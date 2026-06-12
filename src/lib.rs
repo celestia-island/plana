@@ -20,6 +20,11 @@
 #![allow(dead_code)]
 
 pub mod jsonrpc;
+pub mod http;
+pub mod references;
+
+#[cfg(feature = "tracing-helpers")]
+pub mod tracing_helpers;
 
 use serde::{Deserialize, Serialize};
 
