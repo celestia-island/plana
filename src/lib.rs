@@ -1,37 +1,22 @@
-//! WebSocket protocol types — upstream-compatible definitions from entelecheia.
+//! Shared protocol types for the entelecheia multi-agent platform.
 //!
-//! # Allow(dead_code) rationale
+//! Every type in this crate MUST be:
+//! - Defined in entelecheia (canonical source of truth)
+//! - Consumed by shittim-chest (core, mock_scepter, or webui)
 //!
-//! Many types in this module are not directly referenced by Rust consuming code
-//! (core, mock_scepter, lsp-bridge) but are still required because:
-//!
-//! 1. **Upstream protocol fidelity** — these types are exact copies from
-//!    entelecheia's `state_types` / `mcp_types` crates. They MUST be kept in
-//!    sync with upstream even if not yet consumed locally.
-//! 2. **TypeScript codegen** — the `#[ts(export)]` attribute generates TS type
-//!    definitions consumed by the `arona` webui. A type that
-//!    appears "dead" in Rust may be actively used in TypeScript.
-//! 3. **Forward compatibility** — new features (knowledge base, cosmos VM
-//!    snapshots, human review, etc.) will consume these types when implemented.
-//!
-//! Do NOT remove types from this module solely because they trigger dead_code
-//! warnings. Only remove if the upstream entelecheia project has also removed them.
-
-#![allow(dead_code)]
+//! If a type is not paired on both sides, it does not belong here.
 
 pub mod jsonrpc;
 pub mod http;
-pub mod references;
 
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;
 
 use serde::{Deserialize, Serialize};
-
 use ts_rs::TS;
 
 // ═══════════════════════════════════════════════════════════════
-// Upstream-compatible enums (exact copies from entelecheia)
+// Core enums
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
@@ -112,14 +97,6 @@ pub enum ModelTier {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
-pub enum RetryReason {
-    EmptyOutput,
-    ReportNotCaptured,
-    LlmError { message: String },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
 pub enum SkillStage {
     Started(String),
     Done(String),
@@ -130,6 +107,14 @@ pub enum SkillStage {
     TryingModel(String, String),
     ModelFailed(String, String, String),
     Nudging(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub enum RetryReason {
+    EmptyOutput,
+    ReportNotCaptured,
+    LlmError { message: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -158,33 +143,6 @@ pub enum StreamChunkKind {
     Text,
     Thinking,
     DeepThinking,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum StreamMcpEvent {
-    McpCall {
-        tool_name: String,
-        call_id: String,
-        #[serde(default)]
-        #[ts(optional)]
-        params_summary: Option<String>,
-        #[serde(default)]
-        #[ts(optional)]
-        agent_type: Option<String>,
-    },
-    McpResult {
-        tool_name: String,
-        call_id: String,
-        result: String,
-        success: bool,
-        #[serde(default)]
-        #[ts(optional)]
-        duration_ms: Option<u64>,
-        #[serde(default)]
-        #[ts(optional)]
-        agent_type: Option<String>,
-    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
@@ -250,109 +208,14 @@ pub struct LlmStream {
     pub segments: Vec<StreamSegment>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
-#[serde(rename_all = "snake_case")]
-pub enum SystemNotification {
-    WebUiStarted,
-    WebUiStopped,
-    WebUiRestarted,
-    WebUiError {
-        error: String,
-    },
-    WebUiUrl {
-        url: String,
-    },
-    ContainerError {
-        container: String,
-        error: String,
-    },
-    CosmosError {
-        agent: String,
-        error: String,
-    },
-    ServerError {
-        error: String,
-    },
-    AutoModeChanged {
-        enabled: bool,
-        timeout_secs: Option<u64>,
-    },
-    AutoModeUsage,
-    WorkspaceOpened {
-        repo_url: String,
-        branch: Option<String>,
-    },
-    WorkspaceError {
-        error: String,
-    },
-    Generic {
-        key: String,
-        params: Vec<String>,
-    },
-    SecurityPolicyChanged {
-        action: String,
-        details: String,
-        changed_by: String,
-    },
-    SecurityToolBlocked {
-        agent: String,
-        tool: String,
-        reason: String,
-    },
-    ScreenSessionStarted {
-        #[ts(type = "string")]
-        session_id: uuid::Uuid,
-        node_id: String,
-    },
-    ScreenSessionEnded {
-        #[ts(type = "string")]
-        session_id: uuid::Uuid,
-        node_id: String,
-    },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-#[serde(rename_all = "snake_case")]
-pub enum TaskStatus {
-    NotStarted,
-    InProgress,
-    Paused,
-    Completed,
-    Failed,
-    Warning,
-    Waiting { deadline: String, handle: String },
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-#[serde(rename_all = "snake_case")]
-pub enum ContainerStatus {
-    Created,
-    Running,
-    Paused,
-    Restarting,
-    Removing,
-    Exited,
-    Dead,
-    Unknown,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum PeriodType {
-    Hour5,
-    Day7,
-    Month1,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum AskAnswerSource {
-    Human,
-    Auto,
-    Timeout,
+pub struct RouteInfo {
+    pub direction: String,
+    pub target: String,
+    #[serde(default)]
+    #[ts(optional)]
+    pub target_token: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS, thiserror::Error)]
@@ -412,28 +275,73 @@ pub struct StructuredAgentError {
     pub context: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
-pub struct RouteInfo {
-    pub direction: String,
-    pub target: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub target_token: Option<String>,
+#[serde(rename_all = "snake_case")]
+pub enum TaskStatus {
+    NotStarted,
+    InProgress,
+    Paused,
+    Completed,
+    Failed,
+    Warning,
+    Waiting { deadline: String, handle: String },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum ContainerStatus {
+    Created,
+    Running,
+    Paused,
+    Restarting,
+    Removing,
+    Exited,
+    Dead,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub enum PeriodType {
+    Hour5,
+    Day7,
+    Month1,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub enum KnowledgeBaseStatus {
+    #[default]
+    Uninitialized,
+    Indexing,
+    Ready,
+    Error,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub enum EmbeddingModel {
+    OpenAiSmall,
+    OpenAiLarge,
+    OpenAiAda,
+    Custom,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum YoloTaskTier {
+    Realtime,
+    Periodic,
+    Daily,
+    Strategic,
 }
 
 // ═══════════════════════════════════════════════════════════════
-// JSON-RPC notification builder
+// Connection / Handshake
 // ═══════════════════════════════════════════════════════════════
-// Protocol / Connection
-// ═══════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ServerVersionParams {
-    pub version: String,
-    pub build_info: String,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
@@ -458,7 +366,7 @@ pub struct PingParams {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Log entry (shared for server + container logs)
+// Log entry
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -595,31 +503,6 @@ pub struct AgentReportParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
-pub struct AgentTransferParams {
-    pub agent_type: Agent,
-    pub agent_id: String,
-    #[serde(default)]
-    #[ts(type = "string")]
-    #[ts(optional)]
-    pub agent_number: Option<AgentBadge>,
-    pub from_skill: String,
-    pub to_skill: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub summary: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub model_name: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub token_usage: Option<(u32, u32)>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub stream: Option<LlmStream>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
 pub struct OrchestrationStatusParams {
     pub stage: SkillStage,
     pub agent: String,
@@ -662,75 +545,6 @@ pub struct McpToolResultParams {
     #[serde(default)]
     #[ts(optional)]
     pub duration_ms: Option<u64>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct StreamingTailParams {
-    pub agent_id: String,
-    pub tail: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct HumanReviewRequestParams {
-    pub review_id: String,
-    pub agent_type: Agent,
-    pub agent_id: String,
-    pub title: String,
-    pub content: String,
-    pub timestamp: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct HumanReviewResponseParams {
-    pub review_id: String,
-    pub choice: String,
-    pub comment: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AskHumanRequestParams {
-    pub consultation_id: String,
-    pub agent_type: Agent,
-    pub agent_id: String,
-    #[serde(default)]
-    #[ts(type = "string")]
-    #[ts(optional)]
-    pub agent_number: Option<AgentBadge>,
-    pub question: String,
-    pub question_localized: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub context: Option<String>,
-    pub options: Vec<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub recommended: Option<String>,
-    pub timestamp: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AskHumanReplyParams {
-    pub consultation_id: String,
-    pub selected_options: Vec<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub custom_answer: Option<String>,
-    pub answered_by: AskAnswerSource,
-    pub timestamp: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AutoModeUpdateParams {
-    pub enabled: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub timeout_secs: Option<u64>,
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -782,12 +596,6 @@ pub struct TuiAgentInfo {
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct AgentListResponseParams {
     pub agents: Vec<TuiAgentInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AgentUpdateParams {
-    pub agent: TuiAgentInfo,
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1021,60 +829,6 @@ pub struct GlobalSnapshotData {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
-pub struct AgentSnapshotParams {
-    pub snapshot: AgentSnapshotData,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AgentSnapshotData {
-    pub version: u64,
-    pub timestamp: i64,
-    pub agents: Vec<TuiAgentInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct SnapshotModelInfo {
-    pub id: String,
-    pub name: String,
-    pub provider_name: String,
-    pub model_type: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub context_length: Option<u32>,
-    pub is_active: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct SnapshotProviderInfo {
-    pub name: String,
-    pub display_name: String,
-    pub api_endpoint: String,
-    pub has_api_key: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub default_model: Option<String>,
-    pub is_active: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ModelsSnapshotParams {
-    #[serde(default)]
-    pub models: Vec<SnapshotModelInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ProvidersSnapshotParams {
-    #[serde(default)]
-    pub providers: Vec<SnapshotProviderInfo>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
 pub struct ContainerSnapshotParams {
     pub snapshot: ContainerSnapshotData,
 }
@@ -1102,131 +856,8 @@ pub struct TasksSnapshotData {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Snapshot patches (upstream: state_types::gateway::tui_types::snapshot)
-// ═══════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AgentPatch {
-    pub agent_id: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub agent_number: Option<AgentBadge>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub agent_type: Option<Agent>,
-    pub version: u64,
-    #[serde(default)]
-    #[ts(optional)]
-    pub llm_working_changed: Option<bool>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub work_status: Option<WorkStatus>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub current_model: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub model_tier: Option<ModelTier>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub llm_handle: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub token_usage_delta: Option<(u32, u32)>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub token_usage_absolute: Option<(u32, u32)>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub request_state: Option<RequestState>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub mcp_tool_calls_delta: Option<u32>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub skill_calls_delta: Option<u32>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub cpu_usage: Option<f64>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub memory_mb: Option<u64>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub completion_outcome: Option<CompletionOutcome>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub retry_count: Option<u32>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub max_retries: Option<u32>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub current_stage: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub next_stage: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub current_tool_name: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub parent_id: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ContainerPatch {
-    pub container_id: String,
-    pub version: u64,
-    #[serde(default)]
-    #[ts(optional)]
-    pub status_changed: Option<ContainerStatus>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub cpu_usage_changed: Option<f64>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub memory_usage_changed: Option<u64>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub branch_changed: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub is_read_only_changed: Option<bool>,
-    #[serde(default)]
-    #[ts(type = "string")]
-    #[ts(optional)]
-    pub badge_changed: Option<AgentBadge>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub current_skill_changed: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct TaskPatch {
-    #[ts(type = "string")]
-    pub task_id: uuid::Uuid,
-    pub version: u64,
-    #[serde(default)]
-    #[ts(optional)]
-    pub status_changed: Option<TaskStatus>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub progress_changed: Option<u8>,
-}
-
-// ═══════════════════════════════════════════════════════════════
 // Config Filesystem
 // ═══════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ProviderFsInfoParams {
-    pub providers: Vec<ProviderFsInfo>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
@@ -1330,33 +961,8 @@ pub struct ProviderLimitsInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
-pub struct ProviderFsInfo {
-    pub id: String,
-    #[serde(default)]
-    pub name: std::collections::HashMap<String, String>,
-    #[serde(default)]
-    pub protocol: String,
-    #[serde(default)]
-    pub category: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub base_url: Option<String>,
-    #[serde(default)]
-    pub entry_points: Vec<EntrypointConfigInfo>,
-    #[serde(default)]
-    pub models: Vec<ModelFsInfo>,
-    #[serde(default)]
-    pub capabilities: ProviderCapabilitiesInfo,
-    #[serde(default)]
-    pub limits: ProviderLimitsInfo,
-    #[serde(default)]
-    pub pricing_model: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ModelFsInfoParams {
-    pub models: Vec<ModelFsInfo>,
+pub struct ProviderFsInfoParams {
+    pub providers: Vec<ProviderFsInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -1413,6 +1019,37 @@ pub struct ModelFsInfo {
     pub rate_multiplier: Option<f64>,
     #[serde(default)]
     pub rate_rules: Vec<RateRuleInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct ModelFsInfoParams {
+    pub models: Vec<ModelFsInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct ProviderFsInfo {
+    pub id: String,
+    #[serde(default)]
+    pub name: std::collections::HashMap<String, String>,
+    #[serde(default)]
+    pub protocol: String,
+    #[serde(default)]
+    pub category: String,
+    #[serde(default)]
+    #[ts(optional)]
+    pub base_url: Option<String>,
+    #[serde(default)]
+    pub entry_points: Vec<EntrypointConfigInfo>,
+    #[serde(default)]
+    pub models: Vec<ModelFsInfo>,
+    #[serde(default)]
+    pub capabilities: ProviderCapabilitiesInfo,
+    #[serde(default)]
+    pub limits: ProviderLimitsInfo,
+    #[serde(default)]
+    pub pricing_model: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -1476,25 +1113,6 @@ pub struct KbGenericResponseParams {
     pub id: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum KnowledgeBaseStatus {
-    #[default]
-    Uninitialized,
-    Indexing,
-    Ready,
-    Error,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum EmbeddingModel {
-    OpenAiSmall,
-    OpenAiLarge,
-    OpenAiAda,
-    Custom,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct KnowledgeBaseInfo {
@@ -1532,218 +1150,6 @@ pub struct ListKnowledgeBasesResponseParams {
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct GetKnowledgeBaseResponseParams {
     pub knowledge_base: Option<KnowledgeBaseInfo>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum SubscriptionType {
-    GitHubRepo,
-    GitRepo,
-    Website,
-    Rss,
-    LocalDirectory,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum SubscriptionStatus {
-    NotSynced,
-    Syncing,
-    Synced,
-    Error,
-    Paused,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub enum DocumentStatus {
-    Pending,
-    Indexing,
-    Indexed,
-    Error,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct CreateKnowledgeBaseRequest {
-    pub name: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub description: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub embedding_model: Option<EmbeddingModel>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub custom_embedding_endpoint: Option<String>,
-    #[serde(default)]
-    pub tags: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct CreateKnowledgeBaseResponse {
-    #[ts(type = "string")]
-    pub knowledge_base_id: uuid::Uuid,
-    pub success: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AddDocumentRequest {
-    #[ts(type = "string")]
-    pub knowledge_base_id: uuid::Uuid,
-    pub content: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub title: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub source_url: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub metadata: Option<std::collections::HashMap<String, String>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct AddDocumentResponse {
-    #[ts(type = "string")]
-    pub document_id: uuid::Uuid,
-    pub success: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct QueryKnowledgeBaseRequest {
-    #[serde(default)]
-    #[ts(type = "string")]
-    #[ts(optional)]
-    pub knowledge_base_id: Option<uuid::Uuid>,
-    pub query: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub top_k: Option<usize>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub score_threshold: Option<f64>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct QueryResultChunk {
-    #[ts(type = "string")]
-    pub document_id: uuid::Uuid,
-    #[serde(default)]
-    #[ts(optional)]
-    pub document_title: Option<String>,
-    pub content: String,
-    pub score: f64,
-    #[serde(default)]
-    #[ts(optional)]
-    pub source_url: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct QueryKnowledgeBaseResponse {
-    pub results: Vec<QueryResultChunk>,
-    pub success: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct CreateSubscriptionRequest {
-    #[ts(type = "string")]
-    pub knowledge_base_id: uuid::Uuid,
-    pub subscription_type: SubscriptionType,
-    pub url: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub sync_path: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub sync_interval_hours: Option<u64>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct CreateSubscriptionResponse {
-    #[ts(type = "string")]
-    pub subscription_id: uuid::Uuid,
-    pub success: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct SyncSubscriptionRequest {
-    #[ts(type = "string")]
-    pub subscription_id: uuid::Uuid,
-    #[serde(default)]
-    #[ts(optional)]
-    pub force_full_sync: Option<bool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct SyncSubscriptionResponse {
-    pub success: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub added_documents: Option<usize>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub updated_documents: Option<usize>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub deleted_documents: Option<usize>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct DeleteSubscriptionResponse {
-    pub success: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct KnowledgeBaseFilters {
-    #[serde(default)]
-    #[ts(optional)]
-    pub status: Option<KnowledgeBaseStatus>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub tags: Option<Vec<String>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct DeleteKnowledgeBaseResponse {
-    pub success: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1934,67 +1340,6 @@ pub struct RegisterPolemosDeviceResponseParams {
     pub device: Option<PolemosDeviceInfo>,
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WebRTC Screen Signaling
-// ═══════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct WebrtcOfferParams {
-    #[ts(type = "string")]
-    pub session_id: uuid::Uuid,
-    pub node_id: String,
-    pub sdp: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct WebrtcAnswerParams {
-    #[ts(type = "string")]
-    pub session_id: uuid::Uuid,
-    pub node_id: String,
-    pub sdp: String,
-    #[serde(default)]
-    pub displays: Vec<DisplayInfoParams>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct DisplayInfoParams {
-    pub id: u32,
-    pub name: String,
-    pub width: u32,
-    pub height: u32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct WebrtcIceCandidateParams {
-    #[ts(type = "string")]
-    pub session_id: uuid::Uuid,
-    pub node_id: String,
-    #[ts(type = "unknown")]
-    pub candidate: serde_json::Value,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct WebrtcIceServersParams {
-    pub ice_servers: Vec<IceServerParams>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct IceServerParams {
-    pub urls: Vec<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub username: Option<String>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub credential: Option<String>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct SwitchWorkspaceResponseParams {
@@ -2009,13 +1354,6 @@ pub struct SwitchWorkspaceResponseParams {
 // ═══════════════════════════════════════════════════════════════
 // System / UI
 // ═══════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct SystemMessageParams {
-    pub notification: SystemNotification,
-    pub timestamp: String,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
@@ -2145,32 +1483,6 @@ pub struct AuthChangePasswordResponseParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
-pub struct YoloTierTaskConfig {
-    pub agent: String,
-    pub skill: String,
-    #[serde(default = "default_true")]
-    pub enabled: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct YoloTierConfig {
-    pub tier: YoloTaskTier,
-    #[serde(default)]
-    pub enabled: bool,
-    #[serde(default)]
-    pub interval_secs: u64,
-    pub tasks: Vec<YoloTierTaskConfig>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct YoloFullConfig {
-    pub tiers: Vec<YoloTierConfig>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
 pub struct YoloStartResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -2194,16 +1506,6 @@ pub struct YoloTerminateResponseParams {
     #[serde(default)]
     #[ts(optional)]
     pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-#[serde(rename_all = "snake_case")]
-pub enum YoloTaskTier {
-    Realtime,
-    Periodic,
-    Daily,
-    Strategic,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -2278,103 +1580,6 @@ pub struct YoloCycleStepParams {
 pub struct YoloCycleCompleteParams {
     pub loop_count: u64,
     pub duration_ms: u64,
-}
-
-// ═══════════════════════════════════════════════════════════════
-// Arbiter
-// ═══════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ArbiterStatusData {
-    pub locked_down: bool,
-    pub active_policies: u32,
-    #[serde(default)]
-    pub violations: Vec<String>,
-    pub mode: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ArbiterStatusResponseParams {
-    pub ok: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub status: Option<ArbiterStatusData>,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ArbiterLockdownResponseParams {
-    pub ok: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct ArbiterRestoreResponseParams {
-    pub ok: bool,
-    #[serde(default)]
-    #[ts(optional)]
-    pub error: Option<String>,
-}
-
-// ═══════════════════════════════════════════════════════════════
-// VM Snapshot
-// ═══════════════════════════════════════════════════════════════
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct CosmosContainerInfo {
-    pub container_id: String,
-    pub container_name: String,
-    pub agent_type: String,
-    #[ts(type = "string")]
-    pub instance_uuid: uuid::Uuid,
-    pub socket_path: String,
-    pub image: String,
-    #[serde(default)]
-    #[ts(optional)]
-    pub branch: Option<String>,
-    #[serde(default)]
-    #[ts(type = "string")]
-    #[ts(optional)]
-    pub badge: Option<AgentBadge>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct CosmosOperationLogEntry {
-    pub timestamp: String,
-    pub tool_name: String,
-    #[serde(default)]
-    pub params_preview: String,
-    pub success: bool,
-    #[serde(default)]
-    pub result_preview: String,
-    #[serde(default)]
-    pub error: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
-pub struct VmSnapshotParams {
-    pub agent_id: String,
-    #[serde(default)]
-    #[ts(type = "unknown")]
-    pub globals: serde_json::Value,
-    #[serde(default)]
-    #[ts(optional)]
-    pub container_info: Option<CosmosContainerInfo>,
-    #[serde(default)]
-    pub tool_list: Vec<String>,
-    #[serde(default)]
-    pub op_log: Vec<CosmosOperationLogEntry>,
 }
 
 // ═══════════════════════════════════════════════════════════════

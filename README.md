@@ -1,6 +1,8 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 
+<img src="docs/logo.webp" alt="Arona logo" width="200"/>
+
 # Arona
 
 **Shared JSON-RPC 2.0 Protocol Types for the Entelecheia Multi-Agent Platform**

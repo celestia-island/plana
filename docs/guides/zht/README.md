@@ -1,6 +1,9 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 
+<img src="../../logo.webp" alt="Arona logo" width="200"/>
+
+
 # Arona
 
 **Entelecheia 多智能體平台共享 JSON-RPC 2.0 協議類型**
