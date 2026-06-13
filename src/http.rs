@@ -398,6 +398,15 @@ pub struct SceneGrid {
 pub struct SceneCamera {
     pub position: SceneVec3,
     pub target: SceneVec3,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bookmarks: Option<std::collections::HashMap<String, SceneCameraBookmark>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "HttpTypes.ts")]
+pub struct SceneCameraBookmark {
+    pub position: SceneVec3,
+    pub target: SceneVec3,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
