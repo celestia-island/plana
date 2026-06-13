@@ -9,7 +9,7 @@ Paramètres
 
 Concédant :           Celestia Island
 
-Œuvre sous Licence :  Entelecheia — Plateforme de Collaboration Multi-Agent en Rust
+Œuvre sous Licence :  Arona — Types de Protocole JSON-RPC 2.0 Partagés pour la Plateforme Multi-Agent Entelecheia
                       L'Œuvre sous Licence est (c) 2025 langyo <langyo.china@gmail.com>
 
 Octroi d'Utilisation
@@ -110,6 +110,20 @@ Libre :               Pour toute Utilisation Autorisée décrite aux points
                       License 1.1 s'appliquent, et une licence commerciale
                       distincte est requise.
 
+
+Date de Changement:    2030-01-01
+
+Licence de Changement: À compter de la Date de Changement, cette Licence se
+                      convertit automatiquement en une double licence au choix du
+                      destinataire :
+                      — la Licence Apache, Version 2.0
+                        (https://www.apache.org/licenses/LICENSE-2.0), ou
+                      — la Licence MIT
+                        (https://opensource.org/licenses/MIT)
+                      pour toutes les versions de l'Œuvre Concédée publiées sous
+                      cette Licence, pour tous les utilisateurs et tous les usages,
+                      sans restriction d'usage et sans licence commerciale distincte.
+
 ------------------------------------------------------------------------------
 
 Conditions
@@ -153,7 +167,7 @@ DE TITRE.
 
 Avis
 
-Entelecheia
+Arona
 Copyright (c) 2025 langyo <langyo.china@gmail.com>
 
 Ce produit est concédé sous licence selon la Business Source License 1.1.
@@ -167,3 +181,11 @@ des lois applicables en matière de propriété intellectuelle, de droit des con
 et de concurrence déloyale.
 
 Pour toute demande de licence commerciale, veuillez contacter le Concédant.
+
+-----------------------------------------------------------------------------
+
+Note sur la traduction
+
+Ceci est une traduction de commodité sans valeur juridique. La version
+autoritaire est uniquement le fichier LICENSE en anglais, y compris sa section
+"Rationale — Why this license". En cas de conflit, la version anglaise prévaut.

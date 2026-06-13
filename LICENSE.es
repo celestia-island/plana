@@ -9,7 +9,7 @@ Parámetros
 
 Licenciante:          Celestia Island
 
-Obra Licenciada:      Entelecheia — Plataforma de Colaboración Multi-Agente basada en Rust
+Obra Licenciada:      Arona — Tipos de Protocolo JSON-RPC 2.0 Compartidos para la Plataforma Multi-Agente Entelecheia
                       La Obra Licenciada es (c) 2025 langyo <langyo.china@gmail.com>
 
 Concesión de Uso
@@ -104,6 +104,20 @@ Licencia de Uso Libre: Para cualquier Uso Permitido descrito en los puntos
                        de esta Business Source License 1.1, y se requiere
                        una licencia comercial separada.
 
+
+Fecha de Cambio:       2030-01-01
+
+Licencia de Cambio:    A partir de la Fecha de Cambio, esta Licencia se convierte
+                      automáticamente en una licencia doble a elección del
+                      destinatario:
+                      — la Licencia Apache, Versión 2.0
+                        (https://www.apache.org/licenses/LICENSE-2.0), o
+                      — la Licencia MIT
+                        (https://opensource.org/licenses/MIT)
+                      para todas las versiones de la Obra Licenciada publicada bajo
+                      esta Licencia, para todos los usuarios y todos los usos, sin
+                      restricción de uso y sin licencia comercial separada.
+
 ------------------------------------------------------------------------------
 
 Términos
@@ -144,7 +158,7 @@ COMERCIABILIDAD, IDONEIDAD PARA UN FIN DETERMINADO, NO INFRACCIÓN Y TITULARIDAD
 
 Aviso
 
-Entelecheia
+Arona
 Copyright (c) 2025 langyo <langyo.china@gmail.com>
 
 Este producto está licenciado bajo la Business Source License 1.1.
@@ -157,3 +171,11 @@ Licencia puede dar lugar a acciones legales bajo las leyes aplicables de propied
 intelectual, contractuales y de competencia desleal.
 
 Para consultas sobre licencias comerciales, póngase en contacto con el Licenciante.
+
+-----------------------------------------------------------------------------
+
+Nota sobre la traducción
+
+Esta es una traducción de conveniencia sin fuerza legal. La versión
+autoritativa es únicamente el archivo LICENSE en inglés, incluida su sección
+"Rationale — Why this license". En caso de conflicto, prevalece la versión inglesa.
