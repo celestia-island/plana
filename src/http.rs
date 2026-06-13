@@ -117,10 +117,12 @@ pub struct HealthResponse {
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "HttpTypes.ts")]
 pub struct HealthDetailed {
-    pub shittimChest: ConnectionStatus,
+    #[serde(rename = "shittimChest")]
+    pub shittim_chest: ConnectionStatus,
     pub scepter: ConnectionStatus,
     pub database: ConnectionStatus,
-    pub activeSessions: u32,
+    #[serde(rename = "activeSessions")]
+    pub active_sessions: u32,
     pub uptime: u64,
     pub version: String,
 }
@@ -183,11 +185,15 @@ pub struct UsageDayEntry {
 #[ts(export, export_to = "HttpTypes.ts")]
 pub struct ProxySystemInfo {
     pub version: String,
-    pub nodeVersion: String,
+    #[serde(rename = "nodeVersion")]
+    pub node_version: String,
     pub platform: String,
-    pub cpuUsage: f64,
-    pub memoryUsage: f64,
-    pub diskUsage: f64,
+    #[serde(rename = "cpuUsage")]
+    pub cpu_usage: f64,
+    #[serde(rename = "memoryUsage")]
+    pub memory_usage: f64,
+    #[serde(rename = "diskUsage")]
+    pub disk_usage: f64,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -308,12 +314,7 @@ pub struct WorkspaceItem {
     pub short_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alias: Option<String>,
-    #[serde(default = "default_connection_kind")]
     pub connection_kind: String,
-}
-
-fn default_connection_kind() -> String {
-    "local_filesystem".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -530,15 +531,18 @@ pub struct AgentItem {
     pub status: String,
     pub enabled: bool,
     pub tools: Vec<AgentTool>,
-    pub toolsCount: usize,
+    #[serde(rename = "toolsCount")]
+    pub tools_count: usize,
     pub subscribed: bool,
     pub installed: bool,
     pub version: String,
     pub config: AgentConfig,
     pub container: Option<AgentContainer>,
     pub skills: Vec<String>,
-    pub createdAt: String,
-    pub updatedAt: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -583,29 +587,39 @@ pub struct WebhookItem {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
-    pub lastDeliveryAt: Option<String>,
-    pub createdAt: String,
-    pub updatedAt: String,
+    #[serde(rename = "lastDeliveryAt")]
+    pub last_delivery_at: Option<String>,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "HttpTypes.ts")]
 pub struct WebhookDeliveryItem {
     pub id: String,
-    pub webhookId: String,
+    #[serde(rename = "webhookId")]
+    pub webhook_id: String,
     pub event: String,
-    pub statusCode: u16,
-    pub requestHeaders: HashMap<String, String>,
+    #[serde(rename = "statusCode")]
+    pub status_code: u16,
+    #[serde(rename = "requestHeaders")]
+    pub request_headers: HashMap<String, String>,
     #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
     #[ts(type = "Record<string, unknown>")]
-    pub requestBody: serde_json::Value,
+    #[serde(rename = "requestBody")]
+    pub request_body: serde_json::Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
-    pub responseHeaders: Option<HashMap<String, String>>,
-    pub responseBody: String,
+    #[serde(rename = "responseHeaders")]
+    pub response_headers: Option<HashMap<String, String>>,
+    #[serde(rename = "responseBody")]
+    pub response_body: String,
     pub duration: u64,
     pub success: bool,
-    pub deliveredAt: String,
+    #[serde(rename = "deliveredAt")]
+    pub delivered_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

@@ -194,13 +194,19 @@ impl JsonRpcResponse {
 }
 
 pub fn build_notification(method: &str, params: impl serde::Serialize) -> String {
-    let notif = JsonRpcNotification::new(method, Some(serde_json::to_value(&params).unwrap_or_default()));
+    let notif = JsonRpcNotification::new(
+        method,
+        Some(serde_json::to_value(&params).unwrap_or_default()),
+    );
     serde_json::to_string(&notif)
         .unwrap_or_else(|_| format!(r#"{{"jsonrpc":"2.0","method":"{method}","params":{{}}}}"#))
 }
 
 pub fn build_notification_value(method: &str, params: impl serde::Serialize) -> serde_json::Value {
-    let notif = JsonRpcNotification::new(method, Some(serde_json::to_value(&params).unwrap_or_default()));
+    let notif = JsonRpcNotification::new(
+        method,
+        Some(serde_json::to_value(&params).unwrap_or_default()),
+    );
     serde_json::to_value(notif).unwrap_or_else(|_| {
         serde_json::json!({
             "jsonrpc": "2.0",

@@ -6,8 +6,8 @@
 //!
 //! If a type is not paired on both sides, it does not belong here.
 
-pub mod jsonrpc;
 pub mod http;
+pub mod jsonrpc;
 
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;

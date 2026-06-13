@@ -60,13 +60,6 @@ export type AvatarPlatformResponse = {
 
 export type AvatarUpdateResponse = { avatar_url: string | null };
 
-export type BindingId = {
-  platform: string;
-  external_id: string;
-  floor: bigint | null;
-  raw: string | null;
-};
-
 export type ChannelConfigDetail = {
   id: string;
   platform: string;
@@ -125,11 +118,6 @@ export type ConnectionStatus = {
   connected: boolean;
   latency: bigint;
   lastCheck: string;
-};
-
-export type ContainerKind = { "type": "demiurge" } | {
-  "type": "normal";
-  id: number;
 };
 
 export type CreatedResponse = { created: Array<string> };
@@ -200,11 +188,6 @@ export type IpWhitelistResponse = {
   enabled: boolean;
   whitelist: Array<Record<string, unknown>>;
 };
-
-export type MessageRef =
-  | { "kind": "workspace_badge" } & WorkspaceScopedBadge
-  | { "kind": "workspace_session" } & WorkspaceScopedSessionId
-  | { "kind": "binding" } & BindingId;
 
 export type ModelInfo = {
   id: string;
@@ -320,7 +303,13 @@ export type SceneBloom = {
   threshold: number;
 };
 
-export type SceneCamera = { position: SceneVec3; target: SceneVec3 };
+export type SceneCamera = {
+  position: SceneVec3;
+  target: SceneVec3;
+  bookmarks: { [key in string]: SceneCameraBookmark } | null;
+};
+
+export type SceneCameraBookmark = { position: SceneVec3; target: SceneVec3 };
 
 export type SceneConfigItem = {
   project_id: string;
@@ -580,29 +569,11 @@ export type WorkspaceItem = {
   connection_kind: string;
 };
 
-export type WorkspaceRef = { "type": "short_id"; "value": string } | {
-  "type": "alias";
-  "value": string;
-};
-
 export type WorkspaceResolveResponse = {
   workspace_uuid: string;
   short_id: string;
   alias: string | null;
   path: string;
-};
-
-export type WorkspaceScopedBadge = {
-  workspace_ref: WorkspaceRef | null;
-  container: ContainerKind;
-  raw: string | null;
-};
-
-export type WorkspaceScopedSessionId = {
-  workspace_ref: WorkspaceRef | null;
-  container: ContainerKind;
-  session_number: number;
-  raw: string | null;
 };
 
 export type WorkspaceSessionResponse = {
