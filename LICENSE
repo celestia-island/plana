@@ -9,7 +9,8 @@ Parameters
 
 Licensor:             Celestia Island
 
-Licensed Work:        Entelecheia — Rust-based Multi-Agent Collaboration Platform
+Licensed Work:        Arona — Shared JSON-RPC 2.0 Protocol Types for the
+                      Entelecheia Multi-Agent Platform
                       The Licensed Work is (c) 2025 langyo <langyo.china@gmail.com>
 
 Additional Use Grant: The Licensor grants the following additional rights alongside
@@ -100,6 +101,21 @@ Free Use License:     For any Permitted Use described in items (a) through (e)
                       terms of this Business Source License 1.1 apply, and a
                       separate commercial license is required.
 
+Change Date:          2030-01-01
+
+Change License:       On and after the Change Date, this License automatically
+                      converts to a dual license at the recipient's choice:
+                      — the Apache License, Version 2.0
+                        (https://www.apache.org/licenses/LICENSE-2.0), or
+                      — the MIT License
+                        (https://opensource.org/licenses/MIT)
+                      for all versions of the Licensed Work released under this
+                      License, for all users and for all uses, with no
+                      production-use restriction and no separate commercial
+                      license required. The Permitted-Use grant above is a floor
+                      that holds from the effective date of this License and
+                      continues unaffected by the conversion.
+
 -----------------------------------------------------------------------------
 
 Terms
@@ -141,7 +157,7 @@ TITLE.
 
 Notice
 
-Entelecheia
+Arona
 Copyright (c) 2025 langyo <langyo.china@gmail.com>
 
 This product is licensed under the Business Source License 1.1.
@@ -154,3 +170,45 @@ result in legal action under applicable intellectual property, contract,
 and unfair competition laws.
 
 For commercial licensing inquiries, please contact the Licensor.
+
+-----------------------------------------------------------------------------
+
+Rationale — Why this license
+
+Arona is developed in the open: the full source is publicly readable, and the
+Additional Use Grant above already grants Apache-2.0 / MIT equivalent rights
+for all internal, academic, government, educational, and non-commercial use.
+The Business Source License 1.1 is used here for a specific, narrow purpose —
+not to extract rent, but to protect the work and its community until it fully
+opens up.
+
+1. Prevent parasitic re-packaging (套壳). The hard part of this project — the
+   JSON-RPC 2.0 protocol type surface and the type-safety bridge shared across
+   the Entelecheia platform — is difficult to recreate but trivial to re-brand.
+   The BSL production-use restriction stops a third party from taking the work,
+   wrapping it under a new name, and selling it as their own hosted service
+   without contributing anything back. That is irresponsible to both the
+   community (users get a divergent derivative) and the project (it starves the
+   original of the attention and resources it needs to keep improving).
+
+2. Stability over throughput. This crate defines the cross-project contract
+   consumed by every frontend and client of the platform, so correctness and
+   compatibility come first. A permissive license today would invite
+   high-volume, low-quality contributions that we would still have to review and
+   reject, draining the very capacity the project depends on. The contribution
+   policy (see CONTRIBUTING.md) deliberately maintains a high merge bar and
+   requires a Contributor License Agreement (see CLA.md) for every accepted
+   change.
+
+3. A hard, time-boxed commitment to openness. The Change Date above is binding:
+   on 2030-01-01 the entire Licensed Work — every version released under this
+   License — automatically converts to the recipient's choice of Apache-2.0 or
+   MIT, for everyone and every use, with no restrictions and no commercial
+   license required. This balances today's defensibility with a guaranteed
+   return to the commons and lowers the incentive for a competing fork during
+   the restricted period.
+
+Important: opening the license on the Change Date does NOT open the merge bar.
+After 2030-01-01 the code is Apache-2.0 / MIT, but the contribution policy, the
+PR review standards, and the CLA requirement remain exactly as they are today.
+A more permissive license never means a lower quality gate.
