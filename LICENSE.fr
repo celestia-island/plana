@@ -173,7 +173,7 @@ Copyright (c) 2025 langyo <langyo.china@gmail.com>
 Ce produit est concédé sous licence selon la Business Source License 1.1.
 Vous ne pouvez pas utiliser ce produit sauf en conformité avec la Licence.
 
-Ce logiciel est protégé par des droits d'auteur de logiciel enregistrés (软著)
+Ce logiciel est protégé par des droits d'auteur de logiciel enregistrés
 et des droits de brevet applicables détenus par le Concédant. Toute utilisation
 commerciale non autorisée, revente, redistribution ou toute activité interdite
 par la présente Licence peut donner lieu à des poursuites judiciaires en vertu
