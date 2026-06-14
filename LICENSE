@@ -182,7 +182,7 @@ The Business Source License 1.1 is used here for a specific, narrow purpose —
 not to extract rent, but to protect the work and its community until it fully
 opens up.
 
-1. Prevent parasitic re-packaging (套壳). The hard part of this project — the
+1. Prevent parasitic re-packaging. The hard part of this project — the
    JSON-RPC 2.0 protocol type surface and the type-safety bridge shared across
    the Entelecheia platform — is difficult to recreate but trivial to re-brand.
    The BSL production-use restriction stops a third party from taking the work,
