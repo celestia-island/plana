@@ -13,13 +13,14 @@ pub mod jsonrpc;
 pub mod tracing_helpers;
 
 use serde::{Deserialize, Serialize};
+use schemars::JsonSchema;
 use ts_rs::TS;
 
 // ═══════════════════════════════════════════════════════════════
 // Core enums
 // ═══════════════════════════════════════════════════════════════
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum Agent {
     HapLotes,
@@ -38,11 +39,11 @@ pub enum Agent {
     ClassicSoftwareEngineering,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct AgentBadge(pub String);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum AgentStatus {
     Initializing,
@@ -52,7 +53,7 @@ pub enum AgentStatus {
     Error,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum WorkStatus {
     Thinking,
@@ -67,7 +68,7 @@ pub enum WorkStatus {
     CallingTool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum RequestState {
     #[default]
@@ -78,7 +79,7 @@ pub enum RequestState {
     WaitingTool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum CompletionOutcome {
     #[default]
@@ -87,7 +88,7 @@ pub enum CompletionOutcome {
     Failed,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum ModelTier {
     Deep,
@@ -95,7 +96,7 @@ pub enum ModelTier {
     Basic,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum SkillStage {
     Started(String),
@@ -109,7 +110,7 @@ pub enum SkillStage {
     Nudging(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum RetryReason {
     EmptyOutput,
@@ -117,7 +118,7 @@ pub enum RetryReason {
     LlmError { message: String },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ReportType {
@@ -136,7 +137,7 @@ pub enum ReportType {
     System,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub enum StreamChunkKind {
     #[default]
@@ -275,7 +276,7 @@ pub struct StructuredAgentError {
     pub context: std::collections::HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum TaskStatus {
@@ -288,7 +289,7 @@ pub enum TaskStatus {
     Waiting { deadline: String, handle: String },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ContainerStatus {
@@ -424,7 +425,7 @@ pub struct UnsubscribeLogsResponseParams {
 // Agent lifecycle
 // ═══════════════════════════════════════════════════════════════
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct AgentStreamingChunkParams {
     pub agent_type: Agent,
@@ -525,7 +526,7 @@ pub struct OrchestrationStatusParams {
     pub parameters_summary: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct McpToolResultParams {
     pub tool_name: String,
@@ -551,7 +552,7 @@ pub struct McpToolResultParams {
 // Agent list / snapshot
 // ═══════════════════════════════════════════════════════════════
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct TuiAgentInfo {
     pub agent_type: Agent,
@@ -602,7 +603,7 @@ pub struct AgentListResponseParams {
 // Task management
 // ═══════════════════════════════════════════════════════════════
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct TaskCreatedParams {
     #[ts(type = "string")]
@@ -629,7 +630,7 @@ pub struct TaskCreatedParams {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct TaskStatusUpdateParams {
     #[ts(type = "string")]

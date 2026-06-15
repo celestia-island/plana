@@ -22,3 +22,4 @@ ts-rs = { version = "^12", features = ["serde-compat", "serde-json-impl", "forma
 
 chrono = { version = "^0.4", features = ["serde", "clock"], optional = true }
 tracing-subscriber = { version = "^0.3", features = ["env-filter"], optional = true }
+schemars = { version = "1.2.1", features = ["derive", "uuid1"] }
