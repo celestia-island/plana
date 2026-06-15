@@ -3,61 +3,39 @@
 
 <img src="../../logo.webp" alt="Arona logo" width="200"/>
 
-
 # Arona
 
-**Entelecheia マルチエージェントプラットフォーム向け 共有 JSON-RPC 2.0 プロトコル型**
+**Entelecheia マルチエージェントプラットフォーム向け共有 JSON-RPC 2.0 プロトコル型**
 
 [![License](https://img.shields.io/badge/license-BSL--1.1-blue.svg)](../../LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org/)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
 
-**[English](../../README.md)** &bull; **[简体中文](../zhs/README.md)** &bull;
-**[繁體中文](../zht/README.md)** &bull; **[日本語](README.md)** &bull;
-**[한국어](../ko/README.md)** &bull; **[Français](../fr/README.md)** &bull;
-**[Español](../es/README.md)** &bull; **[Русский](../ru/README.md)**
+**[英語](../../README.md)** &bull; **[簡体中国語](../zhs/README.md)** &bull;
+**[繁体中国語](../zht/README.md)** &bull; **[日本語](../ja/README.md)** &bull;
+**[韓国語](../ko/README.md)** &bull; **[フランス語](../fr/README.md)** &bull;
+**[スペイン語](../es/README.md)** &bull; **[ロシア語](../ru/README.md)**
 
 </div>
 <!-- markdownlint-enable MD033 MD041 MD036 -->
 
-## Arona とは
+> **バージョン 0.1.0** — [entelecheia](https://github.com/celestia-island/entelecheia) および [shittim-chest](https://github.com/celestia-island/shittim-chest) により利用されています。
 
-Arona は、entelecheia エージェントオーケストレーションコアとユーザーインターフェース層（TUI、CLI、Web UI、IDE プラグイン、Tauri アプリ）間の通信プロトコルを定義します。内容：
+JSON-RPC 2.0 メッセージ型、Agent 分類法（14 種のバリアント）、約 100 の WebSocket パラメータ型。`ts-rs` による TypeScript バインディングの自動生成。
 
-- **JSON-RPC 2.0** メッセージ型
-- **エージェント分類** — `Agent` 列挙型（14 バリアント）
-- **WebSocket パラメータ型** — ストリーミング、スナップショット、パッチ、タスク、プロバイダ設定、ナレッジベース、YOLO クルーズ制御、WebRTC シグナリング、アービタ、VM スナップショットをカバーする約 100 の構造体
-- **TypeScript 型生成** — 全型が `ts-rs` により `bindings/WsTypes.ts` へエクスポート
-
-### 名前の由来
-
-Arona（アロナ）——シッティムチェスト内でミッションを調整し、コマンドをルーティングする AI アシスタント。
-
-## 使い方
+## 使用方法
 
 **Rust：**
-
 ```toml
 [dependencies]
 arona = { git = "https://github.com/celestia-island/arona.git", branch = "master" }
 ```
 
-**TypeScript（pnpm / npm）：**
-
+**TypeScript：**
 ```bash
 pnpm add @celestia-island/arona
 ```
 
-```ts
-import type { Agent, TuiAgentInfo, SkillStage } from "@celestia-island/arona";
-```
-
-## コントリビュート
-
-Issue と Pull Request を歓迎します。
-
 ## ライセンス
 
-Business Source License 1.1、Apache-2.0 / MIT デュアルパス：個人、学術、非商用利用は Apache 2.0 または MIT が適用されます。商用利用（ホスティング、再販、有料サービス）には BUSL ライセンスが必要です。
-
-翻訳：[简体中文](../../LICENSE.zhs) · [繁體中文](../../LICENSE.zht) · [Español](../../LICENSE.es) · [Français](../../LICENSE.fr) · [العربية](../../LICENSE.ar)
+Business Source License 1.1 — 非商用利用には Apache-2.0 または MIT が適用されます。
