@@ -97,6 +97,19 @@ Licença de Uso Livre:  Para qualquer Uso Permitido descrito nos itens (a) a (e)
                        Business Source License 1.1 aplicam-se, e uma licença comercial
                        separada é necessária.
 
+Data de Mudança:      2030-01-01
+
+Licença de Mudança:   A partir da Data de Mudança, esta Licença converte-se
+                      automaticamente numa licença dupla à escolha do destinatário:
+                      — Apache License 2.0
+                        (https://www.apache.org/licenses/LICENSE-2.0), ou
+                      — MIT License
+                        (https://opensource.org/licenses/MIT)
+                      para todas as versões da Obra Licenciada lançadas sob esta
+                      Licença, para todos os utilizadores e todos os casos de uso,
+                      sem restrições de uso e sem necessidade de licença comercial
+                      separada.
+
 ------------------------------------------------------------------------------
 
 Termos
@@ -150,3 +163,12 @@ em ação legal sob as leis aplicáveis de propriedade intelectual, contrato e c
 desleal.
 
 Para consultas sobre licenciamento comercial, entre em contato com o Licenciante.
+
+
+-----------------------------------------------------------------------------
+
+Nota de Tradução
+
+Este arquivo é uma tradução de referência não vinculativa. O único texto
+legalmente autoritativo é o arquivo LICENSE em inglês, incluindo a seção
+"Rationale — Why this license". Em caso de conflito, a versão em inglês prevalece.
