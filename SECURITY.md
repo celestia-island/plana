@@ -7,7 +7,7 @@
 Report them privately via
 [GitHub Security Advisories](https://github.com/celestia-island/arona/security/advisories/new).
 If GitHub Security Advisories are unavailable to you, email the maintainer at
-langyo.china@gmail.com with a clear description and reproduction steps.
+security@celestia.world with a clear description and reproduction steps.
 
 ## Scope
 

@@ -10,7 +10,7 @@ Parámetros
 Licenciante:          Celestia Island
 
 Obra Licenciada:      Arona — Tipos de Protocolo JSON-RPC 2.0 Compartidos para la Plataforma Multi-Agente Entelecheia
-                      La Obra Licenciada es (c) 2025 langyo <langyo.china@gmail.com>
+                      La Obra Licenciada es (c) 2025 langyo <contact@celestia.world>
 
 Concesión de Uso
 Adicional:            El Licenciante otorga los siguientes derechos adicionales junto
@@ -159,7 +159,7 @@ COMERCIABILIDAD, IDONEIDAD PARA UN FIN DETERMINADO, NO INFRACCIÓN Y TITULARIDAD
 Aviso
 
 Arona
-Copyright (c) 2025 langyo <langyo.china@gmail.com>
+Copyright (c) 2025 langyo <contact@celestia.world>
 
 Este producto está licenciado bajo la Business Source License 1.1.
 No puede utilizar este producto excepto en cumplimiento de la Licencia.

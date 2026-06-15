@@ -16,7 +16,7 @@ El presente Acuerdo de Licencia de Colaborador (el «CLA») se aplica a toda con
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
-- **Colaboradores corporativos.** Si contribuye en nombre de un empleador, este también deberá firmar el CLA Corporativo de la Sección 6 y devolverlo al Licenciante en langyo.china@gmail.com (o al contacto indicado en `LICENSE`). Un `Signed-off-by` de un empleado solo será válido una vez que el CLA Corporativo del empleador esté registrado.
+- **Colaboradores corporativos.** Si contribuye en nombre de un empleador, este también deberá firmar el CLA Corporativo de la Sección 6 y devolverlo al Licenciante en contact@celestia.world (o al contacto indicado en `LICENSE`). Un `Signed-off-by` de un empleado solo será válido una vez que el CLA Corporativo del empleador esté registrado.
 
 ## 2. Definiciones
 
@@ -46,7 +46,7 @@ Usted declara que:
 
 ## 6. CLA Corporativo
 
-Si usted contribuye en nombre de una empresa, esta deberá confirmar lo siguiente firmando y devolviendo el bloque de CLA Corporativo que aparece a continuación a langyo.china@gmail.com:
+Si usted contribuye en nombre de una empresa, esta deberá confirmar lo siguiente firmando y devolviendo el bloque de CLA Corporativo que aparece a continuación a contact@celestia.world:
 
 ```
 Company: ______________________________________________________

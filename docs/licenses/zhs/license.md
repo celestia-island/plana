@@ -10,7 +10,7 @@
 许可方：             Celestia Island
 
 许可作品：           Arona —— Entelecheia 多智能体平台的共享 JSON-RPC 2.0 协议类型
-                     本许可作品版权 (c) 2025 langyo <langyo.china@gmail.com>
+                     本许可作品版权 (c) 2025 langyo <contact@celestia.world>
 
 附加使用授权：       许可方在下列条款（Terms）部分所授予的基础权利之外，
                      额外授予以下权利。这些权利为永久性授权，即时生效——
@@ -121,7 +121,7 @@
 声明
 
 Arona
-版权所有 (c) 2025 langyo <langyo.china@gmail.com>
+版权所有 (c) 2025 langyo <contact@celestia.world>
 
 本产品依据商业源代码许可证 1.1 进行许可。
 您必须遵守本许可的条款方可使用本产品。

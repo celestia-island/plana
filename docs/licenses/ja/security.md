@@ -9,7 +9,7 @@
 [GitHub Security Advisories](https://github.com/celestia-island/arona/security/advisories/new)
 から非公開で報告してください。
 GitHub Security Advisories を利用できない場合は、メンテナ宛てに
-langyo.china@gmail.com へ、明確な説明と再現手順を記載したメールを送信してください。
+security@celestia.world へ、明確な説明と再現手順を記載したメールを送信してください。
 
 ## 対象範囲
 

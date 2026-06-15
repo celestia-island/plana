@@ -16,7 +16,7 @@
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
-- **企业贡献者。** 如果您代表雇主进行贡献，雇主还必须签署第 6 节中的企业 CLA，并将其交回给许可方，邮箱为 langyo.china@gmail.com（或 `LICENSE` 中所列联系方式）。只有在雇主的企业 CLA 已存档之后，员工的 `Signed-off-by` 才有效。
+- **企业贡献者。** 如果您代表雇主进行贡献，雇主还必须签署第 6 节中的企业 CLA，并将其交回给许可方，邮箱为 contact@celestia.world（或 `LICENSE` 中所列联系方式）。只有在雇主的企业 CLA 已存档之后，员工的 `Signed-off-by` 才有效。
 
 ## 2. 定义
 
@@ -46,7 +46,7 @@
 
 ## 6. 企业 CLA
 
-如果您代表公司进行贡献，该公司必须签署下方的企业 CLA 模块并将其交回至 langyo.china@gmail.com，以确认下列事项：
+如果您代表公司进行贡献，该公司必须签署下方的企业 CLA 模块并将其交回至 contact@celestia.world，以确认下列事项：
 
 ```
 Company: ______________________________________________________

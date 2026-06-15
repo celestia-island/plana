@@ -38,7 +38,7 @@ Dieser Verhaltenskodex gilt innerhalb aller Gemeinschaftsräume und findet auch 
 
 ## Durchsetzung
 
-Vorfälle missbräuchlichen, belästigenden oder anderweitig inakzeptablen Verhaltens können den für die Durchsetzung verantwortlichen Leitenden der Gemeinschaft unter langyo.china@gmail.com gemeldet werden. Alle Beschwerden werden umgehend und fair geprüft und untersucht.
+Vorfälle missbräuchlichen, belästigenden oder anderweitig inakzeptablen Verhaltens können den für die Durchsetzung verantwortlichen Leitenden der Gemeinschaft unter contact@celestia.world gemeldet werden. Alle Beschwerden werden umgehend und fair geprüft und untersucht.
 
 Alle Leitenden der Gemeinschaft sind verpflichtet, die Privatsphäre und Sicherheit der meldenden Person jeglichen Vorfalls zu achten.
 

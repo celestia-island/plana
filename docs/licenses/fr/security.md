@@ -9,7 +9,7 @@
 Signalez-les en privé via
 [GitHub Security Advisories](https://github.com/celestia-island/arona/security/advisories/new).
 Si GitHub Security Advisories n'est pas disponible pour vous, envoyez un e-mail au responsable à
-langyo.china@gmail.com avec une description claire et les étapes de reproduction.
+security@celestia.world avec une description claire et les étapes de reproduction.
 
 ## Périmètre
 

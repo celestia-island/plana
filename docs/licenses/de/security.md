@@ -9,7 +9,7 @@
 Melden Sie diese privat über
 [GitHub Security Advisories](https://github.com/celestia-island/arona/security/advisories/new).
 Wenn Ihnen GitHub Security Advisories nicht zur Verfügung stehen, senden Sie eine E-Mail an den Maintainer unter
-langyo.china@gmail.com mit einer klaren Beschreibung und Reproduktionsschritten.
+security@celestia.world mit einer klaren Beschreibung und Reproduktionsschritten.
 
 ## Geltungsbereich
 

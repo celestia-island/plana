@@ -16,7 +16,7 @@ O presente Acordo de Licença de Contribuinte (a "CLA") aplica-se a toda contrib
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
-- **Contribuintes corporativos.** Se você contribui em nome de um empregador, o empregador também deverá assinar a CLA Corporativa da Seção 6 e devolvê-la ao Licenciante no endereço langyo.china@gmail.com (ou ao contato indicado em `LICENSE`). Um `Signed-off-by` de um funcionário só é válido depois que a CLA Corporativa do empregador estiver arquivada.
+- **Contribuintes corporativos.** Se você contribui em nome de um empregador, o empregador também deverá assinar a CLA Corporativa da Seção 6 e devolvê-la ao Licenciante no endereço contact@celestia.world (ou ao contato indicado em `LICENSE`). Um `Signed-off-by` de um funcionário só é válido depois que a CLA Corporativa do empregador estiver arquivada.
 
 ## 2. Definições
 
@@ -46,7 +46,7 @@ Você declara que:
 
 ## 6. CLA Corporativa
 
-Se Você contribui em nome de uma empresa, a empresa deverá confirmar o seguinte assinando e devolvendo o bloco da CLA Corporativa abaixo a langyo.china@gmail.com:
+Se Você contribui em nome de uma empresa, a empresa deverá confirmar o seguinte assinando e devolvendo o bloco da CLA Corporativa abaixo a contact@celestia.world:
 
 ```
 Company: ______________________________________________________

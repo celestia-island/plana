@@ -10,7 +10,7 @@
 [GitHub 安全公告](https://github.com/celestia-island/arona/security/advisories/new)
 私下回報。
 若您無法使用 GitHub 安全公告，請寄信至維護者
-langyo.china@gmail.com，並附上清楚的描述與重現步驟。
+security@celestia.world，並附上清楚的描述與重現步驟。
 
 ## 範圍
 

@@ -11,7 +11,7 @@ Lizenzgeber:           Celestia Island
 
 Lizenziertes Werk:     Arona — Gemeinsame JSON-RPC-2.0-Protokolltypen für die
                       Entelecheia-Multi-Agenten-Plattform
-                       Das lizenzierte Werk ist (c) 2025 langyo <langyo.china@gmail.com>
+                       Das lizenzierte Werk ist (c) 2025 langyo <contact@celestia.world>
 
 Zusätzliche            Der Lizenzgeber gewährt neben den in den nachstehenden
 Nutzungsberechtigung: Grundrechten die folgenden zusätzlichen Rechte. Diese
@@ -154,7 +154,7 @@ MARKTGÄNGIGKEIT, EIGNUNG FÜR EINEN BESTIMMTEN ZWECK, NICHTVERLETZUNG UND EIGEN
 Hinweis
 
 Arona
-Copyright (c) 2025 langyo <langyo.china@gmail.com>
+Copyright (c) 2025 langyo <contact@celestia.world>
 
 Dieses Produkt ist unter der Business Source License 1.1 lizenziert.
 Sie dürfen dieses Produkt nur in Übereinstimmung mit der Lizenz verwenden.

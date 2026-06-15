@@ -38,7 +38,7 @@ Ce Code de conduite s'applique dans tous les espaces de la communauté, et s'app
 
 ## Application
 
-Les cas de comportement abusif, de harcèlement ou autrement inacceptable peuvent être signalés aux responsables de la communauté chargés de l'application à l'adresse langyo.china@gmail.com. Toutes les plaintes seront examinées et étudiées rapidement et équitablement.
+Les cas de comportement abusif, de harcèlement ou autrement inacceptable peuvent être signalés aux responsables de la communauté chargés de l'application à l'adresse contact@celestia.world. Toutes les plaintes seront examinées et étudiées rapidement et équitablement.
 
 Tous les responsables de la communauté ont l'obligation de respecter la confidentialité et la sécurité de la personne signalant un incident.
 

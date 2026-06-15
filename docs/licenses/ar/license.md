@@ -10,7 +10,7 @@
 المرخِّص:             Celestia Island
 
 العمل المرخَّص:       Arona — أنواع بروتوكول JSON-RPC 2.0 المشتركة لمنصة Entelecheia متعددة الوكلاء
-                      العمل المرخَّص هو (c) 2025 langyo <langyo.china@gmail.com>
+                      العمل المرخَّص هو (c) 2025 langyo <contact@celestia.world>
 
 منح الاستخدام
 الإضافي:              يمنح المرخِّص الحقوق الإضافية التالية إلى جانب الحقوق
@@ -139,7 +139,7 @@
 إشعار
 
 Arona
-حقوق الطبع والنشر (c) 2025 langyo <langyo.china@gmail.com>
+حقوق الطبع والنشر (c) 2025 langyo <contact@celestia.world>
 
 هذا المنتج مرخَّص بموجب Business Source License 1.1.
 لا يجوز لك استخدام هذا المنتج إلا وفقًا للرخصة.

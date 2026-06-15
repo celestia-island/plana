@@ -10,7 +10,7 @@ Paramètres
 Concédant :           Celestia Island
 
 Œuvre sous Licence :  Arona — Types de Protocole JSON-RPC 2.0 Partagés pour la Plateforme Multi-Agent Entelecheia
-                      L'Œuvre sous Licence est (c) 2025 langyo <langyo.china@gmail.com>
+                      L'Œuvre sous Licence est (c) 2025 langyo <contact@celestia.world>
 
 Octroi d'Utilisation
 Supplémentaire :      Le Concédant accorde les droits supplémentaires suivants en
@@ -168,7 +168,7 @@ DE TITRE.
 Avis
 
 Arona
-Copyright (c) 2025 langyo <langyo.china@gmail.com>
+Copyright (c) 2025 langyo <contact@celestia.world>
 
 Ce produit est concédé sous licence selon la Business Source License 1.1.
 Vous ne pouvez pas utiliser ce produit sauf en conformité avec la Licence.

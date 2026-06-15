@@ -9,7 +9,7 @@
 Сообщайте о них в частном порядке через
 [GitHub Security Advisories](https://github.com/celestia-island/arona/security/advisories/new).
 Если GitHub Security Advisories вам недоступен, напишите мейнтейнеру на
-langyo.china@gmail.com с понятным описанием и шагами воспроизведения.
+security@celestia.world с понятным описанием и шагами воспроизведения.
 
 ## Область действия
 

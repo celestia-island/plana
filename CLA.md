@@ -30,7 +30,7 @@ contributing on behalf of a company).
 
 - **Corporate contributors.** If you are contributing on behalf of an employer,
   the employer must also sign the Corporate CLA in Section 6 and return it to
-  the Licensor at langyo.china@gmail.com (or the contact in `LICENSE`). A
+  the Licensor at contact@celestia.world (or the contact in `LICENSE`). A
   `Signed-off-by` from an employee is valid only after the employer's Corporate
   CLA is on file.
 
@@ -94,7 +94,7 @@ You represent that:
 
 If You are contributing on behalf of a company, the company must confirm the
 following by signing and returning the Corporate CLA block below to
-langyo.china@gmail.com:
+contact@celestia.world:
 
 ```
 Company: ______________________________________________________

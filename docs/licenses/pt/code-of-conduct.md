@@ -38,7 +38,7 @@ Este Código de Conduta se aplica em todos os espaços da comunidade e também s
 
 ## Aplicação
 
-Casos de comportamento abusivo, de assédio ou de outro modo inaceitável podem ser relatados aos líderes da comunidade responsáveis pela aplicação em langyo.china@gmail.com. Todas as reclamações serão revisadas e investigadas de forma rápida e justa.
+Casos de comportamento abusivo, de assédio ou de outro modo inaceitável podem ser relatados aos líderes da comunidade responsáveis pela aplicação em contact@celestia.world. Todas as reclamações serão revisadas e investigadas de forma rápida e justa.
 
 Todos os líderes da comunidade têm a obrigação de respeitar a privacidade e a segurança do relator de qualquer incidente.
 

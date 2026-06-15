@@ -16,7 +16,7 @@ Diese Contributor License Agreement („CLA") gilt für jeden Beitrag, der in da
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
-- **Unternehmensbeiträger.** Wenn Sie im Namen eines Arbeitgebers beitragen, muss der Arbeitgeber zusätzlich die Corporate CLA in Abschnitt 6 unterzeichnen und an den Lizenzgeber unter langyo.china@gmail.com (oder die in `LICENSE` angegebene Kontaktadresse) zurücksenden. Ein `Signed-off-by` durch einen Mitarbeiter ist erst gültig, wenn die Corporate CLA des Arbeitgebers vorliegt.
+- **Unternehmensbeiträger.** Wenn Sie im Namen eines Arbeitgebers beitragen, muss der Arbeitgeber zusätzlich die Corporate CLA in Abschnitt 6 unterzeichnen und an den Lizenzgeber unter contact@celestia.world (oder die in `LICENSE` angegebene Kontaktadresse) zurücksenden. Ein `Signed-off-by` durch einen Mitarbeiter ist erst gültig, wenn die Corporate CLA des Arbeitgebers vorliegt.
 
 ## 2. Definitionen
 
@@ -46,7 +46,7 @@ Sie zusichern und gewährleisten, dass:
 
 ## 6. Corporate CLA
 
-Wenn Sie im Namen eines Unternehmens beitragen, muss das Unternehmen Folgendes bestätigen, indem es den nachstehenden Corporate-CLA-Block unterzeichnet und an langyo.china@gmail.com zurücksendet:
+Wenn Sie im Namen eines Unternehmens beitragen, muss das Unternehmen Folgendes bestätigen, indem es den nachstehenden Corporate-CLA-Block unterzeichnet und an contact@celestia.world zurücksendet:
 
 ```
 Company: ______________________________________________________

@@ -11,7 +11,7 @@ Business Source License 1.1
 
 허여된 저작물：         Arona —— Entelecheia 멀티 에이전트 플랫폼을 위한
                        공유 JSON-RPC 2.0 프로토콜 타입
-                       본 허여된 저작물은 (c) 2025 langyo <langyo.china@gmail.com>
+                       본 허여된 저작물은 (c) 2025 langyo <contact@celestia.world>
 
 추가 사용 허여：        허여자는 아래 약관（Terms） 섹션에 규정된 기본 권리에
                        더하여 다음의 추가 권리를 부여합니다. 이 권리들은
@@ -142,7 +142,7 @@ Business Source License 1.1
 고지
 
 Arona
-Copyright (c) 2025 langyo <langyo.china@gmail.com>
+Copyright (c) 2025 langyo <contact@celestia.world>
 
 본 제품은 Business Source License 1.1에 따라 라이선스됩니다.
 본 라이선스를 준수하여 본 제품을 사용하십시오.
