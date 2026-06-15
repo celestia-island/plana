@@ -32,8 +32,9 @@ Fora do escopo:
 
 | Etapa | Objetivo |
 |-------|--------|
-| Confirmação de recebimento | 7 dias corridos |
-| Avaliação inicial | 14 dias corridos |
+| Confirmação de recebimento pelo Agent | 10 minutos |
+| Confirmação de recebimento humana | 1 dia corrido |
+| Avaliação inicial | 3 dias corridos |
 | Correção ou mitigação | 30 dias corridos (depende da gravidade) |
 
 Inclua por favor: (1) o componente e a versão afetados, (2) o vetor de ataque e o impacto, (3) os passos de reprodução e (4) as mitigações sugeridas.

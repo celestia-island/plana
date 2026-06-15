@@ -32,8 +32,9 @@ Nicht im Geltungsbereich:
 
 | Phase | Ziel |
 |-------|--------|
-| Empfangsbestätigung | 7 Kalendertage |
-| Ersteinschätzung | 14 Kalendertage |
+| Agent-Empfangsbestätigung | 10 Minuten |
+| Personalbestätigung | 1 Kalendertag |
+| Ersteinschätzung | 3 Kalendertage |
 | Fehlerbehebung oder Minderung | 30 Kalendertage (schweregradabhängig) |
 
 Bitte geben Sie an: (1) die betroffene Komponente und Version, (2) den Angriffsvektor und die Auswirkungen, (3) die Reproduktionsschritte sowie (4) vorgeschlagene Gegenmaßnahmen.

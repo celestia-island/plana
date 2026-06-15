@@ -32,8 +32,9 @@ Fuera del alcance:
 
 | Etapa | Objetivo |
 |-------|--------|
-| Acuse de recibo | 7 días naturales |
-| Evaluación inicial | 14 días naturales |
+| Acuse de recibo del Agent | 10 minutos |
+| Acuse de recibo humano | 1 día natural |
+| Evaluación inicial | 3 días naturales |
 | Corrección o mitigación | 30 días naturales (depende de la gravedad) |
 
 Incluya por favor: (1) el componente y la versión afectados, (2) el vector de ataque y el impacto, (3) los pasos de reproducción y (4) las mitigaciones sugeridas.

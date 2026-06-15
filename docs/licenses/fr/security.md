@@ -32,8 +32,9 @@ Hors périmètre :
 
 | Étape | Objectif |
 |-------|--------|
-| Accusé de réception | 7 jours calendaires |
-| Évaluation initiale | 14 jours calendaires |
+| Accusé de réception par l'Agent | 10 minutes |
+| Accusé de réception humain | 1 jour calendaire |
+| Évaluation initiale | 3 jours calendaires |
 | Correction ou atténuation | 30 jours calendaires (selon la gravité) |
 
 Veuillez inclure : (1) le composant et la version affectés, (2) le vecteur d'attaque et l'impact, (3) les étapes de reproduction, et (4) les mesures d'atténuation suggérées.

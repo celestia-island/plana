@@ -30,8 +30,9 @@ Out of scope:
 
 | Stage | Target |
 |-------|--------|
-| Acknowledgment | 7 calendar days |
-| Initial assessment | 14 calendar days |
+| Agent acknowledgment | 10 minutes |
+| Human acknowledgment | 1 calendar day |
+| Initial assessment | 3 calendar days |
 | Fix or mitigation | 30 calendar days (severity-dependent) |
 
 Please include: (1) the affected component and version, (2) the attack vector
