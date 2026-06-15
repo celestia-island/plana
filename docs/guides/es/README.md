@@ -11,10 +11,10 @@
 [![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org/)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
 
-**[Inglés](../../README.md)** &bull; **[Chino simplificado](../zhs/README.md)** &bull;
-**[Chino tradicional](../zht/README.md)** &bull; **[Japonés](../ja/README.md)** &bull;
-**[Coreano](../ko/README.md)** &bull; **[Francés](../fr/README.md)** &bull;
-**[Español](../es/README.md)** &bull; **[Ruso](../ru/README.md)**
+**[English](../../README.md)** &bull; **[简体中文](../zhs/README.md)** &bull;
+**[繁體中文](../zht/README.md)** &bull; **[日本語](../ja/README.md)** &bull;
+**[한국어](../ko/README.md)** &bull; **[Français](../fr/README.md)** &bull;
+**[Español](../es/README.md)** &bull; **[Русский](../ru/README.md)**
 
 </div>
 <!-- markdownlint-enable MD033 MD041 MD036 -->
