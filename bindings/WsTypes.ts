@@ -15,7 +15,9 @@ export type Agent =
   | "PhiLia"
   | "PoleMos"
   | "WebAutomation"
-  | "ClassicSoftwareEngineering";
+  | "ClassicSoftwareEngineering"
+  | "WebUiPanel"
+  | "IndustrialIoT";
 
 export type AgentBadge = string;
 
@@ -237,6 +239,33 @@ export type CustomAgentInfo = {
 };
 
 export type CustomAgentListResponseParams = { agents: Array<CustomAgentInfo> };
+
+/**
+ * Dashboard layout — a collection of views arranged in a grid.
+ */
+export type DashboardLayout = {
+  /**
+   * Workspace ID this dashboard belongs to.
+   */
+  workspace_id: string;
+  /**
+   * Dashboard name.
+   */
+  name: string;
+  /**
+   * All view instances in this dashboard.
+   */
+  views: Array<ViewInstance>;
+  /**
+   * Grid columns count (0 = auto).
+   */
+  grid_columns: number;
+};
+
+/**
+ * Push a dashboard layout update to connected clients.
+ */
+export type DashboardLayoutPushParams = { layout: DashboardLayout };
 
 export type DiscoveryPhase =
   | "TransportScan"
@@ -855,6 +884,99 @@ export type UserProfileSummary = {
   display_name: string;
   role: string;
   is_active: boolean;
+};
+
+/**
+ * View data update — incremental data push for a specific view.
+ */
+export type ViewDataPushParams = {
+  /**
+   * Target view ID.
+   */
+  view_id: string;
+  /**
+   * Data payload (format depends on ViewKind).
+   */
+  data: JsonValue;
+  /**
+   * Whether this is a full replacement or incremental update.
+   */
+  full_replace: boolean;
+};
+
+/**
+ * A view instance — one panel in the dashboard.
+ */
+export type ViewInstance = {
+  /**
+   * Unique view ID within the workspace.
+   */
+  view_id: string;
+  /**
+   * What kind of renderer to use.
+   */
+  kind: ViewKind;
+  /**
+   * Display title.
+   */
+  title: string;
+  /**
+   * Data source identifier — what the view is bound to.
+   * Examples: "industrial:station:19", "chat:conversation:abc",
+   * "kanban:project:xyz", "media:flow:comfyui"
+   */
+  data_source: string;
+  /**
+   * View-specific configuration (JSON, interpreted by the renderer).
+   */
+  config: JsonValue;
+  /**
+   * Layout position (grid area, tab order, etc.).
+   */
+  layout?: ViewLayout;
+};
+
+/**
+ * View type identifier — determines which frontend renderer handles the view.
+ */
+export type ViewKind =
+  | "IndustrialScada"
+  | "Chat"
+  | "Kanban"
+  | "Gantt"
+  | "DataTable"
+  | "MediaFlow"
+  | "FileExplorer"
+  | "Custom";
+
+/**
+ * Layout descriptor for a view within the dashboard grid.
+ */
+export type ViewLayout = {
+  /**
+   * Grid column start (1-based).
+   */
+  col: number;
+  /**
+   * Grid row start (1-based).
+   */
+  row: number;
+  /**
+   * Column span.
+   */
+  col_span: number;
+  /**
+   * Row span.
+   */
+  row_span: number;
+  /**
+   * Minimum width in pixels.
+   */
+  min_width?: number;
+  /**
+   * Minimum height in pixels.
+   */
+  min_height?: number;
 };
 
 export type WebUiControlResponseParams = {
