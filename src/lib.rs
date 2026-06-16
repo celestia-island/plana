@@ -135,6 +135,22 @@ pub enum ReportType {
     SkillMissingReport,
     Error,
     System,
+    /// Emitted when the server begins processing a user message. Acts as a
+    /// transient placeholder — the real `Reply`/`Error` report replaces it
+    /// once `task_decompose` (or a downstream skill) finishes. Tui renders
+    /// this as a status indicator rather than a resident card.
+    Pending,
+}
+
+/// Selection semantics for an inquiry (`report_type: "query"`) report's
+/// `preset_options`. Defaults to `Single` when omitted.
+#[derive(JsonSchema, Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum ReportSelection {
+    #[default]
+    Single,
+    Multiple,
 }
 
 #[derive(JsonSchema, Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -479,6 +495,21 @@ pub struct AgentReportParams {
     pub timestamp: String,
     #[serde(default)]
     pub preset_options: Vec<String>,
+    /// For `report_type: "query"`: whether `preset_options` are mutually
+    /// exclusive (single) or pick-any (multiple). Omit ⇒ single.
+    #[serde(default)]
+    #[ts(optional)]
+    pub selection_mode: Option<ReportSelection>,
+    /// For `report_type: "query"`: whether the recipient may type a free-form
+    /// answer in addition to (or instead of) picking presets. Omit ⇒ true
+    /// when `report_type == Query`, false otherwise.
+    #[serde(default)]
+    #[ts(optional)]
+    pub allow_custom_reply: Option<bool>,
+    /// Subset of `preset_options` the agent suggests. Empty when no
+    /// recommendation is offered.
+    #[serde(default)]
+    pub recommended_options: Vec<String>,
     #[serde(default)]
     #[ts(optional)]
     pub model_name: Option<String>,
@@ -500,6 +531,23 @@ pub struct AgentReportParams {
     #[serde(default)]
     #[ts(optional)]
     pub error: Option<StructuredAgentError>,
+}
+
+/// Reply payload for an inquiry (`report_type: "query"`) report.
+///
+/// Wire method: `Tui.AgentReportReply` (server-bound). `report_id` mirrors
+/// the `agent_id` of the originating `AgentReportParams` so the upstream can
+/// correlate without keeping a separate consultation registry.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct AgentReportReplyParams {
+    pub report_id: String,
+    #[serde(default)]
+    pub selected_options: Vec<String>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub custom_answer: Option<String>,
+    pub timestamp: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -1604,4 +1652,226 @@ pub struct BaseErrorParams {
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct BaseAckParams {
     pub message_id: String,
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Industrial Control — Telemetry, Alarms, Discovery, Write Approval
+// ═══════════════════════════════════════════════════════════════
+
+// ── Telemetry ──────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialSensorReading {
+    pub station_id: String,
+    #[serde(default)]
+    pub protocol: String,
+    pub address: String,
+    pub name: String,
+    pub raw_value: f64,
+    pub scaled_value: f64,
+    #[serde(default)]
+    pub unit: String,
+    #[serde(default)]
+    pub quality: String,
+    pub timestamp: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialTelemetryBatch {
+    pub readings: Vec<IndustrialSensorReading>,
+    pub station_id: String,
+    pub timestamp: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialTelemetryPushParams {
+    pub batch: IndustrialTelemetryBatch,
+}
+
+// ── Alarms ─────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub enum IndustrialAlarmLevel {
+    Log,
+    LowLow,
+    Low,
+    High,
+    HighHigh,
+    RateOfChange,
+    Emergency,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialAlarmEvent {
+    pub station_id: String,
+    #[serde(default)]
+    pub protocol: String,
+    pub address: String,
+    pub field_name: String,
+    pub level: IndustrialAlarmLevel,
+    pub value: f64,
+    pub threshold: f64,
+    #[serde(default)]
+    pub unit: String,
+    pub breached: bool,
+    pub timestamp: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialAlarmPushParams {
+    pub alarm: IndustrialAlarmEvent,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialAlarmAckParams {
+    pub station_id: String,
+    pub address: String,
+    pub acknowledged_by: String,
+}
+
+// ── Discovery ──────────────────────────────────────────────
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub enum DiscoveryPhase {
+    TransportScan,
+    ProtocolIdentify,
+    DataModelScan,
+    SemanticInference,
+    ManifestGeneration,
+    ManifestValidation,
+    Complete,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct DiscoveryProgressEvent {
+    pub session_id: String,
+    pub phase: DiscoveryPhase,
+    pub message: String,
+    #[serde(default)]
+    pub found_devices: u32,
+    #[serde(default)]
+    pub progress_percent: u8,
+    #[serde(default)]
+    #[ts(optional)]
+    pub raw_findings: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct DiscoveryProgressPushParams {
+    pub event: DiscoveryProgressEvent,
+}
+
+// ── Write Approval (human-in-the-loop) ─────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct WriteApprovalRequest {
+    pub station_id: String,
+    #[serde(default)]
+    pub protocol: String,
+    pub address: String,
+    pub field_name: String,
+    pub current_value: f64,
+    pub proposed_value: f64,
+    #[serde(default)]
+    pub unit: String,
+    pub reason: String,
+    pub agent: String,
+    #[serde(default)]
+    pub risk_level: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct WriteApprovalRequestParams {
+    pub request: WriteApprovalRequest,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct WriteApprovalResponseParams {
+    pub request_id: String,
+    pub approved: bool,
+    pub approved_by: String,
+    #[serde(default)]
+    #[ts(optional)]
+    pub modified_value: Option<f64>,
+}
+
+// ── Topology (station metadata for UI) ─────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct AlarmThresholdInfo {
+    #[serde(default)]
+    #[ts(optional)]
+    pub ll: Option<f64>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub l: Option<f64>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub h: Option<f64>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub hh: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct StationFieldInfo {
+    pub address: String,
+    pub name: String,
+    #[serde(default)]
+    pub data_type: String,
+    #[serde(default)]
+    #[ts(optional)]
+    pub unit: Option<String>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub alarm: Option<AlarmThresholdInfo>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub current_value: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialStationInfo {
+    pub station_id: String,
+    #[serde(default)]
+    pub protocol: String,
+    #[serde(default)]
+    pub connection: String,
+    #[serde(default)]
+    pub device_class: String,
+    #[serde(default)]
+    #[ts(optional)]
+    pub vendor: Option<String>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub model: Option<String>,
+    #[serde(default)]
+    #[ts(optional)]
+    pub firmware: Option<String>,
+    #[serde(default)]
+    pub status: String,
+    #[serde(default)]
+    pub fields: Vec<StationFieldInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct IndustrialTopologyParams {
+    pub stations: Vec<IndustrialStationInfo>,
 }
