@@ -170,6 +170,19 @@ export type BaseErrorParams = { code: string; message: string };
 
 export type BaseHeartbeatParams = { timestamp: bigint };
 
+export type ClientCapability =
+  | "file_relay"
+  | "terminal"
+  | "screen_capture"
+  | "noa_workspace";
+
+export type ClientNodeInfo = {
+  hostname: string;
+  os: string;
+  workspace_root?: string;
+  user_id?: string;
+};
+
 export type CompletionOutcome = "None" | "Reported" | "Failed";
 
 export type ConfiguredProviderInfo = {
@@ -182,6 +195,18 @@ export type ConfiguredProviderInfo = {
 
 export type ConfiguredProvidersListParams = {
   providers: Array<ConfiguredProviderInfo>;
+};
+
+export type ConnectHandshakeParams = {
+  token: string;
+  session_id?: string;
+  capabilities: Array<ClientCapability>;
+  node_info?: ClientNodeInfo;
+  /**
+   * Stringified UUID — kept as a string on the wire so consumers
+   * don't need a UUID parser to round-trip the JSON-RPC payload.
+   */
+  workspace_id?: string;
 };
 
 export type ContainerInfo = {
@@ -573,6 +598,54 @@ export type ModelProviderConfigUpdatedParams = {
 
 export type ModelTier = "Deep" | "Normal" | "Basic";
 
+export type NoaAuthRequestParams = {
+  workspace_id: string;
+  branches: Array<string>;
+  suggested_branch: string;
+  reason: string;
+};
+
+export type NoaAuthResponseParams = {
+  workspace_id: string;
+  selected_branch: string;
+  branch_base?: string;
+  approved: boolean;
+};
+
+export type NoaEvent = {
+  event_id: string;
+  event_type: string;
+  timestamp: string;
+  file_path?: string;
+  content_hash?: string;
+  metadata?: unknown;
+};
+
+export type NoaEventSyncAckParams = {
+  workspace_id: string;
+  last_event_id: string;
+};
+
+export type NoaEventSyncParams = {
+  workspace_id: string;
+  events: Array<NoaEvent>;
+  direction?: string;
+};
+
+export type NoaHandshakeResponseParams = {
+  workspace_id: string;
+  repo_id: string;
+  current_branch: string;
+  noa_initialized: boolean;
+  gitignore_updated: boolean;
+};
+
+export type NoaReadyParams = {
+  workspace_id: string;
+  branch: string;
+  snapshot_id: string;
+};
+
 export type OrchestrationStatusParams = {
   stage: SkillStage;
   agent: string;
@@ -687,6 +760,12 @@ export type ReportType =
   | "error"
   | "system"
   | "pending";
+
+export type RequestNoaHandshakeParams = {
+  workspace_id: string;
+  remote_name: string;
+  remote_path: string;
+};
 
 export type RequestState =
   | "Idle"
