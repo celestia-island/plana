@@ -1793,6 +1793,60 @@ pub struct YoloCycleCompleteParams {
     pub duration_ms: u64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct YoloTierTaskConfig {
+    pub agent: String,
+    pub skill: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct YoloTierConfig {
+    pub tier: YoloTaskTier,
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub interval_secs: u64,
+    #[serde(default)]
+    pub tasks: Vec<YoloTierTaskConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct YoloConfigResponseParams {
+    pub tiers: Vec<YoloTierConfig>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct YoloUpdateTaskResponseParams {
+    pub ok: bool,
+    #[serde(default)]
+    #[ts(optional)]
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct YoloSetTierIntervalResponseParams {
+    pub ok: bool,
+    #[serde(default)]
+    #[ts(optional)]
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "WsTypes.ts")]
+pub struct YoloRunTierNowResponseParams {
+    pub ok: bool,
+    #[serde(default)]
+    #[ts(optional)]
+    pub error: Option<String>,
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Base messages
 // ═══════════════════════════════════════════════════════════════

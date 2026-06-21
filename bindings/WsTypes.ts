@@ -1121,6 +1121,8 @@ export type WriteApprovalResponseParams = {
   modified_value?: number;
 };
 
+export type YoloConfigResponseParams = { tiers: Array<YoloTierConfig> };
+
 export type YoloCycleCompleteParams = {
   loop_count: bigint;
   duration_ms: bigint;
@@ -1133,6 +1135,10 @@ export type YoloCycleStepParams = {
   token_usage?: [number, number];
   model_name?: string;
 };
+
+export type YoloRunTierNowResponseParams = { ok: boolean; error?: string };
+
+export type YoloSetTierIntervalResponseParams = { ok: boolean; error?: string };
 
 export type YoloStartResponseParams = { ok: boolean; error?: string };
 
@@ -1164,6 +1170,13 @@ export type YoloTaskTier = "realtime" | "periodic" | "daily" | "strategic";
 
 export type YoloTerminateResponseParams = { ok: boolean; error?: string };
 
+export type YoloTierConfig = {
+  tier: YoloTaskTier;
+  enabled: boolean;
+  interval_secs: bigint;
+  tasks: Array<YoloTierTaskConfig>;
+};
+
 export type YoloTierStatus = {
   tier: YoloTaskTier;
   enabled: boolean;
@@ -1172,3 +1185,11 @@ export type YoloTierStatus = {
   next_run_at?: string;
   tasks: Array<YoloTaskStatus>;
 };
+
+export type YoloTierTaskConfig = {
+  agent: string;
+  skill: string;
+  enabled: boolean;
+};
+
+export type YoloUpdateTaskResponseParams = { ok: boolean; error?: string };
