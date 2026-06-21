@@ -1094,6 +1094,12 @@ export type WorkspaceStatusParams = {
 };
 
 export type WriteApprovalRequest = {
+  /**
+   * Mirrors `_shared_state_sync::WriteApprovalRequest::request_id`. The
+   * operator UI echoes this back in `industrial.approveWrite` so the
+   * resolver can match the response to the pending producer oneshot.
+   */
+  request_id: string;
   station_id: string;
   protocol: string;
   address: string;

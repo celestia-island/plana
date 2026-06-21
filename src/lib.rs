@@ -1938,6 +1938,11 @@ pub struct DiscoveryProgressPushParams {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct WriteApprovalRequest {
+    /// Mirrors `_shared_state_sync::WriteApprovalRequest::request_id`. The
+    /// operator UI echoes this back in `industrial.approveWrite` so the
+    /// resolver can match the response to the pending producer oneshot.
+    #[serde(default)]
+    pub request_id: String,
     pub station_id: String,
     #[serde(default)]
     pub protocol: String,
