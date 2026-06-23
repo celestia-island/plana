@@ -13,7 +13,6 @@ pub mod jsonrpc;
 pub mod tracing_helpers;
 
 use serde::{Deserialize, Serialize};
-use serde_json;
 use schemars::JsonSchema;
 use ts_rs::TS;
 
