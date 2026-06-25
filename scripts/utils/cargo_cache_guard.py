@@ -227,6 +227,17 @@ def guard(
         }
 
     # ── Soft threshold: target size → cargo sweep ─────────
+    # Skip the (slow) size measurement entirely when cargo-sweep is absent —
+    # the soft step can't reclaim anything without it, so a 60-120s `du` of a
+    # huge target/ would be pure waste on every invocation. The hard floor
+    # above still protects the disk.
+    if not shutil.which("cargo-sweep"):
+        return {
+            "action": "none",
+            "free_gib": free_before / GIB,
+            "soft_skipped": "cargo-sweep not installed",
+        }
+
     size = _measure_target_size(
         target, recheck_interval_s=recheck_interval_s, du_timeout_s=du_timeout_s,
     )
@@ -235,13 +246,6 @@ def guard(
         shown = "inf" if size_gib == float("inf") else f"{size_gib:.1f}"
         if dry_run:
             return {"action": "soft-clean", "dry_run": True, "size_gib": size_gib}
-        if not shutil.which("cargo-sweep"):
-            _log("warn",
-                 f"target {shown} GiB >= threshold {soft_threshold_gib:.1f} GiB but "
-                 f"cargo-sweep is not installed — skipping soft clean "
-                 f"(install with: cargo install cargo-sweep). Incremental preserved.")
-            return {"action": "soft-clean-skipped", "reason": "no cargo-sweep",
-                    "size_gib": size_gib}
         _log("info",
              f"target {shown} GiB >= threshold {soft_threshold_gib:.1f} GiB — "
              f"cargo sweep --time {sweep_days}")

@@ -9,6 +9,12 @@ python_cmd := if which("python3") != "" { "python3" } else { "python" }
 default:
     @just --list
 
+# Pre-stage all dependencies (cargo fetch + node install) so subsequent
+# builds can run fully offline. Run once after cloning (needs network).
+install:
+    just cache-guard
+    {{python_cmd}} scripts/utils/prefetch.py .
+
 # target/ cache guard (see scripts/utils/cargo_cache_guard.py).
 # Hard floor: free disk < 10 GiB → cargo clean.
 # Soft threshold: target/ >= 40 GiB → cargo sweep --time 7 (needs cargo-sweep).
