@@ -8,6 +8,10 @@ license = "BUSL-1.1"
 description = "Shared protocol and API types for the entelecheia multi-agent platform"
 repository = "https://github.com/celestia-island/arona"
 publish = true
+# arona is also the hub for the org's shared Python devtool scripts
+# (scripts/utils/). They are dev-only and must NOT ship in the published
+# crate, so exclude the scripts/ tree from `cargo publish`.
+exclude = ["scripts"]
 
 [features]
 default = []
