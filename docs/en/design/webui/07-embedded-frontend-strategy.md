@@ -1,3 +1,11 @@
++++
+title = "Embedded Frontend Strategy"
+description = """shittim-chest supports two frontend hosting modes: in Dev mode, `dev.py` watches frontend sources and triggers `pnpm build` on changes, with the backend serving both static files and API on `:3000`; i"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Embedded Frontend Strategy
 
 ## Overview

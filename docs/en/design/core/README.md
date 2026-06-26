@@ -1,3 +1,11 @@
++++
+title = "Design Documents"
+description = """> IMPORTANT: These are aspirational design documents. They describe the intended"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Design Documents
 
 > **IMPORTANT**: These are aspirational design documents. They describe the intended

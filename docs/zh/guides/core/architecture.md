@@ -1,3 +1,11 @@
++++
+title = "架构"
+description = """> 以当前运行时结构为准，而不是目标态想象图"""
+lang = "zh"
+category = "guides"
+subcategory = "core"
++++
+
 # 架构
 
 > 以当前运行时结构为准，而不是目标态想象图

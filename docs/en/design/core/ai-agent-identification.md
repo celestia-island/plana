@@ -1,3 +1,11 @@
++++
+title = "AI Agent Identification & Commit Co-author Strategy"
+description = """This document specifies how AI-generated commits across the celestia-island projects"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # AI Agent Identification & Commit Co-author Strategy
 
 ## Overview

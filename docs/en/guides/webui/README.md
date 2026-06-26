@@ -1,3 +1,11 @@
++++
+title = "Shittim Chest (什亭之匣)"
+description = """User-facing shell for the [entelecheia](https://github.com/celestia-island/entelecheia) multi-agent platform"""
+lang = "en"
+category = "guides"
+subcategory = "webui"
++++
+
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 

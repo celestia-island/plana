@@ -1,3 +1,11 @@
++++
+title = "Loose Coupling with entelecheia"
+description = """The integration between shittim-chest and entelecheia is based on a JWT-authenticated HTTP/WebSocket proxy bridge. This design allows shittim-chest to run completely independently without entelecheia,"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Loose Coupling with entelecheia
 
 ## Overview

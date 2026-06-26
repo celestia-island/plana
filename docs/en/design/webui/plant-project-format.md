@@ -1,3 +1,11 @@
++++
+title = "Plant Project File Format (`.plant.json`)"
+description = """> 工程文件格式设计 — 类似西门子博图 (TIA Portal) 的工程文件，统一描述工业节点拓扑、2D 面板、3D 场景。"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Plant Project File Format (`.plant.json`)
 
 > 工程文件格式设计 — 类似西门子博图 (TIA Portal) 的工程文件，统一描述工业节点拓扑、2D 面板、3D 场景。

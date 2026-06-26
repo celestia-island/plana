@@ -1,3 +1,11 @@
++++
+title = "Context Preparation Mechanism"
+description = """Context Preparation is a proactive extraction mechanism that replaces traditional context compression. Instead of lossily compressing old conversation history, it analyzes the existing context, genera"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Context Preparation Mechanism
 
 ## Overview

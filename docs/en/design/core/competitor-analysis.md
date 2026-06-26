@@ -1,3 +1,11 @@
++++
+title = "Multi-Agent Framework Competitive Analysis"
+description = """Date: May 12, 2026 (updated after full source code audit of 43 crates × 1500+ source files)"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Multi-Agent Framework Competitive Analysis
 
 **Date**: May 12, 2026 (updated after full source code audit of 43 crates × 1500+ source files)  

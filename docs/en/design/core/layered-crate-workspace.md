@@ -1,3 +1,11 @@
++++
+title = "ADR-004: 60+ Crate Layered Workspace Architecture"
+description = """Date: 2026-03"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # ADR-004: 60+ Crate Layered Workspace Architecture
 
 **Date**: 2026-03

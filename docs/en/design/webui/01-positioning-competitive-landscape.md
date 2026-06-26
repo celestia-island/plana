@@ -1,3 +1,11 @@
++++
+title = "Product Positioning & Competitive Landscape"
+description = """shittim-chest is a loosely-coupled LLM WebUI platform, with direct competitors being Open WebUI, LobeChat, and the like. Its integration with entelecheia is an optional feature, not an architectural p"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Product Positioning & Competitive Landscape
 
 ## Overview

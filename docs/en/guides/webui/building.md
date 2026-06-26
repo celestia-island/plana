@@ -1,3 +1,11 @@
++++
+title = "Building and Development Guide"
+description = """> Audience: Contributors setting up a local shittim-chest development environment."""
+lang = "en"
+category = "guides"
+subcategory = "webui"
++++
+
 # Building and Development Guide
 
 > **Audience**: Contributors setting up a local shittim-chest development environment.

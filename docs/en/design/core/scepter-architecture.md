@@ -1,3 +1,11 @@
++++
+title = "Usage Period Statistics System Design"
+description = """The Usage Period Statistics System manages and tracks LLM token usage based on time periods, supporting multiple period types (5 hours, 7 days, 30 days, custom), providing a data foundation for cost c"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Usage Period Statistics System Design
 
 ## Overview

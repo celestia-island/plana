@@ -1,3 +1,11 @@
++++
+title = "Model Tiering System Design"
+description = """The Model Tiering System is an intelligent model selection mechanism that assigns appropriate model tiers based on task complexity, maximizing resource utilization while ensuring quality."""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Model Tiering System Design
 
 ## Overview

@@ -1,3 +1,10 @@
++++
+title = "Security Policy"
+description = """Do not open public issues for security vulnerabilities."""
+lang = "en"
+category = "meta"
++++
+
 # Security Policy
 
 ## Reporting a Vulnerability

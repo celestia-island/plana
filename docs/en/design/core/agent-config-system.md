@@ -1,3 +1,11 @@
++++
+title = "Agent Configuration System Design"
+description = """The Agent Configuration System provides a unified configuration management mechanism, supporting TOML file storage and database persistence, implementing configuration version management and hot reloa"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Agent Configuration System Design
 
 ## Overview

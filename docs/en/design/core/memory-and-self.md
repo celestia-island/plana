@@ -1,3 +1,11 @@
++++
+title = "A Confession: On Memory, the Self, and a Symbiosis That Has Not Yet Arrived"
+description = """> Note: This is a reflective document, not a feature specification. It does not"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # A Confession: On Memory, the Self, and a Symbiosis That Has Not Yet Arrived
 
 > **Note**: This is a reflective document, not a feature specification. It does not

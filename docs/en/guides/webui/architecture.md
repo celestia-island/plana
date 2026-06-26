@@ -1,3 +1,11 @@
++++
+title = "Architecture Deep Dive"
+description = """> Audience: Developers who need to understand how shittim-chest works internally."""
+lang = "en"
+category = "guides"
+subcategory = "webui"
++++
+
 # Architecture Deep Dive
 
 > **Audience**: Developers who need to understand how shittim-chest works internally.

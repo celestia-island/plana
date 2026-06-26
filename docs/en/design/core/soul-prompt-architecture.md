@@ -1,3 +1,11 @@
++++
+title = "Soul Prompt Architecture"
+description = """Each Agent has skills (what to do) and a soul (who it is). The soul prompt is the foundational identity layer prepended to every LLM request, establishing a persistent behavioral frame so that an Agen"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Soul Prompt Architecture
 
 ## Background

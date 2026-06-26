@@ -1,3 +1,11 @@
++++
+title = "Cosmos Container Scheduling and Token Routing Design"
+description = """This document describes the Cosmos container scheduling architecture: how MCP tools marked with `ToolLocation::Cosmos` are routed through unix-socket JSON-RPC to their corresponding containers, and ho"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Cosmos Container Scheduling and Token Routing Design
 
 ## Overview

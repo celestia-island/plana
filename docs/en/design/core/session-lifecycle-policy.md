@@ -1,3 +1,11 @@
++++
+title = "ADR-004: Session Storage Lifecycle Management"
+description = """> Status: Accepted (2026-06-10)"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # ADR-004: Session Storage Lifecycle Management
 
 > **Status**: Accepted (2026-06-10)

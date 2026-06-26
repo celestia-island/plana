@@ -1,3 +1,11 @@
++++
+title = "Webhook Configuration Guide"
+description = """> Audience: Administrators integrating external services with shittim-chest."""
+lang = "en"
+category = "guides"
+subcategory = "webui"
++++
+
 # Webhook Configuration Guide
 
 > **Audience**: Administrators integrating external services with shittim-chest.

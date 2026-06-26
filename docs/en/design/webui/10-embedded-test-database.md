@@ -1,3 +1,11 @@
++++
+title = "Embedded Test Database (pglite-oxide)"
+description = """shittim-chest uses [pglite-oxide](https://crates.io/crates/pglite-oxide) as an embedded PostgreSQL for all integration and E2E tests. No external Postgres, Docker, or `testcontainers` is needed — test"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Embedded Test Database (pglite-oxide)
 
 ## Overview

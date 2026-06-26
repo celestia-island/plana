@@ -1,3 +1,10 @@
++++
+title = "Contributing Guide"
+description = """Thank you for your interest in contributing! This guide covers everything you"""
+lang = "en"
+category = "meta"
++++
+
 # Contributing to Arona
 
 Thank you for your interest in contributing! This guide covers everything you

@@ -1,3 +1,11 @@
++++
+title = "Core Concepts"
+description = """> Audience: Developers who want a conceptual understanding of shittim-chest's design."""
+lang = "en"
+category = "guides"
+subcategory = "webui"
++++
+
 # Core Concepts
 
 > **Audience**: Developers who want a conceptual understanding of shittim-chest's design.

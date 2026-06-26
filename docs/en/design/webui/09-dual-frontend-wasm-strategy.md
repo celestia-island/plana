@@ -1,3 +1,11 @@
++++
+title = "Dual Frontend WASM Migration Strategy"
+description = """shittim-chest employs a "Vue 3 first, WASM later" two-phase frontend strategy. The Vue 3 version is delivered first as a production-grade reference implementation, with the Rust/WASM version migrating"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Dual Frontend WASM Migration Strategy
 
 ## Overview

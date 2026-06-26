@@ -1,3 +1,11 @@
++++
+title = "CLI Logging Conventions"
+description = """The shittim-chest CLI wrapper's log output follows conventions consistent with entelecheia, using the `tracing` ecosystem, outputting to stderr in a compact human-readable format."""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # CLI Logging Conventions
 
 ## Overview

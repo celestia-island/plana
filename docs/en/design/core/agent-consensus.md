@@ -1,3 +1,11 @@
++++
+title = "Consensus Validation Mechanism"
+description = """The Consensus Validation Mechanism is a core component of the multi-Agent collaboration system, used to validate and assess the reliability and accuracy of consensus formed by multiple Agents, ensurin"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Consensus Validation Mechanism
 
 ## Overview

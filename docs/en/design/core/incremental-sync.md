@@ -1,3 +1,11 @@
++++
+title = "Incremental Sync Architecture"
+description = """A multi-client state incremental synchronization mechanism based on Automerge CRDT, supporting real-time incremental updates and full synchronization on connection/reconnection, covering all TUI panel"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Incremental Sync Architecture
 
 ## Overview

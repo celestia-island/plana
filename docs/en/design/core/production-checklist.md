@@ -1,3 +1,11 @@
++++
+title = "Entelecheia Production Deployment Checklist"
+description = """> 12-step checklist for deploying Entelecheia to production."""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Entelecheia Production Deployment Checklist
 
 > 12-step checklist for deploying Entelecheia to production.

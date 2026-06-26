@@ -1,3 +1,11 @@
++++
+title = "22 — IEPL TypeScript Execution Engine Design"
+description = """IEPL (In-Execution Prompt Language) Execution Engine is an architectural upgrade to the existing Cosmos/SkeMma JS runtime, upgrading LLM-generated execution code from JavaScript to TypeScript. The cor"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # 22 — IEPL TypeScript Execution Engine Design
 
 ## Overview

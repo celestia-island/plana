@@ -1,3 +1,11 @@
++++
+title = "Dual-Mode Deployment Paths: Dev vs Release"
+description = """shittim-chest supports two deployment modes: Dev (local fast iteration, no Node, no image build) and Release (full Docker image with embedded frontend static files). Both modes share the same containe"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Dual-Mode Deployment Paths: Dev vs Release
 
 ## Overview

@@ -1,3 +1,11 @@
++++
+title = "基础概念"
+description = """> 以当前代码现实为准的概念说明"""
+lang = "zh"
+category = "guides"
+subcategory = "core"
++++
+
 # 基础概念
 
 > 以当前代码现实为准的概念说明

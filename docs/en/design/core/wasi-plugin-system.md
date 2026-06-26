@@ -1,3 +1,11 @@
++++
+title = "25 — WASI Plugin System Design"
+description = """The WASI Plugin System replaces the previous Python/TypeScript webhook scaffolding with WASM component model plugins, providing sandboxed, language-agnostic platform integrations (Layer 2) and busines"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # 25 — WASI Plugin System Design
 
 ## Overview

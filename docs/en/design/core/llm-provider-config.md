@@ -1,3 +1,11 @@
++++
+title = "Provider TOML Configuration System Design"
+description = """The Provider TOML Configuration System migrates all LLM Provider configuration from hardcoded values to TOML configuration files, achieving separation of configuration and code, improving maintainabil"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Provider TOML Configuration System Design
 
 ## Overview

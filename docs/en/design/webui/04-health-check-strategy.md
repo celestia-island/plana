@@ -1,3 +1,11 @@
++++
+title = "PostgreSQL Health Check Strategy"
+description = """The CLI wrapper must ensure PostgreSQL is ready before starting the application container. This document defines the design decisions behind the passive polling health check strategy — rejecting Docke"""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # PostgreSQL Health Check Strategy
 
 ## Overview

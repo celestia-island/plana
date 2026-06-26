@@ -1,3 +1,11 @@
++++
+title = "Conversation Orchestration Design (HubRis + ApoRia)"
+description = """HubRis is a "Pure Skill Agent" — all capabilities are prompt-only skills"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Conversation Orchestration Design (HubRis + ApoRia)
 
 ## Background

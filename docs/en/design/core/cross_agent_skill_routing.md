@@ -1,3 +1,11 @@
++++
+title = "Cross-Agent Skill Routing Architecture"
+description = """The skill chain (`execute_skill_chain`) uses an exec-only microkernel architecture. The LLM sees only three tools: `exec`, `write_to_var`, `write_to_var_json` — no per-agent tool whitelists, no per-sk"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Cross-Agent Skill Routing Architecture
 
 ## Problem

@@ -1,3 +1,11 @@
++++
+title = "ADR-001: Exec-Only Microkernel Tool Surface"
+description = """Date: 2026-02"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # ADR-001: Exec-Only Microkernel Tool Surface
 
 **Date**: 2026-02

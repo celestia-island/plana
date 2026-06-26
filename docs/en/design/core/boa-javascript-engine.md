@@ -1,3 +1,11 @@
++++
+title = "ADR-002: Boa as Embedded JavaScript Engine"
+description = """Date: 2026-02"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # ADR-002: Boa as Embedded JavaScript Engine
 
 **Date**: 2026-02

@@ -1,3 +1,11 @@
++++
+title = "CLI 使用指南"
+description = """`entelecheia-cli` 是 Entelecheia（玄枢）多智能体协作平台的命令行界面。它通过 Unix socket JSON-RPC 与 scepter 服务器通信，提供聊天交互、服务生命周期管理、智能体控制、配置等功能。"""
+lang = "zh"
+category = "guides"
+subcategory = "core"
++++
+
 # CLI 使用指南
 
 `entelecheia-cli` 是 Entelecheia（玄枢）多智能体协作平台的命令行界面。它通过 Unix socket JSON-RPC 与 scepter 服务器通信，提供聊天交互、服务生命周期管理、智能体控制、配置等功能。

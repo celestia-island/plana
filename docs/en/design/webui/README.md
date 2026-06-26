@@ -1,3 +1,11 @@
++++
+title = "Design Documents"
+description = """> Note: These design documents describe the intended architecture and behavior — some features may still be in progress."""
+lang = "en"
+category = "design"
+subcategory = "webui"
++++
+
 # Design Documents
 
 > **Note**: These design documents describe the intended architecture and behavior — some features may still be in progress.

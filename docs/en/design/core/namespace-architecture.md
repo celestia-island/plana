@@ -1,3 +1,11 @@
++++
+title = "Namespace Architecture: `vars`, `refs`, `env`"
+description = """> Note (2026-06): The LLM-visible tool surface was reduced from 5 to 3 primitives. `ref_add` and `ref_remove` are no longer exposed to the LLM — `agent_allowed_tools()` returns only `exec`, `write_to_"""
+lang = "en"
+category = "design"
+subcategory = "core"
++++
+
 # Namespace Architecture: `vars`, `refs`, `env`
 
 > **Note (2026-06)**: The LLM-visible tool surface was reduced from 5 to 3 primitives. `ref_add` and `ref_remove` are **no longer exposed to the LLM** — `agent_allowed_tools()` returns only `exec`, `write_to_var`, `write_to_var_json`. The `__refs` namespace still exists as an internal data structure (snapshot/restore, prompt injection) but is no longer directly mutated by the model. Sections below that describe `ref_add`/`ref_remove` dispatch document the residual internal plumbing, not the LLM tool surface.
