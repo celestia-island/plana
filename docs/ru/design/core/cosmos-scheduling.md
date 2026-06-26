@@ -241,7 +241,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart LR
-    BORDER["│"] --> TOK["1.2k токенов"] --> SEP1["|"] --> DUR["3.5с"] --> SEP2["|"] --> COSMOS["cosmos#042"] --> TIER["[T2]"]
+    BORDER["|"] --> TOK["1.2k токенов"] --> SEP1["|"] --> DUR["3.5с"] --> SEP2["|"] --> COSMOS["cosmos#042"] --> TIER["[T2]"]
 
     TOK -.->|"McpToolResult.token_usage"| SRC1["Использование Токенов"]
     DUR -.->|"Instant::now()"| SRC2["Длительность"]

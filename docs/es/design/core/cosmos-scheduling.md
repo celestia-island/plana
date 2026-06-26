@@ -241,7 +241,7 @@ En la AgentDetailPage de TUI, la línea de estadísticas muestra:
 
 ```mermaid
 flowchart LR
-    BORDER["│"] --> TOK["1.2k tokens"] --> SEP1["|"] --> DUR["3.5s"] --> SEP2["|"] --> COSMOS["cosmos#042"] --> TIER["[T2]"]
+    BORDER["|"] --> TOK["1.2k tokens"] --> SEP1["|"] --> DUR["3.5s"] --> SEP2["|"] --> COSMOS["cosmos#042"] --> TIER["[T2]"]
 
     TOK -.->|"McpToolResult.token_usage"| SRC1["Uso de Tokens"]
     DUR -.->|"Instant::now()"| SRC2["Duración"]

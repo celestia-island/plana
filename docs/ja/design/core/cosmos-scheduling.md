@@ -241,7 +241,7 @@ TUI AgentDetailPageでは、統計行に以下が表示されます：
 
 ```mermaid
 flowchart LR
-    BORDER["│"] --> TOK["1.2k tokens"] --> SEP1["|"] --> DUR["3.5s"] --> SEP2["|"] --> COSMOS["cosmos#042"] --> TIER["[T2]"]
+    BORDER["|"] --> TOK["1.2k tokens"] --> SEP1["|"] --> DUR["3.5s"] --> SEP2["|"] --> COSMOS["cosmos#042"] --> TIER["[T2]"]
 
     TOK -.->|"McpToolResult.token_usage"| SRC1["Token Usage"]
     DUR -.->|"Instant::now()"| SRC2["Duration"]
