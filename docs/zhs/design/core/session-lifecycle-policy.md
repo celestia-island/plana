@@ -121,11 +121,12 @@ opencode issue #16101 揭示了 86% 的 Session 是由 `task()` 生成的子 Ses
 
 ### 架构
 
-```
-父对话（用户发起）
-├── 子对话（任务 #1） — parent_conversation_id → 父
-├── 子对话（任务 #2） — parent_conversation_id → 父
-└── 子对话（任务 #3） — parent_conversation_id → 父
+```mermaid
+graph TD
+    Parent["父对话<br/>（用户发起）"]
+    Parent --> C1["子对话（任务 #1）<br/>parent_conversation_id → 父"]
+    Parent --> C2["子对话（任务 #2）<br/>parent_conversation_id → 父"]
+    Parent --> C3["子对话（任务 #3）<br/>parent_conversation_id → 父"]
 ```
 
 ### 生命周期规则

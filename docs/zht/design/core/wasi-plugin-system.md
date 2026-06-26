@@ -19,31 +19,28 @@ WASI 外掛系統以 **WASM 元件模型**外掛取代先前的 Python/TypeScrip
 
 ## 架構
 
-```
-Scepter（axum HTTP 伺服器，埠 8424）
-  │
-  ├── POST /webhook/{plugin_name}  →  PluginRouter.dispatch_webhook()
-  │
-  ├── 第 2 層 — 平台整合外掛
-  │     ├── WASI 模組（Rust → wasm32-wasip2）
-  │     │     ├── github-webhook.wasm（P0 ✅）
-  │     │     ├── gitee-webhook.wasm
-  │     │     ├── gitlab-webhook.wasm
-  │     │     ├── feishu-webhook.wasm
-  │     │     ├── qq-webhook.wasm
-  │     │     ├── discord-bot.wasm
-  │     │     └── telegram-bot.wasm
-  │     │
-  │     └── boa 容器 TS 擴充（P1）
-  │           └── 每個外掛的隔離 boa_engine Context
-  │
-  ├── 第 3 層 — 業務邏輯外掛（P2）
-  │     ├── WASI 模組
-  │     └── boa 容器 TS 擴充
-  │
-  └── MCP Registry（P1）
-        └── 所有第 2/3 層外掛在 $.agents.xxx 下註冊工具
-              供 LLM 透過標準 MCP 協定調用
+```mermaid
+flowchart TB
+    SC["Scepter<br/>（axum HTTP 伺服器，埠 8424）"]
+    SC -->|"POST /webhook/{plugin_name}"| PR["PluginRouter.dispatch_webhook()"]
+    SC --> L2["第 2 層 — 平台整合外掛"]
+    SC --> L3["第 3 層 — 業務邏輯外掛（P2）"]
+    SC --> MCPReg["MCP Registry（P1）"]
+
+    L2 --> WASI2["WASI 模組<br/>（Rust → wasm32-wasip2）"]
+    WASI2 --> W1["github-webhook.wasm（P0 ✅）"]
+    WASI2 --> W2["gitee-webhook.wasm"]
+    WASI2 --> W3["gitlab-webhook.wasm"]
+    WASI2 --> W4["feishu-webhook.wasm"]
+    WASI2 --> W5["qq-webhook.wasm"]
+    WASI2 --> W6["discord-bot.wasm"]
+    WASI2 --> W7["telegram-bot.wasm"]
+    L2 --> BOA2["boa 容器 TS 擴充（P1）<br/>每個外掛的隔離 boa_engine Context"]
+
+    L3 --> WASI3["WASI 模組"]
+    L3 --> BOA3["boa 容器 TS 擴充"]
+
+    MCPReg -.->|"所有第 2/3 層外掛在 $.agents.xxx 下註冊工具"| LLM["LLM 調用<br/>透過標準 MCP 協定"]
 ```
 
 ## WIT 介面定義
@@ -134,14 +131,15 @@ export!(GithubWebhookPlugin);
 
 ### 執行時堆疊
 
-```
-PluginRouter
-  └── TypedPlugin（每個外掛）
-        ├── tairitsu::Image  →  已編譯的 WASM 元件
-        ├── tairitsu::Container<HostState>  →  wasmtime Store + Instance
-        │     ├── with_host_linker：註冊 host-api 導入
-        │     └── with_guest_initializer：實例化元件
-        └── call_guest_raw_desc("entelecheia:plugin/webhook-handler#handle-request", args)
+```mermaid
+flowchart TB
+    PR["PluginRouter"]
+    PR --> TP["TypedPlugin<br/>（每個外掛）"]
+    TP --> IMG["tairitsu::Image<br/>已編譯的 WASM 元件"]
+    TP --> CT["tairitsu::Container&lt;HostState&gt;<br/>wasmtime Store + Instance"]
+    CT --> HL["with_host_linker<br/>註冊 host-api 導入"]
+    CT --> GI["with_guest_initializer<br/>實例化元件"]
+    TP --> CG["call_guest_raw_desc<br/>entelecheia:plugin/webhook-handler#handle-request, args"]
 ```
 
 ### Guest 匯出名稱

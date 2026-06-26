@@ -19,31 +19,28 @@ subcategory = "core"
 
 ## Архитектура
 
-```
-Scepter (axum HTTP-сервер, порт 8424)
-  │
-  ├── POST /webhook/{plugin_name}  ->  PluginRouter.dispatch_webhook()
-  │
-  ├── Layer 2 — Плагины интеграции с платформами
-  │     ├── Модули WASI (Rust -> wasm32-wasip2)
-  │     │     ├── github-webhook.wasm (P0 ✅)
-  │     │     ├── gitee-webhook.wasm
-  │     │     ├── gitlab-webhook.wasm
-  │     │     ├── feishu-webhook.wasm
-  │     │     ├── qq-webhook.wasm
-  │     │     ├── discord-bot.wasm
-  │     │     └── telegram-bot.wasm
-  │     │
-  │     └── Расширения boa container TS (P1)
-  │           └── Изолированный контекст boa_engine для каждого плагина
-  │
-  ├── Layer 3 — Плагины бизнес-логики (P2)
-  │     ├── Модули WASI
-  │     └── Расширения boa container TS
-  │
-  └── Реестр MCP (P1)
-        └── Все плагины Layer 2/3 регистрируют инструменты под $.agents.xxx
-              для вызова LLM через стандартный протокол MCP
+```mermaid
+flowchart TB
+    SC["Scepter<br/>(axum HTTP-сервер, порт 8424)"]
+    SC -->|"POST /webhook/{plugin_name}"| PR["PluginRouter.dispatch_webhook()"]
+    SC --> L2["Layer 2 — Плагины интеграции с платформами"]
+    SC --> L3["Layer 3 — Плагины бизнес-логики (P2)"]
+    SC --> MCPReg["Реестр MCP (P1)"]
+
+    L2 --> WASI2["Модули WASI<br/>(Rust → wasm32-wasip2)"]
+    WASI2 --> W1["github-webhook.wasm (P0 ✅)"]
+    WASI2 --> W2["gitee-webhook.wasm"]
+    WASI2 --> W3["gitlab-webhook.wasm"]
+    WASI2 --> W4["feishu-webhook.wasm"]
+    WASI2 --> W5["qq-webhook.wasm"]
+    WASI2 --> W6["discord-bot.wasm"]
+    WASI2 --> W7["telegram-bot.wasm"]
+    L2 --> BOA2["Расширения boa container TS (P1)<br/>Изолированный контекст boa_engine для каждого плагина"]
+
+    L3 --> WASI3["Модули WASI"]
+    L3 --> BOA3["Расширения boa container TS"]
+
+    MCPReg -.->|"Все плагины L2/L3 регистрируют инструменты под $.agents.xxx"| LLM["Вызов LLM<br/>через стандартный протокол MCP"]
 ```
 
 ## Определения интерфейса WIT
@@ -134,14 +131,15 @@ export!(GithubWebhookPlugin);
 
 ### Стек времени выполнения
 
-```
-PluginRouter
-  └── TypedPlugin (для каждого плагина)
-        ├── tairitsu::Image  ->  скомпилированный компонент WASM
-        ├── tairitsu::Container<HostState>  ->  хранилище wasmtime + Экземпляр
-        │     ├── with_host_linker: регистрирует импорты host-api
-        │     └── with_guest_initializer: создаёт экземпляр компонента
-        └── call_guest_raw_desc("entelecheia:plugin/webhook-handler#handle-request", args)
+```mermaid
+flowchart TB
+    PR["PluginRouter"]
+    PR --> TP["TypedPlugin<br/>(для каждого плагина)"]
+    TP --> IMG["tairitsu::Image<br/>скомпилированный компонент WASM"]
+    TP --> CT["tairitsu::Container&lt;HostState&gt;<br/>хранилище wasmtime + Экземпляр"]
+    CT --> HL["with_host_linker<br/>регистрирует импорты host-api"]
+    CT --> GI["with_guest_initializer<br/>создаёт экземпляр компонента"]
+    TP --> CG["call_guest_raw_desc<br/>entelecheia:plugin/webhook-handler#handle-request, args"]
 ```
 
 ### Имена экспортов гостя

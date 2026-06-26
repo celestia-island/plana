@@ -18,26 +18,18 @@ Anteriormente, las pruebas de integración dependían de `postgresql_embedded`, 
 
 ## Arquitectura
 
-```
-┌─────────────────────────────────────────────────┐
-│  cargo test                                      │
-│  ┌─────────────────────────────────────────────┐ │
-│  │  #[test] fn xxx_e2e_tests() {               │ │
-│  │    rt.block_on(async {                      │ │
-│  │      let server = start_test_server().await;│ │
-│  │      // ... lógica de prueba ...            │ │
-│  │    });                                      │ │
-│  │    std::process::exit(0);                   │ │
-│  │  }                                          │ │
-│  └─────────────────────────────────────────────┘ │
-│                      │                            │
-│           OnceCell<(String, PgliteServer)>        │
-│                      │                            │
-│           ┌──────────▼──────────┐                 │
-│           │  pglite-oxide WASM  │                 │
-│           │  PG 17.5 en proceso │                 │
-│           └─────────────────────┘                 │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph cargo["cargo test"]
+        subgraph test["#[test] fn xxx_e2e_tests()"]
+            A["rt.block_on(async {<br/>let server = start_test_server().await<br/>// ... lógica de prueba ...<br/>})"]
+            B["std::process::exit(0)"]
+        end
+        CELL["OnceCell&lt;(String, PgliteServer)&gt;"]
+        PG["pglite-oxide WASM<br/>PG 17.5 en proceso"]
+        test -.->|"compartido mediante"| CELL
+        CELL --> PG
+    end
 ```
 
 ## Decisiones Clave

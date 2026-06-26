@@ -121,11 +121,12 @@ Le problème opencode #16101 a révélé que 86% des sessions sont des sessions 
 
 ### Architecture
 
-```
-Conversation Parent (initiée par l'utilisateur)
-├── Conversation Enfant (tâche #1) — parent_conversation_id → parent
-├── Conversation Enfant (tâche #2) — parent_conversation_id → parent
-└── Conversation Enfant (tâche #3) — parent_conversation_id → parent
+```mermaid
+graph TD
+    Parent["Conversation Parent<br/>(initiée par l'utilisateur)"]
+    Parent --> C1["Conversation Enfant (tâche #1)<br/>parent_conversation_id → parent"]
+    Parent --> C2["Conversation Enfant (tâche #2)<br/>parent_conversation_id → parent"]
+    Parent --> C3["Conversation Enfant (tâche #3)<br/>parent_conversation_id → parent"]
 ```
 
 ### Règles du Cycle de Vie

@@ -19,31 +19,28 @@ WASIプラグインシステムは、以前のPython/TypeScript Webhookスキャ
 
 ## アーキテクチャ
 
-```
-Scepter（axum HTTPサーバー、ポート8424）
-  │
-  ├── POST /webhook/{plugin_name}  →  PluginRouter.dispatch_webhook()
-  │
-  ├── レイヤー2 — プラットフォーム統合プラグイン
-  │     ├── WASIモジュール（Rust → wasm32-wasip2）
-  │     │     ├── github-webhook.wasm（P0 ✅）
-  │     │     ├── gitee-webhook.wasm
-  │     │     ├── gitlab-webhook.wasm
-  │     │     ├── feishu-webhook.wasm
-  │     │     ├── qq-webhook.wasm
-  │     │     ├── discord-bot.wasm
-  │     │     └── telegram-bot.wasm
-  │     │
-  │     └── boaコンテナTS拡張（P1）
-  │           └── プラグインごとの隔離されたboa_engine Context
-  │
-  ├── レイヤー3 — ビジネスロジックプラグイン（P2）
-  │     ├── WASIモジュール
-  │     └── boaコンテナTS拡張
-  │
-  └── MCPレジストリ（P1）
-        └── すべてのレイヤー2/3プラグインは $.agents.xxx の下にツールを登録し、
-             標準MCPプロトコルによるLLM呼び出しを可能にする
+```mermaid
+flowchart TB
+    SC["Scepter<br/>(axum HTTPサーバー、ポート8424)"]
+    SC -->|"POST /webhook/{plugin_name}"| PR["PluginRouter.dispatch_webhook()"]
+    SC --> L2["レイヤー2 — プラットフォーム統合プラグイン"]
+    SC --> L3["レイヤー3 — ビジネスロジックプラグイン (P2)"]
+    SC --> MCPReg["MCPレジストリ (P1)"]
+
+    L2 --> WASI2["WASIモジュール<br/>(Rust → wasm32-wasip2)"]
+    WASI2 --> W1["github-webhook.wasm (P0 ✅)"]
+    WASI2 --> W2["gitee-webhook.wasm"]
+    WASI2 --> W3["gitlab-webhook.wasm"]
+    WASI2 --> W4["feishu-webhook.wasm"]
+    WASI2 --> W5["qq-webhook.wasm"]
+    WASI2 --> W6["discord-bot.wasm"]
+    WASI2 --> W7["telegram-bot.wasm"]
+    L2 --> BOA2["boaコンテナTS拡張 (P1)<br/>プラグインごとの隔離されたboa_engine Context"]
+
+    L3 --> WASI3["WASIモジュール"]
+    L3 --> BOA3["boaコンテナTS拡張"]
+
+    MCPReg -.->|"すべてのレイヤー2/3プラグインは $.agents.xxx の下にツールを登録"| LLM["標準MCPプロトコルによる<br/>LLM呼び出し"]
 ```
 
 ## WITインターフェース定義
@@ -134,14 +131,15 @@ export!(GithubWebhookPlugin);
 
 ### ランタイムスタック
 
-```
-PluginRouter
-  └── TypedPlugin（プラグインごと）
-        ├── tairitsu::Image  →  コンパイル済みWASMコンポーネント
-        ├── tairitsu::Container<HostState>  →  wasmtime Store + Instance
-        │     ├── with_host_linker: host-apiインポートを登録
-        │     └── with_guest_initializer: コンポーネントをインスタンス化
-        └── call_guest_raw_desc("entelecheia:plugin/webhook-handler#handle-request", args)
+```mermaid
+flowchart TB
+    PR["PluginRouter"]
+    PR --> TP["TypedPlugin<br/>(プラグインごと)"]
+    TP --> IMG["tairitsu::Image<br/>コンパイル済みWASMコンポーネント"]
+    TP --> CT["tairitsu::Container&lt;HostState&gt;<br/>wasmtime Store + Instance"]
+    CT --> HL["with_host_linker<br/>host-apiインポートを登録"]
+    CT --> GI["with_guest_initializer<br/>コンポーネントをインスタンス化"]
+    TP --> CG["call_guest_raw_desc<br/>entelecheia:plugin/webhook-handler#handle-request, args"]
 ```
 
 ### ゲストエクスポート名

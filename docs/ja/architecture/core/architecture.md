@@ -412,22 +412,25 @@ flowchart TB
 
 ### アーキテクチャ: 現在（ignited）vs. 純粋自己ブートストラップ（目標）
 
-```
-現在 — ignited、サードパーティドライバーがループ内:
-  外部エージェントプラットフォーム（opencode / Claude Code / Cursor）
-   │  ARCHITECTURE.mdを読み取り、分解、ディスパッチ    ← これは提供していません
-   ▼
-  Entelecheia: 手術フック + スキルチェーン + コンテナ ← これは提供しています
-   │  PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → マージ
-   ▼
-  コードベース変更、検証（cargo check）、コミット
+```mermaid
+flowchart TB
+    subgraph Current["現在 — ignited、サードパーティドライバーがループ内"]
+        direction TB
+        Ext["外部エージェントプラットフォーム（opencode / Claude Code / Cursor）<br/>ARCHITECTURE.mdを読み取り、分解、ディスパッチ<br/>← これは提供していません"]
+        Ent["Entelecheia: 手術フック + スキルチェーン + コンテナ<br/>PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → マージ<br/>← これは提供しています"]
+        Done["コードベース変更、検証（cargo check）、コミット"]
+        Ext --> Ent --> Done
+    end
 
-目標 — 純粋自己ブートストラップ（未達成）:
-  Yoloセッション（Hubrisトップレベル、外部ドライバーなし）
-   ├── file_read("ARCHITECTURE.md") → Iteration Backlogを解析
-   ├── task_decompose → workplan_generate（計画のみ、I/Oなし）
-   ├── IEPL exec → サブエージェントスキルチェーンをディスパッチ
-   └── PostSurgeryRollback → NoaMergeCommit → バックログ状態自動更新
+    subgraph Target["目標 — 純粋自己ブートストラップ（未達成）"]
+        direction TB
+        Yolo["Yoloセッション（Hubrisトップレベル、外部ドライバーなし）"]
+        S1["file_read('ARCHITECTURE.md') → Iteration Backlogを解析"]
+        S2["task_decompose → workplan_generate（計画のみ、I/Oなし）"]
+        S3["IEPL exec → サブエージェントスキルチェーンをディスパッチ"]
+        S4["PostSurgeryRollback → NoaMergeCommit → バックログ状態自動更新"]
+        Yolo --> S1 --> S2 --> S3 --> S4
+    end
 ```
 
 旧`role = "coordinator"`ツールホワイトリスト強制（旧IB-02）と専用`hubris::read_iteration_plan`スキル（旧IB-01）は、純粋自己ブートストラップのための計画されたメカニズムでした。実際的な判断として、プランナー/ディスパッチャの役割をサードパーティのエージェントプラットフォームに委ねることで、まずループをigniteさせました。これら2つのメカニズムを再導入することが、自己ブートストラップのギャップを埋めることになります。
@@ -492,18 +495,32 @@ flowchart TB
 
 エージェントの意思決定から物理アクチュエーターへのパスは動作します：
 
-```
-Hubris → Skopeo → Kalos/IEPL → Skemma → EvernightModbusAdapter → evernight → aoba → Modbus → バルブ
-                                                                                        ✅ 書き込み動作
+```mermaid
+flowchart LR
+    Hubris["Hubris"] --> Skopeo["Skopeo"]
+    Skopeo --> Kalos["Kalos/IEPL"]
+    Kalos --> Skemma["Skemma"]
+    Skemma --> EMA["EvernightModbusAdapter"]
+    EMA --> evernight["evernight"]
+    evernight --> aoba["aoba"]
+    aoba --> Modbus["Modbus"]
+    Modbus --> valve["バルブ ✅ 書き込み動作"]
 ```
 
 ### 不足: 読み取り→動作の閉ループ
 
 逆のパス — センサー読み取りがエージェント応答をトリガー — は部分的に構築されています：
 
-```
-H2タンクセンサー → Modbus読み取り → evernight SensorPoller → TriggerDispatcher → Hubris計画 → Skopeo → OreXis → 人間の確認 → 書き込み
-         ❌ ポーリングループなし              ❌ evernight 8B内   ✅ modbusトピック    ❌ エンドツーエンドHubris計画開始が未検証
+```mermaid
+flowchart LR
+    Sensor["H2タンクセンサー ❌ ポーリングループなし"] --> ModbusRead["Modbus読み取り"]
+    ModbusRead --> Poller["evernight SensorPoller ❌ evernight 8B内"]
+    Poller --> TD["TriggerDispatcher ✅ modbusトピック"]
+    TD --> Hubris["Hubris計画 ❌ エンドツーエンド計画開始が未検証"]
+    Hubris --> Skopeo["Skopeo"]
+    Skopeo --> OreXis["OreXis"]
+    OreXis --> Human["人間の確認"]
+    Human --> write["書き込み"]
 ```
 
 ### コンポーネント別ギャップ分析
@@ -527,46 +544,44 @@ H2タンクセンサー → Modbus読み取り → evernight SensorPoller → Tr
 
 ### 目標調整アーキテクチャ
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  産業用SCADA (Ignition / WinCC / iFix)                           │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ OPC UA   │  │ Modbus   │  │ トレンド │  │ アラーム │        │
-│  │ クライアント│  │ マスター  │  │ チャート │  │ パネル   │        │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
-│       │              │             │             │               │
-├───────┼──────────────┼─────────────┼─────────────┼───────────────┤
-│       │              │             │             │               │
-│  ┌────▼──────────────▼─────────────▼─────────────▼──────────┐   │
-│  │  evernight — ハードウェア能力ブローカー                     │   │
-│  │  ┌───────────┐ ┌──────────────┐ ┌────────────────────┐   │   │
-│  │  │ SensorPoll│ │ ModbusMaster │ │ OPC UA client/srv  │   │   │
-│  │  │ (ループ)   │ │ (R/Wコイル)  │ │ (browse/r/w/sub)  │   │   │
-│  │  └─────┬─────┘ └──────┬───────┘ └────────┬───────────┘   │   │
-│  │        │               │                  │               │   │
-│  │  ┌─────▼───────────────▼──────────────────▼───────────┐   │   │
-│  │  │ HardwareTriggerSource → JSON-RPC → entelecheia     │   │   │
-│  │  └────────────────────────────────────────────────────┘   │   │
-│  └──────────────────────────┬────────────────────────────────┘   │
-│                              │                                   │
-│  ┌───────────────────────────▼────────────────────────────────┐  │
-│  │  entelecheia — エージェントオーケストレーション               │  │
-│  │  ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  │  │
-│  │  │ TriggerDispatch│→│ Hubris   │→│ Skopeo → SkillChain │  │  │
-│  │  │ (hwトピック)   │  │ (計画)   │  │ (実行)               │  │  │
-│  │  └──────────────┘  └──────────┘  └──────────┬───────────┘  │  │
-│  │  ┌─────────────┐  ┌──────────┐               │              │  │
-│  │  │ OreXis       │  │ EpieiKeia│               │              │  │
-│  │  │ (アラーム +  │  │ (人間の   │               │              │  │
-│  │  │  ロックダウン) │  │  確認)   │               │              │  │
-│  │  └──────┬───────┘  └────┬─────┘               │              │  │
-│  │         └───────────────┼─────────────────────┘              │  │
-│  │                         │                                    │  │
-│  │  ┌──────────────────────▼─────────────────────────────────┐ │  │
-│  │  │ 共有ストレージ: TimeSeriesAdapter + noaエージェントログ  │ │  │
-│  │  └────────────────────────────────────────────────────────┘ │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph SCADA["産業用SCADA (Ignition / WinCC / iFix)"]
+        OPCUAC["OPC UA クライアント"]
+        ModbusM["Modbus マスター"]
+        Trend["トレンドチャート"]
+        AlarmP["アラームパネル"]
+    end
+
+    subgraph evernight["evernight — ハードウェア能力ブローカー"]
+        SensorPoll["SensorPoll (ループ)"]
+        ModbusMaster["ModbusMaster (R/Wコイル)"]
+        OPC["OPC UA client/srv (browse/r/w/sub)"]
+        HwTrigger["HardwareTriggerSource → JSON-RPC → entelecheia"]
+        SensorPoll --> HwTrigger
+        ModbusMaster --> HwTrigger
+        OPC --> HwTrigger
+    end
+
+    subgraph entelecheia["entelecheia — エージェントオーケストレーション"]
+        direction TB
+        TD["TriggerDispatch (hwトピック)"]
+        Hubris["Hubris (計画)"]
+        Skopeo["Skopeo → SkillChain (実行)"]
+        OreXis["OreXis (アラーム + ロックダウン)"]
+        EpieiKeia["EpieiKeia (人間の確認)"]
+        Shared["共有ストレージ: TimeSeriesAdapter + noaエージェントログ"]
+        TD --> Hubris --> Skopeo
+        Skopeo --> Shared
+        OreXis --> Shared
+        EpieiKeia --> Shared
+    end
+
+    OPCUAC --> OPC
+    ModbusM --> ModbusMaster
+    Trend --> SensorPoll
+    AlarmP --> SensorPoll
+    HwTrigger --> TD
 ```
 
 ### テストリファレンス — 実機器レジスタマップ

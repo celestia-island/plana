@@ -1107,26 +1107,13 @@ entelecheiaは2つの目的で組み込みPostgreSQLとして[pglite-oxide](http
 
 ## フィーチャーゲートアーキテクチャ
 
-    ┌───────────────────────────────────────────────────────┐
-    │  scepter Cargo.toml                                   │
-    │                                                       │
-    │  [features]                                           │
-    │  default = ["all-agents", "embedded-db"]  ◄── 開発    │
-    │  embedded-db = ["dep:pglite-oxide"]                   │
-    │                                                       │
-    │  [dependencies]                                       │
-    │  pglite-oxide = { workspace = true, optional = true } │
-    └───────────────────────────────────────────────────────┘
-              │                              │
-         cargo build                   Dockerfile
-         (デフォルト)                  --no-default-features
-              │                        --features all-agents
-              ▼                              │
-       ┌──────────────┐                 ┌──────────────┐
-       │  pglite-oxide │                 │  pgliteなし,  │
-       │  + wasmer WASM│                 │  wasmerなし   │
-       │  含まれる     │                 │  (プロダクション)│
-       └──────────────┘                 └──────────────┘
+```mermaid
+flowchart TB
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ← 開発<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+
+    Cargo -->|"cargo build (デフォルト)"| Dev["pglite-oxide + wasmer WASM<br/>含まれる"]
+    Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["pgliteなし、wasmerなし<br/>(プロダクション)"]
+```
 
 | ビルドコンテキスト | コマンド | pglite-oxide | wasmer | DATABASE_URL |
 |---------------|---------|:---:|:---:|---|

@@ -1107,26 +1107,13 @@ entelecheia использует [pglite-oxide](https://crates.io/crates/pglite-
 
 ## Архитектура feature gate
 
-    ┌───────────────────────────────────────────────────────┐
-    │  scepter Cargo.toml                                   │
-    │                                                       │
-    │  [features]                                           │
-    │  default = ["all-agents", "embedded-db"]  ◄── dev     │
-    │  embedded-db = ["dep:pglite-oxide"]                   │
-    │                                                       │
-    │  [dependencies]                                       │
-    │  pglite-oxide = { workspace = true, optional = true } │
-    └───────────────────────────────────────────────────────┘
-              │                              │
-         cargo build                   Dockerfile
-         (default)                     --no-default-features
-              │                        --features all-agents
-              ▼                              │
-       ┌──────────────┐                 ┌──────────────┐
-       │  pglite-oxide │                 │  Нет pglite, │
-       │  + wasmer WASM│                 │  нет wasmer  │
-       │  включены     │                 │  (production)│
-       └──────────────┘                 └──────────────┘
+```mermaid
+flowchart TB
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ← dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+
+    Cargo -->|"cargo build (default)"| Dev["pglite-oxide + wasmer WASM<br/>включены"]
+    Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["Нет pglite, нет wasmer<br/>(production)"]
+```
 
 | Контекст сборки | Команда | pglite-oxide | wasmer | DATABASE_URL |
 |---------------|---------|:---:|:---:|---|

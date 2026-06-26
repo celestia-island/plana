@@ -19,31 +19,28 @@ WASI 플러그인 시스템은 이전 Python/TypeScript 웹훅 스캐폴딩을 *
 
 ## 아키텍처
 
-```
-Scepter (axum HTTP 서버, 포트 8424)
-  │
-  ├── POST /webhook/{plugin_name}  →  PluginRouter.dispatch_webhook()
-  │
-  ├── 레이어 2 — 플랫폼 통합 플러그인
-  │     ├── WASI 모듈 (Rust → wasm32-wasip2)
-  │     │     ├── github-webhook.wasm (P0 ✅)
-  │     │     ├── gitee-webhook.wasm
-  │     │     ├── gitlab-webhook.wasm
-  │     │     ├── feishu-webhook.wasm
-  │     │     ├── qq-webhook.wasm
-  │     │     ├── discord-bot.wasm
-  │     │     └── telegram-bot.wasm
-  │     │
-  │     └── boa 컨테이너 TS 확장 (P1)
-  │           └── 플러그인별 격리된 boa_engine Context
-  │
-  ├── 레이어 3 — 비즈니스 로직 플러그인 (P2)
-  │     ├── WASI 모듈
-  │     └── boa 컨테이너 TS 확장
-  │
-  └── MCP 레지스트리 (P1)
-        └── 모든 레이어 2/3 플러그인이 $.agents.xxx 아래에 도구 등록
-              표준 MCP 프로토콜을 통한 LLM 호출용
+```mermaid
+flowchart TB
+    SC["Scepter<br/>(axum HTTP 서버, 포트 8424)"]
+    SC -->|"POST /webhook/{plugin_name}"| PR["PluginRouter.dispatch_webhook()"]
+    SC --> L2["레이어 2 — 플랫폼 통합 플러그인"]
+    SC --> L3["레이어 3 — 비즈니스 로직 플러그인 (P2)"]
+    SC --> MCPReg["MCP 레지스트리 (P1)"]
+
+    L2 --> WASI2["WASI 모듈<br/>(Rust → wasm32-wasip2)"]
+    WASI2 --> W1["github-webhook.wasm (P0 ✅)"]
+    WASI2 --> W2["gitee-webhook.wasm"]
+    WASI2 --> W3["gitlab-webhook.wasm"]
+    WASI2 --> W4["feishu-webhook.wasm"]
+    WASI2 --> W5["qq-webhook.wasm"]
+    WASI2 --> W6["discord-bot.wasm"]
+    WASI2 --> W7["telegram-bot.wasm"]
+    L2 --> BOA2["boa 컨테이너 TS 확장 (P1)<br/>플러그인별 격리된 boa_engine Context"]
+
+    L3 --> WASI3["WASI 모듈"]
+    L3 --> BOA3["boa 컨테이너 TS 확장"]
+
+    MCPReg -.->|"모든 레이어 2/3 플러그인이 $.agents.xxx 아래에 도구 등록"| LLM["LLM 호출<br/>표준 MCP 프로토콜을 통해"]
 ```
 
 ## WIT 인터페이스 정의
@@ -134,14 +131,15 @@ export!(GithubWebhookPlugin);
 
 ### 런타임 스택
 
-```
-PluginRouter
-  └── TypedPlugin (플러그인당)
-        ├── tairitsu::Image  →  컴파일된 WASM 컴포넌트
-        ├── tairitsu::Container<HostState>  →  wasmtime Store + Instance
-        │     ├── with_host_linker: host-api 임포트 등록
-        │     └── with_guest_initializer: 컴포넌트 인스턴스화
-        └── call_guest_raw_desc("entelecheia:plugin/webhook-handler#handle-request", args)
+```mermaid
+flowchart TB
+    PR["PluginRouter"]
+    PR --> TP["TypedPlugin<br/>(플러그인당)"]
+    TP --> IMG["tairitsu::Image<br/>컴파일된 WASM 컴포넌트"]
+    TP --> CT["tairitsu::Container&lt;HostState&gt;<br/>wasmtime Store + Instance"]
+    CT --> HL["with_host_linker<br/>host-api 임포트 등록"]
+    CT --> GI["with_guest_initializer<br/>컴포넌트 인스턴스화"]
+    TP --> CG["call_guest_raw_desc<br/>entelecheia:plugin/webhook-handler#handle-request, args"]
 ```
 
 ### 게스트 익스포트 이름

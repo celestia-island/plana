@@ -1083,26 +1083,13 @@ entelecheia 使用 [pglite-oxide](https://crates.io/crates/pglite-oxide) 作為�
 
 ## 功能開關架構
 
-    ┌───────────────────────────────────────────────────────┐
-    │  scepter Cargo.toml                                   │
-    │                                                       │
-    │  [features]                                           │
-    │  default = ["all-agents", "embedded-db"]  ◄── 開發     │
-    │  embedded-db = ["dep:pglite-oxide"]                   │
-    │                                                       │
-    │  [dependencies]                                       │
-    │  pglite-oxide = { workspace = true, optional = true } │
-    └───────────────────────────────────────────────────────┘
-              │                              │
-         cargo build                   Dockerfile
-         (預設)                         --no-default-features
-              │                        --features all-agents
-              ▼                              │
-      ┌──────────────┐                 ┌──────────────┐
-      │  pglite-oxide │                 │  無 pglite，  │
-      │  + wasmer WASM│                 │  無 wasmer    │
-      │  包含        │                 │  （正式環境）  │
-      └──────────────┘                 └──────────────┘
+```mermaid
+flowchart TB
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ◄── 開發<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+
+    Cargo -->|"cargo build（預設）"| Dev["pglite-oxide + wasmer WASM<br/>包含"]
+    Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["無 pglite，無 wasmer<br/>（正式環境）"]
+```
 
 | 建置上下文 | 指令 | pglite-oxide | wasmer | DATABASE_URL |
 |---------------|---------|:---:|:---:|---|

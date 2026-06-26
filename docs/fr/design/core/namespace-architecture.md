@@ -578,6 +578,23 @@ flowchart TB
 
 Le binaire `cosmos` (serveur de runtime JS autonome) distribue tous les noms d'outils via la même interface `JsRuntime`, y compris les gestionnaires dépréciés `ref_add`/`ref_remove` qui restent comme plomberie interne résiduelle. Seules les trois primitives visibles par le LLM (`exec`, `write_to_var`, `write_to_var_json`) sont exposées au modèle ; voir la note de dépréciation en haut de ce document.
 
+```mermaid
+sequenceDiagram
+    participant Client as Client MCP
+    participant Handler as cosmos/handler.rs
+    participant Repl as JsReplClient
+    participant RT as JsRuntime
+
+    Client->>Handler: McpCall("ref_add", {ref_name, content})
+    Handler->>Handler: valider ref_name non vide
+    Handler->>Repl: repl.ref_add(ref_name, content)
+    Repl->>RT: send(ReplCommand::RefAdd)
+    RT->>RT: write_to_ref(name, content)
+    RT-->>Repl: ExecResult { stdout }
+    Repl-->>Handler: Ok(result)
+    Handler-->>Client: JsonRpcResponse { data: stdout }
+```
+
 ### 5.4 `is_cosmos_internal_tool` — Assistant de Routage
 
 **Fichier :** `packages/scepter/src/agent_manager/tool_ops.rs:7-13`

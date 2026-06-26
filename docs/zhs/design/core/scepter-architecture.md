@@ -1107,26 +1107,13 @@ entelecheia 使用 [pglite-oxide](https://crates.io/crates/pglite-oxide) 作为�
 
 ## 功能门控架构
 
-    ┌───────────────────────────────────────────────────────┐
-    │  scepter Cargo.toml                                   │
-    │                                                       │
-    │  [features]                                           │
-    │  default = ["all-agents", "embedded-db"]  ◄── dev     │
-    │  embedded-db = ["dep:pglite-oxide"]                   │
-    │                                                       │
-    │  [dependencies]                                       │
-    │  pglite-oxide = { workspace = true, optional = true } │
-    └───────────────────────────────────────────────────────┘
-              │                              │
-         cargo build                   Dockerfile
-         （默认）                 --no-default-features
-              │                 --features all-agents
-              ▼                              │
-       ┌──────────────┐                 ┌──────────────┐
-       │  pglite-oxide │                 │  无 pglite,  │
-       │  + wasmer WASM│                 │  无 wasmer   │
-       │  包含        │                 │  （生产）    │
-       └──────────────┘                 └──────────────┘
+```mermaid
+flowchart TB
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ◄── dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+
+    Cargo -->|"cargo build（默认）"| Dev["pglite-oxide + wasmer WASM<br/>包含"]
+    Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["无 pglite，无 wasmer<br/>（生产）"]
+```
 
 | 构建上下文 | 命令 | pglite-oxide | wasmer | DATABASE_URL |
 |---------------|---------|:---:|:---:|---|

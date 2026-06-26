@@ -17,23 +17,18 @@ Un agente de Capa 2/3 es un **paquete autocontenido** compuesto de hasta cinco
 componentes. El paquete es la unidad de distribución — puede ser instalado,
 actualizado y eliminado independientemente.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Paquete de Agente                   │
-│                                                      │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
-│  │ Herramientas│  │ Habilidades│  │  Alma (Identidad)  │  │
-│  │ MCP (TS/IEPL)│  │ (Texto)  │  │  (Multilingüe)    │  │
-│  └────┬─────┘  └──────────┘  └───────────────────┘  │
-│       │                                              │
-│       │ llama ──────────────┐                        │
-│       │                     │                        │
-│  ┌────▼─────┐        ┌─────▼──────┐                 │
-│  │ Backend  │        │ Nube RAG  │  ┌────────────┐  │
-│  │ (Binario)│        │ (KB Vectorial)│  │ Modelo FT │  │
-│  │ opcional │        │  opcional  │  │  opcional  │  │
-│  └──────────┘        └────────────┘  └────────────┘  │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Pkg["Paquete de Agente"]
+        MCP["Herramientas MCP<br/>(TS/IEPL)"]
+        SK["Habilidades<br/>(Texto)"]
+        SOUL["Alma (Identidad)<br/>(Multilingüe)"]
+        BE["Backend (Binario)<br/>opcional"]
+        RAG["Nube RAG (KB Vectorial)<br/>opcional"]
+        FT["Modelo FT<br/>opcional"]
+        MCP -->|llama| BE
+        MCP -->|llama| RAG
+    end
 ```
 
 ## Cinco Componentes

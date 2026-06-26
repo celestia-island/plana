@@ -121,11 +121,12 @@ opencode issue #16101は、セッションの86%が `task()` によって生成�
 
 ### アーキテクチャ
 
-```
-親会話（ユーザー開始）
-├── 子会話（タスク #1） — parent_conversation_id → 親
-├── 子会話（タスク #2） — parent_conversation_id → 親
-└── 子会話（タスク #3） — parent_conversation_id → 親
+```mermaid
+graph TD
+    Parent["親会話<br/>(ユーザー開始)"]
+    Parent --> C1["子会話 (タスク #1)<br/>parent_conversation_id → 親"]
+    Parent --> C2["子会話 (タスク #2)<br/>parent_conversation_id → 親"]
+    Parent --> C3["子会話 (タスク #3)<br/>parent_conversation_id → 親"]
 ```
 
 ### ライフサイクルルール

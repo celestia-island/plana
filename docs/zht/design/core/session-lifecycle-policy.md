@@ -121,11 +121,12 @@ opencode issue #16101 揭示 86% 的對話是由 `task()` 生成的子對話，�
 
 ### 架構
 
-```
-父對話（使用者發起）
-├── 子對話（task #1） — parent_conversation_id → 父對話
-├── 子對話（task #2） — parent_conversation_id → 父對話
-└── 子對話（task #3） — parent_conversation_id → 父對話
+```mermaid
+graph TD
+    Parent["父對話<br/>（使用者發起）"]
+    Parent --> C1["子對話（task #1）<br/>parent_conversation_id → 父對話"]
+    Parent --> C2["子對話（task #2）<br/>parent_conversation_id → 父對話"]
+    Parent --> C3["子對話（task #3）<br/>parent_conversation_id → 父對話"]
 ```
 
 ### 生命週期規則

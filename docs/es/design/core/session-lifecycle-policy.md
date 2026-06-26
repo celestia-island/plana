@@ -121,11 +121,12 @@ El issue #16101 de opencode reveló que el 86% de las sesiones son sesiones hija
 
 ### Arquitectura
 
-```
-Conversación Padre (iniciada por usuario)
-├── Conversación Hija (tarea #1) — parent_conversation_id → padre
-├── Conversación Hija (tarea #2) — parent_conversation_id → padre
-└── Conversación Hija (tarea #3) — parent_conversation_id → padre
+```mermaid
+graph TD
+    Parent["Conversación Padre<br/>(iniciada por usuario)"]
+    Parent --> C1["Conversación Hija (tarea #1)<br/>parent_conversation_id → padre"]
+    Parent --> C2["Conversación Hija (tarea #2)<br/>parent_conversation_id → padre"]
+    Parent --> C3["Conversación Hija (tarea #3)<br/>parent_conversation_id → padre"]
 ```
 
 ### Reglas del Ciclo de Vida

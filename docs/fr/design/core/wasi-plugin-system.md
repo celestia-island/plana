@@ -19,31 +19,28 @@ Le Système de Plugins WASI remplace l'ancien échafaudage de webhooks Python/Ty
 
 ## Architecture
 
-```
-Scepter (serveur HTTP axum, port 8424)
-  │
-  ├── POST /webhook/{plugin_name}  →  PluginRouter.dispatch_webhook()
-  │
-  ├── Couche 2 — Plugins d'Intégration de Plateforme
-  │     ├── Modules WASI (Rust → wasm32-wasip2)
-  │     │     ├── github-webhook.wasm (P0 ✅)
-  │     │     ├── gitee-webhook.wasm
-  │     │     ├── gitlab-webhook.wasm
-  │     │     ├── feishu-webhook.wasm
-  │     │     ├── qq-webhook.wasm
-  │     │     ├── discord-bot.wasm
-  │     │     └── telegram-bot.wasm
-  │     │
-  │     └── extensions TS conteneur boa (P1)
-  │           └── Contexte boa_engine isolé par plugin
-  │
-  ├── Couche 3 — Plugins de Logique Métier (P2)
-  │     ├── Modules WASI
-  │     └── extensions TS conteneur boa
-  │
-  └── Registre MCP (P1)
-        └── Tous les plugins Couche 2/3 enregistrent des outils sous $.agents.xxx
-              pour l'invocation LLM via le protocole MCP standard
+```mermaid
+flowchart TB
+    SC["Scepter<br/>(serveur HTTP axum, port 8424)"]
+    SC -->|"POST /webhook/{plugin_name}"| PR["PluginRouter.dispatch_webhook()"]
+    SC --> L2["Couche 2 — Plugins d'Intégration de Plateforme"]
+    SC --> L3["Couche 3 — Plugins de Logique Métier (P2)"]
+    SC --> MCPReg["Registre MCP (P1)"]
+
+    L2 --> WASI2["Modules WASI<br/>(Rust → wasm32-wasip2)"]
+    WASI2 --> W1["github-webhook.wasm (P0 ✅)"]
+    WASI2 --> W2["gitee-webhook.wasm"]
+    WASI2 --> W3["gitlab-webhook.wasm"]
+    WASI2 --> W4["feishu-webhook.wasm"]
+    WASI2 --> W5["qq-webhook.wasm"]
+    WASI2 --> W6["discord-bot.wasm"]
+    WASI2 --> W7["telegram-bot.wasm"]
+    L2 --> BOA2["extensions TS conteneur boa (P1)<br/>Contexte boa_engine isolé par plugin"]
+
+    L3 --> WASI3["Modules WASI"]
+    L3 --> BOA3["extensions TS conteneur boa"]
+
+    MCPReg -.->|"Tous les plugins Couche 2/3 enregistrent des outils sous $.agents.xxx"| LLM["Invocation LLM<br/>via le protocole MCP standard"]
 ```
 
 ## Définitions d'Interface WIT
@@ -134,14 +131,15 @@ export!(GithubWebhookPlugin);
 
 ### Pile d'Exécution
 
-```
-PluginRouter
-  └── TypedPlugin (par plugin)
-        ├── tairitsu::Image  →  composant WASM compilé
-        ├── tairitsu::Container<HostState>  →  Store wasmtime + Instance
-        │     ├── with_host_linker: enregistre les imports host-api
-        │     └── with_guest_initializer: instancie le composant
-        └── call_guest_raw_desc("entelecheia:plugin/webhook-handler#handle-request", args)
+```mermaid
+flowchart TB
+    PR["PluginRouter"]
+    PR --> TP["TypedPlugin<br/>(par plugin)"]
+    TP --> IMG["tairitsu::Image<br/>composant WASM compilé"]
+    TP --> CT["tairitsu::Container&lt;HostState&gt;<br/>Store wasmtime + Instance"]
+    CT --> HL["with_host_linker<br/>enregistre les imports host-api"]
+    CT --> GI["with_guest_initializer<br/>instancie le composant"]
+    TP --> CG["call_guest_raw_desc<br/>entelecheia:plugin/webhook-handler#handle-request, args"]
 ```
 
 ### Noms d'Export Invité

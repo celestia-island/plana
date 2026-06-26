@@ -616,7 +616,7 @@ graph LR
 
 ### Structure de Répertoire
 
-```
+```text
 .amphoreus/provider_scratch/
 ├── agent.toml
 ├── overview/

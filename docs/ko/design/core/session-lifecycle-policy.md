@@ -121,11 +121,12 @@ opencode 이슈 #16101은 세션의 86%가 `task()`에 의해 생성된 자식 �
 
 ### 아키텍처
 
-```
-부모 대화 (사용자 시작)
-├── 자식 대화 (태스크 #1) — parent_conversation_id → 부모
-├── 자식 대화 (태스크 #2) — parent_conversation_id → 부모
-└── 자식 대화 (태스크 #3) — parent_conversation_id → 부모
+```mermaid
+graph TD
+    Parent["부모 대화<br/>(사용자 시작)"]
+    Parent --> C1["자식 대화 (태스크 #1)<br/>parent_conversation_id → 부모"]
+    Parent --> C2["자식 대화 (태스크 #2)<br/>parent_conversation_id → 부모"]
+    Parent --> C3["자식 대화 (태스크 #3)<br/>parent_conversation_id → 부모"]
 ```
 
 ### 수명 주기 규칙

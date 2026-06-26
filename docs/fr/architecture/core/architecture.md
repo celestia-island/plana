@@ -421,22 +421,25 @@ Les fonctionnalités de connaissance et de mémoire existent sous une forme plus
 
 ### Architecture : Actuelle (allumée) vs. Auto-Amorçage Pur (cible)
 
-```
-ACTUEL — allumé, pilote tiers dans la boucle :
-  Plateforme agent externe (opencode / Claude Code / Cursor)
-   │  lit ARCHITECTURE.md, décompose, distribue    ← nous ne fournissons PAS cela
-   ▼
-  Entelecheia : hooks chirurgie + chaînes compétences + conteneurs ← nous fournissons cela
-   │  PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → merge
-   ▼
-  Base de code modifiée, validée (cargo check), commitée
+```mermaid
+flowchart TB
+    subgraph Current["ACTUEL — allumé, pilote tiers dans la boucle"]
+        direction TB
+        Ext["Plateforme agent externe (opencode / Claude Code / Cursor)\nlit ARCHITECTURE.md, décompose, distribue\n← nous ne fournissons PAS cela"]
+        Ent["Entelecheia : hooks chirurgie + chaînes compétences + conteneurs\nPreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → merge\n← nous fournissons cela"]
+        Done["Base de code modifiée, validée (cargo check), commitée"]
+        Ext --> Ent --> Done
+    end
 
-CIBLE — auto-amorçage pur (PAS ENCORE) :
-  Session Yolo (Hubris niveau supérieur, pas de pilote externe)
-   ├── file_read("ARCHITECTURE.md") → analyser Backlog Itération
-   ├── task_decompose → workplan_generate (planification seulement, pas I/O)
-   ├── IEPL exec → distribuer chaîne compétences sous-agent
-   └── PostSurgeryRollback → NoaMergeCommit → statut backlog auto-mise à jour
+    subgraph Target["CIBLE — auto-amorçage pur (PAS ENCORE)"]
+        direction TB
+        Yolo["Session Yolo (Hubris niveau supérieur, pas de pilote externe)"]
+        S1["file_read('ARCHITECTURE.md') → analyser Backlog Itération"]
+        S2["task_decompose → workplan_generate (planification seulement, pas I/O)"]
+        S3["IEPL exec → distribuer chaîne compétences sous-agent"]
+        S4["PostSurgeryRollback → NoaMergeCommit → statut backlog auto-mise à jour"]
+        Yolo --> S1 --> S2 --> S3 --> S4
+    end
 ```
 
 L'ancienne application liste blanche outils `role = "coordinator"` (ancien IB-02) et la
@@ -507,18 +510,32 @@ planificateur/distributeur. Réintroduire ces deux mécanismes est ce qui comble
 
 Le chemin de la décision agent à l'actionneur physique fonctionne :
 
-```
-Hubris → Skopeo → Kalos/IEPL → Skemma → EvernightModbusAdapter → evernight → aoba → Modbus → vanne
-                                                                                        ✅ écriture ok
+```mermaid
+flowchart LR
+    Hubris["Hubris"] --> Skopeo["Skopeo"]
+    Skopeo --> Kalos["Kalos/IEPL"]
+    Kalos --> Skemma["Skemma"]
+    Skemma --> EMA["EvernightModbusAdapter"]
+    EMA --> evernight["evernight"]
+    evernight --> aoba["aoba"]
+    aoba --> Modbus["Modbus"]
+    Modbus --> valve["vanne ✅ écriture ok"]
 ```
 
 ### Manquant : Boucle Fermée Lire-Puis-Agir
 
 Le chemin inverse — lecture capteur déclenchant réponse agent — est partiellement construit :
 
-```
-Capteur réservoir H2 → lecture Modbus → evernight SensorPoller → TriggerDispatcher → plan Hubris → Skopeo → OreXis → confirmation humaine → écriture
-         ❌ pas de boucle sondage            ❌ dans evernight 8B   ✅ sujets modbus    ❌ initiation plan Hubris de bout en bout non vérifiée
+```mermaid
+flowchart LR
+    Sensor["Capteur réservoir H2 ❌ pas de boucle sondage"] --> ModbusRead["lecture Modbus"]
+    ModbusRead --> Poller["evernight SensorPoller ❌ dans evernight 8B"]
+    Poller --> TD["TriggerDispatcher ✅ sujets modbus"]
+    TD --> Hubris["plan Hubris ❌ initiation de bout en bout non vérifiée"]
+    Hubris --> Skopeo["Skopeo"]
+    Skopeo --> OreXis["OreXis"]
+    OreXis --> Human["confirmation humaine"]
+    Human --> write["écriture"]
 ```
 
 ### Analyse Lacunes par Composant
@@ -542,46 +559,44 @@ Capteur réservoir H2 → lecture Modbus → evernight SensorPoller → TriggerD
 
 ### Architecture de Coordination Cible
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  SCADA Industriel (Ignition / WinCC / iFix)                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ Client   │  │ Maître   │  │ Graphique│  │ Panneau  │        │
-│  │ OPC UA   │  │ Modbus   │  │ Tendance │  │ Alarmes  │        │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
-│       │              │             │             │               │
-├───────┼──────────────┼─────────────┼─────────────┼───────────────┤
-│       │              │             │             │               │
-│  ┌────▼──────────────▼─────────────▼─────────────▼──────────┐   │
-│  │  evernight — Courtier Capacité Matériel                   │   │
-│  │  ┌───────────┐ ┌──────────────┐ ┌────────────────────┐   │   │
-│  │  │SensorPoll │ │ MaîtreModbus │ │ Client/srv OPC UA  │   │   │
-│  │  │ (boucle)  │ │ (R/W coils)  │ │ (parcourir/r/w/sub)│   │   │
-│  │  └─────┬─────┘ └──────┬───────┘ └────────┬───────────┘   │   │
-│  │        │               │                  │               │   │
-│  │  ┌─────▼───────────────▼──────────────────▼───────────┐   │   │
-│  │  │ HardwareTriggerSource → JSON-RPC → entelecheia     │   │   │
-│  │  └────────────────────────────────────────────────────┘   │   │
-│  └──────────────────────────┬────────────────────────────────┘   │
-│                              │                                   │
-│  ┌───────────────────────────▼────────────────────────────────┐  │
-│  │  entelecheia — Orchestration Agent                         │  │
-│  │  ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  │  │
-│  │  │ TriggerDispatch│→│ Hubris   │→│ Skopeo → SkillChain │  │  │
-│  │  │ (sujets hw)   │  │ (plan)   │  │ (exécuter)           │  │  │
-│  │  └──────────────┘  └──────────┘  └──────────┬───────────┘  │  │
-│  │  ┌─────────────┐  ┌──────────┐               │              │  │
-│  │  │ OreXis       │  │ EpieiKeia│               │              │  │
-│  │  │ (alarme +    │  │ (confir. │               │              │  │
-│  │  │  verrouill.) │  │  humaine)│               │              │  │
-│  │  └──────┬───────┘  └────┬─────┘               │              │  │
-│  │         └───────────────┼─────────────────────┘              │  │
-│  │                         │                                    │  │
-│  │  ┌──────────────────────▼─────────────────────────────────┐ │  │
-│  │  │ Stockage partagé : TimeSeriesAdapter + journal agent noa│ │  │
-│  │  └────────────────────────────────────────────────────────┘ │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph SCADA["SCADA Industriel (Ignition / WinCC / iFix)"]
+        OPCUAC["Client OPC UA"]
+        ModbusM["Maître Modbus"]
+        Trend["Graphique Tendance"]
+        AlarmP["Panneau Alarmes"]
+    end
+
+    subgraph evernight["evernight — Courtier Capacité Matériel"]
+        SensorPoll["SensorPoll (boucle)"]
+        ModbusMaster["MaîtreModbus (R/W coils)"]
+        OPC["Client/srv OPC UA (parcourir/r/w/sub)"]
+        HwTrigger["HardwareTriggerSource → JSON-RPC → entelecheia"]
+        SensorPoll --> HwTrigger
+        ModbusMaster --> HwTrigger
+        OPC --> HwTrigger
+    end
+
+    subgraph entelecheia["entelecheia — Orchestration Agent"]
+        direction TB
+        TD["TriggerDispatch (sujets hw)"]
+        Hubris["Hubris (plan)"]
+        Skopeo["Skopeo → SkillChain (exécuter)"]
+        OreXis["OreXis (alarme + verrouillage)"]
+        EpieiKeia["EpieiKeia (confirmation humaine)"]
+        Shared["Stockage partagé : TimeSeriesAdapter + journal agent noa"]
+        TD --> Hubris --> Skopeo
+        Skopeo --> Shared
+        OreXis --> Shared
+        EpieiKeia --> Shared
+    end
+
+    OPCUAC --> OPC
+    ModbusM --> ModbusMaster
+    Trend --> SensorPoll
+    AlarmP --> SensorPoll
+    HwTrigger --> TD
 ```
 
 ### Référence Test — Cartes Registres Équipement Réel

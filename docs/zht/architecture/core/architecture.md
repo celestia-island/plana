@@ -420,22 +420,25 @@ flowchart TB
 
 ### 架構：目前（已點燃）vs. 純自我引導（目標）
 
-```
-目前 — 已點燃，迴路中有第三方驅動器：
-  外部代理平台 (opencode / Claude Code / Cursor)
-   │  讀取 ARCHITECTURE.md、分解、分派    ← 我們不提供此功能
-   ▼
-  Entelecheia：手術掛鉤 + 技能鏈 + 容器    ← 我們確實提供此功能
-   │  PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → 合併
-   ▼
-  程式庫已修改、已驗證（cargo check）、已提交
+```mermaid
+flowchart TB
+    subgraph Current["目前 — 已點燃，迴路中有第三方驅動器"]
+        direction TB
+        Ext["外部代理平台 (opencode / Claude Code / Cursor)<br/>讀取 ARCHITECTURE.md、分解、分派<br/>← 我們不提供此功能"]
+        Ent["Entelecheia：手術掛鉤 + 技能鏈 + 容器<br/>PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → 合併<br/>← 我們確實提供此功能"]
+        Done["程式庫已修改、已驗證（cargo check）、已提交"]
+        Ext --> Ent --> Done
+    end
 
-目標 — 純自我引導（尚未達成）：
-  Yolo 會話（Hubris 頂層，無外部驅動器）
-   ├── file_read("ARCHITECTURE.md") → 解析迭代待辦事項
-   ├── task_decompose → workplan_generate（僅規劃，無 I/O）
-   ├── IEPL exec → 分派子代理技能鏈
-   └── PostSurgeryRollback → NoaMergeCommit → 待辦事項狀態自動更新
+    subgraph Target["目標 — 純自我引導（尚未達成）"]
+        direction TB
+        Yolo["Yolo 會話（Hubris 頂層，無外部驅動器）"]
+        S1["file_read('ARCHITECTURE.md') → 解析迭代待辦事項"]
+        S2["task_decompose → workplan_generate（僅規劃，無 I/O）"]
+        S3["IEPL exec → 分派子代理技能鏈"]
+        S4["PostSurgeryRollback → NoaMergeCommit → 待辦事項狀態自動更新"]
+        Yolo --> S1 --> S2 --> S3 --> S4
+    end
 ```
 
 先前的 `role = "coordinator"` 工具白名單強制（舊 IB-02）和
@@ -503,18 +506,32 @@ flowchart TB
 
 從代理決策到實體致動器的路徑有效：
 
-```
-Hubris → Skopeo → Kalos/IEPL → Skemma → EvernightModbusAdapter → evernight → aoba → Modbus → 閥門
-                                                                                        ✅ 寫入有效
+```mermaid
+flowchart LR
+    Hubris["Hubris"] --> Skopeo["Skopeo"]
+    Skopeo --> Kalos["Kalos/IEPL"]
+    Kalos --> Skemma["Skemma"]
+    Skemma --> EMA["EvernightModbusAdapter"]
+    EMA --> evernight["evernight"]
+    evernight --> aoba["aoba"]
+    aoba --> Modbus["Modbus"]
+    Modbus --> valve["閥門 ✅ 寫入有效"]
 ```
 
 ### 缺少：讀取後行動的閉合迴路
 
 反向路徑 — 感測器讀取觸發代理回應 — 部分已構建：
 
-```
-H2 罐感測器 → Modbus 讀取 → evernight SensorPoller → TriggerDispatcher → Hubris 計畫 → Skopeo → OreXis → 人工確認 → 寫入
-         ❌ 無輪詢迴路              ❌ 在 evernight 8B   ✅ modbus 主題      ❌ 端對端 Hubris 計畫啟動未驗證
+```mermaid
+flowchart LR
+    Sensor["H2 罐感測器 ❌ 無輪詢迴路"] --> ModbusRead["Modbus 讀取"]
+    ModbusRead --> Poller["evernight SensorPoller ❌ 在 evernight 8B"]
+    Poller --> TD["TriggerDispatcher ✅ modbus 主題"]
+    TD --> Hubris["Hubris 計畫 ❌ 端對端 Hubris 計畫啟動未驗證"]
+    Hubris --> Skopeo["Skopeo"]
+    Skopeo --> OreXis["OreXis"]
+    OreXis --> Human["人工確認"]
+    Human --> write["寫入"]
 ```
 
 ### 每個元件的缺口分析
@@ -538,46 +555,44 @@ H2 罐感測器 → Modbus 讀取 → evernight SensorPoller → TriggerDispatch
 
 ### 目標協調架構
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  工業 SCADA (Ignition / WinCC / iFix)                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ OPC UA   │  │ Modbus   │  │ 趨勢     │  │ 警報     │        │
-│  │ 用戶端   │  │ 主站     │  │ 圖表     │  │ 面板     │        │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
-│       │              │             │             │               │
-├───────┼──────────────┼─────────────┼─────────────┼───────────────┤
-│       │              │             │             │               │
-│  ┌────▼──────────────▼─────────────▼─────────────▼──────────┐   │
-│  │  evernight — 硬體能力代理                                 │   │
-│  │  ┌───────────┐ ┌──────────────┐ ┌────────────────────┐   │   │
-│  │  │ SensorPoll│ │ ModbusMaster │ │ OPC UA 伺服/用戶端 │   │   │
-│  │  │ (迴路)    │ │ (R/W 線圈)   │ │ (browse/r/w/sub)   │   │   │
-│  │  └─────┬─────┘ └──────┬───────┘ └────────┬───────────┘   │   │
-│  │        │               │                  │               │   │
-│  │  ┌─────▼───────────────▼──────────────────▼───────────┐   │   │
-│  │  │ HardwareTriggerSource → JSON-RPC → entelecheia     │   │   │
-│  │  └────────────────────────────────────────────────────┘   │   │
-│  └──────────────────────────┬────────────────────────────────┘   │
-│                              │                                   │
-│  ┌───────────────────────────▼────────────────────────────────┐  │
-│  │  entelecheia — 代理編排                                    │  │
-│  │  ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  │  │
-│  │  │ TriggerDispatch│→│ Hubris   │→│ Skopeo → SkillChain │  │  │
-│  │  │ (hw 主題)     │  │ (計畫)   │  │ (執行)              │  │  │
-│  │  └──────────────┘  └──────────┘  └──────────┬───────────┘  │  │
-│  │  ┌─────────────┐  ┌──────────┐               │              │  │
-│  │  │ OreXis       │  │ EpieiKeia│               │              │  │
-│  │  │ (警報 +      │  │ (人工    │               │              │  │
-│  │  │  鎖定)       │  │  確認)   │               │              │  │
-│  │  └──────┬───────┘  └────┬─────┘               │              │  │
-│  │         └───────────────┼─────────────────────┘              │  │
-│  │                         │                                    │  │
-│  │  ┌──────────────────────▼─────────────────────────────────┐ │  │
-│  │  │ 共享儲存：TimeSeriesAdapter + noa 代理日誌              │ │  │
-│  │  └────────────────────────────────────────────────────────┘ │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph SCADA["工業 SCADA (Ignition / WinCC / iFix)"]
+        OPCUAC["OPC UA 用戶端"]
+        ModbusM["Modbus 主站"]
+        Trend["趨勢圖表"]
+        AlarmP["警報面板"]
+    end
+
+    subgraph evernight["evernight — 硬體能力代理"]
+        SensorPoll["SensorPoll (迴路)"]
+        ModbusMaster["ModbusMaster (R/W 線圈)"]
+        OPC["OPC UA 伺服/用戶端 (browse/r/w/sub)"]
+        HwTrigger["HardwareTriggerSource → JSON-RPC → entelecheia"]
+        SensorPoll --> HwTrigger
+        ModbusMaster --> HwTrigger
+        OPC --> HwTrigger
+    end
+
+    subgraph entelecheia["entelecheia — 代理編排"]
+        direction TB
+        TD["TriggerDispatch (hw 主題)"]
+        Hubris["Hubris (計畫)"]
+        Skopeo["Skopeo → SkillChain (執行)"]
+        OreXis["OreXis (警報 + 鎖定)"]
+        EpieiKeia["EpieiKeia (人工確認)"]
+        Shared["共享儲存：TimeSeriesAdapter + noa 代理日誌"]
+        TD --> Hubris --> Skopeo
+        Skopeo --> Shared
+        OreXis --> Shared
+        EpieiKeia --> Shared
+    end
+
+    OPCUAC --> OPC
+    ModbusM --> ModbusMaster
+    Trend --> SensorPoll
+    AlarmP --> SensorPoll
+    HwTrigger --> TD
 ```
 
 ### 測試參考 — 真實裝置寄存器對應表

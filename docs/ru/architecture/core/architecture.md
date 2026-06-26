@@ -420,22 +420,25 @@ flowchart TB
 
 ### Архитектура: Текущая (запущенная) vs Чистая Само-Загрузка (целевая)
 
-```
-ТЕКУЩАЯ — запущена, сторонний драйвер в цикле:
-   Внешняя агентная платформа (opencode / Claude Code / Cursor)
-    │  читает ARCHITECTURE.md, декомпозирует, диспетчеризует ← мы НЕ предоставляем это
-    ▼
-   Entelecheia: хуки хирургии + цепочки навыков + контейнеры ← мы ПРЕДОСТАВЛЯЕМ это
-    │  PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → merge
-    ▼
-   Кодовая база изменена, проверена (cargo check), закоммичена
+```mermaid
+flowchart TB
+    subgraph Current["ТЕКУЩАЯ — запущена, сторонний драйвер в цикле"]
+        direction TB
+        Ext["Внешняя агентная платформа (opencode / Claude Code / Cursor)<br/>читает ARCHITECTURE.md, декомпозирует, диспетчеризует<br/>← мы НЕ предоставляем это"]
+        Ent["Entelecheia: хуки хирургии + цепочки навыков + контейнеры<br/>PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → merge<br/>← мы ПРЕДОСТАВЛЯЕМ это"]
+        Done["Кодовая база изменена, проверена (cargo check), закоммичена"]
+        Ext --> Ent --> Done
+    end
 
-ЦЕЛЕВАЯ — чистая само-загрузка (ЕЩЁ НЕТ):
-   Сессия Yolo (Hubris верхнего уровня, без внешнего драйвера)
-    ├── file_read("ARCHITECTURE.md") → разбор Iteration Backlog
-    ├── task_decompose → workplan_generate (только планирование, без I/O)
-    ├── выполнение IEPL → диспетчеризация цепочки навыков подагента
-    └── PostSurgeryRollback → NoaMergeCommit → автообновление статуса backlog
+    subgraph Target["ЦЕЛЕВАЯ — чистая само-загрузка (ЕЩЁ НЕТ)"]
+        direction TB
+        Yolo["Сессия Yolo (Hubris верхнего уровня, без внешнего драйвера)"]
+        S1["file_read('ARCHITECTURE.md') → разбор Iteration Backlog"]
+        S2["task_decompose → workplan_generate (только планирование, без I/O)"]
+        S3["выполнение IEPL → диспетчеризация цепочки навыков подагента"]
+        S4["PostSurgeryRollback → NoaMergeCommit → автообновление статуса backlog"]
+        Yolo --> S1 --> S2 --> S3 --> S4
+    end
 ```
 
 Бывшее принудительное применение `role = "coordinator"` в белых списках инструментов (старый IB-02) и
@@ -541,46 +544,44 @@ Hubris → Skopeo → Kalos/IEPL → Skemma → EvernightModbusAdapter → evern
 
 ### Целевая архитектура координации
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Промышленная SCADA (Ignition / WinCC / iFix)                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ OPC UA   │  │ Modbus   │  │ График   │  │ Панель   │        │
-│  │ Клиент   │  │ Master   │  │ трендов  │  │ тревог   │        │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
-│       │              │             │             │               │
-├───────┼──────────────┼─────────────┼─────────────┼───────────────┤
-│       │              │             │             │               │
-│  ┌────▼──────────────▼─────────────▼─────────────▼──────────┐   │
-│  │  evernight — Брокер аппаратных возможностей               │   │
-│  │  ┌───────────┐ ┌──────────────┐ ┌────────────────────┐   │   │
-│  │  │ SensorPoll│ │ ModbusMaster │ │ OPC UA клиент/серв │   │   │
-│  │  │ (цикл)    │ │ (R/W coils)  │ │ (browse/r/w/sub)  │   │   │
-│  │  └─────┬─────┘ └──────┬───────┘ └────────┬───────────┘   │   │
-│  │        │               │                  │               │   │
-│  │  ┌─────▼───────────────▼──────────────────▼───────────┐   │   │
-│  │  │ HardwareTriggerSource → JSON-RPC → entelecheia    │   │   │
-│  │  └────────────────────────────────────────────────────┘   │   │
-│  └──────────────────────────┬────────────────────────────────┘   │
-│                              │                                   │
-│  ┌───────────────────────────▼────────────────────────────────┐  │
-│  │  entelecheia — Оркестрация агентов                         │  │
-│  │  ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  │  │
-│  │  │ TriggerDispatch│→│ Hubris   │→│ Skopeo → SkillChain │  │  │
-│  │  │ (hw topics)   │  │ (план)   │  │ (выполнение)        │  │  │
-│  │  └──────────────┘  └──────────┘  └──────────┬───────────┘  │  │
-│  │  ┌─────────────┐  ┌──────────┐               │              │  │
-│  │  │ OreXis       │  │ EpieiKeia│               │              │  │
-│  │  │ (тревога +   │  │ (подтв.   │               │              │  │
-│  │  │  блокировка) │  │  человек)│               │              │  │
-│  │  └──────┬───────┘  └────┬─────┘               │              │  │
-│  │         └───────────────┼─────────────────────┘              │  │
-│  │                         │                                    │  │
-│  │  ┌──────────────────────▼─────────────────────────────────┐ │  │
-│  │  │ Общее хранилище: TimeSeriesAdapter + журнал агента noa │ │  │
-│  │  └────────────────────────────────────────────────────────┘ │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph SCADA["Промышленная SCADA (Ignition / WinCC / iFix)"]
+        OPCUAC["OPC UA Клиент"]
+        ModbusM["Modbus Master"]
+        Trend["График трендов"]
+        AlarmP["Панель тревог"]
+    end
+
+    subgraph evernight["evernight — Брокер аппаратных возможностей"]
+        SensorPoll["SensorPoll (цикл)"]
+        ModbusMaster["ModbusMaster (R/W coils)"]
+        OPC["OPC UA клиент/серв (browse/r/w/sub)"]
+        HwTrigger["HardwareTriggerSource → JSON-RPC → entelecheia"]
+        SensorPoll --> HwTrigger
+        ModbusMaster --> HwTrigger
+        OPC --> HwTrigger
+    end
+
+    subgraph entelecheia["entelecheia — Оркестрация агентов"]
+        direction TB
+        TD["TriggerDispatch (hw topics)"]
+        Hubris["Hubris (план)"]
+        Skopeo["Skopeo → SkillChain (выполнение)"]
+        OreXis["OreXis (тревога + блокировка)"]
+        EpieiKeia["EpieiKeia (подтв. человек)"]
+        Shared["Общее хранилище: TimeSeriesAdapter + журнал агента noa"]
+        TD --> Hubris --> Skopeo
+        Skopeo --> Shared
+        OreXis --> Shared
+        EpieiKeia --> Shared
+    end
+
+    OPCUAC --> OPC
+    ModbusM --> ModbusMaster
+    Trend --> SensorPoll
+    AlarmP --> SensorPoll
+    HwTrigger --> TD
 ```
 
 ### Тестовый справочник — Карты регистров реального оборудования

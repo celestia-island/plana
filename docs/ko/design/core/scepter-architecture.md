@@ -1107,26 +1107,13 @@ entelecheia는 두 가지 목적으로 [pglite-oxide](https://crates.io/crates/p
 
 ## 기능 게이트 아키텍처
 
-    ┌───────────────────────────────────────────────────────┐
-    │  scepter Cargo.toml                                   │
-    │                                                       │
-    │  [features]                                           │
-    │  default = ["all-agents", "embedded-db"]  ◄── dev     │
-    │  embedded-db = ["dep:pglite-oxide"]                   │
-    │                                                       │
-    │  [dependencies]                                       │
-    │  pglite-oxide = { workspace = true, optional = true } │
-    └───────────────────────────────────────────────────────┘
-              │                              │
-         cargo build                   Dockerfile
-         (default)                     --no-default-features
-              │                        --features all-agents
-              ▼                              │
-       ┌──────────────┐                 ┌──────────────┐
-       │  pglite-oxide │                 │  pglite 없음,│
-       │  + wasmer WASM│                 │  wasmer 없음 │
-       │  포함됨       │                 │  (프로덕션)  │
-       └──────────────┘                 └──────────────┘
+```mermaid
+flowchart TB
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ◄── dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+
+    Cargo -->|"cargo build (기본)"| Dev["pglite-oxide + wasmer WASM<br/>포함됨"]
+    Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["pglite 없음, wasmer 없음<br/>(프로덕션)"]
+```
 
 | 빌드 컨텍스트 | 명령 | pglite-oxide | wasmer | DATABASE_URL |
 |---------------|---------|:---:|:---:|---|

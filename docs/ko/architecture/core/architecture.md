@@ -417,22 +417,25 @@ flowchart TB
 
 ### 아키텍처: 현재 (점화) vs. 순수 자가 부트스트랩 (목표)
 
-```
-현재 — 점화됨, 루프에 제3자 드라이버 있음:
-  외부 에이전트 플랫폼 (opencode / Claude Code / Cursor)
-   │  ARCHITECTURE.md를 읽고, 분해하고, 디스패치함    ← 우리는 이것을 제공하지 않음
-   ▼
-  Entelecheia: 수술 훅 + 스킬 체인 + 컨테이너 ← 우리는 이것을 제공함
-   │  PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → merge
-   ▼
-  코드베이스 수정, 검증(cargo check), 커밋됨
+```mermaid
+flowchart TB
+    subgraph Current["현재 — 점화됨, 루프에 제3자 드라이버 있음"]
+        direction TB
+        Ext["외부 에이전트 플랫폼 (opencode / Claude Code / Cursor)<br/>ARCHITECTURE.md를 읽고, 분해하고, 디스패치함<br/>← 우리는 이것을 제공하지 않음"]
+        Ent["Entelecheia: 수술 훅 + 스킬 체인 + 컨테이너<br/>PreSurgeryCheckpoint → plan_execute → PostSurgeryRollback → merge<br/>← 우리는 이것을 제공함"]
+        Done["코드베이스 수정, 검증(cargo check), 커밋됨"]
+        Ext --> Ent --> Done
+    end
 
-목표 — 순수 자가 부트스트랩 (아직 아님):
-  Yolo 세션 (Hubris 최상위, 외부 드라이버 없음)
-   ├── file_read("ARCHITECTURE.md") → 반복 백로그 파싱
-   ├── task_decompose → workplan_generate (계획만, I/O 없음)
-   ├── IEPL exec → 하위 에이전트 스킬 체인 디스패치
-   └── PostSurgeryRollback → NoaMergeCommit → 백로그 상태 자동 업데이트
+    subgraph Target["목표 — 순수 자가 부트스트랩 (아직 아님)"]
+        direction TB
+        Yolo["Yolo 세션 (Hubris 최상위, 외부 드라이버 없음)"]
+        S1["file_read('ARCHITECTURE.md') → 반복 백로그 파싱"]
+        S2["task_decompose → workplan_generate (계획만, I/O 없음)"]
+        S3["IEPL exec → 하위 에이전트 스킬 체인 디스패치"]
+        S4["PostSurgeryRollback → NoaMergeCommit → 백로그 상태 자동 업데이트"]
+        Yolo --> S1 --> S2 --> S3 --> S4
+    end
 ```
 
 이전의 `role = "coordinator"` 도구 화이트리스트 집행(구 IB-02)과 전용
@@ -499,18 +502,32 @@ flowchart TB
 
 에이전트 결정에서 물리적 액추에이터로의 경로가 작동합니다:
 
-```
-Hubris → Skopeo → Kalos/IEPL → Skemma → EvernightModbusAdapter → evernight → aoba → Modbus → valve
-                                                                                        ✅ 쓰기 작동
+```mermaid
+flowchart LR
+    Hubris["Hubris"] --> Skopeo["Skopeo"]
+    Skopeo --> Kalos["Kalos/IEPL"]
+    Kalos --> Skemma["Skemma"]
+    Skemma --> EMA["EvernightModbusAdapter"]
+    EMA --> evernight["evernight"]
+    evernight --> aoba["aoba"]
+    aoba --> Modbus["Modbus"]
+    Modbus --> valve["valve ✅ 쓰기 작동"]
 ```
 
 ### 누락: 읽기 후 행동 폐쇄 루프
 
 역방향 경로 — 센서 판독이 에이전트 응답을 트리거 — 는 부분적으로 구축되었습니다:
 
-```
-H2 tank sensor → Modbus read → evernight SensorPoller → TriggerDispatcher → Hubris plan → Skopeo → OreXis → human confirm → write
-        ❌ 폴링 루프 없음              ❌ evernight 8B에 있음   ✅ modbus 토픽    ❌ 종단 간 Hubris 계획 시작 검증되지 않음
+```mermaid
+flowchart LR
+    Sensor["H2 탱크 센서 ❌ 폴링 루프 없음"] --> ModbusRead["Modbus read"]
+    ModbusRead --> Poller["evernight SensorPoller ❌ evernight 8B에 있음"]
+    Poller --> TD["TriggerDispatcher ✅ modbus 토픽"]
+    TD --> Hubris["Hubris 계획 ❌ 종단 간 Hubris 계획 시작 검증되지 않음"]
+    Hubris --> Skopeo["Skopeo"]
+    Skopeo --> OreXis["OreXis"]
+    OreXis --> Human["인간 확인"]
+    Human --> write["write"]
 ```
 
 ### 구성 요소별 공백 분석
@@ -534,46 +551,44 @@ H2 tank sensor → Modbus read → evernight SensorPoller → TriggerDispatcher 
 
 ### 목표 조정 아키텍처
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  산업 SCADA (Ignition / WinCC / iFix)                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
-│  │ OPC UA   │  │ Modbus   │  │ 트렌드   │  │ 경보     │        │
-│  │ 클라이언트│  │ 마스터   │  │ 차트     │  │ 패널     │        │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │
-│       │              │             │             │               │
-├───────┼──────────────┼─────────────┼─────────────┼───────────────┤
-│       │              │             │             │               │
-│  ┌────▼──────────────▼─────────────▼─────────────▼──────────┐   │
-│  │  evernight — 하드웨어 기능 브로커                         │   │
-│  │  ┌───────────┐ ┌──────────────┐ ┌────────────────────┐   │   │
-│  │  │ SensorPoll│ │ ModbusMaster │ │ OPC UA 클라이언트/서버│ │   │
-│  │  │ (루프)    │ │ (R/W 코일)   │ │ (browse/r/w/sub)   │   │   │
-│  │  └─────┬─────┘ └──────┬───────┘ └────────┬───────────┘   │   │
-│  │        │               │                  │               │   │
-│  │  ┌─────▼───────────────▼──────────────────▼───────────┐   │   │
-│  │  │ HardwareTriggerSource → JSON-RPC → entelecheia     │   │   │
-│  │  └────────────────────────────────────────────────────┘   │   │
-│  └──────────────────────────┬────────────────────────────────┘   │
-│                              │                                   │
-│  ┌───────────────────────────▼────────────────────────────────┐  │
-│  │  entelecheia — 에이전트 오케스트레이션                      │  │
-│  │  ┌─────────────┐  ┌──────────┐  ┌──────────────────────┐  │  │
-│  │  │ TriggerDispatch│→│ Hubris   │→│ Skopeo → SkillChain │  │  │
-│  │  │ (hw 토픽)      │  │ (계획)   │  │ (실행)              │  │  │
-│  │  └──────────────┘  └──────────┘  └──────────┬───────────┘  │  │
-│  │  ┌─────────────┐  ┌──────────┐               │              │  │
-│  │  │ OreXis       │  │ EpieiKeia│               │              │  │
-│  │  │ (경보 +      │  │ (인간    │               │              │  │
-│  │  │  잠금)       │  │  확인)   │               │              │  │
-│  │  └──────┬───────┘  └────┬─────┘               │              │  │
-│  │         └───────────────┼─────────────────────┘              │  │
-│  │                         │                                    │  │
-│  │  ┌──────────────────────▼─────────────────────────────────┐ │  │
-│  │  │ 공유 저장소: TimeSeriesAdapter + noa 에이전트 로그      │ │  │
-│  │  └────────────────────────────────────────────────────────┘ │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph SCADA["산업 SCADA (Ignition / WinCC / iFix)"]
+        OPCUAC["OPC UA 클라이언트"]
+        ModbusM["Modbus 마스터"]
+        Trend["트렌드 차트"]
+        AlarmP["경보 패널"]
+    end
+
+    subgraph evernight["evernight — 하드웨어 기능 브로커"]
+        SensorPoll["SensorPoll (루프)"]
+        ModbusMaster["ModbusMaster (R/W 코일)"]
+        OPC["OPC UA 클라이언트/서버 (browse/r/w/sub)"]
+        HwTrigger["HardwareTriggerSource → JSON-RPC → entelecheia"]
+        SensorPoll --> HwTrigger
+        ModbusMaster --> HwTrigger
+        OPC --> HwTrigger
+    end
+
+    subgraph entelecheia["entelecheia — 에이전트 오케스트레이션"]
+        direction TB
+        TD["TriggerDispatch (hw 토픽)"]
+        Hubris["Hubris (계획)"]
+        Skopeo["Skopeo → SkillChain (실행)"]
+        OreXis["OreXis (경보 + 잠금)"]
+        EpieiKeia["EpieiKeia (인간 확인)"]
+        Shared["공유 저장소: TimeSeriesAdapter + noa 에이전트 로그"]
+        TD --> Hubris --> Skopeo
+        Skopeo --> Shared
+        OreXis --> Shared
+        EpieiKeia --> Shared
+    end
+
+    OPCUAC --> OPC
+    ModbusM --> ModbusMaster
+    Trend --> SensorPoll
+    AlarmP --> SensorPoll
+    HwTrigger --> TD
 ```
 
 ### 테스트 참조 — 실제 장비 레지스터 맵

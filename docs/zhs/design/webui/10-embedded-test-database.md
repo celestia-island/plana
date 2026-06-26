@@ -18,26 +18,18 @@ shittim-chest 使用 [pglite-oxide](https://crates.io/crates/pglite-oxide) 作�
 
 ## 架构
 
-```
-┌─────────────────────────────────────────────────┐
-│  cargo test                                      │
-│  ┌─────────────────────────────────────────────┐ │
-│  │  #[test] fn xxx_e2e_tests() {               │ │
-│  │    rt.block_on(async {                      │ │
-│  │      let server = start_test_server().await;│ │
-│  │      // ... 测试逻辑 ...                    │ │
-│  │    });                                      │ │
-│  │    std::process::exit(0);                   │ │
-│  │  }                                          │ │
-│  └─────────────────────────────────────────────┘ │
-│                      │                            │
-│           OnceCell<(String, PgliteServer)>        │
-│                      │                            │
-│           ┌──────────▼──────────┐                 │
-│           │  pglite-oxide WASM  │                 │
-│           │  PG 17.5 进程内运行 │                 │
-│           └─────────────────────┘                 │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph cargo["cargo test"]
+        subgraph test["#[test] fn xxx_e2e_tests()"]
+            A["rt.block_on(async {<br/>let server = start_test_server().await<br/>// ... 测试逻辑 ...<br/>})"]
+            B["std::process::exit(0)"]
+        end
+        CELL["OnceCell&lt;(String, PgliteServer)&gt;"]
+        PG["pglite-oxide WASM<br/>PG 17.5 进程内运行"]
+        test -.->|"共享"| CELL
+        CELL --> PG
+    end
 ```
 
 ## 关键决策

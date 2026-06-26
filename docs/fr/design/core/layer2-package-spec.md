@@ -17,24 +17,18 @@ Un agent de Couche 2/3 est un **paquet autonome** composé de jusqu'à cinq
 composants. Le paquet est l'unité de distribution — il peut être installé,
 mis à jour et supprimé indépendamment.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Paquet d'Agent                      │
-│                                                      │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
-│  │ Outils   │  │Compétences│  │  Âme (Identité)   │  │
-│  │ MCP      │  │ (Texte)   │  │  (Multilingue)    │  │
-│  │ (TS/IEPL)│  │           │  │                   │  │
-│  └────┬─────┘  └──────────┘  └───────────────────┘  │
-│       │                                              │
-│       │ appelle ───────────┐                         │
-│       │                     │                        │
-│  ┌────▼─────┐        ┌─────▼──────┐                 │
-│  │  Backend │        │  Cloud RAG │  ┌────────────┐  │
-│  │ (Binaire)│        │ (BD Vect.) │  │ Modèle FT  │  │
-│  │ optionnel│        │  optionnel │  │  optionnel  │  │
-│  └──────────┘        └────────────┘  └────────────┘  │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Pkg["Paquet d'Agent"]
+        MCP["Outils MCP<br/>(TS/IEPL)"]
+        SK["Compétences<br/>(Texte)"]
+        SOUL["Âme (Identité)<br/>(Multilingue)"]
+        BE["Backend (Binaire)<br/>optionnel"]
+        RAG["Cloud RAG (BD Vect.)<br/>optionnel"]
+        FT["Modèle FT<br/>optionnel"]
+        MCP -->|appelle| BE
+        MCP -->|appelle| RAG
+    end
 ```
 
 ## Cinq Composants
