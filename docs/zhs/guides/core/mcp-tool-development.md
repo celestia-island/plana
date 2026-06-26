@@ -309,7 +309,6 @@ sequenceDiagram
     Cosmos->>Cosmos: 9. 继续执行（例如 report()）
     Cosmos-->>LLM: 10. 最终结果返回给 LLM
 ```
-```
 
 ---
 

@@ -309,7 +309,6 @@ sequenceDiagram
     Cosmos->>Cosmos: 9. Continúa ejecución (ej. report())
     Cosmos-->>LLM: 10. Resultado final devuelto al LLM
 ```
-```
 
 ---
 

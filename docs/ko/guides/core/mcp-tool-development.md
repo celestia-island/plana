@@ -309,7 +309,6 @@ sequenceDiagram
     Cosmos->>Cosmos: 9. 계속 실행(예: report())
     Cosmos-->>LLM: 10. 최종 결과가 LLM에 반환
 ```
-```
 
 ---
 
