@@ -19,31 +19,28 @@ The WASI Plugin System replaces the previous Python/TypeScript webhook scaffoldi
 
 ## Architecture
 
-```
-Scepter (axum HTTP server, port 8424)
-  │
-  ├── POST /webhook/{plugin_name}  →  PluginRouter.dispatch_webhook()
-  │
-  ├── Layer 2 — Platform Integration Plugins
-  │     ├── WASI modules (Rust → wasm32-wasip2)
-  │     │     ├── github-webhook.wasm (P0 ✅)
-  │     │     ├── gitee-webhook.wasm
-  │     │     ├── gitlab-webhook.wasm
-  │     │     ├── feishu-webhook.wasm
-  │     │     ├── qq-webhook.wasm
-  │     │     ├── discord-bot.wasm
-  │     │     └── telegram-bot.wasm
-  │     │
-  │     └── boa container TS extensions (P1)
-  │           └── Isolated boa_engine Context per plugin
-  │
-  ├── Layer 3 — Business Logic Plugins (P2)
-  │     ├── WASI modules
-  │     └── boa container TS extensions
-  │
-  └── MCP Registry (P1)
-        └── All Layer 2/3 plugins register tools under $.agents.xxx
-              for LLM invocation via standard MCP protocol
+```mermaid
+flowchart TB
+    SC["Scepter<br/>(axum HTTP server, port 8424)"]
+    SC -->|"POST /webhook/{plugin_name}"| PR["PluginRouter.dispatch_webhook()"]
+    SC --> L2["Layer 2 — Platform Integration Plugins"]
+    SC --> L3["Layer 3 — Business Logic Plugins (P2)"]
+    SC --> MCPReg["MCP Registry (P1)"]
+
+    L2 --> WASI2["WASI modules<br/>(Rust → wasm32-wasip2)"]
+    WASI2 --> W1["github-webhook.wasm (P0 ✅)"]
+    WASI2 --> W2["gitee-webhook.wasm"]
+    WASI2 --> W3["gitlab-webhook.wasm"]
+    WASI2 --> W4["feishu-webhook.wasm"]
+    WASI2 --> W5["qq-webhook.wasm"]
+    WASI2 --> W6["discord-bot.wasm"]
+    WASI2 --> W7["telegram-bot.wasm"]
+    L2 --> BOA2["boa container TS extensions (P1)<br/>Isolated boa_engine Context per plugin"]
+
+    L3 --> WASI3["WASI modules"]
+    L3 --> BOA3["boa container TS extensions"]
+
+    MCPReg -.->|"All L2/L3 plugins register tools under $.agents.xxx"| LLM["LLM invocation<br/>via standard MCP protocol"]
 ```
 
 ## WIT Interface Definitions
@@ -134,14 +131,15 @@ export!(GithubWebhookPlugin);
 
 ### Runtime Stack
 
-```
-PluginRouter
-  └── TypedPlugin (per plugin)
-        ├── tairitsu::Image  →  compiled WASM component
-        ├── tairitsu::Container<HostState>  →  wasmtime Store + Instance
-        │     ├── with_host_linker: registers host-api imports
-        │     └── with_guest_initializer: instantiates component
-        └── call_guest_raw_desc("entelecheia:plugin/webhook-handler#handle-request", args)
+```mermaid
+flowchart TB
+    PR["PluginRouter"]
+    PR --> TP["TypedPlugin<br/>(per plugin)"]
+    TP --> IMG["tairitsu::Image<br/>compiled WASM component"]
+    TP --> CT["tairitsu::Container&lt;HostState&gt;<br/>wasmtime Store + Instance"]
+    CT --> HL["with_host_linker<br/>registers host-api imports"]
+    CT --> GI["with_guest_initializer<br/>instantiates component"]
+    TP --> CG["call_guest_raw_desc<br/>entelecheia:plugin/webhook-handler#handle-request, args"]
 ```
 
 ### Guest Export Names

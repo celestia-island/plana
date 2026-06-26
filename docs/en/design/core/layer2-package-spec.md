@@ -17,23 +17,18 @@ A Layer 2/3 agent is a **self-contained package** composed of up to five
 components. The package is the unit of distribution — it can be installed,
 updated, and removed independently.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Agent Package                      │
-│                                                      │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
-│  │ MCP Tools│  │  Skills  │  │  Soul (Identity)  │  │
-│  │ (TS/IEPL)│  │ (Text)   │  │  (Multilingual)   │  │
-│  └────┬─────┘  └──────────┘  └───────────────────┘  │
-│       │                                              │
-│       │ calls ──────────────┐                        │
-│       │                     │                        │
-│  ┌────▼─────┐        ┌─────▼──────┐                 │
-│  │ Backend  │        │ RAG Cloud  │  ┌────────────┐  │
-│  │ (Binary) │        │ (Vector KB)│  │ FT Model   │  │
-│  │ optional │        │  optional  │  │  optional  │  │
-│  └──────────┘        └────────────┘  └────────────┘  │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Pkg["Agent Package"]
+        MCP["MCP Tools<br/>(TS/IEPL)"]
+        SK["Skills<br/>(Text)"]
+        SOUL["Soul (Identity)<br/>(Multilingual)"]
+        BE["Backend (Binary)<br/>optional"]
+        RAG["RAG Cloud (Vector KB)<br/>optional"]
+        FT["FT Model<br/>optional"]
+        MCP -->|calls| BE
+        MCP -->|calls| RAG
+    end
 ```
 
 ## Five Components
@@ -138,7 +133,7 @@ A model fine-tuned for the agent's specific domain. Also cloud-hosted.
 
 ## Package Directory Structure
 
-```
+```text
 packages/agents/{agent_name}/
 ├── manifest.toml           # Package metadata and configuration
 ├── mcp/

@@ -121,11 +121,12 @@ opencode issue #16101 revealed that 86% of sessions are child sessions spawned b
 
 ### Architecture
 
-```
-Parent Conversation (user-initiated)
-├── Child Conversation (task #1) — parent_conversation_id → parent
-├── Child Conversation (task #2) — parent_conversation_id → parent
-└── Child Conversation (task #3) — parent_conversation_id → parent
+```mermaid
+graph TD
+    Parent["Parent Conversation<br/>(user-initiated)"]
+    Parent --> C1["Child Conversation (task #1)<br/>parent_conversation_id → parent"]
+    Parent --> C2["Child Conversation (task #2)<br/>parent_conversation_id → parent"]
+    Parent --> C3["Child Conversation (task #3)<br/>parent_conversation_id → parent"]
 ```
 
 ### Lifecycle Rules

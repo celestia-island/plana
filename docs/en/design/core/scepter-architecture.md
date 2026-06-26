@@ -1107,26 +1107,13 @@ Previously, local development required either Docker Compose or a manual Postgre
 
 ## Feature Gate Architecture
 
-    ┌───────────────────────────────────────────────────────┐
-    │  scepter Cargo.toml                                   │
-    │                                                       │
-    │  [features]                                           │
-    │  default = ["all-agents", "embedded-db"]  ◄── dev     │
-    │  embedded-db = ["dep:pglite-oxide"]                   │
-    │                                                       │
-    │  [dependencies]                                       │
-    │  pglite-oxide = { workspace = true, optional = true } │
-    └───────────────────────────────────────────────────────┘
-              │                              │
-         cargo build                   Dockerfile
-         (default)                     --no-default-features
-              │                        --features all-agents
-              ▼                              │
-      ┌──────────────┐                 ┌──────────────┐
-      │  pglite-oxide │                 │  No pglite,  │
-      │  + wasmer WASM│                 │  no wasmer   │
-      │  included     │                 │  (production)│
-      └──────────────┘                 └──────────────┘
+```mermaid
+flowchart TB
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ← dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+
+    Cargo -->|"cargo build (default)"| Dev["pglite-oxide + wasmer WASM<br/>included"]
+    Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["No pglite, no wasmer<br/>(production)"]
+```
 
 | Build Context | Command | pglite-oxide | wasmer | DATABASE_URL |
 |---------------|---------|:---:|:---:|---|

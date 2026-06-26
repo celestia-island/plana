@@ -8,6 +8,7 @@
 
 pub mod http;
 pub mod jsonrpc;
+pub mod mcp;
 
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;

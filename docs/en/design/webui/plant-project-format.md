@@ -388,7 +388,7 @@ Model3D 结构：
 
 加载路径：`fixtures/{project}.plant.json`
 
-```
+```text
 fixtures/
 ├── agents.json
 ├── devices.json
