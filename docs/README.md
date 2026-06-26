@@ -4,19 +4,31 @@ Unified documentation hub for the **celestia-island** ecosystem.
 
 ## Structure
 
-| Directory | Contents |
-|-----------|----------|
-| [`meta/`](meta/) | Governance & legal: CLA, Code of Conduct, Security policy, Contributing guide |
-| [`architecture/`](architecture/) | High-level architecture overviews |
-| [`architecture/core/`](architecture/core/) | **entelecheia** — agent orchestration backend |
-| [`architecture/webui/`](architecture/webui/) | **shittim-chest** — user-facing shell & frontend |
-| [`design/`](design/) | Design documents & technical RFCs |
-| [`design/core/`](design/core/) | **entelecheia** — 29 design docs (agent system, IEPL, containers, etc.) |
-| [`design/webui/`](design/webui/) | **shittim-chest** — design docs (deployment, LLM architecture, RBAC, etc.) |
-| [`guides/`](guides/) | User & contributor guides |
-| [`guides/core/`](guides/core/) | **entelecheia** — building, CLI, agent development, MCP tools, etc. |
-| [`guides/webui/`](guides/webui/) | **shittim-chest** — architecture, building, fundamentals, webhooks |
-| [`licenses/`](licenses/) | Translated legal documents (11 languages) |
+```
+docs/
+├── PLAN.md                # i18n & format alignment roadmap
+├── README.md              # This index
+├── logo.webp              # Arona logo
+├── licenses/              # Translated legal documents (11 languages)
+├── en/                    # English (canonical source)
+│   ├── meta/              # Governance & legal
+│   ├── architecture/      # High-level architecture
+│   │   ├── core/          # entelecheia — agent orchestration backend
+│   │   └── webui/         # shittim-chest — user-facing shell
+│   ├── design/            # Design documents & technical RFCs
+│   │   ├── core/          # entelecheia
+│   │   └── webui/         # shittim-chest
+│   └── guides/            # User & contributor guides
+│       ├── core/          # entelecheia
+│       └── webui/         # shittim-chest
+├── zh/                    # Simplified Chinese
+├── zht/                   # Traditional Chinese
+├── ja/                    # Japanese
+├── ko/                    # Korean
+├── fr/                    # French
+├── es/                    # Spanish
+└── ru/                    # Russian
+```
 
 ## Repositories
 
@@ -26,6 +38,7 @@ Unified documentation hub for the **celestia-island** ecosystem.
 
 ## Conventions
 
+- `en/` is the canonical source; translations live in their respective language directories.
 - `core/` subdirectories contain documentation for **entelecheia**.
 - `webui/` subdirectories contain documentation for **shittim-chest**.
-- Only English source documents live here; per-repo translated copies remain in their respective repositories.
+- Each document begins with TOML frontmatter (`+++` / `+++`).
