@@ -184,7 +184,6 @@ pub enum FileType {
 
 #### 1.3 `.d.ts` File Layout
 
-```
 ```mermaid
 flowchart LR
     Bindings["bindings/\nts-rs default export directory"] --> Types["types/"]
@@ -207,7 +206,6 @@ flowchart LR
     ApiDir --> OrexisA["orexis.d.ts"]
     ApiDir --> HubrisA["hubris.d.ts"]
     ApiDir --> DotsA["... (on demand)"]
-```
 ```
 
 #### 1.4 Hand-Written API `.d.ts` Example
@@ -298,14 +296,12 @@ swc_core = { version = "65", features = [
 
 New `iepl/` module under `packages/agents/skemma/src/`:
 
-```
 ```mermaid
 flowchart LR
     IeplMod["packages/agents/skemma/src/iepl/"] --> ModRs["mod.rs\nModule entry point"]
     IeplMod --> EngineRs["engine.rs\nIEPL core engine (parse → validate → strip → codegen)"]
     IeplMod --> AstRs["ast_validator.rs\nAST safety validator"]
     IeplMod --> TypeIdx["type_index.rs\nType index (built from .d.ts)"]
-```
 ```
 
 ##### engine.rs — Core Transpilation Flow
@@ -689,7 +685,6 @@ swc_core = { version = "65", features = [
 
 ## New Crate Structure
 
-```
 ```mermaid
 flowchart LR
     SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
@@ -706,7 +701,6 @@ flowchart LR
     BApi --> BA1["kalos.d.ts"]
     BApi --> BA2["neikos.d.ts"]
     BApi --> BA3["..."]
-```
 ```
 
 ## Implementation Path

@@ -184,7 +184,6 @@ pub enum FileType {
 
 #### 1.3 `.d.ts`ファイルレイアウト
 
-```
 ```mermaid
 flowchart LR
     Bindings["bindings/\nts-rsのデフォルトエクスポートディレクトリ"] --> Types["types/"]
@@ -207,7 +206,6 @@ flowchart LR
     ApiDir --> OrexisA["orexis.d.ts"]
     ApiDir --> HubrisA["hubris.d.ts"]
     ApiDir --> DotsA["... (オンデマンド)"]
-```
 ```
 
 #### 1.4 手書きAPI `.d.ts`の例
@@ -298,14 +296,12 @@ swc_core = { version = "65", features = [
 
 `packages/agents/skemma/src/`の下に新しい`iepl/`モジュール：
 
-```
 ```mermaid
 flowchart LR
     IeplMod["packages/agents/skemma/src/iepl/"] --> ModRs["mod.rs\nモジュールエントリポイント"]
     IeplMod --> EngineRs["engine.rs\nIEPLコアエンジン（parse → validate → strip → codegen）"]
     IeplMod --> AstRs["ast_validator.rs\nAST安全バリデータ"]
     IeplMod --> TypeIdx["type_index.rs\n型インデックス（.d.tsから構築）"]
-```
 ```
 
 ##### engine.rs — コアトランスパイルフロー
@@ -689,7 +685,6 @@ swc_core = { version = "65", features = [
 
 ## 新しいクレート構造
 
-```
 ```mermaid
 flowchart LR
     SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
@@ -706,7 +701,6 @@ flowchart LR
     BApi --> BA1["kalos.d.ts"]
     BApi --> BA2["neikos.d.ts"]
     BApi --> BA3["..."]
-```
 ```
 
 ## 実装パス

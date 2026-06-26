@@ -184,7 +184,6 @@ pub enum FileType {
 
 #### 1.3 `.d.ts` 文件布局
 
-```
 ```mermaid
 flowchart LR
     Bindings["bindings/\nts-rs 默认导出目录"] --> Types["types/"]
@@ -207,7 +206,6 @@ flowchart LR
     ApiDir --> OrexisA["orexis.d.ts"]
     ApiDir --> HubrisA["hubris.d.ts"]
     ApiDir --> DotsA["...（按需）"]
-```
 ```
 
 #### 1.4 手写 API `.d.ts` 示例
@@ -298,14 +296,12 @@ swc_core = { version = "65", features = [
 
 `packages/agents/skemma/src/` 下的新 `iepl/` 模块：
 
-```
 ```mermaid
 flowchart LR
     IeplMod["packages/agents/skemma/src/iepl/"] --> ModRs["mod.rs\n模块入口点"]
     IeplMod --> EngineRs["engine.rs\nIEPL 核心引擎（解析 → 验证 → 剥离 → 代码生成）"]
     IeplMod --> AstRs["ast_validator.rs\nAST 安全验证器"]
     IeplMod --> TypeIdx["type_index.rs\n类型索引（从 .d.ts 构建）"]
-```
 ```
 
 ##### engine.rs — 核心转译流程
@@ -689,7 +685,6 @@ swc_core = { version = "65", features = [
 
 ## 新 Crate 结构
 
-```
 ```mermaid
 flowchart LR
     SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
@@ -706,7 +701,6 @@ flowchart LR
     BApi --> BA1["kalos.d.ts"]
     BApi --> BA2["neikos.d.ts"]
     BApi --> BA3["..."]
-```
 ```
 
 ## 实现路径

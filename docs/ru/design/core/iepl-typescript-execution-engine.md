@@ -184,7 +184,6 @@ pub enum FileType {
 
 #### 1.3 Структура Файлов `.d.ts`
 
-```
 ```mermaid
 flowchart LR
     Bindings["bindings/\nдиректория экспорта ts-rs по умолчанию"] --> Types["types/"]
@@ -207,7 +206,6 @@ flowchart LR
     ApiDir --> OrexisA["orexis.d.ts"]
     ApiDir --> HubrisA["hubris.d.ts"]
     ApiDir --> DotsA["... (по требованию)"]
-```
 ```
 
 #### 1.4 Пример Написанного Вручную `.d.ts` API
@@ -298,14 +296,12 @@ swc_core = { version = "65", features = [
 
 Новый модуль `iepl/` в `packages/agents/skemma/src/`:
 
-```
 ```mermaid
 flowchart LR
     IeplMod["packages/agents/skemma/src/iepl/"] --> ModRs["mod.rs\nТочка входа модуля"]
     IeplMod --> EngineRs["engine.rs\nЯдро движка IEPL (разбор → проверка → удаление → генерация кода)"]
     IeplMod --> AstRs["ast_validator.rs\nВалидатор безопасности AST"]
     IeplMod --> TypeIdx["type_index.rs\nИндекс типов (построен из .d.ts)"]
-```
 ```
 
 ##### engine.rs — Основной Поток Транспиляции
@@ -689,7 +685,6 @@ swc_core = { version = "65", features = [
 
 ## Новая Структура Крейтов
 
-```
 ```mermaid
 flowchart LR
     SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
@@ -706,7 +701,6 @@ flowchart LR
     BApi --> BA1["kalos.d.ts"]
     BApi --> BA2["neikos.d.ts"]
     BApi --> BA3["..."]
-```
 ```
 
 ## Путь Реализации
