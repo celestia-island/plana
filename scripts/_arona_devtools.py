@@ -9,9 +9,9 @@ shared code.
 
 Locating a cargo-[patch]-ed source crate is the same algorithm everywhere
 (env var → cargo [patch] path → sibling checkout → last-resort git clone into
-targets/), so it is exposed as the generic `find_patched_crate`. arona locates
-itself with it; shittim-chest reuses the SAME call to locate entelecheia —
-only the crate name / env var differ.
+cargo's own `target/` dir), so it is exposed as the generic `find_patched_crate`.
+arona locates itself with it; shittim-chest reuses the SAME call to locate
+entelecheia — only the crate name / env var differ.
 
 Usage:
     python scripts/_arona_devtools.py <module> [args...]   # delegate
@@ -30,7 +30,10 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ARONA_GIT = os.environ.get("ARONA_GIT", "https://github.com/celestia-island/arona.git")
-TARGETS_DIR = os.environ.get("CELESTIA_TARGETS_DIR", "targets")
+# Last-resort clone destination lives INSIDE cargo's own `target/` dir (already
+# gitignored everywhere), so no separate scratch dir or ignore rule is needed.
+# Override with CELESTIA_DEV_TARGET_DIR if you really must.
+TARGET_DIR = os.environ.get("CELESTIA_DEV_TARGET_DIR", "target")
 
 
 def _stderr(level: str, msg: str) -> None:
@@ -51,19 +54,23 @@ def find_patched_crate(
 ) -> Path | None:
     """Resolve the checkout of a cargo path/git-patched crate.
 
-    Priority:
+    Priority (cheap first, so the common case never walks the tree):
       1. $env_var
       2. a `crate = { path = ".." }` under any [patch.*] in ~/.cargo/config.toml
-         or this repo's Cargo.toml(s)
+         or this repo's top-level Cargo.toml
       3. a sibling `../<crate>` checkout (the org dev layout)
-      4. shallow `git clone` into <repo_root>/<targets>/<crate>-shared
+      4. (fallback) the same [patch] search across nested Cargo.toml files,
+         pruning target/ / node_modules / .git so a 30+ GiB target/ doesn't
+         make every invocation stall for a minute
+      5. shallow `git clone` into <repo_root>/target/<crate>-shared
 
     `marker` is a path relative to the crate root whose presence confirms a
-    valid checkout (e.g. scripts/utils/cargo_cache_guard.py for arona,
-    packages/scepter for entelecheia). Returns the resolved root, or None.
+    valid checkout. Returns the resolved root, or None.
     """
+    import os
+
     def _ok(cand: Path) -> bool:
-        return (cand / marker).exists()
+        return cand and (cand / marker).exists()
 
     # 1. explicit override
     if env := os.environ.get(env_var):
@@ -71,31 +78,49 @@ def find_patched_crate(
         if _ok(c):
             return c.resolve()
 
-    # 2. cargo [patch] path = "..." (git-patched deps are left to cargo fetch)
     pat = re.compile(
         rf'\b{re.escape(crate)}\s*=\s*\{{\s*[^}}]*\bpath\s*=\s*"([^"]+)"', re.S,
     )
-    cfgs = [Path.home() / ".cargo" / "config.toml", repo_root / "Cargo.toml"]
-    cfgs += list(repo_root.glob("**/Cargo.toml"))
-    for cfg in cfgs:
-        try:
-            text = cfg.read_text(errors="ignore")
-        except OSError:
-            continue
+
+    def _check_cfg(text: str, base: Path) -> Path | None:
         for m in pat.finditer(text):
             p = Path(m.group(1))
             if not p.is_absolute():
-                p = cfg.parent / p
+                p = base / p
             if _ok(p):
                 return p.resolve()
+        return None
+
+    # 2. the two config files that almost always carry the org-wide patch
+    for cfg in (Path.home() / ".cargo" / "config.toml", repo_root / "Cargo.toml"):
+        try:
+            hit = _check_cfg(cfg.read_text(errors="ignore"), cfg.parent)
+        except OSError:
+            hit = None
+        if hit:
+            return hit
 
     # 3. sibling layout
     sib = repo_root.parent / crate
     if _ok(sib):
         return sib.resolve()
 
-    # 4. last resort: clone into the repo's targets/ scratch dir
-    clone = repo_root / TARGETS_DIR / (clone_subdir or f"{crate}-shared")
+    # 4. fallback: scan nested Cargo.toml, pruning heavy dirs
+    _SKIP_DIRS = {"target", "node_modules", ".git", ".next", "dist", "build"}
+    for root, dirs, files in os.walk(repo_root):
+        dirs[:] = [d for d in dirs if d not in _SKIP_DIRS]
+        if "Cargo.toml" not in files:
+            continue
+        cfg = Path(root) / "Cargo.toml"
+        try:
+            hit = _check_cfg(cfg.read_text(errors="ignore"), cfg.parent)
+        except OSError:
+            hit = None
+        if hit:
+            return hit
+
+    # 5. last resort: clone into the repo's cargo target/ dir (already ignored)
+    clone = repo_root / TARGET_DIR / (clone_subdir or f"{crate}-shared")
     if not _ok(clone):
         try:
             clone.parent.mkdir(parents=True, exist_ok=True)
