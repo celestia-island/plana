@@ -1109,7 +1109,7 @@ entelecheia는 두 가지 목적으로 [pglite-oxide](https://crates.io/crates/p
 
 ```mermaid
 flowchart TB
-    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ◄── dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ← dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
 
     Cargo -->|"cargo build (기본)"| Dev["pglite-oxide + wasmer WASM<br/>포함됨"]
     Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["pglite 없음, wasmer 없음<br/>(프로덕션)"]

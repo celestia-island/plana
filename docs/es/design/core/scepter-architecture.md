@@ -1109,7 +1109,7 @@ Anteriormente, el desarrollo local requería Docker Compose o una instalación m
 
 ```mermaid
 flowchart TB
-    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ◄── dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ← dev<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
 
     Cargo -->|"cargo build (predeterminado)"| Dev["pglite-oxide + wasmer WASM<br/>incluido"]
     Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["Sin pglite, sin wasmer<br/>(producción)"]

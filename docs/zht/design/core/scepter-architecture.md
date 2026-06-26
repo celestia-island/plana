@@ -1085,7 +1085,7 @@ entelecheia 使用 [pglite-oxide](https://crates.io/crates/pglite-oxide) 作為�
 
 ```mermaid
 flowchart TB
-    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ◄── 開發<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
+    Cargo["scepter Cargo.toml<br/>[features] default = ['all-agents', 'embedded-db']  ← 開發<br/>embedded-db = ['dep:pglite-oxide']<br/>[dependencies] pglite-oxide = { workspace = true, optional = true }"]
 
     Cargo -->|"cargo build（預設）"| Dev["pglite-oxide + wasmer WASM<br/>包含"]
     Cargo -->|"Dockerfile<br/>--no-default-features<br/>--features all-agents"| Prod["無 pglite，無 wasmer<br/>（正式環境）"]
