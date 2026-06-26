@@ -5,36 +5,59 @@
 
 # Arona
 
-**Shared JSON-RPC 2.0 Protocol Types for the Entelecheia Multi-Agent Platform**
+**Shared protocol types, TypeScript bindings, devtools, and documentation hub for the Entelecheia Multi-Agent Platform**
 
 [![License](https://img.shields.io/badge/license-BSL--1.1-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org/)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
-
-**[English](README.md)** &bull; **[简体中文](docs/guides/zhs/README.md)** &bull;
-**[繁體中文](docs/guides/zht/README.md)** &bull; **[日本語](docs/guides/ja/README.md)** &bull;
-**[한국어](docs/guides/ko/README.md)** &bull; **[Français](docs/guides/fr/README.md)** &bull;
-**[Español](docs/guides/es/README.md)** &bull; **[Русский](docs/guides/ru/README.md)**
 
 </div>
 <!-- markdownlint-enable MD033 MD041 MD036 -->
 
 > **Version 0.1.0** — Consumed by [entelecheia](https://github.com/celestia-island/entelecheia) and [shittim-chest](https://github.com/celestia-island/shittim-chest).
 
-JSON-RPC 2.0 message types, agent taxonomy (14 variants), ~100 WebSocket parameter types. Auto-generated TypeScript bindings via `ts-rs`.
+## Repository Structure
 
-## Usage
+Arona is a monorepo that serves as the **central hub** for the celestia-island ecosystem:
 
-**Rust:**
+```
+arona/
+├── docs/                # Unified documentation for the entire ecosystem
+│   ├── meta/            # CLA, CoC, SECURITY, CONTRIBUTING (canonical)
+│   ├── architecture/    # Architecture overviews (core/, webui/)
+│   ├── design/          # Design documents (core/, webui/)
+│   ├── guides/          # User & contributor guides (core/, webui/)
+│   └── licenses/        # Translated legal documents
+├── packages/
+│   ├── protocol/        # Rust crate — JSON-RPC 2.0 & API types
+│   ├── bindings/        # TypeScript bindings (auto-generated via ts-rs)
+│   └── devtools/        # Shared Python build scripts
+└── ...
+```
+
+## Packages
+
+### `packages/protocol` (Rust crate)
+
+JSON-RPC 2.0 message types, agent taxonomy (16 variants), ~230 WebSocket/HTTP parameter types.
+
+**Rust usage:**
 ```toml
 [dependencies]
 arona = { git = "https://github.com/celestia-island/arona.git", branch = "master" }
 ```
 
-**TypeScript:**
+### `packages/bindings` (TypeScript)
+
+Auto-generated TypeScript bindings from the Rust crate via `ts-rs`.
+
 ```bash
 pnpm add @celestia-island/arona
 ```
+
+### `packages/devtools` (Python)
+
+Shared build/dev scripts (cargo cache guard, logger, offline prefetch) used across all celestia-island repos.
 
 ## License
 
