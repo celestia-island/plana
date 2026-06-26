@@ -13,8 +13,8 @@ pub mod mcp;
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;
 
-use serde::{Deserialize, Serialize};
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 // ═══════════════════════════════════════════════════════════════
