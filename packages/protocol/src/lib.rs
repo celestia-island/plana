@@ -40,6 +40,7 @@ pub enum Agent {
     ClassicSoftwareEngineering,
     WebUiPanel,
     IndustrialIoT,
+    RemoteOperations,
 }
 
 #[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
