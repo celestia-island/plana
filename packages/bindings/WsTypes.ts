@@ -171,6 +171,14 @@ export type BaseErrorParams = { code: string; message: string };
 
 export type BaseHeartbeatParams = { timestamp: bigint };
 
+/**
+ * `Tui.BridgeNetwork` — the host/workspace roster response/push.
+ */
+export type BridgeNetworkParams = {
+  hosts: Array<HostMetrics>;
+  workspaces: Array<WorkspaceNode>;
+};
+
 export type ClientCapability =
   | "file_relay"
   | "terminal"
@@ -426,6 +434,36 @@ export type GlobalSnapshotData = {
 export type GlobalSnapshotParams = { snapshot: GlobalSnapshotData };
 
 export type HandshakeAckParams = { ok: boolean; error?: string };
+
+/**
+ * Live performance snapshot for one host machine.
+ */
+export type HostMetrics = {
+  /**
+   * Stable host id ("localhost" for self, or a polemos device id).
+   */
+  host_id: string;
+  hostname: string;
+  os: string;
+  /**
+   * CPU utilisation, 0..100.
+   */
+  cpu_usage_percent: number;
+  /**
+   * Logical CPU core count (shown with an i18n "cores" unit).
+   */
+  cpu_cores: number;
+  mem_used_bytes: bigint;
+  mem_total_bytes: bigint;
+  /**
+   * Outbound network rate (bytes/sec). Omitted when unknown.
+   */
+  net_up_bps?: bigint;
+  /**
+   * Inbound network rate (bytes/sec). Omitted when unknown.
+   */
+  net_down_bps?: bigint;
+};
 
 export type IndustrialAlarmAckParams = {
   station_id: string;
@@ -819,6 +857,11 @@ export type ReportType =
   | "pending";
 
 /**
+ * `Tui.RequestBridgeNetwork` — request the host/workspace roster.
+ */
+export type RequestBridgeNetworkParams = Record<symbol, never>;
+
+/**
  * `Tui.RequestFileRead` — read a single (text) file, capped server-side.
  */
 export type RequestFileReadParams = { target: FileTarget; path: string };
@@ -1156,6 +1199,44 @@ export type WorkStatus =
   | "ToolLoopTerminated"
   | "CallingTool";
 
+/**
+ * noa-git status for a workspace checkout (branch / dirty / ahead / behind).
+ */
+export type WorkspaceGitStatus = {
+  branch: string;
+  /**
+   * Modified/untracked file count.
+   */
+  modified: number;
+  /**
+   * Commits ahead of upstream.
+   */
+  ahead: number;
+  /**
+   * Commits behind upstream.
+   */
+  behind: number;
+  /**
+   * `true` when there are uncommitted changes.
+   */
+  dirty: boolean;
+};
+
+/**
+ * A workspace attached to a host, with its git + token-usage summary.
+ */
+export type WorkspaceNode = {
+  workspace_id: string;
+  host_id: string;
+  path: string;
+  alias?: string;
+  git?: WorkspaceGitStatus;
+  /**
+   * Top token consumers in this workspace (max 3).
+   */
+  token_usage: Array<WorkspaceTokenUsage>;
+};
+
 export type WorkspaceStatusParams = {
   workspace_id: string;
   display_name?: string;
@@ -1164,6 +1245,15 @@ export type WorkspaceStatusParams = {
   remote_url?: string;
   branch?: string;
   host_id?: string;
+};
+
+/**
+ * One agent's token usage within a workspace (top-N entries).
+ */
+export type WorkspaceTokenUsage = {
+  agent: string;
+  input: bigint;
+  output: bigint;
 };
 
 export type WriteApprovalRequest = {
