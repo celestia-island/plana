@@ -1,108 +1,108 @@
 +++
-title = "RBAC 系统详细设计文档"
-description = """为 Shittim Chest 实现完整的基于角色的访问控制系统，支持："""
+title = "RBAC System Design"
+description = "Comprehensive role-based access control system for Shittim Chest"
 lang = "en"
 category = "design"
 subcategory = "webui"
 +++
 
-# RBAC 系统详细设计文档
+# RBAC System Design
 
-## 1. 目标
+## 1. Objectives
 
-为 Shittim Chest 实现完整的基于角色的访问控制系统，支持：
+Implement a comprehensive role-based access control system for Shittim Chest, supporting:
 
-- **用户管理**：管理员可邀请/创建/禁用/删除用户
-- **群组管理**：支持账号组，用户可属于多个群组
-- **细粒度权限**：控制用户能否添加/修改/使用特定的模型提供商、MCP 工具、Layer3 Agent、IM 通道等
-- **功能开关**：控制用户能否使用自动巡航模式等高级功能
-- **灵活授权模式**：管理员可选择全局统一配置、各个账号单独配置或账号组共享
+- **User management**: Admins can invite/create/disable/delete users
+- **Group management**: Support for account groups; users may belong to multiple groups
+- **Fine-grained permissions**: Control whether users can add/modify/use specific model providers, MCP tools, Layer3 agents, IM channels, etc.
+- **Feature toggles**: Control whether users can use advanced features such as cruise control mode
+- **Flexible authorization modes**: Admins can choose global uniform config, per-user config, or group-shared config
 
-## 2. 核心概念
+## 2. Core Concepts
 
-### 2.1 角色 (Role)
+### 2.1 Roles
 
-| 角色 | 说明 |
-|------|------|
-| `admin` | 超级管理员，拥有所有权限，可管理 RBAC 本身 |
-| `operator` | 运营人员，可管理大部分资源（提供商、通道、Agent 等） |
-| `member` | 普通成员，可使用被授权的资源 |
-| `viewer` | 只读用户，仅可查看，不可修改 |
+| Role | Description |
+|------|-------------|
+| `admin` | Super administrator with all permissions; can manage RBAC itself |
+| `operator` | Operations staff; can manage most resources (providers, channels, agents, etc.) |
+| `member` | Regular member; can use authorized resources |
+| `viewer` | Read-only user; can view but not modify |
 
-角色是**预设的**，不提供自定义角色（简化实现）。每个用户可以有一个主角色。
+Roles are **preset** — custom roles are not supported (to simplify implementation). Each user has one primary role.
 
-### 2.2 权限 (Permission)
+### 2.2 Permissions
 
-权限格式：`<resource>.<action>`
+Permission format: `<resource>.<action>`
 
-| 类别 | 权限 | 说明 |
-|------|------|------|
-| **提供商** | `provider.list` | 查看提供商列表 |
-| | `provider.create` | 添加提供商 |
-| | `provider.update` | 修改提供商配置 |
-| | `provider.delete` | 删除提供商 |
-| | `provider.use` | 使用提供商的模型进行对话 |
-| **MCP 工具** | `mcp.list` | 查看 MCP 工具列表 |
-| | `mcp.create` | 注册 MCP 工具 |
-| | `mcp.update` | 修改 MCP 工具配置 |
-| | `mcp.delete` | 删除 MCP 工具 |
-| | `mcp.use` | 在对话中使用 MCP 工具 |
-| **Agent** | `agent.list` | 查看 Agent 列表 |
-| | `agent.create` | 创建 Agent |
-| | `agent.update` | 修改 Agent 配置 |
-| | `agent.delete` | 删除 Agent |
-| | `agent.use` | 在分析模式中使用 Agent |
-| **IM 通道** | `channel.list` | 查看 IM 通道列表 |
-| | `channel.create` | 创建 IM 通道 |
-| | `channel.update` | 修改通道配置 |
-| | `channel.delete` | 删除通道 |
-| | `channel.use` | 通过通道收发消息 |
-| **巡航模式** | `yolo.use` | 使用自动巡航模式 |
-| **工作区** | `workspace.list` | 查看工作区 |
-| | `workspace.create` | 创建工作区 |
-| | `workspace.manage` | 管理工作区（删除、导出） |
-| **设备** | `device.list` | 查看远程设备 |
-| | `device.connect` | 连接远程设备 |
-| **系统** | `system.read` | 查看系统设置 |
-| | `system.write` | 修改系统设置 |
-| | `rbac.manage` | 管理 RBAC（用户/群组/权限） |
-| **OAuth** | `oauth.read` | 查看 OAuth 配置 |
-| | `oauth.write` | 修改 OAuth 配置 |
+| Category | Permission | Description |
+|----------|------------|-------------|
+| **Providers** | `provider.list` | View provider list |
+| | `provider.create` | Add a provider |
+| | `provider.update` | Modify provider configuration |
+| | `provider.delete` | Delete a provider |
+| | `provider.use` | Use a provider's models for chat |
+| **MCP Tools** | `mcp.list` | View MCP tool list |
+| | `mcp.create` | Register an MCP tool |
+| | `mcp.update` | Modify MCP tool configuration |
+| | `mcp.delete` | Delete an MCP tool |
+| | `mcp.use` | Use MCP tools in conversations |
+| **Agents** | `agent.list` | View agent list |
+| | `agent.create` | Create an agent |
+| | `agent.update` | Modify agent configuration |
+| | `agent.delete` | Delete an agent |
+| | `agent.use` | Use agents in analysis mode |
+| **IM Channels** | `channel.list` | View IM channel list |
+| | `channel.create` | Create an IM channel |
+| | `channel.update` | Modify channel configuration |
+| | `channel.delete` | Delete a channel |
+| | `channel.use` | Send/receive messages through a channel |
+| **Cruise Mode** | `yolo.use` | Use autonomous cruise control mode |
+| **Workspaces** | `workspace.list` | View workspaces |
+| | `workspace.create` | Create a workspace |
+| | `workspace.manage` | Manage workspaces (delete, export) |
+| **Devices** | `device.list` | View remote devices |
+| | `device.connect` | Connect to a remote device |
+| **System** | `system.read` | View system settings |
+| | `system.write` | Modify system settings |
+| | `rbac.manage` | Manage RBAC (users/groups/permissions) |
+| **OAuth** | `oauth.read` | View OAuth configuration |
+| | `oauth.write` | Modify OAuth configuration |
 
-### 2.3 角色默认权限
+### 2.3 Default Role Permissions
 
-| 权限 | admin | operator | member | viewer |
-|------|-------|----------|--------|--------|
+| Permission | admin | operator | member | viewer |
+|------------|-------|----------|--------|--------|
 | `provider.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `mcp.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `agent.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `channel.*` | ✅ | ✅ | `list` + `use` | `list` |
-| `yolo.use` | ✅ | ✅ | ❌ (默认关闭) | ❌ |
+| `yolo.use` | ✅ | ✅ | ❌ (off by default) | ❌ |
 | `workspace.*` | ✅ | ✅ | `list` + `create` | `list` |
 | `device.*` | ✅ | ✅ | `list` + `connect` | `list` |
 | `system.*` | ✅ | ❌ | ❌ | ❌ |
 | `rbac.manage` | ✅ | ❌ | ❌ | ❌ |
 | `oauth.*` | ✅ | ✅ | ❌ | ❌ |
 
-### 2.4 授权模式
+### 2.4 Authorization Modes
 
-对于提供商、MCP、Agent、通道等资源，支持三种授权模式：
+For resources such as providers, MCP, agents, channels, etc., three authorization modes are supported:
 
-| 模式 | 说明 | 适用场景 |
-|------|------|---------|
-| **全局配置** | 所有用户共享相同的权限 | 小团队、个人使用 |
-| **按用户配置** | 每个用户有独立的资源权限 | 需要精细控制的场景 |
-| **按群组配置** | 同一群组的用户共享权限 | 按部门/团队划分 |
+| Mode | Description | Use case |
+|------|-------------|----------|
+| **Global config** | All users share the same permissions | Small teams, personal use |
+| **Per-user config** | Each user has independent resource permissions | Scenarios requiring fine-grained control |
+| **Per-group config** | Users in the same group share permissions | Department/team-based partitioning |
 
-管理员在「权限矩阵」页面中选择授权模式，然后配置具体的允许/拒绝规则。
+The admin selects an authorization mode on the "Permission Matrix" page, then configures specific allow/deny rules.
 
-**优先级**：按用户配置 > 按群组配置 > 全局配置 > 角色默认权限
+**Priority**: Per-user > Per-group > Global > Role defaults
 
-## 3. 数据库 Schema
+## 3. Database Schema
 
-### 3.1 新增表
+### 3.1 New Tables
 
-#### `rbac_groups` — 用户群组
+#### `rbac_groups` — User groups
 
 ```sql
 CREATE TABLE rbac_groups (
@@ -114,7 +114,7 @@ CREATE TABLE rbac_groups (
 );
 ```
 
-#### `rbac_user_groups` — 用户-群组关联
+#### `rbac_user_groups` — User-group association
 
 ```sql
 CREATE TABLE rbac_user_groups (
@@ -126,22 +126,22 @@ CREATE TABLE rbac_user_groups (
 );
 ```
 
-#### `rbac_grants` — 权限授予（统一表）
+#### `rbac_grants` — Permission grants (unified table)
 
 ```sql
 CREATE TABLE rbac_grants (
     id           UUID PRIMARY KEY,
-    -- 授权目标（三选一）
+    -- Grant target (exactly one)
     scope        VARCHAR(16) NOT NULL, -- 'global' | 'group' | 'user'
     user_id      UUID REFERENCES auth_users(id) ON DELETE CASCADE,
     group_id     UUID REFERENCES rbac_groups(id) ON DELETE CASCADE,
-    -- 权限
+    -- Permission
     permission   VARCHAR(64) NOT NULL, -- e.g. 'provider.use', 'yolo.use'
-    resource_id  VARCHAR(128),         -- 可选：限定到特定资源 (provider name, channel id 等)，NULL 表示该类别全部资源
-    -- 授权类型
-    granted      BOOLEAN NOT NULL DEFAULT TRUE, -- TRUE=允许, FALSE=拒绝
+    resource_id  VARCHAR(128),         -- Optional: restrict to a specific resource (provider name, channel id, etc.); NULL means all resources in the category
+    -- Grant type
+    granted      BOOLEAN NOT NULL DEFAULT TRUE, -- TRUE=allow, FALSE=deny
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 约束：scope 和对应的 FK 必须一致
+    -- Constraint: scope and corresponding FK must be consistent
     CONSTRAINT rbac_grants_scope_check CHECK (
         (scope = 'global' AND user_id IS NULL AND group_id IS NULL) OR
         (scope = 'user'   AND user_id IS NOT NULL AND group_id IS NULL) OR
@@ -153,147 +153,147 @@ CREATE INDEX idx_rbac_grants_group ON rbac_grants(group_id);
 CREATE INDEX idx_rbac_grants_permission ON rbac_grants(permission);
 ```
 
-### 3.2 修改现有表
+### 3.2 Modifying Existing Tables
 
-#### `auth_users` 增加角色字段
+#### Add role field to `auth_users`
 
 ```sql
 ALTER TABLE auth_users ADD COLUMN role VARCHAR(16) NOT NULL DEFAULT 'member';
--- 迁移：is_admin=true 的用户设为 'admin'
+-- Migration: set users with is_admin=true to 'admin'
 UPDATE auth_users SET role = 'admin' WHERE is_admin = TRUE;
 ```
 
-保留 `is_admin` 字段做兼容，但新代码优先使用 `role`。
+The `is_admin` field is kept for backward compatibility, but new code uses `role` first.
 
-### 3.3 权限检查逻辑（伪代码）
+### 3.3 Permission Check Logic (pseudocode)
 
 ```rust
 fn has_permission(user, permission, resource_id=None) -> bool {
-    // 1. admin 角色直接通过
+    // 1. admin role always passes
     if user.role == "admin" { return true; }
 
-    // 2. 收集所有匹配的 grants，按优先级排序
+    // 2. Collect all matching grants, sorted by priority
     let grants = [];
 
-    // 2a. 角色默认权限（最低优先级）
+    // 2a. Role defaults (lowest priority)
     grants.push(role_defaults(user.role, permission));
 
-    // 2b. 全局配置
+    // 2b. Global config
     grants.extend(query_grants(scope="global", permission, resource_id));
 
-    // 2c. 群组配置（用户所属的所有群组）
+    // 2c. Group config (all groups the user belongs to)
     for group in user.groups:
         grants.extend(query_grants(scope="group", group_id=group.id, permission, resource_id));
 
-    // 2d. 用户级别配置（最高优先级）
+    // 2d. User-level config (highest priority)
     grants.extend(query_grants(scope="user", user_id=user.id, permission, resource_id));
 
-    // 3. 按优先级：user > group > global > role_default
-    // 同一 scope 内，denied 优先于 granted
-    // 有任何 user scope denied → 拒绝
-    // 有任何 group scope denied → 拒绝（除非 user scope granted）
-    // 最终结果
+    // 3. Priority: user > group > global > role_default
+    // Within the same scope, denied takes precedence over granted
+    // Any user-scope denied → deny
+    // Any group-scope denied → deny (unless user-scope granted)
+    // Final result
     resolve_grants(grants)
 }
 ```
 
-## 4. API 设计
+## 4. API Design
 
-### 4.1 用户管理 (`/api/rbac/users`)
+### 4.1 User Management (`/api/rbac/users`)
 
-| 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
-| GET | `/api/rbac/users` | `rbac.manage` | 列出所有用户（含角色、群组） |
-| POST | `/api/rbac/users` | `rbac.manage` | 邀请用户（发邮件或创建账号） |
-| PUT | `/api/rbac/users/:id` | `rbac.manage` | 更新用户角色、启用/禁用 |
-| DELETE | `/api/rbac/users/:id` | `rbac.manage` | 删除用户 |
+| Method | Path | Permission | Description |
+|--------|------|------------|-------------|
+| GET | `/api/rbac/users` | `rbac.manage` | List all users (with role, groups) |
+| POST | `/api/rbac/users` | `rbac.manage` | Invite a user (send email or create account) |
+| PUT | `/api/rbac/users/:id` | `rbac.manage` | Update user role, enable/disable |
+| DELETE | `/api/rbac/users/:id` | `rbac.manage` | Delete a user |
 
-### 4.2 群组管理 (`/api/rbac/groups`)
+### 4.2 Group Management (`/api/rbac/groups`)
 
-| 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
-| GET | `/api/rbac/groups` | `rbac.manage` | 列出所有群组 |
-| POST | `/api/rbac/groups` | `rbac.manage` | 创建群组 |
-| PUT | `/api/rbac/groups/:id` | `rbac.manage` | 更新群组（名称、描述） |
-| DELETE | `/api/rbac/groups/:id` | `rbac.manage` | 删除群组 |
-| POST | `/api/rbac/groups/:id/members` | `rbac.manage` | 添加成员 |
-| DELETE | `/api/rbac/groups/:id/members/:userId` | `rbac.manage` | 移除成员 |
+| Method | Path | Permission | Description |
+|--------|------|------------|-------------|
+| GET | `/api/rbac/groups` | `rbac.manage` | List all groups |
+| POST | `/api/rbac/groups` | `rbac.manage` | Create a group |
+| PUT | `/api/rbac/groups/:id` | `rbac.manage` | Update group (name, description) |
+| DELETE | `/api/rbac/groups/:id` | `rbac.manage` | Delete a group |
+| POST | `/api/rbac/groups/:id/members` | `rbac.manage` | Add a member |
+| DELETE | `/api/rbac/groups/:id/members/:userId` | `rbac.manage` | Remove a member |
 
-### 4.3 权限管理 (`/api/rbac/grants`)
+### 4.3 Permission Management (`/api/rbac/grants`)
 
-| 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
-| GET | `/api/rbac/grants` | `rbac.manage` | 列出所有权限规则（支持 ?scope=&permission= 过滤） |
-| PUT | `/api/rbac/grants` | `rbac.manage` | 批量设置权限（传入完整规则列表，覆盖对应 scope 的规则） |
-| DELETE | `/api/rbac/grants/:id` | `rbac.manage` | 删除单条规则 |
+| Method | Path | Permission | Description |
+|--------|------|------------|-------------|
+| GET | `/api/rbac/grants` | `rbac.manage` | List all permission rules (supports ?scope=&permission= filtering) |
+| PUT | `/api/rbac/grants` | `rbac.manage` | Batch set permissions (provide full rule list, overwrites the corresponding scope's rules) |
+| DELETE | `/api/rbac/grants/:id` | `rbac.manage` | Delete a single rule |
 
-### 4.4 权限检查 (`/api/rbac/check`)
+### 4.4 Permission Check (`/api/rbac/check`)
 
-| 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
-| GET | `/api/rbac/check?permission=xxx&resource_id=yyy` | (任何认证用户) | 检查当前用户是否有指定权限 |
-| GET | `/api/rbac/my-permissions` | (任何认证用户) | 返回当前用户的所有有效权限列表 |
+| Method | Path | Permission | Description |
+|--------|------|------------|-------------|
+| GET | `/api/rbac/check?permission=xxx&resource_id=yyy` | (any authenticated user) | Check whether the current user has the specified permission |
+| GET | `/api/rbac/my-permissions` | (any authenticated user) | Return the current user's full list of effective permissions |
 
-### 4.5 资源可见性改造
+### 4.5 Resource Visibility Refactor
 
-现有资源 API 需要增加权限过滤：
+Existing resource APIs need permission filtering:
 
-- `GET /api/chat/providers` → 只返回当前用户有 `provider.list` 权限的提供商，且只展示有 `provider.use` 权限的模型
-- `GET /api/channel` → 只返回有 `channel.list` 权限的通道
-- 巡航模式启动前 → 检查 `yolo.use` 权限
+- `GET /api/chat/providers` → only return providers the current user has `provider.list` permission for, and only show models with `provider.use` permission
+- `GET /api/channel` → only return channels with `channel.list` permission
+- Before starting cruise mode → check `yolo.use` permission
 
-## 5. 前端设计（Plana）
+## 5. Frontend Design
 
-### 5.1 RbacView 重构
+### 5.1 RbacView Refactor
 
-分为三个 Tab：
+Split into three tabs:
 
-#### Tab 1: 用户管理
-- 用户列表表格：头像、用户名、邮箱、角色（下拉切换）、群组标签、状态（活跃/禁用）、操作
-- 邀请用户按钮 → 弹出 Modal（输入用户名/邮箱/密码、选择角色）
-- 行操作：编辑角色、禁用/启用、删除
+#### Tab 1: User Management
+- User list table: avatar, username, email, role (dropdown switch), group tags, status (active/disabled), actions
+- Invite user button → opens modal (enter username/email/password, select role)
+- Row actions: edit role, disable/enable, delete
 
-#### Tab 2: 群组管理
-- 群组列表表格：名称、描述、成员数、操作
-- 创建群组 → 弹出 Modal
-- 点击群组 → 展开成员列表，可添加/移除成员
+#### Tab 2: Group Management
+- Group list table: name, description, member count, actions
+- Create group → opens modal
+- Click a group → expand member list, can add/remove members
 
-#### Tab 3: 权限矩阵
-- 左上角选择授权模式：全局 / 按群组 / 按用户
-- 选择群组或用户后，显示权限矩阵表格：
-  - 行：资源类别（提供商、MCP、Agent、通道、巡航模式...）
-  - 列：操作（列表、创建、修改、删除、使用）
-  - 单元格：三态切换（✅ 允许 / ❌ 拒绝 / ➖ 继承默认）
-- 特定资源 ID 的精细化控制（如只允许使用某个提供商）
+#### Tab 3: Permission Matrix
+- Top-left: select authorization mode: global / per-group / per-user
+- After selecting a group or user, display the permission matrix table:
+  - Rows: resource categories (providers, MCP, agents, channels, cruise mode...)
+  - Columns: actions (list, create, modify, delete, use)
+  - Cells: tri-state toggle (✅ allow / ❌ deny / ➖ inherit default)
+- Fine-grained control for specific resource IDs (e.g., only allow a specific provider)
 
-### 5.2 导航权限控制
+### 5.2 Navigation Permission Control
 
-- 侧边栏项目根据当前用户权限动态显示/隐藏
-- 路由守卫增加权限检查，无权限时跳转到 403 页面
-- 操作按钮（如"添加提供商"）根据权限显示/隐藏
+- Sidebar items dynamically show/hide based on the current user's permissions
+- Route guards add permission checks; redirect to 403 page when unauthorized
+- Action buttons (e.g., "Add Provider") show/hide based on permissions
 
-## 6. 实现步骤
+## 6. Implementation Steps
 
-### Phase 1: 后端基础
-1. 新增数据库迁移（rbac_groups, rbac_user_groups, rbac_grants 表 + auth_users.role 字段）
-2. 新增 SeaORM 实体模型
-3. 实现 RBAC API 路由（users, groups, grants CRUD）
-4. 实现权限检查中间件/extractor
-5. 在 JWT claims 中加入 role 字段
+### Phase 1: Backend Foundation
+1. Add database migration (rbac_groups, rbac_user_groups, rbac_grants tables + auth_users.role field)
+2. Add SeaORM entity models
+3. Implement RBAC API routes (users, groups, grants CRUD)
+4. Implement permission check middleware/extractor
+5. Add role field to JWT claims
 
-### Phase 2: 后端集成
-6. 在现有资源 API（providers, channels 等）中加入权限检查
-7. 实现 `/api/rbac/check` 和 `/api/rbac/my-permissions`
-8. 修改 arona 的资源请求以适配权限过滤
+### Phase 2: Backend Integration
+6. Add permission checks to existing resource APIs (providers, channels, etc.)
+7. Implement `/api/rbac/check` and `/api/rbac/my-permissions`
+8. Modify arona's resource requests to accommodate permission filtering
 
-### Phase 3: 前端 UI
-9. 重构 arona 的 RbacView（用户/群组/权限矩阵三个 Tab）
-10. 实现侧边栏和路由的权限守卫
-11. arona 端根据权限隐藏/禁用功能（如巡航模式按钮）
+### Phase 3: Frontend UI
+9. Refactor arona's RbacView (user/group/permission-matrix tabs)
+10. Implement sidebar and route permission guards
+11. Show/hide features based on permissions in arona (e.g., cruise mode button)
 
-## 7. 安全考虑
+## 7. Security Considerations
 
-- `admin` 角色的权限不可被 rbac_grants 覆盖（硬编码放行）
-- 权限检查在中间件层统一执行，不依赖业务代码手动检查
-- 敏感操作（删除用户、修改权限）记录审计日志
-- JWT 中只包含 role，具体权限每次从 DB 实时查询（避免权限变更后 token 未更新）
+- The `admin` role's permissions cannot be overridden by rbac_grants (hardcoded allow)
+- Permission checks are enforced uniformly at the middleware layer, not relying on business code to manually check
+- Sensitive operations (deleting users, modifying permissions) are recorded in an audit log
+- JWT only contains the role; specific permissions are queried from the DB in real time (to avoid stale tokens after permission changes)
