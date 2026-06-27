@@ -398,7 +398,8 @@ def check_tabs(paths: list[Path]) -> list[str]:
         for lineno, line in enumerate(text.splitlines(), 1):
             if "\t" in line:
                 warnings.append(
-                    f"  {path}:{lineno} contains tab character(s) — use spaces instead"
+                    f"  {path}:{lineno} contains tab character(s) — replace with spaces "
+                    f"(tabs break Mermaid diagram rendering)"
                 )
     return warnings
 
