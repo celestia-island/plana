@@ -19,7 +19,7 @@ Entelecheia는 주요 분할을 완료했습니다: 사용자 대상 셸 레이�
 
 | 저장소 | 범위 |
 |------------|-------|
-| **entelecheia** | Scepter 오케스트레이션, 14개 에이전트 (12개 L1 + 2개 활성 L2; 4개 L2 계획됨), Cosmos/IEPL 런타임, 32개 공유 크레이트 |
+| **entelecheia** | Scepter 오케스트레이션, 16개 에이전트 (12개 L1 + 4개 L2), Cosmos/IEPL 런타임, 32개 공유 크레이트 |
 | **shittim-chest** | arona (채팅 UI 프론트엔드), plana (관리자 UI), `shittim_chest` 백엔드 (axum 프록시 + 인증 + 웹훅), IDE 플러그인, Tauri 앱 |
 
 ## 현재 범위
@@ -47,10 +47,12 @@ Entelecheia는 `packages/scepter`(오케스트레이션 서버)를 중심으로 
 | **WebUI** | 제거됨 — shittim-chest로 이전 | — | ✅ 완료 |
 | **WebUI 프론트엔드** | 제거됨 — shittim-chest로 이전 | — | ✅ 완료 |
 | **Cosmos / JS 런타임** | Boa 엔진, ES 모듈 임포트 디스패치(`__native_dispatch` 내부 해결), 네임스페이스 생성, 서킷 브레이커+재시도 포함 McpRouter. `#[derive(TS)]`의 `.d.ts` 자동 생성이 TypeScript 타입 파일을 채움. 50개 단위 테스트. | SWC TypeScript 트랜스파일 파이프라인 구현 및 테스트 완료(37개 단위 테스트). `in-process-transpile` 기능 플래그가 있는 `shared_iepl::client`를 통해 전체 자동 파이프라인(LLM 출력 → SWC → Boa) 연결 가능. | 🟢 활성 |
-| **14개 에이전트 (12개 L1 + 2개 L2)** | 모든 14개 에이전트가 MCP 도구 구현과 함께 컴파일됨. 총 147개 MCP 도구 — **모두 실제**. 코드베이스에 `unimplemented!()` 또는 `todo!()` 매크로 없음. | 클래식 SE 도구는 메타데이터에서 `maturity: Stub`로 표시되었으나 실제 구현 보유(cargo clippy, eslint, pylint, go vet 서브프로세스 호출; 코드 메트릭; 함수 추출 리팩토링). | 🟢 활성 |
+| **16개 에이전트 (12개 L1 + 4개 L2)** | 모든 16개 에이전트가 MCP 도구 구현과 함께 컴파일됨. 총 147개 MCP 도구 — **모두 실제**. 코드베이스에 `unimplemented!()` 또는 `todo!()` 매크로 없음. | 클래식 SE 도구는 메타데이터에서 `maturity: Stub`로 표시되었으나 실제 구현 보유(cargo clippy, eslint, pylint, go vet 서브프로세스 호출; 코드 메트릭; 함수 추출 리팩토링). | 🟢 활성 |
 | **Layer2: 웹 자동화** | 11개 MCP 도구 — WebDriver 프로토콜을 통한 모든 실제 구현: 세션 관리, 탐색, 스크린샷, 스크립트 실행, 콘솔/네트워크 로그, 키보드, 마우스, 녹화. 10개 도구에 `maturity: Experimental`. | — | 🟢 활성 |
 | **Layer2: 클래식 SE** | 7개 MCP 도구 — 모든 실제 구현: static_analyze (cargo clippy/eslint/pylint/go vet), code_review (긴 함수, 깊은 중첩, 매직 넘버 감지), quality_check (LOC, 복잡도, 등급), refactor_suggest, lsp_diagnose, lsp_symbols, lsp_refactor (실제 이름 변경 및 함수 추출). 2개 단위 테스트. | LSP refactor의 인라인 작업은 미리보기 전용(LSP 서버가 있어야 전체 해결 가능). | 🟢 활성 |
-| **기타 Layer2 설계** | 위 두 가지 외에 추가 도메인 전문가 에이전트 없음; `res/prompts/domain_agents/`는 구현된 에이전트에 대한 설정/스킬 문서만 포함 | `docs/plans/`는 생성된 적 없음 | 🔴 없음 |
+| **Layer2: 산업 IoT** | 7개 MCP 도구 — 모두 실제 구현: modbus_read, modbus_write, s7comm_probe, serial_discover, opcua_browse, opcua_read, opcua_write. 산업 프로토콜 통신 (Modbus RTU/TCP, Siemens S7comm, OPC UA 클라이언트). `maturity: Experimental`. | L2 통합의 일환으로 SkeMma/PoleMos에서 이전됨. | 🟢 활성 |
+| **Layer2: 원격 작업** | 16개 MCP 도구 — 모두 실제 구현: SSH 세션 관리, 원격 명령 실행, 파일 전송 (SFTP), 호스트 정보 수집, GUI 자동화 (X11/VNC 스크린샷, 입력, 탐색), 시스템 모니터링. `maturity: Experimental`. | L2 통합의 일환으로 SkeMma/PoleMos에서 이전됨. | 🟢 활성 |
+| **기타 Layer2 설계** | 계획된 4개의 L2 에이전트가 모두 구현됨. `res/prompts/domain_agents/`는 모든 구현된 에이전트에 대한 설정/스킬 문서를 포함. | `docs/plans/`는 생성된 적 없음 | 🟢 활성 |
 | **컨테이너 격리** | 2계층 런타임: Bollard를 통한 Docker/Podman (외부 오케스트레이션), libcontainer를 통한 Youki/libcontainer (내부 샌드박스). 비루트 사용자, cap_drop=ALL, no-new-privileges, 전용 Docker 네트워크, Unix 소켓 IPC, 생성/포크/병합/재생성 시 리소스 제한(512MB/1CPU/100 PIDs). 사용자 정의 seccomp 프로필. 포크/커밋/스냅샷이 두 백엔드에서 완전히 작동. | AppArmor 프로필 미구현. `read_only_rootfs`가 기본적으로 활성화되지 않음. | 🟡 일부 |
 | **메모리 / RAG** | API 기반 임베딩(OpenAI 호환, SHA-256 해시 폴백, ONNX fastembed BGE-M3). 3개 임베딩 백엔드 완전 구현. PgVector 저장소, 인메모리 벡터 문서, 그래프 탐색, 주변 컨텍스트 주입용 RagContextBuffer. 39개 단위 테스트. | 임베딩→RAG 연결 분리(호출자가 사전 계산된 임베딩 제공). PgVector 경로가 인메모리 폴백보다 새롭고 테스트가 적음. RAG 구독 동기화 예약됨(아직 구현되지 않음). | 🟡 일부 |
 | **IEPL 파이프라인** | Boa 엔진 + MCP 브리지 + 네임스페이스 필터링 + 서킷 브레이커. SWC TypeScript 파싱 구현 및 테스트(37개 단위 테스트). `.d.ts` 자동 생성 작동 중. IEPL 코드 생성(Rust 타입 → TS 선언) 연결됨. `shared_iepl::client`를 통해 TS→JS 트랜스파일 가능(인프로세스 또는 서브프로세스 모드). | Cosmos 컨테이너 실행 경로에 대해 SWC→Boa 체인이 통합되지 않음(사전 스트립된 JS 예상). | 🟡 일부 |
@@ -155,7 +157,7 @@ block-beta
 
 ## 활성 에이전트
 
-워크스페이스는 12개 Layer1 에이전트(129개 MCP 도구)와 2개 활성 Layer2 크레이트(웹 자동화 11개 도구, 클래식 소프트웨어 엔지니어링 7개 도구; 총 148개 MCP 도구)를 컴파일합니다. 모든 에이전트는 MCP 도구 등록을 위해 `agent_mcp_module!` 매크로를 사용합니다. 이 매크로는 사전 디스패치 인터셉션이 필요한 에이전트(예: Skopeo의 `SkillExecutor` 이중 디스패치)를 위해 `skill_routing`을 지원합니다.
+워크스페이스는 12개 Layer1 에이전트(111개 MCP 도구)와 4개 Layer2 크레이트(웹 자동화 11개 도구, 클래식 소프트웨어 엔지니어링 7개 도구, 산업 IoT 7개 도구, 원격 작업 16개 도구)를 컴파일합니다. 모든 에이전트는 MCP 도구 등록을 위해 `agent_mcp_module!` 매크로를 사용합니다. 이 매크로는 사전 디스패치 인터셉션이 필요한 에이전트(예: Skopeo의 `SkillExecutor` 이중 디스패치)를 위해 `skill_routing`을 지원합니다.
 
 **도구 구현 상태:** 모든 147개 도구가 실제 구현을 보유하고 있습니다. 코드베이스 어디에도 `unimplemented!()` 또는 `todo!()` 매크로가 존재하지 않습니다. 실제 로직 없이 단순히 `Ok(())`를 반환하는 도구는 없습니다.
 
@@ -166,20 +168,22 @@ block-beta
 | **HubRis** | 1 | 계획, 할 일 관리, 보고, 이슈 도우미 | 8 | 0 | 65개 테스트 | 🟢 실제 |
 | **KaLos** | 1 | 파일 및 저장소 작업 | 8 | 0 | 20개 테스트 | 🟢 실제 |
 | **NeiKos** | 1 | 컨테이너 생명주기 및 실행 도우미 | 17 | 0 | 14개 테스트 | 🟢 실제 |
-| **SkeMma** | 1 | 스크립트 실행 및 MCP 인접 런타임 동작 | 11 | 0 | 124개 테스트 | 🟢 실제 |
+| **SkeMma** | 1 | 스크립트 실행 및 런타임 샌드박싱 | 2 | 0 | 124개 테스트 | 🟢 실제 |
 | **ApoRia** | 1 | 제공자 설정, 지식 도우미, RAG 도구 | 11 | 0 | 14개 테스트 | 🟢 실제 |
 | **EleOs** | 1 | 웹 검색 및 원격 정보 검색 | 2 | 0 | 11개 테스트 | 🟢 실제 |
 | **EpieiKeia** | 1 | 스케줄링 및 유지보수 도우미 | 8 | 0 | 4개 테스트 | 🟢 실제 |
 | **OreXis** | 1 | 보안 정책 집행(거부목록/허용목록/잠금을 통한 런타임 차단) + 경보 계층 + 감사 보고 | 20 | 0 | 19개 테스트 | 🟢 실제 |
 | **PhiLia** | 1 | 메모리 및 데이터 저장소 관련 함수 | 7 | 0 | 0개 테스트 | 🟡 테스트 커버리지 없음 |
-| **PoleMos** | 1 | 장치, 에지, SSH, 하드웨어 정보 기능 | 24 | 0 | 3개 테스트 | 🟡 낮은 테스트 커버리지 |
+| **PoleMos** | 1 | 호스트 통신 및 하드웨어 원격 측정 | 9 | 0 | 3개 테스트 | 🟡 낮은 테스트 커버리지 |
 | **웹 자동화** | 2 | 브라우저 자동화 (생성, 탐색, 스크린샷, 실행, 콘솔, 네트워크, 키보드, 마우스, 녹화) | 11 | 0 | 3개 테스트 | 🟡 낮은 테스트 커버리지 (`maturity: Experimental`) |
 | **클래식 소프트웨어 엔지니어링** | 2 | 정적 분석, 코드 리뷰, 품질 검사, 리팩토링 제안, LSP 진단/심볼/리팩토링 | 7 | 0 | 2개 테스트 | 🟡 낮은 테스트 커버리지 (메타데이터에서는 `maturity: Stub`이나 실제 구현) |
+| **산업 IoT** | 2 | 산업 프로토콜 통신 (Modbus RTU/TCP, Siemens S7comm, OPC UA 클라이언트) | 7 | 0 | 0개 테스트 | 🟡 낮은 테스트 커버리지 (`maturity: Experimental`) |
+| **원격 작업** | 2 | SSH 원격 실행, 파일 전송, GUI 자동화, 시스템 모니터링 | 16 | 0 | 0개 테스트 | 🟡 낮은 테스트 커버리지 (`maturity: Experimental`) |
 
 ## Layer2 및 Layer3
 
-- **현재 Layer2**: `web_automation`(11개 MCP 도구)과 `classic-software-engineering`(7개 MCP 도구)이 활성 Layer2 크레이트입니다. `classic-software-engineering`은 정적 분석, 코드 리뷰, 품질 검사, 리팩토링 제안, LSP 진단, 심볼 추출, LSP 리팩토링을 `packages/domain_agents/classic_software_engineering/`에서 제공합니다. wasmtime + boa TS 이중 샌드박스를 갖춘 WASI 플러그인 시스템(`plugin_host`)은 참조 GitHub 웹훅 플러그인을 호스팅합니다; 트리거 아키텍처(`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`)는 외부 이벤트를 스킬 체인으로 디스패치합니다.
-- **기타 Layer2 설계**: 위 두 가지 외에 추가 도메인 전문가 에이전트는 존재하지 않습니다. `res/prompts/domain_agents/`는 구현된 L2 에이전트에 대한 설정/스킬/mcp 문서만 포함합니다. 원래 계획된 `docs/plans/` 디렉터리는 생성된 적이 없습니다.
+- **현재 Layer2**: `web_automation`(11개 MCP 도구), `classic-software-engineering`(7개 MCP 도구), `industrial_iot`(7개 MCP 도구), `remote_operations`(16개 MCP 도구)이 활성 Layer2 크레이트입니다. `classic-software-engineering`은 정적 분석, 코드 리뷰, 품질 검사, 리팩토링 제안, LSP 진단, 심볼 추출, LSP 리팩토링을 `packages/domain_agents/classic_software_engineering/`에서 제공합니다. `industrial_iot`는 산업 프로토콜 통신(Modbus RTU/TCP, Siemens S7comm, OPC UA)을 제공하며 SkeMma/PoleMos Layer1 도구에서 이전되었습니다. `remote_operations`는 SSH 원격 실행, 파일 전송, GUI 자동화, 시스템 모니터링을 제공하며 SkeMma/PoleMos Layer1 도구에서 이전되었습니다. wasmtime + boa TS 이중 샌드박스를 갖춘 WASI 플러그인 시스템(`plugin_host`)은 참조 GitHub 웹훅 플러그인을 호스팅합니다; 트리거 아키텍처(`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`)는 외부 이벤트를 스킬 체인으로 디스패치합니다.
+- **기타 Layer2 설계**: 계획된 4개의 L2 에이전트가 모두 구현되었습니다. `res/prompts/domain_agents/`는 구현된 L2 에이전트에 대한 설정/스킬/mcp 문서를 포함합니다. 원래 계획된 `docs/plans/` 디렉터리는 생성된 적이 없습니다.
 - **Layer3**: 사용자 정의 에이전트는 워크스페이스 로컬 `.amphoreus/` 디렉터리에서 로드됩니다. 외부 Layer 3 에이전트의 subscribe/list/run을 위한 CLI 명령어가 존재합니다. `shared-custom-agent` 크레이트는 부분적 인프라를 제공합니다. 실제 Layer 3 비즈니스 로직 플러그인은 구현되지 않았습니다.
 
 ## 런타임 패턴
@@ -539,11 +543,11 @@ flowchart LR
 | **텔레메트리 배치 수집 연결** | `BatchProcessor` 정의됨, 인스턴스화되지 않음; `try_intercept_sensor_batch()` 파서 존재하나 디스패치 루프에서 호출되지 않음 | `Sensor.Batch` 핸들러를 메시지 디스패치 → `BatchProcessor` → 텔레메트리 저장소로 연결 | P1 |
 | **OreXis의 경보 계층** | ✅ **완전 구현됨.** `alarm_tools.rs`: 경보 규칙 설정/제거/확인 (HH/H/L/LL/ROC 수준, 임계값, 히스테리시스, 디바운스, 에스컬레이션: log→notify_agent→auto_correct→human_notify→emergency_shutdown). `SharedAlarmPolicyStore` 작동. 스테이션 재정의 지원됨. | 누락: hydro-tin-monitor의 97개 오류 코드 사전 로드. | P2 |
 | **시계열 어댑터** | ✅ **구현됨.** `JsonlTimeSeriesAdapter`가 `TimeSeriesAdapter` 트레이트 구현. `skemma/state.rs`에서 사용됨. 버퍼 쓰기, 포인트 파싱, 쿼리. | 추후: 기능 게이트 뒤의 TimescaleDB/InfluxDB 백엔드. | ✓ |
-| **Modbus 읽기/쓰기** | ✅ **완전 구현됨.** `skemma::modbus_read`(레지스터 안전 게이팅이 있는 FC 01/02/03/04) 및 `skemma::modbus_write`(쓰기 화이트리스트 게이팅이 있는 FC 05/06/15/16) 둘 다 작동. | — | ✓ |
-| **S7comm 검색** | ✅ **구현됨.** `polemos::s7comm_discover`가 TCP:102에 연결, CPU 정보 획득, DB 번호 스캔, DB 구조 탐색. evernight의 `s7comm_probe` 사용. | — | ✓ |
-| **직렬 검색** | ✅ **구현됨.** `polemos::serial_discover`가 포트 열거, 보레이트 탐색, Modbus 스테이션 ID 스캔. | — | ✓ |
+| **Modbus 읽기/쓰기** | ✅ **완전 구현됨.** `industrial_iot::modbus_read`(레지스터 안전 게이팅이 있는 FC 01/02/03/04) 및 `industrial_iot::modbus_write`(쓰기 화이트리스트 게이팅이 있는 FC 05/06/15/16) 둘 다 작동. | — | ✓ |
+| **S7comm 검색** | ✅ **구현됨.** `industrial_iot::s7comm_probe`가 TCP:102에 연결, CPU 정보 획득, DB 번호 스캔, DB 구조 탐색. evernight의 `s7comm_probe` 사용. | — | ✓ |
+| **직렬 검색** | ✅ **구현됨.** `industrial_iot::serial_discover`가 포트 열거, 보레이트 탐색, Modbus 스테이션 ID 스캔. | — | ✓ |
 | **쓰기 작업에 대한 인간 루프 내** | `emergency_lockdown`이 모든 쓰기 차단 | `require_approval` 정책 추가 — 안전 중요 레지스터에 대한 쓰기는 webui 관리자를 통한 운영자 확인 필요. `WriteApprovalRequest` 프로토콜 타입이 arona에 정의됨(PLAN.md의 Phase A). | P1 |
-| **OPC UA 클라이언트/서버** | OPC UA 클라이언트/서버 통합이 필요합니다. PoleMos가 포트 4840을 감지하지만 실제 OPC UA 클라이언트/서버 구현이 존재하지 않습니다. | 타사 SCADA 장치에서 읽기 위한 실제 OPC UA 클라이언트; 산업 SCADA(Ignition/WinCC/iFix)에 entelecheia 센서 판독값을 노출하기 위한 OPC UA 서버. | P1 |
+| **OPC UA 클라이언트/서버** | OPC UA 클라이언트/서버 통합이 필요합니다. IndustrialIoT가 포트 4840을 감지하고 `industrial_iot::opcua_*` 도구를 통해 기본 OPC UA 클라이언트 browse/read/write를 제공합니다. 완전한 OPC UA 서버 구현은 없습니다. | 타사 SCADA 장치에서 읽기 위한 실제 OPC UA 클라이언트; 산업 SCADA(Ignition/WinCC/iFix)에 entelecheia 센서 판독값을 노출하기 위한 OPC UA 서버. | P1 |
 | **MPC 솔버 브리지** | `hydro-platform-research`에 Python MILP/MPC 스케줄러 있음 | MCP 도구로 노출: `call_mpc_solver` → IPC → Python 프로세스 → 스케줄 반환. 또는 Rust로 이식(`good_lp` + `argmin`). | P2 |
 | **이중화 / 장애 조치** | 단일 노드 아키텍처(하나의 scepter, 하나의 PostgreSQL) | 리더 선출이 있는 이중 scepter 핫 스탠바이. 빠른 인계를 위해 Neikos 포크 메커니즘 재사용 가능. | P2 |
 | **운영자 HMI** | TUI는 터미널 전용; webui는 채팅 UI | P&ID 오버레이, 트렌드 차트, 경보 패널, 운영자 작업 감사 로그. hikari는 충분한 UI 기본 요소(Chart, Timeline, Table)를 갖추고 있으나 HMI별 구성 필요. | P2 |

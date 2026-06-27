@@ -19,7 +19,7 @@ Entelecheia 已完成重大拆分：面向用户的壳层已迁移至兄弟项�
 
 | 仓库 | 范围 |
 |------------|-------|
-| **entelecheia** | Scepter 编排，14 个智能体（12 个 L1 + 2 个活跃 L2；4 个 L2 计划中），Cosmos/IEPL 运行时，32 个共享 crate |
+| **entelecheia** | Scepter 编排，16 个智能体（12 个 L1 + 4 个 L2），Cosmos/IEPL 运行时，32 个共享 crate |
 | **shittim-chest** | arona（聊天 UI 前端），plana（管理 UI），`shittim_chest` 后端（axum 代理 + 认证 + webhook），IDE 插件，Tauri 应用 |
 
 ## 当前范围
@@ -47,10 +47,12 @@ Entelecheia 是一个包含 **56 个 crate** 的 Rust 工作空间，核心为 `
 | **WebUI** | 已移除 — 迁移至 shittim-chest | — | ✅ 完成 |
 | **WebUI 前端** | 已移除 — 迁移至 shittim-chest | — | ✅ 完成 |
 | **Cosmos / JS 运行时** | Boa 引擎，ES 模块导入分发（`__native_dispatch` 内部解析），命名空间生成，McpRouter 含熔断器+重试。`.d.ts` 从 `#[derive(TS)]` 自动生成，填充 TypeScript 类型文件。50 个单元测试。 | SWC TypeScript 转译管道已实现并测试（37 个单元测试）。完整的自动化管道（LLM 输出 → SWC → Boa）可通过 `shared_iepl::client` 以 `in-process-transpile` 特性标志桥接。 | 🟢 活跃 |
-| **14 个智能体（12 L1 + 2 L2）** | 全部 14 个智能体均编译通过并具有 MCP 工具实现。共 147 个 MCP 工具 — **全部真实**。代码库中零个 `unimplemented!()` 或 `todo!()` 宏。 | 经典软件工程工具在元数据中标记为 `maturity: Stub`，但具有真实实现（cargo clippy、eslint、pylint、go vet 子进程调用；代码度量；提取函数重构）。 | 🟢 活跃 |
+| **16 个智能体（12 L1 + 4 L2）** | 全部 16 个智能体均编译通过并具有 MCP 工具实现。共 147 个 MCP 工具 — **全部真实**。代码库中零个 `unimplemented!()` 或 `todo!()` 宏。 | 经典软件工程工具在元数据中标记为 `maturity: Stub`，但具有真实实现（cargo clippy、eslint、pylint、go vet 子进程调用；代码度量；提取函数重构）。 | 🟢 活跃 |
 | **Layer2：Web 自动化** | 11 个 MCP 工具 — 全部通过 WebDriver 协议真实实现：会话管理、导航、截图、脚本执行、控制台/网络日志、键盘、鼠标、录制。10 个工具标记为 `maturity: Experimental`。 | — | 🟢 活跃 |
 | **Layer2：经典软件工程** | 7 个 MCP 工具 — 全部真实实现：static_analyze（cargo clippy/eslint/pylint/go vet），code_review（检测长函数、深层嵌套、魔法数字），quality_check（LOC、复杂度、字母评分），refactor_suggest，lsp_diagnose，lsp_symbols，lsp_refactor（真实的变量重命名和提取函数）。2 个单元测试。 | LSP 重构的内联操作仅预览（需要 LSP 服务器才能完全解析）。 | 🟢 活跃 |
-| **其他 Layer2 设计** | 除上述两个之外，没有额外的领域专家智能体；`res/prompts/domain_agents/` 仅包含已实现智能体的配置/技能文档 | `docs/plans/` 从未创建 | 🔴 无 |
+| **Layer2：工业物联网** | 7 个 MCP 工具 — 全部真实实现：modbus_read、modbus_write、s7comm_probe、serial_discover、opcua_browse、opcua_read、opcua_write。工业协议通信（Modbus RTU/TCP、Siemens S7comm、OPC UA 客户端）。标记为 `maturity: Experimental`。 | 从 SkeMma/PoleMos 迁移，作为 L2 整合的一部分。 | 🟢 活跃 |
+| **Layer2：远程操作** | 16 个 MCP 工具 — 全部真实实现：SSH 会话管理、远程命令执行、文件传输（SFTP）、主机信息采集、GUI 自动化（X11/VNC 截图、输入、导航）、系统监控。标记为 `maturity: Experimental`。 | 从 SkeMma/PoleMos 迁移，作为 L2 整合的一部分。 | 🟢 活跃 |
+| **其他 Layer2 设计** | 全部 4 个计划的 L2 智能体现已实现。`res/prompts/domain_agents/` 包含所有已实现智能体的配置/技能文档。 | `docs/plans/` 从未创建 | 🟢 活跃 |
 | **容器隔离** | 双层运行时：Docker/Podman（外部编排）通过 Bollard，Youki/libcontainer（内部沙箱）通过 libcontainer。非 root 用户，cap_drop=ALL，no-new-privileges，专用 Docker 网络，Unix 套接字 IPC，在创建、分支、合并和重建时施加资源限制（512MB/1CPU/100 PID）。自定义 seccomp 配置文件。两个后端上的分支/提交/快照功能全面可用。 | AppArmor 配置文件未实现。`read_only_rootfs` 默认未启用。 | 🟡 部分 |
 | **记忆 / RAG** | API 支持的嵌入（OpenAI 兼容，SHA-256 哈希回退，ONNX fastembed BGE-M3）。3 个嵌入后端全部实现。PgVector 存储、内存向量文档、图遍历、用于环境上下文注入的 RagContextBuffer。39 个单元测试。 | 嵌入→RAG 连接解耦（调用方提供预计算的嵌入）。PgVector 路径比内存回退更新、测试较少。RAG 订阅同步保留（尚未实现）。 | 🟡 部分 |
 | **IEPL 管道** | Boa 引擎 + MCP 桥接 + 命名空间过滤 + 熔断器。SWC TypeScript 解析已实现并测试（37 个单元测试）。`.d.ts` 自动生成可操作。IEPL 代码生成（Rust 类型 → TS 声明）已接入。TS→JS 转译可通过 `shared_iepl::client`（进程内或子进程模式）使用。 | SWC→Boa 链未集成到 Cosmos 容器执行路径（期望预剥离的 JS）。 | 🟡 部分 |
@@ -155,7 +157,7 @@ block-beta
 
 ## 活跃智能体
 
-工作空间编译了 12 个 Layer1 智能体（129 个 MCP 工具）和 2 个活跃的 Layer2 crate（Web 自动化 11 个工具，经典软件工程 7 个工具；共 148 个 MCP 工具）。所有智能体使用 `agent_mcp_module!` 宏进行 MCP 工具注册。该宏为需要预分发拦截的智能体支持 `skill_routing`（例如 Skopeo 的 `SkillExecutor` 双重分发）。
+工作空间编译了 12 个 Layer1 智能体（111 个 MCP 工具）和 4 个 Layer2 crate（Web 自动化 11 个工具，经典软件工程 7 个工具，工业物联网 7 个工具，远程操作 16 个工具）。所有智能体使用 `agent_mcp_module!` 宏进行 MCP 工具注册。该宏为需要预分发拦截的智能体支持 `skill_routing`（例如 Skopeo 的 `SkillExecutor` 双重分发）。
 
 **工具实现状态：** 全部 147 个工具均具有真实实现。代码库中任何地方都不存在 `unimplemented!()` 或 `todo!()` 宏。没有工具返回无真实逻辑的空 `Ok(())`。
 
@@ -166,20 +168,22 @@ block-beta
 | **HubRis** | 1 | 规划、待办管理、报告、问题辅助 | 8 | 0 | 65 个测试 | 🟢 真实 |
 | **KaLos** | 1 | 文件和仓库操作 | 8 | 0 | 20 个测试 | 🟢 真实 |
 | **NeiKos** | 1 | 容器生命周期和执行辅助 | 17 | 0 | 14 个测试 | 🟢 真实 |
-| **SkeMma** | 1 | 脚本执行和 MCP 相邻运行时行为 | 11 | 0 | 124 个测试 | 🟢 真实 |
+| **SkeMma** | 1 | 脚本执行和运行时沙箱化 | 2 | 0 | 124 个测试 | 🟢 真实 |
 | **ApoRia** | 1 | 提供商配置、知识辅助、RAG 工具 | 11 | 0 | 14 个测试 | 🟢 真实 |
 | **EleOs** | 1 | Web 搜索和远程信息检索 | 2 | 0 | 11 个测试 | 🟢 真实 |
 | **EpieiKeia** | 1 | 调度和维护辅助 | 8 | 0 | 4 个测试 | 🟢 真实 |
 | **OreXis** | 1 | 安全策略执行（通过拒绝列表/允许列表/锁定在运行时阻止）+ 告警层级 + 审计报告 | 20 | 0 | 19 个测试 | 🟢 真实 |
 | **PhiLia** | 1 | 记忆和数据存储相关功能 | 7 | 0 | 0 个测试 | 🟡 零测试覆盖 |
-| **PoleMos** | 1 | 设备、边缘、SSH、硬件信息能力 | 24 | 0 | 3 个测试 | 🟡 低测试覆盖 |
+| **PoleMos** | 1 | 主机通信和硬件遥测 | 9 | 0 | 3 个测试 | 🟡 低测试覆盖 |
 | **Web 自动化** | 2 | 浏览器自动化（创建、导航、截图、执行、控制台、网络、键盘、鼠标、录制） | 11 | 0 | 3 个测试 | 🟡 低测试覆盖（元数据：`maturity: Experimental`） |
 | **经典软件工程** | 2 | 静态分析、代码审查、质量检查、重构建议、LSP 诊断/符号/重构 | 7 | 0 | 2 个测试 | 🟡 低测试覆盖（元数据中 `maturity: Stub` 但为真实实现） |
+| **工业物联网** | 2 | 工业协议通信（Modbus RTU/TCP、Siemens S7comm、OPC UA 客户端） | 7 | 0 | 0 个测试 | 🟡 低测试覆盖（`maturity: Experimental`） |
+| **远程操作** | 2 | SSH 远程执行、文件传输、GUI 自动化、系统监控 | 16 | 0 | 0 个测试 | 🟡 低测试覆盖（`maturity: Experimental`） |
 
 ## Layer2 和 Layer3
 
-- **当前 Layer2**：`web_automation`（11 个 MCP 工具）和 `classic-software-engineering`（7 个 MCP 工具）是活跃的 Layer2 crate。`classic-software-engineering` 提供静态分析、代码审查、质量检查、重构建议、LSP 诊断、符号提取和 LSP 重构 — 在 `packages/domain_agents/classic_software_engineering/` 中实现。一个 WASI 插件系统（`plugin_host`）使用 wasmtime + boa TS 双沙箱，托管一个参考 GitHub webhook 插件；一个 Trigger 架构（`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`）将外部事件分发到技能链。
-- **其他 Layer2 设计**：除上述两个之外，没有额外的领域专家智能体。`res/prompts/domain_agents/` 仅包含已实现的 L2 智能体的配置/技能/MCP 文档。原计划中的 `docs/plans/` 目录从未创建。
+- **当前 Layer2**：`web_automation`（11 个 MCP 工具）、`classic-software-engineering`（7 个 MCP 工具）、`industrial_iot`（7 个 MCP 工具）和 `remote_operations`（16 个 MCP 工具）是活跃的 Layer2 crate。`classic-software-engineering` 提供静态分析、代码审查、质量检查、重构建议、LSP 诊断、符号提取和 LSP 重构 — 在 `packages/domain_agents/classic_software_engineering/` 中实现。`industrial_iot` 提供工业协议通信（Modbus RTU/TCP、Siemens S7comm、OPC UA）— 从 SkeMma/PoleMos Layer1 工具迁移。`remote_operations` 提供 SSH 远程执行、文件传输、GUI 自动化和系统监控 — 从 SkeMma/PoleMos Layer1 工具迁移。一个 WASI 插件系统（`plugin_host`）使用 wasmtime + boa TS 双沙箱，托管一个参考 GitHub webhook 插件；一个 Trigger 架构（`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`）将外部事件分发到技能链。
+- **其他 Layer2 设计**：全部 4 个计划的 L2 智能体现已实现。`res/prompts/domain_agents/` 包含已实现的 L2 智能体的配置/技能/MCP 文档。原计划中的 `docs/plans/` 目录从未创建。
 - **Layer3**：用户定义的智能体将从工作空间本地的 `.amphoreus/` 目录加载。用于订阅/列出/运行外部 Layer 3 智能体的 CLI 命令已存在。`shared-custom-agent` crate 提供部分基础设施。尚未实现实际的 Layer 3 业务逻辑插件。
 
 ## 运行时模式
@@ -541,11 +545,11 @@ flowchart LR
 | **遥测批量摄入已接入** | `BatchProcessor` 已定义但未实例化；`try_intercept_sensor_batch()` 解析器存在但在分发循环中未被调用 | 将 `Sensor.Batch` 处理程序接入消息分发 → `BatchProcessor` → 遥测存储 | P1 |
 | **OreXis 中的告警层级** | ✅ **全面实现。** `alarm_tools.rs`：设置/移除/确认告警规则（HH/H/L/LL/ROC 级别、阈值、滞后、防抖、升级：log→notify_agent→auto_correct→human_notify→emergency_shutdown）。`SharedAlarmPolicyStore` 功能正常。支持站点覆盖。 | 缺失：从 hydro-tin-monitor 预加载 97 个故障代码。 | P2 |
 | **时序适配器** | ✅ **已实现。** `JsonlTimeSeriesAdapter` 实现 `TimeSeriesAdapter` trait。由 `skemma/state.rs` 使用。缓冲写入、点解析、查询。 | 未来：特性门控后的 TimescaleDB/InfluxDB 后端。 | ✓ |
-| **Modbus 读/写** | ✅ **全面实现。** `skemma::modbus_read`（FC 01/02/03/04，含寄存器安全门控）和 `skemma::modbus_write`（FC 05/06/15/16，含写入白名单门控）均可运行。 | — | ✓ |
-| **S7comm 发现** | ✅ **已实现。** `polemos::s7comm_discover` 连接 TCP:102，获取 CPU 信息，扫描 DB 编号，探测 DB 结构。使用 evernight 的 `s7comm_probe`。 | — | ✓ |
-| **串口发现** | ✅ **已实现。** `polemos::serial_discover` 枚举端口，探测波特率，扫描 Modbus 站 ID。 | — | ✓ |
+| **Modbus 读/写** | ✅ **全面实现。** `industrial_iot::modbus_read`（FC 01/02/03/04，含寄存器安全门控）和 `industrial_iot::modbus_write`（FC 05/06/15/16，含写入白名单门控）均可运行。 | — | ✓ |
+| **S7comm 发现** | ✅ **已实现。** `industrial_iot::s7comm_probe` 连接 TCP:102，获取 CPU 信息，扫描 DB 编号，探测 DB 结构。使用 evernight 的 `s7comm_probe`。 | — | ✓ |
+| **串口发现** | ✅ **已实现。** `industrial_iot::serial_discover` 枚举端口，探测波特率，扫描 Modbus 站 ID。 | — | ✓ |
 | **写入操作的人机协同** | `emergency_lockdown` 阻止所有写入 | 添加 `require_approval` 策略 — 对安全关键寄存器的写入需要操作员通过 webui admin 确认。`WriteApprovalRequest` 协议类型在 arona 中定义（PLAN.md 阶段 A）。 | P1 |
-| **OPC UA 客户端/服务器** | 需要 OPC UA 客户端/服务器集成。PoleMos 检测端口 4840，但尚无真实的 OPC UA 客户端/服务器实现。 | 真实的 OPC UA 客户端，用于从第三方 SCADA 设备读取；OPC UA 服务器，将 entelecheia 传感器读数暴露给工业 SCADA（Ignition/WinCC/iFix）。 | P1 |
+| **OPC UA 客户端/服务器** | 需要 OPC UA 客户端/服务器集成。IndustrialIoT 检测端口 4840 并通过 `industrial_iot::opcua_*` 工具提供基本 OPC UA 客户端浏览/读/写。尚无完整的 OPC UA 服务器实现。 | 真实的 OPC UA 客户端，用于从第三方 SCADA 设备读取；OPC UA 服务器，将 entelecheia 传感器读数暴露给工业 SCADA（Ignition/WinCC/iFix）。 | P1 |
 | **MPC 求解器桥接** | `hydro-platform-research` 有 Python MILP/MPC 调度器 | 暴露为 MCP 工具：`call_mpc_solver` → IPC → Python 进程 → 返回调度。或迁移到 Rust（`good_lp` + `argmin`）。 | P2 |
 | **冗余/故障转移** | 单节点架构（一个 scepter、一个 PostgreSQL） | 双 scepter 热备，含领导者选举。Neikos 分支机制可重用于快速接管。 | P2 |
 | **操作员 HMI** | TUI 仅终端；webui 是聊天 UI | P&ID 叠加、趋势图、告警面板、操作员操作审计日志。hikari 有足够的 UI 原语（Chart、Timeline、Table）但需要 HMI 特定的组合。 | P2 |

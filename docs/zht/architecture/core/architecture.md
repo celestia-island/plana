@@ -19,7 +19,7 @@ Entelecheia 已完成其主要分割：使用者面向的外殼層已遷移到�
 
 | 倉庫 | 範圍 |
 |------------|-------|
-| **entelecheia** | Scepter 編排、14 個代理（12 個 L1 + 2 個活躍 L2；4 個 L2 計劃中）、Cosmos/IEPL 執行環境、32 個共享 crate |
+| **entelecheia** | Scepter 編排、16 個代理（12 個 L1 + 4 個 L2）、Cosmos/IEPL 執行環境、32 個共享 crate |
 | **shittim-chest** | arona（聊天 UI 前端）、plana（管理 UI）、`shittim_chest` 後端（axum 代理 + auth + webhook）、IDE 外掛、Tauri 應用 |
 
 ## 目前範圍
@@ -47,10 +47,12 @@ Entelecheia 是一個包含 **56 個 crate** 的 Rust 工作區，圍繞 `packag
 | **WebUI** | 已移除 — 遷移到 shittim-chest | — | ✅ 完成 |
 | **WebUI 前端** | 已移除 — 遷移到 shittim-chest | — | ✅ 完成 |
 | **Cosmos / JS 執行環境** | Boa 引擎、ES 模組匯入分派（`__native_dispatch` 內部解析）、命名空間生成、帶有熔斷器+重試的 McpRouter。從 `#[derive(TS)]` 自動生成 `.d.ts` 以填充 TypeScript 型別檔案。50 個單元測試。 | SWC TypeScript 轉譯管線已實作並測試（37 個單元測試）。完整自動化管線（LLM 輸出 → SWC → Boa）可透過 `shared_iepl::client` 以 `in-process-transpile` 功能標誌橋接。 | 🟢 活躍 |
-| **14 個代理（12 L1 + 2 L2）** | 所有 14 個代理均以 MCP 工具實作編譯。總共 147 個 MCP 工具 — **全部真實**。程式庫中零個 `unimplemented!()` 或 `todo!()` 巨集。 | Classic SE 工具在中繼資料中標記為 `maturity: Stub`，但具有真實的實作（cargo clippy、eslint、pylint、go vet 子處理程序呼叫；程式碼指標；extract-function 重構）。 | 🟢 活躍 |
+| **16 個代理（12 L1 + 4 L2）** | 所有 16 個代理均以 MCP 工具實作編譯。總共 147 個 MCP 工具 — **全部真實**。程式庫中零個 `unimplemented!()` 或 `todo!()` 巨集。 | Classic SE 工具在中繼資料中標記為 `maturity: Stub`，但具有真實的實作（cargo clippy、eslint、pylint、go vet 子處理程序呼叫；程式碼指標；extract-function 重構）。 | 🟢 活躍 |
 | **第 2 層：Web Automation** | 11 個 MCP 工具 — 全部為透過 WebDriver 協定的真實實作：會話管理、導航、截圖、腳本執行、控制台/網路日誌、鍵盤、滑鼠、錄製。10 個工具 `maturity: Experimental`。 | — | 🟢 活躍 |
 | **第 2 層：Classic SE** | 7 個 MCP 工具 — 全部為真實實作：static_analyze（cargo clippy/eslint/pylint/go vet）、code_review（偵測長函數、深層巢狀、魔術數字）、quality_check（LOC、複雜度、字母等級）、refactor_suggest、lsp_diagnose、lsp_symbols、lsp_refactor（真實的重新命名和 extract-function）。2 個單元測試。 | LSP refactor 的內嵌操作僅供預覽（需要 LSP 伺服器進行完整解析）。 | 🟢 活躍 |
-| **其他第 2 層設計** | 除上述兩個之外沒有其他域專家代理；`res/prompts/domain_agents/` 僅包含已實作代理的設定/技能文件 | `docs/plans/` 從未被建立 | 🔴 無 |
+| **第 2 層：Industrial IoT** | 7 個 MCP 工具 — 全部為真實實作：modbus_read、modbus_write、s7comm_probe、serial_discover、opcua_browse、opcua_read、opcua_write。工業協定通訊（Modbus RTU/TCP、Siemens S7comm、OPC UA 用戶端）。`maturity: Experimental`。 | 從 SkeMma/PoleMos 遷移，作為第 2 層整合的一部分。 | 🟢 活躍 |
+| **第 2 層：Remote Operations** | 16 個 MCP 工具 — 全部為真實實作：SSH 會話管理、遠端命令執行、檔案傳輸（SFTP）、主機資訊收集、GUI 自動化（X11/VNC 截圖、輸入、導航）、系統監控。`maturity: Experimental`。 | 從 SkeMma/PoleMos 遷移，作為第 2 層整合的一部分。 | 🟢 活躍 |
+| **其他第 2 層設計** | 全部 4 個計劃的第 2 層代理現已實作。`res/prompts/domain_agents/` 包含所有已實作代理的設定/技能文件。 | `docs/plans/` 從未被建立 | 🟢 活躍 |
 | **容器隔離** | 兩層執行環境：Docker/Podman（外部編排）透過 Bollard、Youki/libcontainer（內部沙箱）透過 libcontainer。非 root 使用者、cap_drop=ALL、no-new-privileges、專用 Docker 網路、Unix socket IPC、資源限制（512MB/1CPU/100 PIDs）於建立、分支、合併和重建時。自訂 seccomp 設定檔。兩種後端上的分支/提交/快照完全功能。 | AppArmor 設定檔未實作。`read_only_rootfs` 預設未啟用。 | 🟡 部分 |
 | **記憶體 / RAG** | API 支援的嵌入（OpenAI 相容、SHA-256 雜湊備援、ONNX fastembed BGE-M3）。3 個嵌入後端完全實作。PgVector 儲存、記憶體內向量文件、圖遍歷、用於環境上下文注入的 RagContextBuffer。39 個單元測試。 | 嵌入→RAG 連線已解耦（呼叫者提供預先計算的嵌入）。PgVector 路徑較新/測試較少，不如記憶體內備援。RAG 訂閱同步已保留（尚未實作）。 | 🟡 部分 |
 | **IEPL 管線** | Boa 引擎 + MCP 橋接 + 命名空間過濾 + 熔斷器。SWC TypeScript 解析已實作並測試（37 個單元測試）。`.d.ts` 自動生成已可操作。IEPL 程式碼生成（Rust 型別 → TS 宣告）已接線。TS→JS 轉譯可透過 `shared_iepl::client`（處理程序內或子處理程序模式）使用。 | SWC→Boa 鏈未整合到 Cosmos 容器執行路徑中（預期預先剝離的 JS）。 | 🟡 部分 |
@@ -155,7 +157,7 @@ block-beta
 
 ## 活躍代理
 
-工作區編譯 12 個第 1 層代理（129 個 MCP 工具）和 2 個活躍的第 2 層 crate（Web Automation 11 個工具、Classic Software Engineering 7 個工具；總共 148 個 MCP 工具）。所有代理使用 `agent_mcp_module!` 巨集進行 MCP 工具註冊。該巨集支援 `skill_routing`，用於需要預先分派攔截的代理（例如 SkoPeo 的 `SkillExecutor` 雙重分派）。
+工作區編譯 12 個第 1 層代理（111 個 MCP 工具）和 4 個第 2 層 crate（Web Automation 11 個工具、Classic Software Engineering 7 個工具、Industrial IoT 7 個工具、Remote Operations 16 個工具）。所有代理使用 `agent_mcp_module!` 巨集進行 MCP 工具註冊。該巨集支援 `skill_routing`，用於需要預先分派攔截的代理（例如 SkoPeo 的 `SkillExecutor` 雙重分派）。
 
 **工具實作狀態：** 全部 147 個工具均具有真實的實作。程式庫中任何地方都不存在 `unimplemented!()` 或 `todo!()` 巨集。沒有任何工具返回沒有真實邏輯的平凡 `Ok(())`。
 
@@ -166,20 +168,22 @@ block-beta
 | **HubRis** | 1 | 規劃、待辦事項管理、報告、issue 輔助工具 | 8 | 0 | 65 個測試 | 🟢 真實 |
 | **KaLos** | 1 | 檔案和倉庫操作 | 8 | 0 | 20 個測試 | 🟢 真實 |
 | **NeiKos** | 1 | 容器生命週期和執行輔助工具 | 17 | 0 | 14 個測試 | 🟢 真實 |
-| **SkeMma** | 1 | 腳本執行和 MCP 相鄰執行環境行為 | 11 | 0 | 124 個測試 | 🟢 真實 |
+| **SkeMma** | 1 | 腳本執行和執行環境沙箱化 | 2 | 0 | 124 個測試 | 🟢 真實 |
 | **ApoRia** | 1 | 提供者設定、知識輔助工具、RAG 工具 | 11 | 0 | 14 個測試 | 🟢 真實 |
 | **EleOs** | 1 | 網頁搜尋和遠端資訊檢索 | 2 | 0 | 11 個測試 | 🟢 真實 |
 | **EpieiKeia** | 1 | 排程和維護輔助工具 | 8 | 0 | 4 個測試 | 🟢 真實 |
 | **OreXis** | 1 | 安全政策強制（透過拒絕列表/允許列表/鎖定進行執行環境封鎖）+ 警報層級 + 審計報告 | 20 | 0 | 19 個測試 | 🟢 真實 |
 | **PhiLia** | 1 | 記憶體和資料儲存相關功能 | 7 | 0 | 0 個測試 | 🟡 零測試覆蓋率 |
-| **PoleMos** | 1 | 裝置、邊緣、SSH、硬體資訊能力 | 24 | 0 | 3 個測試 | 🟡 低測試覆蓋率 |
+| **PoleMos** | 1 | 主機通訊和硬體遙測 | 9 | 0 | 3 個測試 | 🟡 低測試覆蓋率 |
 | **Web Automation** | 2 | 瀏覽器自動化（建立、導航、截圖、執行、控制台、網路、鍵盤、滑鼠、錄製） | 11 | 0 | 3 個測試 | 🟡 低測試覆蓋率（`maturity: Experimental`） |
 | **Classic Software Engineering** | 2 | 靜態分析、程式碼審查、品質檢查、重構建議、LSP 診斷/符號/重構 | 7 | 0 | 2 個測試 | 🟡 低測試覆蓋率（中繼資料中 `maturity: Stub`，但具有真實實作） |
+| **Industrial IoT** | 2 | 工業協定通訊（Modbus RTU/TCP、Siemens S7comm、OPC UA 用戶端） | 7 | 0 | 0 個測試 | 🟡 低測試覆蓋率（`maturity: Experimental`） |
+| **Remote Operations** | 2 | SSH 遠端執行、檔案傳輸、GUI 自動化、系統監控 | 16 | 0 | 0 個測試 | 🟡 低測試覆蓋率（`maturity: Experimental`） |
 
 ## 第 2 層和第 3 層
 
-- **目前的第 2 層**：`web_automation`（11 個 MCP 工具）和 `classic-software-engineering`（7 個 MCP 工具）是活躍的第 2 層 crate。`classic-software-engineering` 提供靜態分析、程式碼審查、品質檢查、重構建議、LSP 診斷、符號提取和 LSP 重構 — 實作於 `packages/domain_agents/classic_software_engineering/`。一個 WASI 外掛系統（`plugin_host`）以 wasmtime + boa TS 雙沙箱主機方式託管一個參考 GitHub webhook 外掛；一個 Trigger 架構（`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`）將外部事件分派到技能鏈。
-- **其他第 2 層設計**：除上述兩個之外不存在其他域專家代理。`res/prompts/domain_agents/` 僅包含已實作 L2 代理的設定/技能/mcp 文件。最初規劃的 `docs/plans/` 目錄從未被建立。
+- **目前的第 2 層**：`web_automation`（11 個 MCP 工具）、`classic-software-engineering`（7 個 MCP 工具）、`industrial_iot`（7 個 MCP 工具）和 `remote_operations`（16 個 MCP 工具）是活躍的第 2 層 crate。`classic-software-engineering` 提供靜態分析、程式碼審查、品質檢查、重構建議、LSP 診斷、符號提取和 LSP 重構 — 實作於 `packages/domain_agents/classic_software_engineering/`。`industrial_iot` 提供工業協定通訊（Modbus RTU/TCP、Siemens S7comm、OPC UA）— 從 SkeMma/PoleMos 第 1 層工具遷移。`remote_operations` 提供 SSH 遠端執行、檔案傳輸、GUI 自動化和系統監控 — 從 SkeMma/PoleMos 第 1 層工具遷移。一個 WASI 外掛系統（`plugin_host`）以 wasmtime + boa TS 雙沙箱主機方式託管一個參考 GitHub webhook 外掛；一個 Trigger 架構（`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`）將外部事件分派到技能鏈。
+- **其他第 2 層設計**：全部 4 個計劃的第 2 層代理現已實作。`res/prompts/domain_agents/` 包含已實作 L2 代理的設定/技能/MCP 文件。原始規劃的 `docs/plans/` 目錄從未被建立。
 - **第 3 層**：使用者定義的代理將從工作區本機 `.amphoreus/` 目錄載入。外部第 3 層代理的訂閱/列表/執行 CLI 命令已存在。`shared-custom-agent` crate 提供部分基礎設施。尚未實作實際的第 3 層業務邏輯外掛。
 
 ## 執行環境模式
@@ -543,11 +547,11 @@ flowchart LR
 | **遙測批次擷取已接線** | `BatchProcessor` 已定義但未實例化；`try_intercept_sensor_batch()` 解析器存在但未在分派迴路中調用 | 將 `Sensor.Batch` 處理常式接線到訊息分派 → `BatchProcessor` → 遙測儲存 | P1 |
 | **OreXis 中的警報層級** | ✅ **完全實作。** `alarm_tools.rs`：設定/移除/確認警報規則（HH/H/L/LL/ROC 級別、閾值、滯後、去抖、升級：log→notify_agent→auto_correct→human_notify→emergency_shutdown）。`SharedAlarmPolicyStore` 功能正常。支援站點覆寫。 | 缺少：從 hydro-tin-monitor 預載入 97 個故障碼。 | P2 |
 | **時間序列轉接器** | ✅ **已實作。** `JsonlTimeSeriesAdapter` 實作 `TimeSeriesAdapter` trait。由 `skemma/state.rs` 使用。緩衝寫入、點解析、查詢。 | 未來：功能閘後的 TimescaleDB/InfluxDB 後端。 | ✓ |
-| **Modbus 讀取/寫入** | ✅ **完全實作。** `skemma::modbus_read`（FC 01/02/03/04，具有寄存器安全閘控）和 `skemma::modbus_write`（FC 05/06/15/16，具有寫入白名單閘控）兩者功能正常。 | — | ✓ |
-| **S7comm 發現** | ✅ **已實作。** `polemos::s7comm_discover` 連線 TCP:102、獲取 CPU 資訊、掃描 DB 編號、探測 DB 結構。使用 evernight 的 `s7comm_probe`。 | — | ✓ |
-| **序列發現** | ✅ **已實作。** `polemos::serial_discover` 列舉埠、探測鮑率、掃描 Modbus 站號 ID。 | — | ✓ |
+| **Modbus 讀取/寫入** | ✅ **完全實作。** `industrial_iot::modbus_read`（FC 01/02/03/04，具有寄存器安全閘控）和 `industrial_iot::modbus_write`（FC 05/06/15/16，具有寫入白名單閘控）兩者功能正常。 | — | ✓ |
+| **S7comm 發現** | ✅ **已實作。** `industrial_iot::s7comm_probe` 連線 TCP:102、獲取 CPU 資訊、掃描 DB 編號、探測 DB 結構。使用 evernight 的 `s7comm_probe`。 | — | ✓ |
+| **序列發現** | ✅ **已實作。** `industrial_iot::serial_discover` 列舉埠、探測鮑率、掃描 Modbus 站號 ID。 | — | ✓ |
 | **寫入操作的人員在環確認** | `emergency_lockdown` 封鎖所有寫入 | 新增 `require_approval` 政策 — 對安全關鍵寄存器的寫入需要操作員透過 webui 管理面板確認。`WriteApprovalRequest` 協定型別在 arona 中定義（PLAN.md 的 A 階段）。 | P1 |
-| **OPC UA 用戶端/伺服器** | 需要 OPC UA 用戶端/伺服器整合。PoleMos 偵測埠 4840，但尚無真實的 OPC UA 用戶端/伺服器實作。 | 用於從第三方 SCADA 裝置讀取的真實 OPC UA 用戶端；用於將 entelecheia 感測器讀數暴露給工業 SCADA（Ignition/WinCC/iFix）的 OPC UA 伺服器。 | P1 |
+| **OPC UA 用戶端/伺服器** | 需要 OPC UA 用戶端/伺服器整合。IndustrialIoT 偵測埠 4840 並透過 `industrial_iot::opcua_*` 工具提供基本 OPC UA 用戶端瀏覽/讀/寫。尚無完整的 OPC UA 伺服器實作。 | 用於從第三方 SCADA 裝置讀取的真實 OPC UA 用戶端；用於將 entelecheia 感測器讀數暴露給工業 SCADA（Ignition/WinCC/iFix）的 OPC UA 伺服器。 | P1 |
 | **MPC 求解器橋接** | `hydro-platform-research` 具有 Python MILP/MPC 排程器 | 作為 MCP 工具暴露：`call_mpc_solver` → IPC → Python 處理程序 → 返回排程。或遷移到 Rust（`good_lp` + `argmin`）。 | P2 |
 | **冗餘 / 故障轉移** | 單節點架構（一個 scepter、一個 PostgreSQL） | 雙 scepter 熱待命，具有領袖選舉。Neikos 分支機制可重複使用以進行快速接管。 | P2 |
 | **操作員 HMI** | TUI 僅限終端；webui 是聊天 UI | P&ID 覆蓋、趨勢圖、警報面板、操作員操作審計日誌。hikari 具有足夠的 UI 原語（Chart、Timeline、Table），但需要 HMI 特定的組合。 | P2 |

@@ -19,7 +19,7 @@ Entelecheiaは大規模な分割を完了しました：ユーザー向けシェ
 
 | リポジトリ | 範囲 |
 |------------|-------|
-| **entelecheia** | Scepterオーケストレーション、14エージェント（12 L1 + 2 アクティブL2; 4 L2計画）、Cosmos/IEPLランタイム、32共有クレート |
+| **entelecheia** | Scepterオーケストレーション、16エージェント（12 L1 + 4 L2）、Cosmos/IEPLランタイム、32共有クレート |
 | **shittim-chest** | arona（チャットUIフロントエンド）、plana（管理UI）、`shittim_chest`バックエンド（axumプロキシ + 認証 + webhook）、IDEプラグイン、Tauriアプリ |
 
 ## 現在の範囲
@@ -47,10 +47,12 @@ Entelecheiaは`packages/scepter`（オーケストレーションサーバー）
 | **WebUI** | 削除 — shittim-chestに移行 | — | ✅ 完了 |
 | **WebUI フロントエンド** | 削除 — shittim-chestに移行 | — | ✅ 完了 |
 | **Cosmos / JSランタイム** | Boaエンジン、ESモジュールインポートディスパッチ（`__native_dispatch`内部解決）、名前空間生成、サーキットブレーカー+リトライ付きMcpRouter。`#[derive(TS)]`からの`.d.ts`自動生成によりTypeScript型ファイルを生成。50ユニットテスト。 | SWC TypeScriptトランスパイルパイプラインが実装・テスト済み（37ユニットテスト）。完全自動パイプライン（LLM出力 → SWC → Boa）は`shared_iepl::client`経由で`in-process-transpile`機能フラグで橋渡し可能。 | 🟢 アクティブ |
-| **14エージェント（12 L1 + 2 L2）** | 全14エージェントがMCPツール実装付きでコンパイル。合計147 MCPツール — **すべて本物**。コードベースに`unimplemented!()`または`todo!()`マクロはゼロ。 | Classic SEツールはメタデータで`maturity: Stub`とマークされているが本物の実装あり（cargo clippy、eslint、pylint、go vetサブプロセス呼び出し。コードメトリクス、関数抽出リファクタリング）。 | 🟢 アクティブ |
+| **16エージェント（12 L1 + 4 L2）** | 全16エージェントがMCPツール実装付きでコンパイル。合計147 MCPツール — **すべて本物**。コードベースに`unimplemented!()`または`todo!()`マクロはゼロ。 | Classic SEツールはメタデータで`maturity: Stub`とマークされているが本物の実装あり（cargo clippy、eslint、pylint、go vetサブプロセス呼び出し。コードメトリクス、関数抽出リファクタリング）。 | 🟢 アクティブ |
 | **Layer2: Web Automation** | 11 MCPツール — すべてWebDriverプロトコル経由の本物の実装：セッション管理、ナビゲーション、スクリーンショット、スクリプト実行、コンソール/ネットワークログ、キーボード、マウス、録画。10ツールが`maturity: Experimental`。 | — | 🟢 アクティブ |
 | **Layer2: Classic SE** | 7 MCPツール — すべて本物の実装：static_analyze（cargo clippy/eslint/pylint/go vet）、code_review（長い関数、深いネスト、マジックナンバーを検出）、quality_check（LOC、複雑度、段階評価）、refactor_suggest、lsp_diagnose、lsp_symbols、lsp_refactor（本物のリネームと関数抽出）。2ユニットテスト。 | LSPリファクタのインライン操作プレビューのみ（完全解決にはLSPサーバーが必要）。 | 🟢 アクティブ |
-| **その他のLayer2設計** | 上記2つ以外のドメイン特化エージェントはなし。`res/prompts/domain_agents/`には実装済みエージェントの設定/スキルドキュメントのみ。 | `docs/plans/`は作成されず | 🔴 なし |
+| **Layer2: Industrial IoT** | 7 MCPツール — すべて本物の実装：modbus_read、modbus_write、s7comm_probe、serial_discover、opcua_browse、opcua_read、opcua_write。産業用プロトコル通信（Modbus RTU/TCP、Siemens S7comm、OPC UAクライアント）。`maturity: Experimental`。 | SkeMma/PoleMosからL2統合の一環として移行。 | 🟢 アクティブ |
+| **Layer2: Remote Operations** | 16 MCPツール — すべて本物の実装：SSHセッション管理、リモートコマンド実行、ファイル転送（SFTP）、ホスト情報収集、GUI自動化（X11/VNCスクリーンショット、入力、ナビゲーション）、システムモニタリング。`maturity: Experimental`。 | SkeMma/PoleMosからL2統合の一環として移行。 | 🟢 アクティブ |
+| **その他のLayer2設計** | 計画された4つのL2エージェントがすべて実装されました。`res/prompts/domain_agents/`にはすべての実装済みエージェントの設定/スキルドキュメントが含まれます。 | `docs/plans/`は作成されず | 🟢 アクティブ |
 | **コンテナ分離** | 二層ランタイム：Docker/Podman（外部オーケストレーション）via Bollard、Youki/libcontainer（内部サンドボックス）via libcontainer。非rootユーザー、cap_drop=ALL、no-new-privileges、専用Dockerネットワーク、UnixソケットIPC、リソース制限（512MB/1CPU/100 PIDs）をcreate、fork、merge、recreate時に適用。カスタムseccompプロファイル。fork/commit/snapshotは両バックエンドで完全に機能。 | AppArmorプロファイル未実装。`read_only_rootfs`はデフォルトで無効。 | 🟡 部分的 |
 | **メモリ / RAG** | APIバックエンド埋め込み（OpenAI互換、SHA-256ハッシュフォールバック、ONNX fastembed BGE-M3）。3つの埋め込みバックエンドが完全実装。PgVectorストア、インメモリベクトルドキュメント、グラフ走査、RagContextBufferによるアンビエントコンテキスト注入。39ユニットテスト。 | 埋め込み→RAG接続は分離（呼び出し元が事前計算済み埋め込みを提供）。PgVectorパスはインメモリフォールバックより新しくテストが少ない。RAGサブスクリプション同期は予約済み（未実装）。 | 🟡 部分的 |
 | **IEPLパイプライン** | Boaエンジン + MCPブリッジ + 名前空間フィルタリング + サーキットブレーカー。SWC TypeScript解析が実装・テスト済み（37ユニットテスト）。`.d.ts`自動生成が運用可能。IEPLコード生成（Rust型 → TS宣言）が配線済み。TS→JSトランスパイルは`shared_iepl::client`経由で利用可能（プロセス内またはサブプロセスモード）。 | SWC→BoaチェーンはCosmosコンテナ実行パスに未統合（事前除去済みJSを期待）。 | 🟡 部分的 |
@@ -155,7 +157,7 @@ block-beta
 
 ## アクティブエージェント
 
-ワークスペースは12のLayer1エージェント（129 MCPツール）と2つのアクティブLayer2クレート（Web Automation 11ツール、Classic Software Engineering 7ツール。合計148 MCPツール）をコンパイルします。すべてのエージェントはMCPツール登録に`agent_mcp_module!`マクロを使用します。このマクロは、事前ディスパッチインターセプトを必要とするエージェント（例：Skopeoの`SkillExecutor`デュアルディスパッチ）のための`skill_routing`をサポートしています。
+ワークスペースは12のLayer1エージェント（111 MCPツール）と4つのLayer2クレート（Web Automation 11ツール、Classic Software Engineering 7ツール、Industrial IoT 7ツール、Remote Operations 16ツール）をコンパイルします。すべてのエージェントはMCPツール登録に`agent_mcp_module!`マクロを使用します。このマクロは、事前ディスパッチインターセプトを必要とするエージェント（例：Skopeoの`SkillExecutor`デュアルディスパッチ）のための`skill_routing`をサポートしています。
 
 **ツール実装状況:** 全147ツールが本物の実装を持ちます。コードベース全体に`unimplemented!()`または`todo!()`マクロは存在しません。本物のロジックなしに単純な`Ok(())`を返すツールはありません。
 
@@ -166,20 +168,22 @@ block-beta
 | **HubRis** | 1 | 計画、ToDo管理、レポート、Issueヘルパー | 8 | 0 | 65テスト | 🟢 本物 |
 | **KaLos** | 1 | ファイルおよびリポジトリ操作 | 8 | 0 | 20テスト | 🟢 本物 |
 | **NeiKos** | 1 | コンテナライフサイクルおよび実行ヘルパー | 17 | 0 | 14テスト | 🟢 本物 |
-| **SkeMma** | 1 | スクリプト実行およびMCP隣接ランタイム動作 | 11 | 0 | 124テスト | 🟢 本物 |
+| **SkeMma** | 1 | スクリプト実行とランタイムサンドボックス化 | 2 | 0 | 124テスト | 🟢 本物 |
 | **ApoRia** | 1 | プロバイダー設定、知識ヘルパー、RAGツール | 11 | 0 | 14テスト | 🟢 本物 |
 | **EleOs** | 1 | Web検索およびリモート情報取得 | 2 | 0 | 11テスト | 🟢 本物 |
 | **EpieiKeia** | 1 | スケジューリングおよびメンテナンスヘルパー | 8 | 0 | 4テスト | 🟢 本物 |
 | **OreXis** | 1 | セキュリティポリシー強制（denylist/allowlist/lockdownによるランタイムブロッキング）+ アラーム階層 + 監査レポート | 20 | 0 | 19テスト | 🟢 本物 |
 | **PhiLia** | 1 | メモリおよびデータストア関連機能 | 7 | 0 | 0テスト | 🟡 テストカバレッジゼロ |
-| **PoleMos** | 1 | デバイス、エッジ、SSH、ハードウェア情報機能 | 24 | 0 | 3テスト | 🟡 低テストカバレッジ |
+| **PoleMos** | 1 | ホスト通信とハードウェアテレメトリ | 9 | 0 | 3テスト | 🟡 低テストカバレッジ |
 | **Web Automation** | 2 | ブラウザ自動化（作成、ナビゲーション、スクリーンショット、実行、コンソール、ネットワーク、キーボード、マウス、録画） | 11 | 0 | 3テスト | 🟡 低テストカバレッジ（`maturity: Experimental`） |
 | **Classic Software Engineering** | 2 | 静的解析、コードレビュー、品質チェック、リファクタリング提案、LSP診断/シンボル/リファクタ | 7 | 0 | 2テスト | 🟡 低テストカバレッジ（メタデータでは`maturity: Stub`だが本物の実装） |
+| **Industrial IoT** | 2 | 産業用プロトコル通信（Modbus RTU/TCP、Siemens S7comm、OPC UAクライアント） | 7 | 0 | 0テスト | 🟡 低テストカバレッジ（`maturity: Experimental`） |
+| **Remote Operations** | 2 | SSHリモート実行、ファイル転送、GUI自動化、システムモニタリング | 16 | 0 | 0テスト | 🟡 低テストカバレッジ（`maturity: Experimental`） |
 
 ## Layer2およびLayer3
 
-- **現在のLayer2**: `web_automation`（11 MCPツール）と`classic-software-engineering`（7 MCPツール）がアクティブなLayer2クレートです。`classic-software-engineering`は静的解析、コードレビュー、品質チェック、リファクタリング提案、LSP診断、シンボル抽出、LSPリファクタリングを提供し、`packages/domain_agents/classic_software_engineering/`に実装されています。wasmtime + boa TSデュアルサンドボックスを備えたWASIプラグインシステム（`plugin_host`）はリファレンスGitHub webhookプラグインをホストします。トリガーアーキテクチャ（`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`）は外部イベントをスキルチェーンにディスパッチします。
-- **その他のLayer2設計**: 上記2つ以外のドメイン特化エージェントは存在しません。`res/prompts/domain_agents/`には実装済みL2エージェントの設定/スキル/MCPドキュメントのみが含まれます。当初計画されていた`docs/plans/`ディレクトリは作成されませんでした。
+- **現在のLayer2**: `web_automation`（11 MCPツール）、`classic-software-engineering`（7 MCPツール）、`industrial_iot`（7 MCPツール）、`remote_operations`（16 MCPツール）がアクティブなLayer2クレートです。`classic-software-engineering`は静的解析、コードレビュー、品質チェック、リファクタリング提案、LSP診断、シンボル抽出、LSPリファクタリングを提供し、`packages/domain_agents/classic_software_engineering/`に実装されています。`industrial_iot`は産業用プロトコル通信（Modbus RTU/TCP、Siemens S7comm、OPC UA）を提供し、SkeMma/PoleMosのLayer1ツールから移行されました。`remote_operations`はSSHリモート実行、ファイル転送、GUI自動化、システムモニタリングを提供し、SkeMma/PoleMosのLayer1ツールから移行されました。wasmtime + boa TSデュアルサンドボックスを備えたWASIプラグインシステム（`plugin_host`）はリファレンスGitHub webhookプラグインをホストします。トリガーアーキテクチャ（`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`）は外部イベントをスキルチェーンにディスパッチします。
+- **その他のLayer2設計**: 計画された4つのL2エージェントがすべて実装されています。`res/prompts/domain_agents/`には実装済みL2エージェントの設定/スキル/MCPドキュメントが含まれます。当初計画されていた`docs/plans/`ディレクトリは作成されませんでした。
 - **Layer3**: ユーザー定義エージェントはワークスペースローカルの`.amphoreus/`ディレクトリからロードされます。外部Layer 3エージェントのsubscribe/list/runのCLIコマンドが存在します。`shared-custom-agent`クレートは部分的なインフラを提供します。実際のLayer 3ビジネスロジックプラグインは実装されていません。
 
 ## ランタイムパターン
@@ -532,11 +536,11 @@ flowchart LR
 | **テレメトリバッチ取り込み配線** | `BatchProcessor`は定義済みだが未インスタンス化。`try_intercept_sensor_batch()`パーサは存在するがディスパッチループで未呼び出し | `Sensor.Batch`ハンドラをメッセージディスパッチに配線 → `BatchProcessor` → テレメトリストア | P1 |
 | **OreXisのアラーム階層** | ✅ **完全実装。** `alarm_tools.rs`: アラームルールの設定/解除/確認（HH/H/L/LL/ROCレベル、しきい値、ヒステリシス、デバウンス、エスカレーション: log→notify_agent→auto_correct→human_notify→emergency_shutdown）。`SharedAlarmPolicyStore`は機能的。ステーション上書きをサポート。 | 不足: hydro-tin-monitorからの97障害コードの事前読み込み。 | P2 |
 | **時系列アダプタ** | ✅ **実装済み。** `JsonlTimeSeriesAdapter`は`TimeSeriesAdapter`トレイトを実装。`skemma/state.rs`で使用。バッファ書き込み、ポイント解析、クエリ。 | 将来: フィーチャーゲートの背後にTimescaleDB/InfluxDBバックエンド。 | ✓ |
-| **Modbus読み取り/書き込み** | ✅ **完全実装。** `skemma::modbus_read`（レジスタ安全ゲート付きFC 01/02/03/04）および`skemma::modbus_write`（書き込みホワイトリストゲート付きFC 05/06/15/16）が両方とも機能。 | — | ✓ |
-| **S7comm発見** | ✅ **実装済み。** `polemos::s7comm_discover`はTCP:102に接続し、CPU情報を取得、DB番号をスキャン、DB構造をプローブ。evernightの`s7comm_probe`を使用。 | — | ✓ |
-| **シリアル発見** | ✅ **実装済み。** `polemos::serial_discover`はポートを列挙、ボーレートをプローブ、ModbusステーションIDをスキャン。 | — | ✓ |
+| **Modbus読み取り/書き込み** | ✅ **完全実装。** `industrial_iot::modbus_read`（レジスタ安全ゲート付きFC 01/02/03/04）および`industrial_iot::modbus_write`（書き込みホワイトリストゲート付きFC 05/06/15/16）が両方とも機能。 | — | ✓ |
+| **S7comm発見** | ✅ **実装済み。** `industrial_iot::s7comm_probe`はTCP:102に接続し、CPU情報を取得、DB番号をスキャン、DB構造をプローブ。evernightの`s7comm_probe`を使用。 | — | ✓ |
+| **シリアル発見** | ✅ **実装済み。** `industrial_iot::serial_discover`はポートを列挙、ボーレートをプローブ、ModbusステーションIDをスキャン。 | — | ✓ |
 | **書き込み操作のヒューマンインザループ** | `emergency_lockdown`がすべての書き込みをブロック | `require_approval`ポリシーを追加 — 安全クリティカルなレジスタへの書き込みにはwebui管理者経由のオペレーター確認が必要。`WriteApprovalRequest`プロトコル型はaronaで定義済み（PLAN.mdのフェーズA）。 | P1 |
-| **OPC UAクライアント/サーバー** | OPC UAクライアント/サーバー統合が必要。PoleMosはポート4840を検出するが、本物のOPC UAクライアント/サーバー実装は存在しない。 | サードパーティSCADAデバイスから読み取るための本物のOPC UAクライアント。entelecheiaセンサー読み取り値を産業用SCADA（Ignition/WinCC/iFix）に公開するOPC UAサーバー。 | P1 |
+| **OPC UAクライアント/サーバー** | OPC UAクライアント/サーバー統合が必要。IndustrialIoTはポート4840を検出し、`industrial_iot::opcua_*`ツールを通じて基本的なOPC UAクライアントのbrowse/read/writeが可能。完全なOPC UAサーバー実装は存在しない。 | サードパーティSCADAデバイスから読み取るための本物のOPC UAクライアント。entelecheiaセンサー読み取り値を産業用SCADA（Ignition/WinCC/iFix）に公開するOPC UAサーバー。 | P1 |
 | **MPCソルバーブリッジ** | `hydro-platform-research`にPython MILP/MPCスケジューラがある | MCPツールとして公開: `call_mpc_solver` → IPC → Pythonプロセス → スケジュールを返す。またはRustに移行（`good_lp` + `argmin`）。 | P2 |
 | **冗長性 / フェイルオーバー** | 単一ノードアーキテクチャ（1 scepter、1 PostgreSQL） | リーダー選出付きデュアルscepterホットスタンバイ。Neikosフォークメカニズムを迅速な引き継ぎに再利用可能。 | P2 |
 | **オペレーターHMI** | TUIはターミナルのみ。webuiはチャットUI | P&IDオーバーレイ、トレンドチャート、アラームパネル、オペレーター操作監査ログ。hikariは十分なUIプリミティブ（Chart、Timeline、Table）を持つがHMI固有の構成が必要。 | P2 |

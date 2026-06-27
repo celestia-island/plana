@@ -19,7 +19,7 @@ Entelecheia has completed its major split: the user-facing shell layers have bee
 
 | Repository | Scope |
 |------------|-------|
-| **entelecheia** | Scepter orchestration, 14 agents (12 L1 + 2 active L2; 4 L2 planned), Cosmos/IEPL runtime, 32 shared crates |
+| **entelecheia** | Scepter orchestration, 16 agents (12 L1 + 4 L2), Cosmos/IEPL runtime, 32 shared crates |
 | **shittim-chest** | arona (Chat UI frontend), plana (Admin UI), `shittim_chest` backend (axum proxy + auth + webhook), IDE plugins, Tauri apps |
 
 ## Current Scope
@@ -47,10 +47,12 @@ The project has undergone a major decomposition: the old monolithic `packages/sh
 | **WebUI** | Removed — migrated to shittim-chest | — | ✅ Complete |
 | **WebUI Frontend** | Removed — migrated to shittim-chest | — | ✅ Complete |
 | **Cosmos / JS Runtime** | Boa engine, ES module import dispatch (`__native_dispatch` internal resolution), namespace generation, McpRouter with circuit breaker+retry. `.d.ts` auto-gen from `#[derive(TS)]` populates TypeScript type files. 50 unit tests. | SWC TypeScript transpile pipeline implemented and tested (37 unit tests). Full automated pipeline (LLM output → SWC → Boa) bridgeable via `shared_iepl::client` with `in-process-transpile` feature flag. | 🟢 Active |
-| **14 Agents (12 L1 + 2 L2)** | All 14 agents compile with MCP tool implementations. 147 MCP tools total — **all real**. Zero `unimplemented!()` or `todo!()` macros in the codebase. | Classic SE tools marked `maturity: Stub` in metadata but have real implementations (cargo clippy, eslint, pylint, go vet subprocess calls; code metrics; extract-function refactoring). | 🟢 Active |
+| **16 Agents (12 L1 + 4 L2)** | All 16 agents compile with MCP tool implementations. 147 MCP tools total — **all real**. Zero `unimplemented!()` or `todo!()` macros in the codebase. | Classic SE tools marked `maturity: Stub` in metadata but have real implementations (cargo clippy, eslint, pylint, go vet subprocess calls; code metrics; extract-function refactoring). | 🟢 Active |
 | **Layer2: Web Automation** | 11 MCP tools — all real implementations via WebDriver protocol: session management, navigation, screenshot, script execution, console/network logs, keyboard, mouse, recording. `maturity: Experimental` for 10 tools. | — | 🟢 Active |
 | **Layer2: Classic SE** | 7 MCP tools — all real implementations: static_analyze (cargo clippy/eslint/pylint/go vet), code_review (detects long functions, deep nesting, magic numbers), quality_check (LOC, complexity, letter grades), refactor_suggest, lsp_diagnose, lsp_symbols, lsp_refactor (real rename and extract-function). 2 unit tests. | LSP refactor's inline operation preview-only (needs LSP server for full resolution). | 🟢 Active |
-| **Other Layer2 designs** | No additional domain-specialist agents beyond the two above; `res/prompts/domain_agents/` contains config/skill docs for implemented agents only | `docs/plans/` was never created | 🔴 None |
+| **Layer2: Industrial IoT** | 7 MCP tools — all real implementations: modbus_read, modbus_write, s7comm_probe, serial_discover, opcua_browse, opcua_read, opcua_write. Industrial protocol communication (Modbus RTU/TCP, Siemens S7comm, OPC UA client). `maturity: Experimental`. | Migrated from SkeMma/PoleMos as part of Layer2 consolidation. | 🟢 Active |
+| **Layer2: Remote Operations** | 16 MCP tools — all real implementations: SSH session management, remote command execution, file transfer (SFTP), host information gathering, GUI automation (X11/VNC screenshot, input, navigation), system monitoring. `maturity: Experimental`. | Migrated from SkeMma/PoleMos as part of Layer2 consolidation. | 🟢 Active |
+| **Other Layer2 designs** | All 4 planned L2 agents now have implementations. `res/prompts/domain_agents/` contains config/skill docs for all implemented agents. | `docs/plans/` was never created | 🟢 Active |
 | **Container Isolation** | Two-tier runtime: Docker/Podman (outer orchestration) via Bollard, Youki/libcontainer (inner sandbox) via libcontainer. Non-root user, cap_drop=ALL, no-new-privileges, dedicated Docker network, Unix socket IPC, resource limits (512MB/1CPU/100 PIDs) on create, fork, merge, and recreate. Custom seccomp profiles. Fork/commit/snapshot fully functional on both backends. | AppArmor profiles not implemented. `read_only_rootfs` not enabled by default. | 🟡 Partial |
 | **Memory / RAG** | API-backed embedding (OpenAI-compatible, hash SHA-256 fallback, ONNX fastembed BGE-M3). 3 embedding backends fully implemented. PgVector store, in-memory vector documents, graph traversal, RagContextBuffer for ambient context injection. 39 unit tests. | Embedding→RAG connection decoupled (caller supplies pre-computed embeddings). PgVector path newer/less tested than in-memory fallback. RAG subscription sync is reserved (not yet implemented). | 🟡 Partial |
 | **IEPL Pipeline** | Boa engine + MCP bridge + namespace filtering + circuit breaker. SWC TypeScript parsing implemented and tested (37 unit tests). `.d.ts` auto-generation operational. IEPL codegen (Rust types → TS declarations) wired. TS→JS transpile available via `shared_iepl::client` (in-process or subprocess mode). | SWC→Boa chain not integrated for Cosmos container execution path (expects pre-stripped JS). | 🟡 Partial |
@@ -155,7 +157,7 @@ Consumers (scepter, agents, tui) import directly from individual sub-crates (e.g
 
 ## Active Agents
 
-The workspace compiles 12 Layer1 agents (129 MCP tools) and 2 active Layer2 crates (Web Automation 11 tools, Classic Software Engineering 7 tools; 148 MCP tools total). All agents use the `agent_mcp_module!` macro for MCP tool registration. The macro supports `skill_routing` for agents that need pre-dispatch interception (e.g., Skopeo's `SkillExecutor` dual-dispatch).
+The workspace compiles 12 Layer1 agents (111 MCP tools) and 4 Layer2 crates (Web Automation 11 tools, Classic Software Engineering 7 tools, Industrial IoT 7 tools, Remote Operations 16 tools). All agents use the `agent_mcp_module!` macro for MCP tool registration. The macro supports `skill_routing` for agents that need pre-dispatch interception (e.g., Skopeo's `SkillExecutor` dual-dispatch).
 
 **Tool implementation status:** All 147 tools have real implementations. Zero `unimplemented!()` or `todo!()` macros exist anywhere in the codebase. No tool returns a trivial `Ok(())` without real logic.
 
@@ -166,20 +168,22 @@ The workspace compiles 12 Layer1 agents (129 MCP tools) and 2 active Layer2 crat
 | **HubRis** | 1 | Planning, todo management, reporting, issue helpers | 8 | 0 | 65 tests | 🟢 Real |
 | **KaLos** | 1 | File and repository operations | 8 | 0 | 20 tests | 🟢 Real |
 | **NeiKos** | 1 | Container lifecycle and execution helpers | 17 | 0 | 14 tests | 🟢 Real |
-| **SkeMma** | 1 | Script execution and MCP-adjacent runtime behavior | 11 | 0 | 124 tests | 🟢 Real |
+| **SkeMma** | 1 | Script execution and runtime sandboxing | 2 | 0 | 124 tests | 🟢 Real |
 | **ApoRia** | 1 | Provider config, knowledge helpers, RAG tools | 11 | 0 | 14 tests | 🟢 Real |
 | **EleOs** | 1 | Web search and remote information retrieval | 2 | 0 | 11 tests | 🟢 Real |
 | **EpieiKeia** | 1 | Scheduling and maintenance helpers | 8 | 0 | 4 tests | 🟢 Real |
 | **OreXis** | 1 | Security policy enforcement (runtime blocking via denylist/allowlist/lockdown) + alarm hierarchy + audit reporting | 20 | 0 | 19 tests | 🟢 Real |
 | **PhiLia** | 1 | Memory and data-store related functions | 7 | 0 | 0 tests | 🟡 Zero test coverage |
-| **PoleMos** | 1 | Device, edge, SSH, hardware info capabilities | 24 | 0 | 3 tests | 🟡 Low test coverage |
+| **PoleMos** | 1 | Host communication and hardware telemetry | 9 | 0 | 3 tests | 🟡 Low test coverage |
 | **Web Automation** | 2 | Browser automation (create, navigate, screenshot, execute, console, network, keyboard, mouse, record) | 11 | 0 | 3 tests | 🟡 Low test coverage (`maturity: Experimental`) |
 | **Classic Software Engineering** | 2 | Static analysis, code review, quality check, refactor suggest, LSP diagnose/symbols/refactor | 7 | 0 | 2 tests | 🟡 Low test coverage (`maturity: Stub` in metadata but real implementations) |
+| **Industrial IoT** | 2 | Industrial protocol communication (Modbus RTU/TCP, Siemens S7comm, OPC UA client) | 7 | 0 | 0 tests | 🟡 Low test coverage (`maturity: Experimental`) |
+| **Remote Operations** | 2 | SSH remote execution, file transfer, GUI automation, system monitoring | 16 | 0 | 0 tests | 🟡 Low test coverage (`maturity: Experimental`) |
 
 ## Layer2 and Layer3
 
-- **Layer2 today**: `web_automation` (11 MCP tools) and `classic-software-engineering` (7 MCP tools) are the active Layer2 crates. `classic-software-engineering` provides static analysis, code review, quality checks, refactoring suggestions, LSP diagnostics, symbol extraction, and LSP refactoring — implemented at `packages/domain_agents/classic_software_engineering/`. A WASI plugin system (`plugin_host`) with wasmtime + boa TS dual sandbox hosts a reference GitHub webhook plugin; a Trigger architecture (`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`) dispatches external events to skill chains.
-- **Other Layer2 designs**: no additional domain-specialist agents exist beyond the two above. `res/prompts/domain_agents/` contains config/skill/mcp documentation for the implemented L2 agents only. The originally planned `docs/plans/` directory was never created.
+- **Layer2 today**: `web_automation` (11 MCP tools), `classic-software-engineering` (7 MCP tools), `industrial_iot` (7 MCP tools), and `remote_operations` (16 MCP tools) are the active Layer2 crates. `classic-software-engineering` provides static analysis, code review, quality checks, refactoring suggestions, LSP diagnostics, symbol extraction, and LSP refactoring — implemented at `packages/domain_agents/classic_software_engineering/`. `industrial_iot` provides industrial protocol communication (Modbus RTU/TCP, Siemens S7comm, OPC UA) — migrated from SkeMma/PoleMos Layer1 tools. `remote_operations` provides SSH remote execution, file transfer, GUI automation, and system monitoring — migrated from SkeMma/PoleMos Layer1 tools. A WASI plugin system (`plugin_host`) with wasmtime + boa TS dual sandbox hosts a reference GitHub webhook plugin; a Trigger architecture (`TriggerDispatcher` / `TriggerTopic` / `TriggerConfig`) dispatches external events to skill chains.
+- **Other Layer2 designs**: all 4 planned L2 agents are now implemented. `res/prompts/domain_agents/` contains config/skill/mcp documentation for the implemented L2 agents. The originally planned `docs/plans/` directory was never created.
 - **Layer3**: user-defined agents would be loaded from workspace-local `.amphoreus/` directories. CLI commands for subscribe/list/run of external Layer 3 agents exist. The `shared-custom-agent` crate provides partial infrastructure. No actual Layer 3 business logic plugins have been implemented.
 
 ## Runtime Patterns
@@ -547,11 +551,11 @@ flowchart LR
 | **Telemetry batch ingestion wired** | `BatchProcessor` defined but not instantiated; `try_intercept_sensor_batch()` parser exists but not called in dispatch loop | Wire `Sensor.Batch` handler into message dispatch → `BatchProcessor` → telemetry store | P1 |
 | **Alarm hierarchy in OreXis** | ✅ **Fully implemented.** `alarm_tools.rs`: set/remove/acknowledge alarm rules (HH/H/L/LL/ROC levels, threshold, hysteresis, debounce, escalation: log→notify_agent→auto_correct→human_notify→emergency_shutdown). `SharedAlarmPolicyStore` functional. Station overrides supported. | Missing: pre-load 97 fault codes from hydro-tin-monitor. | P2 |
 | **Time-series adapter** | ✅ **Implemented.** `JsonlTimeSeriesAdapter` implements `TimeSeriesAdapter` trait. Used by `skemma/state.rs`. Buffered writes, point parsing, query. | Future: TimescaleDB/InfluxDB backend behind feature gate. | ✓ |
-| **Modbus read/write** | ✅ **Fully implemented.** `skemma::modbus_read` (FC 01/02/03/04 with register safety gating) and `skemma::modbus_write` (FC 05/06/15/16 with write whitelist gating) both functional. | — | ✓ |
-| **S7comm discovery** | ✅ **Implemented.** `polemos::s7comm_discover` connects TCP:102, gets CPU info, scans DB numbers, probes DB structure. Uses evernight's `s7comm_probe`. | — | ✓ |
-| **Serial discovery** | ✅ **Implemented.** `polemos::serial_discover` enumerates ports, probes baud rates, scans Modbus station IDs. | — | ✓ |
+| **Modbus read/write** | ✅ **Fully implemented.** `industrial_iot::modbus_read` (FC 01/02/03/04 with register safety gating) and `industrial_iot::modbus_write` (FC 05/06/15/16 with write whitelist gating) both functional. | — | ✓ |
+| **S7comm discovery** | ✅ **Implemented.** `industrial_iot::s7comm_probe` connects TCP:102, gets CPU info, scans DB numbers, probes DB structure. Uses evernight's `s7comm_probe`. | — | ✓ |
+| **Serial discovery** | ✅ **Implemented.** `industrial_iot::serial_discover` enumerates ports, probes baud rates, scans Modbus station IDs. | — | ✓ |
 | **Human-in-the-loop for write ops** | `emergency_lockdown` blocks all writes | Add `require_approval` policy — writes to safety-critical registers require operator confirmation via webui admin. `WriteApprovalRequest` protocol type defined in arona (Phase A of PLAN.md). | P1 |
-| **OPC UA client/server** | OPC UA client/server integration needed. PoleMos detects port 4840 but no real OPC UA client/server implementation exists. | Real OPC UA client for reading from third-party SCADA devices; OPC UA server to expose entelecheia sensor readings to industrial SCADA (Ignition/WinCC/iFix). | P1 |
+| **OPC UA client/server** | OPC UA client/server integration needed. IndustrialIoT detects port 4840 and has basic OPC UA client browse/read/write through `industrial_iot::opcua_*` tools. No full OPC UA server implementation exists. | Real OPC UA client for reading from third-party SCADA devices; OPC UA server to expose entelecheia sensor readings to industrial SCADA (Ignition/WinCC/iFix). | P1 |
 | **MPC solver bridge** | `hydro-platform-research` has Python MILP/MPC scheduler | Expose as MCP tool: `call_mpc_solver` → IPC → Python process → return schedule. Or migrate to Rust (`good_lp` + `argmin`). | P2 |
 | **Redundancy / failover** | Single-node architecture (one scepter, one PostgreSQL) | Dual scepter hot standby with leader election. Neikos fork mechanism can be reused for quick takeover. | P2 |
 | **Operator HMI** | TUI is terminal-only; webui is chat UI | P&ID overlay, trend charts, alarm panel, operator action audit log. hikari has sufficient UI primitives (Chart, Timeline, Table) but needs HMI-specific composition. | P2 |
