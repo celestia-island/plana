@@ -25,26 +25,6 @@ pub struct Layer2ScriptExecResult {
     pub output: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
-pub struct OpcUaNodeInfo {
-    pub node_id: String,
-    pub browse_name: String,
-    pub display_name: String,
-    pub node_class: String,
-    pub children: Vec<OpcUaNodeInfo>,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
-pub struct OpcUaBrowseResult {
-    pub endpoint: String,
-    pub start_node_id: String,
-    pub max_depth: u32,
-    pub nodes: Vec<OpcUaNodeInfo>,
-    pub total_nodes: usize,
-    pub stub: bool,
-}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export)]
@@ -218,11 +198,6 @@ pub struct DisconnectRemoteParams {
     pub remote_id: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-pub struct OpcuaBrowseParams {
-    pub endpoint_url: String,
-    pub node_id: Option<String>,
-}
 
 // ── Tool result structs (signal/modbus/opcua) ──
 
@@ -244,15 +219,6 @@ pub struct SignalNormalizeResult {
     pub stats: SignalStats,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
-pub struct OpcuaBrowseToolResult {
-    pub endpoint_url: String,
-    pub browsed_node: String,
-    pub status: String,
-    pub message: String,
-    pub note: String,
-}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export)]

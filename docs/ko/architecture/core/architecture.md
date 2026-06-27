@@ -47,7 +47,7 @@ Entelecheia는 `packages/scepter`(오케스트레이션 서버)를 중심으로 
 | **WebUI** | 제거됨 — shittim-chest로 이전 | — | ✅ 완료 |
 | **WebUI 프론트엔드** | 제거됨 — shittim-chest로 이전 | — | ✅ 완료 |
 | **Cosmos / JS 런타임** | Boa 엔진, ES 모듈 임포트 디스패치(`__native_dispatch` 내부 해결), 네임스페이스 생성, 서킷 브레이커+재시도 포함 McpRouter. `#[derive(TS)]`의 `.d.ts` 자동 생성이 TypeScript 타입 파일을 채움. 50개 단위 테스트. | SWC TypeScript 트랜스파일 파이프라인 구현 및 테스트 완료(37개 단위 테스트). `in-process-transpile` 기능 플래그가 있는 `shared_iepl::client`를 통해 전체 자동 파이프라인(LLM 출력 → SWC → Boa) 연결 가능. | 🟢 활성 |
-| **14개 에이전트 (12개 L1 + 2개 L2)** | 모든 14개 에이전트가 MCP 도구 구현과 함께 컴파일됨. 총 148개 MCP 도구 — **147개 실제, 1개 스텁**(`opcua_browse`). 코드베이스에 `unimplemented!()` 또는 `todo!()` 매크로 없음. | 클래식 SE 도구는 메타데이터에서 `maturity: Stub`로 표시되었으나 실제 구현 보유(cargo clippy, eslint, pylint, go vet 서브프로세스 호출; 코드 메트릭; 함수 추출 리팩토링). | 🟢 활성 |
+| **14개 에이전트 (12개 L1 + 2개 L2)** | 모든 14개 에이전트가 MCP 도구 구현과 함께 컴파일됨. 총 147개 MCP 도구 — **모두 실제**. 코드베이스에 `unimplemented!()` 또는 `todo!()` 매크로 없음. | 클래식 SE 도구는 메타데이터에서 `maturity: Stub`로 표시되었으나 실제 구현 보유(cargo clippy, eslint, pylint, go vet 서브프로세스 호출; 코드 메트릭; 함수 추출 리팩토링). | 🟢 활성 |
 | **Layer2: 웹 자동화** | 11개 MCP 도구 — WebDriver 프로토콜을 통한 모든 실제 구현: 세션 관리, 탐색, 스크린샷, 스크립트 실행, 콘솔/네트워크 로그, 키보드, 마우스, 녹화. 10개 도구에 `maturity: Experimental`. | — | 🟢 활성 |
 | **Layer2: 클래식 SE** | 7개 MCP 도구 — 모든 실제 구현: static_analyze (cargo clippy/eslint/pylint/go vet), code_review (긴 함수, 깊은 중첩, 매직 넘버 감지), quality_check (LOC, 복잡도, 등급), refactor_suggest, lsp_diagnose, lsp_symbols, lsp_refactor (실제 이름 변경 및 함수 추출). 2개 단위 테스트. | LSP refactor의 인라인 작업은 미리보기 전용(LSP 서버가 있어야 전체 해결 가능). | 🟢 활성 |
 | **기타 Layer2 설계** | 위 두 가지 외에 추가 도메인 전문가 에이전트 없음; `res/prompts/domain_agents/`는 구현된 에이전트에 대한 설정/스킬 문서만 포함 | `docs/plans/`는 생성된 적 없음 | 🔴 없음 |
@@ -157,7 +157,7 @@ block-beta
 
 워크스페이스는 12개 Layer1 에이전트(129개 MCP 도구)와 2개 활성 Layer2 크레이트(웹 자동화 11개 도구, 클래식 소프트웨어 엔지니어링 7개 도구; 총 148개 MCP 도구)를 컴파일합니다. 모든 에이전트는 MCP 도구 등록을 위해 `agent_mcp_module!` 매크로를 사용합니다. 이 매크로는 사전 디스패치 인터셉션이 필요한 에이전트(예: Skopeo의 `SkillExecutor` 이중 디스패치)를 위해 `skill_routing`을 지원합니다.
 
-**도구 구현 상태:** 148개 도구 중 147개가 실제 구현을 보유하고 있습니다. 유일한 진정한 스텁은 `skemma::opcua_browse`입니다(TCP 연결 확인만 수행, 스텁으로 자체 식별). 코드베이스 어디에도 `unimplemented!()` 또는 `todo!()` 매크로가 존재하지 않습니다. 실제 로직 없이 단순히 `Ok(())`를 반환하는 도구는 없습니다.
+**도구 구현 상태:** 모든 147개 도구가 실제 구현을 보유하고 있습니다. 코드베이스 어디에도 `unimplemented!()` 또는 `todo!()` 매크로가 존재하지 않습니다. 실제 로직 없이 단순히 `Ok(())`를 반환하는 도구는 없습니다.
 
 | 에이전트 | 계층 | 현재 책임 | 도구 | 스텁 | 테스트 커버리지 | 완성도 |
 |-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
@@ -166,7 +166,7 @@ block-beta
 | **HubRis** | 1 | 계획, 할 일 관리, 보고, 이슈 도우미 | 8 | 0 | 65개 테스트 | 🟢 실제 |
 | **KaLos** | 1 | 파일 및 저장소 작업 | 8 | 0 | 20개 테스트 | 🟢 실제 |
 | **NeiKos** | 1 | 컨테이너 생명주기 및 실행 도우미 | 17 | 0 | 14개 테스트 | 🟢 실제 |
-| **SkeMma** | 1 | 스크립트 실행 및 MCP 인접 런타임 동작 | 11 | 1 (`opcua_browse`) | 124개 테스트 | 🟢 실제 |
+| **SkeMma** | 1 | 스크립트 실행 및 MCP 인접 런타임 동작 | 11 | 0 | 124개 테스트 | 🟢 실제 |
 | **ApoRia** | 1 | 제공자 설정, 지식 도우미, RAG 도구 | 11 | 0 | 14개 테스트 | 🟢 실제 |
 | **EleOs** | 1 | 웹 검색 및 원격 정보 검색 | 2 | 0 | 11개 테스트 | 🟢 실제 |
 | **EpieiKeia** | 1 | 스케줄링 및 유지보수 도우미 | 8 | 0 | 4개 테스트 | 🟢 실제 |
@@ -371,7 +371,6 @@ flowchart TB
 - **OreXis 완전 작동**: 보안 에이전트가 `SecurityPolicySet`을 통해 호출 시점에 도구 거부목록, 허용목록, 긴급 잠금, 세션별 정책 재정의를 집행합니다. HH/H/L/LL/ROC 임계값, 히스테리시스, 디바운스, 에스컬레이션 경로가 있는 경보 계층(`alarm_tools.rs`). `audit_only` 모드(기본값: 꺼짐) 전환 가능. 19개 테스트. 누락: hydro-tin-monitor의 97개 오류 코드 사전 로드.
 - **메모리/RAG 스택 대부분 연결됨**: 3개 임베딩 백엔드(API, ONNX fastembed, SHA-256 해시 폴백) 모두 완전 구현. PgVector 백엔드 작동. 그래프 탐색 작동 중. 임베딩→RAG 연결 분리(호출자가 자동 인라인 계산 대신 사전 계산된 임베딩 제공). RAG 구독 동기화 예약됨(아직 구현되지 않음).
 - **텔레메트리/배치 읽기 부분 연결**: `BatchProcessor` 구조체 정의되었으나 scepter 설정에서 인스턴스화되지 않음. `try_intercept_sensor_batch()` 파서 정의되었으나 메시지 디스패치 루프에서 호출되지 않음. `SensorBatch` 메시지 형식 파싱이 trigger_intercept에 존재.
-- **SkeMma OPC UA는 유일한 진정한 스텁**: TCP 연결 확인만 수행. 로그 출력에서 자체 식별. 실제 `opcua` 크레이트 통합 필요.
 - **JSON-RPC id 타입 불일치**: Rust/TypeScript/Kotlin이 서로 다른 JSON-RPC id 타입 사용.
 - **테스트 커버리지**: 약 2,070개 `#[test]` 함수. scepter (351)와 tui (329)가 가장 많이 테스트됨. 5개 크레이트에 테스트 없음(philia, concurrent, e2e_events, github-webhook, plugins/examples). 대부분의 공유 크레이트(30/33)는 인라인 단위 테스트에만 의존. 워크스페이스 수준 E2E 테스트 크레이트(`tests/rust`)에 95개 테스트.
 
@@ -468,7 +467,7 @@ flowchart TB
 | IB-06 | CLI 기능 동등성 (TUI 수준) | 대기 중 | CLI가 모든 TUI 명령 지원(제공자 설정, 에이전트 모달, 테마) | 현재 공백 → 심각 참조 |
 | IB-07 | L2 도메인 에이전트 테스트 커버리지 | 대기 중 | 각 L2 크레이트가 ≥5 통합 테스트 보유; classic_software_engineering이 안정성 도달 | 현재 2(CSE) + 3(WA) 테스트 |
 | IB-08 | ONNX + pgvector 종단 간 | 대기 중 | 임베딩 파이프라인: ONNX 모델 → pgvector 저장소 → 의미론적 검색; 통합 테스트 통과 | 임베딩 & RAG 개별 작동; 통합 분리됨 |
-| IB-09 | 실제 OPC UA 클라이언트 통합 | 대기 중 | `skemma::opcua_browse`가 실제 장치 데이터 반환; `opcua` 크레이트 연결 | **코드베이스 내 유일한 진정한 스텁** (148개 도구 중 1개) |
+| IB-09 | 실제 OPC UA 클라이언트 통합 | 대기 중 | 실제 OPC UA 클라이언트/서버 기능을 위해 `opcua` 크레이트 연결 | 실제 OPC UA 클라이언트 통합 필요 |
 | IB-10 | 자율 도그푸드 점화 | **완료 (제3자 드라이버 통해)** | 종단 간 yolo 세션: 부팅 → 백로그 읽기 → 하위 에이전트 디스패치 → 코드 수정 → PostSurgeryRollback 통과 → 커밋 | 아키텍처 검증됨. 남은 것은 외부 드라이버를 Entelecheia 자체 조정자로 교체(IB-01 + IB-02). |
 
 ### 자율 실행 준비도 지표
@@ -479,7 +478,7 @@ flowchart TB
 |--------|--------|---------|
 | 워크스페이스 컴파일 (`cargo check --workspace`) | 0 오류로 클린 | ✅ 클린 (1개 dead_code 경고) |
 | 실제 구현이 있는 MCP 도구 | 100% | 99.3% (147/148) |
-| 스텁 도구 | 0 | 1 (`opcua_browse`) |
+| 스텁 도구 | 0 | 0 |
 | 코드베이스 내 `unimplemented!()` / `todo!()` 매크로 | 0 | 0 |
 | **— 인프라 계층 (Entelecheia 소유)** | | |
 | 자가 수술 훅 체인 (체크포인트 → 롤백 → 병합) | 연결 + 등록됨 | ✅ 연결됨 (`surgery_hooks.rs`, 직렬 병합 조정자) |
@@ -544,7 +543,7 @@ flowchart LR
 | **S7comm 검색** | ✅ **구현됨.** `polemos::s7comm_discover`가 TCP:102에 연결, CPU 정보 획득, DB 번호 스캔, DB 구조 탐색. evernight의 `s7comm_probe` 사용. | — | ✓ |
 | **직렬 검색** | ✅ **구현됨.** `polemos::serial_discover`가 포트 열거, 보레이트 탐색, Modbus 스테이션 ID 스캔. | — | ✓ |
 | **쓰기 작업에 대한 인간 루프 내** | `emergency_lockdown`이 모든 쓰기 차단 | `require_approval` 정책 추가 — 안전 중요 레지스터에 대한 쓰기는 webui 관리자를 통한 운영자 확인 필요. `WriteApprovalRequest` 프로토콜 타입이 arona에 정의됨(PLAN.md의 Phase A). | P1 |
-| **OPC UA 클라이언트/서버** | 시스템 내 유일한 진정한 스텁: `skemma::opcua_browse`(TCP 연결 확인만, 스텁으로 자체 식별). PoleMos가 포트 4840 감지. | 타사 SCADA 장치에서 읽기 위한 실제 OPC UA 클라이언트; 산업 SCADA(Ignition/WinCC/iFix)에 entelecheia 센서 판독값을 노출하기 위한 OPC UA 서버. | P1 |
+| **OPC UA 클라이언트/서버** | OPC UA 클라이언트/서버 통합이 필요합니다. PoleMos가 포트 4840을 감지하지만 실제 OPC UA 클라이언트/서버 구현이 존재하지 않습니다. | 타사 SCADA 장치에서 읽기 위한 실제 OPC UA 클라이언트; 산업 SCADA(Ignition/WinCC/iFix)에 entelecheia 센서 판독값을 노출하기 위한 OPC UA 서버. | P1 |
 | **MPC 솔버 브리지** | `hydro-platform-research`에 Python MILP/MPC 스케줄러 있음 | MCP 도구로 노출: `call_mpc_solver` → IPC → Python 프로세스 → 스케줄 반환. 또는 Rust로 이식(`good_lp` + `argmin`). | P2 |
 | **이중화 / 장애 조치** | 단일 노드 아키텍처(하나의 scepter, 하나의 PostgreSQL) | 리더 선출이 있는 이중 scepter 핫 스탠바이. 빠른 인계를 위해 Neikos 포크 메커니즘 재사용 가능. | P2 |
 | **운영자 HMI** | TUI는 터미널 전용; webui는 채팅 UI | P&ID 오버레이, 트렌드 차트, 경보 패널, 운영자 작업 감사 로그. hikari는 충분한 UI 기본 요소(Chart, Timeline, Table)를 갖추고 있으나 HMI별 구성 필요. | P2 |

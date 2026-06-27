@@ -47,7 +47,7 @@ Le projet a subi une décomposition majeure : l'ancienne crate monolithique `pac
 | **WebUI** | Retirée — migrée vers shittim-chest | — | ✅ Terminé |
 | **Frontend WebUI** | Retiré — migré vers shittim-chest | — | ✅ Terminé |
 | **Cosmos / Runtime JS** | Moteur Boa, distribution import module ES (`__native_dispatch` résolution interne), génération namespace, McpRouter avec disjoncteur+retry. Auto-génération `.d.ts` depuis `#[derive(TS)]` peuple les fichiers de type TypeScript. 50 tests unitaires. | Pipeline transpile TypeScript SWC implémenté et testé (37 tests unitaires). Pipeline automatisé complet (sortie LLM → SWC → Boa) pontable via `shared_iepl::client` avec feature flag `in-process-transpile`. | 🟢 Actif |
-| **14 Agents (12 L1 + 2 L2)** | Les 14 agents compilent avec des implémentations d'outils MCP. 148 outils MCP au total — **147 réels, 1 stub** (`opcua_browse`). Zéro macro `unimplemented!()` ou `todo!()` dans la base de code. | Les outils SE classiques marqués `maturity: Stub` dans les métadonnées ont des implémentations réelles (appels subprocess cargo clippy, eslint, pylint, go vet ; métriques de code ; refactoring extract-function). | 🟢 Actif |
+| **14 Agents (12 L1 + 2 L2)** | Les 14 agents compilent avec des implémentations d'outils MCP. 147 outils MCP au total — **tous réels**. Zéro macro `unimplemented!()` ou `todo!()` dans la base de code. | Les outils SE classiques marqués `maturity: Stub` dans les métadonnées ont des implémentations réelles (appels subprocess cargo clippy, eslint, pylint, go vet ; métriques de code ; refactoring extract-function). | 🟢 Actif |
 | **Layer2 : Automatisation Web** | 11 outils MCP — tous implémentations réelles via protocole WebDriver : gestion de sessions, navigation, capture d'écran, exécution de script, logs console/réseau, clavier, souris, enregistrement. `maturity: Experimental` pour 10 outils. | — | 🟢 Actif |
 | **Layer2 : SE Classique** | 7 outils MCP — tous implémentations réelles : static_analyze (cargo clippy/eslint/pylint/go vet), code_review (détecte fonctions longues, imbrication profonde, nombres magiques), quality_check (LOC, complexité, notes par lettre), refactor_suggest, lsp_diagnose, lsp_symbols, lsp_refactor (rename et extract-function réels). 2 tests unitaires. | Aperçu inline de l'opération LSP refactor seulement (nécessite serveur LSP pour la résolution complète). | 🟢 Actif |
 | **Autres conceptions Layer2** | Aucun agent spécialiste de domaine supplémentaire au-delà des deux ci-dessus ; `res/prompts/domain_agents/` contient docs config/skill pour les agents implémentés uniquement | `docs/plans/` n'a jamais été créé | 🔴 Aucun |
@@ -157,7 +157,7 @@ Les consommateurs (scepter, agents, tui) importent directement depuis les sous-c
 
 Le workspace compile 12 agents Layer1 (129 outils MCP) et 2 crates Layer2 actives (Web Automation 11 outils, Classic Software Engineering 7 outils ; 148 outils MCP au total). Tous les agents utilisent la macro `agent_mcp_module!` pour l'enregistrement des outils MCP. La macro supporte `skill_routing` pour les agents nécessitant une interception pré-distribution (ex. `SkillExecutor` de Skopeo en double distribution).
 
-**Statut d'implémentation des outils :** 147 des 148 outils ont des implémentations réelles. Le seul vrai stub est `skemma::opcua_browse` (vérification connectivité TCP seulement, s'auto-identifie comme stub). Zéro macro `unimplemented!()` ou `todo!()` n'existe nulle part dans la base de code. Aucun outil ne retourne un `Ok(())` trivial sans logique réelle.
+**Statut d'implémentation des outils :** Les 147 outils ont tous des implémentations réelles. Zéro macro `unimplemented!()` ou `todo!()` n'existe nulle part dans la base de code. Aucun outil ne retourne un `Ok(())` trivial sans logique réelle.
 
 | Agent | Couche | Responsabilité actuelle | Outils | Stubs | Couverture tests | Maturité |
 |-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
@@ -166,7 +166,7 @@ Le workspace compile 12 agents Layer1 (129 outils MCP) et 2 crates Layer2 active
 | **HubRis** | 1 | Planification, gestion todo, rapports, assistants ticket | 8 | 0 | 65 tests | 🟢 Réel |
 | **KaLos** | 1 | Opérations de fichiers et dépôt | 8 | 0 | 20 tests | 🟢 Réel |
 | **NeiKos** | 1 | Cycle de vie conteneur et assistants exécution | 17 | 0 | 14 tests | 🟢 Réel |
-| **SkeMma** | 1 | Exécution de scripts et comportement runtime adjacent MCP | 11 | 1 (`opcua_browse`) | 124 tests | 🟢 Réel |
+| **SkeMma** | 1 | Exécution de scripts et comportement runtime adjacent MCP | 11 | 0 | 124 tests | 🟢 Réel |
 | **ApoRia** | 1 | Config fournisseur, assistants connaissance, outils RAG | 11 | 0 | 14 tests | 🟢 Réel |
 | **EleOs** | 1 | Recherche web et récupération d'information distante | 2 | 0 | 11 tests | 🟢 Réel |
 | **EpieiKeia** | 1 | Assistants planification et maintenance | 8 | 0 | 4 tests | 🟢 Réel |
@@ -372,7 +372,6 @@ Les fonctionnalités de connaissance et de mémoire existent sous une forme plus
 - **OreXis pleinement opérationnel** : L'agent de sécurité applique la liste noire, la liste blanche, le verrouillage d'urgence et les surcharges de politique par session au moment de l'invocation via `SecurityPolicySet`. La hiérarchie d'alarmes (`alarm_tools.rs`) avec seuils HH/H/L/LL/ROC, hystérésis, anti-rebond et chemins d'escalade est implémentée. Le mode `audit_only` (défaut : off) peut être basculé. 19 tests. Manquant : pré-charger 97 codes défaut depuis hydro-tin-monitor.
 - **Pile Mémoire/RAG principalement câblée** : Les 3 backends embedding (API, ONNX fastembed, fallback hash SHA-256) entièrement implémentés. Backend PgVector fonctionnel. Parcours graphe opérationnel. La connexion embedding→RAG est découplée (l'appelant fournit des embeddings pré-calculés plutôt que le calcul automatique inline). Synchro abonnement RAG réservée (pas encore implémentée).
 - **Télémétrie/lecture batch partiellement câblée** : Struct `BatchProcessor` défini mais non instancié dans la configuration scepter. Analyseur `try_intercept_sensor_batch()` défini mais non appelé dans la boucle de distribution de messages. Analyse format message `SensorBatch` existe dans trigger_intercept.
-- **SkeMma OPC UA est le seul vrai stub** : Effectue seulement une vérification connectivité TCP. S'auto-identifie dans la sortie log. Nécessite une vraie intégration crate `opcua`.
 - **Incohérence type id JSON-RPC** : Rust/TypeScript/Kotlin utilisent différents types id JSON-RPC.
 - **Couverture tests** : ~2 070 fonctions `#[test]` au total. scepter (351) et tui (329) les plus testés. 5 crates ont zéro test (philia, concurrent, e2e_events, github-webhook, plugins/examples). La plupart des crates partagées (30/33) reposent uniquement sur des tests unitaires inline. La crate de test E2E au niveau workspace (`tests/rust`) a 95 tests.
 
@@ -474,7 +473,7 @@ planificateur/distributeur. Réintroduire ces deux mécanismes est ce qui comble
 | IB-06 | Parité fonctionnelle CLI avec TUI | en attente | CLI supporte toutes commandes TUI (config fournisseur, modale agent, thème) | Voir Lacunes Actuelles → Critique |
 | IB-07 | Couverture test agents domaine L2 | en attente | Chaque crate L2 a ≥5 tests intégration ; classic_software_engineering atteint stabilité | Actuellement 2 (CSE) + 3 (WA) tests |
 | IB-08 | ONNX + pgvector de bout en bout | en attente | Pipeline embedding : modèle ONNX → stockage pgvector → récupération sémantique ; test intégration passe | Embedding & RAG séparément fonctionnels ; intégration découplée |
-| IB-09 | Intégration client OPC UA réel | en attente | `skemma::opcua_browse` retourne vraies données périphérique ; crate `opcua` câblée | **Seul vrai stub de la base de code** (1 sur 148 outils) |
+| IB-09 | Intégration client OPC UA réel | en attente | Câbler la crate `opcua` pour des capacités réelles client/serveur OPC UA | Intégration réelle client OPC UA nécessaire |
 | IB-10 | Allumage dogfood autonome | **fait (via pilote tiers)** | Session yolo de bout en bout : démarrer → lire backlog → distribuer sous-agent → modifier code → PostSurgeryRollback passe → commiter | L'architecture est validée. Ce qui reste est de remplacer le pilote externe par le coordinateur propre d'Entelecheia (IB-01 + IB-02). |
 
 ### Métriques de Préparation Exécution Autonome
@@ -487,7 +486,7 @@ planificateur/distributeur. Réintroduire ces deux mécanismes est ce qui comble
 |--------|--------|---------|
 | Compilation workspace (`cargo check --workspace`) | Propre avec 0 erreurs | ✅ Propre (1 avertissement dead_code) |
 | Outils MCP avec implémentations réelles | 100% | 99,3% (147/148) |
-| Outils stub | 0 | 1 (`opcua_browse`) |
+| Outils stub | 0 | 0 |
 | Macros `unimplemented!()` / `todo!()` dans la base de code | 0 | 0 |
 | **— Couche infrastructure (propriété Entelecheia)** | | |
 | Chaîne hooks auto-chirurgie (checkpoint → rollback → merge) | Câblée + enregistrée | ✅ Câblée (`surgery_hooks.rs`, coordinateur fusion série) |
@@ -552,7 +551,7 @@ flowchart LR
 | **Découverte S7comm** | ✅ **Implémentée.** `polemos::s7comm_discover` connecte TCP:102, obtient info CPU, scanne numéros DB, sonde structure DB. Utilise `s7comm_probe` d'evernight. | — | ✓ |
 | **Découverte série** | ✅ **Implémentée.** `polemos::serial_discover` énumère ports, sonde débits baud, scanne IDs station Modbus. | — | ✓ |
 | **Humain dans la boucle pour opérations écriture** | `emergency_lockdown` bloque toutes écritures | Ajouter politique `require_approval` — écritures vers registres critiques sécurité nécessitent confirmation opérateur via admin webui. Type protocole `WriteApprovalRequest` défini dans arona (Phase A de PLAN.md). | P1 |
-| **Client/serveur OPC UA** | Seul vrai stub du système : `skemma::opcua_browse` (vérification connectivité TCP seulement, s'auto-identifie comme stub). PoleMos détecte port 4840. | Vrai client OPC UA pour lecture depuis périphériques SCADA tiers ; serveur OPC UA pour exposer lectures capteur entelecheia au SCADA industriel (Ignition/WinCC/iFix). | P1 |
+| **Client/serveur OPC UA** | Intégration client/serveur OPC UA nécessaire. PoleMos détecte le port 4840 mais aucune implémentation réelle client/serveur OPC UA n'existe. | Vrai client OPC UA pour lecture depuis périphériques SCADA tiers ; serveur OPC UA pour exposer lectures capteur entelecheia au SCADA industriel (Ignition/WinCC/iFix). | P1 |
 | **Pont solveur MPC** | `hydro-platform-research` a planificateur Python MILP/MPC | Exposer comme outil MCP : `call_mpc_solver` → IPC → processus Python → retourner planning. Ou migrer vers Rust (`good_lp` + `argmin`). | P2 |
 | **Redondance / basculement** | Architecture nœud unique (un scepter, un PostgreSQL) | Double scepter veille active avec élection leader. Mécanisme fork Neikos réutilisable pour prise rapide. | P2 |
 | **IHM opérateur** | TUI terminal seulement ; webui est UI chat | Overlay P&ID, graphiques tendance, panneau alarmes, journal audit action opérateur. hikari a primitives UI suffisantes (Chart, Timeline, Table) mais nécessite composition spécifique IHM. | P2 |

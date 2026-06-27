@@ -47,7 +47,7 @@ Entelecheia 是一個包含 **56 個 crate** 的 Rust 工作區，圍繞 `packag
 | **WebUI** | 已移除 — 遷移到 shittim-chest | — | ✅ 完成 |
 | **WebUI 前端** | 已移除 — 遷移到 shittim-chest | — | ✅ 完成 |
 | **Cosmos / JS 執行環境** | Boa 引擎、ES 模組匯入分派（`__native_dispatch` 內部解析）、命名空間生成、帶有熔斷器+重試的 McpRouter。從 `#[derive(TS)]` 自動生成 `.d.ts` 以填充 TypeScript 型別檔案。50 個單元測試。 | SWC TypeScript 轉譯管線已實作並測試（37 個單元測試）。完整自動化管線（LLM 輸出 → SWC → Boa）可透過 `shared_iepl::client` 以 `in-process-transpile` 功能標誌橋接。 | 🟢 活躍 |
-| **14 個代理（12 L1 + 2 L2）** | 所有 14 個代理均以 MCP 工具實作編譯。總共 148 個 MCP 工具 — **147 個真實，1 個樁**（`opcua_browse`）。程式庫中零個 `unimplemented!()` 或 `todo!()` 巨集。 | Classic SE 工具在中繼資料中標記為 `maturity: Stub`，但具有真實的實作（cargo clippy、eslint、pylint、go vet 子處理程序呼叫；程式碼指標；extract-function 重構）。 | 🟢 活躍 |
+| **14 個代理（12 L1 + 2 L2）** | 所有 14 個代理均以 MCP 工具實作編譯。總共 147 個 MCP 工具 — **全部真實**。程式庫中零個 `unimplemented!()` 或 `todo!()` 巨集。 | Classic SE 工具在中繼資料中標記為 `maturity: Stub`，但具有真實的實作（cargo clippy、eslint、pylint、go vet 子處理程序呼叫；程式碼指標；extract-function 重構）。 | 🟢 活躍 |
 | **第 2 層：Web Automation** | 11 個 MCP 工具 — 全部為透過 WebDriver 協定的真實實作：會話管理、導航、截圖、腳本執行、控制台/網路日誌、鍵盤、滑鼠、錄製。10 個工具 `maturity: Experimental`。 | — | 🟢 活躍 |
 | **第 2 層：Classic SE** | 7 個 MCP 工具 — 全部為真實實作：static_analyze（cargo clippy/eslint/pylint/go vet）、code_review（偵測長函數、深層巢狀、魔術數字）、quality_check（LOC、複雜度、字母等級）、refactor_suggest、lsp_diagnose、lsp_symbols、lsp_refactor（真實的重新命名和 extract-function）。2 個單元測試。 | LSP refactor 的內嵌操作僅供預覽（需要 LSP 伺服器進行完整解析）。 | 🟢 活躍 |
 | **其他第 2 層設計** | 除上述兩個之外沒有其他域專家代理；`res/prompts/domain_agents/` 僅包含已實作代理的設定/技能文件 | `docs/plans/` 從未被建立 | 🔴 無 |
@@ -157,7 +157,7 @@ block-beta
 
 工作區編譯 12 個第 1 層代理（129 個 MCP 工具）和 2 個活躍的第 2 層 crate（Web Automation 11 個工具、Classic Software Engineering 7 個工具；總共 148 個 MCP 工具）。所有代理使用 `agent_mcp_module!` 巨集進行 MCP 工具註冊。該巨集支援 `skill_routing`，用於需要預先分派攔截的代理（例如 SkoPeo 的 `SkillExecutor` 雙重分派）。
 
-**工具實作狀態：** 148 個工具中的 147 個具有真實的實作。唯一真正的樁是 `skemma::opcua_browse`（僅 TCP 連通性檢查，自我標識為樁）。程式庫中任何地方都不存在 `unimplemented!()` 或 `todo!()` 巨集。沒有任何工具返回沒有真實邏輯的平凡 `Ok(())`。
+**工具實作狀態：** 全部 147 個工具均具有真實的實作。程式庫中任何地方都不存在 `unimplemented!()` 或 `todo!()` 巨集。沒有任何工具返回沒有真實邏輯的平凡 `Ok(())`。
 
 | 代理 | 層級 | 目前責任 | 工具 | 樁 | 測試覆蓋率 | 成熟度 |
 |-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
@@ -166,7 +166,7 @@ block-beta
 | **HubRis** | 1 | 規劃、待辦事項管理、報告、issue 輔助工具 | 8 | 0 | 65 個測試 | 🟢 真實 |
 | **KaLos** | 1 | 檔案和倉庫操作 | 8 | 0 | 20 個測試 | 🟢 真實 |
 | **NeiKos** | 1 | 容器生命週期和執行輔助工具 | 17 | 0 | 14 個測試 | 🟢 真實 |
-| **SkeMma** | 1 | 腳本執行和 MCP 相鄰執行環境行為 | 11 | 1 (`opcua_browse`) | 124 個測試 | 🟢 真實 |
+| **SkeMma** | 1 | 腳本執行和 MCP 相鄰執行環境行為 | 11 | 0 | 124 個測試 | 🟢 真實 |
 | **ApoRia** | 1 | 提供者設定、知識輔助工具、RAG 工具 | 11 | 0 | 14 個測試 | 🟢 真實 |
 | **EleOs** | 1 | 網頁搜尋和遠端資訊檢索 | 2 | 0 | 11 個測試 | 🟢 真實 |
 | **EpieiKeia** | 1 | 排程和維護輔助工具 | 8 | 0 | 4 個測試 | 🟢 真實 |
@@ -372,7 +372,6 @@ flowchart TB
 - **OreXis 完全可操作**：安全代理在調用時透過 `SecurityPolicySet` 強制執行工具拒絕列表、允許列表、緊急鎖定和會話特定的政策覆寫。警報層級（`alarm_tools.rs`）具有 HH/H/L/LL/ROC 閾值、滯後、去抖和升級路徑已實作。`audit_only` 模式（預設：關閉）可以切換。19 個測試。缺少：從 hydro-tin-monitor 預載入 97 個故障碼。
 - **記憶體/RAG 堆疊大部分已接線**：所有 3 個嵌入後端（API、ONNX fastembed、SHA-256 雜湊備援）完全實作。PgVector 後端功能正常。圖遍歷可操作。嵌入→RAG 連線已解耦（呼叫者提供預先計算的嵌入，而非自動內嵌計算）。RAG 訂閱同步已保留（尚未實作）。
 - **遙測/批次讀取部分接線**：`BatchProcessor` 結構體已定義但未在 scepter 設定中實例化。`try_intercept_sensor_batch()` 解析器已定義但未在訊息分派迴路中調用。`SensorBatch` 訊息格式解析存在於 trigger_intercept 中。
-- **SkeMma OPC UA 是唯一真正的樁**：僅執行 TCP 連通性檢查。在日誌輸出中自我標識。需要真實的 `opcua` crate 整合。
 - **JSON-RPC id 型別不一致**：Rust/TypeScript/Kotlin 使用不同的 JSON-RPC id 型別。
 - **測試覆蓋率**：總共約 2,070 個 `#[test]` 函數。scepter（351）和 tui（329）測試最多。5 個 crate 零測試（philia、concurrent、e2e_events、github-webhook、plugins/examples）。大多數共享 crate（30/33）僅依賴內嵌單元測試。工作區級別的 E2E 測試 crate（`tests/rust`）有 95 個測試。
 
@@ -470,7 +469,7 @@ flowchart TB
 | IB-06 | CLI 功能與 TUI 持平 | 待處理 | CLI 支援所有 TUI 命令（提供者設定、代理模態框、主題） | 參見當前缺口 → 關鍵 |
 | IB-07 | L2 域代理測試覆蓋率 | 待處理 | 每個 L2 crate 有 ≥5 個整合測試；classic_software_engineering 達到穩定性 | 目前 2（CSE）+ 3（WA）個測試 |
 | IB-08 | ONNX + pgvector 端對端 | 待處理 | 嵌入管線：ONNX 模型 → pgvector 儲存 → 語義檢索；整合測試通過 | 嵌入和 RAG 分別功能正常；整合已解耦 |
-| IB-09 | 真實 OPC UA 用戶端整合 | 待處理 | `skemma::opcua_browse` 返回真實裝置資料；`opcua` crate 已接線 | **程式庫中唯一真正的樁**（148 個工具中的 1 個） |
+| IB-09 | 真實 OPC UA 用戶端整合 | 待處理 | 接入 `opcua` crate 以獲得真實的 OPC UA 用戶端/伺服器能力 | 需要真實的 OPC UA 用戶端整合 |
 | IB-10 | 自主 dogfood 點燃 | **完成（透過第三方驅動器）** | 端對端 yolo 會話：啟動 → 讀取待辦事項 → 分派子代理 → 修改程式碼 → PostSurgeryRollback 通過 → 提交 | 架構已驗證。剩下的是用 Entelecheia 自己的協調者（IB-01 + IB-02）取代外部驅動器。 |
 
 ### 自主執行就緒度指標
@@ -483,7 +482,7 @@ flowchart TB
 |--------|--------|---------|
 | 工作區編譯（`cargo check --workspace`） | 乾淨，0 錯誤 | ✅ 乾淨（1 個 dead_code 警告） |
 | 具有真實實作的 MCP 工具 | 100% | 99.3%（147/148） |
-| 樁工具 | 0 | 1（`opcua_browse`） |
+| 樁工具 | 0 | 0 |
 | 程式庫中的 `unimplemented!()` / `todo!()` 巨集 | 0 | 0 |
 | **— 基礎設施層（Entelecheia 擁有）** | | |
 | 自我手術掛鉤鏈（檢查點 → 回滾 → 合併） | 已接線 + 已註冊 | ✅ 已接線（`surgery_hooks.rs`、序列合併協調者） |
@@ -548,7 +547,7 @@ flowchart LR
 | **S7comm 發現** | ✅ **已實作。** `polemos::s7comm_discover` 連線 TCP:102、獲取 CPU 資訊、掃描 DB 編號、探測 DB 結構。使用 evernight 的 `s7comm_probe`。 | — | ✓ |
 | **序列發現** | ✅ **已實作。** `polemos::serial_discover` 列舉埠、探測鮑率、掃描 Modbus 站號 ID。 | — | ✓ |
 | **寫入操作的人員在環確認** | `emergency_lockdown` 封鎖所有寫入 | 新增 `require_approval` 政策 — 對安全關鍵寄存器的寫入需要操作員透過 webui 管理面板確認。`WriteApprovalRequest` 協定型別在 arona 中定義（PLAN.md 的 A 階段）。 | P1 |
-| **OPC UA 用戶端/伺服器** | 系統中唯一真正的樁：`skemma::opcua_browse`（僅 TCP 連通性檢查，自我標識為樁）。PoleMos 偵測埠 4840。 | 用於從第三方 SCADA 裝置讀取的真實 OPC UA 用戶端；用於將 entelecheia 感測器讀數暴露給工業 SCADA（Ignition/WinCC/iFix）的 OPC UA 伺服器。 | P1 |
+| **OPC UA 用戶端/伺服器** | 需要 OPC UA 用戶端/伺服器整合。PoleMos 偵測埠 4840，但尚無真實的 OPC UA 用戶端/伺服器實作。 | 用於從第三方 SCADA 裝置讀取的真實 OPC UA 用戶端；用於將 entelecheia 感測器讀數暴露給工業 SCADA（Ignition/WinCC/iFix）的 OPC UA 伺服器。 | P1 |
 | **MPC 求解器橋接** | `hydro-platform-research` 具有 Python MILP/MPC 排程器 | 作為 MCP 工具暴露：`call_mpc_solver` → IPC → Python 處理程序 → 返回排程。或遷移到 Rust（`good_lp` + `argmin`）。 | P2 |
 | **冗餘 / 故障轉移** | 單節點架構（一個 scepter、一個 PostgreSQL） | 雙 scepter 熱待命，具有領袖選舉。Neikos 分支機制可重複使用以進行快速接管。 | P2 |
 | **操作員 HMI** | TUI 僅限終端；webui 是聊天 UI | P&ID 覆蓋、趨勢圖、警報面板、操作員操作審計日誌。hikari 具有足夠的 UI 原語（Chart、Timeline、Table），但需要 HMI 特定的組合。 | P2 |

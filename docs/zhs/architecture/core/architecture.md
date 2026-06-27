@@ -47,7 +47,7 @@ Entelecheia 是一个包含 **56 个 crate** 的 Rust 工作空间，核心为 `
 | **WebUI** | 已移除 — 迁移至 shittim-chest | — | ✅ 完成 |
 | **WebUI 前端** | 已移除 — 迁移至 shittim-chest | — | ✅ 完成 |
 | **Cosmos / JS 运行时** | Boa 引擎，ES 模块导入分发（`__native_dispatch` 内部解析），命名空间生成，McpRouter 含熔断器+重试。`.d.ts` 从 `#[derive(TS)]` 自动生成，填充 TypeScript 类型文件。50 个单元测试。 | SWC TypeScript 转译管道已实现并测试（37 个单元测试）。完整的自动化管道（LLM 输出 → SWC → Boa）可通过 `shared_iepl::client` 以 `in-process-transpile` 特性标志桥接。 | 🟢 活跃 |
-| **14 个智能体（12 L1 + 2 L2）** | 全部 14 个智能体均编译通过并具有 MCP 工具实现。共 148 个 MCP 工具 — **147 个真实，1 个桩**（`opcua_browse`）。代码库中零个 `unimplemented!()` 或 `todo!()` 宏。 | 经典软件工程工具在元数据中标记为 `maturity: Stub`，但具有真实实现（cargo clippy、eslint、pylint、go vet 子进程调用；代码度量；提取函数重构）。 | 🟢 活跃 |
+| **14 个智能体（12 L1 + 2 L2）** | 全部 14 个智能体均编译通过并具有 MCP 工具实现。共 147 个 MCP 工具 — **全部真实**。代码库中零个 `unimplemented!()` 或 `todo!()` 宏。 | 经典软件工程工具在元数据中标记为 `maturity: Stub`，但具有真实实现（cargo clippy、eslint、pylint、go vet 子进程调用；代码度量；提取函数重构）。 | 🟢 活跃 |
 | **Layer2：Web 自动化** | 11 个 MCP 工具 — 全部通过 WebDriver 协议真实实现：会话管理、导航、截图、脚本执行、控制台/网络日志、键盘、鼠标、录制。10 个工具标记为 `maturity: Experimental`。 | — | 🟢 活跃 |
 | **Layer2：经典软件工程** | 7 个 MCP 工具 — 全部真实实现：static_analyze（cargo clippy/eslint/pylint/go vet），code_review（检测长函数、深层嵌套、魔法数字），quality_check（LOC、复杂度、字母评分），refactor_suggest，lsp_diagnose，lsp_symbols，lsp_refactor（真实的变量重命名和提取函数）。2 个单元测试。 | LSP 重构的内联操作仅预览（需要 LSP 服务器才能完全解析）。 | 🟢 活跃 |
 | **其他 Layer2 设计** | 除上述两个之外，没有额外的领域专家智能体；`res/prompts/domain_agents/` 仅包含已实现智能体的配置/技能文档 | `docs/plans/` 从未创建 | 🔴 无 |
@@ -157,7 +157,7 @@ block-beta
 
 工作空间编译了 12 个 Layer1 智能体（129 个 MCP 工具）和 2 个活跃的 Layer2 crate（Web 自动化 11 个工具，经典软件工程 7 个工具；共 148 个 MCP 工具）。所有智能体使用 `agent_mcp_module!` 宏进行 MCP 工具注册。该宏为需要预分发拦截的智能体支持 `skill_routing`（例如 Skopeo 的 `SkillExecutor` 双重分发）。
 
-**工具实现状态：** 148 个工具中有 147 个具有真实实现。唯一真正的桩是 `skemma::opcua_browse`（仅 TCP 连接检查，自标识为桩）。代码库中任何地方都不存在 `unimplemented!()` 或 `todo!()` 宏。没有工具返回无真实逻辑的空 `Ok(())`。
+**工具实现状态：** 全部 147 个工具均具有真实实现。代码库中任何地方都不存在 `unimplemented!()` 或 `todo!()` 宏。没有工具返回无真实逻辑的空 `Ok(())`。
 
 | 智能体 | 层级 | 当前职责 | 工具数 | 桩 | 测试覆盖 | 成熟度 |
 |-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
@@ -166,7 +166,7 @@ block-beta
 | **HubRis** | 1 | 规划、待办管理、报告、问题辅助 | 8 | 0 | 65 个测试 | 🟢 真实 |
 | **KaLos** | 1 | 文件和仓库操作 | 8 | 0 | 20 个测试 | 🟢 真实 |
 | **NeiKos** | 1 | 容器生命周期和执行辅助 | 17 | 0 | 14 个测试 | 🟢 真实 |
-| **SkeMma** | 1 | 脚本执行和 MCP 相邻运行时行为 | 11 | 1（`opcua_browse`） | 124 个测试 | 🟢 真实 |
+| **SkeMma** | 1 | 脚本执行和 MCP 相邻运行时行为 | 11 | 0 | 124 个测试 | 🟢 真实 |
 | **ApoRia** | 1 | 提供商配置、知识辅助、RAG 工具 | 11 | 0 | 14 个测试 | 🟢 真实 |
 | **EleOs** | 1 | Web 搜索和远程信息检索 | 2 | 0 | 11 个测试 | 🟢 真实 |
 | **EpieiKeia** | 1 | 调度和维护辅助 | 8 | 0 | 4 个测试 | 🟢 真实 |
@@ -372,7 +372,6 @@ flowchart TB
 - **OreXis 全面运行**：安全智能体通过 `SecurityPolicySet` 在调用时强制执行工具拒绝列表、允许列表、紧急锁定和会话特定的策略覆盖。告警层级（`alarm_tools.rs`）含 HH/H/L/LL/ROC 阈值、滞后、防抖和升级路径已实现。`audit_only` 模式（默认关闭）可切换。19 个测试。缺失：从 hydro-tin-monitor 预加载 97 个故障代码。
 - **记忆/RAG 栈大部分已接入**：所有 3 个嵌入后端（API、ONNX fastembed、SHA-256 哈希回退）全部实现。PgVector 后端功能正常。图遍历可操作。嵌入→RAG 连接已解耦（调用方提供预计算的嵌入，而非自动内联计算）。RAG 订阅同步保留（尚未实现）。
 - **遥测/批量读取部分接入**：`BatchProcessor` 结构体已定义但在 scepter 设置中未实例化。`try_intercept_sensor_batch()` 解析器已定义但在消息分发循环中未被调用。`SensorBatch` 消息格式解析存在于 trigger_intercept 中。
-- **SkeMma OPC UA 是唯一真正的桩**：仅执行 TCP 连接检查。在日志输出中自标识。需要真正的 `opcua` crate 集成。
 - **JSON-RPC id 类型不一致**：Rust/TypeScript/Kotlin 使用不同的 JSON-RPC id 类型。
 - **测试覆盖**：约 2,070 个 `#[test]` 函数。scepter（351）和 tui（329）测试最多。5 个 crate 零测试（philia、concurrent、e2e_events、github-webhook、plugins/examples）。大多数共享 crate（30/33）仅依赖内联单元测试。工作空间级别的 E2E 测试 crate（`tests/rust`）有 95 个测试。
 
@@ -470,7 +469,7 @@ flowchart TB
 | IB-06 | CLI 功能对等 TUI | pending | CLI 支持所有 TUI 命令（提供商配置、智能体模态框、主题） | 参见当前差距 → 关键 |
 | IB-07 | L2 领域智能体测试覆盖 | pending | 每个 L2 crate 有 ≥5 个集成测试；classic_software_engineering 达到稳定性 | 当前 2（CSE）+ 3（WA）个测试 |
 | IB-08 | ONNX + pgvector 端到端 | pending | 嵌入管道：ONNX 模型 → pgvector 存储 → 语义检索；集成测试通过 | 嵌入和 RAG 分别功能正常；集成已解耦 |
-| IB-09 | 真实 OPC UA 客户端集成 | pending | `skemma::opcua_browse` 返回真实设备数据；`opcua` crate 已接入 | **代码库中唯一真正的桩**（148 个工具中的 1 个） |
+| IB-09 | 真实 OPC UA 客户端集成 | pending | 接入 `opcua` crate 以获得真实的 OPC UA 客户端/服务器能力 | 需要真实的 OPC UA 客户端集成 |
 | IB-10 | 自主自举点火 | **done（通过第三方驱动程序）** | 端到端 yolo 会话：启动 → 读取待办 → 分派子智能体 → 修改代码 → PostSurgeryRollback 通过 → 提交 | 架构已验证。剩下的工作是用 Entelecheia 自身的协调器替换外部驱动程序（IB-01 + IB-02）。 |
 
 ### 自主执行就绪度指标
@@ -481,7 +480,7 @@ flowchart TB
 |--------|--------|---------|
 | 工作空间编译（`cargo check --workspace`） | 零错误，干净 | ✅ 干净（1 个 dead_code 警告） |
 | 具有真实实现的 MCP 工具 | 100% | 99.3%（147/148） |
-| 桩工具 | 0 | 1（`opcua_browse`） |
+| 桩工具 | 0 | 0 |
 | 代码库中 `unimplemented!()` / `todo!()` 宏 | 0 | 0 |
 | **— 基础设施层（Entelecheia 拥有）** | | |
 | 自我手术钩子链（检查点 → 回滚 → 合并） | 已接入 + 注册 | ✅ 已接入（`surgery_hooks.rs`、串行合并协调器） |
@@ -546,7 +545,7 @@ flowchart LR
 | **S7comm 发现** | ✅ **已实现。** `polemos::s7comm_discover` 连接 TCP:102，获取 CPU 信息，扫描 DB 编号，探测 DB 结构。使用 evernight 的 `s7comm_probe`。 | — | ✓ |
 | **串口发现** | ✅ **已实现。** `polemos::serial_discover` 枚举端口，探测波特率，扫描 Modbus 站 ID。 | — | ✓ |
 | **写入操作的人机协同** | `emergency_lockdown` 阻止所有写入 | 添加 `require_approval` 策略 — 对安全关键寄存器的写入需要操作员通过 webui admin 确认。`WriteApprovalRequest` 协议类型在 arona 中定义（PLAN.md 阶段 A）。 | P1 |
-| **OPC UA 客户端/服务器** | 系统中唯一真正的桩：`skemma::opcua_browse`（仅 TCP 连接检查，自标识为桩）。PoleMos 检测端口 4840。 | 真实的 OPC UA 客户端，用于从第三方 SCADA 设备读取；OPC UA 服务器，将 entelecheia 传感器读数暴露给工业 SCADA（Ignition/WinCC/iFix）。 | P1 |
+| **OPC UA 客户端/服务器** | 需要 OPC UA 客户端/服务器集成。PoleMos 检测端口 4840，但尚无真实的 OPC UA 客户端/服务器实现。 | 真实的 OPC UA 客户端，用于从第三方 SCADA 设备读取；OPC UA 服务器，将 entelecheia 传感器读数暴露给工业 SCADA（Ignition/WinCC/iFix）。 | P1 |
 | **MPC 求解器桥接** | `hydro-platform-research` 有 Python MILP/MPC 调度器 | 暴露为 MCP 工具：`call_mpc_solver` → IPC → Python 进程 → 返回调度。或迁移到 Rust（`good_lp` + `argmin`）。 | P2 |
 | **冗余/故障转移** | 单节点架构（一个 scepter、一个 PostgreSQL） | 双 scepter 热备，含领导者选举。Neikos 分支机制可重用于快速接管。 | P2 |
 | **操作员 HMI** | TUI 仅终端；webui 是聊天 UI | P&ID 叠加、趋势图、告警面板、操作员操作审计日志。hikari 有足够的 UI 原语（Chart、Timeline、Table）但需要 HMI 特定的组合。 | P2 |

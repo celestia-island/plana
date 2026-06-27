@@ -47,7 +47,7 @@ The project has undergone a major decomposition: the old monolithic `packages/sh
 | **WebUI** | Removed — migrated to shittim-chest | — | ✅ Complete |
 | **WebUI Frontend** | Removed — migrated to shittim-chest | — | ✅ Complete |
 | **Cosmos / JS Runtime** | Boa engine, ES module import dispatch (`__native_dispatch` internal resolution), namespace generation, McpRouter with circuit breaker+retry. `.d.ts` auto-gen from `#[derive(TS)]` populates TypeScript type files. 50 unit tests. | SWC TypeScript transpile pipeline implemented and tested (37 unit tests). Full automated pipeline (LLM output → SWC → Boa) bridgeable via `shared_iepl::client` with `in-process-transpile` feature flag. | 🟢 Active |
-| **14 Agents (12 L1 + 2 L2)** | All 14 agents compile with MCP tool implementations. 148 MCP tools total — **147 real, 1 stub** (`opcua_browse`). Zero `unimplemented!()` or `todo!()` macros in the codebase. | Classic SE tools marked `maturity: Stub` in metadata but have real implementations (cargo clippy, eslint, pylint, go vet subprocess calls; code metrics; extract-function refactoring). | 🟢 Active |
+| **14 Agents (12 L1 + 2 L2)** | All 14 agents compile with MCP tool implementations. 147 MCP tools total — **all real**. Zero `unimplemented!()` or `todo!()` macros in the codebase. | Classic SE tools marked `maturity: Stub` in metadata but have real implementations (cargo clippy, eslint, pylint, go vet subprocess calls; code metrics; extract-function refactoring). | 🟢 Active |
 | **Layer2: Web Automation** | 11 MCP tools — all real implementations via WebDriver protocol: session management, navigation, screenshot, script execution, console/network logs, keyboard, mouse, recording. `maturity: Experimental` for 10 tools. | — | 🟢 Active |
 | **Layer2: Classic SE** | 7 MCP tools — all real implementations: static_analyze (cargo clippy/eslint/pylint/go vet), code_review (detects long functions, deep nesting, magic numbers), quality_check (LOC, complexity, letter grades), refactor_suggest, lsp_diagnose, lsp_symbols, lsp_refactor (real rename and extract-function). 2 unit tests. | LSP refactor's inline operation preview-only (needs LSP server for full resolution). | 🟢 Active |
 | **Other Layer2 designs** | No additional domain-specialist agents beyond the two above; `res/prompts/domain_agents/` contains config/skill docs for implemented agents only | `docs/plans/` was never created | 🔴 None |
@@ -157,7 +157,7 @@ Consumers (scepter, agents, tui) import directly from individual sub-crates (e.g
 
 The workspace compiles 12 Layer1 agents (129 MCP tools) and 2 active Layer2 crates (Web Automation 11 tools, Classic Software Engineering 7 tools; 148 MCP tools total). All agents use the `agent_mcp_module!` macro for MCP tool registration. The macro supports `skill_routing` for agents that need pre-dispatch interception (e.g., Skopeo's `SkillExecutor` dual-dispatch).
 
-**Tool implementation status:** 147 of 148 tools have real implementations. The only true stub is `skemma::opcua_browse` (TCP connectivity check only, self-identifies as stub). Zero `unimplemented!()` or `todo!()` macros exist anywhere in the codebase. No tool returns a trivial `Ok(())` without real logic.
+**Tool implementation status:** All 147 tools have real implementations. Zero `unimplemented!()` or `todo!()` macros exist anywhere in the codebase. No tool returns a trivial `Ok(())` without real logic.
 
 | Agent | Layer | Current responsibility | Tools | Stubs | Test coverage | Maturity |
 |-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
@@ -166,7 +166,7 @@ The workspace compiles 12 Layer1 agents (129 MCP tools) and 2 active Layer2 crat
 | **HubRis** | 1 | Planning, todo management, reporting, issue helpers | 8 | 0 | 65 tests | 🟢 Real |
 | **KaLos** | 1 | File and repository operations | 8 | 0 | 20 tests | 🟢 Real |
 | **NeiKos** | 1 | Container lifecycle and execution helpers | 17 | 0 | 14 tests | 🟢 Real |
-| **SkeMma** | 1 | Script execution and MCP-adjacent runtime behavior | 11 | 1 (`opcua_browse`) | 124 tests | 🟢 Real |
+| **SkeMma** | 1 | Script execution and MCP-adjacent runtime behavior | 11 | 0 | 124 tests | 🟢 Real |
 | **ApoRia** | 1 | Provider config, knowledge helpers, RAG tools | 11 | 0 | 14 tests | 🟢 Real |
 | **EleOs** | 1 | Web search and remote information retrieval | 2 | 0 | 11 tests | 🟢 Real |
 | **EpieiKeia** | 1 | Scheduling and maintenance helpers | 8 | 0 | 4 tests | 🟢 Real |
@@ -372,7 +372,6 @@ Knowledge and memory features exist in a simpler form than design documents desc
 - **OreXis is fully operational**: The security agent enforces tool denylist, allowlist, emergency lockdown, and session-specific policy overrides at invocation time via `SecurityPolicySet`. Alarm hierarchy (`alarm_tools.rs`) with HH/H/L/LL/ROC thresholds, hysteresis, debounce, and escalation paths is implemented. The `audit_only` mode (default: off) can be toggled. 19 tests. Missing: pre-load 97 fault codes from hydro-tin-monitor.
 - **Memory/RAG stack mostly wired**: All 3 embedding backends (API, ONNX fastembed, SHA-256 hash fallback) fully implemented. PgVector backend functional. Graph traversal operational. The embedding→RAG connection is decoupled (caller supplies pre-computed embeddings rather than automatic inline computation). RAG subscription sync is reserved (not yet implemented).
 - **Telemetry/batch reading partially wired**: `BatchProcessor` struct defined but not instantiated in scepter setup. `try_intercept_sensor_batch()` parser defined but not called in the message dispatch loop. `SensorBatch` message format parsing exists in trigger_intercept.
-- **SkeMma OPC UA is the only true stub**: Only performs TCP connectivity check. Self-identifies in log output. Needs real `opcua` crate integration.
 - **JSON-RPC id type inconsistency**: Rust/TypeScript/Kotlin use different JSON-RPC id types.
 - **Test coverage**: ~2,070 total `#[test]` functions. scepter (351) and tui (329) most tested. 5 crates have zero tests (philia, concurrent, e2e_events, github-webhook, plugins/examples). Most shared crates (30/33) rely on inline unit tests only. The workspace-level E2E test crate (`tests/rust`) has 95 tests.
 
@@ -474,7 +473,7 @@ role. Re-introducing those two mechanisms is what would close the self-bootstrap
 | IB-06 | CLI feature parity with TUI | pending | CLI supports all TUI commands (provider config, agent modal, theme) | See Current Gaps → Critical |
 | IB-07 | L2 domain agent test coverage | pending | Each L2 crate has ≥5 integration tests; classic_software_engineering reaches stability | Currently 2 (CSE) + 3 (WA) tests |
 | IB-08 | ONNX + pgvector end-to-end | pending | Embedding pipeline: ONNX model → pgvector store → semantic retrieval; integration test passes | Embedding & RAG separately functional; integration decoupled |
-| IB-09 | Real OPC UA client integration | pending | `skemma::opcua_browse` returns real device data; `opcua` crate wired | **Only true stub in the codebase** (1 of 148 tools) |
+| IB-09 | Real OPC UA client integration | pending | Wire `opcua` crate for real OPC UA client/server capabilities | Real OPC UA client integration needed |
 | IB-10 | Autonomous dogfood ignition | **done (via third-party driver)** | End-to-end yolo session: boot → read backlog → dispatch sub-agent → modify code → PostSurgeryRollback passes → commit | The architecture is validated. What remains is replacing the external driver with Entelecheia's own coordinator (IB-01 + IB-02). |
 
 ### Metrics for Autonomous Execution Readiness
@@ -487,7 +486,7 @@ role. Re-introducing those two mechanisms is what would close the self-bootstrap
 |--------|--------|---------|
 | Workspace compilation (`cargo check --workspace`) | Clean with 0 errors | ✅ Clean (1 dead_code warning) |
 | MCP tools with real implementations | 100% | 99.3% (147/148) |
-| Stub tools | 0 | 1 (`opcua_browse`) |
+| Stub tools | 0 | 0 |
 | `unimplemented!()` / `todo!()` macros in codebase | 0 | 0 |
 | **— Infrastructure layer (Entelecheia-owned)** | | |
 | Self-surgery hook chain (checkpoint → rollback → merge) | Wired + registered | ✅ Wired (`surgery_hooks.rs`, serial merge coordinator) |
@@ -552,7 +551,7 @@ flowchart LR
 | **S7comm discovery** | ✅ **Implemented.** `polemos::s7comm_discover` connects TCP:102, gets CPU info, scans DB numbers, probes DB structure. Uses evernight's `s7comm_probe`. | — | ✓ |
 | **Serial discovery** | ✅ **Implemented.** `polemos::serial_discover` enumerates ports, probes baud rates, scans Modbus station IDs. | — | ✓ |
 | **Human-in-the-loop for write ops** | `emergency_lockdown` blocks all writes | Add `require_approval` policy — writes to safety-critical registers require operator confirmation via webui admin. `WriteApprovalRequest` protocol type defined in arona (Phase A of PLAN.md). | P1 |
-| **OPC UA client/server** | Only true stub in system: `skemma::opcua_browse` (TCP connectivity check only, self-identifies as stub). PoleMos detects port 4840. | Real OPC UA client for reading from third-party SCADA devices; OPC UA server to expose entelecheia sensor readings to industrial SCADA (Ignition/WinCC/iFix). | P1 |
+| **OPC UA client/server** | OPC UA client/server integration needed. PoleMos detects port 4840 but no real OPC UA client/server implementation exists. | Real OPC UA client for reading from third-party SCADA devices; OPC UA server to expose entelecheia sensor readings to industrial SCADA (Ignition/WinCC/iFix). | P1 |
 | **MPC solver bridge** | `hydro-platform-research` has Python MILP/MPC scheduler | Expose as MCP tool: `call_mpc_solver` → IPC → Python process → return schedule. Or migrate to Rust (`good_lp` + `argmin`). | P2 |
 | **Redundancy / failover** | Single-node architecture (one scepter, one PostgreSQL) | Dual scepter hot standby with leader election. Neikos fork mechanism can be reused for quick takeover. | P2 |
 | **Operator HMI** | TUI is terminal-only; webui is chat UI | P&ID overlay, trend charts, alarm panel, operator action audit log. hikari has sufficient UI primitives (Chart, Timeline, Table) but needs HMI-specific composition. | P2 |

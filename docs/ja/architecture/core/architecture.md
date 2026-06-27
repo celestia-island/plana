@@ -47,7 +47,7 @@ Entelecheiaは`packages/scepter`（オーケストレーションサーバー）
 | **WebUI** | 削除 — shittim-chestに移行 | — | ✅ 完了 |
 | **WebUI フロントエンド** | 削除 — shittim-chestに移行 | — | ✅ 完了 |
 | **Cosmos / JSランタイム** | Boaエンジン、ESモジュールインポートディスパッチ（`__native_dispatch`内部解決）、名前空間生成、サーキットブレーカー+リトライ付きMcpRouter。`#[derive(TS)]`からの`.d.ts`自動生成によりTypeScript型ファイルを生成。50ユニットテスト。 | SWC TypeScriptトランスパイルパイプラインが実装・テスト済み（37ユニットテスト）。完全自動パイプライン（LLM出力 → SWC → Boa）は`shared_iepl::client`経由で`in-process-transpile`機能フラグで橋渡し可能。 | 🟢 アクティブ |
-| **14エージェント（12 L1 + 2 L2）** | 全14エージェントがMCPツール実装付きでコンパイル。合計148 MCPツール — **147が本物、1がスタブ**（`opcua_browse`）。コードベースに`unimplemented!()`または`todo!()`マクロはゼロ。 | Classic SEツールはメタデータで`maturity: Stub`とマークされているが本物の実装あり（cargo clippy、eslint、pylint、go vetサブプロセス呼び出し。コードメトリクス、関数抽出リファクタリング）。 | 🟢 アクティブ |
+| **14エージェント（12 L1 + 2 L2）** | 全14エージェントがMCPツール実装付きでコンパイル。合計147 MCPツール — **すべて本物**。コードベースに`unimplemented!()`または`todo!()`マクロはゼロ。 | Classic SEツールはメタデータで`maturity: Stub`とマークされているが本物の実装あり（cargo clippy、eslint、pylint、go vetサブプロセス呼び出し。コードメトリクス、関数抽出リファクタリング）。 | 🟢 アクティブ |
 | **Layer2: Web Automation** | 11 MCPツール — すべてWebDriverプロトコル経由の本物の実装：セッション管理、ナビゲーション、スクリーンショット、スクリプト実行、コンソール/ネットワークログ、キーボード、マウス、録画。10ツールが`maturity: Experimental`。 | — | 🟢 アクティブ |
 | **Layer2: Classic SE** | 7 MCPツール — すべて本物の実装：static_analyze（cargo clippy/eslint/pylint/go vet）、code_review（長い関数、深いネスト、マジックナンバーを検出）、quality_check（LOC、複雑度、段階評価）、refactor_suggest、lsp_diagnose、lsp_symbols、lsp_refactor（本物のリネームと関数抽出）。2ユニットテスト。 | LSPリファクタのインライン操作プレビューのみ（完全解決にはLSPサーバーが必要）。 | 🟢 アクティブ |
 | **その他のLayer2設計** | 上記2つ以外のドメイン特化エージェントはなし。`res/prompts/domain_agents/`には実装済みエージェントの設定/スキルドキュメントのみ。 | `docs/plans/`は作成されず | 🔴 なし |
@@ -157,7 +157,7 @@ block-beta
 
 ワークスペースは12のLayer1エージェント（129 MCPツール）と2つのアクティブLayer2クレート（Web Automation 11ツール、Classic Software Engineering 7ツール。合計148 MCPツール）をコンパイルします。すべてのエージェントはMCPツール登録に`agent_mcp_module!`マクロを使用します。このマクロは、事前ディスパッチインターセプトを必要とするエージェント（例：Skopeoの`SkillExecutor`デュアルディスパッチ）のための`skill_routing`をサポートしています。
 
-**ツール実装状況:** 148ツール中147が本物の実装を持ちます。唯一の真のスタブは`skemma::opcua_browse`（TCP接続チェックのみ、スタブと自己識別）です。コードベース全体に`unimplemented!()`または`todo!()`マクロは存在しません。本物のロジックなしに単純な`Ok(())`を返すツールはありません。
+**ツール実装状況:** 全147ツールが本物の実装を持ちます。コードベース全体に`unimplemented!()`または`todo!()`マクロは存在しません。本物のロジックなしに単純な`Ok(())`を返すツールはありません。
 
 | エージェント | レイヤー | 現在の責務 | ツール数 | スタブ | テストカバレッジ | 成熟度 |
 |-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
@@ -166,7 +166,7 @@ block-beta
 | **HubRis** | 1 | 計画、ToDo管理、レポート、Issueヘルパー | 8 | 0 | 65テスト | 🟢 本物 |
 | **KaLos** | 1 | ファイルおよびリポジトリ操作 | 8 | 0 | 20テスト | 🟢 本物 |
 | **NeiKos** | 1 | コンテナライフサイクルおよび実行ヘルパー | 17 | 0 | 14テスト | 🟢 本物 |
-| **SkeMma** | 1 | スクリプト実行およびMCP隣接ランタイム動作 | 11 | 1（`opcua_browse`） | 124テスト | 🟢 本物 |
+| **SkeMma** | 1 | スクリプト実行およびMCP隣接ランタイム動作 | 11 | 0 | 124テスト | 🟢 本物 |
 | **ApoRia** | 1 | プロバイダー設定、知識ヘルパー、RAGツール | 11 | 0 | 14テスト | 🟢 本物 |
 | **EleOs** | 1 | Web検索およびリモート情報取得 | 2 | 0 | 11テスト | 🟢 本物 |
 | **EpieiKeia** | 1 | スケジューリングおよびメンテナンスヘルパー | 8 | 0 | 4テスト | 🟢 本物 |
@@ -372,7 +372,6 @@ flowchart TB
 - **OreXisは完全に稼働**: セキュリティエージェントは`SecurityPolicySet`を通じてツールdenylist、allowlist、緊急ロックダウン、セッション固有のポリシー上書きを呼び出し時に強制します。アラーム階層（`alarm_tools.rs`）はHH/H/L/LL/ROCしきい値、ヒステリシス、デバウンス、エスカレーションパスを持ちます。`audit_only`モード（デフォルト: off）は切り替え可能です。19テスト。不足: hydro-tin-monitorからの97障害コードの事前読み込み。
 - **メモリ/RAGスタックはほぼ配線済み**: 3つすべての埋め込みバックエンド（API、ONNX fastembed、SHA-256ハッシュフォールバック）が完全実装。PgVectorバックエンドは機能的。グラフ走査は運用可能。埋め込み→RAG接続は分離されています（呼び出し元が事前計算済み埋め込みを提供し、自動インライン計算は行わない）。RAGサブスクリプション同期は予約済み（未実装）。
 - **テレメトリ/バッチ読み取りは部分的に配線**: `BatchProcessor`構造体は定義済みだがscepterセットアップで未インスタンス化。`try_intercept_sensor_batch()`パーサは定義済みだがメッセージディスパッチループで未呼び出し。`SensorBatch`メッセージフォーマット解析はtrigger_interceptに存在。
-- **SkeMma OPC UAは唯一の真のスタブ**: TCP接続チェックのみを実行。ログ出力で自己識別。本物の`opcua`クレート統合が必要。
 - **JSON-RPC id型の不整合**: Rust/TypeScript/Kotlinで異なるJSON-RPC id型を使用。
 - **テストカバレッジ**: 合計約2,070の`#[test]`関数。scepter（351）とtui（329）が最もテストされている。5クレートがゼロテスト（philia、concurrent、e2e_events、github-webhook、plugins/examples）。ほとんどの共有クレート（30/33）はインラインユニットテストのみに依存。ワークスペースレベルのE2Eテストクレート（`tests/rust`）には95テスト。
 - **設計のシグナル対ノイズ比**: 本プロジェクトには実装をはるかに超える機能を説明する広範な設計ドキュメントがあります。READMEおよび設計ドキュメントは機能リストとして読まれるべきではありません。
@@ -459,7 +458,7 @@ flowchart TB
 | IB-06 | TUIとのCLI機能同等性 | pending | CLIがすべてのTUIコマンド（プロバイダー設定、エージェントモーダル、テーマ）をサポート | 現在のギャップ → 重大を参照 |
 | IB-07 | L2ドメインエージェントテストカバレッジ | pending | 各L2クレートが5以上の統合テストを持つ。classic_software_engineeringが安定性に達する | 現在2（CSE）+ 3（WA）テスト |
 | IB-08 | ONNX + pgvectorエンドツーエンド | pending | 埋め込みパイプライン: ONNXモデル → pgvectorストア → 意味的検索。統合テストが合格 | 埋め込みとRAGは個別に機能。統合は分離 |
-| IB-09 | 本物のOPC UAクライアント統合 | pending | `skemma::opcua_browse`が本物のデバイスデータを返す。`opcua`クレートが配線される | **コードベース内の唯一の真のスタブ**（148ツール中1） |
+| IB-09 | 本物のOPC UAクライアント統合 | pending | 本物のOPC UAクライアント/サーバー機能のために`opcua`クレートを配線 | 本物のOPC UAクライアント統合が必要 |
 | IB-10 | 自律ドッグフード点火 | **done（サードパーティドライバー経由）** | エンドツーエンドyoloセッション: 起動 → バックログ読み取り → サブエージェントディスパッチ → コード変更 → PostSurgeryRollback合格 → コミット | アーキテクチャは検証済み。残るは外部ドライバーをEntelecheia自身のコーディネーターに置き換えること（IB-01 + IB-02）。 |
 
 ### 自律実行準備状況の指標
@@ -472,7 +471,7 @@ flowchart TB
 |--------|--------|---------|
 | ワークスペースコンパイル（`cargo check --workspace`） | 0エラーでクリーン | ✅ クリーン（1 dead_code警告） |
 | 本物の実装を持つMCPツール | 100% | 99.3%（147/148） |
-| スタブツール | 0 | 1（`opcua_browse`） |
+| スタブツール | 0 | 0 |
 | コードベース内の`unimplemented!()` / `todo!()`マクロ | 0 | 0 |
 | **— インフラストラクチャ層（Entelecheia所有）** | | |
 | 自己手術フックチェーン（チェックポイント → ロールバック → マージ） | 配線 + 登録済み | ✅ 配線済み（`surgery_hooks.rs`、シリアルマージコーディネーター） |
@@ -537,7 +536,7 @@ flowchart LR
 | **S7comm発見** | ✅ **実装済み。** `polemos::s7comm_discover`はTCP:102に接続し、CPU情報を取得、DB番号をスキャン、DB構造をプローブ。evernightの`s7comm_probe`を使用。 | — | ✓ |
 | **シリアル発見** | ✅ **実装済み。** `polemos::serial_discover`はポートを列挙、ボーレートをプローブ、ModbusステーションIDをスキャン。 | — | ✓ |
 | **書き込み操作のヒューマンインザループ** | `emergency_lockdown`がすべての書き込みをブロック | `require_approval`ポリシーを追加 — 安全クリティカルなレジスタへの書き込みにはwebui管理者経由のオペレーター確認が必要。`WriteApprovalRequest`プロトコル型はaronaで定義済み（PLAN.mdのフェーズA）。 | P1 |
-| **OPC UAクライアント/サーバー** | システム内の唯一の真のスタブ: `skemma::opcua_browse`（TCP接続チェックのみ、スタブと自己識別）。PoleMosはポート4840を検出。 | サードパーティSCADAデバイスから読み取るための本物のOPC UAクライアント。entelecheiaセンサー読み取り値を産業用SCADA（Ignition/WinCC/iFix）に公開するOPC UAサーバー。 | P1 |
+| **OPC UAクライアント/サーバー** | OPC UAクライアント/サーバー統合が必要。PoleMosはポート4840を検出するが、本物のOPC UAクライアント/サーバー実装は存在しない。 | サードパーティSCADAデバイスから読み取るための本物のOPC UAクライアント。entelecheiaセンサー読み取り値を産業用SCADA（Ignition/WinCC/iFix）に公開するOPC UAサーバー。 | P1 |
 | **MPCソルバーブリッジ** | `hydro-platform-research`にPython MILP/MPCスケジューラがある | MCPツールとして公開: `call_mpc_solver` → IPC → Pythonプロセス → スケジュールを返す。またはRustに移行（`good_lp` + `argmin`）。 | P2 |
 | **冗長性 / フェイルオーバー** | 単一ノードアーキテクチャ（1 scepter、1 PostgreSQL） | リーダー選出付きデュアルscepterホットスタンバイ。Neikosフォークメカニズムを迅速な引き継ぎに再利用可能。 | P2 |
 | **オペレーターHMI** | TUIはターミナルのみ。webuiはチャットUI | P&IDオーバーレイ、トレンドチャート、アラームパネル、オペレーター操作監査ログ。hikariは十分なUIプリミティブ（Chart、Timeline、Table）を持つがHMI固有の構成が必要。 | P2 |
