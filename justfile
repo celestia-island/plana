@@ -39,3 +39,15 @@ test:
 # Regenerate TypeScript bindings into packages/bindings/ via ts-rs.
 bindings:
     cargo test --package arona
+
+# Format Markdown docs + Rust code, then run lint checks.
+# Warnings (tab characters, untranslated duplicate paragraphs) are printed
+# to stderr but do not cause a non-zero exit.
+fmt:
+    {{python_cmd}} {{devtools}}/utils/format_markdown.py .
+    cargo fmt --all
+
+# Check formatting without writing changes.
+fmt-check:
+    {{python_cmd}} {{devtools}}/utils/format_markdown.py . --check
+    cargo fmt --all -- --check
