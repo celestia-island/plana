@@ -1,6 +1,6 @@
 +++
 title = "Plant Project File Format (`.plant.json`)"
-description = """> 工程文件格式设计 — 类似西门子博图 (TIA Portal) 的工程文件，统一描述工业节点拓扑、2D 面板、3D 场景。"""
+description = "Project file format design — similar to Siemens TIA Portal project files, unifying industrial node topology, 2D panels, and 3D scenes."
 lang = "en"
 category = "design"
 subcategory = "webui"
@@ -8,24 +8,24 @@ subcategory = "webui"
 
 # Plant Project File Format (`.plant.json`)
 
-> 工程文件格式设计 — 类似西门子博图 (TIA Portal) 的工程文件，统一描述工业节点拓扑、2D 面板、3D 场景。
+> Project file format design — similar to Siemens TIA Portal project files, unifying industrial node topology, 2D panels, and 3D scenes.
 
-## 设计目标
+## Design Goals
 
-1. **单一数据源** — 一个文件描述整个工厂/项目：设备节点、2D 拓扑、3D 场景、工业网络
-2. **三方兼容** — mock_scepter (fixture)、shittim-chest webui (3D 渲染)、entelecheia PoleMos agent (设备管理) 都读同一份文件
-3. **节点为中心** — 所有拓扑、场景、传感器都挂在 node 上，node 是核心实体
-4. **可版本管理** — `format_version` 字段 + JSON Schema，支持向后兼容演进
-5. **可扩展** — 允许追加自定义 metadata 不破坏现有解析器
+1. **Single source of truth** — One file describes the entire plant/project: device nodes, 2D topology, 3D scene, industrial networks
+2. **Three-way compatibility** — mock_scepter (fixture), shittim-chest webui (3D rendering), entelecheia PoleMos agent (device management) all read the same file
+3. **Node-centric** — All topology, scene, and sensor data is attached to nodes; the node is the core entity
+4. **Versionable** — `format_version` field + JSON Schema for backward-compatible evolution
+5. **Extensible** — Custom metadata can be appended without breaking existing parsers
 
-## 文件约定
+## File Conventions
 
-- 后缀：`.plant.json`
-- 编码：UTF-8
-- 格式：JSON（三端都原生支持）
-- 每个文件 = 一个 project = 一个工厂/产线
+- Extension: `.plant.json`
+- Encoding: UTF-8
+- Format: JSON (natively supported by all three parties)
+- One file = one project = one plant/production line
 
-## 顶层结构
+## Top-level Structure
 
 ```json
 {
@@ -43,13 +43,13 @@ subcategory = "webui"
 
 ## Section 1: `metadata`
 
-工程元数据。
+Project metadata.
 
 ```json
 {
   "metadata": {
     "name": "Green Hydrogen Corridor",
-    "description": "氢能走廊示范工程",
+    "description": "Green hydrogen corridor demonstration project",
     "author": "engineering-team",
     "created_at": "2026-06-13T00:00:00Z",
     "updated_at": "2026-06-13T00:00:00Z",
@@ -58,22 +58,22 @@ subcategory = "webui"
 }
 ```
 
-字段说明：
+Field descriptions:
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| name | string | Y | 工程名称 |
-| description | string | N | 描述 |
-| author | string | N | 创建者 |
-| created_at | ISO8601 | N | 创建时间 |
-| updated_at | ISO8601 | N | 最后修改时间 |
-| tags | string[] | N | 标签 |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | string | Y | Project name |
+| description | string | N | Description |
+| author | string | N | Creator |
+| created_at | ISO8601 | N | Creation time |
+| updated_at | ISO8601 | N | Last modified time |
+| tags | string[] | N | Tags |
 
 ---
 
 ## Section 2: `nodes`
 
-**核心实体**。每个 node 代表一个物理设备/逻辑单元。其他 section（topology、scene）通过 node ID 引用。
+**Core entity**. Each node represents a physical device or logical unit. Other sections (topology, scene) reference nodes by ID.
 
 ```json
 {
@@ -88,10 +88,10 @@ subcategory = "webui"
       "model": "RSOC-2024-ENC",
       "serial": "SN-RSOCENC-012345",
       "rated": {
-        "额定功率": "150 kW",
-        "工作温度": "600 ~ 850 °C",
-        "燃料": "H₂ / CH₄",
-        "发电效率": "≥ 60%"
+        "rated_power": "150 kW",
+        "operating_temperature": "600 ~ 850 °C",
+        "fuel": "H₂ / CH₄",
+        "generation_efficiency": "≥ 60%"
       },
       "sensors": [
         {
@@ -128,39 +128,39 @@ subcategory = "webui"
 }
 ```
 
-字段说明：
+Field descriptions:
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| label | string | Y | 显示名称 |
-| label_i18n | {lang: string} | N | 多语言名称 |
-| type | string | Y | 设备类型标识 (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
-| box | string | Y | 所属箱体 ID，对应 topology.boxes[].id |
-| polemos_node_id | string | N | entelecheia PoleMos agent 的节点 ID，用于云边协同 |
-| manufacturer | string | N | 厂商 |
-| model | string | N | 型号 |
-| serial | string | N | 序列号 |
-| rated | {key: string} | N | 铭牌参数 |
-| sensors | Sensor[] | N | 关联传感器 |
-| status | string | N | 默认状态 (online / offline / maintenance) |
-| metadata | object | N | 扩展字段 |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| label | string | Y | Display name |
+| label_i18n | {lang: string} | N | Multilingual names |
+| type | string | Y | Device type identifier (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
+| box | string | Y | Enclosure ID, corresponds to topology.boxes[].id |
+| polemos_node_id | string | N | entelecheia PoleMos agent node ID for cloud-edge collaboration |
+| manufacturer | string | N | Manufacturer |
+| model | string | N | Model |
+| serial | string | N | Serial number |
+| rated | {key: string} | N | Nameplate parameters |
+| sensors | Sensor[] | N | Associated sensors |
+| status | string | N | Default status (online / offline / maintenance) |
+| metadata | object | N | Extension fields |
 
-Sensor 结构：
+Sensor structure:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | 传感器 ID (如 tt-101) |
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Sensor ID (e.g. tt-101) |
 | type | string | temperature / pressure / flow / level / gas / current |
-| label | string | 显示标签 |
-| address | string | 工业协议地址 (Modbus:HR101 / OPC-UA:ns=2;s=Temperature) |
-| unit | string | 单位 |
-| range | [min, max] | 量程 |
+| label | string | Display label |
+| address | string | Industrial protocol address (Modbus:HR101 / OPC-UA:ns=2;s=Temperature) |
+| unit | string | Unit |
+| range | [min, max] | Measurement range |
 
 ---
 
 ## Section 3: `topology`
 
-2D 面板拓扑 — 用于 SCADA 式面板视图、2D 管线图。
+2D panel topology — used for SCADA-style panel views and 2D pipeline diagrams.
 
 ```json
 {
@@ -168,14 +168,14 @@ Sensor 结构：
     "boxes": [
       {
         "id": "box-1",
-        "label": "#1 RSOC 系统",
+        "label": "#1 RSOC System",
         "label_i18n": { "zhs": "#1 RSOC 系统", "en": "#1 RSOC System" },
         "color": "#8b5cf6",
         "nodes": ["rsoc-enc", "rsoc-stack"]
       },
       {
         "id": "box-2",
-        "label": "#2 电解槽区",
+        "label": "#2 Electrolyzer Area",
         "label_i18n": { "zhs": "#2 电解槽区", "en": "#2 Electrolyzer Area" },
         "color": "#3b82f6",
         "nodes": ["alk2", "alk3", "bop", "pem", "pem-cluster"]
@@ -210,7 +210,7 @@ Sensor 结构：
           "id": "wp-rsoc-1",
           "from": "cooling-tower",
           "to": "rsoc-enc",
-          "medium": "循环冷却水",
+          "medium": "circulating cooling water",
           "points": [[50,400],[300,300]],
           "flow_rate": 120,
           "temperature": 28
@@ -237,45 +237,45 @@ Sensor 结构：
 }
 ```
 
-topology 字段说明：
+Topology field descriptions:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| boxes | Box[] | 箱体分组，每个 box 包含若干 node |
-| plcs | PLC[] | PLC 设备列表 |
-| connections | Connections | 四类连接：信号线、电力电缆、水管、气管 |
-| layout | {id: LayoutItem} | 2D 面板坐标 (每个 node / sensor / plc 的 2D 位置) |
+| Field | Type | Description |
+|-------|------|-------------|
+| boxes | Box[] | Enclosure groupings; each box contains several nodes |
+| plcs | PLC[] | PLC device list |
+| connections | Connections | Four connection types: signal wires, power cables, water pipes, gas pipes |
+| layout | {id: LayoutItem} | 2D panel coordinates (2D position of each node / sensor / plc) |
 
-Box 结构：
+Box structure:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | 箱体 ID |
-| label | string | 显示标签 |
-| label_i18n | {lang: string} | 多语言 |
-| color | string | 主题色 |
-| nodes | string[] | 包含的 node ID 列表 |
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Enclosure ID |
+| label | string | Display label |
+| label_i18n | {lang: string} | Multilingual |
+| color | string | Theme color |
+| nodes | string[] | List of contained node IDs |
 
-Connection 结构（通用）：
+Connection structure (common):
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | 连接 ID |
-| from | string | 起点实体 ID (node / sensor / plc / utility) |
-| to | string | 终点实体 ID |
-| points | [x,y][] | 折线路径坐标 |
-| protocol | string | 信号线协议 (Modbus / 4-20mA / Profibus / HART / OPC-UA) |
-| voltage | string | 电力电缆电压 |
-| medium | string | 水管介质 |
-| gas | string | 气管气体类型 |
-| flow_rate | number | 流量 |
-| temperature | number | 温度 |
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Connection ID |
+| from | string | Source entity ID (node / sensor / plc / utility) |
+| to | string | Destination entity ID |
+| points | [x,y][] | Polyline path coordinates |
+| protocol | string | Signal wire protocol (Modbus / 4-20mA / Profibus / HART / OPC-UA) |
+| voltage | string | Power cable voltage |
+| medium | string | Water pipe medium |
+| gas | string | Gas pipe type |
+| flow_rate | number | Flow rate |
+| temperature | number | Temperature |
 
 ---
 
 ## Section 4: `scene`
 
-3D 全息场景配置 — 用于 webui PhysicalPreview 的 Three.js 渲染。
+3D holographic scene configuration — used by webui PhysicalPreview's Three.js rendering.
 
 ```json
 {
@@ -346,108 +346,108 @@ Connection 结构（通用）：
 }
 ```
 
-scene 字段说明：
+Scene field descriptions:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| background_color | string | 3D 场景背景色 |
-| environment_url | string? | HDR 环境贴图 URL |
-| camera.overview | CameraView | 初始摄像机视角（正对模型全景） |
-| camera.bookmarks | {boxId: CameraView} | 每个箱体的飞入目标视角 |
-| lighting.ambient | {color, intensity} | 环境光 |
-| lighting.directional | {color, intensity, position} | 方向光 |
-| ground | {enabled, ...} | 地面配置 |
-| bloom | {strength, radius, threshold} | 泛光后处理 |
-| models | Model3D[] | 3D 模型放置列表 |
+| Field | Type | Description |
+|-------|------|-------------|
+| background_color | string | 3D scene background color |
+| environment_url | string? | HDR environment map URL |
+| camera.overview | CameraView | Initial camera angle (overview of all models) |
+| camera.bookmarks | {boxId: CameraView} | Fly-to target angle for each enclosure |
+| lighting.ambient | {color, intensity} | Ambient light |
+| lighting.directional | {color, intensity, position} | Directional light |
+| ground | {enabled, ...} | Ground configuration |
+| bloom | {strength, radius, threshold} | Bloom post-processing |
+| models | Model3D[] | 3D model placement list |
 
-CameraView 结构：
+CameraView structure:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| position | [x, y, z] | 摄像机位置 |
-| target | [x, y, z] | 注视目标点 |
-| fov | number | 视场角 (度) |
+| Field | Type | Description |
+|-------|------|-------------|
+| position | [x, y, z] | Camera position |
+| target | [x, y, z] | Look-at target point |
+| fov | number | Field of view (degrees) |
 
-Model3D 结构：
+Model3D structure:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| node | string | 关联的 node ID |
-| glb | string | GLB 文件名 (相对于 models/ 目录) |
-| position | [x, y, z] | 3D 世界坐标 |
-| rotation | [x, y, z] | 欧拉角旋转 |
-| scale | number | 缩放 |
-| material | "auto" \| "holographic" \| "native" | 材质覆盖 |
-| is_background | boolean | 是否为背景装饰物 |
+| Field | Type | Description |
+|-------|------|-------------|
+| node | string | Associated node ID |
+| glb | string | GLB filename (relative to models/ directory) |
+| position | [x, y, z] | 3D world coordinates |
+| rotation | [x, y, z] | Euler angle rotation |
+| scale | number | Scale factor |
+| material | "auto" \| "holographic" \| "native" | Material override |
+| is_background | boolean | Whether this is a background decoration |
 
 ---
 
-## 三端对接方案
+## Three-Party Integration
 
 ### 1. mock_scepter (Rust fixture)
 
-加载路径：`fixtures/{project}.plant.json`
+Load path: `fixtures/{project}.plant.json`
 
 ```text
 fixtures/
 ├── agents.json
 ├── devices.json
-├── hydrogen_corridor.plant.json   ← 新增
+├── hydrogen_corridor.plant.json   ← new
 └── models/
     ├── box1_rsoc_enclosure.glb
     ├── box2_alk2.glb
     └── ...
 ```
 
-mock_scepter 启动时：
-- `fixtures::load_all()` 新增 `load_plant()` 调用
-- 解析 `.plant.json` → 拆分为 `DeviceModelResponse[]` + `SceneConfigItem`
-- `get_scene_config` 从 plant 数据返回，不再硬编码
-- `list_device_models` 从 plant 数据返回
-- `topology.rs` 的 `box_detail()` / `equipment_detail()` 从 plant 数据派生
+On mock_scepter startup:
+- `fixtures::load_all()` gets a new `load_plant()` call
+- Parse `.plant.json` → split into `DeviceModelResponse[]` + `SceneConfigItem`
+- `get_scene_config` returns from plant data instead of hardcoded values
+- `list_device_models` returns from plant data
+- `topology.rs`'s `box_detail()` / `equipment_detail()` derived from plant data
 
 ### 2. shittim-chest webui
 
-现有 API 契约不变（`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`）。
+Existing API contracts remain unchanged (`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`).
 
-新增：
-- `PhysicalPreview.tsx` 的 `BOX_CAMERA_TARGETS` 从 `scene.camera.bookmarks` 读取，不再硬编码
-- 3D 模型的 CSS2D overlay 标签从 `nodes[nodeId].label` 读取
+New additions:
+- `PhysicalPreview.tsx`'s `BOX_CAMERA_TARGETS` reads from `scene.camera.bookmarks` instead of being hardcoded
+- 3D model CSS2D overlay labels read from `nodes[nodeId].label`
 
 ### 3. entelecheia PoleMos agent
 
-PoleMos 通过 MCP tool 读取 plant 文件：
-- `node_discover` → 遍历 `nodes` + `topology.plcs`
-- `device_self_test` → 读取 `nodes[id].sensors` + `nodes[id].rated`
-- 设备管理操作 → 写回 `nodes[id].status`
+PoleMos reads the plant file via MCP tools:
+- `node_discover` → iterate `nodes` + `topology.plcs`
+- `device_self_test` → read `nodes[id].sensors` + `nodes[id].rated`
+- Device management operations → write back `nodes[id].status`
 
-未来可扩展：
-- PoleMos layer2 agent 生成 `.plant.json`（通过 AI 读取设备文档自动建立拓扑）
-- 人在 webui 里拖拽编辑 3D 布局 → 写回 `.plant.json`
-- CI/CD 管线验证 `.plant.json` 的 schema 完整性
-
----
-
-## 示例文件
-
-完整示例见 `scripts/mock/fixtures/hydrogen_corridor.plant.json`（待创建）。
+Future extensions:
+- PoleMos layer2 agent generates `.plant.json` (AI reads device docs to automatically build topology)
+- Users drag-and-drop 3D layout in webui → write back `.plant.json`
+- CI/CD pipeline validates `.plant.json` schema integrity
 
 ---
 
-## 与现有数据的关系
+## Example File
 
-| 现有数据源 | 迁移到 .plant.json 的部分 |
-|-----------|--------------------------|
-| `http_server.rs` 硬编码的 20 个 DeviceModelResponse | → `scene.models[]` + `nodes{}` |
-| `http_server.rs` 硬编码的 SceneConfigItem | → `scene{}` (camera, lighting, ground, bloom) |
-| `mock_data/topology.rs` 的 overview() / box_detail() | → `topology{}` (boxes, connections, layout) |
-| `mock_data/topology.rs` 的 equipment_detail() | → `nodes{}.rated` + `nodes{}.sensors` |
-| `PhysicalPreview.tsx` 的 BOX_CAMERA_TARGETS | → `scene.camera.bookmarks` |
+See `scripts/mock/fixtures/hydrogen_corridor.plant.json` for a complete example (to be created).
+
+---
+
+## Relationship to Existing Data
+
+| Existing data source | Portion migrated to .plant.json |
+|---------------------|---------------------------------|
+| `http_server.rs` hardcoded 20 DeviceModelResponses | → `scene.models[]` + `nodes{}` |
+| `http_server.rs` hardcoded SceneConfigItem | → `scene{}` (camera, lighting, ground, bloom) |
+| `mock_data/topology.rs` overview() / box_detail() | → `topology{}` (boxes, connections, layout) |
+| `mock_data/topology.rs` equipment_detail() | → `nodes{}.rated` + `nodes{}.sensors` |
+| `PhysicalPreview.tsx` BOX_CAMERA_TARGETS | → `scene.camera.bookmarks` |
 | `devices.json` fixture (entelecheia PoleMos) | → `nodes{}.polemos_node_id` |
 
-## Schema 校验
+## Schema Validation
 
-JSON Schema 文件放在 `schemas/plant-v1.json`，三端共享。
-mock_scepter 加载时 `serde_json` 反序列化 + schema 校验。
-webui 构建时可用 `ajv` 校验。
-entelecheia 可用 `jsonschema` crate 校验。
+The JSON Schema file lives at `schemas/plant-v1.json` and is shared by all three parties.
+mock_scepter validates via `serde_json` deserialization + schema validation at load time.
+The webui can validate using `ajv` at build time.
+entelecheia can validate using the `jsonschema` crate.
