@@ -17,7 +17,8 @@ export type Agent =
   | "WebAutomation"
   | "ClassicSoftwareEngineering"
   | "WebUiPanel"
-  | "IndustrialIoT";
+  | "IndustrialIoT"
+  | "RemoteOperations";
 
 export type AgentBadge = string;
 
@@ -352,6 +353,62 @@ export type EntrypointDefaultsInfo = {
   normal: Array<string>;
   basic: Array<string>;
   max_concurrent: MaxConcurrentInfo;
+};
+
+/**
+ * `Tui.FileRead` — file-content response.
+ */
+export type FileReadParams = {
+  target: FileTarget;
+  path: string;
+  content: string;
+  size: bigint;
+  /**
+   * `true` when content was truncated to the server read cap.
+   */
+  truncated: boolean;
+};
+
+/**
+ * A file-operation target — a (kind, id) pair plus optional workspace
+ * context (container slots are per-workspace).
+ */
+export type FileTarget = {
+  kind: FileTargetKind;
+  /**
+   * Container badge (`#demiurge` / `#001`), host id, or workspace id.
+   */
+  id: string;
+  /**
+   * Owning workspace id (container slots are workspace-scoped).
+   */
+  workspace_id?: string;
+};
+
+/**
+ * Which filesystem a file operation targets.
+ */
+export type FileTargetKind = "container" | "host" | "workspace";
+
+/**
+ * One entry in a directory listing.
+ */
+export type FileTreeEntry = {
+  name: string;
+  /**
+   * `"file"` | `"dir"` | `"symlink"`.
+   */
+  kind: string;
+  size: bigint;
+};
+
+/**
+ * `Tui.FileTree` — directory listing response.
+ */
+export type FileTreeParams = {
+  target: FileTarget;
+  path: string;
+  entries: Array<FileTreeEntry>;
 };
 
 export type GetKnowledgeBaseResponseParams = {
@@ -760,6 +817,22 @@ export type ReportType =
   | "error"
   | "system"
   | "pending";
+
+/**
+ * `Tui.RequestFileRead` — read a single (text) file, capped server-side.
+ */
+export type RequestFileReadParams = { target: FileTarget; path: string };
+
+/**
+ * `Tui.RequestFileTree` — list one level of a directory.
+ */
+export type RequestFileTreeParams = {
+  target: FileTarget;
+  /**
+   * Sub-path under the target root (empty/`""` = root).
+   */
+  path: string;
+};
 
 export type RequestNoaHandshakeParams = {
   workspace_id: string;
