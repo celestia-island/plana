@@ -1,7 +1,7 @@
 use serde_json::Value;
 use uuid::Uuid;
 
-use super::enums::ConsultationStatus;
+use crate::enums::ConsultationStatus;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/epieikeia.ts")]

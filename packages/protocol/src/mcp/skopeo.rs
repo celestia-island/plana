@@ -1,4 +1,4 @@
-use super::enums::{GoalStatus, GoalTaskStatus, TrackStatus};
+use crate::enums::{GoalStatus, GoalTaskStatus, TrackStatus};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Goal / Track / GoalTask — replaces the old OKR system

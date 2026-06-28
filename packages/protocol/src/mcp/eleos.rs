@@ -1,4 +1,4 @@
-use super::enums::WebSearchEngine;
+use crate::enums::WebSearchEngine;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/eleos.ts")]

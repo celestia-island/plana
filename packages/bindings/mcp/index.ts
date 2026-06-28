@@ -1,6 +1,5 @@
 export * as aporia from "./aporia";
 export * as eleos from "./eleos";
-export * as enums from "./enums";
 export * as epieikeia from "./epieikeia";
 export * as haplotes from "./haplotes";
 export * as hubris from "./hubris";

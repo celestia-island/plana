@@ -5,7 +5,7 @@
 // GetConversationResult
 // Resolve conflicts if any.
 
-use super::enums::{
+use crate::enums::{
     ConversationMessageType, ConversationStatus, FileOperationType, ObservationType,
 };
 

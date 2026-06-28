@@ -1,10 +1,17 @@
+//! Shared domain vocabulary enums.
+//!
+//! Platform-wide enumerations consumed by MCP tool types and protocol
+//! messages. These are *vocabulary*, not tool I/O shapes, so they live at the
+//! crate root rather than under `mcp/`. Per-agent tool request/result structs
+//! (see `mcp/`) reference the types defined here.
+
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
 macro_rules! str_enum {
     ($name:ident { $($variant:ident = $val:literal),* $(,)? }) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
-        #[ts(export, export_to = "mcp/enums.ts")]
+        #[ts(export, export_to = "enums.ts")]
         pub enum $name {
             $($variant,)*
         }
@@ -51,11 +58,6 @@ str_enum!(ContainerOpStatus {
     Forked = "forked",
 });
 
-str_enum!(BranchStatus {
-    BranchCreated = "branch_created",
-    AlreadyOnBranch = "already_on_branch",
-});
-
 str_enum!(ConsultationStatus {
     WaitingHuman = "waiting_human",
     Pending = "pending",
@@ -65,18 +67,6 @@ str_enum!(ConsultationStatus {
     Triggered = "triggered",
     Cancelled = "cancelled",
     Replied = "replied",
-});
-
-str_enum!(DiskType {
-    Ssd = "SSD",
-    Hdd = "HDD",
-    Unknown = "Unknown",
-});
-
-str_enum!(TranslationQuality {
-    Good = "GOOD",
-    Acceptable = "ACCEPTABLE",
-    Poor = "POOR",
 });
 
 str_enum!(WebSearchEngine {
@@ -93,12 +83,6 @@ str_enum!(ScriptLanguage {
     Node = "node",
     Zsh = "zsh",
     Layer2 = "layer2",
-});
-
-str_enum!(MessageType {
-    TaskRequest = "task_request",
-    ContextSupplement = "context_supplement",
-    Question = "question",
 });
 
 str_enum!(ObservationType {
@@ -157,6 +141,3 @@ str_enum!(GoalTaskStatus {
     Failed = "failed",
     Cancelled = "cancelled",
 });
-
-pub const PROTOCOL_VERSION: &str = "1.0.0";
-pub const DEFAULT_REPORT_TYPE: &str = "general";

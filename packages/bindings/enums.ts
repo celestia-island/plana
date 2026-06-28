@@ -7,8 +7,6 @@ export type AnnotationType =
   | "Suggestion"
   | "Conflict";
 
-export type BranchStatus = "BranchCreated" | "AlreadyOnBranch";
-
 export type ConsultationStatus =
   | "WaitingHuman"
   | "Pending"
@@ -40,8 +38,6 @@ export type ConversationStatus =
   | "Deadlocked"
   | "Escalated";
 
-export type DiskType = "Ssd" | "Hdd" | "Unknown";
-
 export type FileOpStatus = "Created" | "Deleted" | "Edited" | "Written";
 
 export type FileOperationType = "Reading" | "Editing" | "Deleting";
@@ -57,8 +53,6 @@ export type GoalTaskStatus =
   | "Failed"
   | "Cancelled";
 
-export type MessageType = "TaskRequest" | "ContextSupplement" | "Question";
-
 export type ObservationType = "Reading" | "Editing" | "Deleting" | "Watching";
 
 export type ScriptLanguage =
@@ -73,7 +67,5 @@ export type ScriptLanguage =
   | "Layer2";
 
 export type TrackStatus = "Active" | "Completed" | "Abandoned";
-
-export type TranslationQuality = "Good" | "Acceptable" | "Poor";
 
 export type WebSearchEngine = "Duckduckgo";

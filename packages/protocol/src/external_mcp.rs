@@ -1,3 +1,10 @@
+//! External (third-party) MCP server connection configuration.
+//!
+//! These types describe how scepter connects to *out-of-tree* MCP servers
+//! declared in the operator's `mcp_servers` TOML file. They are internal
+//! config types — not exported to the TypeScript bindings — and are distinct
+//! from the per-agent tool I/O structs under `mcp/`.
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

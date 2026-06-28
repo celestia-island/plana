@@ -1,7 +1,5 @@
-use super::{
-    enums::{AnnotationType, FileOpStatus},
-    haplotes::{AgentReference, ConflictInfo},
-};
+use super::haplotes::{AgentReference, ConflictInfo};
+use crate::enums::{AnnotationType, FileOpStatus, FileType};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/kalos.ts")]
@@ -17,7 +15,7 @@ pub struct FileListResult {
 pub struct FileEntry {
     pub name: String,
     #[serde(rename = "type")]
-    pub file_type: super::enums::FileType,
+    pub file_type: FileType,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
@@ -78,7 +76,7 @@ pub struct FileWriteResult {
 pub struct FileInfoResult {
     pub path: String,
     #[serde(rename = "type")]
-    pub file_type: super::enums::FileType,
+    pub file_type: FileType,
     pub size_bytes: u64,
     pub modified_unix: u64,
 }
@@ -178,6 +176,7 @@ pub struct FileCreateDirParams {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::enums::FileOperationType;
     use anyhow::Result;
 
     #[test]
@@ -194,7 +193,7 @@ mod tests {
                     agent_type: "WebAutomation".to_string(),
                     instance_badge: None,
                 },
-                operation_type: super::super::enums::FileOperationType::Editing,
+                operation_type: FileOperationType::Editing,
                 since: "2026-05-11T10:00:00Z".to_string(),
             }],
         };

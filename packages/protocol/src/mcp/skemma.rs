@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use super::enums::ScriptLanguage;
+use crate::enums::ScriptLanguage;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/skemma.ts")]

@@ -1,4 +1,4 @@
-use super::enums::{ConsultationStatus, ContainerOpStatus};
+use crate::enums::{ConsultationStatus, ContainerOpStatus};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/neikos.ts")]
