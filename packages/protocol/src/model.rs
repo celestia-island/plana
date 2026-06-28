@@ -46,7 +46,7 @@ use ts_rs::TS;
 
 /// Top-level model category. Determines which subsystem consumes the model.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ModelCategory {
     /// Large language model — chat, reasoning, tool use.
@@ -69,7 +69,7 @@ pub enum ModelCategory {
 /// Where a model physically executes. evernight chooses the backend based on
 /// GPU availability — GPU-first, CPU-fallback.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ModelBackend {
     /// Remote API (OpenAI, Anthropic, ZhiPu …). No local resources.
@@ -92,7 +92,7 @@ pub enum ModelBackend {
 /// Both sides can enumerate available models, check their status, and request
 /// inference using this common vocabulary.
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct ModelDescriptor {
     /// Unique id, e.g. `"bge-m3"`, `"whisper-tiny"`, `"claude-opus-4.8"`.
     pub id: String,
@@ -129,7 +129,7 @@ pub use super::ModelTier;
 
 /// Status of a local model server (ollama, whisper.cpp, …).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ModelServerStatus {
     /// Server is running and accepting requests.
@@ -146,7 +146,7 @@ pub enum ModelServerStatus {
 /// Neither scepter nor chest starts/stops these directly — they issue
 /// `RequestModelServerAction` and evernight performs the lifecycle.
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct ModelServerInfo {
     /// Server kind (determines the Docker image / launch command).
     pub kind: ModelServerKind,
@@ -168,7 +168,7 @@ pub struct ModelServerInfo {
 /// The type of model server. evernight deploys and manages these; the choice
 /// of GPU vs CPU variant is made by evernight at deploy time (GPU-first).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ModelServerKind {
     /// Ollama — LLM + embedding models (GPU via candle/CUDA; CPU via GGUF fallback).
@@ -189,7 +189,7 @@ pub enum ModelServerKind {
 /// over the WS JSON-RPC channel. The engine routes it to the appropriate
 /// backend (local CPU / local GPU / remote GPU / remote API).
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct ModelInferenceRequest {
     /// Which model to use (by id).
     pub model_id: String,
@@ -204,7 +204,7 @@ pub struct ModelInferenceRequest {
 
 /// Inference result returned to the web UI.
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct ModelInferenceResult {
     /// Model that produced the output.
     pub model_id: String,
@@ -226,7 +226,7 @@ pub struct ModelInferenceResult {
 
 /// `Tui.RequestModelList` — enumerate available models.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct RequestModelListParams {
     /// Filter by category (omit for all).
     #[serde(default)]
@@ -236,7 +236,7 @@ pub struct RequestModelListParams {
 
 /// `Tui.ModelList` — model catalogue response.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct ModelListParams {
     pub models: Vec<ModelDescriptor>,
     pub servers: Vec<ModelServerInfo>,
@@ -244,14 +244,14 @@ pub struct ModelListParams {
 
 /// `Tui.RequestModelInference` — ask the engine to run a model.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct RequestModelInferenceParams {
     pub request: ModelInferenceRequest,
 }
 
 /// `Tui.ModelInferenceResult` — inference result push.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct ModelInferenceResultParams {
     pub result: ModelInferenceResult,
 }
@@ -261,7 +261,7 @@ pub struct ModelInferenceResultParams {
 /// deployment directly; the action is forwarded to evernight's model lifecycle
 /// manager.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct RequestModelServerActionParams {
     pub kind: ModelServerKind,
     pub action: ModelServerAction,
@@ -274,7 +274,7 @@ pub struct RequestModelServerActionParams {
 
 /// `Tui.ModelServerActionResult` — action result.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 pub struct ModelServerActionResultParams {
     pub kind: ModelServerKind,
     pub status: ModelServerStatus,
@@ -282,7 +282,7 @@ pub struct ModelServerActionResultParams {
 
 /// What to do with a model server.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "model.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ModelServerAction {
     Start,

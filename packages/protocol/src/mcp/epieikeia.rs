@@ -4,7 +4,7 @@ use uuid::Uuid;
 use super::enums::ConsultationStatus;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TriggerAddResult {
     pub trigger_id: Uuid,
     pub trigger_type: String,
@@ -12,7 +12,7 @@ pub struct TriggerAddResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TriggerEntry {
     pub id: String,
     pub trigger_type: String,
@@ -21,20 +21,20 @@ pub struct TriggerEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TriggerListResult {
     pub count: usize,
     pub triggers: Vec<TriggerEntry>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TriggerRemoveResult {
     pub trigger_id: Uuid,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TaskScheduleResult {
     pub task_id: Uuid,
     pub schedule: Value,
@@ -43,7 +43,7 @@ pub struct TaskScheduleResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TaskEntry {
     pub id: String,
     pub schedule: Value,
@@ -52,14 +52,14 @@ pub struct TaskEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TaskListResult {
     pub count: usize,
     pub tasks: Vec<TaskEntry>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TaskCancelResult {
     pub task_id: Uuid,
     pub status: ConsultationStatus,
@@ -113,7 +113,7 @@ pub struct ListFileObserversParams {
 // ── Tool result structs ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct DeliverMessageResult {
     pub todo_id: Uuid,
     pub title: String,
@@ -122,7 +122,7 @@ pub struct DeliverMessageResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct InjectUserPromptResult {
     pub target_badge: String,
     pub injected: bool,
@@ -130,7 +130,7 @@ pub struct InjectUserPromptResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct InjectedPromptView {
     pub source_badge: String,
     pub message: String,
@@ -139,14 +139,14 @@ pub struct InjectedPromptView {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct ConsumeInjectedPromptsResult {
     pub consumed: Vec<InjectedPromptView>,
     pub count: usize,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct ForkContainerRegistrationResult {
     pub status: String,
     pub message: String,
@@ -155,14 +155,14 @@ pub struct ForkContainerRegistrationResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct NotifyFileOperationToolResult {
     pub file_path: String,
     pub observers_count: usize,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct FileObserverView {
     pub agent_type: String,
     pub instance_badge: Option<String>,
@@ -171,14 +171,14 @@ pub struct FileObserverView {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct ListFileObserversToolResult {
     pub file_path: String,
     pub observers: Vec<FileObserverView>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct UnregisterFileOperationResult {
     pub status: String,
 }

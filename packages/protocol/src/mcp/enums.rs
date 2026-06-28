@@ -4,7 +4,7 @@ use std::fmt;
 macro_rules! str_enum {
     ($name:ident { $($variant:ident = $val:literal),* $(,)? }) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
-        #[ts(export)]
+        #[ts(export, export_to = "mcp/enums.ts")]
         pub enum $name {
             $($variant,)*
         }

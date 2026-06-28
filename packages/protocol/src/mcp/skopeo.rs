@@ -7,7 +7,7 @@ use super::enums::{GoalStatus, GoalTaskStatus, TrackStatus};
 // ── Goal result types ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalEntry {
     pub id: String,
     pub title: String,
@@ -23,7 +23,7 @@ pub struct GoalEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalCreateResult {
     pub goal_id: String,
     pub title: String,
@@ -32,7 +32,7 @@ pub struct GoalCreateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalUpdateResult {
     pub goal_id: String,
     pub title: String,
@@ -40,14 +40,14 @@ pub struct GoalUpdateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalCloseResult {
     pub goal_id: String,
     pub status: GoalStatus,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalListResult {
     pub count: usize,
     pub goals: Vec<GoalEntry>,
@@ -56,7 +56,7 @@ pub struct GoalListResult {
 // ── Track result types ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct TrackEntry {
     pub id: String,
     pub goal_id: String,
@@ -74,7 +74,7 @@ pub struct TrackEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct TrackCreateResult {
     pub track_id: String,
     pub goal_id: String,
@@ -83,7 +83,7 @@ pub struct TrackCreateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct TrackUpdateResult {
     pub track_id: String,
     pub title: String,
@@ -93,7 +93,7 @@ pub struct TrackUpdateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct TrackCloseResult {
     pub track_id: String,
     pub status: TrackStatus,
@@ -102,7 +102,7 @@ pub struct TrackCloseResult {
 // ── GoalTask result types ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskEntry {
     pub id: String,
     pub track_id: String,
@@ -118,7 +118,7 @@ pub struct GoalTaskEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskCreateResult {
     pub task_id: String,
     pub track_id: String,
@@ -128,7 +128,7 @@ pub struct GoalTaskCreateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskUpdateResult {
     pub task_id: String,
     pub title: String,
@@ -136,14 +136,14 @@ pub struct GoalTaskUpdateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskCompleteResult {
     pub task_id: String,
     pub status: GoalTaskStatus,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskListResult {
     pub count: usize,
     pub tasks: Vec<GoalTaskEntry>,
@@ -152,7 +152,7 @@ pub struct GoalTaskListResult {
 // ── Alignment check ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct AlignmentCheckResult {
     pub goal_id: String,
     pub alignment_status: String,

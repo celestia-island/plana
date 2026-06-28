@@ -4,7 +4,7 @@ use uuid::Uuid;
 use super::enums::ConsultationStatus;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct CheckResultItem {
     pub standard: String,
     pub status: String,
@@ -14,7 +14,7 @@ pub struct CheckResultItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct SensitivityRule {
     pub tool: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -25,7 +25,7 @@ pub struct SensitivityRule {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct AskResult {
     pub consultation_id: Uuid,
     pub question: String,
@@ -36,7 +36,7 @@ pub struct AskResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct ReplyResult {
     pub consultation_id: Uuid,
     pub answer: String,
@@ -45,7 +45,7 @@ pub struct ReplyResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct ReportHumanResult {
     pub report_id: Uuid,
     pub report_type: String,
@@ -56,7 +56,7 @@ pub struct ReportHumanResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct AuditAlignmentResult {
     pub audit_id: Uuid,
     pub target: String,
@@ -67,7 +67,7 @@ pub struct AuditAlignmentResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct AuditLegalityResult {
     pub audit_id: Uuid,
     pub target: String,
@@ -79,7 +79,7 @@ pub struct AuditLegalityResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct AuditFinding {
     pub rule_id: String,
     pub severity: String,
@@ -193,7 +193,7 @@ pub struct ManageSensitivityRulesParams {
 // ── Tool result structs (compliance) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct ComplianceRule {
     pub id: String,
     pub standard: String,
@@ -205,14 +205,14 @@ pub struct ComplianceRule {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct StandardRegisterResult {
     pub standard_id: Uuid,
     pub rules_registered: usize,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct RuleCheckResult {
     pub rule_id: String,
     pub clause: String,
@@ -225,7 +225,7 @@ pub struct RuleCheckResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct StandardCheckResult {
     pub standard_id: Uuid,
     pub total_rules: usize,
@@ -237,7 +237,7 @@ pub struct StandardCheckResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct ComplianceSummary {
     pub total_rules: usize,
     pub passed: usize,
@@ -248,7 +248,7 @@ pub struct ComplianceSummary {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct ReportDetail {
     pub rule_id: String,
     pub clause: String,
@@ -260,7 +260,7 @@ pub struct ReportDetail {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/orexis.ts")]
 pub struct ComplianceReportToolResult {
     pub report_id: Uuid,
     pub standard_id: Uuid,

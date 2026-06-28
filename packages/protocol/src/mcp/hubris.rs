@@ -1,13 +1,13 @@
 use uuid::Uuid;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct ReportResult {
     pub summary: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoTreeNode {
     pub id: Uuid,
     pub title: String,
@@ -106,7 +106,7 @@ pub struct ReportHumanParams {
 // ── Tool result structs ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoCreateResult {
     pub id: Uuid,
     pub title: String,
@@ -116,7 +116,7 @@ pub struct TodoCreateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoListItem {
     pub id: Uuid,
     pub title: String,
@@ -130,21 +130,21 @@ pub struct TodoListItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoListResult {
     pub total: usize,
     pub items: Vec<TodoListItem>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoTreeListResult {
     pub total: usize,
     pub tree: Vec<TodoTreeNode>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoUpdateResult {
     pub id: Uuid,
     pub title: String,
@@ -153,14 +153,14 @@ pub struct TodoUpdateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoDeleteResult {
     pub deleted_id: Uuid,
     pub success: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoClearItem {
     pub id: Uuid,
     pub title: String,
@@ -168,7 +168,7 @@ pub struct TodoClearItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoClearDryRunResult {
     pub dry_run: bool,
     pub would_delete: usize,
@@ -176,14 +176,14 @@ pub struct TodoClearDryRunResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoClearResult {
     pub deleted_count: u64,
     pub success: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct TodoMoveResult {
     pub id: Uuid,
     pub parent_id: Option<Uuid>,

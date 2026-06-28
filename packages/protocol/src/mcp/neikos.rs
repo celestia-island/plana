@@ -1,7 +1,7 @@
 use super::enums::{ConsultationStatus, ContainerOpStatus};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerListItem {
     pub name: String,
     pub image: String,
@@ -10,14 +10,14 @@ pub struct ContainerListItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerListResult {
     pub total_count: usize,
     pub containers: Vec<ContainerListItem>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerInfoResult {
     pub container_id: String,
     pub name: String,
@@ -32,28 +32,28 @@ pub struct ContainerInfoResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerStartResult {
     pub container_id: String,
     pub status: ContainerOpStatus,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerStopResult {
     pub container_id: String,
     pub status: ContainerOpStatus,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerRemoveResult {
     pub container_id: String,
     pub status: ContainerOpStatus,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerSnapshotResult {
     pub container_id: String,
     pub snapshot_id: String,
@@ -62,7 +62,7 @@ pub struct ContainerSnapshotResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct VolumeInfo {
     pub host_path: String,
     pub container_path: String,
@@ -70,7 +70,7 @@ pub struct VolumeInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerCreateResult {
     pub image: String,
     pub container_id: String,
@@ -83,7 +83,7 @@ pub struct ContainerCreateResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerForkResult {
     pub parent_container_id: String,
     pub new_container_id: String,
@@ -94,7 +94,7 @@ pub struct ContainerForkResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ExecResult {
     pub container_id: String,
     pub command: String,
@@ -104,7 +104,7 @@ pub struct ExecResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct DeliverMessageResult {
     pub todo_id: String,
     pub title: String,
@@ -114,7 +114,7 @@ pub struct DeliverMessageResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct GitPushResult {
     pub container_id: String,
     pub branch: String,
@@ -127,7 +127,7 @@ pub struct GitPushResult {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct NewContainerVolumeMount {
     pub source: String,
     pub target: String,
@@ -172,7 +172,7 @@ pub struct ContainerSnapshotParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerFilterCriteria {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub label: Option<std::collections::HashMap<String, String>>,
@@ -256,7 +256,7 @@ pub struct CheckWaitParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ToolchainProfileInfo {
     pub id: String,
     pub display_name: String,
@@ -268,13 +268,13 @@ pub struct ToolchainProfileInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ToolchainListResult {
     pub profiles: Vec<ToolchainProfileInfo>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ToolchainVolumeSpec {
     pub host_path: String,
     pub container_path: String,
@@ -282,7 +282,7 @@ pub struct ToolchainVolumeSpec {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ToolchainEnsureResult {
     pub profile_id: String,
     pub source_image: String,
@@ -292,7 +292,7 @@ pub struct ToolchainEnsureResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct SidecarSendResult {
     pub name: String,
     pub sent: bool,

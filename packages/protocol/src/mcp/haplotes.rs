@@ -10,7 +10,7 @@ use super::enums::{
 };
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct LlmProviderCallResult {
     pub model: String,
     pub tokens: String,
@@ -18,7 +18,7 @@ pub struct LlmProviderCallResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS, PartialEq, Eq, Hash)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct AgentReference {
     pub agent_type: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -26,14 +26,14 @@ pub struct AgentReference {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct FileLineRange {
     pub start: u32,
     pub end: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ConflictInfo {
     pub conflict_id: String,
     pub file_path: String,
@@ -45,7 +45,7 @@ pub struct ConflictInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ObserverInfo {
     pub agent: AgentReference,
     pub observation_type: ObservationType,
@@ -53,7 +53,7 @@ pub struct ObserverInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct NotifyFileOperationResult {
     pub file_path: String,
     pub observers_count: usize,
@@ -61,14 +61,14 @@ pub struct NotifyFileOperationResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ListFileObserversResult {
     pub file_path: String,
     pub observers: Vec<ObserverInfo>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct AgentReasoning {
     pub what: String,
     pub why: String,
@@ -76,7 +76,7 @@ pub struct AgentReasoning {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ConversationContext {
     pub what: String,
     pub why: String,
@@ -84,7 +84,7 @@ pub struct ConversationContext {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct FileAnchor {
     pub file_path: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -96,7 +96,7 @@ pub struct FileAnchor {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ConversationMessage {
     pub id: String,
     pub author: AgentReference,
@@ -106,7 +106,7 @@ pub struct ConversationMessage {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct AgentConversation {
     pub id: String,
     pub topic: String,
@@ -125,7 +125,7 @@ pub struct AgentConversation {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct AskAgentResult {
     pub conversation_id: String,
     pub status: ConversationStatus,
@@ -133,14 +133,14 @@ pub struct AskAgentResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ReplyAgentResult {
     pub conversation_id: String,
     pub status: ConversationStatus,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct EscalateConversationResult {
     pub conversation_id: String,
     pub human_consultation_id: String,
@@ -148,14 +148,14 @@ pub struct EscalateConversationResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ListConversationsResult {
     pub count: usize,
     pub conversations: Vec<AgentConversation>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct GetConversationResult {
     pub conversation: AgentConversation,
 }
@@ -163,7 +163,7 @@ pub struct GetConversationResult {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ChatMessage {
     pub role: String,
     pub content: String,
