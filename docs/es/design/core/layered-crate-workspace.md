@@ -16,22 +16,22 @@ subcategory = "core"
 Entelecheia comenzó con un crate monolítico `packages/shared` (38K líneas, 187 archivos `.rs`) que contenía toda la infraestructura compartida: tipos, protocolo MCP, proveedores LLM, gestión de contenedores, base de datos, seguridad, configuración y más. A medida que el proyecto creció a 12 agentes + 1 agente de dominio + 3 paquetes binarios, surgieron varios problemas:
 
 1. **Tiempos de compilación**: Cualquier cambio en `shared` requería recompilar todos los 187 archivos, incluso si solo se modificaba una estructura.
-2. **Contaminación de dependencias**: Los crates de agente que solo necesitaban tipos MCP se veían obligados a depender transitivamente de controladores de base de datos, runtimes de contenedores y proveedores LLM.
-3. **Propiedad poco clara**: Con 187 archivos en un crate, no estaba claro qué módulo "poseía" qué funcionalidad, haciendo que la refactorización fuera arriesgada.
-4. **Explosión de feature flags**: La compilación condicional mediante características de Cargo se usaba para evitar incorporar dependencias innecesarias, pero esto llevó a una explosión combinatoria en configuraciones de prueba.
+1. **Contaminación de dependencias**: Los crates de agente que solo necesitaban tipos MCP se veían obligados a depender transitivamente de controladores de base de datos, runtimes de contenedores y proveedores LLM.
+1. **Propiedad poco clara**: Con 187 archivos en un crate, no estaba claro qué módulo "poseía" qué funcionalidad, haciendo que la refactorización fuera arriesgada.
+1. **Explosión de feature flags**: La compilación condicional mediante características de Cargo se usaba para evitar incorporar dependencias innecesarias, pero esto llevó a una explosión combinatoria en configuraciones de prueba.
 
 ## Decisión
 
 Descomponer el monolítico `packages/shared` en **37 sub-crates enfocados** organizados en **6 capas de dependencia** (L0 a L5), siguiendo una dirección de dependencia estricta:
 
-```
+```text
 L0 (hoja) → L1 → L2 → L3 → L4 → L5 → consumidores (scepter, agentes, tui)
 ```
 
 **Definiciones de capas:**
 
 | Capa | Crates | Regla |
-|-------|--------|------|
+| --- | --- | --- |
 | **L0** | core, logging, macros | Cero dependencias internas en otros crates de entelecheia |
 | **L1** | domain_enums, mcp_types, text, concurrent | Dependen solo de L0 |
 | **L2** | config, agent_registry, state_types | Dependen de L0-L1 |

@@ -324,7 +324,7 @@ Scénario applicable : exécution via SSH avec un support de terminal minimal, c
 #### Comparaison des paramètres
 
 | Fonctionnalité | Défaut | `--no-image-render` | `--no-ansi` | `--no-ansi-pure` |
-|------|------|---------------------|-------------|-------------------|
+| --- | --- | --- | --- | --- |
 | Couleur | Complète | Complète | Complète | Désactivée |
 | Capture souris | Oui | Oui | Non | Non |
 | Rendu d'image | Oui | Non | Non | Non |

@@ -16,15 +16,15 @@ subcategory = "core"
 在多 agent 系统中，agent 执行 LLM 生成的代码，agent 之间的隔离对于以下方面至关重要：
 
 1. **安全性**：不可信的 LLM 输出不应能够访问另一个 agent 的内存、文件或网络连接。
-2. **状态隔离**：每个 agent 的 REPL 状态（JavaScript 变量、绑定、快照）必须独立。
-3. **资源控制**：行为异常的 agent 不应消耗无限的 CPU、内存或 PID。
-4. **可复现性**：Agent 状态应可快照化和恢复，以供调试和回滚。
-5. **Fork/Merge 工作流**：系统需要支持分支 agent 执行（fork）和合并结果（merge），类似于 git 分支。
+1. **状态隔离**：每个 agent 的 REPL 状态（JavaScript 变量、绑定、快照）必须独立。
+1. **资源控制**：行为异常的 agent 不应消耗无限的 CPU、内存或 PID。
+1. **可复现性**：Agent 状态应可快照化和恢复，以供调试和回滚。
+1. **Fork/Merge 工作流**：系统需要支持分支 agent 执行（fork）和合并结果（merge），类似于 git 分支。
 
 评估了多种隔离方法：
 
 | 方法 | 隔离强度 | 资源控制 | 快照/Fork | 开销 |
-|----------|-------------------|-----------------|---------------|----------|
+| --- | --- | --- | --- | --- |
 | **每 agent 容器（Docker/OCI）** | 强（内核级） | 完全（cgroups、seccomp、capabilities） | 原生（commit/snapshot） | 中等（~100ms 启动，~50MB 每容器） |
 | **每 agent 进程** | 中等（UID/seccomp） | 部分（rlimit） | 手动（序列化状态） | 低 |
 | **每 agent 线程** | 弱（共享内存） | 最小 | 手动 | 最小 |
@@ -36,10 +36,12 @@ subcategory = "core"
 我们选择了**双层容器架构**，以 **COSMOS** 作为每个 agent 容器内的 init 进程：
 
 **外层（编排基础设施）：**
+
 - 通过 Bollard 使用 Docker/Podman 管理基础设施容器（PostgreSQL、Scepter 守护进程）。
 - 完整编排能力：网络、卷、健康检查、Compose。
 
 **内层（agent 沙箱）：**
+
 - Youki/libcontainer（默认）或 Docker 用于每 agent COSMOS 容器。
 - 每个 agent 获得自己的容器，COSMOS 作为 PID 1。
 - COSMOS 是**中介所有交互的前端进程**——它提供 JSON-RPC Unix 套接字服务器、Boa JS REPL、MCP 路由器和 HapLotes 桥接连接回到 Scepter。
@@ -49,9 +51,9 @@ subcategory = "core"
 与容器化 agent 的所有交互必须通过 COSMOS。直接容器操作（例如 `docker exec` 进入容器）会绕过安全模型、状态管理和审计追踪。COSMOS 提供：
 
 1. **工具调度中介**：`McpRouter` 在任何工具到达 agent 之前强制执行允许列表、双重授权和信任级别。
-2. **状态持久化**：双缓冲快照系统确保 REPL 状态在崩溃后存活。
-3. **桥接通信**：HapLotes 桥接将 COSMOS 连接回 Scepter 以进行 agent 间协调。
-4. **安全强制执行**：Seccomp 配置文件、出口策略和能力限制在容器创建时应用并由内核强制执行。
+1. **状态持久化**：双缓冲快照系统确保 REPL 状态在崩溃后存活。
+1. **桥接通信**：HapLotes 桥接将 COSMOS 连接回 Scepter 以进行 agent 间协调。
+1. **安全强制执行**：Seccomp 配置文件、出口策略和能力限制在容器创建时应用并由内核强制执行。
 
 **为什么内层沙箱使用 Youki/libcontainer：**
 
@@ -64,7 +66,7 @@ subcategory = "core"
 
 ### 正面
 
-- **通过内核强制执行实现强隔离**：cgroups（CPU/内存/PID 限制）、seccomp（系统调用过滤）、capabilities（cap_drop=ALL）、命名空间（PID/网络/挂载隔离）。
+- **通过内核强制执行实现强隔离**：cgroups（CPU/内存/PID 限制）、seccomp（系统调用过滤）、capabilities（`cap_drop`=ALL）、命名空间（PID/网络/挂载隔离）。
 - **原生 fork/merge**：容器 commit 创建镜像快照；可以从快照创建新容器。Overlay 文件系统仅跟踪更改的文件。
 - **每 agent 资源限制**：默认 512MB 内存、1 CPU、100 PID，可按容器配置。
 - **审计追踪**：所有工具调用通过 COSMOS 的 MCP 路由器，记录每次调度以供 OreXis 安全审计。

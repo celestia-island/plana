@@ -9,13 +9,12 @@ subcategory = "webui"
 # Documentos de Diseño
 
 > **Nota**: Estos documentos de diseño describen la arquitectura y comportamiento previstos — algunas características pueden estar aún en progreso.
->
 > Para el estado actual de la implementación, consulta [ARCHITECTURE.md](../../ARCHITECTURE.md) en la raíz del repositorio.
 
 ## Directorios por Idioma
 
 | Código | Idioma |
-|------|----------|
+| --- | --- |
 | `en/` | English (Inglés) |
 | `zhs/` | 简体中文 (Chino Simplificado) |
 | `zht/` | 繁體中文 (Chino Tradicional) |

@@ -47,7 +47,7 @@ flowchart TB
 ### 설계 원칙
 
 | 원칙 | 설명 |
-|-----------|-------------|
+| --- | --- |
 | **단일 진실 공급원** | 각 네임스페이스는 정확히 하나의 모듈(`var_namespace.rs`, `ref_namespace.rs`, `namespace.rs`)을 가지며, 해당 네임스페이스를 참조하는 **모든** JS 코드 문자열을 생성합니다 |
 | **지연 초기화** | `__vars`와 `__refs`는 `JsRuntime::new()`에서 한 번 초기화되어 스킬 체인 전반에 걸쳐 생존합니다; `__env`는 네임스페이스 JS 평가 중에 초기화됩니다 |
 | **스냅샷/복원** | 전체 `__vars` + `__refs` 상태는 스냅샷 및 복원 가능하여 세션 영속화를 가능하게 합니다 |
@@ -133,7 +133,7 @@ flowchart TB
 
 ### 1.3 초기화 순서
 
-```
+```text
 JsRuntime::new()
   → context.eval("globalThis.$ = globalThis.$ || {}; globalThis.__vars = {}; globalThis.__refs = {};")
   → __vars가 빈 객체로 초기화됨
@@ -146,7 +146,7 @@ JsRuntime::new()
 ### 1.4 연산
 
 | 연산 | 도구명 | 타입 | 동작 |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | 문자열 저장 | `write_to_var` | Blocking | JS용 콘텐츠 이스케이프, `vars['name'] = 'content'` eval |
 | JSON 저장 | `write_to_var_json` | Blocking | JSON 검증, `vars['name'] = JSON.parse('content')` eval |
 | exec에서 읽기 | `exec` | FireAndForget | 직접 접근: `vars['name']` 또는 `import vars from 'vars'` |
@@ -158,7 +158,7 @@ JsRuntime::new()
 
 `build_runtime_context()`(`prompt.rs:472`)에서 변수 저장소는 시스템 프롬프트에 다음과 같이 나타납니다:
 
-```
+```text
 ## JS 런타임 컨텍스트
 
 __vars (write_to_var / write_to_var_json에서, N개):
@@ -176,7 +176,7 @@ __vars (write_to_var / write_to_var_json에서, N개):
 
 `env`와 유사하게, `vars` 모듈은 편리한 임포트를 위해 `__vars`를 래핑하는 Boa 합성 모듈입니다:
 
-```
+```python
 import vars from 'vars';
 // vars === __vars (실시간 참조)
 const report = vars['analysis_results'];
@@ -278,7 +278,7 @@ interface RefAgentOutput {
 ### 2.4 연산
 
 | 연산 | 도구명 | 타입 | 동작 |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | 참조 추가 | `ref_add` | Blocking | JSON 검증, `refs['name'] = JSON.parse('...')` eval |
 | 참조 제거 | `ref_remove` | FireAndForget | `delete refs['name']` eval |
 | exec에서 읽기 | (`exec` 통해) | — | `refs['name'].files[0].content` |
@@ -291,7 +291,7 @@ Refs는 시스템 프롬프트의 **두 위치**에 나타납니다:
 
 #### 위치 1: `refs_section` (전용 목차)
 
-```
+```text
 ## 참조된 리소스 (refs)
 
 다음 리소스는 `refs['name']`을 통해 사용 가능합니다.
@@ -304,7 +304,7 @@ Refs는 시스템 프롬프트의 **두 위치**에 나타납니다:
 
 #### 위치 2: `runtime_context` (이름 목록)
 
-```
+```text
 __refs (사용자/에이전트의 참조된 리소스, 3개):
   `code:src/main.rs`, `image:architecture`, `agent:orexis/audit-1`
   접근: `refs['name']` — 각 ref는 .ref_type, .source, .summary를 가짐
@@ -359,7 +359,7 @@ flowchart LR
 ### 3.3 연산
 
 | 연산 | 메커니즘 | 동작 |
-|-----------|-----------|----------|
+| --- | --- | --- |
 | 초기화 | `build_namespace_js()` | `__env = __env \|\| {}; env.aporia = env.aporia \|\| { language: 'auto' }` |
 | 언어 설정 | cosmos 커넥터를 통한 `exec` 호출 | `env.aporia.language = 'zh'` |
 | IEPL에서 읽기 | `import { language } from 'env'` | `'auto'` 폴백과 함께 `env.aporia.language` 반환 |
@@ -414,8 +414,8 @@ Object.defineProperty(globalThis.$, 'variant', {
 `LocalCosmosRuntime`은 전용 스레드에서 **단일 장수명 `JsRuntime`**을 실행합니다. 스킬 체인 실행 사이에 런타임 상태(`__vars`, `__refs`)는 자연스럽게 지속됩니다. 그러나 스냅샷은 다음 용도로 사용됩니다:
 
 1. **프롬프트 주입** — `build_runtime_context()` 및 `build_refs_section()`이 스냅샷 JSON을 읽어 시스템 프롬프트를 채웁니다
-2. **세션 영속화** — 충돌 복구 또는 세션 마이그레이션을 위한 디스크 덤프/복원
-3. **컨테이너 동기화** — `cosmos_set_rag_context()`를 통해 cosmos 컨테이너로 상태 푸시
+1. **세션 영속화** — 충돌 복구 또는 세션 마이그레이션을 위한 디스크 덤프/복원
+1. **컨테이너 동기화** — `cosmos_set_rag_context()`를 통해 cosmos 컨테이너로 상태 푸시
 
 ### 4.2 스냅샷 형식
 
@@ -569,7 +569,7 @@ flowchart TB
 ### 5.2 도구 정의
 
 | 도구 | 호출 모드 | 필요 | 매개변수 스키마 |
-|------|-----------|----------|-----------------|
+| --- | --- | --- | --- |
 | `exec` | FireAndForget | `code: string` | 단일 JS 코드 문자열 |
 | `write_to_var` | Blocking | `var_name, content` | `{var_name: string, content: string}` |
 | `write_to_var_json` | Blocking | `var_name, content` | `{var_name: string, content: string (유효한 JSON)}` |
@@ -614,7 +614,7 @@ fn is_cosmos_internal_tool(tool_name: &str) -> bool {
 이 헬퍼는 두 가지 중요한 목적을 수행합니다:
 
 1. **에이전트 타입 해석** — `get_tool_agent_type()`은 내부 도구에 대해 `Agent::SkeMma`를 반환하는데, 이는 도구가 Cosmos 런타임에서 실행되기 때문입니다(도메인 에이전트의 프로세스가 아님).
-2. **폴백 라우팅** — 컨테이너화된 cosmos 호출이 내부 도구에 대해 실패할 경우, 시스템은 로컬 cosmos 런타임으로 폴백합니다. 비내부 도구의 경우 폴백은 대신 인프로세스 실행으로 전환됩니다. 이는 cosmos 연산이 컨테이너화 모드에서 결코 조용히 실패하지 않도록 보장합니다.
+1. **폴백 라우팅** — 컨테이너화된 cosmos 호출이 내부 도구에 대해 실패할 경우, 시스템은 로컬 cosmos 런타임으로 폴백합니다. 비내부 도구의 경우 폴백은 대신 인프로세스 실행으로 전환됩니다. 이는 cosmos 연산이 컨테이너화 모드에서 결코 조용히 실패하지 않도록 보장합니다.
 
 ### 5.5 컨테이너화 vs 로컬 Cosmos 라우팅
 
@@ -656,7 +656,7 @@ flowchart TB
 **주요 차이점:**
 
 | 측면 | 로컬 모드 | 컨테이너화 모드 |
-|--------|-----------|-------------------|
+| --- | --- | --- |
 | `__vars` / `__refs` | 모든 에이전트 간 공유 | 컨테이너 내 공유, 컨테이너 간 격리 |
 | `__env` | `exec`를 통해 직접 설정 | `CosmosConnector` JSON-RPC 호출을 통해 설정 |
 | 성능 | 직렬화 오버헤드 없음 | 호출당 JSON-RPC 직렬화 |
@@ -683,14 +683,16 @@ pub async fn build_scepter_namespace_config_and_js(
 이 함수는:
 
 1. `AgentRegistry`에서 모든 등록된 에이전트의 MCP 도구를 수집합니다
-2. 에이전트별 도구 목록과 메타데이터(동기/비동기, unwrap_data)를 포함하는 `NamespaceConfig`를 구축합니다
-3. `build_namespace_js(&config)`를 통해 네임스페이스 JS를 생성하며, 이는:
+1. 에이전트별 도구 목록과 메타데이터(동기/비동기, `unwrap_data`)를 포함하는 `NamespaceConfig`를 구축합니다
+1. `build_namespace_js(&config)`를 통해 네임스페이스 JS를 생성하며, 이는:
+
    - `globalThis.$`가 없으면 생성
    - `env.aporia`를 `{ language: 'auto' }`로 초기화
    - `$.variant` 속성 정의 (`globalThis.$`를 반환하는 순환 getter)
    - `register_tool_modules_with_rag()`를 통해 모든 에이전트 도구 모듈 등록
 
 네임스페이스 JS는 다음과 같이 평가됩니다:
+
 - `LocalCosmosRuntime::new()` 시작 시 **1회**
 - `CosmosCommand::RebuildNamespace`를 통한 스킬 체인 재구축 시 **요청형**
 
@@ -700,7 +702,7 @@ pub async fn build_scepter_namespace_config_and_js(
 
 `pipeline.rs:869-882`에서 조립되는 완전한 시스템 프롬프트:
 
-```
+```text
 You are the {Agent} {skill_name} skill execution engine. Execute the skill faithfully.
 
 [capability_section]
@@ -745,7 +747,7 @@ You are the {Agent} {skill_name} skill execution engine. Execute the skill faith
 ### 섹션 배치 근거
 
 | 섹션 | 위치 | 이유 |
-|---------|----------|--------|
+| --- | --- | --- |
 | 에이전트 정체성 + 스킬명 | 첫 문장 | 즉시 역할 설정 |
 | 도구 선언 | 소울 이전 | LLM이 개성이 선택에 영향을 미치기 전에 가용 도구를 알아야 함 |
 | 소울 | 도구 이후, refs 이전 | 개성은 refs가 해석되는 방식에 영향을 미침 |
@@ -766,6 +768,7 @@ globalThis.__refs = globalThis.__refs || {};
 ```
 
 이는 다음을 의미합니다:
+
 - **기존 값이 유지됨** — `__vars`와 `__refs`는 그대로 보존됩니다
 - **손상된 상태 복구** — `__refs`가 실수로 삭제된 경우 재생성됩니다
 - **스킬 격리는 옵트인** — 스킬은 자신이 알고 있는 변수만 읽어야 합니다(런타임 컨텍스트 프롬프트의 이름으로)
@@ -776,7 +779,7 @@ globalThis.__refs = globalThis.__refs || {};
 ## 8. 구현 파일 맵
 
 | 구성 요소 | 파일 | 라인 | 설명 |
-|-----------|------|-------|-------------|
+| --- | --- | --- | --- |
 | `__vars` 상수 및 생성기 | `packages/shared/core/src/var_namespace.rs` | 1-211 | vars용 모든 JS 코드 생성 |
 | `__refs` 상수 및 생성기 | `packages/shared/core/src/ref_namespace.rs` | 1-145 | refs용 모든 JS 코드 생성 |
 | `__env` 생성 | `packages/shared/iepl/src/namespace.rs` | 193-197 | `build_env_namespace_js()` |
@@ -825,7 +828,7 @@ globalThis.__refs = globalThis.__refs || {};
 ### 9.2 메모리 제한
 
 | 제한 | 값 | 적용 위치 |
-|-------|-------|-------------|
+| --- | --- | --- |
 | 프롬프트 내 최대 vars | 30 | `build_runtime_context()` — `MAX_NAMES` 상수 |
 | 프롬프트 내 최대 refs | 30 | `build_refs_section()` — `.take(30)` |
 | runtime_context 내 최대 refs | 30 | `build_runtime_context()` — `MAX_NAMES` 상수 |
@@ -836,7 +839,7 @@ globalThis.__refs = globalThis.__refs || {};
 ### 9.3 오류 처리
 
 | 오류 | 처리 |
-|-------|----------|
+| --- | --- |
 | 유효하지 않은 JSON으로 `write_to_var_json` | 미리보기(처음 200자)와 함께 오류 반환 |
 | 유효하지 않은 JSON으로 `ref_add` | 미리보기와 함께 `SkemmaError::JsEval` 반환 |
 | 순환 참조(`$.variant`)의 스냅샷 | `TypeError`를 조용히 캐치, 키 건너뜀 |
@@ -880,7 +883,7 @@ connector.cosmos_exec(&container_uuid, &lang_code).await?;
 
 이는 JSON-RPC 전송을 통해 cosmos 컨테이너로 `exec` MCP 호출을 전송하며, 컨테이너의 격리된 `JsRuntime`에서 JS 할당을 평가합니다. 전체 언어 전파 경로는 다음과 같습니다:
 
-```
+```text
 TUI 요청 언어 → Scepter (request_language 추출)
   → [로컬 모드] 직접 exec("env.aporia.language = 'zh'")
   → [컨테이너화] CosmosConnector::cosmos_exec(json_rpc_call)
@@ -894,4 +897,5 @@ TUI 요청 언어 → Scepter (request_language 추출)
 - `ref_add` 콘텐츠는 `JSON.parse()`를 통과합니다 — 임의 코드를 주입할 수 없습니다
 - 어떤 네임스페이스 도구도 원시 Boa 컨텍스트 접근을 노출하지 않습니다
 - Cosmos 컨테이너는 seccomp 프로필이 적용된 샌드박스형 youki 컨테이너에서 실행되며, 각각은
-  Docker/Podman scepter 컨테이너 내부에 중첩됩니다 (2계층 컨테이너 격리)
+
+Docker/Podman scepter 컨테이너 내부에 중첩됩니다 (2계층 컨테이너 격리)

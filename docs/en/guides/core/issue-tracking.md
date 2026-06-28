@@ -9,7 +9,6 @@ subcategory = "core"
 # Issue Tracking Integration
 
 > Connect external issue tracking systems to Entelecheia's agent workflow
-
 > Current status note: HubRis does currently provide issue create, update, search, and comment helper capabilities, and webhook integrations also exist in the repository. However, this document should not be read as "there already exists a complete, unified, cross-platform issue product surface."
 
 ---
@@ -43,7 +42,7 @@ Cross-platform issue automation can be viewed as an existing direction and a par
 Containers in Entelecheia use a three-tier ID system to maintain identity across different contexts:
 
 | Tier | Format | Lifetime | Use |
-|------|------|----------|------|
+| --- | --- | --- | --- |
 | UUID | Standard UUID (e.g. `550e8400-e29b-41d4-a716-446655440000`) | Permanent | Database primary key, cross-restart tracking |
 | Binding ID | `@platform#id` (e.g. `@github#234`) | Stable | External resource binding, branch naming |
 | Runtime ID | `#xxx` (e.g. `#616`) | Per session | TUI display, Unix socket routing |
@@ -56,7 +55,7 @@ The **Binding ID** links a container to an external platform resource. It remain
 
 The general format of a binding ID is:
 
-```
+```text
 @platform#id[@#floor]
 ```
 
@@ -67,7 +66,7 @@ The general format of a binding ID is:
 ### Examples
 
 | Binding ID | Meaning |
-|---------|------|
+| --- | --- |
 | `@github#123` | GitHub Issue #123 |
 | `@gitee#456` | Gitee Issue #456 |
 | `@gitlab#789` | GitLab Issue #789 |
@@ -90,7 +89,7 @@ Agents interact with external issues through HubRis MCP tools. These tools wrap 
 ### Available issue operations
 
 | Tool | Description |
-|------|------|
+| --- | --- |
 | `$.agent.HubRis.issue_create()` | Create a new issue on an external platform |
 | `$.agent.HubRis.issue_update()` | Update an existing issue (title, body, state, labels) |
 | `$.agent.HubRis.issue_search()` | Search issues across platforms with filters applied |
@@ -142,11 +141,11 @@ flowchart TB
 ### Step-by-step example
 
 1. A developer creates an issue `@github#42` titled "Memory leak in container cleanup"
-2. The GitHub webhook forwards the event to Scepter
-3. The `issue_triage` skill classifies it as a **bug** with priority **high**
-4. HubRis breaks down the task: (a) reproduce the leak (b) find the root cause (c) implement the fix
-5. KaLos reads the relevant source files, SkeMma runs diagnostic scripts
-6. The agent commits the fix and comments the solution on `@github#42`
+1. The GitHub webhook forwards the event to Scepter
+1. The `issue_triage` skill classifies it as a **bug** with priority **high**
+1. HubRis breaks down the task: (a) reproduce the leak (b) find the root cause (c) implement the fix
+1. KaLos reads the relevant source files, SkeMma runs diagnostic scripts
+1. The agent commits the fix and comments the solution on `@github#42`
 
 ---
 
@@ -155,7 +154,7 @@ flowchart TB
 The platform prefix mapping is configurable. The default registry includes:
 
 | Prefix | Platform | Issue URL pattern |
-|------|------|----------------|
+| --- | --- | --- |
 | `github` | GitHub | `https://github.com/{repo}/issues/{id}` |
 | `gitee` | Gitee | `https://gitee.com/{repo}/issues/{id}` |
 | `gitlab` | GitLab | `https://gitlab.com/{repo}/-/issues/{id}` |
@@ -180,20 +179,20 @@ When an agent creates a branch for issue-driven work, the branch follows a namin
 
 ### Format
 
-```
+```text
 cosmos-<binding_id>-<reason>
 ```
 
 or
 
-```
+```text
 cosmos-<uuid8>-<reason>
 ```
 
 ### Examples
 
 | Branch name | Context |
-|----------|--------|
+| --- | --- |
 | `cosmos-@github#42-fix-memory-leak` | Fixing GitHub Issue #42 |
 | `cosmos-@gitee#15-add-ci-pipeline` | Feature work for Gitee Issue #15 |
 | `cosmos-a1b2c3d4-refactor-auth-module` | Internal task using a UUID prefix |

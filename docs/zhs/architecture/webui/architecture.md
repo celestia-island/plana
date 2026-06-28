@@ -17,7 +17,7 @@ subcategory = "webui"
 shittim-chest 是一个混合的 Cargo + pnpm monorepo。它拥有包装 entelecheia 智能体编排核心的面向用户层。两个项目通过 JWT 认证的 HTTP/WebSocket 进行通信 — shittim-chest 从不直接访问 entelecheia 的数据库进行智能体操作。
 
 | 组件 | 技术 | 角色 | 状态 |
-|-----------|------|------|--------|
+| --- | --- | --- | --- |
 | **core** | Rust + Axum | 统一后端：认证（JWT + OAuth）、独立 LLM 路由、聊天 API、图像生成、webhook 入口、scepter 代理、远程设备信令、渠道集成、计费、RBAC、工作空间 | 🟢 已实现 |
 | **cli** | Rust | Docker 编排器：dev、up、down、migrate、logs、status | 🟢 已实现 |
 | **webui** | Vue 3 + Vite（TSX） | 前端：聊天界面、管理面板（20+ 视图）、2D SCADA 拓扑、3D 全息预览 | 🟡 部分 |
@@ -108,6 +108,7 @@ sequenceDiagram
 ### 认证（`packages/core/src/auth/`）
 
 全面实现：
+
 - 用户名/密码注册和登录，使用 argon2 哈希
 - JWT 访问令牌 + 刷新令牌系统，含轮换
 - GitHub OAuth 2.0 集成（重定向 + 回调，自动创建用户）
@@ -117,6 +118,7 @@ sequenceDiagram
 ### 聊天（`packages/core/src/chat/`）
 
 全面实现：
+
 - 会话 CRUD（创建、列出、获取、更新、删除）
 - 消息发送/接收，含 LLM 路由
 - SSE（服务器发送事件）流式响应（`/api/chat/stream`）
@@ -127,6 +129,7 @@ sequenceDiagram
 ### LLM（`packages/core/src/llm/`）
 
 全面实现：
+
 - 用于聊天和图像生成的 OpenAI 兼容 HTTP 客户端
 - 基于优先级选择的多提供商路由器
 - 含 API 密钥加密（AES-256-GCM）的提供商 CRUD
@@ -136,12 +139,14 @@ sequenceDiagram
 ### 生成（`packages/core/src/generation/`）
 
 全面实现：
+
 - 图像生成端点（`/api/generation/images`、`/api/generation/models`）
 - 使用已配置的 LLM 提供商
 
 ### Webhook（`packages/core/src/webhook.rs`）
 
 全面实现（约 1,000+ 行）：
+
 - 含 HMAC-SHA256 验证的 GitHub webhook
 - 含令牌验证的 GitLab webhook
 - 含 HMAC + 令牌回退的 Gitee webhook
@@ -154,6 +159,7 @@ sequenceDiagram
 ### 设备（`packages/core/src/devices/`）
 
 信令中继已实现（需要外部 scepter 进行 WebRTC 握手）：
+
 - 设备列表、详情、会话 CRUD 的 REST 端点
 - WebRTC 的 WebSocket 信令中继 — 通过 Unix 套接字将 SDP offer/ICE 候选转发到 scepter；SDP answer 必须来自 scepter（如果 scepter 不可达，`forward_sdp_to_scepter` 返回空字符串）
 - 终端中继（通过 WebSocket 到 xterm.js）— 将击键转发到 scepter
@@ -167,6 +173,7 @@ sequenceDiagram
 ### 渠道（`packages/core/src/channel/`）
 
 全面实现（22 个模块文件 + `mod.rs`）：
+
 - 12 个平台连接器：Telegram、Discord、Slack、Lark/飞书、QQ Bot、企业微信、IRC、Matrix、Mattermost、Google Chat、Microsoft Teams、LINE
 - 每个平台的真实 API 客户端实现
 - DM 策略控制（`dm_policy.rs`）
@@ -180,7 +187,7 @@ sequenceDiagram
 ### 其他后端模块
 
 | 模块 | 描述 |
-|--------|-------------|
+| --- | --- |
 | `proxy/` | Scepter HTTP/WS 桥接（`ws_bridge.rs` 是代码库中最大的单文件） |
 | `rbac/` | 基于角色的访问控制 |
 | `workspace/` | 工作空间管理 |
@@ -211,7 +218,7 @@ Vue 3 + Vite 前端，用 TSX 编写（通过 `@vitejs/plugin-vue-jsx` — 无 `
 #### 视图
 
 | 视图组 | 描述 |
-|------------|-------------|
+| --- | --- |
 | `demiurge/` | 主聊天界面（DemiurgeView）— 流式响应、智能体状态、工具调用 |
 | `auth/` | LoginView、RegisterView、SetupView |
 | `admin/` | 20+ 管理视图：Dashboard、Providers、Agents、RBAC、Webhooks、Channels、System、Device Models、Devices Settings、Skills、MCP Tools、OAuth Providers、Token Usage、Workspaces、Voice Service、Resource Quota 等 |
@@ -221,7 +228,7 @@ Vue 3 + Vite 前端，用 TSX 编写（通过 `@vitejs/plugin-vue-jsx` — 无 `
 #### 组件系统
 
 | 目录 | 描述 |
-|-----------|-------------|
+| --- | --- |
 | `base/` | 50+ 个 `S` 前缀的设计系统组件（SButton、SCard、SModal、STable、STabs、STimeline、STreeView、SMarkdownRenderer、SMorphingTabs 等） |
 | `chat/` | 聊天特定组件（ChatBubble、AgentStatusBar、FloatingChatBar、ThinkingDots、ReportViewer、NodeMinimap 等） |
 | `header/` | 头部组件（面包屑栏、模式切换） |
@@ -237,7 +244,7 @@ webui 中所有 CSS 驱动的运动和逐帧采样都通过**一个共享的 rAF
 该总线暴露四个工作注册 API 加两个附带通道标志：
 
 | API | 用途 | 帧模型 |
-|-----|---------|-------------|
+| --- | --- | --- |
 | `onFrame(cb, priority?)` | 注册逐帧回调。`priority` ∈ `sync` / `normal` / `idle`。返回 `{ disconnect() }`。 | 每帧调用（sync），节流至约 30 Hz 预算（normal），或约 0.5 Hz 预算（idle）。 |
 | `onceFrame(cb)` | 在下一帧运行回调，然后自动断开。即发即弃（无可取消句柄）。 | 一次性。 |
 | `scheduleFrame(cb)` | 在下一帧运行回调；返回 `{ disconnect() }` 以在触发前取消。用于"将多次调用合并为一个帧后回调"的节流模式（替代手写的 `if(rafId)cancel; rafId=rAF(cb)` 惯用法）。 | 一次性（可取消）。 |
@@ -274,7 +281,7 @@ DOM 总线有意与 **`packages/webui/src/composables/three/animationBus3D.ts`**
 webui 通过**两个故意不同的路径别名**（均在 `vite.config.ts` + `tsconfig.json` 中声明）消费其自身的 `src/`，整个代码库遵循此分离：
 
 | 别名 | 解析为 | 用于 |
-|-------|-------------|-----------|
+| --- | --- | --- |
 | `@/<path>` | `src/*` | **内部深层导入** — 直接访问特定模块（`@/api/client`、`@/composables/useReportedTransition`、`@/theme/animationBus`）。约 600 处；从不作为裸桶使用。 |
 | `@celestia-island/shared_ui` | `src/`（→ `src/index.ts` barrel） | **仅限精选的公共 API 接口** — 始终是裸说明符，从不编码子路径。约 92 处。 |
 
@@ -295,13 +302,11 @@ webui 使用**`vue-i18n`**（非自定义实现），包含**11 种声明的语�
 每种语言环境有**17 个命名空间 JSON 文件**（admin、auth、chat、cmd、common、devices、errors、footer、help、logs、models、reports、skills、timeline、tokenUsage、tools、workspace）。应用内语言切换可通过头部语言选择器使用。
 
 > **翻译完整性差异显著**（对照 950 个英文参考键审计）：
->
 > | 层级 | 语言环境 | 英文直通 | 键缺失 |
 > |------|---------|-------------------|---------|
 > | 翻译良好 | `ja`、`ko`、`zhs`、`zht` | ~5% | `zhs` 缺失 18 个键；其他缺失 112 个 |
 > | 大部分已翻译 | `de`、`fr`、`pt`、`es`、`ar` | ~9–14% | 缺失共享的 112 键块 |
 > | 翻译实质不足 | `ru` | **~76%** | 键完全对等，但值是无区别的英文 |
->
 > 共享的 112 键差距涵盖较新功能：`admin.agents.*`、`admin.deviceModels.*`、`admin.projects.*`、`admin.rbac.*`、`admin.resourceQuota.*`、`auth.protocol.*`、`chat.cruise.*`、`chat.voice_*`。
 
 ## RBAC 架构
@@ -311,7 +316,7 @@ webui 使用**`vue-i18n`**（非自定义实现），包含**11 种声明的语�
 数据所有权在两个项目之间分离，以维护清晰边界：
 
 | 数据 | 数据库 | 所有者 | 理由 |
-|------|----------|-------|-----------|
+| --- | --- | --- | --- |
 | 用户凭证（密码哈希、OAuth、API 密钥） | shittim_chest_db | shittim-chest | 展示层拥有登录流程 |
 | 活跃会话、刷新令牌 | shittim_chest_db | shittim-chest | 会话管理是前端关注的问题 |
 | 会话、消息 | shittim_chest_db | shittim-chest | 聊天数据是面向用户的 |
@@ -323,11 +328,11 @@ webui 使用**`vue-i18n`**（非自定义实现），包含**11 种声明的语�
 ### 认证流程
 
 1. 用户通过 core 认证（密码 / OAuth）
-2. core 对照 shittim_chest_db 验证凭证（密码使用 argon2）
-3. core 查询 entelecheia 获取用户的组权限（或从 TTL 缓存读取）
-4. core 签发 JWT，包含 `{ sub: user_id, groups: [...] }`
-5. 所有后续请求携带 JWT → core 验证 → 转发到 scepter 进行代理路由
-6. scepter 验证 JWT（通过环境变量共享密钥）并强制执行组级别的权限
+1. core 对照 `shittim_chest_db` 验证凭证（密码使用 argon2）
+1. core 查询 entelecheia 获取用户的组权限（或从 TTL 缓存读取）
+1. core 签发 JWT，包含 `{ sub: user_id, groups: [...] }`
+1. 所有后续请求携带 JWT → core 验证 → 转发到 scepter 进行代理路由
+1. scepter 验证 JWT（通过环境变量共享密钥）并强制执行组级别的权限
 
 ## 跨项目依赖
 
@@ -358,7 +363,7 @@ webui 通过 `@celestia-island/arona` 路径别名消费 `arona` crate 的 TS �
 以下功能在 shittim-chest 中有真实实现，但需要运行中的 [entelecheia/scepter](https://github.com/celestia-island/entelecheia) 实例才能完全发挥作用：
 
 | 功能 | 什么可用 | 需要 scepter 什么 |
-|---------|-----------|-------------------|
+| --- | --- | --- |
 | 拓扑 SCADA | WS 传输、SVG 渲染、面包屑导航 | 实时遥测数据（转发到 scepter 的 `topology.*` RPC） |
 | 全息 3D | GLB 模型加载、场景配置、摄像机控制 | 遥测参数芯片 |
 | 设备 WebRTC | 信令中继、JWT 认证、ICE 转发 | SDP answer 生成 |
@@ -382,7 +387,7 @@ webui 通过 `@celestia-island/arona` 路径别名消费 `arona` crate 的 TS �
 `skills.rs` 和 `tools.rs` REST 端点仍为仅回退桩（返回 `[]`），但**主要 WS 路径已全面接入**，通过 `ws_bridge.rs` 中的通用通知-响应桥接实现。该桥接将 webui 请求-响应方法转换为 scepter 通知风格的配对操作：
 
 | WS 方法 | Scepter 配对 | 状态 |
-|-----------|-------------|--------|
+| --- | --- | --- |
 | `skills.list` | `Skill.ListSkills` → `SkillsListResponse` | ✅ 已桥接（字段映射器） |
 | `tools.list` | `Mcp.ListTools` → `ToolsListResponse` | ✅ 已桥接（字段映射器） |
 | `layer2.agents.list` | `Tui.Layer2AgentList` → Response | ✅ 已桥接（身份） |
@@ -400,7 +405,7 @@ webui 通过 `@celestia-island/arona` 路径别名消费 `arona` crate 的 TS �
 ## 许可证
 
 | 参数 | 值 |
-|-----------|-------|
+| --- | --- |
 | 商业许可证 | Business Source License 1.1（BUSL-1.1） |
 | 非商业使用 | Synthetic Source License 1.0（SySL-1.0） |
 | 附加使用授权 | 允许内部生产、学术、政府和非商业用途 |

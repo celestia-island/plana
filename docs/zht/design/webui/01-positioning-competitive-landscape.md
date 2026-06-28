@@ -63,6 +63,6 @@ graph TB
 ## 設計理念
 
 1. **獨立優先**：所有核心功能不依賴於 entelecheia。僅需 `LLM_DEFAULT_PROVIDER_*` 環境變數即可獨立啟動對話功能。
-2. **鬆耦合整合**：entelecheia 整合為可選代理層。使用者可選擇僅使用 LLM 對話，或透過 entelecheia 啟用 Agent 編排。
-3. **漸進式 WASM**：Vue 3 前端先作為「活規格」交付；WASM 遷移有明確的決策門檻（框架成熟度、生態系覆蓋率、開發人力）。
-4. **Docker 原生**：所有伺服器端元件透過 bollard Docker API 管理，不依賴 docker-compose。
+1. **鬆耦合整合**：entelecheia 整合為可選代理層。使用者可選擇僅使用 LLM 對話，或透過 entelecheia 啟用 Agent 編排。
+1. **漸進式 WASM**：Vue 3 前端先作為「活規格」交付；WASM 遷移有明確的決策門檻（框架成熟度、生態系覆蓋率、開發人力）。
+1. **Docker 原生**：所有伺服器端元件透過 bollard Docker API 管理，不依賴 docker-compose。

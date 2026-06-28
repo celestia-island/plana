@@ -9,7 +9,6 @@ subcategory = "core"
 # Integración de seguimiento de Issues
 
 > Conectar sistemas externos de seguimiento de Issues a los flujos de trabajo de Agent de Entelecheia (玄枢)
-
 > Nota de estado actual: HubRis actualmente proporciona capacidades de creación, actualización, búsqueda y comentarios de issues, y también existen integraciones de webhook en el repositorio. Pero este documento no debe interpretarse como que "ya existe una superficie de producto de issues unificada y completa multiplataforma".
 
 ---
@@ -43,7 +42,7 @@ La automatización de issues multiplataforma puede considerarse una dirección e
 Los contenedores en Entelecheia utilizan un sistema de ID de tres capas para mantener la identidad en diferentes contextos:
 
 | Capa | Formato | Ciclo de vida | Propósito |
-|------|------|----------|------|
+| --- | --- | --- | --- |
 | UUID | UUID estándar (ej. `550e8400-e29b-41d4-a716-446655440000`) | Permanente | Clave primaria de base de datos, seguimiento entre reinicios |
 | ID vinculante | `@platform#id` (ej. `@github#234`) | Estable | Vinculación de recursos externos, nomenclatura de ramas |
 | ID de tiempo de ejecución | `#xxx` (ej. `#616`) | Por sesión | Visualización TUI, enrutamiento Unix socket |
@@ -56,7 +55,7 @@ El **ID vinculante** enlaza un contenedor a un recurso de plataforma externa. Pe
 
 El formato general del ID vinculante es:
 
-```
+```text
 @platform#id[@#floor]
 ```
 
@@ -67,7 +66,7 @@ El formato general del ID vinculante es:
 ### Ejemplos
 
 | ID vinculante | Significado |
-|---------|------|
+| --- | --- |
 | `@github#123` | GitHub Issue #123 |
 | `@gitee#456` | Gitee Issue #456 |
 | `@gitlab#789` | GitLab Issue #789 |
@@ -90,7 +89,7 @@ Los Agents interactúan con Issues externos a través de las herramientas MCP de
 ### Operaciones de Issue disponibles
 
 | Herramienta | Descripción |
-|------|------|
+| --- | --- |
 | `$.agent.HubRis.issue_create()` | Crear un nuevo Issue en una plataforma externa |
 | `$.agent.HubRis.issue_update()` | Actualizar un Issue existente (título, cuerpo, estado, etiquetas) |
 | `$.agent.HubRis.issue_search()` | Buscar Issues multiplataforma aplicando filtros |
@@ -142,11 +141,11 @@ flowchart TB
 ### Ejemplo paso a paso
 
 1. Un desarrollador crea el Issue `@github#42` con título "Memory leak in container cleanup"
-2. El Webhook de GitHub reenvía el evento a Scepter
-3. La skill `issue_triage` lo clasifica como **bug**, prioridad **high**
-4. HubRis descompone la tarea: (a) reproducir la fuga (b) encontrar la causa raíz (c) implementar la corrección
-5. KaLos lee los archivos fuente relevantes, SkeMma ejecuta scripts de diagnóstico
-6. El Agent envía la corrección y comenta la solución en `@github#42`
+1. El Webhook de GitHub reenvía el evento a Scepter
+1. La skill `issue_triage` lo clasifica como **bug**, prioridad **high**
+1. HubRis descompone la tarea: (a) reproducir la fuga (b) encontrar la causa raíz (c) implementar la corrección
+1. KaLos lee los archivos fuente relevantes, SkeMma ejecuta scripts de diagnóstico
+1. El Agent envía la corrección y comenta la solución en `@github#42`
 
 ---
 
@@ -155,7 +154,7 @@ flowchart TB
 El mapeo de prefijos de plataforma es configurable. El registro predeterminado incluye:
 
 | Prefijo | Plataforma | Patrón de URL de Issue |
-|------|------|----------------|
+| --- | --- | --- |
 | `github` | GitHub | `https://github.com/{repo}/issues/{id}` |
 | `gitee` | Gitee | `https://gitee.com/{repo}/issues/{id}` |
 | `gitlab` | GitLab | `https://gitlab.com/{repo}/-/issues/{id}` |
@@ -180,20 +179,20 @@ Cuando un Agent crea ramas para trabajo impulsado por Issues, las ramas siguen u
 
 ### Formato
 
-```
+```text
 cosmos-<binding_id>-<reason>
 ```
 
 o
 
-```
+```text
 cosmos-<uuid8>-<reason>
 ```
 
 ### Ejemplos
 
 | Nombre de rama | Contexto |
-|----------|--------|
+| --- | --- |
 | `cosmos-@github#42-fix-memory-leak` | Corregir GitHub Issue #42 |
 | `cosmos-@gitee#15-add-ci-pipeline` | Desarrollo de funcionalidad para Gitee Issue #15 |
 | `cosmos-a1b2c3d4-refactor-auth-module` | Tarea interna usando prefijo UUID |

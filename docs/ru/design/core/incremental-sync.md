@@ -70,7 +70,7 @@ flowchart TB
 ## Матрица Стратегии Синхронизации
 
 | Панель | Метод Синхронизации | Триггер | Частота | Типы Сообщений |
-|-------|-------------|---------|-----------|---------------|
+| --- | --- | --- | --- | --- |
 | **Временная Шкала Агентов** | Инкрементальная + Полная | Синхронизация при Подключении + Push в Реальном Времени | При Подключении / В Реальном Времени | `AgentPatch` / `GlobalSnapshot` |
 | **Контейнеры** | Инкрементальная + Полная | Синхронизация при Подключении + Push в Реальном Времени | При Подключении / В Реальном Времени | `ContainerPatch` / `GlobalSnapshot` |
 | **Задачи** | Инкрементальная + Полная | Синхронизация при Подключении + Push в Реальном Времени | При Подключении / В Реальном Времени | `TaskPatch` / `GlobalSnapshot` |
@@ -172,6 +172,7 @@ sequenceDiagram
 ## Структуры Данных
 
 ### AgentPatch (Инкрементальное Обновление)
+
 ```rust
 pub struct AgentPatch {
     pub agent_id: String,
@@ -188,6 +189,7 @@ pub struct AgentPatch {
 ```
 
 ### AgentSnapshot (Полный Снимок)
+
 ```rust
 pub struct AgentSnapshot {
     pub version: u64,
@@ -197,6 +199,7 @@ pub struct AgentSnapshot {
 ```
 
 ### GlobalSnapshot (Глобальный Снимок)
+
 ```rust
 pub struct GlobalSnapshot {
     pub version: u64,
@@ -209,6 +212,7 @@ pub struct GlobalSnapshot {
 ```
 
 ### ModelsSnapshot (Список Моделей)
+
 ```rust
 pub struct ModelsSnapshot {
     pub models: Vec<ModelInfo>,
@@ -216,6 +220,7 @@ pub struct ModelsSnapshot {
 ```
 
 ### ContainerPatch (Инкрементальное Состояние Контейнера)
+
 ```rust
 pub struct ContainerPatch {
     pub container_id: String,
@@ -227,6 +232,7 @@ pub struct ContainerPatch {
 ```
 
 ### ContainerSnapshot (Полное Состояние Контейнера)
+
 ```rust
 pub struct ContainerSnapshot {
     pub version: u64,
@@ -236,6 +242,7 @@ pub struct ContainerSnapshot {
 ```
 
 ### TaskPatch (Инкрементальное Состояние Задачи)
+
 ```rust
 pub struct TaskPatch {
     pub task_id: Uuid,
@@ -246,6 +253,7 @@ pub struct TaskPatch {
 ```
 
 ### TasksSnapshot (Полное Состояние Задач)
+
 ```rust
 pub struct TasksSnapshot {
     pub version: u64,
@@ -257,7 +265,7 @@ pub struct TasksSnapshot {
 ## Стратегия Синхронизации
 
 | Тип | Направление | Триггер | Частота |
-|------|-----------|---------|-----------|
+| --- | --- | --- | --- |
 | Инкрементальное Обновление Агента | Сервер → Клиент | Изменение Состояния | В Реальном Времени |
 | Полная Синхронизация Агента | Сервер → Клиент | При Подключении | При Подключении / Переподключении |
 | Инкрементальное Обновление Контейнеров | Сервер → Клиент | Изменение Состояния | В Реальном Времени |

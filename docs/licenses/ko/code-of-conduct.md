@@ -72,14 +72,14 @@
 
 ## 저작자 표시
 
-본 행동 강령은 [Contributor Covenant][homepage](기여자 서약) 버전 2.1에서 각색되었으며, [https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1]에서 확인할 수 있습니다.
+본 행동 강령은 [Contributor Covenant][homepage](기여자 서약) 버전 2.1에서 각색되었으며, [https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1]에서 확인할 수 있습니다.
 
 커뮤니티 영향 지침은 [Mozilla의 행동 강령 집행 사다리][mozilla-coc]에서 영감을 받았습니다.
 
 본 행동 강령에 대한 일반적인 질문의 답변은 [https://www.contributor-covenant.org/faq][faq]의 FAQ를 참조하십시오. 번역은 [https://www.contributor-covenant.org/translations][translations]에서 이용할 수 있습니다.
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

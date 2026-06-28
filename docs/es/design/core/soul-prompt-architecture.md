@@ -17,7 +17,7 @@ El proyecto en sí se llama **Entelecheia** — el orquestador del runtime multi
 ## Objetivos
 
 1. Inyectar el soul prompt como la capa de identidad fundamental en cada solicitud LLM.
-1. Establecer un modelo de ensamblaje de prompt de tres capas: **Alma > Habilidad (con related_tools) > superficie de herramientas solo ejecución**.
+1. Establecer un modelo de ensamblaje de prompt de tres capas: **Alma > Habilidad (con `related_tools`) > superficie de herramientas solo ejecución**.
 1. Añadir un párrafo corto de identidad por Agente basado en su **impulso primordial**, que es el ancla conductual principal.
 1. Establecer la distinción de entidad **Alma / Agente**: Las Almas son orquestadores portadores de identidad con topología multi-habilidad, MCP compartido; los Agentes son trabajadores enfocados en una sola habilidad que reciben delegación.
 
@@ -133,7 +133,7 @@ Herramientas compartidas como `LLM_CHAT` y `VALIDATE_PARAMS` aparecen en múltip
 
 Las Almas se comunican mediante el protocolo de orquestación mediado por el servidor (`state_machine.rs`). El ejemplo canónico: HubRis invoca la herramienta `llm_chat` de ApoRia a través de `invoke_aporia_llm_chat()`. Cada Alma retiene su propia identidad durante todo el intercambio — HubRis decreta, ApoRia cuestiona.
 
-Los enlaces Alma-a-Alma son bidireccionales: cualquier Alma puede solicitar servicios de cualquier otra Alma a través del AgentManager.
+Los enlaces Alma-a-Alma son bidireccionales: cualquier Alma puede solicitar servicios de cualquier otra Alma a través del `AgentManager`.
 
 ### Delegación Alma-a-Agente
 
@@ -178,7 +178,7 @@ Los doce Agentes de Capa 1 están organizados en cuatro tríadas, cada una gober
 
 ### Las Cuatro Tríadas
 
-```
+```text
 Tríada de Fundación — percepción, arraigo e inferencia
   +-- Cielo     : percepción, amplitud, refugio            -> EleOs
   +-- Tierra    : arraigo, resistencia, soporte            -> Skopeo
@@ -229,7 +229,7 @@ Cada impulso es un descriptor conductual autocontenido; la columna Dominio propo
 | PoleMos | Contención | Conflicto | El dios de la guerra limitado por juramento; aparentemente orgulloso pero valora los vínculos; agresión canalizada a través de estrictas reglas de enfrentamiento; lucha solo cuando es requerido |
 | EpieiKeia | Tranquilidad | Muerte | Suprime altamente el comportamiento desviado; las decisiones siguen la mínima perturbación; toma solo lo que es excedente; justo más allá de toda duda; el umbral de equilibrio no debe romperse |
 
-> **Nota**: Los agentes de Capa 2 (domain_agents) son trabajadores especializados. Sus archivos de alma también contienen una sección `## Identidad` que describe tendencias conductuales derivadas del rol funcional de cada agente — no de la cosmología de impulsos.
+> **Nota**: Los agentes de Capa 2 (`domain_agents`) son trabajadores especializados. Sus archivos de alma también contienen una sección `## Identidad` que describe tendencias conductuales derivadas del rol funcional de cada agente — no de la cosmología de impulsos.
 
 ## Ensamblaje de Prompt en Tres Capas
 

@@ -26,7 +26,7 @@ Se comunican mediante HTTP y WebSocket autenticado con JWT. shittim-chest nunca 
 
 El backend central (`packages/core`) es una aplicación Axum 0.8. El router monta estos grupos de módulos:
 
-```
+```text
 /                   → health check
 /api/auth/*         → AuthService (inicio de sesión, registro, GitHub OAuth, refresco, cierre de sesión)
 /api/chat/*         → ChatService (conversaciones, mensajes, streaming SSE/WS, búsqueda, exportación)
@@ -53,7 +53,7 @@ El acceso a la base de datos usa SeaORM 1.x con PostgreSQL. `shittim_chest_db` a
 
 ### Autenticación JWT
 
-shittim_chest emite JWT que contienen `{ sub: user_id, groups: [...] }`. El secreto JWT se comparte con scepter para que ambos servicios puedan validar tokens independientemente. Los tokens de acceso expiran en 1 hora; los tokens de refresco en 7 días con rotación en cada uso.
+`shittim_chest` emite JWT que contienen `{ sub: user_id, groups: [...] }`. El secreto JWT se comparte con scepter para que ambos servicios puedan validar tokens independientemente. Los tokens de acceso expiran en 1 hora; los tokens de refresco en 7 días con rotación en cada uso.
 
 ## Capacidad LLM Independiente
 
@@ -71,7 +71,7 @@ Esto significa que shittim-chest puede ejecutarse como una aplicación de chat i
 
 ### Secuencia de Inicio de Sesión
 
-```
+```text
 Usuario → shittim_chest: POST /api/auth/login { username, password }
 shittim_chest → shittim_chest_db: SELECT user WHERE username = ? (verificar hash argon2)
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -83,7 +83,7 @@ shittim_chest: Almacenar sesión + cachear RBAC
 
 ### GitHub OAuth
 
-```
+```text
 Usuario → shittim_chest: GET /api/auth/github
 shittim_chest → Usuario: 302 redirigir a GitHub OAuth
 Usuario → GitHub: autorizar
@@ -98,7 +98,7 @@ shittim_chest → Usuario: { access_token, refresh_token } (crea automáticament
 
 ### Flujo de Mensajes (LLM Independiente)
 
-```
+```text
 Usuario → POST /api/chat/conversations/:id/messages
 shittim_chest: validar JWT, cargar conversación
 shittim_chest → LlmRouter: enrutar solicitud al mejor proveedor
@@ -118,19 +118,20 @@ shittim_chest: persistir mensaje en shittim_chest_db
 El endpoint `/api/proxy/*` reenvía solicitudes autenticadas a scepter:
 
 1. El navegador abre `ws://shittim-chest:80/api/proxy/chat` con JWT
-2. shittim_chest valida el JWT, abre conexión a scepter reenviando el JWT
-3. Reenvío bidireccional de mensajes entre el navegador y scepter
-4. shittim_chest aplica límites de tasa, registra el uso, gestiona el ciclo de vida de la conexión
+1. `shittim_chest` valida el JWT, abre conexión a scepter reenviando el JWT
+1. Reenvío bidireccional de mensajes entre el navegador y scepter
+1. `shittim_chest` aplica límites de tasa, registra el uso, gestiona el ciclo de vida de la conexión
 
 ## Pipeline de Webhooks
 
 Los webhooks de servicios externos entran a través de `/api/webhook/*`:
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → Validación HMAC → Parsear evento → Reenviar a scepter mediante socket Unix
 ```
 
 Fuentes soportadas: GitHub (HMAC-SHA256), GitLab (token), Gitee (HMAC + fallback de token), más un endpoint genérico `/api/webhook/custom/{name}`. Características:
+
 - Detección de entregas duplicadas (caché LRU, 10,000 IDs)
 - Registro de entregas con API de listado
 - Lista blanca de IPs para fuentes de webhook
@@ -139,11 +140,12 @@ Fuentes soportadas: GitHub (HMAC-SHA256), GitLab (token), Gitee (HMAC + fallback
 
 Los dispositivos remotos se gestionan a través de un relay de señalización:
 
-```
+```text
 Navegador (webui) → WS /api/devices/stream → shittim_chest (relay de señal) → Socket Unix → entelecheia/polemos
 ```
 
 Características:
+
 - Listado de dispositivos y CRUD de sesiones mediante REST
 - Señalización WebRTC (oferta/respuesta SDP, candidatos ICE)
 - Relay de terminal (WebSocket a xterm.js)
@@ -157,7 +159,7 @@ shittim-chest nunca se conecta directamente a dispositivos remotos — todos los
 ### shittim_chest_db
 
 | Datos | Tabla | Justificación |
-|------|-------|---------------|
+| --- | --- | --- |
 | Hashes de contraseñas (argon2) | `auth_users` | La capa de presentación posee el flujo de inicio de sesión |
 | Sesiones activas, tokens de refresco | `sessions` | La gestión de sesiones es una preocupación del frontend |
 | Claves API cifradas | `api_keys` | La emisión de claves API es orientada al usuario |
@@ -170,7 +172,7 @@ shittim-chest nunca se conecta directamente a dispositivos remotos — todos los
 ### entelecheia_db
 
 | Datos | Justificación |
-|------|---------------|
+| --- | --- |
 | Identidad de usuario, grupos, asignaciones de roles | El núcleo aplica los permisos |
 | GroupPermissions (cuotas de proveedor, listas blancas de agentes) | La política a nivel de agente reside con los agentes |
 | Configuraciones de agentes, estado Cosmos/IEPL | Los datos de orquestación pertenecen al núcleo |
@@ -180,13 +182,13 @@ shittim-chest nunca se conecta directamente a dispositivos remotos — todos los
 ### Fase 1: Vue 3 (Actual)
 
 | Paquete | Tecnología | Puerto | Propósito |
-|---------|------------|--------|-----------|
+| --- | --- | --- | --- |
 | `webui` | Vue 3 + Vite + Pinia (TSX) | `:3000 (compartido)` | Webui unificado: chat, generación de imágenes, dispositivos, admin (proveedores, agentes, RBAC, webhooks) |
 
 ### Fase 2: Rust WASM (Futuro)
 
 | Paquete | Tecnología | Propósito |
-|---------|------------|-----------|
+| --- | --- | --- |
 | `webui` | Rust → WASM (Tairitsu) | Webui unificado a largo plazo (chat + admin) |
 
 Los frontends heredados sirven como especificaciones vivas. Durante la transición, ambas versiones se ejecutan en paralelo, e interacciones de usuario idénticas deben producir resultados idénticos.
@@ -219,8 +221,8 @@ SHITTIM_CHEST_PROXY_DOMAIN=app.ejemplo.com
 El CLI crea un contenedor `shittim-chest-caddy` (imagen `caddy:2`) que:
 
 1. Escucha en los puertos 80/443 (configurable mediante `SHITTIM_CHEST_PROXY_HTTP_PORT` / `SHITTIM_CHEST_PROXY_HTTPS_PORT`)
-2. Aprovisiona automáticamente certificados TLS mediante Let's Encrypt (ACME integrado de Caddy)
-3. Proxy de todas las solicitudes al backend central en la red Docker
+1. Aprovisiona automáticamente certificados TLS mediante Let's Encrypt (ACME integrado de Caddy)
+1. Proxy de todas las solicitudes al backend central en la red Docker
 
 No se necesita Caddyfile — el CLI genera uno automáticamente. El dominio debe tener DNS público apuntando al host.
 
@@ -255,7 +257,7 @@ Crea un contenedor `nginx:bookworm` con tu archivo de configuración. Tú gestio
 Todos los contenedores proxy son gestionados por el CLI mediante la API Docker (`bollard`):
 
 | Comando | Comportamiento |
-|---------|---------------|
+| --- | --- |
 | `just dev` / `chest up` | Crea/inicia el contenedor proxy si `PROXY_MODE` está configurado |
 | `just dev-stop` / `chest down` | Detiene y elimina el contenedor proxy |
 | Contenedor ya en ejecución | Reutiliza el contenedor existente (idempotente) |

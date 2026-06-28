@@ -77,7 +77,7 @@ shittim-chest and scepter share the JWT signing key via the same `JWT_SECRET` en
 
 ### Login Flow
 
-```
+```text
 User → shittim_chest: POST /api/auth/login
 shittim_chest: Verify argon2 password
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -91,7 +91,7 @@ shittim_chest → User: tokens
 
 ### HTTP Proxy
 
-```
+```text
 Browser → shittim_chest:80/api/proxy/chat (JWT in Header)
 shittim_chest: Verify JWT
 shittim_chest → scepter:8424/api/chat (Forward JWT)
@@ -100,7 +100,7 @@ scepter → Agent → LLM → scepter → shittim_chest → Browser
 
 ### WebSocket Proxy
 
-```
+```text
 Browser → shittim_chest:80/api/proxy/ws (JWT in Header)
 shittim_chest: Verify JWT
 shittim_chest ↔ scepter:8424/ws (Bidirectional forwarding + JWT)
@@ -110,6 +110,7 @@ Browser ↔ scepter: Full-duplex Agent interaction
 ### Rate Limiting & Monitoring
 
 At the proxy layer, shittim-chest is responsible for:
+
 - Rate limiting (per-user / per-IP)
 - Usage logging
 - Connection lifecycle management
@@ -117,7 +118,7 @@ At the proxy layer, shittim-chest is responsible for:
 
 ## Webhook Pipeline
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC verification → Parse event → Unix socket → scepter
 ```
 

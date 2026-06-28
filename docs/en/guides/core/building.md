@@ -324,7 +324,7 @@ Applicable scenarios: running via SSH, serial consoles, `docker exec`, CI enviro
 #### Parameter comparison
 
 | Feature | Default | `--no-image-render` | `--no-ansi` | `--no-ansi-pure` |
-|------|------|---------------------|-------------|-------------------|
+| --- | --- | --- | --- | --- |
 | Colors | Full | Full | Full | Disabled |
 | Mouse capture | Yes | Yes | No | No |
 | Image rendering | Yes | No | No | No |

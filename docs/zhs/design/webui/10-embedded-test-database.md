@@ -35,7 +35,7 @@ flowchart TD
 ## 关键决策
 
 | 决策 | 理由 |
-|----------|-----------|
+| --- | --- |
 | `pglite-oxide`（WASM）代替 `postgresql_embedded`（原生二进制） | 无需约 100 MB 下载，无平台特定 PG 二进制，约 96 ms 启动 |
 | `pglite-oxide` 代替 `pglite-rust-bindings` | 已发布至 crates.io（v0.5.0），启动更快，成熟的 builder API 支持扩展 |
 | `tower::ServiceExt::oneshot` 代替 `reqwest` | 避免 sqlx 连接池后台任务与 hyper HTTP 服务之间的 tokio 运行时死锁 |
@@ -70,7 +70,7 @@ pub async fn start_test_server() -> TestServer {
 
 ```rust
 // tests/xxx_tests.rs
-#[test]
+# [test]
 fn xxx_e2e_tests() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -90,6 +90,6 @@ fn xxx_e2e_tests() {
 ## PGlite 限制
 
 1. **单连接**：`max_connections` 必须为 1。多个连接池指向同一 PGlite 实例将挂起。
-2. **严格类型转换**：PGlite 比标准 PostgreSQL 更严格。如 `uuid_column = text_value` 这类查询将失败——始终显式转换。
-3. **禁止并发测试运行器**：共享同一 PGlite 实例的所有异步测试必须在单个 `#[test]` 函数内顺序运行。
-4. **连接池挂起**：`sqlx::PgPool::close()` 可能无限挂起。使用 `std::process::exit(0)` 终止测试进程。
+1. **严格类型转换**：PGlite 比标准 PostgreSQL 更严格。如 `uuid_column = text_value` 这类查询将失败——始终显式转换。
+1. **禁止并发测试运行器**：共享同一 PGlite 实例的所有异步测试必须在单个 `#[test]` 函数内顺序运行。
+1. **连接池挂起**：`sqlx::PgPool::close()` 可能无限挂起。使用 `std::process::exit(0)` 终止测试进程。

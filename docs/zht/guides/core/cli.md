@@ -78,7 +78,7 @@ entelecheia-cli status
 ## 全域選項
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `-l, --log-level <LEVEL>` | 日誌級別（trace、debug、info、warn、error） | `warn` |
 | `-d, --daemon` | 背景派發命令後立即退出 | — |
 | `-c, --clean` | 清理 Cosmos 容器和 socket 檔案 | — |
@@ -89,6 +89,7 @@ entelecheia-cli status
 | `--format <FORMAT>` | 輸出格式（table、json、raw） | `table` |
 
 輸出格式選項：
+
 - `table` — 人類可讀的表格輸出
 - `json` — 機器可讀的 JSON 輸出
 
@@ -121,7 +122,7 @@ entelecheia-cli chat send [OPTIONS]
 ```
 
 | 選項 | 描述 |
-|--------|-------------|
+| --- | --- |
 | `-m, --message <MSG>` | 要傳送的訊息文字 |
 | `--stdin` | 從標準輸入讀取訊息 |
 | `-f, --file <PATH>` | 從檔案讀取訊息 |
@@ -150,7 +151,7 @@ entelecheia-cli chat history [OPTIONS]
 ```
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--conversation <ID>` | 按工作階段 ID 篩選 | — |
 | `--agent <TYPE>` | 按智慧體類型篩選 | — |
 | `--role <ROLE>` | 按角色篩選（user/assistant/system） | — |
@@ -172,7 +173,7 @@ entelecheia-cli chat recent [OPTIONS]
 ```
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--timeline <ID>` | 按時間線/工作階段 ID 篩選 | — |
 | `--agent <TYPE>` | 按智慧體類型篩選 | — |
 | `--limit <N>` | 返回的最大訊息數 | `20` |
@@ -222,7 +223,7 @@ entelecheia-cli init [OPTIONS]
 設定完整的服務棧：PostgreSQL（含 pgvector）、Docker 登錄表、scepter 伺服器和 WebUI。建立所需的 Docker 網路並拉取/構建映像。
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | 容器名稱前綴 | `e-` |
 | `--source-build` | 從原始碼構建映像而非拉取 | `false` |
 | `--webui-port <PORT>` | WebUI 埠 | `3424` |
@@ -242,7 +243,7 @@ entelecheia-cli serve [OPTIONS]
 啟動所有之前已初始化的容器。需要先執行 `init`。
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | 容器名稱前綴 | `e-` |
 | `--webui-port <PORT>` | WebUI 埠 | `3424` |
 
@@ -255,7 +256,7 @@ entelecheia-cli stop [OPTIONS]
 按順序停止所有正在執行的容器：webui → scepter → registry → postgres。
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | 容器名稱前綴 | `e-` |
 
 ### 僅啟動 WebUI
@@ -267,7 +268,7 @@ entelecheia-cli webui [OPTIONS]
 僅啟動或建立 WebUI 容器。
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | 容器名稱前綴 | `e-` |
 | `--webui-port <PORT>` | WebUI 埠 | `3424` |
 
@@ -284,6 +285,7 @@ entelecheia-cli config show
 ```
 
 顯示當前組態，包括：
+
 - 資料庫 URL 和連接設定
 - ApoRia LLM 提供商組態（名稱、模型、端點）
 - WebSocket 繫結位址
@@ -298,6 +300,7 @@ entelecheia-cli config validate
 ```
 
 執行驗證檢查：
+
 - 資料庫 URL 已設定
 - 至少組態了一個具有完整設定的 ApoRia 提供商
 - WebSocket 繫結位址已設定
@@ -306,7 +309,7 @@ entelecheia-cli config validate
 
 **輸出範例：**
 
-```
+```text
 Validate Configuration:
 
 Validating database configuration...
@@ -366,6 +369,7 @@ entelecheia-cli context create dev --description "Development server"
 ```
 
 從遠端伺服器獲取 Bearer token：
+
 ```bash
 # 在伺服器機器上
 docker exec e-scepter cat /home/entelecheia/.config/entelecheia/scepter.token
@@ -421,6 +425,7 @@ entelecheia-cli status
 ```
 
 顯示：
+
 - 伺服器版本
 - 連接狀態（socket 狀態）
 - LLM 提供商摘要
@@ -437,7 +442,7 @@ entelecheia-cli status <PATH> [--raw]
 ```
 
 | 路徑語法 | 描述 |
-|---|---|
+| --- | --- |
 | `timeline.#agent[-N]` | 顯示某 agent 最近 N 次 skill 呼叫記錄 |
 | `timeline.#agent[N][M]` | 顯示第 N 次 skill 呼叫中的第 M 個 MCP/工具呼叫 |
 | `history[-N]` | 顯示最近 N 條聊天訊息（所有角色） |
@@ -478,7 +483,7 @@ entelecheia-cli logs [OPTIONS]
 ```
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `-a, --agent <NAME>` | 按智慧體名稱篩選日誌 | 所有智慧體 |
 | `-l, --lines <N>` | 顯示的行數（尾部） | `100` |
 
@@ -515,7 +520,7 @@ entelecheia-cli subscribe add [OPTIONS]
 ```
 
 | 選項 | 描述 |
-|--------|-------------|
+| --- | --- |
 | `--name <NAME>` | 訂閱名稱（必需） |
 | `--source <SOURCE>` | 來源類型：`official`、`github` 或 `url`（必需） |
 | `--repository <REPO>` | GitHub 倉庫（用於 github 來源） |
@@ -565,7 +570,7 @@ entelecheia-cli run <AGENT> [OPTIONS]
 執行 Layer3 智慧體腳本。在當前目錄中查找 `.amphoreus/<AGENT>/run.py`。首次執行時會執行預檢稽核。
 
 | 選項 | 描述 |
-|--------|-------------|
+| --- | --- |
 | `--ci` | 啟用 CI 模式 |
 | `--auto-pr` | 啟用自動 PR 模式 |
 | `--dry-run` | 試執行（不進行實際變更） |
@@ -619,7 +624,7 @@ entelecheia-cli timeline list [OPTIONS]
 ```
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--agent <TYPE>` | 按智慧體類型篩選 | — |
 | `--limit <N>` | 最大結果數 | `50` |
 | `--offset <N>` | 分頁偏移量 | `0` |
@@ -631,7 +636,7 @@ entelecheia-cli timeline show <CONVERSATION_ID> [OPTIONS]
 ```
 
 | 選項 | 描述 | 預設值 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--include-messages` | 輸出中包含訊息 | `true` |
 
 ---
@@ -645,7 +650,7 @@ entelecheia-cli init-docker-images [OPTIONS]
 構建或拉取平台所需的 Docker 映像。
 
 | 選項 | 描述 |
-|--------|-------------|
+| --- | --- |
 | `--source-build` | 從原始碼構建映像而非拉取 |
 | `--tag <TAG>` | 映像標籤（預設：`latest`） |
 
@@ -660,6 +665,7 @@ entelecheia-cli init-docker-images --tag v0.2.0
 ```
 
 管理的映像：
+
 - `entelecheia` — 編排伺服器（含內嵌 cosmos 執行時）
 - `pgvector/pgvector` — 帶向量擴充的 PostgreSQL
 
@@ -693,6 +699,7 @@ entelecheia-cli -l trace send "測試訊息"
 ### 與 TUI 搭配使用
 
 CLI 與 TUI 連接到同一個 scepter 伺服器。兩者可以同時使用：
+
 - 啟動 TUI 進行互動式工作階段：`cargo run --bin entelecheia-tui`
 - 使用 CLI 進行腳本編寫、自動化和快速查詢
 
@@ -728,6 +735,7 @@ entelecheia-cli init && entelecheia-cli serve
 ### "Configuration validation failed"
 
 執行 `entelecheia-cli config validate` 檢視哪些檢查失敗。常見問題：
+
 - 缺少 `DATABASE_URL` 環境變數
-- ApoRia 提供商設定不完整（名稱、模型、api_key）
+- ApoRia 提供商設定不完整（名稱、模型、`api_key`）
 - 缺少 WebSocket 繫結位址

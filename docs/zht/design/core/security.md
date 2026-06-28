@@ -17,7 +17,7 @@ Entelecheia 實作了**縱深防禦安全架構**，涵蓋 14 個可獨立測試
 ## 安全層索引
 
 | # | 層級 | Crate | 緩解的威脅 |
-|---|-------|----------|-----------------|
+| --- | --- | --- | --- |
 | 1 | Exec-Only 微核心 | `scepter`、`mcp_types` | LLM 無限制的工具存取 |
 | 2 | 雙重授權權限閘道 | `security_policy` | 未經授權的 MCP 工具調用 |
 | 3 | 信任層級技能授權 | `domain_skills_permissions` | 透過技能鏈的特權提升 |
@@ -37,13 +37,13 @@ Entelecheia 實作了**縱深防禦安全架構**，涵蓋 14 個可獨立測試
 
 ## 第 1 層：Exec-Only 微核心
 
-**Crate：** `scepter`、`mcp_types`  
+**Crate：** `scepter`、`mcp_types`
 **設計理念：** 最小化 LLM 攻擊面
 
 LLM 在一個**僅 exec 的沙箱**中運作，它只能調用三個原語操作：
 
 | 工具 | 用途 | 參數 |
-|------|---------|------------|
+| --- | --- | --- |
 | `exec` | 執行腳本字串 | JavaScript 程式碼（透過 IEPL 從 TypeScript 轉譯） |
 | `write_to_var` | 儲存字串值 | 變數名稱 + 值 |
 | `write_to_var_json` | 儲存 JSON 值 | 變數名稱 + JSON 值 |
@@ -76,10 +76,11 @@ pub enum PermissionLevel {
 ```
 
 **授權流程：**
+
 1. 技能宣告："我需要對 `ssh_exec` 的 `System` 存取權"
-2. 工具宣告："我需要 `System` 權限"
-3. 權限閘道檢查：`skill_level >= tool_requirement` 且 `skill 被明確授予此工具`
-4. 若任一檢查失敗：調用被封鎖、記錄並回報給 OreXis 哨兵
+1. 工具宣告："我需要 `System` 權限"
+1. 權限閘道檢查：`skill_level >= tool_requirement` 且 `skill 被明確授予此工具`
+1. 若任一檢查失敗：調用被封鎖、記錄並回報給 OreXis 哨兵
 
 **實作：** `packages/shared/security_policy/src/` — 107 個測試註解，4 個 tokio 測試。
 
@@ -92,7 +93,7 @@ pub enum PermissionLevel {
 技能根據決定其預設權限範圍的**信任層級**進行分類：
 
 | 信任層級 | 說明 | 預設權限 |
-|-------------|-------------|---------------------|
+| --- | --- | --- |
 | `Builtin` | 隨平台發布 | 完整工具存取 |
 | `Verified` | 由維護者審查和簽署 | 讀寫 |
 | `Community` | 使用者提交 | 僅讀取 |
@@ -107,6 +108,7 @@ pub enum PermissionLevel {
 **Crate：** `container`（5,742 行）
 
 每個 Agent 執行都在一個 **Docker 或 Podman 容器**內進行，具有：
+
 - 網路命名空間隔離
 - 唯讀根檔案系統（工作區掛載除外）
 - 限制系統調用的 Seccomp 配置
@@ -162,6 +164,7 @@ pub enum PermissionLevel {
 **Crate：** `aporia`（5,802 行）
 
 所有 LLM 提供者的 API 金鑰使用 **AES-256-GCM** 靜態加密，具有：
+
 - 每次加密操作的唯一 nonce
 - 從主機密（環境配置）衍生的金鑰
 - 使用後記憶體中明文金鑰的歸零
@@ -174,6 +177,7 @@ pub enum PermissionLevel {
 **Crate：** `orexis`（5,239 行） — 「免疫系統」Agent
 
 OreXis 是一個第 1 層 Agent，負責：
+
 - **審計程式碼**以發現安全漏洞和授權合規性
 - **檢查工具調用**是否符合已註冊的安全策略
 - **封鎖/解除封鎖**任何 Agent 的工具（按模式）
@@ -190,10 +194,10 @@ MCP 工具（24 個）：`standard_check`、`compliance_report`、`audit_alignme
 **Entelecheia Plugin Language**（IEPL）管線確保 LLM 生成的程式碼與原生工具分派之間的型別安全：
 
 1. LLM 使用 ES 模組導入生成 TypeScript 程式碼
-2. **SWC** 轉譯 TypeScript → JavaScript（語法驗證）
-3. **Boa 引擎**在沙箱化上下文中執行 JavaScript
-4. ES 模組導入解析為 `__native_dispatch` 調用
-5. 每次分派透過 `McpRouter` 進行路由，並進行完整的型別檢查
+1. **SWC** 轉譯 TypeScript → JavaScript（語法驗證）
+1. **Boa 引擎**在沙箱化上下文中執行 JavaScript
+1. ES 模組導入解析為 `__native_dispatch` 調用
+1. 每次分派透過 `McpRouter` 進行路由，並進行完整的型別檢查
 
 **緩解的威脅：** 透過未型別化工具調用的注入攻擊（常見於 Python 為基礎的 Agent 框架，其中工具結構僅在執行時驗證）。
 
@@ -205,7 +209,7 @@ MCP 工具（24 個）：`standard_check`、`compliance_report`、`audit_alignme
 
 Entelecheia 維護一個跨 15 個生態系統的受信任套件註冊表的**硬編碼白名單**：
 
-crates.io、PyPI、npm、Go modules、Docker Hub、Maven Central、NuGet、RubyGems、Hackage、Alpine APK、Debian APT、GitHub、GitLab、HuggingFace、PyTorch。
+crates.io、PyPI、npm、Go modules、Docker Hub、Maven Central、NuGet、RubyGems、Hackage、Alpine APK、Debian APT、GitHub、GitLab、`HuggingFace`、PyTorch。
 
 來自非白名單註冊表的任何套件導入在執行前在**容器層級被封鎖**。
 
@@ -216,6 +220,7 @@ crates.io、PyPI、npm、Go modules、Docker Hub、Maven Central、NuGet、RubyG
 **機制：** IEPL 沙箱邊界
 
 LLM 的 `exec` 輸出在**隔離的 Boa JS 上下文**中執行，無法存取：
+
 - 主機檔案系統
 - 網路 sockets
 - 環境變數
@@ -230,6 +235,7 @@ LLM 的 `exec` 輸出在**隔離的 Boa JS 上下文**中執行，無法存取�
 **模組：** shittim-chest `channel/rate_limit.rs`（118 行）
 
 使用 **GCRA（Generic Cell Rate Algorithm）** 進行每個使用者、每個通道的速率限制：
+
 - 可配置的突發大小和持續速率
 - 每個使用者的 DashMap 以實現 O(1) 查找
 - 超過限制時自動退避
@@ -242,17 +248,18 @@ LLM 的 `exec` 輸出在**隔離的 Boa JS 上下文**中執行，無法存取�
 **Crate：** `orexis`、`timeline`（3,096 行）
 
 每個工具調用、Agent 決策和安全事件都會：
+
 1. 記錄在**時間線**中，包含完整上下文（Agent 徽章、技能名稱、參數、結果）
-2. 以雜湊鏈結至先前事件，用於篡改檢測
-3. 持久化至 PostgreSQL，具有可配置的保留期
-4. 可透過 CLI 查詢（`entelecheia-cli trace-chain <badge>`）
+1. 以雜湊鏈結至先前事件，用於篡改檢測
+1. 持久化至 PostgreSQL，具有可配置的保留期
+1. 可透過 CLI 查詢（`entelecheia-cli trace-chain <badge>`）
 
 ---
 
 ## 與其他框架的安全比較
 
 | 功能 | Entelecheia | OpenFANG | LangChain | Claude Code |
-|---------|:-----------:|:--------:|:---------:|:-----------:|
+| --- |  ---  |  ---  |  ---  |  ---  |
 | LLM 可見的工具 | **3（僅 exec）** | 53（全部可見） | 全部可見 | 33（全部可見） |
 | 容器隔離 | **雙層**（Docker + Youki） | 僅 WASM | 無 | 作業系統層級（Seatbelt/Landlock） |
 | 工具權限模型 | **雙重授權** | RBAC | 無 | 無 |
@@ -266,12 +273,14 @@ LLM 的 `exec` 輸出在**隔離的 Boa JS 上下文**中執行，無法存取�
 ## 威脅模型
 
 ### 不納入範圍
+
 - 對主機機器的物理存取
 - 已入侵的 Docker/Podman 守護程序（假設受信任）
 - 核心漏洞（由使用者空間隔離緩解但不防止）
 - Rust crate 依賴的供應鏈攻擊（由 `cargo-deny` 部分緩解）
 
 ### 接受的風險
+
 - Boa JS 引擎漏洞（在容器內沙箱化）
 - LLM 提供者中斷（無備援執行路徑）
 - PostgreSQL 資料損壞（由備份緩解，不防止）

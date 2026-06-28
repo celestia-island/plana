@@ -15,7 +15,7 @@ subcategory = "core"
 当前仓库中有三种实际可用的扩展层级。
 
 | 层级 | 当前含义 |
-|------|----------|
+| --- | --- |
 | Layer1 | 以 Rust crate 实现并编译进 workspace 的核心 Agent |
 | Layer2 | Web Automation 这一活跃内置领域 Agent，加上若干归档或规划材料 |
 | Layer3 | 用户自定义 Agent（计划中，尚未实现） |

@@ -9,7 +9,6 @@ subcategory = "core"
 # Issue 追跡統合
 
 > 外部 Issue 追跡システムを Entelecheia（玄枢）の Agent ワークフローに接続する
-
 > 現在の状態説明：HubRis は現在、Issue の作成、更新、検索、コメント支援機能を実際に提供しており、リポジトリには webhook 統合も存在します。ただし、本文書は「完全に統一されたクロスプラットフォーム Issue プロダクト面が既に存在する」と理解すべきではありません。
 
 ---
@@ -43,7 +42,7 @@ subcategory = "core"
 Entelecheia のコンテナは三層 ID システムを使用し、異なるコンテキストでアイデンティティを維持します：
 
 | 階層 | 形式 | ライフサイクル | 用途 |
-|------|------|----------|------|
+| --- | --- | --- | --- |
 | UUID | 標準 UUID（例：`550e8400-e29b-41d4-a716-446655440000`） | 永続 | データベース主キー、再起動間の追跡 |
 | バインディング ID | `@platform#id`（例：`@github#234`） | 安定 | 外部リソースバインディング、ブランチ命名 |
 | ランタイム ID | `#xxx`（例：`#616`） | セッション毎 | TUI 表示、Unix ソケットルーティング |
@@ -56,7 +55,7 @@ Entelecheia のコンテナは三層 ID システムを使用し、異なるコ�
 
 バインディング ID の一般的な形式：
 
-```
+```text
 @platform#id[@#floor]
 ```
 
@@ -67,7 +66,7 @@ Entelecheia のコンテナは三層 ID システムを使用し、異なるコ�
 ### 例
 
 | バインディング ID | 意味 |
-|---------|------|
+| --- | --- |
 | `@github#123` | GitHub Issue #123 |
 | `@gitee#456` | Gitee Issue #456 |
 | `@gitlab#789` | GitLab Issue #789 |
@@ -90,7 +89,7 @@ Agent は HubRis MCP ツールを通じて外部 Issue と対話します。こ�
 ### 利用可能な Issue 操作
 
 | ツール | 説明 |
-|------|------|
+| --- | --- |
 | `$.agent.HubRis.issue_create()` | 外部プラットフォームに新しい Issue を作成 |
 | `$.agent.HubRis.issue_update()` | 既存 Issue を更新（タイトル、本文、状態、ラベル） |
 | `$.agent.HubRis.issue_search()` | クロスプラットフォームで Issue を検索しフィルタを適用 |
@@ -142,11 +141,11 @@ flowchart TB
 ### ステップバイステップ例
 
 1. 開発者が "Memory leak in container cleanup" というタイトルの Issue `@github#42` を作成
-2. GitHub Webhook がイベントを Scepter に転送
-3. `issue_triage` スキルがこれを **bug** に分類、優先度 **high**
-4. HubRis がタスクを分解：(a) リークの再現 (b) 根本原因の発見 (c) 修正の実装
-5. KaLos が関連ソースファイルを読み取り、SkeMma が診断スクリプトを実行
-6. Agent が修正をコミットし、`@github#42` に解決策をコメント
+1. GitHub Webhook がイベントを Scepter に転送
+1. `issue_triage` スキルがこれを **bug** に分類、優先度 **high**
+1. HubRis がタスクを分解：(a) リークの再現 (b) 根本原因の発見 (c) 修正の実装
+1. KaLos が関連ソースファイルを読み取り、SkeMma が診断スクリプトを実行
+1. Agent が修正をコミットし、`@github#42` に解決策をコメント
 
 ---
 
@@ -155,7 +154,7 @@ flowchart TB
 プラットフォームプレフィックスマッピングは設定可能です。デフォルトの登録表：
 
 | プレフィックス | プラットフォーム | Issue URL パターン |
-|------|------|----------------|
+| --- | --- | --- |
 | `github` | GitHub | `https://github.com/{repo}/issues/{id}` |
 | `gitee` | Gitee | `https://gitee.com/{repo}/issues/{id}` |
 | `gitlab` | GitLab | `https://gitlab.com/{repo}/-/issues/{id}` |
@@ -180,20 +179,20 @@ Agent が Issue 駆動作業用のブランチを作成する際、ブランチ�
 
 ### 形式
 
-```
+```text
 cosmos-<binding_id>-<reason>
 ```
 
 または
 
-```
+```text
 cosmos-<uuid8>-<reason>
 ```
 
 ### 例
 
 | ブランチ名 | コンテキスト |
-|----------|--------|
+| --- | --- |
 | `cosmos-@github#42-fix-memory-leak` | GitHub Issue #42 の修正 |
 | `cosmos-@gitee#15-add-ci-pipeline` | Gitee Issue #15 の機能開発 |
 | `cosmos-a1b2c3d4-refactor-auth-module` | UUID プレフィックスを使用した内部タスク |

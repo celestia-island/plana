@@ -16,17 +16,18 @@ subcategory = "core"
 In a multi-agent LLM orchestration system, the model must decide which tools to call and how to compose them. The naive approach is to expose every MCP tool (118+ across 12 agents) directly to the LLM as separate function definitions in the prompt.
 
 This creates several problems:
+
 1. **Context window consumption**: 118+ tool definitions consume thousands of tokens, leaving less room for reasoning and conversation.
-2. **Security surface area**: Every tool exposed to the LLM is a potential attack vector for prompt injection or jailbreaking.
-3. **Permission enforcement fragmentation**: If tools are dispatched directly by LLM output, each tool must independently validate permissions — leading to inconsistent enforcement and gaps.
-4. **Model confusion**: Research shows LLM performance degrades when presented with too many tool choices (the "tool overload" problem).
+1. **Security surface area**: Every tool exposed to the LLM is a potential attack vector for prompt injection or jailbreaking.
+1. **Permission enforcement fragmentation**: If tools are dispatched directly by LLM output, each tool must independently validate permissions — leading to inconsistent enforcement and gaps.
+1. **Model confusion**: Research shows LLM performance degrades when presented with too many tool choices (the "tool overload" problem).
 
 ## Decision
 
 We adopt an **exec-only microkernel** design. The LLM sees exactly **3 execution primitives** as its tool surface:
 
 | Primitive | Purpose |
-|-----------|---------|
+| --- | --- |
 | `exec` | Execute TypeScript/JavaScript code via the IEPL pipeline |
 | `write_to_var` | Write a string value to a named REPL variable |
 | `write_to_var_json` | Write a JSON value to a named REPL variable |

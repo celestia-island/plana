@@ -15,7 +15,7 @@ subcategory = "core"
 當前倉庫中有三種實際可用的擴充層級。
 
 | 層級 | 當前含義 |
-|------|----------|
+| --- | --- |
 | Layer1 | 以 Rust crate 實作並編譯進 workspace 的核心 Agent |
 | Layer2 | Web Automation 這一活躍內建領域 Agent，加上若干歸檔或規劃材料 |
 | Layer3 | 使用者自訂 Agent（計劃中，尚未實作） |

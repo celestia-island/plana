@@ -13,8 +13,8 @@ subcategory = "core"
 IEPL（In-Execution Prompt Language）执行引擎是对现有 Cosmos/SkeMma JS 运行时的架构升级，将 LLM 生成的执行代码从 JavaScript 升级到 TypeScript。核心变更包括：
 
 1. **内置 SWC crate**：严格的语法检查、类型剥离和 LLM 生成 TypeScript 的转译
-2. **Rust derive → TypeScript 类型生成**：通过 `ts-rs` 自动导出 Rust 结构体到 `.d.ts` 声明文件
-3. **类型安全的技能提示**：注入完整的 `.d.ts` 声明而非硬编码的函数列表，显著提高健壮性
+1. **Rust derive → TypeScript 类型生成**：通过 `ts-rs` 自动导出 Rust 结构体到 `.d.ts` 声明文件
+1. **类型安全的技能提示**：注入完整的 `.d.ts` 声明而非硬编码的函数列表，显著提高健壮性
 
 ## 当前状态与问题
 
@@ -30,7 +30,7 @@ flowchart LR
 ### 存在的问题
 
 | 问题 | 描述 |
-|---------|-------------|
+| --- | --- |
 | **无类型约束** | LLM 生成的 JS 代码没有任何静态类型信息；参数拼写错误只能在运行时捕获 |
 | **脆弱的接口描述** | `build_report_tool_instruction()` 硬编码文本列表如 `- file_read（从 'kalos' 导入）`，无法表达参数类型或返回值结构 |
 | **无预验证** | LLM 代码直接进入 Boa `eval()`；语法错误仅在执行时发现 |
@@ -40,7 +40,7 @@ flowchart LR
 ### 涉及的关键文件
 
 | 文件 | 当前职责 |
-|------|----------------------|
+| --- | --- |
 | `packages/agents/skemma/src/js_runtime/runtime.rs` | Boa JS 运行时，`exec()` 直接调用 `eval()` |
 | `packages/agents/skemma/src/mcp/tools/script_exec.rs` | 仅接受 `"javascript"` 语言 |
 | `packages/cosmos/src/bin/cosmos/js_repl/js_commands.rs` | 动态生成 `globalThis.$agent.tool = (...) => ...` |
@@ -81,7 +81,7 @@ flowchart TB
 ### 1. Rust → TypeScript 类型生成：`ts-rs`
 
 | 属性 | 值 |
-|-----------|-------|
+| --- | --- |
 | Crate | `ts-rs`（Aleph-Alpha/ts-rs） |
 | 版本 | ≥ 12.0 |
 | Stars | 1,772 |
@@ -100,7 +100,7 @@ flowchart TB
 **排除的替代方案：**
 
 | Crate | 排除原因 |
-|-------|---------------------|
+| --- | --- |
 | `specta` | 偏向 Tauri/rspc 生态系统；此场景不需要函数类型导出 |
 | `typeshare` | CLI 驱动，CI 集成不便；生成 `interface` 而非 `type`（对 LLM 提示无实际区别） |
 | `tsify` | 绑定到 `wasm-bindgen`；本项目不是 WASM 工作流 |
@@ -108,7 +108,7 @@ flowchart TB
 ### 2. TypeScript 解析与转译：SWC
 
 | Crate | 用途 |
-|-------|---------|
+| --- | --- |
 | `swc_core`（特性：`ecma_parser`） | 将 TS 源码解析为 AST |
 | `swc_core`（特性：`ecma_ast`） | AST 节点类型 |
 | `swc_core`（特性：`ecma_visit`） | AST 遍历/转换 |
@@ -148,16 +148,16 @@ ts-rs = { version = "12", features = ["serde-compat", "format"] }
 // packages/shared/src/mcp_types/kalos.rs
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileReadResult {
     pub path: String,
     pub size_bytes: u64,
     pub content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileListResult {
     pub path: String,
     pub total_count: usize,
@@ -173,7 +173,7 @@ pub struct FileListResult {
 // packages/shared/src/mcp_types/enums.rs
 // 现有的 str_enum! 宏生成的枚举需要额外的 TS derive
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+# [derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 pub enum FileType {
     File,
     Directory,
@@ -501,7 +501,8 @@ parts.push(format!("\n可用 JS API：\n{}", items.join("\n")));
 ```
 
 这生成：
-```
+
+```text
 可用 JS API：
 - file_read（从 'kalos' 导入）
 - file_write（从 'kalos' 导入）
@@ -536,65 +537,69 @@ pub(super) fn build_report_tool_instruction(
 ```typescript
 你正在编写 TypeScript 代码。可用的 API 类型声明：
 
-```typescript
+```
+
 // === 类型（自动从 Rust 生成） ===
-type FileReadResult = { path: string; size_bytes: number; content: string };
-type FileListResult = { path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> };
-type FileWriteResult = { path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" };
+type `FileReadResult` = { path: string; `size_bytes`: number; content: string };
+type `FileListResult` = { path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> };
+type `FileWriteResult` = { path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" };
 
 // === API（手写） ===
 interface KalosApi {
-  file_read(params: { path: string }): Promise<FileReadResult>;
-  file_write(params: { path: string; content: string }): Promise<FileWriteResult>;
-  file_list(params: { path: string }): Promise<FileListResult>;
-  // ...
+`file_read`(params: { path: string }): Promise<`FileReadResult`>;
+`file_write`(params: { path: string; content: string }): Promise<`FileWriteResult`>;
+`file_list`(params: { path: string }): Promise<`FileListResult`>;
+// ...
 }
 
 declare const $kalos: KalosApi;
-```
+
+```text
 
 #### 3.3 .d.ts 加载器
 
-```rust
+```
+
 // packages/shared/src/iepl/decl_loader.rs
 
-use include_dir::{Dir, include_dir};
+use `include_dir`::{Dir, `include_dir`};
 
-static IEPL_BINDINGS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../bindings");
+static IEPL_BINDINGS: Dir = `include_dir`!("$CARGO_MANIFEST_DIR/../../../bindings");
 
-pub struct IeplDeclLoader;
+pub struct `IeplDeclLoader`;
 
-impl IeplDeclLoader {
-    /// 加载由 related_tools 过滤的所需 .d.ts 声明
-    pub fn load_for_tools(related_tools: &[RelatedTool]) -> String {
-        let mut declarations = Vec::new();
+impl `IeplDeclLoader` {
+/// 加载由 `related_tools` 过滤的所需 .d.ts 声明
+pub fn `load_for_tools`(`related_tools`: &[`RelatedTool`]) -> String {
+let mut declarations = Vec::new();
 
-        // 收集涉及的 agent 集合
-        let agents: std::collections::HashSet<&str> = related_tools
-            .iter()
-            .map(|t| t.agent_name.as_str())
-            .collect();
+// 收集涉及的 agent 集合
+let agents: std::collections::HashSet<&str> = `related_tools`
+.iter()
+.map(|t| t.agent_name.as_str())
+.collect();
 
-        for agent in &agents {
-            // 加载自动生成的类型声明
-            if let Some(types_file) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(types_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-
-            // 加载手写的 API 声明
-            if let Some(api_file) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(api_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-        }
-
-        declarations.join("\n\n")
-    }
+for agent in &agents {
+// 加载自动生成的类型声明
+if let Some(`types_file`) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(types_file.contents()) {
+declarations.push(content.to_string());
 }
-```
+}
+
+// 加载手写的 API 声明
+if let Some(`api_file`) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(api_file.contents()) {
+declarations.push(content.to_string());
+}
+}
+}
+
+declarations.join("\n\n")
+}
+}
+
+```text
 
 #### 3.4 JS 命名空间构建器升级
 
@@ -604,24 +609,28 @@ impl IeplDeclLoader {
 
 ### 当前（JavaScript）
 
-```mermaid
-flowchart TD
-    Meta["技能元数据\nrelated_tools：\n- kalos.file_read\n- kalos.file_write"]
-    Meta --> Build["build_report_tool_instruction\n→ '- file_read（导入）'\n→ '- file_write（导入）'\n（硬编码文本）"]
-    Build -->|"注入到\n系统提示"| LLM1["LLM 生成 JavaScript\nfile_read({path:'x'})\n（无类型检查）"]
-    LLM1 --> Boa1["Boa eval() 直接执行\n（无预验证）"]
 ```
+
+flowchart TD
+Meta["技能元数据\`nrelated_tools`：\n- kalos.file_read\n- kalos.file_write"]
+Meta --> Build["`build_report_tool_instruction`\n→ '- `file_read`（导入）'\n→ '- `file_write`（导入）'\n（硬编码文本）"]
+Build -->|"注入到\n系统提示"| LLM1["LLM 生成 JavaScript\`nfile_read`({path:'x'})\n（无类型检查）"]
+LLM1 --> Boa1["Boa eval() 直接执行\n（无预验证）"]
+
+```text
 
 ### 目标（TypeScript + IEPL）
 
-```mermaid
-flowchart TD
-    Meta2["技能元数据\nrelated_tools：\n- kalos.file_read\n- kalos.file_write"]
-    Meta2 --> Loader["IeplDeclLoader\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n（完整类型声明）"]
-    Loader -->|"注入到\n系统提示"| LLM2["LLM 生成 TypeScript\nconst r: FileReadResult =\n  await file_read(\n    {path: 'x'}\n  );\n（类型约束）"]
-    LLM2 --> IEPL["IEPL 引擎\n1. SWC 解析 → AST（语法检查）\n2. AST 验证器（安全检查）\n3. 剥离类型 → JS（类型剥离）\n4. 代码生成 → JS 字符串"]
-    IEPL --> Boa2["Boa eval() 执行"]
 ```
+
+flowchart TD
+Meta2["技能元数据\`nrelated_tools`：\n- kalos.file_read\n- kalos.file_write"]
+Meta2 --> Loader["`IeplDeclLoader`\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n（完整类型声明）"]
+Loader -->|"注入到\n系统提示"| LLM2["LLM 生成 TypeScript\nconst r: `FileReadResult` =\n  await `file_read`(\n    {path: 'x'}\n  );\n（类型约束）"]
+LLM2 --> IEPL["IEPL 引擎\n1. SWC 解析 → AST（语法检查）\n2. AST 验证器（安全检查）\n3. 剥离类型 → JS（类型剥离）\n4. 代码生成 → JS 字符串"]
+IEPL --> Boa2["Boa eval() 执行"]
+
+```text
 
 ## 健壮性改进分析
 
@@ -642,24 +651,29 @@ flowchart TD
 LLM 看到的当前提示片段：
 
 ```
+
 可用 JS API：
-- file_read（从 'kalos' 导入）
-- file_write（从 'kalos' 导入）
+
+- `file_read`（从 'kalos' 导入）
+- `file_write`（从 'kalos' 导入）
 - report()
-```
+
+```text
 
 LLM 在 IEPL 下看到的提示片段：
 
-```typescript
+```
+
 declare const $kalos: {
-  file_read(params: { path: string }): Promise<{ path: string; size_bytes: number; content: string }>;
-  file_write(params: { path: string; content: string }): Promise<{ path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" }>;
-  file_list(params: { path: string }): Promise<{ path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> }>;
+`file_read`(params: { path: string }): Promise<{ path: string; `size_bytes`: number; content: string }>;
+`file_write`(params: { path: string; content: string }): Promise<{ path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" }>;
+`file_list`(params: { path: string }): Promise<{ path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> }>;
 };
 // hubris 工具可通过 ES 模块导入：import { report } from 'hubris'
-  report(params: { summary: string }): Promise<{ summary: string }>;
+report(params: { summary: string }): Promise<{ summary: string }>;
 };
-```
+
+```text
 
 后者提供：
 - 精确的参数名和类型
@@ -669,39 +683,44 @@ declare const $kalos: {
 
 ## 新工作区依赖摘要
 
-```toml
-# 新增
-ts-rs = { version = "12", features = ["serde-compat", "format"] }
-swc_core = { version = "65", features = [
-    "ecma_parser",
-    "ecma_ast",
-    "ecma_visit",
-    "ecma_transforms_base",
-    "ecma_transforms_typescript",
-    "ecma_codegen",
-    "common",
-] }
 ```
+
+# 新增
+
+ts-rs = { version = "12", features = ["serde-compat", "format"] }
+`swc_core` = { version = "65", features = [
+"`ecma_parser`",
+"`ecma_ast`",
+"`ecma_visit`",
+"`ecma_transforms_base`",
+"`ecma_transforms_typescript`",
+"`ecma_codegen`",
+"common",
+] }
+
+```text
 
 ## 新 Crate 结构
 
-```mermaid
-flowchart LR
-    SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
-    SkemmaIepl --> SM2["engine.rs\nIeplEngine：transpile(ts_code) -> Result&lt;TranspileResult&gt;"]
-    SkemmaIepl --> SM3["ast_validator.rs\nAstValidator：安全模式检测"]
-    SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod decl_loader;"]
-    SharedIepl --> SH2["decl_loader.rs\nIeplDeclLoader：按 related_tools 过滤加载 .d.ts"]
-    Bindings["bindings/\n生成的产物，在 git 中追踪"] --> BTypes["types/\nts-rs 自动导出"]
-    Bindings --> BApi["api/\n手写维护"]
-    Bindings --> BIepl["iepl-api.d.ts\n合并产物（可选）"]
-    BTypes --> BT1["kalos.d.ts"]
-    BTypes --> BT2["neikos.d.ts"]
-    BTypes --> BT3["..."]
-    BApi --> BA1["kalos.d.ts"]
-    BApi --> BA2["neikos.d.ts"]
-    BApi --> BA3["..."]
 ```
+
+flowchart LR
+SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod `ast_validator`;"]
+SkemmaIepl --> SM2["engine.rs\`nIeplEngine`：transpile(`ts_code`) -> Result&lt;`TranspileResult`&gt;"]
+SkemmaIepl --> SM3["ast_validator.rs\`nAstValidator`：安全模式检测"]
+SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod `decl_loader`;"]
+SharedIepl --> SH2["decl_loader.rs\`nIeplDeclLoader`：按 `related_tools` 过滤加载 .d.ts"]
+Bindings["bindings/\n生成的产物，在 git 中追踪"] --> BTypes["types/\nts-rs 自动导出"]
+Bindings --> BApi["api/\n手写维护"]
+Bindings --> BIepl["iepl-api.d.ts\n合并产物（可选）"]
+BTypes --> BT1["kalos.d.ts"]
+BTypes --> BT2["neikos.d.ts"]
+BTypes --> BT3["..."]
+BApi --> BA1["kalos.d.ts"]
+BApi --> BA2["neikos.d.ts"]
+BApi --> BA3["..."]
+
+```text
 
 ## 实现路径
 

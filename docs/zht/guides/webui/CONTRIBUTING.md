@@ -16,21 +16,30 @@ Shittim Chest 是一個可以驅動實體和工業系統的平台的使用者面
 因此**穩定性和安全性優先於貢獻吞吐量**。在發起 pull request 之前請閱讀本節。
 
 - **高合併門檻，非公開路線圖。** 發起 PR 並不意味著它會被合併。
-  我們有意識地只接受少量變更，且僅在它們符合架構並通過審查時
-  才接受。這是設計上的選擇，並非無禮。
+
+我們有意識地只接受少量變更，且僅在它們符合架構並通過審查時
+才接受。這是設計上的選擇，並非無禮。
+
 - **我們歡迎的內容：** 錯誤報告、針對性修復、對**外圍**（IDE 外掛、
-  Tauri 應用、頻道整合、提供者轉接器和文件）的範圍限定改進，
-  以及在程式碼之前的設計討論。
+
+Tauri 應用、頻道整合、提供者轉接器和文件）的範圍限定改進，
+以及在程式碼之前的設計討論。
+
 - **我們通常不會合併的內容：** 大型未經請求的重寫、未經事先設計討論的
-  架構變更、批次「vibe-coded」PR、任何降低核心安全性和正確性門檻
-  的內容，以及未經明確邀請和擴展審查的對安全性關鍵核心（auth、
-  JWT/OAuth、LLM 路由、webhook 驗證、RBAC）的變更。
+
+架構變更、批次「vibe-coded」PR、任何降低核心安全性和正確性門檻
+的內容，以及未經明確邀請和擴展審查的對安全性關鍵核心（auth、
+JWT/OAuth、LLM 路由、webhook 驗證、RBAC）的變更。
+
 - **核心 vs. 外圍。** 核心後端和 auth/RBAC 模型受到最嚴格的門檻要求，
-  主要由核心團隊維護。外圍（前端、IDE/行動應用、頻道連接器）
-  是外部貢獻最有幫助且最有可能被接受的地方。
+
+主要由核心團隊維護。外圍（前端、IDE/行動應用、頻道連接器）
+是外部貢獻最有幫助且最有可能被接受的地方。
+
 - **需要 CLA。** 每個被接受的貢獻都需要簽署貢獻者授權協議。
-  請參閱 [`CLA.md`](CLA.md)。提交必須帶有 `Signed-off-by` 行
-  （`git commit -s`）。
+
+請參閱 [`CLA.md`](CLA.md)。提交必須帶有 `Signed-off-by` 行
+（`git commit -s`）。
 
 > **授權可能會開放；合併門檻不會。** 在 **2030-01-01**，本專案
 > 將從 BUSL-1.1 轉換為 Synthetic Source License (SySL-1.0) — 請參閱
@@ -191,7 +200,7 @@ cargo clippy               # lint
 cargo clippy --fix         # 自動修復
 ```
 
-- 遵循標準 Rust 慣例（函數/變數使用 snake_case，型別使用 CamelCase）
+- 遵循標準 Rust 慣例（函數/變數使用 `snake_case`，型別使用 CamelCase）
 - 在 crate 的 `Cargo.toml` 檔案中對共享依賴版本使用 `workspace = true`
 - 錯誤處理：對應用程式碼使用 `anyhow::Result`，對程式庫 crate 錯誤型別使用 `thiserror`
 
@@ -222,10 +231,10 @@ import { t } from '@/i18n'
 
 ### 命名慣例
 
-`packages/` 下的所有目錄名稱使用 **snake_case**：
+`packages/` 下的所有目錄名稱使用 **`snake_case`**：
 
 | 型別 | 慣例 | 範例 |
-|------|-----------|---------|
+| --- | --- | --- |
 | Rust crate 目錄 | snake_case | `core/` |
 | Rust crate 名稱 | snake_case | `core` |
 
@@ -256,16 +265,16 @@ just clean                 # 清理構建產物
 ## Pull Request 流程
 
 1. 從 `dev` 建立功能分支：`git checkout -b feat/my-feature dev`
-2. 使用清晰、原子性的提交進行變更
-3. 推送前執行 `just lint && just test`
-4. 針對 `dev` 分支發起 PR
-5. 確保 CI 通過（Rust 構建、npm 構建、lint）
+1. 使用清晰、原子性的提交進行變更
+1. 推送前執行 `just lint && just test`
+1. 針對 `dev` 分支發起 PR
+1. 確保 CI 通過（Rust 構建、npm 構建、lint）
 
 ## 提交慣例
 
 使用 [Conventional Commits](https://www.conventionalcommits.org/)：
 
-```
+```text
 feat(auth): 新增密碼登入端點
 fix(proxy): 處理 WebSocket 重新連線
 docs(readme): 新增 logo 和徽章

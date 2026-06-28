@@ -25,9 +25,12 @@ category = "meta"
 * 尊重不同的意见、观点和经历
 * 给予并优雅地接受建设性反馈
 * 承担责任，向因我们的错误而受影响的人道歉，
-  并从中吸取教训
+
+并从中吸取教训
+
 * 不仅关注作为个人对我们最有利的事，也关注
-  对整个社区最有利的事
+
+对整个社区最有利的事
 
 不可接受的行为示例包括：
 
@@ -35,7 +38,9 @@ category = "meta"
 * 挑衅、侮辱或贬损性的评论，以及人身或政治攻击
 * 公开或私下骚扰
 * 未经他人明确许可，发布他人的私人信息，如物理地址或
-  电子邮件地址
+
+电子邮件地址
+
 * 其他在专业环境中可被合理视为不恰当的行为
 
 ## 执行责任
@@ -104,7 +109,7 @@ category = "meta"
 ## 归属
 
 本行为准则改编自 [Contributor Covenant][homepage] 2.1 版，可访问
-[https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1]。
+[https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1]。
 
 社区影响指南的灵感来源于
 [Mozilla 的行为准则执行阶梯][mozilla-coc]。
@@ -114,7 +119,7 @@ category = "meta"
 [https://www.contributor-covenant.org/translations][translations] 获取。
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

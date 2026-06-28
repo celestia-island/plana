@@ -9,11 +9,8 @@ subcategory = "core"
 # Pipeline multimodal
 
 > **⚠️ Référence d'Agent archivée — hors du pipeline de développement**
->
 > L'Agent Layer2 `multimedia-creation` référencé dans ce document a été **archivé**. Son code Rust, ses liaisons `.d.ts` et son enregistrement d'Agent ont été supprimés. Le pipeline multimodal décrit ici est un **objectif de conception**, pas une fonctionnalité livrée. À moins que le développeur ne le demande explicitement, n'implémentez ni ne planifiez le travail sur ce pipeline.
-
 > Utiliser multimedia-creation et ApoRia pour générer, enregistrer et analyser des médias
-
 > Note sur l'état actuel : ce document décrit principalement le flux de travail cible. Des outils liés au multimodal existent effectivement dans ApoRia dans la base de code actuelle, mais ils n'ont pas encore pleinement atteint les capacités de registre d'actifs centralisé et de boucle fermée complète décrites ci-dessous.
 
 ---
@@ -213,11 +210,11 @@ const context_analysis = $.agent.ApoRia.multimodal_chat({
 Le pipeline multimodal prend en charge des cycles de revue itératifs :
 
 1. **Générer** — multimedia-creation crée le média initial
-2. **Enregistrer** — stocker dans le registre d'actifs
-3. **Analyser** — ApoRia évalue le média à l'aide du LLM multimodal
-4. **Identifier les problèmes** — extraire les points d'amélioration spécifiques de l'analyse
-5. **Affiner** — multimedia-creation ajuste les paramètres selon les retours et régénère
-6. **Ré-analyser** — ApoRia évalue la sortie affinée
+1. **Enregistrer** — stocker dans le registre d'actifs
+1. **Analyser** — ApoRia évalue le média à l'aide du LLM multimodal
+1. **Identifier les problèmes** — extraire les points d'amélioration spécifiques de l'analyse
+1. **Affiner** — multimedia-creation ajuste les paramètres selon les retours et régénère
+1. **Ré-analyser** — ApoRia évalue la sortie affinée
 
 ### Exemple de cycle de revue dans le code exec
 

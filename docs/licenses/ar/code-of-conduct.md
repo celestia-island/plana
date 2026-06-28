@@ -72,14 +72,14 @@
 
 ## الإسناد
 
-هذه مدونة قواعد السلوك مقتبسة من [Contributor Covenant][homepage]، الإصدار 2.1، المتاحة على [https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1].
+هذه مدونة قواعد السلوك مقتبسة من [Contributor Covenant][homepage]، الإصدار 2.1، المتاحة على [https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1].
 
 استلهمت إرشادات تأثير المجتمع من [سُلَّم إنفاذ مدونة قواعد السلوك لموزيلا][mozilla-coc].
 
 للحصول على إجابات للأسئلة الشائعة حول مدونة قواعد السلوك هذه، راجع الأسئلة الشائعة على [https://www.contributor-covenant.org/faq][faq]. الترجمات متاحة على [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

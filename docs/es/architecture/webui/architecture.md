@@ -17,7 +17,7 @@ subcategory = "webui"
 shittim-chest es un monorepo híbrido Cargo + pnpm. Posee la capa orientada al usuario que envuelve el núcleo de orquestación de agentes de entelecheia. Los dos proyectos se comunican mediante HTTP/WebSocket autenticado con JWT — shittim-chest nunca accede directamente a la base de datos de entelecheia para operaciones de agentes.
 
 | Componente | Tecnología | Rol | Estado |
-|-----------|------|------|--------|
+| --- | --- | --- | --- |
 | **core** | Rust + Axum | Backend unificado: auth (JWT + OAuth), enrutamiento LLM independiente, API de chat, generación de imágenes, ingreso de webhooks, proxy scepter, señalización de dispositivos remotos, integraciones de canal, facturación, RBAC, espacios de trabajo | 🟢 Implementado |
 | **cli** | Rust | Orquestador Docker: dev, up, down, migrate, logs, status | 🟢 Implementado |
 | **webui** | Vue 3 + Vite (TSX) | Frontend: superficie de chat, panel de administración (20+ vistas), topología SCADA 2D, vista previa holográfica 3D | 🟡 Parcial |
@@ -108,6 +108,7 @@ Todos los módulos residen bajo `packages/core/src/`. El backend tiene ~34K lín
 ### Auth (`packages/core/src/auth/`)
 
 Completamente implementado:
+
 - Registro e inicio de sesión con usuario/contraseña con hash argon2
 - Sistema de tokens JWT de acceso + refresco con rotación
 - Integración GitHub OAuth 2.0 (redirección + callback, crea usuarios automáticamente)
@@ -117,6 +118,7 @@ Completamente implementado:
 ### Chat (`packages/core/src/chat/`)
 
 Completamente implementado:
+
 - CRUD de conversaciones (crear, listar, obtener, actualizar, eliminar)
 - Envío/recepción de mensajes con enrutamiento LLM
 - Respuestas en streaming SSE (Server-Sent Events) (`/api/chat/stream`)
@@ -127,6 +129,7 @@ Completamente implementado:
 ### LLM (`packages/core/src/llm/`)
 
 Completamente implementado:
+
 - Cliente HTTP compatible con OpenAI para chat y generación de imágenes
 - Enrutador multi-proveedor con selección basada en prioridad
 - CRUD de proveedores con cifrado de claves API (AES-256-GCM)
@@ -136,12 +139,14 @@ Completamente implementado:
 ### Generación (`packages/core/src/generation/`)
 
 Completamente implementado:
+
 - Endpoints de generación de imágenes (`/api/generation/images`, `/api/generation/models`)
 - Usa los proveedores LLM configurados
 
 ### Webhook (`packages/core/src/webhook.rs`)
 
 Completamente implementado (~1,000+ líneas):
+
 - Webhook de GitHub con validación HMAC-SHA256
 - Webhook de GitLab con validación de token
 - Webhook de Gitee con HMAC + fallback de token
@@ -154,6 +159,7 @@ Completamente implementado (~1,000+ líneas):
 ### Dispositivos (`packages/core/src/devices/`)
 
 Relay de señalización implementado (requiere scepter externo para el handshake WebRTC):
+
 - Endpoints REST para listado de dispositivos, detalle, CRUD de sesiones
 - Relay de señalización WebSocket para WebRTC — reenvía ofertas SDP/candidatos ICE a scepter mediante socket Unix; la respuesta SDP debe venir de scepter (`forward_sdp_to_scepter` devuelve cadena vacía si scepter es inalcanzable)
 - Relay de terminal (mediante WebSocket a xterm.js) — reenvía pulsaciones de teclas a scepter
@@ -167,6 +173,7 @@ Relay de señalización implementado (requiere scepter externo para el handshake
 ### Canales (`packages/core/src/channel/`)
 
 Completamente implementado (22 archivos de módulo + `mod.rs`):
+
 - 12 conectores de plataforma: Telegram, Discord, Slack, Lark/Feishu, QQ Bot, WeCom, IRC, Matrix, Mattermost, Google Chat, Microsoft Teams, LINE
 - Implementaciones reales de cliente API por plataforma
 - Controles de política de MD (`dm_policy.rs`)
@@ -180,7 +187,7 @@ Completamente implementado (22 archivos de módulo + `mod.rs`):
 ### Módulos Adicionales del Backend
 
 | Módulo | Descripción |
-|--------|-------------|
+| --- | --- |
 | `proxy/` | Puente HTTP/WS de Scepter (`ws_bridge.rs` es el archivo más grande del código base) |
 | `rbac/` | Control de acceso basado en roles |
 | `workspace/` | Gestión de espacios de trabajo |
@@ -211,7 +218,7 @@ Frontend Vue 3 + Vite escrito en TSX (mediante `@vitejs/plugin-vue-jsx` — sin 
 #### Vistas
 
 | Grupo de vistas | Descripción |
-|------------|-------------|
+| --- | --- |
 | `demiurge/` | Superficie principal de chat (DemiurgeView) — respuestas en streaming, estado de agentes, llamadas a herramientas |
 | `auth/` | LoginView, RegisterView, SetupView |
 | `admin/` | 20+ vistas de administración: Dashboard, Proveedores, Agentes, RBAC, Webhooks, Canales, Sistema, Modelos de Dispositivo, Configuración de Dispositivos, Skills, Herramientas MCP, Proveedores OAuth, Uso de Tokens, Espacios de Trabajo, Servicio de Voz, Cuota de Recursos, etc. |
@@ -221,7 +228,7 @@ Frontend Vue 3 + Vite escrito en TSX (mediante `@vitejs/plugin-vue-jsx` — sin 
 #### Sistema de componentes
 
 | Directorio | Descripción |
-|-----------|-------------|
+| --- | --- |
 | `base/` | 50+ componentes de sistema de diseño con prefijo `S` (SButton, SCard, SModal, STable, STabs, STimeline, STreeView, SMarkdownRenderer, SMorphingTabs, etc.) |
 | `chat/` | Componentes específicos de chat (ChatBubble, AgentStatusBar, FloatingChatBar, ThinkingDots, ReportViewer, NodeMinimap, etc.) |
 | `header/` | Componentes de cabecera (barra de breadcrumb, cambio de modo) |
@@ -237,7 +244,7 @@ Todo el movimiento basado en CSS y el muestreo por frame en el webui se ejecuta 
 El bus expone cuatro APIs de registro de trabajo más dos flags de canal lateral:
 
 | API | Propósito | Modelo de frame |
-|-----|---------|-------------|
+| --- | --- | --- |
 | `onFrame(cb, priority?)` | Registrar un callback por frame. `priority` ∈ `sync` / `normal` / `idle`. Devuelve `{ disconnect() }`. | Invocado cada frame (sync), limitado a ~30 Hz (normal), o ~0.5 Hz (idle). |
 | `onceFrame(cb)` | Ejecutar un callback en el siguiente frame, luego auto-desconectar. Dispara y olvida (sin manejador de cancelación). | Un solo uso. |
 | `scheduleFrame(cb)` | Ejecutar un callback en el siguiente frame; devuelve `{ disconnect() }` para cancelar antes de que se dispare. Para el patrón de limitación "coalescer muchas llamadas en un callback post-frame" (reemplaza el modismo artesanal `if(rafId)cancel; rafId=rAF(cb)`). | Un solo uso (cancelable). |
@@ -274,7 +281,7 @@ El bus DOM está intencionalmente separado de **`packages/webui/src/composables/
 El webui consume su propio `src/` a través de **dos alias de ruta deliberadamente distintos** (ambos declarados en `vite.config.ts` + `tsconfig.json`), y todo el código base obedece la división:
 
 | Alias | Resuelve a | Úsalo para |
-|-------|-------------|-----------|
+| --- | --- | --- |
 | `@/<path>` | `src/*` | **Importaciones profundas internas** — alcanzar un módulo específico directamente (`@/api/client`, `@/composables/useReportedTransition`, `@/theme/animationBus`). ~600 sitios; nunca se usa como barrel simple. |
 | `@celestia-island/shared_ui` | `src/` (→ `src/index.ts` barrel) | **Solo la superficie de API pública curada** — siempre el especificador simple, nunca una subruta de código. ~92 sitios. |
 
@@ -295,13 +302,11 @@ El webui usa **`vue-i18n`** (no una implementación personalizada) con **11 loca
 Cada locale tiene **17 archivos JSON de namespace** (admin, auth, chat, cmd, common, devices, errors, footer, help, logs, models, reports, skills, timeline, tokenUsage, tools, workspace). El cambio de locale en la aplicación está disponible mediante el selector de locale de la cabecera.
 
 > **La completitud de las traducciones varía significativamente** (auditado contra 950 claves de referencia en inglés):
->
 > | Nivel | Locales | Passthrough al inglés | Brecha de claves |
 > |------|---------|-------------------|---------|
 > | Bien traducidos | `ja`, `ko`, `zhs`, `zht` | ~5% | `zhs` faltan 18 claves; otros faltan 112 |
 > | Mayormente traducidos | `de`, `fr`, `pt`, `es`, `ar` | ~9–14% | Bloque compartido de 112 claves faltante |
 > | Efectivamente sin traducir | `ru` | **~76%** | Paridad completa de claves, pero los valores son inglés literal |
->
 > La brecha compartida de 112 claves cubre características más nuevas: `admin.agents.*`, `admin.deviceModels.*`, `admin.projects.*`, `admin.rbac.*`, `admin.resourceQuota.*`, `auth.protocol.*`, `chat.cruise.*`, `chat.voice_*`.
 
 ## Arquitectura RBAC
@@ -311,7 +316,7 @@ Cada locale tiene **17 archivos JSON de namespace** (admin, auth, chat, cmd, com
 La propiedad de los datos se divide entre los dos proyectos para mantener fronteras limpias:
 
 | Datos | Base de Datos | Propietario | Justificación |
-|------|----------|-------|-----------|
+| --- | --- | --- | --- |
 | Credenciales de usuario (hash de contraseña, OAuth, claves API) | shittim_chest_db | shittim-chest | La capa de presentación posee el flujo de inicio de sesión |
 | Sesiones activas, tokens de refresco | shittim_chest_db | shittim-chest | La gestión de sesiones es una preocupación del frontend |
 | Conversaciones, mensajes | shittim_chest_db | shittim-chest | Los datos de chat son orientados al usuario |
@@ -323,11 +328,11 @@ La propiedad de los datos se divide entre los dos proyectos para mantener fronte
 ### Flujo de Autenticación
 
 1. El usuario se autentica a través de core (contraseña / OAuth)
-2. core valida las credenciales contra shittim_chest_db (argon2 para contraseñas)
-3. core consulta a entelecheia los permisos de grupo del usuario (o lee de caché TTL)
-4. core emite JWT con `{ sub: user_id, groups: [...] }`
-5. Todas las solicitudes subsiguientes llevan JWT → core valida → reenvía a scepter para rutas proxy
-6. scepter valida JWT (secreto compartido mediante variable de entorno) y aplica permisos a nivel de grupo
+1. core valida las credenciales contra `shittim_chest_db` (argon2 para contraseñas)
+1. core consulta a entelecheia los permisos de grupo del usuario (o lee de caché TTL)
+1. core emite JWT con `{ sub: user_id, groups: [...] }`
+1. Todas las solicitudes subsiguientes llevan JWT → core valida → reenvía a scepter para rutas proxy
+1. scepter valida JWT (secreto compartido mediante variable de entorno) y aplica permisos a nivel de grupo
 
 ## Dependencias Multi-Proyecto
 
@@ -358,7 +363,7 @@ El webui consume los bindings TS de la crate `arona` a través del alias de ruta
 Las siguientes funcionalidades tienen implementaciones reales en shittim-chest pero requieren una instancia de [entelecheia/scepter](https://github.com/celestia-island/entelecheia) en ejecución para funcionalidad completa:
 
 | Funcionalidad | Qué funciona | Qué necesita scepter |
-|---------|-----------|-------------------|
+| --- | --- | --- |
 | Topología SCADA | Transporte WS, renderizado SVG, navegación breadcrumb | Datos de telemetría en vivo (RPCs `topology.*` reenviados a scepter) |
 | Holográfico 3D | Carga de modelos GLB, configuración de escena, control de cámara | Chips de parámetros de telemetría |
 | Dispositivo WebRTC | Relay de señalización, auth JWT, reenvío ICE | Generación de respuesta SDP |
@@ -382,7 +387,7 @@ El backend tiene pruebas de integración para auth, chat, validación HMAC de we
 Los endpoints REST `skills.rs` y `tools.rs` siguen siendo stubs de solo fallback (devuelven `[]`), pero la **ruta WS primaria está completamente cableada** a través del puente generalizado de notificación-respuesta en `ws_bridge.rs`. El puente traduce los métodos de solicitud-respuesta del webui a las acciones emparejadas de estilo notificación de scepter:
 
 | Método WS | Par Scepter | Estado |
-|-----------|-------------|--------|
+| --- | --- | --- |
 | `skills.list` | `Skill.ListSkills` → `SkillsListResponse` | ✅ Puenteado (mapeador de campos) |
 | `tools.list` | `Mcp.ListTools` → `ToolsListResponse` | ✅ Puenteado (mapeador de campos) |
 | `layer2.agents.list` | `Tui.Layer2AgentList` → Response | ✅ Puenteado (identidad) |
@@ -400,7 +405,7 @@ El backend tiene un flag de entorno `SHITTIM_CHEST_MOCK_MODE` (`config.rs`) que 
 ## Licenciamiento
 
 | Parámetro | Valor |
-|-----------|-------|
+| --- | --- |
 | Licencia comercial | Business Source License 1.1 (BUSL-1.1) |
 | Uso no comercial | Synthetic Source License 1.0 (SySL-1.0) |
 | Concesión de Uso Adicional | Producción interna, académico, gubernamental y uso no comercial permitido |

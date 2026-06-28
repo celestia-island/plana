@@ -35,7 +35,7 @@ flowchart LR
 
 ## 輪詢策略
 
-```
+```text
 while true:
     sleep 1s
     state = docker.inspect_container(PG)
@@ -86,7 +86,7 @@ pg18 將資料目錄從 `/var/lib/postgresql/data` 更改為 `/var/lib/postgresq
 
 資料庫遷移有獨立的 5 次重試邏輯：
 
-```
+```text
 for retry in 0..5:
     execute docker run --rm ... shittim_chest db-migrate
     if success: break

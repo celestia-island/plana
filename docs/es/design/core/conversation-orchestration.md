@@ -18,9 +18,9 @@ sección `[report]`, reemplazando la lógica de orquestación hardcodeada.
 ## Objetivos
 
 1. Las habilidades declaran su comportamiento de enrutamiento en el front matter (no hardcodeado).
-2. Un ejecutor genérico de cadena de habilidades reemplaza el pipeline de 2 etapas hardcodeado.
-3. La revisión humana es un destino de enrutamiento de primera clase.
-4. Limpieza del lenguaje de prompts: los archivos planos de habilidad/MCP son solo en inglés.
+1. Un ejecutor genérico de cadena de habilidades reemplaza el pipeline de 2 etapas hardcodeado.
+1. La revisión humana es un destino de enrutamiento de primera clase.
+1. Limpieza del lenguaje de prompts: los archivos planos de habilidad/MCP son solo en inglés.
 
 ## Configuración de Reporte de Habilidad (Front Matter TOML)
 
@@ -32,7 +32,7 @@ next_skill = "workplan_generate"  # requerido si target = "next_node"
 
 ## Cadena de Habilidades de HubRis
 
-```
+```text
 task_decompose → workplan_generate → operator → workplan_execute → submit_report → human
 ```
 
@@ -78,7 +78,7 @@ sequenceDiagram
 ## Destinos de Enrutamiento de Reporte
 
 | Destino       | Comportamiento                                                        |
-| ------------ | --------------------------------------------------------------- |
+| --- | --- |
 | `next_node`  | El ejecutor carga la habilidad nombrada en `next_skill` y la ejecuta.     |
 | `parent`     | Devuelve el control al orquestador padre (reservado para cadenas anidadas). |
 | `human`      | Pausa la cadena, envía `HumanReviewRequest` a TUI, reanuda con `HumanReviewResponse`. |
@@ -86,7 +86,7 @@ sequenceDiagram
 
 ## Estructura de Archivos (Fase 1)
 
-```
+```text
 res/prompts/agents/hubris/skills/
   task_decompose.md
   workplan_generate.md
@@ -112,6 +112,7 @@ ApoRia `llm_chat` usa ese modelo por defecto para mantener bajo el costo de desa
 ## Política de Respaldo ante Fallos
 
 1. Si una habilidad falla: devolver mensaje de fallo y finalizar la cadena actual.
-2. Si ApoRia está fuera de línea: devolver mensaje `Agent not ready`.
-3. Si la revisión humana agota el tiempo: devolver aviso de tiempo de espera sin bloquear
-   chats subsiguientes.
+1. Si ApoRia está fuera de línea: devolver mensaje `Agent not ready`.
+1. Si la revisión humana agota el tiempo: devolver aviso de tiempo de espera sin bloquear
+
+chats subsiguientes.

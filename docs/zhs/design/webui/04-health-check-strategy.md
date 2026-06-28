@@ -35,7 +35,7 @@ flowchart LR
 
 ## 轮询策略
 
-```
+```text
 while true:
     sleep 1s
     state = docker.inspect_container(PG)
@@ -86,7 +86,7 @@ pg18 将数据目录从 `/var/lib/postgresql/data` 更改为 `/var/lib/postgresq
 
 数据库迁移具有独立的 5 次重试逻辑：
 
-```
+```text
 for retry in 0..5:
     execute docker run --rm ... shittim_chest db-migrate
     if success: break

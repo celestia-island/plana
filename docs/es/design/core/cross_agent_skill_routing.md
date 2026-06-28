@@ -15,10 +15,10 @@ La cadena de habilidades (`execute_skill_chain`) utiliza una arquitectura de mic
 ## Principios de Diseño
 
 1. **Microkernel solo-ejecución** — Al LLM nunca se le dan definiciones de herramientas MCP directamente. Tiene tres herramientas: `exec`, `write_to_var` y `write_to_var_json`. Todas las llamadas a herramientas ocurren dentro del runtime TS del motor IEPL.
-2. **`related_tools` dirige todo** — Las habilidades declaran `related_tools` en su frontmatter TOML. Estos nombres se convierten en documentación de API TS inyectada en el prompt del LLM (ej. `file_read()`, `report()`).
-3. **Enrutamiento vía API TS → McpRouter** — Dentro del runtime IEPL de `exec`, las importaciones de módulos ES se enrutan a la implementación correcta de herramienta MCP mediante `McpRouter`. Las llamadas entre agentes como `file_read()` se resuelven a la implementación `file_read` del agente KaLos.
-4. **Aislamiento de contenedores** — Los contenedores hijos heredan el sistema de archivos del padre mediante fork `docker commit`. Los espacios de trabajo se montan como solo lectura o lectura-escritura según los `related_tools` de la habilidad.
-5. **`related_tools` determina el modo lectura/escritura** — `skill_needs_write_access()` inspecciona `related_tools` en busca de nombres de herramientas de escritura (`file_write`, `file_edit`, etc.) para decidir el modo de montaje del contenedor fork.
+1. **`related_tools` dirige todo** — Las habilidades declaran `related_tools` en su frontmatter TOML. Estos nombres se convierten en documentación de API TS inyectada en el prompt del LLM (ej. `file_read()`, `report()`).
+1. **Enrutamiento vía API TS → McpRouter** — Dentro del runtime IEPL de `exec`, las importaciones de módulos ES se enrutan a la implementación correcta de herramienta MCP mediante `McpRouter`. Las llamadas entre agentes como `file_read()` se resuelven a la implementación `file_read` del agente KaLos.
+1. **Aislamiento de contenedores** — Los contenedores hijos heredan el sistema de archivos del padre mediante fork `docker commit`. Los espacios de trabajo se montan como solo lectura o lectura-escritura según los `related_tools` de la habilidad.
+1. **`related_tools` determina el modo lectura/escritura** — `skill_needs_write_access()` inspecciona `related_tools` en busca de nombres de herramientas de escritura (`file_write`, `file_edit`, etc.) para decidir el modo de montaje del contenedor fork.
 
 ## Arquitectura
 
@@ -69,7 +69,7 @@ flowchart TB
 ### Componentes Principales
 
 | Componente | Archivo | Responsabilidad |
-|-----------|------|---------------|
+| --- | --- | --- |
 | `skill_to_agent_name()` | `skill_chain.rs` | Busca el nombre del agente propietario de una habilidad dada |
 | `skill_needs_write_access()` | `skill_chain.rs` | Inspecciona `related_tools` en busca de nombres de herramientas de escritura para determinar el modo de montaje del contenedor fork |
 | `fork_for_sub_skill()` | `snowflake_manager.rs` | Realiza `docker commit` + `docker run`; monta workspace como ro/rw según `skill_needs_write_access()` |
@@ -104,15 +104,15 @@ El LLM llama a estas APIs dentro de su código `exec`; el McpRouter despacha a l
 ### Ciclo de Vida del Fork
 
 1. **Crear**: `docker commit` contenedor padre → imagen fork → `docker run` contenedor hijo
-2. **Conectar**: CosmosConnector se conecta al Unix socket del contenedor hijo
-3. **Puente**: HapLotesBridgeClient dentro del contenedor fork se conecta al HapLotesBridgeServer de Scepter
-4. **Ejecutar**: El LLM llama `exec` con código JS; el runtime JS usa McpRouter → puente → agentes Scepter
-5. **Limpiar**: Cuando la cadena termina, `snowflake.remove()` destruye el contenedor + `docker rmi` limpia la imagen
+1. **Conectar**: `CosmosConnector` se conecta al Unix socket del contenedor hijo
+1. **Puente**: `HapLotesBridgeClient` dentro del contenedor fork se conecta al `HapLotesBridgeServer` de Scepter
+1. **Ejecutar**: El LLM llama `exec` con código JS; el runtime JS usa McpRouter → puente → agentes Scepter
+1. **Limpiar**: Cuando la cadena termina, `snowflake.remove()` destruye el contenedor + `docker rmi` limpia la imagen
 
 ### Estrategia de Montaje de Workspace
 
 | Tipo de habilidad | Característica de `related_tools` | Montaje de workspace |
-|-----------|-------------------------------|----------------|
+| --- | --- | --- |
 | Solo lectura (smart_read_file) | Solo file_read, file_list, file_exists | `:ro` (solo lectura) |
 | Escritura (smart_write_file) | Incluye file_write, file_edit, file_delete | `:rw` (lectura-escritura) |
 
@@ -198,7 +198,7 @@ name = "workplan_execute"
 ## Referencia de API JS de Habilidades
 
 | Habilidad | Agente | APIs JS (de `related_tools`) | Estado |
-|-------|-------|-------------------------------|--------|
+| --- | --- | --- | --- |
 | `smart_read_file` | KaLos | `file_read()`, `file_list()`, `file_exists()` | ✅ Implementado |
 | `smart_write_file` | KaLos | `file_write()`, `file_edit()` | ✅ Implementado |
 | `exec_script` | SkeMma | `$skeMma.script_exec()` | Pendiente |
@@ -207,8 +207,8 @@ name = "workplan_execute"
 ## Riesgos y Consideraciones
 
 1. **Recursos de contenedores** — Cada fork crea un nuevo contenedor Docker; los contenedores se limpian automáticamente cuando la cadena termina.
-2. **Costo de tokens** — Cada fork tiene su propio contexto LLM independiente; los docs de API JS añaden sobrecarga modesta por habilidad.
-3. **Profundidad de cadena de fork** — Actualmente sin límite de profundidad; los forks solo ocurren cuando `step_index > 1`.
-4. **Paso de contexto** — Padre → hijo pasa a través del contenido del reporte; pueden necesitarse estrategias de truncamiento.
-5. **Seguridad en paralelo** — Cuando múltiples cadenas hacen fork concurrentemente del mismo tipo de agente, la búsqueda en orden inverso asegura que cada una use su último fork.
-6. **Control de superficie API** — El LLM solo puede llamar APIs JS listadas en los docs inyectados; McpRouter rechaza nombres de herramienta desconocidos.
+1. **Costo de tokens** — Cada fork tiene su propio contexto LLM independiente; los docs de API JS añaden sobrecarga modesta por habilidad.
+1. **Profundidad de cadena de fork** — Actualmente sin límite de profundidad; los forks solo ocurren cuando `step_index > 1`.
+1. **Paso de contexto** — Padre → hijo pasa a través del contenido del reporte; pueden necesitarse estrategias de truncamiento.
+1. **Seguridad en paralelo** — Cuando múltiples cadenas hacen fork concurrentemente del mismo tipo de agente, la búsqueda en orden inverso asegura que cada una use su último fork.
+1. **Control de superficie API** — El LLM solo puede llamar APIs JS listadas en los docs inyectados; McpRouter rechaza nombres de herramienta desconocidos.

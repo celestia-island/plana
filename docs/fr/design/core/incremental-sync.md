@@ -70,7 +70,7 @@ flowchart TB
 ## Matrice de Stratégie de Synchronisation
 
 | Panneau | Méthode de Sync | Déclencheur | Fréquence | Types de Messages |
-|-------|-------------|---------|-----------|---------------|
+| --- | --- | --- | --- | --- |
 | **Chronologie des Agents** | Incrémentielle + Complète | Sync à la Connexion + Push en Temps Réel | À la Connexion / Temps Réel | `AgentPatch` / `GlobalSnapshot` |
 | **Conteneurs** | Incrémentielle + Complète | Sync à la Connexion + Push en Temps Réel | À la Connexion / Temps Réel | `ContainerPatch` / `GlobalSnapshot` |
 | **Tâches** | Incrémentielle + Complète | Sync à la Connexion + Push en Temps Réel | À la Connexion / Temps Réel | `TaskPatch` / `GlobalSnapshot` |
@@ -172,6 +172,7 @@ sequenceDiagram
 ## Structures de Données
 
 ### AgentPatch (Mise à Jour Incrémentielle)
+
 ```rust
 pub struct AgentPatch {
     pub agent_id: String,
@@ -188,6 +189,7 @@ pub struct AgentPatch {
 ```
 
 ### AgentSnapshot (Instantané Complet)
+
 ```rust
 pub struct AgentSnapshot {
     pub version: u64,
@@ -197,6 +199,7 @@ pub struct AgentSnapshot {
 ```
 
 ### GlobalSnapshot (Instantané Global)
+
 ```rust
 pub struct GlobalSnapshot {
     pub version: u64,
@@ -209,6 +212,7 @@ pub struct GlobalSnapshot {
 ```
 
 ### ModelsSnapshot (Liste des Modèles)
+
 ```rust
 pub struct ModelsSnapshot {
     pub models: Vec<ModelInfo>,
@@ -216,6 +220,7 @@ pub struct ModelsSnapshot {
 ```
 
 ### ContainerPatch (État de Conteneur Incrémentiel)
+
 ```rust
 pub struct ContainerPatch {
     pub container_id: String,
@@ -227,6 +232,7 @@ pub struct ContainerPatch {
 ```
 
 ### ContainerSnapshot (État de Conteneur Complet)
+
 ```rust
 pub struct ContainerSnapshot {
     pub version: u64,
@@ -236,6 +242,7 @@ pub struct ContainerSnapshot {
 ```
 
 ### TaskPatch (État de Tâche Incrémentiel)
+
 ```rust
 pub struct TaskPatch {
     pub task_id: Uuid,
@@ -246,6 +253,7 @@ pub struct TaskPatch {
 ```
 
 ### TasksSnapshot (État des Tâches Complet)
+
 ```rust
 pub struct TasksSnapshot {
     pub version: u64,
@@ -257,7 +265,7 @@ pub struct TasksSnapshot {
 ## Stratégie de Synchronisation
 
 | Type | Direction | Déclencheur | Fréquence |
-|------|-----------|---------|-----------|
+| --- | --- | --- | --- |
 | Mise à Jour Incrémentielle Agent | Serveur → Client | Changement d'État | Temps Réel |
 | Synchronisation Complète Agent | Serveur → Client | À la Connexion | À la Connexion / Reconnexion |
 | Mise à Jour Incrémentielle Conteneurs | Serveur → Client | Changement d'État | Temps Réel |

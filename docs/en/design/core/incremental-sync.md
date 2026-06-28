@@ -70,7 +70,7 @@ flowchart TB
 ## Sync Strategy Matrix
 
 | Panel | Sync Method | Trigger | Frequency | Message Types |
-|-------|-------------|---------|-----------|---------------|
+| --- | --- | --- | --- | --- |
 | **Agents Timeline** | Incremental + Full | Sync on Connection + Real-time Push | On Connection / Real-time | `AgentPatch` / `GlobalSnapshot` |
 | **Containers** | Incremental + Full | Sync on Connection + Real-time Push | On Connection / Real-time | `ContainerPatch` / `GlobalSnapshot` |
 | **Tasks** | Incremental + Full | Sync on Connection + Real-time Push | On Connection / Real-time | `TaskPatch` / `GlobalSnapshot` |
@@ -172,6 +172,7 @@ sequenceDiagram
 ## Data Structures
 
 ### AgentPatch (Incremental Update)
+
 ```rust
 pub struct AgentPatch {
     pub agent_id: String,
@@ -188,6 +189,7 @@ pub struct AgentPatch {
 ```
 
 ### AgentSnapshot (Full Snapshot)
+
 ```rust
 pub struct AgentSnapshot {
     pub version: u64,
@@ -197,6 +199,7 @@ pub struct AgentSnapshot {
 ```
 
 ### GlobalSnapshot (Global Snapshot)
+
 ```rust
 pub struct GlobalSnapshot {
     pub version: u64,
@@ -209,6 +212,7 @@ pub struct GlobalSnapshot {
 ```
 
 ### ModelsSnapshot (Models List)
+
 ```rust
 pub struct ModelsSnapshot {
     pub models: Vec<ModelInfo>,
@@ -216,6 +220,7 @@ pub struct ModelsSnapshot {
 ```
 
 ### ContainerPatch (Container State Incremental)
+
 ```rust
 pub struct ContainerPatch {
     pub container_id: String,
@@ -227,6 +232,7 @@ pub struct ContainerPatch {
 ```
 
 ### ContainerSnapshot (Container State Full)
+
 ```rust
 pub struct ContainerSnapshot {
     pub version: u64,
@@ -236,6 +242,7 @@ pub struct ContainerSnapshot {
 ```
 
 ### TaskPatch (Task State Incremental)
+
 ```rust
 pub struct TaskPatch {
     pub task_id: Uuid,
@@ -246,6 +253,7 @@ pub struct TaskPatch {
 ```
 
 ### TasksSnapshot (Tasks State Full)
+
 ```rust
 pub struct TasksSnapshot {
     pub version: u64,
@@ -257,7 +265,7 @@ pub struct TasksSnapshot {
 ## Sync Strategy
 
 | Type | Direction | Trigger | Frequency |
-|------|-----------|---------|-----------|
+| --- | --- | --- | --- |
 | Agent Incremental Update | Server → Client | State Change | Real-time |
 | Agent Full Sync | Server → Client | On Connection | On Connection / Reconnection |
 | Containers Incremental | Server → Client | State Change | Real-time |

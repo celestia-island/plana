@@ -101,7 +101,7 @@ contact@celestia.world를 통해 집행 책임이 있는 커뮤니티 리더에�
 ## 저작자 표시
 
 본 행동 강령은 [Contributor Covenant][homepage] 버전 2.1을 기반으로 각색되었으며,
-[https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1]에서
+[https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1]에서
 확인할 수 있습니다.
 
 커뮤니티 영향 지침은 [Mozilla의 행동 강령 집행 등급][mozilla-coc]에서
@@ -112,7 +112,7 @@ FAQ를 참조하십시오. 번역본은 [https://www.contributor-covenant.org/tr
 확인할 수 있습니다.
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

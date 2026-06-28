@@ -17,7 +17,7 @@ Entelecheia implementa una **arquitectura de seguridad de defensa en profundidad
 ## Índice de Capas de Seguridad
 
 | # | Capa | Crate(s) | Amenaza Mitigada |
-|---|-------|----------|-----------------|
+| --- | --- | --- | --- |
 | 1 | Microkernel Solo-Ejecución | `scepter`, `mcp_types` | Acceso irrestricto a herramientas por el LLM |
 | 2 | Puerta de Permiso de Doble Autorización | `security_policy` | Invocación no autorizada de herramientas MCP |
 | 3 | Autorización de Habilidades por Nivel de Confianza | `domain_skills_permissions` | Escalada de privilegios mediante encadenamiento de habilidades |
@@ -37,13 +37,13 @@ Entelecheia implementa una **arquitectura de seguridad de defensa en profundidad
 
 ## Capa 1: Microkernel Solo-Ejecución
 
-**Crates:** `scepter`, `mcp_types`  
+**Crates:** `scepter`, `mcp_types`
 **Filosofía de Diseño:** Minimizar la superficie de ataque del LLM
 
 El LLM opera en un **sandbox solo-ejecución** donde puede invocar solo tres operaciones primitivas:
 
 | Herramienta | Propósito | Parámetros |
-|------|---------|------------|
+| --- | --- | --- |
 | `exec` | Ejecutar una cadena de script | Código JavaScript (transpilado desde TypeScript vía IEPL) |
 | `write_to_var` | Almacenar un valor de cadena | Nombre de variable + valor |
 | `write_to_var_json` | Almacenar un valor JSON | Nombre de variable + valor JSON |
@@ -76,10 +76,11 @@ pub enum PermissionLevel {
 ```
 
 **Flujo de autorización:**
+
 1. La habilidad declara: "Necesito acceso `System` a `ssh_exec`"
-2. La herramienta declara: "Requiero permiso `System`"
-3. La puerta de permiso verifica: `skill_level >= tool_requirement` Y `la habilidad tiene concedida explícitamente esta herramienta`
-4. Si alguna verificación falla: la llamada se bloquea, se registra y se reporta al centinela OreXis
+1. La herramienta declara: "Requiero permiso `System`"
+1. La puerta de permiso verifica: `skill_level >= tool_requirement` Y `la habilidad tiene concedida explícitamente esta herramienta`
+1. Si alguna verificación falla: la llamada se bloquea, se registra y se reporta al centinela OreXis
 
 **Implementación:** `packages/shared/security_policy/src/` — 107 anotaciones de prueba, 4 pruebas tokio.
 
@@ -92,7 +93,7 @@ pub enum PermissionLevel {
 Las habilidades se clasifican en **niveles de confianza** que determinan su alcance de permiso predeterminado:
 
 | Nivel de Confianza | Descripción | Permisos Predeterminados |
-|-------------|-------------|---------------------|
+| --- | --- | --- |
 | `Builtin` | Se distribuye con la plataforma | Acceso completo a herramientas |
 | `Verified` | Revisado y firmado por mantenedores | Lectura + Escritura |
 | `Community` | Enviado por usuarios | Solo lectura |
@@ -107,6 +108,7 @@ El nivel de confianza de cada habilidad se verifica al cargar y se almacena en c
 **Crate:** `container` (5,742 líneas)
 
 Cada ejecución de agente ocurre dentro de un **contenedor Docker o Podman** con:
+
 - Aislamiento de espacio de nombres de red
 - Sistema de archivos raíz de solo lectura (excepto montaje de workspace)
 - Perfil Seccomp que restringe syscalls
@@ -162,6 +164,7 @@ Control de acceso basado en roles que gobierna todas las operaciones API:
 **Crate:** `aporia` (5,802 líneas)
 
 Todas las claves API de proveedores LLM se encriptan en reposo usando **AES-256-GCM** con:
+
 - Nonce único por operación de encriptación
 - Clave derivada de un secreto maestro (configurado por entorno)
 - Puesta a cero de claves en texto plano de la memoria después del uso
@@ -174,6 +177,7 @@ Todas las claves API de proveedores LLM se encriptan en reposo usando **AES-256-
 **Crate:** `orexis` (5,239 líneas) — el agente "sistema inmunológico"
 
 OreXis es un Agente de Capa-1 que:
+
 - **Audita código** en busca de vulnerabilidades de seguridad y cumplimiento de licencias
 - **Inspecciona llamadas a herramientas** contra políticas de seguridad registradas
 - **Bloquea/desbloquea** las herramientas de cualquier agente por patrón
@@ -190,10 +194,10 @@ Herramientas MCP (24): `standard_check`, `compliance_report`, `audit_alignment`,
 El pipeline **Lenguaje de Plugin de Entelecheia** (IEPL) asegura la seguridad de tipos entre el código generado por LLM y el despacho de herramientas nativas:
 
 1. El LLM genera código TypeScript usando importaciones de módulos ES
-2. **SWC** transpila TypeScript → JavaScript (validación de sintaxis)
-3. El **motor Boa** ejecuta JavaScript en un contexto aislado
-4. Las importaciones de módulos ES se resuelven a llamadas `__native_dispatch`
-5. Cada despacho se enruta a través de `McpRouter` con verificación completa de tipos
+1. **SWC** transpila TypeScript → JavaScript (validación de sintaxis)
+1. El **motor Boa** ejecuta JavaScript en un contexto aislado
+1. Las importaciones de módulos ES se resuelven a llamadas `__native_dispatch`
+1. Cada despacho se enruta a través de `McpRouter` con verificación completa de tipos
 
 **Amenaza mitigada:** Ataques de inyección mediante llamadas a herramientas sin tipo (común en frameworks de agentes basados en Python donde los esquemas de herramientas se validan solo en tiempo de ejecución).
 
@@ -205,7 +209,7 @@ El pipeline **Lenguaje de Plugin de Entelecheia** (IEPL) asegura la seguridad de
 
 Entelecheia mantiene una **lista blanca hardcodeada** de registros de paquetes confiables en 15 ecosistemas:
 
-crates.io, PyPI, npm, Go modules, Docker Hub, Maven Central, NuGet, RubyGems, Hackage, Alpine APK, Debian APT, GitHub, GitLab, HuggingFace, PyTorch.
+crates.io, PyPI, npm, Go modules, Docker Hub, Maven Central, NuGet, RubyGems, Hackage, Alpine APK, Debian APT, GitHub, GitLab, `HuggingFace`, PyTorch.
 
 Cualquier importación de paquete desde un registro no incluido en la lista blanca se **bloquea a nivel de contenedor** antes de la ejecución.
 
@@ -216,6 +220,7 @@ Cualquier importación de paquete desde un registro no incluido en la lista blan
 **Mecanismo:** Límite del sandbox IEPL
 
 La salida `exec` del LLM se ejecuta en un **contexto Boa JS aislado** sin acceso a:
+
 - El sistema de archivos del host
 - Sockets de red
 - Variables de entorno
@@ -230,6 +235,7 @@ Las salidas de herramientas devueltas al LLM son **sanitizadas** — los datos b
 **Módulo:** shittim-chest `channel/rate_limit.rs` (118 líneas)
 
 Limitación de tasa por usuario y por canal usando el **Algoritmo GCRA (Generic Cell Rate Algorithm)**:
+
 - Tamaño de ráfaga y tasa sostenida configurables
 - DashMap por usuario para búsqueda O(1)
 - Retroceso automático al exceder el límite
@@ -242,17 +248,18 @@ Limitación de tasa por usuario y por canal usando el **Algoritmo GCRA (Generic 
 **Crates:** `orexis`, `timeline` (3,096 líneas)
 
 Cada invocación de herramienta, decisión de agente y evento de seguridad es:
+
 1. Registrado en la **línea de tiempo** con contexto completo (insignia de agente, nombre de habilidad, parámetros, resultado)
-2. Enlazado por hash a eventos anteriores para detección de manipulación
-3. Persistido en PostgreSQL con retención configurable
-4. Consultable mediante CLI (`entelecheia-cli trace-chain <insignia>`)
+1. Enlazado por hash a eventos anteriores para detección de manipulación
+1. Persistido en PostgreSQL con retención configurable
+1. Consultable mediante CLI (`entelecheia-cli trace-chain <insignia>`)
 
 ---
 
 ## Comparación de Seguridad con Otros Frameworks
 
 | Característica | Entelecheia | OpenFANG | LangChain | Claude Code |
-|---------|:-----------:|:--------:|:---------:|:-----------:|
+| --- |  ---  |  ---  |  ---  |  ---  |
 | Herramientas visibles al LLM | **3 (solo-exec)** | 53 (todas visibles) | Todas visibles | 33 (todas visibles) |
 | Aislamiento de contenedor | **Doble capa** (Docker + Youki) | Solo WASM | Ninguno | Nivel SO (Seatbelt/Landlock) |
 | Modelo de permiso de herramientas | **Doble autorización** | RBAC | Ninguno | Ninguno |
@@ -266,12 +273,14 @@ Cada invocación de herramienta, decisión de agente y evento de seguridad es:
 ## Modelo de Amenazas
 
 ### Fuera de Alcance
+
 - Acceso físico a máquinas host
 - Demonio Docker/Podman comprometido (se asume confiable)
 - Exploits de kernel (mitigados pero no prevenidos por aislamiento en espacio de usuario)
 - Ataques a la cadena de suministro en dependencias de crates Rust (parcialmente mitigados por `cargo-deny`)
 
 ### Riesgos Aceptados
+
 - Vulnerabilidades del motor Boa JS (aislado dentro del contenedor)
 - Interrupciones del proveedor LLM (sin ruta de ejecución de respaldo)
 - Corrupción de datos PostgreSQL (mitigada por respaldos, no prevenida)

@@ -17,7 +17,7 @@ Entelecheiaは、ハードウェアレベルのコンテナ隔離からLLM向け
 ## セキュリティレイヤーインデックス
 
 | # | レイヤー | クレート | 軽減する脅威 |
-|---|-------|----------|-----------------|
+| --- | --- | --- | --- |
 | 1 | Exec-Onlyマイクロカーネル | `scepter`, `mcp_types` | LLMによる無制限のツールアクセス |
 | 2 | 二重認可権限ゲート | `security_policy` | 不正なMCPツール呼び出し |
 | 3 | 信頼レベルスキル認可 | `domain_skills_permissions` | スキルチェーンによる権限昇格 |
@@ -43,7 +43,7 @@ Entelecheiaは、ハードウェアレベルのコンテナ隔離からLLM向け
 LLMは**exec-onlyサンドボックス**内で動作し、以下の3つのプリミティブ操作のみを呼び出せる：
 
 | ツール | 目的 | パラメータ |
-|------|---------|------------|
+| --- | --- | --- |
 | `exec` | スクリプト文字列の実行 | JavaScriptコード（IEPLによりTypeScriptからトランスパイル） |
 | `write_to_var` | 文字列値の保存 | 変数名 + 値 |
 | `write_to_var_json` | JSON値の保存 | 変数名 + JSON値 |
@@ -76,10 +76,11 @@ pub enum PermissionLevel {
 ```
 
 **認可フロー:**
+
 1. スキルが宣言：「`ssh_exec` に `System` アクセスが必要」
-2. ツールが宣言：「`System` 権限が必要」
-3. 権限ゲートが確認：`skill_level >= tool_requirement` AND `スキルがこのツールを明示的に許可されている`
-4. いずれかのチェックが失敗した場合：呼び出しはブロック、ログ記録、OreXisセンチネルに報告
+1. ツールが宣言：「`System` 権限が必要」
+1. 権限ゲートが確認：`skill_level >= tool_requirement` AND `スキルがこのツールを明示的に許可されている`
+1. いずれかのチェックが失敗した場合：呼び出しはブロック、ログ記録、OreXisセンチネルに報告
 
 **実装:** `packages/shared/security_policy/src/` — 107のテストアノテーション、4つのtokioテスト。
 
@@ -92,7 +93,7 @@ pub enum PermissionLevel {
 スキルは**信頼レベル**に分類され、デフォルトの権限範囲を決定する：
 
 | 信頼レベル | 説明 | デフォルト権限 |
-|-------------|-------------|---------------------|
+| --- | --- | --- |
 | `Builtin` | プラットフォーム同梱 | 全ツールアクセス |
 | `Verified` | メンテナによるレビューと署名 | 読み取り + 書き込み |
 | `Community` | ユーザー提出 | 読み取りのみ |
@@ -107,6 +108,7 @@ pub enum PermissionLevel {
 **クレート:** `container`（5,742行）
 
 すべてのエージェント実行は以下の設定を持つ**DockerまたはPodmanコンテナ**内で行われる：
+
 - ネットワーク名前空間隔離
 - 読み取り専用ルートファイルシステム（ワークスペースマウント以外）
 - システムコールを制限するSeccompプロファイル
@@ -162,6 +164,7 @@ Dockerコンテナ内で、EntelecheiaはYouki/libcontainer（デーモンレス
 **クレート:** `aporia`（5,802行）
 
 すべてのLLMプロバイダAPIキーは**AES-256-GCM**を使用して保存時に暗号化される：
+
 - 暗号化操作ごとの一意なNonce
 - マスターシークレットから導出された鍵（環境設定）
 - 使用後の平文キーのメモリからのゼロ化
@@ -174,6 +177,7 @@ Dockerコンテナ内で、EntelecheiaはYouki/libcontainer（デーモンレス
 **クレート:** `orexis`（5,239行）— 「免疫システム」エージェント
 
 OreXisは以下のことを行うレイヤー1エージェントである：
+
 - セキュリティ脆弱性とライセンスコンプライアンスのための**コード監査**
 - 登録されたセキュリティポリシーに対する**ツール呼び出し検査**
 - パターンによる任意のエージェントのツールの**ブロック/ブロック解除**
@@ -190,10 +194,10 @@ MCPツール（24個）: `standard_check`、`compliance_report`、`audit_alignme
 **Entelecheiaプラグイン言語**（IEPL）パイプラインは、LLM生成コードとネイティブツールディスパッチ間の型安全性を確保する：
 
 1. LLMがESモジュールインポートを使用したTypeScriptコードを生成
-2. **SWC**がTypeScript → JavaScriptにトランスパイル（構文検証）
-3. **Boaエンジン**がサンドボックスコンテキストでJavaScriptを実行
-4. ESモジュールインポートが `__native_dispatch` 呼び出しに解決
-5. 各ディスパッチは完全な型チェック付きで `McpRouter` を通じてルーティング
+1. **SWC**がTypeScript → JavaScriptにトランスパイル（構文検証）
+1. **Boaエンジン**がサンドボックスコンテキストでJavaScriptを実行
+1. ESモジュールインポートが `__native_dispatch` 呼び出しに解決
+1. 各ディスパッチは完全な型チェック付きで `McpRouter` を通じてルーティング
 
 **軽減する脅威:** 型なしツール呼び出しによるインジェクション攻撃（ツールスキーマが実行時にのみ検証されるPythonベースのエージェントフレームワークで一般的）。
 
@@ -205,7 +209,7 @@ MCPツール（24個）: `standard_check`、`compliance_report`、`audit_alignme
 
 Entelecheiaは15のエコシステムにわたる信頼できるパッケージレジストリの**ハードコードされたホワイトリスト**を維持する：
 
-crates.io、PyPI、npm、Goモジュール、Docker Hub、Maven Central、NuGet、RubyGems、Hackage、Alpine APK、Debian APT、GitHub、GitLab、HuggingFace、PyTorch。
+crates.io、PyPI、npm、Goモジュール、Docker Hub、Maven Central、NuGet、RubyGems、Hackage、Alpine APK、Debian APT、GitHub、GitLab、`HuggingFace`、PyTorch。
 
 ホワイトリストにないレジストリからのパッケージインポートは、実行前に**コンテナレベルでブロック**される。
 
@@ -216,6 +220,7 @@ crates.io、PyPI、npm、Goモジュール、Docker Hub、Maven Central、NuGet�
 **機構:** IEPLサンドボックス境界
 
 LLMの `exec` 出力は、以下にアクセスできない**隔離されたBoa JSコンテキスト**で実行される：
+
 - ホストファイルシステム
 - ネットワークソケット
 - 環境変数
@@ -230,6 +235,7 @@ LLMに返されるツール出力は**サニタイズ**される — バイナ�
 **モジュール:** shittim-chest `channel/rate_limit.rs`（118行）
 
 **GCRA（Generic Cell Rate Algorithm）**を使用したユーザーごと、チャネルごとのレート制限：
+
 - 設定可能なバーストサイズと持続レート
 - O(1)ルックアップのためのユーザーごとDashMap
 - 制限超過時の自動バックオフ
@@ -242,17 +248,18 @@ LLMに返されるツール出力は**サニタイズ**される — バイナ�
 **クレート:** `orexis`、`timeline`（3,096行）
 
 すべてのツール呼び出し、エージェント決定、セキュリティイベントは：
+
 1. 完全なコンテキスト（エージェントバッジ、スキル名、パラメータ、結果）と共に**タイムライン**に記録
-2. 改竄検出のために前のイベントにハッシュリンク
-3. 設定可能な保持期間でPostgreSQLに永続化
-4. CLI経由でクエリ可能（`entelecheia-cli trace-chain <badge>`）
+1. 改竄検出のために前のイベントにハッシュリンク
+1. 設定可能な保持期間でPostgreSQLに永続化
+1. CLI経由でクエリ可能（`entelecheia-cli trace-chain <badge>`）
 
 ---
 
 ## 他フレームワークとのセキュリティ比較
 
 | 機能 | Entelecheia | OpenFANG | LangChain | Claude Code |
-|---------|:-----------:|:--------:|:---------:|:-----------:|
+| --- |  ---  |  ---  |  ---  |  ---  |
 | LLM可視ツール | **3（exec-only）** | 53（すべて可視） | すべて可視 | 33（すべて可視） |
 | コンテナ隔離 | **二重層**（Docker + Youki） | WASMのみ | なし | OSレベル（Seatbelt/Landlock） |
 | ツール権限モデル | **二重認可** | RBAC | なし | なし |
@@ -266,12 +273,14 @@ LLMに返されるツール出力は**サニタイズ**される — バイナ�
 ## 脅威モデル
 
 ### 対象外
+
 - ホストマシンへの物理的アクセス
 - 侵害されたDocker/Podmanデーモン（信頼を前提）
 - カーネルエクスプロイト（ユーザー空間隔離により軽減されるが防止されない）
 - Rustクレート依存関係へのサプライチェーン攻撃（`cargo-deny`により部分的に軽減）
 
 ### 受容するリスク
+
 - Boa JSエンジンの脆弱性（コンテナ内でサンドボックス化）
 - LLMプロバイダの停止（代替実行パスなし）
 - PostgreSQLデータ破損（バックアップにより軽減されるが防止されない）

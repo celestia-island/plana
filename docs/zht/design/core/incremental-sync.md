@@ -70,7 +70,7 @@ flowchart TB
 ## 同步策略矩陣
 
 | 面板 | 同步方式 | 觸發條件 | 頻率 | 訊息類型 |
-|-------|-------------|---------|-----------|---------------|
+| --- | --- | --- | --- | --- |
 | **Agents 時間線** | 增量 + 全量 | 連接時同步 + 即時推送 | 連接時 / 即時 | `AgentPatch` / `GlobalSnapshot` |
 | **Containers** | 增量 + 全量 | 連接時同步 + 即時推送 | 連接時 / 即時 | `ContainerPatch` / `GlobalSnapshot` |
 | **Tasks** | 增量 + 全量 | 連接時同步 + 即時推送 | 連接時 / 即時 | `TaskPatch` / `GlobalSnapshot` |
@@ -172,6 +172,7 @@ sequenceDiagram
 ## 資料結構
 
 ### AgentPatch（增量更新）
+
 ```rust
 pub struct AgentPatch {
     pub agent_id: String,
@@ -188,6 +189,7 @@ pub struct AgentPatch {
 ```
 
 ### AgentSnapshot（全量快照）
+
 ```rust
 pub struct AgentSnapshot {
     pub version: u64,
@@ -197,6 +199,7 @@ pub struct AgentSnapshot {
 ```
 
 ### GlobalSnapshot（全域快照）
+
 ```rust
 pub struct GlobalSnapshot {
     pub version: u64,
@@ -209,6 +212,7 @@ pub struct GlobalSnapshot {
 ```
 
 ### ModelsSnapshot（Models 清單）
+
 ```rust
 pub struct ModelsSnapshot {
     pub models: Vec<ModelInfo>,
@@ -216,6 +220,7 @@ pub struct ModelsSnapshot {
 ```
 
 ### ContainerPatch（Container 狀態增量）
+
 ```rust
 pub struct ContainerPatch {
     pub container_id: String,
@@ -227,6 +232,7 @@ pub struct ContainerPatch {
 ```
 
 ### ContainerSnapshot（Container 狀態全量）
+
 ```rust
 pub struct ContainerSnapshot {
     pub version: u64,
@@ -236,6 +242,7 @@ pub struct ContainerSnapshot {
 ```
 
 ### TaskPatch（Task 狀態增量）
+
 ```rust
 pub struct TaskPatch {
     pub task_id: Uuid,
@@ -246,6 +253,7 @@ pub struct TaskPatch {
 ```
 
 ### TasksSnapshot（Tasks 狀態全量）
+
 ```rust
 pub struct TasksSnapshot {
     pub version: u64,
@@ -257,7 +265,7 @@ pub struct TasksSnapshot {
 ## 同步策略
 
 | 類型 | 方向 | 觸發條件 | 頻率 |
-|------|-----------|---------|-----------|
+| --- | --- | --- | --- |
 | Agent 增量更新 | 伺服器 → 客戶端 | 狀態變更 | 即時 |
 | Agent 全量同步 | 伺服器 → 客戶端 | 連接時 | 連接時 / 重連時 |
 | Containers 增量 | 伺服器 → 客戶端 | 狀態變更 | 即時 |

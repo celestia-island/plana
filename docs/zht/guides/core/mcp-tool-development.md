@@ -48,8 +48,8 @@ Skill 的 TOML frontmatter 中的 `related_tools` 宣告決定了哪些 ES 模�
 一個 MCP 工具由三部分組成：
 
 1. **Rust 實作** — 實際邏輯，位於 `packages/agents/<agent>/src/mcp/tools/`
-2. **Registry 分發** — 路由，位於 `packages/agents/<agent>/src/mcp/registry.rs`
-3. **工具名稱常數** — 字串常數，位於 `packages/shared/domain_skills/src/tool_names.rs`
+1. **Registry 分發** — 路由，位於 `packages/agents/<agent>/src/mcp/registry.rs`
+1. **工具名稱常數** — 字串常數，位於 `packages/shared/domain_skills/src/tool_names.rs`
 
 ### mcp/registry.rs 中的工具定義
 
@@ -168,7 +168,7 @@ use tokio::sync::RwLock;
 use crate::state::HubrisState;
 use _shared::skills::mcp_tools::{validate_required_params, McpToolResult};
 
-#[derive(Serialize, Debug, Clone)]
+# [derive(Serialize, Debug, Clone)]
 struct MyNewToolResult {
     id: String,
     message: String,
@@ -448,7 +448,7 @@ McpToolResult::failure("Error".into())
 透過構造 `Value` 參數並斷言 `McpToolResult`，直接測試每個工具函式：
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_report_success() {
     use std::sync::Arc;
     use tokio::sync::RwLock;
@@ -469,7 +469,7 @@ async fn test_report_success() {
     assert_eq!(state.pending_reports[0], "Test report content");
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_report_empty_text() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({
@@ -488,7 +488,7 @@ async fn test_report_empty_text() {
 測試 registry 是否正確路由工具名稱：
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_routes_known_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({"text": "hello"});
@@ -497,7 +497,7 @@ async fn test_registry_routes_known_tool() {
     assert!(result.success);
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_rejects_unknown_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({});
@@ -513,14 +513,14 @@ async fn test_registry_rejects_unknown_tool() {
 直接測試 `validate_required_params` 輔助函式：
 
 ```rust
-#[test]
+# [test]
 fn test_validate_required_params_all_present() {
     let params = serde_json::json!({"title": "test", "content": "body"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
     assert!(result.is_none());
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_missing() {
     let params = serde_json::json!({"title": "test"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
@@ -530,7 +530,7 @@ fn test_validate_required_params_missing() {
     assert!(failure.error[0].contains("content"));
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_empty_string() {
     let params = serde_json::json!({"title": ""});
     let result = validate_required_params(&params, &["title"], "test_tool");
@@ -543,7 +543,7 @@ fn test_validate_required_params_empty_string() {
 對於依賴資料庫 Store 的工具，通常使用記憶體或測試資料庫進行測試：
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_create_todo_success() {
     // 設定：建立測試 TodoStore（依賴測試基礎設施）
     let todo_store = create_test_store().await;
@@ -583,7 +583,7 @@ cargo test -p hubris -- --nocapture
 ## 快速參考：關鍵檔案
 
 | 用途 | 路徑 |
-|---------|------|
+| --- | --- |
 | `McpToolResult` 定義 | `packages/shared/domain_skills/src/mcp_tools.rs` |
 | `validate_required_params` | `packages/shared/domain_skills/src/mcp_tools.rs:12-41` |
 | 工具名稱常數 | `packages/shared/domain_skills/src/tool_names.rs` |

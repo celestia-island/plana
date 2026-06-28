@@ -36,7 +36,7 @@ Out of scope:
 ## Response
 
 | Stage | Target |
-|-------|--------|
+| --- | --- |
 | Agent acknowledgment | 10 minutes |
 | Human acknowledgment | 1 calendar day |
 | Initial assessment | 3 calendar days |

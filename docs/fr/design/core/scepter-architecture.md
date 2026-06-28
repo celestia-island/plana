@@ -143,7 +143,6 @@ graph LR
 - Les horodatages utilisent UTC uniformément
 - Les transactions garantissent l'atomicité d'écriture
 
-
 # Conception du Flux de Configuration LLM
 
 ## Aperçu
@@ -482,7 +481,6 @@ flowchart TB
 | Basculement Automatique | Commutation automatique lorsque le Fournisseur est indisponible | Moyenne |
 | Intégration des Stats d'Utilisation | Lien avec le système de statistiques d'utilisation | Basse |
 
-
 # Mécanisme d'Injection de Prompt MCP et de Compression de Contexte
 
 ## Aperçu
@@ -558,9 +556,9 @@ sequenceDiagram
 
 La documentation de chaque outil MCP est formatée comme une référence API JS :
 
-    $agent.todo_list_view() — Voir la structure actuelle de l'arbre todo
-    $agent.todo_create({ title: String, description: String }) — Créer un nouvel élément todo
-    $agent.todo_update_status({ todo_id: String, status: String }) — Mettre à jour le statut d'un élément todo
+$agent.todo_list_view() — Voir la structure actuelle de l'arbre todo
+$agent.todo_create({ title: String, description: String }) — Créer un nouvel élément todo
+$agent.todo_update_status({ `todo_id`: String, status: String }) — Mettre à jour le statut d'un élément todo
 
 ### Exemple de Configuration
 
@@ -590,15 +588,16 @@ flowchart TB
 
 Chaque entrée `[[related_tools]]` peut optionnellement déclarer un `access_mode` :
 
-    [[related_tools]]
-    agent_name = "polemos"
-    tool_name = "node_execute"
-    access_mode = "read"       # La compétence n'a besoin que d'un accès en lecture (par défaut : "read")
+[[`related_tools`]]
+`agent_name` = "polemos"
+`tool_name` = "`node_execute`"
+`access_mode` = "read"       # La compétence n'a besoin que d'un accès en lecture (par défaut : "read")
 
 La passerelle de double autorisation vérifie que :
+
 1. La `ToolCapability` déclarée de l'outil prend en charge le `access_mode` demandé
-2. Le `TrustLevel` du nœud cible permet l'opération
-3. Pour les nœuds externes, un filtrage supplémentaire par niveau de risque s'applique
+1. Le `TrustLevel` du nœud cible permet l'opération
+1. Pour les nœuds externes, un filtrage supplémentaire par niveau de risque s'applique
 
 Voir `docs/design/en/22-mcp-tool-permission-model.md` pour plus de détails.
 
@@ -876,7 +875,7 @@ flowchart TB
 L'injection d'outils MCP décrite dans les Sections I-VII fournit au LLM des **références API** — elle indique au LLM *comment* appeler les outils. Un mécanisme complémentaire, l'Injection de Contexte RAG, fournit au LLM des **connaissances pré-calculées** — elle injecte les *résultats* des requêtes RAG directement dans le prompt système.
 
 | Aspect | Injection d'Outils MCP | Injection de Contexte RAG |
-|--------|-------------------|----------------------|
+| --- | --- | --- |
 | Ce que le LLM reçoit | Docs de référence API (imports de modules ES) | Contenu de connaissance réel (nœuds de mémoire, docs d'espace de travail) |
 | Quand injecté | Par compétence, basé sur `related_tools` | Par étape de compétence, basé sur le contexte de compétence |
 | Implication du LLM | Le LLM doit appeler l'outil | Aucune implication du LLM — pré-calculé |
@@ -884,7 +883,6 @@ L'injection d'outils MCP décrite dans les Sections I-VII fournit au LLM des **r
 | Modules IEPL | `{agent}` (distribution MCP) | `rag/{philia,aporia}` (lecture de tampon) |
 
 Les deux mécanismes coexistent : les outils MCP restent disponibles comme solution de repli pour les requêtes que le contexte pré-calculé ne couvre pas. Voir `docs/design/en/26-rag-context-injection.md` pour la conception complète.
-
 
 # Conception de la Double Identité des Agents et de la Frontière de Visibilité
 
@@ -944,7 +942,6 @@ Les deux mécanismes coexistent : les outils MCP restent disponibles comme solut
   - `agent_number` est pour l'affichage et l'interaction.
   - `agent_uuid` est pour l'audit et l'historique.
 
-
 # Architecture de Concurrence des Requêtes
 
 ## Aperçu
@@ -966,7 +963,7 @@ Pensez à un restaurant :
 - **Les clients** (requêtes utilisateur) arrivent et passent commande simultanément
 - **Les tables** (conteneurs Cosmos) sont créées par requête — chacune obtient son propre espace de travail
 - **Les postes de cuisine** (concurrence du fournisseur LLM) sont limités — peut-être 3 au total
-- **Le système de tickets** (file d'attente par niveau RequestPool) gère l'ordonnancement FIFO par niveau
+- **Le système de tickets** (file d'attente par niveau `RequestPool`) gère l'ordonnancement FIFO par niveau
 
 30 clients peuvent commander en même temps (scepter accepte plusieurs requêtes), mais la cuisine ne peut cuisiner que 3 plats à la fois (limite de débit de l'API LLM).
 
@@ -997,9 +994,9 @@ Auparavant, c'était `AtomicBool` (N=1), maintenant c'est `Semaphore(N)`.
 File d'attente FIFO par niveau avec sémaphores par modèle. Dans un niveau :
 
 1. Les requêtes LLM entrantes entrent dans la file d'attente du niveau
-2. Essayer d'acquérir un créneau sur le modèle de priorité la plus élevée d'abord
-3. Si occupé, essayer le modèle suivant dans l'ordre de priorité
-4. Si tous occupés, attendre dans la file FIFO — le premier modèle qui se libère sert la requête suivante
+1. Essayer d'acquérir un créneau sur le modèle de priorité la plus élevée d'abord
+1. Si occupé, essayer le modèle suivant dans l'ordre de priorité
+1. Si tous occupés, attendre dans la file FIFO — le premier modèle qui se libère sert la requête suivante
 
 ```mermaid
 flowchart TB
@@ -1025,26 +1022,27 @@ flowchart TB
 
 ### Configuration
 
-    # provider_config.toml
-    [[models]]
-    id = "gpt-5.4"
-    tier = "normal"
-    priority = 10
-    max_concurrent = 3        # 3 appels API simultanés vers ce modèle
+# provider_config.toml
+[[models]]
+id = "gpt-5.4"
+tier = "normal"
+priority = 10
+`max_concurrent` = 3        # 3 appels API simultanés vers ce modèle
 
-    [[models]]
-    id = "gpt-4o-mini"
-    tier = "normal"
-    priority = 5
-    max_concurrent = 5        # 5 appels API simultanés
+[[models]]
+id = "gpt-4o-mini"
+tier = "normal"
+priority = 5
+`max_concurrent` = 5        # 5 appels API simultanés
 
-    [[models]]
-    id = "deepseek-v3"
-    tier = "deep"
-    priority = 8
-    max_concurrent = 2
+[[models]]
+id = "deepseek-v3"
+tier = "deep"
+priority = 8
+`max_concurrent` = 2
 
 Avec cette configuration :
+
 - Niveau `normal` : Modèle A (3 créneaux) + Modèle B (5 créneaux) = 8 appels LLM simultanés de niveau normal
 - Niveau `deep` : Modèle C (2 créneaux) = 2 appels LLM simultanés de niveau profond
 - Sémaphore de Requêtes : 3 + 5 + 2 = 10 requêtes utilisateur simultanées
@@ -1052,43 +1050,54 @@ Avec cette configuration :
 ## Flux : Message Utilisateur → Réponse LLM
 
     1. L'utilisateur envoie un message via TUI/CLI/socket
-    2. handle_user_message() :
-       a. try_acquire() sur le Sémaphore de Requêtes (Couche 1)
+    1. `handle_user_message`() :
+
+a. `try_acquire`() sur le Sémaphore de Requêtes (Couche 1)
+
           - Si pas de créneaux : retourner l'erreur "occupé"
           - Chaque créneau → conteneur Cosmos indépendant
-       b. execute_skill_chain() → invoke_aporia_llm_chat()
-    3. invoke_aporia_llm_chat() :
-       a. acquire_tier("normal", excluded_models) sur RequestPool (Couche 2)
+
+b. `execute_skill_chain`() → `invoke_aporia_llm_chat`()
+
+    1. `invoke_aporia_llm_chat`() :
+
+a. `acquire_tier`("normal", `excluded_models`) sur `RequestPool` (Couche 2)
+
           - Essayer chaque modèle dans l'ordre de priorité (non bloquant)
           - Si tous occupés : attendre dans FIFO jusqu'à ce qu'un créneau de modèle se libère
-          - Retourne TierPermit { model_id, display_name }
-       b. chat_loop → llm_backend.chat() → LlmService::chat_with_tools()
+          - Retourne TierPermit { `model_id`, `display_name` }
+
+b. `chat_loop` → llm_backend.chat() → LlmService::`chat_with_tools`()
+
           - Utilise le modèle sélectionné pour l'appel API
-       c. TierPermit libéré → créneau de sémaphore libéré
-    4. finish_handling() :
-       a. Permis du Sémaphore de Requêtes retourné
-       b. Le conteneur Cosmos peut être nettoyé (ou réutilisé)
+
+c. TierPermit libéré → créneau de sémaphore libéré
+
+    1. `finish_handling`() :
+
+a. Permis du Sémaphore de Requêtes retourné
+b. Le conteneur Cosmos peut être nettoyé (ou réutilisé)
 
 ## Tests E2E
 
 Les tests utilisent un délai d'inactivité (pas une échéance absolue). Le minuteur se réinitialise à chaque événement significatif :
 
-    # L'activité réinitialise le minuteur d'inactivité — la chaîne peut s'exécuter indéfiniment tant qu'elle reste active
-    ACTIVE_METHODS = {
-        "Tui.OrchestrationStatus",
-        "Tui.McpToolResult",
-        "Tui.AgentReport",
-        "Tui.AgentStreamingChunk",
-        "Tui.TaskStatusUpdate",
-        "Tui.AskHumanRequest",
-        "Tui.AgentPatch",
-        "Tui.ContainerSnapshot",
-    }
+# L'activité réinitialise le minuteur d'inactivité — la chaîne peut s'exécuter indéfiniment tant qu'elle reste active
+ACTIVE_METHODS = {
+"Tui.`OrchestrationStatus`",
+"Tui.`McpToolResult`",
+"Tui.`AgentReport`",
+"Tui.`AgentStreamingChunk`",
+"Tui.`TaskStatusUpdate`",
+"Tui.`AskHumanRequest`",
+"Tui.AgentPatch",
+"Tui.`ContainerSnapshot`",
+}
 
 Cela garantit :
+
 - Un délai d'inactivité court (120s) capture les chaînes vraiment bloquées
 - Les chaînes de longue durée mais actives (multi-compétences complexes) ne sont jamais tuées prématurément
-
 
 # Base de Données de Développement Embarquée et Isolation de Production par Portes de Fonctionnalités
 
@@ -1097,7 +1106,7 @@ Cela garantit :
 entelecheia utilise [pglite-oxide](https://crates.io/crates/pglite-oxide) comme PostgreSQL embarqué à deux fins :
 
 1. **Développement local** : Lorsqu'aucun `DATABASE_URL` n'est configuré, scepter démarre automatiquement un PostgreSQL en processus (PG 17.5 via WASM/wasmer) avec support pgvector.
-2. **Tests d'intégration** : Les tests d'intégration PG utilisent pglite-oxide au lieu de Docker/testcontainers.
+1. **Tests d'intégration** : Les tests d'intégration PG utilisent pglite-oxide au lieu de Docker/testcontainers.
 
 En production (Docker), la fonctionnalité `embedded-db` est exclue, et scepter se connecte à un vrai conteneur PostgreSQL.
 
@@ -1116,7 +1125,7 @@ flowchart TB
 ```
 
 | Contexte de Construction | Commande | pglite-oxide | wasmer | DATABASE_URL |
-|---------------|---------|:---:|:---:|---|
+| --- | --- |  ---  |  ---  | --- |
 | `cargo run` (dev local) | fonctionnalités par défaut | ✓ | ✓ | Optionnel — démarre automatiquement PG embarqué si absent |
 | `cargo test` (tests) | fonctionnalités par défaut | ✓ | ✓ | Démarré automatiquement par le harnais de test |
 | `just build` (release) | `--no-default-features --features all-agents` | ✗ | ✗ | Requis |
@@ -1124,29 +1133,29 @@ flowchart TB
 
 ## Ordre de Résolution de la BD à l'Exécution
 
-    // packages/scepter/src/app/setup.rs
-    let db_url = if let Ok(url) = std::env::var("DATABASE_URL") {
-        // 1. Variable d'environnement (production : Docker PG, dev : fichier .env)
-        url
-    } else if !user_config.database.url.is_empty() {
-        // 2. Fichier de configuration utilisateur (~/.config/entelecheia/config.toml)
-        user_config.database.url.clone()
-    } else {
-        // 3. pglite-oxide embarqué (par porte de fonctionnalité)
-        #[cfg(feature = "embedded-db")]
-        {
-            let server = PgliteServer::builder()
-                .extension(pglite_oxide::extensions::VECTOR)  // support pgvector
-                .start()?;
-            let url = server.database_url();
-            std::mem::forget(server);  // maintenir en vie pour la durée du processus
-            url
-        }
-        #[cfg(not(feature = "embedded-db"))]
-        {
-            return Err(/* "aucun DATABASE_URL configuré" */);
-        }
-    };
+// packages/scepter/src/app/setup.rs
+let `db_url` = if let Ok(url) = std::env::var("DATABASE_URL") {
+// 1. Variable d'environnement (production : Docker PG, dev : fichier .env)
+url
+} else if !user_config.database.url.is_empty() {
+// 2. Fichier de configuration utilisateur (~/.config/entelecheia/config.toml)
+user_config.database.url.clone()
+} else {
+// 3. pglite-oxide embarqué (par porte de fonctionnalité)
+#[cfg(feature = "embedded-db")]
+{
+let server = `PgliteServer`::builder()
+.extension(`pglite_oxide`::extensions::VECTOR)  // support pgvector
+.start()?;
+let url = server.database_url();
+std::mem::forget(server);  // maintenir en vie pour la durée du processus
+url
+}
+#[cfg(not(feature = "embedded-db"))]
+{
+return Err(/* "aucun DATABASE_URL configuré" */);
+}
+};
 
 ## Modèle de Harnais de Test
 
@@ -1154,7 +1163,7 @@ flowchart TB
 // tests/pg_integration/auth_test.rs
 static PG: OnceCell<(String, PgliteServer)> = OnceCell::const_new();
 
-#[test]
+# [test]
 fn pg_integration_tests() {
     let rt = tokio::Runtime::new().unwrap();
     rt.block_on(async {
@@ -1185,7 +1194,7 @@ Les 23 tables + 1 table à schéma spécifique + 4 vues sont créées via les mi
 ## Contraintes PGlite
 
 | Contrainte | Impact | Atténuation |
-|------------|--------|------------|
+| --- | --- | --- |
 | `max_connections=1` | Un seul pool à la fois | Connexion DB partagée entre les sous-tests ; pas de `db.close()` entre les tests |
 | Conversion de type stricte | `uuid = text` échoue | Toujours passer des valeurs typées (par exemple, `Uuid` pas `String` pour les colonnes UUID) |
 | Pas d'accès concurrent | Les tests doivent être séquentiels | Un seul exécuteur `#[test]` avec tous les sous-tests en ligne |
@@ -1195,8 +1204,8 @@ Les 23 tables + 1 table à schéma spécifique + 4 vues sont créées via les mi
 
 Tous les Dockerfiles de production excluent embedded-db :
 
-    # Dockerfile
-    RUN cargo build --release -p scepter \
-        --no-default-features --features all-agents
+# Dockerfile
+RUN cargo build --release -p scepter \
+--no-default-features --features all-agents
 
 Cela garantit zéro code wasmer/pglite dans les images de production, maintenant la taille binaire minimale et la surface d'attaque réduite.

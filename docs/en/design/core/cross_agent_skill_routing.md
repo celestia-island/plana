@@ -15,10 +15,10 @@ The skill chain (`execute_skill_chain`) uses an exec-only microkernel architectu
 ## Design Principles
 
 1. **Exec-only microkernel** — The LLM is never given MCP tool definitions directly. It has three tools: `exec`, `write_to_var`, and `write_to_var_json`. All tool calls happen inside the IEPL engine's TS runtime.
-2. **`related_tools` drive everything** — Skills declare `related_tools` in their TOML frontmatter. These names become TS API documentation injected into the LLM prompt (e.g. `file_read()`, `report()`).
-3. **Routing via TS API → McpRouter** — Inside `exec`'s IEPL runtime, ES module imports route to the correct MCP tool implementation via `McpRouter`. Cross-agent calls like `file_read()` resolve to KaLos agent's `file_read` implementation.
-4. **Container isolation** — Child containers inherit the parent filesystem via `docker commit` fork. Workspaces are mounted read-only or read-write based on the skill's `related_tools`.
-5. **`related_tools` determine read/write mode** — `skill_needs_write_access()` inspects `related_tools` for write tool names (`file_write`, `file_edit`, etc.) to decide the fork container's mount mode.
+1. **`related_tools` drive everything** — Skills declare `related_tools` in their TOML frontmatter. These names become TS API documentation injected into the LLM prompt (e.g. `file_read()`, `report()`).
+1. **Routing via TS API → McpRouter** — Inside `exec`'s IEPL runtime, ES module imports route to the correct MCP tool implementation via `McpRouter`. Cross-agent calls like `file_read()` resolve to KaLos agent's `file_read` implementation.
+1. **Container isolation** — Child containers inherit the parent filesystem via `docker commit` fork. Workspaces are mounted read-only or read-write based on the skill's `related_tools`.
+1. **`related_tools` determine read/write mode** — `skill_needs_write_access()` inspects `related_tools` for write tool names (`file_write`, `file_edit`, etc.) to decide the fork container's mount mode.
 
 ## Architecture
 
@@ -69,7 +69,7 @@ flowchart TB
 ### Core Components
 
 | Component | File | Responsibility |
-|-----------|------|---------------|
+| --- | --- | --- |
 | `skill_to_agent_name()` | `skill_chain.rs` | Looks up the agent name that owns a given skill |
 | `skill_needs_write_access()` | `skill_chain.rs` | Inspects `related_tools` for write tool names to determine fork container mount mode |
 | `fork_for_sub_skill()` | `snowflake_manager.rs` | Performs `docker commit` + `docker run`; mounts workspace as ro/rw based on `skill_needs_write_access()` |
@@ -104,15 +104,15 @@ The LLM calls these APIs inside its `exec` code; the McpRouter dispatches to the
 ### Fork Lifecycle
 
 1. **Create**: `docker commit` parent container → fork image → `docker run` child container
-2. **Connect**: CosmosConnector connects to child container's Unix socket
-3. **Bridge**: HapLotesBridgeClient inside fork container connects to Scepter's HapLotesBridgeServer
-4. **Execute**: LLM calls `exec` with JS code; JS runtime uses McpRouter → bridge → Scepter agents
-5. **Cleanup**: When the chain ends, `snowflake.remove()` destroys the container + `docker rmi` cleans up the image
+1. **Connect**: `CosmosConnector` connects to child container's Unix socket
+1. **Bridge**: `HapLotesBridgeClient` inside fork container connects to Scepter's `HapLotesBridgeServer`
+1. **Execute**: LLM calls `exec` with JS code; JS runtime uses McpRouter → bridge → Scepter agents
+1. **Cleanup**: When the chain ends, `snowflake.remove()` destroys the container + `docker rmi` cleans up the image
 
 ### Workspace Mount Strategy
 
 | Skill type | `related_tools` characteristic | Workspace mount |
-|-----------|-------------------------------|----------------|
+| --- | --- | --- |
 | Read-only (smart_read_file) | Only file_read, file_list, file_exists | `:ro` (read-only) |
 | Write (smart_write_file) | Includes file_write, file_edit, file_delete | `:rw` (read-write) |
 
@@ -198,7 +198,7 @@ name = "workplan_execute"
 ## Skill JS API Reference
 
 | Skill | Agent | JS APIs (from `related_tools`) | Status |
-|-------|-------|-------------------------------|--------|
+| --- | --- | --- | --- |
 | `smart_read_file` | KaLos | `file_read()`, `file_list()`, `file_exists()` | ✅ Implemented |
 | `smart_write_file` | KaLos | `file_write()`, `file_edit()` | ✅ Implemented |
 | `exec_script` | SkeMma | `$skeMma.script_exec()` | Pending |
@@ -207,8 +207,8 @@ name = "workplan_execute"
 ## Risks & Considerations
 
 1. **Container resources** — Each fork creates a new Docker container; containers are automatically cleaned up when the chain ends.
-2. **Token cost** — Each fork has its own independent LLM context; JS API docs add modest overhead per skill.
-3. **Fork chain depth** — Currently no depth limit; forks only occur when `step_index > 1`.
-4. **Context passing** — Parent → child passes through report content; truncation strategies may be needed.
-5. **Parallel safety** — When multiple chains concurrently fork the same agent type, reverse-order search ensures each uses its latest fork.
-6. **API surface control** — The LLM can only call JS APIs listed in the injected docs; McpRouter rejects unknown tool names.
+1. **Token cost** — Each fork has its own independent LLM context; JS API docs add modest overhead per skill.
+1. **Fork chain depth** — Currently no depth limit; forks only occur when `step_index > 1`.
+1. **Context passing** — Parent → child passes through report content; truncation strategies may be needed.
+1. **Parallel safety** — When multiple chains concurrently fork the same agent type, reverse-order search ensures each uses its latest fork.
+1. **API surface control** — The LLM can only call JS APIs listed in the injected docs; McpRouter rejects unknown tool names.

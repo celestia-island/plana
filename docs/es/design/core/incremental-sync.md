@@ -70,7 +70,7 @@ flowchart TB
 ## Matriz de Estrategia de Sincronización
 
 | Panel | Método de Sincronización | Disparador | Frecuencia | Tipos de Mensaje |
-|-------|-------------|---------|-----------|---------------|
+| --- | --- | --- | --- | --- |
 | **Línea de Tiempo de Agentes** | Incremental + Completa | Sincronizar en Conexión + Push en Tiempo Real | En Conexión / Tiempo Real | `AgentPatch` / `GlobalSnapshot` |
 | **Contenedores** | Incremental + Completa | Sincronizar en Conexión + Push en Tiempo Real | En Conexión / Tiempo Real | `ContainerPatch` / `GlobalSnapshot` |
 | **Tareas** | Incremental + Completa | Sincronizar en Conexión + Push en Tiempo Real | En Conexión / Tiempo Real | `TaskPatch` / `GlobalSnapshot` |
@@ -172,6 +172,7 @@ sequenceDiagram
 ## Estructuras de Datos
 
 ### AgentPatch (Actualización Incremental)
+
 ```rust
 pub struct AgentPatch {
     pub agent_id: String,
@@ -188,6 +189,7 @@ pub struct AgentPatch {
 ```
 
 ### AgentSnapshot (Instantánea Completa)
+
 ```rust
 pub struct AgentSnapshot {
     pub version: u64,
@@ -197,6 +199,7 @@ pub struct AgentSnapshot {
 ```
 
 ### GlobalSnapshot (Instantánea Global)
+
 ```rust
 pub struct GlobalSnapshot {
     pub version: u64,
@@ -209,6 +212,7 @@ pub struct GlobalSnapshot {
 ```
 
 ### ModelsSnapshot (Lista de Modelos)
+
 ```rust
 pub struct ModelsSnapshot {
     pub models: Vec<ModelInfo>,
@@ -216,6 +220,7 @@ pub struct ModelsSnapshot {
 ```
 
 ### ContainerPatch (Estado de Contenedor Incremental)
+
 ```rust
 pub struct ContainerPatch {
     pub container_id: String,
@@ -227,6 +232,7 @@ pub struct ContainerPatch {
 ```
 
 ### ContainerSnapshot (Estado de Contenedor Completo)
+
 ```rust
 pub struct ContainerSnapshot {
     pub version: u64,
@@ -236,6 +242,7 @@ pub struct ContainerSnapshot {
 ```
 
 ### TaskPatch (Estado de Tarea Incremental)
+
 ```rust
 pub struct TaskPatch {
     pub task_id: Uuid,
@@ -246,6 +253,7 @@ pub struct TaskPatch {
 ```
 
 ### TasksSnapshot (Estado de Tareas Completo)
+
 ```rust
 pub struct TasksSnapshot {
     pub version: u64,
@@ -257,7 +265,7 @@ pub struct TasksSnapshot {
 ## Estrategia de Sincronización
 
 | Tipo | Dirección | Disparador | Frecuencia |
-|------|-----------|---------|-----------|
+| --- | --- | --- | --- |
 | Actualización Incremental de Agente | Servidor → Cliente | Cambio de Estado | Tiempo Real |
 | Sincronización Completa de Agente | Servidor → Cliente | En Conexión | En Conexión / Reconexión |
 | Incremental de Contenedores | Servidor → Cliente | Cambio de Estado | Tiempo Real |

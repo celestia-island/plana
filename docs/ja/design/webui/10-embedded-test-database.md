@@ -35,7 +35,7 @@ flowchart TD
 ## 主要判断
 
 | 判断 | 理由 |
-|----------|-----------|
+| --- | --- |
 | `pglite-oxide`（WASM）を`postgresql_embedded`（ネイティブバイナリ）より選択 | ~100 MBのダウンロード不要、プラットフォーム固有のPGバイナリ不要、~96 ms起動 |
 | `pglite-oxide`を`pglite-rust-bindings`より選択 | crates.ioで公開（v0.5.0）、高速起動、拡張サポート付きの成熟したビルダーAPI |
 | `tower::ServiceExt::oneshot`を`reqwest`より選択 | sqlxプールのバックグラウンドタスクとhyper HTTPサーバー間のtokioランタイムデッドロックを回避 |
@@ -70,7 +70,7 @@ pub async fn start_test_server() -> TestServer {
 
 ```rust
 // tests/xxx_tests.rs
-#[test]
+# [test]
 fn xxx_e2e_tests() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -90,6 +90,6 @@ fn xxx_e2e_tests() {
 ## PGliteの制限
 
 1. **単一接続**: `max_connections`は1である必要があります。同じPGliteインスタンスへの複数のプールはハングします。
-2. **厳密な型キャスト**: PGliteは標準PostgreSQLよりも厳密です。`uuid_column = text_value`のようなクエリは失敗します — 常に明示的にキャストしてください。
-3. **並行テストランナー不可**: 1つのPGliteインスタンスを共有するすべての非同期テストは、単一の`#[test]`関数内で順次実行する必要があります。
-4. **プールのドロップ時ハング**: `sqlx::PgPool::close()`は無期限にハングする可能性があります。`std::process::exit(0)`を使用してテストプロセスを終了してください。
+1. **厳密な型キャスト**: PGliteは標準PostgreSQLよりも厳密です。`uuid_column = text_value`のようなクエリは失敗します — 常に明示的にキャストしてください。
+1. **並行テストランナー不可**: 1つのPGliteインスタンスを共有するすべての非同期テストは、単一の`#[test]`関数内で順次実行する必要があります。
+1. **プールのドロップ時ハング**: `sqlx::PgPool::close()`は無期限にハングする可能性があります。`std::process::exit(0)`を使用してテストプロセスを終了してください。

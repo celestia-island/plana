@@ -18,7 +18,7 @@ subcategory = "core"
 Entelecheia 已完成其主要分割：使用者面向的外殼層已遷移到同級專案 **shittim-chest**（`../shittim-chest`）。Entelecheia 現在專注於多代理編排核心。
 
 | 倉庫 | 範圍 |
-|------------|-------|
+| --- | --- |
 | **entelecheia** | Scepter 編排、16 個代理（12 個 L1 + 4 個 L2）、Cosmos/IEPL 執行環境、32 個共享 crate |
 | **shittim-chest** | arona（聊天 UI 前端）、plana（管理 UI）、`shittim_chest` 後端（axum 代理 + auth + webhook）、IDE 外掛、Tauri 應用 |
 
@@ -40,7 +40,7 @@ Entelecheia 是一個包含 **56 個 crate** 的 Rust 工作區，圍繞 `packag
 ## 元件現實檢查
 
 | 元件 | 已實作 | 僅設計/樁 | 評判 |
-|-----------|------------|-------------------|---------|
+| --- | --- | --- | --- |
 | **Scepter**（編排） | Auth/RBAC、提供者路由、代理生命週期、技能鏈執行、WebSocket/HTTP 端點、金鑰加密。49 個原始檔中 351 個單元測試。`AppState` 為 5 個子狀態提供 `FromRef` 實作；agent_lifecycle 處理常式使用 `State<Arc<Persistence>>` | 完整的 API 表面。批次處理器已定義但未實例化。 | 🟢 真實 |
 | **TUI** | 完整生命週期：啟動畫面、Docker 初始化、時間線、代理模態框、i18n（8 種語言）、提供者設定、主題支援。47 個原始檔中 329 個單元測試。`ComponentStore` 分割為 5 個子結構體；AppState 減少到 6 個欄位。透過 Unix socket（首選）或 WebSocket 備援連線。 | 與 Scepter API 功能持平。`CancelRequest`/`ExecuteSudoCommand` 尚未接線。 | 🟢 真實 |
 | **CLI** | 服務管理、聊天、時間線、代理生命週期命令。28 個單元測試。 | 功能未與 TUI 持平 | 🟡 部分 |
@@ -162,7 +162,7 @@ block-beta
 **工具實作狀態：** 全部 147 個工具均具有真實的實作。程式庫中任何地方都不存在 `unimplemented!()` 或 `todo!()` 巨集。沒有任何工具返回沒有真實邏輯的平凡 `Ok(())`。
 
 | 代理 | 層級 | 目前責任 | 工具 | 樁 | 測試覆蓋率 | 成熟度 |
-|-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
+| --- | --- | --- |  ---  |  ---  |  ---  | --- |
 | **HapLotes** | 1 | 閘道、訊息路由、傳輸膠合 | 2 | 0 | 21 個測試 | 🟢 真實 |
 | **SkoPeo** | 1 | 協調和 LLM 面向的執行流程 | 12 | 0 | 41 個測試 | 🟢 真實 |
 | **HubRis** | 1 | 規劃、待辦事項管理、報告、issue 輔助工具 | 8 | 0 | 65 個測試 | 🟢 真實 |
@@ -218,11 +218,12 @@ Boa 引擎 + MCP 橋接部分端對端運作。基於 SWC 的 TypeScript 轉譯�
 **兩層執行環境架構：**
 
 | 層 | 執行環境 | 預設值 | 範圍 |
-|-------|---------|---------|-------|
+| --- | --- | --- | --- |
 | **外部**（編排） | Docker/Podman | `CONTAINER_RUNTIME=docker` | 基礎設施容器：scepter、postgres。透過初始化引擎建立，由 TUI 健康檢查。需要完整編排（網路、卷、健康檢查）。 |
 | **內部**（cosmos 沙箱） | Youki/libcontainer | `COSMOS_CONTAINER_RUNTIME=youki` | scepter 內的短暫代理沙箱。輕量、快速啟動、seccomp 限制。 |
 
 執行環境選擇輔助函式位於 `shared/infra_services/src/container_factory.rs`：
+
 - `outer_runtime_type()` — 讀取 `CONTAINER_RUNTIME`，預設 `docker`
 - `cosmos_runtime_type()` — 讀取 `COSMOS_CONTAINER_RUNTIME`，預設 `youki`
 
@@ -316,7 +317,7 @@ flowchart TB
 ```
 
 | 概念 | 原始檔 |
-|---------|---------------|
+| --- | --- |
 | 後端建構 | `shared/infra_services/src/container_factory.rs` |
 | `ContainerOps` trait | `shared/container/src/ops.rs` |
 | Docker 建立/分支 | `shared/container/src/lifecycle.rs`、`image_ops.rs` |
@@ -330,7 +331,7 @@ flowchart TB
 ### 端對端路徑接線狀態
 
 | # | 路徑 | 狀態 | 關鍵連線點 |
-|---|------|--------|----------------------|
+| --- | --- | --- | --- |
 | 1 | **Scepter 啟動 → WS → 技能鏈** | 🟢 完全接線 | `scepter/src/app/setup.rs:876-1653`、`scepter/src/lib.rs:139-361`、`scepter/src/tui_connection/core/message_dispatch.rs:10-140` |
 | 2 | **TUI 啟動 → scepter 連線** | 🟢 完全接線 | Unix socket（首選）或 WebSocket 備援，具有完整的握手 + 狀態同步 |
 | 3 | **IEPL 管線（SWC→Boa→MCP）** | 🟡 部分接線 | 轉譯器功能正常（37 個測試）。Boa+MCP 分派已接線。SWC→Boa 可透過 `shared_iepl::client` 橋接，但不在容器內。 |
@@ -342,7 +343,7 @@ flowchart TB
 ### 雙重沙箱隔離
 
 | 執行通道 | 可呼叫工具函數（透過 ES 模組匯入） | 沙箱型別 | 用途 |
-|-------------------|--------------------------|--------------|---------|
+| --- | --- | --- | --- |
 | `neikos.exec()` | 是（透過 ES 模組匯入） | Boa 持久上下文 | 技能編排（代理到代理分派） |
 | `skemma.script_exec()` | 否 | 獨立處理程序沙箱 | MCP 工具後端（計算/IO） |
 
@@ -375,7 +376,7 @@ flowchart TB
 - **容器安全缺口**：自訂 seccomp 設定檔已實作。AppArmor 設定檔未實作。`read_only_rootfs` 預設未啟用。資源限制（512MB 記憶體、1 CPU、100 PIDs）在容器建立、分支和重建時強制執行。兩層執行環境（Docker/Podman 外部 + Youki/libcontainer 內部）完全功能。
 - **OreXis 完全可操作**：安全代理在調用時透過 `SecurityPolicySet` 強制執行工具拒絕列表、允許列表、緊急鎖定和會話特定的政策覆寫。警報層級（`alarm_tools.rs`）具有 HH/H/L/LL/ROC 閾值、滯後、去抖和升級路徑已實作。`audit_only` 模式（預設：關閉）可以切換。19 個測試。缺少：從 hydro-tin-monitor 預載入 97 個故障碼。
 - **記憶體/RAG 堆疊大部分已接線**：所有 3 個嵌入後端（API、ONNX fastembed、SHA-256 雜湊備援）完全實作。PgVector 後端功能正常。圖遍歷可操作。嵌入→RAG 連線已解耦（呼叫者提供預先計算的嵌入，而非自動內嵌計算）。RAG 訂閱同步已保留（尚未實作）。
-- **遙測/批次讀取部分接線**：`BatchProcessor` 結構體已定義但未在 scepter 設定中實例化。`try_intercept_sensor_batch()` 解析器已定義但未在訊息分派迴路中調用。`SensorBatch` 訊息格式解析存在於 trigger_intercept 中。
+- **遙測/批次讀取部分接線**：`BatchProcessor` 結構體已定義但未在 scepter 設定中實例化。`try_intercept_sensor_batch()` 解析器已定義但未在訊息分派迴路中調用。`SensorBatch` 訊息格式解析存在於 `trigger_intercept` 中。
 - **JSON-RPC id 型別不一致**：Rust/TypeScript/Kotlin 使用不同的 JSON-RPC id 型別。
 - **測試覆蓋率**：總共約 2,070 個 `#[test]` 函數。scepter（351）和 tui（329）測試最多。5 個 crate 零測試（philia、concurrent、e2e_events、github-webhook、plugins/examples）。大多數共享 crate（30/33）僅依賴內嵌單元測試。工作區級別的 E2E 測試 crate（`tests/rust`）有 95 個測試。
 
@@ -388,7 +389,7 @@ flowchart TB
 ## 架構債務
 
 | 問題 | 優先級 | 預估工作量 |
-|-------|----------|-----------------|
+| --- | --- | --- |
 | 跨 21 個檔案的 ~60 個 `.map_err(...to_string())` 模式（8 個精確的 `\|e\| e.to_string()`、52 個更廣泛的變體）。集中在轉接器邊界（`shared/adapter`、`shared/llm_provider`）和外部 API 用戶端（`docker_client`、`plugin_loader`）。可接受的轉接器模式在邊界處；內部程式碼應使用型別化錯誤。 | P4 | 程式庫級別關注事項 |
 | Classic SE 工具上的 `maturity: Stub` 中繼資料具有誤導性 — 所有 7 個都有真實實作（基於子處理程序的分析器、模式偵測器、程式碼指標、extract-function 重構）。應提升到 `Experimental` 或更高。 | P4 | 僅中繼資料 |
 | `SensorBatch` 解析器已定義（`trigger_intercept.rs:58-70`）但未接線到訊息分派迴路。`BatchProcessor` 結構體已定義但未在 scepter 設定中實例化。遙測擷取路徑存在但已中斷連線。 | P3 | 接線工作 |
@@ -408,16 +409,22 @@ flowchart TB
 ### 已接線的部分（Entelecheia 提供執行安全層）
 
 - **自我手術掛鉤**（`scepter/.../skill_chain/execution/surgery_hooks.rs`）：
-  `PreSurgeryCheckpoint`（在手術前記錄 git HEAD）、`PostSurgeryRollback`
-  （在失敗時自動還原）、重新部署邏輯、`attempt_rollback`。已註冊到
-  掛鉤管理器。
+
+`PreSurgeryCheckpoint`（在手術前記錄 git HEAD）、`PostSurgeryRollback`
+（在失敗時自動還原）、重新部署邏輯、`attempt_rollback`。已註冊到
+掛鉤管理器。
+
 - **YOLO 滴答迴路**：限時節奏（週期性 5 分鐘 / 每日 6 小時 / 策略性
-  7 天）。技能：`yolo_cycle_report`、`regression_monitor`（每日層級的退化
-  預測，具有分支決策邏輯）。分支啟發式記錄在
-  `res/prompts/system/yolo-fork-pattern.md` — 當一個滴答發現無法在預算內完成的
-  工作時，它會分支一個 `#demiurge.xxx` 會話，而不是截斷。
+
+7 天）。技能：`yolo_cycle_report`、`regression_monitor`（每日層級的退化
+預測，具有分支決策邏輯）。分支啟發式記錄在
+`res/prompts/system/yolo-fork-pattern.md` — 當一個滴答發現無法在預算內完成的
+工作時，它會分支一個 `#demiurge.xxx` 會話，而不是截斷。
+
 - **序列合併協調者**：檔案鎖定、功能閘控；透過 `run_exclusive` 路由 noa
-  鏈後提交，以便並行的 YOLO 分支不會破壞歷史記錄。
+
+鏈後提交，以便並行的 YOLO 分支不會破壞歷史記錄。
+
 - **容器分支/合併** 用於安全實驗（Docker/Podman 外部 + Youki 內部沙箱）。
 - 里程碑提交 `37863366e`（「初步實現自主思考能力」）實現了端對端迴路。
 
@@ -452,7 +459,7 @@ flowchart TB
 ### 阻擋純自我引導的剩餘缺口
 
 | 缺口 | 目前狀態 | 所需 | 優先級 |
-|-----|---------------|----------|----------|
+| --- | --- | --- | --- |
 | **內部計畫文件解析器** | 迴路僅因外部代理平台讀取 ARCHITECTURE.md 並自行分解任務而運作。無內部技能存在。 | `hubris::read_iteration_plan` 技能：解析待辦事項表格 → 返回結構化的 `Vec<BacklogItem>`，以便 Entelecheia 自己的協調者可以驅動迴路。 | P0 |
 | **協調者-工作者分離強制** | 外部平台提供其自己的規劃者/工作者分離；Entelecheia 的管線不強制執行它。協調者技能鏈仍然可以直接調用 `file_write`/`host_command_exec`。 | 在技能 frontmatter 中新增 `role` 欄位；在 `pipeline.rs` 工具白名單建構器中剝離 `role = "coordinator"` 鏈的變更工具。 | P0 |
 | **驗收標準驗證** | `PostSurgeryRollback` 檢查 `cargo check --workspace`（構建級別）而非任務特定的驗收標準。`prompt.rs` 中有部分接線。 | `verify_acceptance_criteria` 掛鉤命名空間：每個待辦事項項目宣告可檢查的標準（測試通過、檔案存在、功能已實作）。 | P1 |
@@ -464,7 +471,7 @@ flowchart TB
 > **機器可讀格式。** 活躍驅動器（目前是第三方代理平台，最終是 Entelecheia 自己的協調者）解析此表格以找到下一個可操作的工作。完成後更新 `status`。
 
 | ID | 標題 | 狀態 | 驗收標準 | 備註 |
-|----|-------|--------|---------------------|-------|
+| --- | --- | --- | --- | --- |
 | IB-01 | `hubris::read_iteration_plan` 技能 | **已取代** | 技能文件於 `res/prompts/agents/hubris/skills/read_iteration_plan.md`；解析 ARCHITECTURE.md 待辦事項表；返回結構化任務列表 | 迴路在沒有此技能的情況下點燃 — 外部代理平台直接讀取計畫。僅**純自我引導**需要重新引入它。 |
 | IB-02 | 協調者工具白名單強制 | **已取代** | 協調者技能鏈不能直接調用 `file_write` / `host_command_exec`；僅透過分派的子代理 | 與 IB-01 相同：外部平台提供其自己的規劃者/工作者分離。僅純自我引導需要。 |
 | IB-03 | `verify_acceptance_criteria` 掛鉤命名空間 | **部分** | 掛鉤命名空間已註冊；每個待辦事項項目的標準在鏈後檢查；失敗時中止 | `skill_chain/prompt.rs` 中有部分接線。建構級別檢查（`cargo check`）運作；任務級別標準尚未。 |
@@ -483,7 +490,7 @@ flowchart TB
 > 自我引導指標在 IB-01/IB-02 重新引入之前不適用。
 
 | 指標 | 目標 | 目前 |
-|--------|--------|---------|
+| --- | --- | --- |
 | 工作區編譯（`cargo check --workspace`） | 乾淨，0 錯誤 | ✅ 乾淨（1 個 dead_code 警告） |
 | 具有真實實作的 MCP 工具 | 100% | 99.3%（147/148） |
 | 樁工具 | 0 | 0 |
@@ -542,7 +549,7 @@ flowchart LR
 > **最後驗證**：2026-06-14 — 先前列為未完成的 3 個缺口現已實作。
 
 | 缺口 | 目前 | 所需 | 優先級 |
-|-----|---------|----------|----------|
+| --- | --- | --- | --- |
 | **感測器事件 → Hubris 計畫橋接** | Hubris 透過 TUI/CLI 接收使用者提示詞 | Hubris 必須接受 `TriggerEvent { topic: "modbus.19.h2_leak_conc.hh" }` 作為計畫啟動事件。`TriggerDispatcher::dispatch_event()` 調用已訂閱的技能；從感測器事件進行的端對端 Hubris 計畫啟動尚未在整合測試中驗證。 | P0 |
 | **遙測批次擷取已接線** | `BatchProcessor` 已定義但未實例化；`try_intercept_sensor_batch()` 解析器存在但未在分派迴路中調用 | 將 `Sensor.Batch` 處理常式接線到訊息分派 → `BatchProcessor` → 遙測儲存 | P1 |
 | **OreXis 中的警報層級** | ✅ **完全實作。** `alarm_tools.rs`：設定/移除/確認警報規則（HH/H/L/LL/ROC 級別、閾值、滯後、去抖、升級：log→notify_agent→auto_correct→human_notify→emergency_shutdown）。`SharedAlarmPolicyStore` 功能正常。支援站點覆寫。 | 缺少：從 hydro-tin-monitor 預載入 97 個故障碼。 | P2 |
@@ -603,7 +610,7 @@ flowchart TB
 來自 `/mnt/sdb1/hydro-tin-monitor/doc/通信端口說明 25.8.7.md`：
 
 | 裝置 | 站號 | 鮑率 | 寄存器 | 備註 |
-|--------|---------|------|-----------|-------|
+| --- | --- | --- | --- | --- |
 | AEM 電解槽（2 Nm3/h） | 21 | 9600 | ~32 IR（0x04），32 位元浮點 BE | 溫度、壓力、流量、電壓 |
 | ALK 電解槽（3 Nm3/h） | 20 | 9600 | ~32 IR（0x04），32 位元浮點 BE | 與 AEM 相同格式 |
 | PEM 電解槽 | 2 | 9600 | ~17 HR（0x03），16 位元有符號 | 壓力、水質、洩漏、電壓 |

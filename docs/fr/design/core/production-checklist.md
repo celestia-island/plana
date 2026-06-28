@@ -15,6 +15,7 @@ subcategory = "core"
 - [ ] **1. Choisir le Mode de Base de Données**
   - pglite embarquée : binaire unique, pas de BD externe. Adapté pour <50 agents simultanés.
   - PostgreSQL : recommandé pour la production. Définir `DATABASE_URL`.
+
   ```bash
   # Mode embarqué
   docker run -d -p 8080:8080 -v data:/data entelecheia:latest
@@ -24,17 +25,21 @@ subcategory = "core"
   ```
 
 - [ ] **2. Configurer l'Identité de l'Utilisateur**
+
   ```bash
   export ENTELECHEIA_USER_UUID=$(uuidgen)
   ```
-  Cet UUID est l'identité du propriétaire de l'espace de travail. Toutes les opérations des agents y sont limitées.
+
+Cet UUID est l'identité du propriétaire de l'espace de travail. Toutes les opérations des agents y sont limitées.
 
 - [ ] **3. Configurer les Fournisseurs LLM**
+
   ```bash
   entelecheia-cli config set-provider openai --api-key sk-...
   entelecheia-cli config set-provider anthropic --api-key sk-ant-...
   ```
-  Les clés API sont chiffrées au repos avec AES-256-GCM via l'agent Aporia.
+
+Les clés API sont chiffrées au repos avec AES-256-GCM via l'agent Aporia.
 
 - [ ] **4. Configurer le Runtime de Conteneur**
   - Docker (par défaut) : `--container-backend docker`
@@ -42,6 +47,7 @@ subcategory = "core"
   - Vérifier le profil seccomp : `configs/seccomp/`
 
 - [ ] **5. Examiner les Politiques de Sécurité**
+
   ```bash
   # Lister les politiques de sécurité enregistrées
   entelecheia-cli security policy-list
@@ -53,6 +59,7 @@ subcategory = "core"
 ## Déploiement
 
 - [ ] **6. Construire ou Récupérer l'Image**
+
   ```bash
   # Construire depuis la source
   docker build -t entelecheia:latest .
@@ -62,6 +69,7 @@ subcategory = "core"
   ```
 
 - [ ] **7. Démarrer le Service**
+
   ```bash
   # Utiliser Docker Compose (recommandé)
   docker-compose up -d
@@ -76,20 +84,24 @@ subcategory = "core"
   ```
 
 - [ ] **8. Vérifier la Santé**
+
   ```bash
   entelecheia-cli status
   curl http://localhost:8080/health
   ```
 
 - [ ] **9. Initialiser les Images Docker pour les Agents**
+
   ```bash
   entelecheia-cli init-docker-images
   ```
-  Cela construit les images de conteneur utilisées par chaque agent Couche 1 pour l'exécution isolée.
+
+Cela construit les images de conteneur utilisées par chaque agent Couche 1 pour l'exécution isolée.
 
 ## Post-Déploiement
 
 - [ ] **10. Configurer la Surveillance**
+
   ```bash
   # Activer le traçage
   export RUST_LOG=info,entelecheia=debug
@@ -104,6 +116,7 @@ subcategory = "core"
   - Journaux d'audit de la chronologie : exporter périodiquement
 
 - [ ] **12. Test de Charge**
+
   ```bash
   # Envoyer un message de test
   entelecheia-cli send "Bonjour, vérifier que le système est opérationnel"
@@ -118,7 +131,7 @@ subcategory = "core"
 ## Durcissement de la Sécurité (Recommandé)
 
 | Vérification | Commande |
-|-------|---------|
+| --- | --- |
 | Vérifier l'absence de secrets dans l'env | `env \| grep -i key` |
 | Examiner les groupes RBAC | `entelecheia-cli security rbac-list` |
 | Vérifier les limites de débit | `entelecheia-cli config show channel.rate_limit` |
@@ -128,7 +141,7 @@ subcategory = "core"
 ## Dépannage
 
 | Symptôme | Diagnostic |
-|---------|-----------|
+| --- | --- |
 | Agents ne répondent pas | `entelecheia-cli status` → vérifier que scepter est en cours d'exécution |
 | Appels LLM échouent | Vérifier les clés API : `entelecheia-cli config show providers` |
 | Erreurs de conteneur | `docker logs entelecheia` → chercher les erreurs Youki/Docker |

@@ -15,10 +15,10 @@ subcategory = "core"
 ## 設計原則
 
 1. **Exec-onlyマイクロカーネル** — LLMにMCPツール定義が直接与えられることはありません。3つのツール（`exec`、`write_to_var`、`write_to_var_json`）のみです。すべてのツール呼び出しはIEPLエンジンのTSランタイム内で行われます。
-2. **`related_tools`がすべてを駆動** — スキルはTOMLフロントマターで`related_tools`を宣言します。これらの名前がTS APIドキュメントとなりLLMプロンプトに注入されます（例：`file_read()`、`report()`）。
-3. **TS API → McpRouter経由のルーティング** — `exec`のIEPLランタイム内で、ESモジュールインポートが`McpRouter`を通じて正しいMCPツール実装にルーティングされます。`file_read()`のようなクロスエージェント呼び出しはKaLosエージェントの`file_read`実装に解決されます。
-4. **コンテナ分離** — 子コンテナは`docker commit`フォークを通じて親ファイルシステムを継承します。ワークスペースはスキルの`related_tools`に基づいて読み取り専用または読み書き可能でマウントされます。
-5. **`related_tools`が読み取り/書き込みモードを決定** — `skill_needs_write_access()`は書き込みツール名（`file_write`、`file_edit`など）について`related_tools`を検査し、フォークコンテナのマウントモードを決定します。
+1. **`related_tools`がすべてを駆動** — スキルはTOMLフロントマターで`related_tools`を宣言します。これらの名前がTS APIドキュメントとなりLLMプロンプトに注入されます（例：`file_read()`、`report()`）。
+1. **TS API → McpRouter経由のルーティング** — `exec`のIEPLランタイム内で、ESモジュールインポートが`McpRouter`を通じて正しいMCPツール実装にルーティングされます。`file_read()`のようなクロスエージェント呼び出しはKaLosエージェントの`file_read`実装に解決されます。
+1. **コンテナ分離** — 子コンテナは`docker commit`フォークを通じて親ファイルシステムを継承します。ワークスペースはスキルの`related_tools`に基づいて読み取り専用または読み書き可能でマウントされます。
+1. **`related_tools`が読み取り/書き込みモードを決定** — `skill_needs_write_access()`は書き込みツール名（`file_write`、`file_edit`など）について`related_tools`を検査し、フォークコンテナのマウントモードを決定します。
 
 ## アーキテクチャ
 
@@ -69,7 +69,7 @@ flowchart TB
 ### コアコンポーネント
 
 | コンポーネント | ファイル | 責任 |
-|-----------|------|---------------|
+| --- | --- | --- |
 | `skill_to_agent_name()` | `skill_chain.rs` | 指定されたスキルを所有するエージェント名を検索 |
 | `skill_needs_write_access()` | `skill_chain.rs` | 書き込みツール名について`related_tools`を検査し、フォークコンテナのマウントモードを決定 |
 | `fork_for_sub_skill()` | `snowflake_manager.rs` | `docker commit` + `docker run`を実行；`skill_needs_write_access()`に基づいてワークスペースをro/rwでマウント |
@@ -104,15 +104,15 @@ LLMは`exec`コード内でこれらのAPIを呼び出します；McpRouterは�
 ### フォークライフサイクル
 
 1. **作成**: `docker commit` 親コンテナ → フォークイメージ → `docker run` 子コンテナ
-2. **接続**: CosmosConnectorが子コンテナのUnixソケットに接続
-3. **ブリッジ**: フォークコンテナ内のHapLotesBridgeClientがScepterのHapLotesBridgeServerに接続
-4. **実行**: LLMがJSコードで`exec`を呼び出し；JSランタイムがMcpRouter → ブリッジ → Scepterエージェントを使用
-5. **クリーンアップ**: チェーンが終了すると、`snowflake.remove()`がコンテナを破棄 + `docker rmi`がイメージをクリーンアップ
+1. **接続**: CosmosConnectorが子コンテナのUnixソケットに接続
+1. **ブリッジ**: フォークコンテナ内のHapLotesBridgeClientがScepterのHapLotesBridgeServerに接続
+1. **実行**: LLMがJSコードで`exec`を呼び出し；JSランタイムがMcpRouter → ブリッジ → Scepterエージェントを使用
+1. **クリーンアップ**: チェーンが終了すると、`snowflake.remove()`がコンテナを破棄 + `docker rmi`がイメージをクリーンアップ
 
 ### ワークスペースマウント戦略
 
 | スキルタイプ | `related_tools`の特性 | ワークスペースマウント |
-|-----------|-------------------------------|----------------|
+| --- | --- | --- |
 | 読み取り専用（smart_read_file） | file_read、file_list、file_existsのみ | `:ro`（読み取り専用） |
 | 書き込み（smart_write_file） | file_write、file_edit、file_deleteを含む | `:rw`（読み書き可能） |
 
@@ -198,7 +198,7 @@ name = "workplan_execute"
 ## スキルJS APIリファレンス
 
 | スキル | エージェント | JS API（`related_tools`から） | ステータス |
-|-------|-------|-------------------------------|--------|
+| --- | --- | --- | --- |
 | `smart_read_file` | KaLos | `file_read()`、`file_list()`、`file_exists()` | ✅ 実装済み |
 | `smart_write_file` | KaLos | `file_write()`、`file_edit()` | ✅ 実装済み |
 | `exec_script` | SkeMma | `$skeMma.script_exec()` | 保留中 |
@@ -207,8 +207,8 @@ name = "workplan_execute"
 ## リスクと考慮事項
 
 1. **コンテナリソース** — 各フォークが新しいDockerコンテナを作成します；コンテナはチェーン終了時に自動的にクリーンアップされます。
-2. **トークンコスト** — 各フォークは独自の独立したLLMコンテキストを持ちます；JS APIドキュメントはスキルごとに控えめなオーバーヘッドを追加します。
-3. **フォークチェーンの深さ** — 現在深さ制限はありません；フォークは`step_index > 1`の場合にのみ発生します。
-4. **コンテキスト受け渡し** — 親 → 子はレポート内容を通じて受け渡します；切り詰め戦略が必要になる場合があります。
-5. **並列安全性** — 複数のチェーンが同じエージェントタイプを同時にフォークする場合、逆順検索により各チェーンが最新のフォークを使用することが保証されます。
-6. **APIサーフェス制御** — LLMは注入されたドキュメントにリストされたJS APIのみを呼び出せます；McpRouterは未知のツール名を拒否します。
+1. **トークンコスト** — 各フォークは独自の独立したLLMコンテキストを持ちます；JS APIドキュメントはスキルごとに控えめなオーバーヘッドを追加します。
+1. **フォークチェーンの深さ** — 現在深さ制限はありません；フォークは`step_index > 1`の場合にのみ発生します。
+1. **コンテキスト受け渡し** — 親 → 子はレポート内容を通じて受け渡します；切り詰め戦略が必要になる場合があります。
+1. **並列安全性** — 複数のチェーンが同じエージェントタイプを同時にフォークする場合、逆順検索により各チェーンが最新のフォークを使用することが保証されます。
+1. **APIサーフェス制御** — LLMは注入されたドキュメントにリストされたJS APIのみを呼び出せます；McpRouterは未知のツール名を拒否します。

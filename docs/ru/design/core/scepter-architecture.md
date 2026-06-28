@@ -143,7 +143,6 @@ graph LR
 - Временные метки единообразно используют UTC
 - Транзакции гарантируют атомарность записи
 
-
 # Проектирование потока конфигурации LLM
 
 ## Обзор
@@ -482,7 +481,6 @@ flowchart TB
 | Авто-аварийное переключение | Автопереключение при недоступности провайдера | Средний |
 | Интеграция статистики использования | Связь с системой статистики использования | Низкий |
 
-
 # Механизм внедрения MCP-промпта и сжатия контекста
 
 ## Обзор
@@ -558,9 +556,9 @@ sequenceDiagram
 
 Документация каждого инструмента MCP форматируется как ссылка JS API:
 
-    $agent.todo_list_view() — Просмотр текущей структуры дерева задач
-    $agent.todo_create({ title: String, description: String }) — Создание нового элемента задачи
-    $agent.todo_update_status({ todo_id: String, status: String }) — Обновление статуса элемента задачи
+$agent.todo_list_view() — Просмотр текущей структуры дерева задач
+$agent.todo_create({ title: String, description: String }) — Создание нового элемента задачи
+$agent.todo_update_status({ `todo_id`: String, status: String }) — Обновление статуса элемента задачи
 
 ### Пример конфигурации
 
@@ -590,15 +588,16 @@ flowchart TB
 
 Каждая запись `[[related_tools]]` может опционально объявить `access_mode`:
 
-    [[related_tools]]
-    agent_name = "polemos"
-    tool_name = "node_execute"
-    access_mode = "read"       # Навыку нужен только доступ уровня чтения (по умолчанию: "read")
+[[`related_tools`]]
+`agent_name` = "polemos"
+`tool_name` = "`node_execute`"
+`access_mode` = "read"       # Навыку нужен только доступ уровня чтения (по умолчанию: "read")
 
 Шлюз двойной авторизации проверяет, что:
+
 1. Объявленный `ToolCapability` инструмента поддерживает запрошенный `access_mode`
-2. `TrustLevel` целевого узла разрешает операцию
-3. Для внешних узлов применяется дополнительное ограничение по уровню риска
+1. `TrustLevel` целевого узла разрешает операцию
+1. Для внешних узлов применяется дополнительное ограничение по уровню риска
 
 См. `docs/design/en/22-mcp-tool-permission-model.md` для полной информации.
 
@@ -876,7 +875,7 @@ flowchart TB
 Внедрение инструментов MCP, описанное в разделах I-VII, предоставляет LLM **ссылки API** — оно говорит LLM *как* вызывать инструменты. Дополнительный механизм, внедрение контекста RAG, предоставляет LLM **предварительно вычисленные знания** — он внедряет *результаты* запросов RAG напрямую в системный промпт.
 
 | Аспект | Внедрение инструментов MCP | Внедрение контекста RAG |
-|--------|-------------------|----------------------|
+| --- | --- | --- |
 | Что получает LLM | Справочная документация API (импорты ES модулей) | Фактическое содержимое знаний (узлы памяти, документы рабочего пространства) |
 | Когда внедряется | Для каждого навыка, на основе `related_tools` | Для каждого шага навыка, на основе контекста навыка |
 | Участие LLM | LLM должен вызвать инструмент | Без участия LLM — предварительно вычислено |
@@ -884,7 +883,6 @@ flowchart TB
 | Модули IEPL | `{agent}` (диспетчеризация MCP) | `rag/{philia,aporia}` (чтение буфера) |
 
 Оба механизма сосуществуют: инструменты MCP остаются доступными как резервный вариант для запросов, которые не покрывает предварительно вычисленный контекст. См. `docs/design/en/26-rag-context-injection.md` для полного проекта.
-
 
 # Проектирование двойной идентичности агентов и границ видимости
 
@@ -944,7 +942,6 @@ flowchart TB
   - `agent_number` для отображения и взаимодействия.
   - `agent_uuid` для аудита и истории.
 
-
 # Архитектура параллелизма запросов
 
 ## Обзор
@@ -966,7 +963,7 @@ flowchart LR
 - **Посетители** (запросы пользователей) приходят и делают заказы одновременно
 - **Столики** (контейнеры Cosmos) создаются для каждого запроса — каждый получает своё рабочее пространство
 - **Кухонные станции** (параллелизм провайдера LLM) ограничены — возможно, всего 3
-- **Система талонов** (очередь уровней RequestPool) управляет порядком FIFO для каждого уровня
+- **Система талонов** (очередь уровней `RequestPool`) управляет порядком FIFO для каждого уровня
 
 30 посетителей могут заказать одновременно (scepter принимает несколько запросов), но кухня может готовить только 3 блюда одновременно (ограничение скорости LLM API).
 
@@ -997,9 +994,9 @@ N = общее количество одновременных слотов дл
 Очередь FIFO для каждого уровня с семафорами для каждой модели. Внутри уровня:
 
 1. Входящие запросы LLM попадают в очередь уровня
-2. Попытка получить слот на модели с наивысшим приоритетом
-3. Если занята — попробовать следующую модель в порядке приоритета
-4. Если все заняты — ожидать в очереди FIFO — какая модель освободится первой, та и обслуживает следующий запрос
+1. Попытка получить слот на модели с наивысшим приоритетом
+1. Если занята — попробовать следующую модель в порядке приоритета
+1. Если все заняты — ожидать в очереди FIFO — какая модель освободится первой, та и обслуживает следующий запрос
 
 ```mermaid
 flowchart TB
@@ -1025,26 +1022,27 @@ flowchart TB
 
 ### Конфигурация
 
-    # provider_config.toml
-    [[models]]
-    id = "gpt-5.4"
-    tier = "normal"
-    priority = 10
-    max_concurrent = 3        # 3 одновременных вызова API к этой модели
+# provider_config.toml
+[[models]]
+id = "gpt-5.4"
+tier = "normal"
+priority = 10
+`max_concurrent` = 3        # 3 одновременных вызова API к этой модели
 
-    [[models]]
-    id = "gpt-4o-mini"
-    tier = "normal"
-    priority = 5
-    max_concurrent = 5        # 5 одновременных вызовов API
+[[models]]
+id = "gpt-4o-mini"
+tier = "normal"
+priority = 5
+`max_concurrent` = 5        # 5 одновременных вызовов API
 
-    [[models]]
-    id = "deepseek-v3"
-    tier = "deep"
-    priority = 8
-    max_concurrent = 2
+[[models]]
+id = "deepseek-v3"
+tier = "deep"
+priority = 8
+`max_concurrent` = 2
 
 С этой конфигурацией:
+
 - Уровень `normal`: Модель A (3 слота) + Модель B (5 слотов) = 8 одновременных вызовов LLM уровня normal
 - Уровень `deep`: Модель C (2 слота) = 2 одновременных вызова LLM уровня deep
 - Семафор запросов: 3 + 5 + 2 = 10 одновременных пользовательских запросов
@@ -1052,43 +1050,54 @@ flowchart TB
 ## Поток: Сообщение пользователя → Ответ LLM
 
     1. Пользователь отправляет сообщение через TUI/CLI/сокет
-    2. handle_user_message():
-       a. try_acquire() на семафоре запросов (Слой 1)
+    1. `handle_user_message`():
+
+a. `try_acquire`() на семафоре запросов (Слой 1)
+
           - Если нет слотов: вернуть ошибку "занято"
           - Каждый слот → независимый контейнер Cosmos
-       b. execute_skill_chain() → invoke_aporia_llm_chat()
-    3. invoke_aporia_llm_chat():
-       a. acquire_tier("normal", excluded_models) на RequestPool (Слой 2)
+
+b. `execute_skill_chain`() → `invoke_aporia_llm_chat`()
+
+    1. `invoke_aporia_llm_chat`():
+
+a. `acquire_tier`("normal", `excluded_models`) на `RequestPool` (Слой 2)
+
           - Попробовать каждую модель в порядке приоритета (неблокирующий)
           - Если все заняты: ожидать в FIFO, пока любой слот модели не освободится
-          - Возвращает TierPermit { model_id, display_name }
-       b. chat_loop → llm_backend.chat() → LlmService::chat_with_tools()
+          - Возвращает TierPermit { `model_id`, `display_name` }
+
+b. `chat_loop` → llm_backend.chat() → LlmService::`chat_with_tools`()
+
           - Использует выбранную модель для вызова API
-       c. TierPermit сброшен → слот семафора освобождён
-    4. finish_handling():
-       a. Разрешение семафора запросов возвращено
-       b. Контейнер Cosmos может быть очищен (или переиспользован)
+
+c. TierPermit сброшен → слот семафора освобождён
+
+    1. `finish_handling`():
+
+a. Разрешение семафора запросов возвращено
+b. Контейнер Cosmos может быть очищен (или переиспользован)
 
 ## E2E тестирование
 
 Тесты используют таймаут бездействия (а не абсолютный дедлайн). Таймер сбрасывается при каждом значимом событии:
 
-    # Активность сбрасывает таймер бездействия — цепочка может работать бесконечно, пока остаётся активной
-    ACTIVE_METHODS = {
-        "Tui.OrchestrationStatus",
-        "Tui.McpToolResult",
-        "Tui.AgentReport",
-        "Tui.AgentStreamingChunk",
-        "Tui.TaskStatusUpdate",
-        "Tui.AskHumanRequest",
-        "Tui.AgentPatch",
-        "Tui.ContainerSnapshot",
-    }
+# Активность сбрасывает таймер бездействия — цепочка может работать бесконечно, пока остаётся активной
+ACTIVE_METHODS = {
+"Tui.`OrchestrationStatus`",
+"Tui.`McpToolResult`",
+"Tui.`AgentReport`",
+"Tui.`AgentStreamingChunk`",
+"Tui.`TaskStatusUpdate`",
+"Tui.`AskHumanRequest`",
+"Tui.AgentPatch",
+"Tui.`ContainerSnapshot`",
+}
 
 Это обеспечивает:
+
 - Короткий таймаут бездействия (120с) отлавливает действительно зависшие цепочки
 - Длительные, но активные цепочки (сложные multi-skill) никогда не завершаются преждевременно
-
 
 # Встроенная база данных для разработки и feature-gated изоляция в production
 
@@ -1097,7 +1106,7 @@ flowchart TB
 entelecheia использует [pglite-oxide](https://crates.io/crates/pglite-oxide) как встроенный PostgreSQL для двух целей:
 
 1. **Локальная разработка**: Когда `DATABASE_URL` не настроен, scepter автоматически запускает внутрипроцессный PostgreSQL (PG 17.5 через WASM/wasmer) с поддержкой pgvector.
-2. **Интеграционные тесты**: Интеграционные тесты PG используют pglite-oxide вместо Docker/testcontainers.
+1. **Интеграционные тесты**: Интеграционные тесты PG используют pglite-oxide вместо Docker/testcontainers.
 
 В production (Docker) функция `embedded-db` исключена, и scepter подключается к реальному контейнеру PostgreSQL.
 
@@ -1116,7 +1125,7 @@ flowchart TB
 ```
 
 | Контекст сборки | Команда | pglite-oxide | wasmer | DATABASE_URL |
-|---------------|---------|:---:|:---:|---|
+| --- | --- |  ---  |  ---  | --- |
 | `cargo run` (локальная разработка) | функции по умолчанию | ✓ | ✓ | Опционально — авто-запуск встроенной PG, если отсутствует |
 | `cargo test` (тесты) | функции по умолчанию | ✓ | ✓ | Авто-запуск тестовым окружением |
 | `just build` (релиз) | `--no-default-features --features all-agents` | ✗ | ✗ | Обязателен |
@@ -1124,29 +1133,29 @@ flowchart TB
 
 ## Порядок разрешения БД во время выполнения
 
-    // packages/scepter/src/app/setup.rs
-    let db_url = if let Ok(url) = std::env::var("DATABASE_URL") {
-        // 1. Переменная окружения (production: Docker PG, dev: файл .env)
-        url
-    } else if !user_config.database.url.is_empty() {
-        // 2. Файл конфигурации пользователя (~/.config/entelecheia/config.toml)
-        user_config.database.url.clone()
-    } else {
-        // 3. Встроенный pglite-oxide (feature-gated)
-        #[cfg(feature = "embedded-db")]
-        {
-            let server = PgliteServer::builder()
-                .extension(pglite_oxide::extensions::VECTOR)  // поддержка pgvector
-                .start()?;
-            let url = server.database_url();
-            std::mem::forget(server);  // сохранить живым на время жизни процесса
-            url
-        }
-        #[cfg(not(feature = "embedded-db"))]
-        {
-            return Err(/* "DATABASE_URL не настроен" */);
-        }
-    };
+// packages/scepter/src/app/setup.rs
+let `db_url` = if let Ok(url) = std::env::var("DATABASE_URL") {
+// 1. Переменная окружения (production: Docker PG, dev: файл .env)
+url
+} else if !user_config.database.url.is_empty() {
+// 2. Файл конфигурации пользователя (~/.config/entelecheia/config.toml)
+user_config.database.url.clone()
+} else {
+// 3. Встроенный pglite-oxide (feature-gated)
+#[cfg(feature = "embedded-db")]
+{
+let server = `PgliteServer`::builder()
+.extension(`pglite_oxide`::extensions::VECTOR)  // поддержка pgvector
+.start()?;
+let url = server.database_url();
+std::mem::forget(server);  // сохранить живым на время жизни процесса
+url
+}
+#[cfg(not(feature = "embedded-db"))]
+{
+return Err(/* "DATABASE_URL не настроен" */);
+}
+};
 
 ## Шаблон тестового окружения
 
@@ -1154,7 +1163,7 @@ flowchart TB
 // tests/pg_integration/auth_test.rs
 static PG: OnceCell<(String, PgliteServer)> = OnceCell::const_new();
 
-#[test]
+# [test]
 fn pg_integration_tests() {
     let rt = tokio::Runtime::new().unwrap();
     rt.block_on(async {
@@ -1185,7 +1194,7 @@ fn pg_integration_tests() {
 ## Ограничения PGlite
 
 | Ограничение | Влияние | Смягчение |
-|------------|--------|------------|
+| --- | --- | --- |
 | `max_connections=1` | Только один пул одновременно | Общее соединение с БД между подтестами; без `db.close()` между тестами |
 | Строгое приведение типов | `uuid = text` не работает | Всегда передавать типизированные значения (например, `Uuid`, а не `String` для столбцов UUID) |
 | Отсутствие параллельного доступа | Тесты должны быть последовательными | Один `#[test]` runner со всеми подтестами внутри |
@@ -1195,8 +1204,8 @@ fn pg_integration_tests() {
 
 Все production Dockerfile исключают embedded-db:
 
-    # Dockerfile
-    RUN cargo build --release -p scepter \
-        --no-default-features --features all-agents
+# Dockerfile
+RUN cargo build --release -p scepter \
+--no-default-features --features all-agents
 
 Это обеспечивает нулевой код wasmer/pglite в production-образах, сохраняя минимальный размер бинарного файла и уменьшая поверхность атаки.

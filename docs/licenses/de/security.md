@@ -31,7 +31,7 @@ Nicht im Geltungsbereich:
 ## Reaktion
 
 | Phase | Ziel |
-|-------|--------|
+| --- | --- |
 | Agent-Empfangsbestätigung | 10 Minuten |
 | Personalbestätigung | 1 Kalendertag |
 | Ersteinschätzung | 3 Kalendertage |

@@ -18,9 +18,9 @@ layer, skills declare their routing behavior in TOML front matter via a
 ## Goals
 
 1. Skills declare routing behavior in front matter (not hardcoded).
-2. A generic skill chain executor replaces the hardcoded 2-stage pipeline.
-3. Human review is a first-class routing target.
-4. Prompt language cleanup: skill/MCP flat files are English-only.
+1. A generic skill chain executor replaces the hardcoded 2-stage pipeline.
+1. Human review is a first-class routing target.
+1. Prompt language cleanup: skill/MCP flat files are English-only.
 
 ## Skill Report Config (TOML Front Matter)
 
@@ -32,7 +32,7 @@ next_skill = "workplan_generate"  # required if target = "next_node"
 
 ## HubRis Skill Chain
 
-```
+```text
 task_decompose → workplan_generate → operator → workplan_execute → submit_report → human
 ```
 
@@ -78,7 +78,7 @@ sequenceDiagram
 ## Report Routing Targets
 
 | Target       | Behavior                                                        |
-| ------------ | --------------------------------------------------------------- |
+| --- | --- |
 | `next_node`  | Executor loads the skill named in `next_skill` and runs it.     |
 | `parent`     | Returns control to the parent orchestrator (reserved for nested chains). |
 | `human`      | Pauses chain, sends `HumanReviewRequest` to TUI, resumes on `HumanReviewResponse`. |
@@ -86,7 +86,7 @@ sequenceDiagram
 
 ## File Structure (Phase 1)
 
-```
+```text
 res/prompts/agents/hubris/skills/
   task_decompose.md
   workplan_generate.md
@@ -114,6 +114,7 @@ testing cost low.
 ## Failure Fallback Policy
 
 1. If a skill fails: return failure message and end current chain.
-2. If ApoRia is offline: return `Agent not ready` message.
-3. If human review times out: return timeout notice without blocking
-   subsequent chats.
+1. If ApoRia is offline: return `Agent not ready` message.
+1. If human review times out: return timeout notice without blocking
+
+subsequent chats.

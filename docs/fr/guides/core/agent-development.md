@@ -15,7 +15,7 @@ subcategory = "core"
 Il existe trois niveaux d'extension réellement utilisables dans le dépôt actuel.
 
 | Niveau | Signification actuelle |
-|------|----------|
+| --- | --- |
 | Layer1 | Agents principaux implémentés en tant que crate Rust et compilés dans le workspace |
 | Layer2 | Web Automation, l'Agent de domaine intégré actif, avec quelques documents archivés ou planifiés |
 | Layer3 | Agents personnalisés par l'utilisateur (planifié, pas encore implémenté) |

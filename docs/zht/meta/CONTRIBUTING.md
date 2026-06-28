@@ -16,18 +16,27 @@ Arona 定義了 Entelecheia 平台中共享的 JSON-RPC 2.0 協定型別，
 在發起 pull request 之前請閱讀本節。
 
 - **高合併門檻，非公開路線圖。** 發起 PR 並不意味著它會被合併。
-  我們有意識地只接受少量變更，且僅在它們符合架構並通過審查時
-  才接受。這是設計上的選擇，並非無禮。
+
+我們有意識地只接受少量變更，且僅在它們符合架構並通過審查時
+才接受。這是設計上的選擇，並非無禮。
+
 - **我們歡迎的內容：** 錯誤報告、針對性修復、新增（非破壞性）的
-  協定欄位、改進的文件，以及在程式碼之前的設計討論。
+
+協定欄位、改進的文件，以及在程式碼之前的設計討論。
+
 - **我們通常不會合併的內容：** 大型未經請求的重寫、對協定型別
-  表面的破壞性變更、未經事先設計討論的架構變更、批次「vibe-coding」
-  PR，以及任何降低型別合約相容性門檻的內容。
+
+表面的破壞性變更、未經事先設計討論的架構變更、批次「vibe-coding」
+PR，以及任何降低型別合約相容性門檻的內容。
+
 - **核心 vs. 外圍。** 協定型別定義及其序列化表面受到最嚴格的
-  門檻要求，並由核心團隊維護。
+
+門檻要求，並由核心團隊維護。
+
 - **需要 CLA。** 每個被接受的貢獻都需要簽署貢獻者授權協議。
-  請參閱 [`CLA.md`](CLA.md)。提交必須帶有 `Signed-off-by` 行
-  （`git commit -s`）。
+
+請參閱 [`CLA.md`](CLA.md)。提交必須帶有 `Signed-off-by` 行
+（`git commit -s`）。
 
 > **授權可能會開放；合併門檻不會。** 在 **2030-01-01**，本專案
 > 將從 BUSL-1.1 轉換為 Apache-2.0 或 MIT（接收方可選擇）— 請參閱
@@ -60,19 +69,24 @@ cargo clippy -- -D warnings
 
 - Rust 1.85+。
 - 型別衍生 `ts-rs`（`#[derive(TS)]`）以生成 TypeScript 繫結 — 保持
-  `serde` 屬性和 `ts-rs` 註解一致。
+
+`serde` 屬性和 `ts-rs` 註解一致。
+
 - 不要對現有協定型別引入破壞性變更；偏好使用帶有 `#[serde(default)]`
-  的新增欄位。
+
+的新增欄位。
 
 ## Pull Request 流程
 
 1. 從 `main` 分叉並建立分支。
-2. 先在 issue 中討論大型或影響協定的變更。
-3. 按照 [Conventional Commits](https://www.conventionalcommits.org/)
-   進行原子提交。
-4. 確保 `cargo fmt`、`cargo clippy -D warnings` 和 `cargo test` 通過。
-5. 簽署 CLA 並在每個提交中新增 `Signed-off-by`。
-6. 回應審查回饋；強制推送僅限於 rebase。
+1. 先在 issue 中討論大型或影響協定的變更。
+1. 按照 [Conventional Commits](https://www.conventionalcommits.org/)
+
+進行原子提交。
+
+1. 確保 `cargo fmt`、`cargo clippy -D warnings` 和 `cargo test` 通過。
+1. 簽署 CLA 並在每個提交中新增 `Signed-off-by`。
+1. 回應審查回饋；強制推送僅限於 rebase。
 
 ## 授權與 CLA
 

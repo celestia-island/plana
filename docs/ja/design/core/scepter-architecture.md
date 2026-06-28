@@ -143,7 +143,6 @@ graph LR
 - タイムスタンプはUTCで統一
 - トランザクションで書き込みの原子性を保証
 
-
 # LLM設定フロー設計
 
 ## 概要
@@ -482,7 +481,6 @@ flowchart TB
 | 自動フェイルオーバー | プロバイダ利用不可時の自動切り替え | 中 |
 | 使用統計との統合 | 使用統計システムとの連携 | 低 |
 
-
 # MCPプロンプト注入とコンテキスト圧縮機構
 
 ## 概要
@@ -558,9 +556,9 @@ sequenceDiagram
 
 各MCPツールのドキュメントはJS APIリファレンスとして整形される：
 
-    $agent.todo_list_view() — 現在のtodoツリー構造を表示
-    $agent.todo_create({ title: String, description: String }) — 新しいtodo項目を作成
-    $agent.todo_update_status({ todo_id: String, status: String }) — todo項目のステータスを更新
+$agent.todo_list_view() — 現在のtodoツリー構造を表示
+$agent.todo_create({ title: String, description: String }) — 新しいtodo項目を作成
+$agent.todo_update_status({ `todo_id`: String, status: String }) — todo項目のステータスを更新
 
 ### 設定例
 
@@ -590,15 +588,16 @@ flowchart TB
 
 各 `[[related_tools]]` エントリはオプションで `access_mode` を宣言できる：
 
-    [[related_tools]]
-    agent_name = "polemos"
-    tool_name = "node_execute"
-    access_mode = "read"       # スキルは読み取りレベルのアクセスのみ必要（デフォルト: "read"）
+[[`related_tools`]]
+`agent_name` = "polemos"
+`tool_name` = "`node_execute`"
+`access_mode` = "read"       # スキルは読み取りレベルのアクセスのみ必要（デフォルト: "read"）
 
 二重認可ゲートウェイは以下をチェックする：
+
 1. ツールの宣言された `ToolCapability` が要求された `access_mode` をサポートしていること
-2. 対象ノードの `TrustLevel` が操作を許可していること
-3. 外部ノードの場合、追加のリスクレベルゲーティングが適用されること
+1. 対象ノードの `TrustLevel` が操作を許可していること
+1. 外部ノードの場合、追加のリスクレベルゲーティングが適用されること
 
 詳細は `docs/design/en/22-mcp-tool-permission-model.md` を参照。
 
@@ -876,7 +875,7 @@ flowchart TB
 セクションI-VIIで説明したMCPツール注入はLLMに**APIリファレンス**を提供する — *どのように*ツールを呼び出すかをLLMに伝える。補完的な機構であるRAGコンテキスト注入はLLMに**事前計算された知識**を提供する — RAGクエリの*結果*をシステムプロンプトに直接注入する。
 
 | 側面 | MCPツール注入 | RAGコンテキスト注入 |
-|--------|-------------------|----------------------|
+| --- | --- | --- |
 | LLMが受け取るもの | APIリファレンスドキュメント（ESモジュールインポート） | 実際の知識内容（メモリノード、ワークスペースドキュメント） |
 | 注入タイミング | スキルごと、`related_tools` に基づく | スキルステップごと、スキルコンテキストに基づく |
 | LLMの関与 | LLMがツールを呼び出す必要がある | LLMの関与なし — 事前計算 |
@@ -884,7 +883,6 @@ flowchart TB
 | IEPLモジュール | `{agent}`（MCPディスパッチ） | `rag/{philia,aporia}`（バッファ読み取り） |
 
 両方の機構は共存する：MCPツールは事前計算されたコンテキストがカバーしないクエリのフォールバックとして利用可能のままである。完全な設計については `docs/design/en/26-rag-context-injection.md` を参照。
-
 
 # エージェント二重アイデンティティと可視性境界設計
 
@@ -944,7 +942,6 @@ flowchart TB
   - `agent_number` は表示と対話用。
   - `agent_uuid` は監査と履歴用。
 
-
 # リクエスト並行性アーキテクチャ
 
 ## 概要
@@ -997,9 +994,9 @@ N = 有効な全モデルの同時スロット合計。モデルA（3スロッ�
 モデルごとのセマフォを持つ階層ごとのFIFOキュー。階層内で：
 
 1. 到着するLLMリクエストが階層キューに入る
-2. 最初に最高優先度モデルのスロット獲得を試みる
-3. ビジーなら優先度順に次のモデルを試行
-4. すべてビジーならFIFOキューで待機 — どのモデルのスロットが空いても次のリクエストを処理
+1. 最初に最高優先度モデルのスロット獲得を試みる
+1. ビジーなら優先度順に次のモデルを試行
+1. すべてビジーならFIFOキューで待機 — どのモデルのスロットが空いても次のリクエストを処理
 
 ```mermaid
 flowchart TB
@@ -1025,26 +1022,27 @@ flowchart TB
 
 ### 設定
 
-    # provider_config.toml
-    [[models]]
-    id = "gpt-5.4"
-    tier = "normal"
-    priority = 10
-    max_concurrent = 3        # このモデルへの同時API呼び出し3件
+# provider_config.toml
+[[models]]
+id = "gpt-5.4"
+tier = "normal"
+priority = 10
+`max_concurrent` = 3        # このモデルへの同時API呼び出し3件
 
-    [[models]]
-    id = "gpt-4o-mini"
-    tier = "normal"
-    priority = 5
-    max_concurrent = 5        # 同時API呼び出し5件
+[[models]]
+id = "gpt-4o-mini"
+tier = "normal"
+priority = 5
+`max_concurrent` = 5        # 同時API呼び出し5件
 
-    [[models]]
-    id = "deepseek-v3"
-    tier = "deep"
-    priority = 8
-    max_concurrent = 2
+[[models]]
+id = "deepseek-v3"
+tier = "deep"
+priority = 8
+`max_concurrent` = 2
 
 この設定では：
+
 - `normal` 階層: モデルA（3スロット）+ モデルB（5スロット）= 8つの同時normal階層LLM呼び出し
 - `deep` 階層: モデルC（2スロット）= 2つの同時deep階層LLM呼び出し
 - リクエストセマフォ: 3 + 5 + 2 = 10の同時ユーザーリクエスト
@@ -1052,43 +1050,54 @@ flowchart TB
 ## フロー: ユーザーメッセージ → LLM応答
 
     1. ユーザーがTUI/CLI/ソケット経由でメッセージを送信
-    2. handle_user_message():
-       a. リクエストセマフォ（レイヤー1）で try_acquire()
+    1. `handle_user_message`():
+
+a. リクエストセマフォ（レイヤー1）で `try_acquire`()
+
           - スロットがない場合: "busy" エラーを返す
           - 各スロット → 独立したCosmosコンテナ
-       b. execute_skill_chain() → invoke_aporia_llm_chat()
-    3. invoke_aporia_llm_chat():
-       a. RequestPool（レイヤー2）で acquire_tier("normal", excluded_models)
+
+b. `execute_skill_chain`() → `invoke_aporia_llm_chat`()
+
+    1. `invoke_aporia_llm_chat`():
+
+a. `RequestPool`（レイヤー2）で `acquire_tier`("normal", `excluded_models`)
+
           - 各モデルを優先度順に試行（非ブロッキング）
           - すべてビジー: いずれかのモデルスロットが空くまでFIFOで待機
-          - TierPermit { model_id, display_name } を返す
-       b. chat_loop → llm_backend.chat() → LlmService::chat_with_tools()
+          - TierPermit { `model_id`, `display_name` } を返す
+
+b. `chat_loop` → llm_backend.chat() → LlmService::`chat_with_tools`()
+
           - 選択されたモデルをAPI呼び出しに使用
-       c. TierPermitがドロップ → セマフォスロット解放
-    4. finish_handling():
-       a. リクエストセマフォパーミット返却
-       b. Cosmosコンテナをクリーンアップ（または再利用）可能
+
+c. TierPermitがドロップ → セマフォスロット解放
+
+    1. `finish_handling`():
+
+a. リクエストセマフォパーミット返却
+b. Cosmosコンテナをクリーンアップ（または再利用）可能
 
 ## E2Eテスト
 
 テストはアイドルタイムアウト（絶対期限ではない）を使用する。タイマーは意味のあるイベントごとにリセットされる：
 
-    # アクティビティがアイドルタイマーをリセット — チェーンはアクティブであり続ける限り無期限に実行可能
-    ACTIVE_METHODS = {
-        "Tui.OrchestrationStatus",
-        "Tui.McpToolResult",
-        "Tui.AgentReport",
-        "Tui.AgentStreamingChunk",
-        "Tui.TaskStatusUpdate",
-        "Tui.AskHumanRequest",
-        "Tui.AgentPatch",
-        "Tui.ContainerSnapshot",
-    }
+# アクティビティがアイドルタイマーをリセット — チェーンはアクティブであり続ける限り無期限に実行可能
+ACTIVE_METHODS = {
+"Tui.`OrchestrationStatus`",
+"Tui.`McpToolResult`",
+"Tui.`AgentReport`",
+"Tui.`AgentStreamingChunk`",
+"Tui.`TaskStatusUpdate`",
+"Tui.`AskHumanRequest`",
+"Tui.AgentPatch",
+"Tui.`ContainerSnapshot`",
+}
 
 これにより以下が保証される：
+
 - 短いアイドルタイムアウト（120秒）が真に停止したチェーンを捕捉
 - 長時間実行だがアクティブなチェーン（複雑なマルチスキル）が早期に強制終了されない
-
 
 # 組み込み開発DB & フィーチャーゲートによるプロダクション隔離
 
@@ -1097,7 +1106,7 @@ flowchart TB
 entelecheiaは2つの目的で組み込みPostgreSQLとして[pglite-oxide](https://crates.io/crates/pglite-oxide)を使用する：
 
 1. **ローカル開発**: `DATABASE_URL` が設定されていない場合、scepterは自動的にpgvectorサポート付きのプロセス内PostgreSQL（WASM/wasmer経由のPG 17.5）を起動する。
-2. **統合テスト**: PG統合テストはDocker/testcontainersの代わりにpglite-oxideを使用する。
+1. **統合テスト**: PG統合テストはDocker/testcontainersの代わりにpglite-oxideを使用する。
 
 プロダクション（Docker）では、`embedded-db` フィーチャーが除外され、scepterは実際のPostgreSQLコンテナに接続する。
 
@@ -1116,7 +1125,7 @@ flowchart TB
 ```
 
 | ビルドコンテキスト | コマンド | pglite-oxide | wasmer | DATABASE_URL |
-|---------------|---------|:---:|:---:|---|
+| --- | --- |  ---  |  ---  | --- |
 | `cargo run`（ローカル開発） | デフォルトフィーチャー | ✓ | ✓ | オプション — 不足時は組み込みPGを自動起動 |
 | `cargo test`（テスト） | デフォルトフィーチャー | ✓ | ✓ | テストハーネスが自動起動 |
 | `just build`（リリース） | `--no-default-features --features all-agents` | ✗ | ✗ | 必須 |
@@ -1124,29 +1133,29 @@ flowchart TB
 
 ## 実行時DB解決順序
 
-    // packages/scepter/src/app/setup.rs
-    let db_url = if let Ok(url) = std::env::var("DATABASE_URL") {
-        // 1. 環境変数（プロダクション: Docker PG、開発: .envファイル）
-        url
-    } else if !user_config.database.url.is_empty() {
-        // 2. ユーザー設定ファイル（~/.config/entelecheia/config.toml）
-        user_config.database.url.clone()
-    } else {
-        // 3. 組み込みpglite-oxide（フィーチャーゲート）
-        #[cfg(feature = "embedded-db")]
-        {
-            let server = PgliteServer::builder()
-                .extension(pglite_oxide::extensions::VECTOR)  // pgvectorサポート
-                .start()?;
-            let url = server.database_url();
-            std::mem::forget(server);  // プロセス寿命中保持
-            url
-        }
-        #[cfg(not(feature = "embedded-db"))]
-        {
-            return Err(/* "DATABASE_URLが設定されていません" */);
-        }
-    };
+// packages/scepter/src/app/setup.rs
+let `db_url` = if let Ok(url) = std::env::var("DATABASE_URL") {
+// 1. 環境変数（プロダクション: Docker PG、開発: .envファイル）
+url
+} else if !user_config.database.url.is_empty() {
+// 2. ユーザー設定ファイル（~/.config/entelecheia/config.toml）
+user_config.database.url.clone()
+} else {
+// 3. 組み込みpglite-oxide（フィーチャーゲート）
+#[cfg(feature = "embedded-db")]
+{
+let server = `PgliteServer`::builder()
+.extension(`pglite_oxide`::extensions::VECTOR)  // pgvectorサポート
+.start()?;
+let url = server.database_url();
+std::mem::forget(server);  // プロセス寿命中保持
+url
+}
+#[cfg(not(feature = "embedded-db"))]
+{
+return Err(/* "DATABASE_URLが設定されていません" */);
+}
+};
 
 ## テストハーネスパターン
 
@@ -1154,7 +1163,7 @@ flowchart TB
 // tests/pg_integration/auth_test.rs
 static PG: OnceCell<(String, PgliteServer)> = OnceCell::const_new();
 
-#[test]
+# [test]
 fn pg_integration_tests() {
     let rt = tokio::Runtime::new().unwrap();
     rt.block_on(async {
@@ -1185,7 +1194,7 @@ fn pg_integration_tests() {
 ## PGlite制約
 
 | 制約 | 影響 | 軽減策 |
-|------------|--------|------------|
+| --- | --- | --- |
 | `max_connections=1` | 一度に1つのプールのみ | サブテスト間でDB接続を共有。テスト間で `db.close()` しない |
 | 厳密な型キャスト | `uuid = text` が失敗 | 常に型付き値を渡す（例：UUID列には `Uuid` を使用、`String` ではなく） |
 | 同時アクセス不可 | テストは逐次的である必要がある | 全サブテストをインライン化した単一 `#[test]` ランナー |
@@ -1195,8 +1204,8 @@ fn pg_integration_tests() {
 
 すべてのプロダクションDockerfileはembedded-dbを除外する：
 
-    # Dockerfile
-    RUN cargo build --release -p scepter \
-        --no-default-features --features all-agents
+# Dockerfile
+RUN cargo build --release -p scepter \
+--no-default-features --features all-agents
 
 これにより、プロダクションイメージにwasmer/pgliteコードがゼロであることを保証し、バイナリサイズを最小化し、攻撃表面を削減する。

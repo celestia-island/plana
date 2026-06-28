@@ -27,6 +27,7 @@ shittim-chest 支持两种运行模式：
 ### 独立模式
 
 通过自己的 LLM 路由层独立运行。支持：
+
 - 流式响应聊天（SSE + WebSocket）
 - 通过配置的提供商进行图像生成
 - 用户认证（密码 + GitHub OAuth）
@@ -37,6 +38,7 @@ shittim-chest 支持两种运行模式：
 ### 代理模式
 
 作为进入 entelecheia 智能体系统的网关。增加：
+
 - 带 JWT 传递的请求转发到 scepter
 - 基于智能体聊天的 WebSocket 桥接
 - Webhook 入口和触发器转发
@@ -47,14 +49,14 @@ shittim-chest 支持两种运行模式：
 
 ## 认证模型
 
-认证使用 shittim_chest 签发的 JWT 令牌：
+认证使用 `shittim_chest` 签发的 JWT 令牌：
 
 1. **凭据存储**：密码（argon2 哈希）、会话、刷新令牌和 API 密钥存储在 `shittim_chest_db` 中。
-2. **GitHub OAuth**：用户可以使用 GitHub 登录；首次登录时自动创建账户。
-3. **权限存储**：用户分组、角色和权限矩阵存储在 `entelecheia_db` 中。
-4. **JWT 流程**：登录时，shittim_chest 在本地验证凭据，然后从 scepter 获取权限。签发的 JWT 包含 `{ sub: user_id, groups: [...] }`。
-5. **共享密钥**：JWT 签名密钥与 scepter 共享，因此两个服务可以独立验证令牌。
-6. **令牌轮换**：访问令牌有效期为 1 小时；刷新令牌为 7 天。每次使用刷新令牌时进行轮换。
+1. **GitHub OAuth**：用户可以使用 GitHub 登录；首次登录时自动创建账户。
+1. **权限存储**：用户分组、角色和权限矩阵存储在 `entelecheia_db` 中。
+1. **JWT 流程**：登录时，`shittim_chest` 在本地验证凭据，然后从 scepter 获取权限。签发的 JWT 包含 `{ sub: user_id, groups: [...] }`。
+1. **共享密钥**：JWT 签名密钥与 scepter 共享，因此两个服务可以独立验证令牌。
+1. **令牌轮换**：访问令牌有效期为 1 小时；刷新令牌为 7 天。每次使用刷新令牌时进行轮换。
 
 ## 前端 (webui)
 
@@ -92,22 +94,23 @@ shittim-chest 为 entelecheia/polemos 管理的远程设备提供基于浏览器
 
 ## 代理架构
 
-shittim_chest 充当用户和 scepter 之间的网关：
+`shittim_chest` 充当用户和 scepter 之间的网关：
 
 - **HTTP 反向代理**：`/api/proxy/*` 将经过认证的请求转发到 scepter，并传递 JWT。
 - **WebSocket 桥接**：聊天流式传输使用双向 WebSocket 转发（`浏览器 ↔ shittim_chest ↔ scepter`）。
 
-这使得 shittim_chest 可以强制执行速率限制、记录使用情况并管理连接生命周期，而 scepter 无需处理单个浏览器连接。
+这使得 `shittim_chest` 可以强制执行速率限制、记录使用情况并管理连接生命周期，而 scepter 无需处理单个浏览器连接。
 
 ## Webhook 管道
 
 外部事件通过 Webhook 管道到达智能体核心：
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 验证 → 解析事件 → 通过 Unix 套接字转发到 scepter → 智能体调度
 ```
 
 每个提供商有自己的验证机制：
+
 - **GitHub**：通过 `X-Hub-Signature-256` 进行 HMAC-SHA256
 - **GitLab**：通过 `X-Gitlab-Token` 进行令牌验证
 - **Gitee**：HMAC 配合令牌回退
@@ -125,7 +128,7 @@ GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 验证 → 解析事
   - 智能体白名单（分组可以访问哪些智能体）
   - 管理能力（管理用户、配置提供商）
 
-shittim_chest 在进程内缓存权限，带有 TTL（默认 5 分钟）。缓存在 TTL 过期、登出或从 scepter 传播的显式权限变更时失效。
+`shittim_chest` 在进程内缓存权限，带有 TTL（默认 5 分钟）。缓存在 TTL 过期、登出或从 scepter 传播的显式权限变更时失效。
 
 ## 前端策略
 
@@ -139,7 +142,7 @@ shittim-chest 采用两阶段前端方法：
 
 TypeScript 类型通过外部的 `arona` 协议 crate 从 Rust 代码生成，确保前端与后端的一致性：
 
-```
+```text
 arona Rust crate（git 依赖）
   → #[derive(ts_rs::TS)]
   → ts-rs codegen → packages/webui/src/types/arona/（TypeScript）

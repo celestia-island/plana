@@ -13,8 +13,8 @@ subcategory = "core"
 IEPL (In-Execution Prompt Language) Движок Выполнения — это архитектурное обновление существующей среды выполнения Cosmos/SkeMma JS, повышающее код выполнения, сгенерированный LLM, с JavaScript до TypeScript. Основные изменения включают:
 
 1. **Встроенный крейт SWC**: Строгая проверка синтаксиса, удаление типов и транспиляция TypeScript, сгенерированного LLM
-2. **Rust derive → генерация типов TypeScript**: Авто-экспорт структур Rust в файлы объявлений `.d.ts` через `ts-rs`
-3. **Типобезопасный Промпт Навыка**: Внедрение полных объявлений `.d.ts` вместо жёстко закодированных списков функций, значительно повышая надёжность
+1. **Rust derive → генерация типов TypeScript**: Авто-экспорт структур Rust в файлы объявлений `.d.ts` через `ts-rs`
+1. **Типобезопасный Промпт Навыка**: Внедрение полных объявлений `.d.ts` вместо жёстко закодированных списков функций, значительно повышая надёжность
 
 ## Текущее Состояние и Проблемы
 
@@ -30,7 +30,7 @@ flowchart LR
 ### Существующие Проблемы
 
 | Проблема | Описание |
-|---------|-------------|
+| --- | --- |
 | **Нет ограничений типов** | Сгенерированный LLM JS-код имеет нулевую статическую информацию о типах; опечатки параметров обнаруживаются только во время выполнения |
 | **Хрупкие описания интерфейсов** | `build_report_tool_instruction()` жёстко кодирует текстовые списки, такие как `- file_read (импортирован из 'kalos')`, неспособные выразить типы параметров или структуры возвращаемых значений |
 | **Нет предварительной проверки** | Код LLM напрямую поступает в Boa `eval()`; синтаксические ошибки обнаруживаются только во время выполнения |
@@ -40,7 +40,7 @@ flowchart LR
 ### Задействованные Ключевые Файлы
 
 | Файл | Текущая Ответственность |
-|------|----------------------|
+| --- | --- |
 | `packages/agents/skemma/src/js_runtime/runtime.rs` | Среда выполнения Boa JS, `exec()` напрямую вызывает `eval()` |
 | `packages/agents/skemma/src/mcp/tools/script_exec.rs` | Принимает только язык `"javascript"` |
 | `packages/cosmos/src/bin/cosmos/js_repl/js_commands.rs` | Динамически генерирует `globalThis.$agent.tool = (...) => ...` |
@@ -81,7 +81,7 @@ flowchart TB
 ### 1. Rust → Генерация Типов TypeScript: `ts-rs`
 
 | Атрибут | Значение |
-|-----------|-------|
+| --- | --- |
 | Крейт | `ts-rs` (Aleph-Alpha/ts-rs) |
 | Версия | ≥ 12.0 |
 | Звёзды | 1,772 |
@@ -100,7 +100,7 @@ flowchart TB
 **Исключённые Альтернативы:**
 
 | Крейт | Причина Исключения |
-|-------|---------------------|
+| --- | --- |
 | `specta` | Склонён к экосистеме Tauri/rspc; экспорт типов функций не нужен в этом сценарии |
 | `typeshare` | Управляется через CLI, неудобен для интеграции CI; генерирует `interface` вместо `type` (нет практической разницы для промптов LLM) |
 | `tsify` | Привязан к `wasm-bindgen`; этот проект не является рабочим процессом WASM |
@@ -108,7 +108,7 @@ flowchart TB
 ### 2. Парсинг и Транспиляция TypeScript: SWC
 
 | Крейт | Назначение |
-|-------|---------|
+| --- | --- |
 | `swc_core` (функция: `ecma_parser`) | Разбор исходного кода TS в AST |
 | `swc_core` (функция: `ecma_ast`) | Типы узлов AST |
 | `swc_core` (функция: `ecma_visit`) | Обход/трансформация AST |
@@ -148,16 +148,16 @@ ts-rs = { version = "12", features = ["serde-compat", "format"] }
 // packages/shared/src/mcp_types/kalos.rs
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileReadResult {
     pub path: String,
     pub size_bytes: u64,
     pub content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileListResult {
     pub path: String,
     pub total_count: usize,
@@ -173,7 +173,7 @@ pub struct FileListResult {
 // packages/shared/src/mcp_types/enums.rs
 // Существующие перечисления, сгенерированные макросом str_enum!, нуждаются в дополнительном derive TS
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+# [derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 pub enum FileType {
     File,
     Directory,
@@ -501,7 +501,8 @@ parts.push(format!("\nДоступные JS API:\n{}", items.join("\n")));
 ```
 
 Это генерирует:
-```
+
+```text
 Доступные JS API:
 - file_read (импортирован из 'kalos')
 - file_write (импортирован из 'kalos')
@@ -536,65 +537,69 @@ pub(super) fn build_report_tool_instruction(
 ```typescript
 Вы пишете код TypeScript. Доступные объявления типов API:
 
-```typescript
+```
+
 // === Типы (авто-сгенерированы из Rust) ===
-type FileReadResult = { path: string; size_bytes: number; content: string };
-type FileListResult = { path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> };
-type FileWriteResult = { path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" };
+type `FileReadResult` = { path: string; `size_bytes`: number; content: string };
+type `FileListResult` = { path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> };
+type `FileWriteResult` = { path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" };
 
 // === API (написано вручную) ===
 interface KalosApi {
-  file_read(params: { path: string }): Promise<FileReadResult>;
-  file_write(params: { path: string; content: string }): Promise<FileWriteResult>;
-  file_list(params: { path: string }): Promise<FileListResult>;
-  // ...
+`file_read`(params: { path: string }): Promise<`FileReadResult`>;
+`file_write`(params: { path: string; content: string }): Promise<`FileWriteResult`>;
+`file_list`(params: { path: string }): Promise<`FileListResult`>;
+// ...
 }
 
 declare const $kalos: KalosApi;
-```
+
+```text
 
 #### 3.3 Загрузчик .d.ts
 
-```rust
+```
+
 // packages/shared/src/iepl/decl_loader.rs
 
-use include_dir::{Dir, include_dir};
+use `include_dir`::{Dir, `include_dir`};
 
-static IEPL_BINDINGS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../bindings");
+static IEPL_BINDINGS: Dir = `include_dir`!("$CARGO_MANIFEST_DIR/../../../bindings");
 
-pub struct IeplDeclLoader;
+pub struct `IeplDeclLoader`;
 
-impl IeplDeclLoader {
-    /// Загрузить требуемые объявления .d.ts, отфильтрованные по related_tools
-    pub fn load_for_tools(related_tools: &[RelatedTool]) -> String {
-        let mut declarations = Vec::new();
+impl `IeplDeclLoader` {
+/// Загрузить требуемые объявления .d.ts, отфильтрованные по `related_tools`
+pub fn `load_for_tools`(`related_tools`: &[`RelatedTool`]) -> String {
+let mut declarations = Vec::new();
 
-        // Собрать набор задействованных агентов
-        let agents: std::collections::HashSet<&str> = related_tools
-            .iter()
-            .map(|t| t.agent_name.as_str())
-            .collect();
+// Собрать набор задействованных агентов
+let agents: std::collections::HashSet<&str> = `related_tools`
+.iter()
+.map(|t| t.agent_name.as_str())
+.collect();
 
-        for agent in &agents {
-            // Загрузить авто-сгенерированные объявления типов
-            if let Some(types_file) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(types_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-
-            // Загрузить написанные вручную объявления API
-            if let Some(api_file) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(api_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-        }
-
-        declarations.join("\n\n")
-    }
+for agent in &agents {
+// Загрузить авто-сгенерированные объявления типов
+if let Some(`types_file`) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(types_file.contents()) {
+declarations.push(content.to_string());
 }
-```
+}
+
+// Загрузить написанные вручную объявления API
+if let Some(`api_file`) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(api_file.contents()) {
+declarations.push(content.to_string());
+}
+}
+}
+
+declarations.join("\n\n")
+}
+}
+
+```text
 
 #### 3.4 Обновление Построителя Пространства Имён JS
 
@@ -604,24 +609,28 @@ impl IeplDeclLoader {
 
 ### Текущий (JavaScript)
 
-```mermaid
-flowchart TD
-    Meta["Метаданные Навыка\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta --> Build["build_report_tool_instruction\n→ '- file_read (импортирован)'\n→ '- file_write (импортирован)'\n(жёстко закодированный текст)"]
-    Build -->|"внедрён в\nсистемный промпт"| LLM1["LLM генерирует JavaScript\nfile_read({path:'x'})\n(без проверки типов)"]
-    LLM1 --> Boa1["Boa eval() прямое выполнение\n(без предварительной проверки)"]
 ```
+
+flowchart TD
+Meta["Метаданные Навыка\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta --> Build["`build_report_tool_instruction`\n→ '- `file_read` (импортирован)'\n→ '- `file_write` (импортирован)'\n(жёстко закодированный текст)"]
+Build -->|"внедрён в\nсистемный промпт"| LLM1["LLM генерирует JavaScript\`nfile_read`({path:'x'})\n(без проверки типов)"]
+LLM1 --> Boa1["Boa eval() прямое выполнение\n(без предварительной проверки)"]
+
+```text
 
 ### Целевой (TypeScript + IEPL)
 
-```mermaid
-flowchart TD
-    Meta2["Метаданные Навыка\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta2 --> Loader["IeplDeclLoader\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(полные объявления типов)"]
-    Loader -->|"внедрён в\nсистемный промпт"| LLM2["LLM генерирует TypeScript\nconst r: FileReadResult =\n  await file_read(\n    {path: 'x'}\n  );\n(ограничен типами)"]
-    LLM2 --> IEPL["Движок IEPL\n1. SWC разбор → AST (проверка синтаксиса)\n2. Валидатор AST (проверка безопасности)\n3. удаление типов → JS (удаление типов)\n4. codegen → строка JS"]
-    IEPL --> Boa2["Boa eval() выполнение"]
 ```
+
+flowchart TD
+Meta2["Метаданные Навыка\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta2 --> Loader["`IeplDeclLoader`\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(полные объявления типов)"]
+Loader -->|"внедрён в\nсистемный промпт"| LLM2["LLM генерирует TypeScript\nconst r: `FileReadResult` =\n  await `file_read`(\n    {path: 'x'}\n  );\n(ограничен типами)"]
+LLM2 --> IEPL["Движок IEPL\n1. SWC разбор → AST (проверка синтаксиса)\n2. Валидатор AST (проверка безопасности)\n3. удаление типов → JS (удаление типов)\n4. codegen → строка JS"]
+IEPL --> Boa2["Boa eval() выполнение"]
+
+```text
 
 ## Анализ Улучшения Надёжности
 
@@ -642,24 +651,29 @@ flowchart TD
 Текущий фрагмент промпта, который видит LLM:
 
 ```
+
 Доступные JS API:
-- file_read (импортирован из 'kalos')
-- file_write (импортирован из 'kalos')
+
+- `file_read` (импортирован из 'kalos')
+- `file_write` (импортирован из 'kalos')
 - report()
-```
+
+```text
 
 Фрагмент промпта, который видит LLM в IEPL:
 
-```typescript
+```
+
 declare const $kalos: {
-  file_read(params: { path: string }): Promise<{ path: string; size_bytes: number; content: string }>;
-  file_write(params: { path: string; content: string }): Promise<{ path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" }>;
-  file_list(params: { path: string }): Promise<{ path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> }>;
+`file_read`(params: { path: string }): Promise<{ path: string; `size_bytes`: number; content: string }>;
+`file_write`(params: { path: string; content: string }): Promise<{ path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" }>;
+`file_list`(params: { path: string }): Promise<{ path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> }>;
 };
 // инструменты hubris доступны через импорт ES модуля: import { report } from 'hubris'
-  report(params: { summary: string }): Promise<{ summary: string }>;
+report(params: { summary: string }): Promise<{ summary: string }>;
 };
-```
+
+```text
 
 Последнее предоставляет:
 - Точные имена и типы параметров
@@ -669,39 +683,44 @@ declare const $kalos: {
 
 ## Сводка Новых Зависимостей Рабочего Пространства
 
-```toml
-# Новые
-ts-rs = { version = "12", features = ["serde-compat", "format"] }
-swc_core = { version = "65", features = [
-    "ecma_parser",
-    "ecma_ast",
-    "ecma_visit",
-    "ecma_transforms_base",
-    "ecma_transforms_typescript",
-    "ecma_codegen",
-    "common",
-] }
 ```
+
+# Новые
+
+ts-rs = { version = "12", features = ["serde-compat", "format"] }
+`swc_core` = { version = "65", features = [
+"`ecma_parser`",
+"`ecma_ast`",
+"`ecma_visit`",
+"`ecma_transforms_base`",
+"`ecma_transforms_typescript`",
+"`ecma_codegen`",
+"common",
+] }
+
+```text
 
 ## Новая Структура Крейтов
 
-```mermaid
-flowchart LR
-    SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
-    SkemmaIepl --> SM2["engine.rs\nIeplEngine: transpile(ts_code) -> Result&lt;TranspileResult&gt;"]
-    SkemmaIepl --> SM3["ast_validator.rs\nAstValidator: обнаружение опасных шаблонов"]
-    SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod decl_loader;"]
-    SharedIepl --> SH2["decl_loader.rs\nIeplDeclLoader: загрузка .d.ts, отфильтрованных по related_tools"]
-    Bindings["bindings/\nСгенерированные артефакты, отслеживаются в git"] --> BTypes["types/\nts-rs авто-экспорт"]
-    Bindings --> BApi["api/\nНаписано и поддерживается вручную"]
-    Bindings --> BIepl["iepl-api.d.ts\nОбъединённый артефакт (опционально)"]
-    BTypes --> BT1["kalos.d.ts"]
-    BTypes --> BT2["neikos.d.ts"]
-    BTypes --> BT3["..."]
-    BApi --> BA1["kalos.d.ts"]
-    BApi --> BA2["neikos.d.ts"]
-    BApi --> BA3["..."]
 ```
+
+flowchart LR
+SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod `ast_validator`;"]
+SkemmaIepl --> SM2["engine.rs\`nIeplEngine`: transpile(`ts_code`) -> Result&lt;`TranspileResult`&gt;"]
+SkemmaIepl --> SM3["ast_validator.rs\`nAstValidator`: обнаружение опасных шаблонов"]
+SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod `decl_loader`;"]
+SharedIepl --> SH2["decl_loader.rs\`nIeplDeclLoader`: загрузка .d.ts, отфильтрованных по `related_tools`"]
+Bindings["bindings/\nСгенерированные артефакты, отслеживаются в git"] --> BTypes["types/\nts-rs авто-экспорт"]
+Bindings --> BApi["api/\nНаписано и поддерживается вручную"]
+Bindings --> BIepl["iepl-api.d.ts\nОбъединённый артефакт (опционально)"]
+BTypes --> BT1["kalos.d.ts"]
+BTypes --> BT2["neikos.d.ts"]
+BTypes --> BT3["..."]
+BApi --> BA1["kalos.d.ts"]
+BApi --> BA2["neikos.d.ts"]
+BApi --> BA3["..."]
+
+```text
 
 ## Путь Реализации
 

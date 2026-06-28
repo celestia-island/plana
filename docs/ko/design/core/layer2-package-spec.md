@@ -53,6 +53,7 @@ export async function memory_store(params: {
 ```
 
 도구는 다음과 같이 분류됩니다:
+
 - **순수 TS**: 로직 전용, 다른 도구를 합성하거나 데이터 변환
 - **백엔드 지원**: MCP 백엔드가 제공하는 프리미티브 호출
 - **클라우드 지원**: 원격 API 호출 (RAG, 모델, 외부 서비스)
@@ -68,6 +69,7 @@ TypeScript 소스는 순수 텍스트이므로, 컴파일 없이 버전 관리, 
 - 백엔드는 프리미티브 연산을 노출하며, 모든 합성과 오케스트레이션은 TS 레이어에서 이루어집니다.
 
 백엔드 인터페이스 예시 (Rust로부터 자동 생성):
+
 ```typescript
 // Rust 백엔드로부터 자동 생성
 declare module 'backend' {
@@ -117,7 +119,7 @@ tier = "worker"
 
 ## 패키지 디렉터리 구조
 
-```
+```text
 packages/agents/{agent_name}/
 ├── manifest.toml           # 패키지 메타데이터 및 설정
 ├── mcp/
@@ -200,7 +202,7 @@ export function vars_set(key: string, value: unknown): void;
 ## 레이어 아키텍처
 
 | 레이어 | 에이전트 | 배포 방식 | 패키지? | 컨테이너? |
-|-------|--------|-----------|----------|------------|
+| --- | --- | --- | --- | --- |
 | L1 | SkeMma, HapLotes, HubRis, KaLos, NeiKos, ApoRia, EleOs, EpieiKeia, OreXis, PhiLia, PoleMos, SkoPeo | 이미지 내장 | 백엔드 전용 (Rust 크레이트) | 아니오 (인프로세스) |
 | L2 | ClassicSoftwareEngineering, WebAutomation, WebUiPanel, IndustrialIoT | 이미지 내장 | **전체 패키지** (TS + 스킬 + 소울) | 예 (e-skemma) |
 | L3 | 사용자 설치 확장 | 동적 설치 | **전체 패키지** | 예 (e-skemma) |

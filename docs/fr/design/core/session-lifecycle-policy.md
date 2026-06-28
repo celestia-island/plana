@@ -56,6 +56,7 @@ Tous les paramètres du cycle de vie résident dans `StorageLifecycleConfig` (en
 ### Table conversations (entelecheia)
 
 Colonnes ajoutées :
+
 - `parent_conversation_id UUID REFERENCES conversations(conversation_id)` — suivi des sessions enfants
 - `is_archived BOOLEAN NOT NULL DEFAULT FALSE` — drapeau d'archivage
 - `archived_at TIMESTAMPTZ` — quand l'archivage a eu lieu
@@ -64,6 +65,7 @@ Colonnes ajoutées :
 ### Table messages (entelecheia)
 
 Colonnes ajoutées :
+
 - `is_compacted BOOLEAN NOT NULL DEFAULT FALSE` — marque les messages compactés éligibles au nettoyage de contenu
 - `metadata JSONB NOT NULL DEFAULT '{}'` — métadonnées extensibles
 
@@ -78,7 +80,7 @@ Nouvelle table pour la persistance de session kirino (backend SQL).
 ## Phases d'Implémentation
 
 | Phase | Description | Statut |
-|-------|-------------|--------|
+| --- | --- | --- |
 | 0.1 | Corrections de migration de schéma (dialogue_events, mise à niveau conversations/messages) | Fait |
 | 1.2 | Espace de noms de configuration unifié (`StorageLifecycleConfig`) | Fait |
 | 0.2 | `ConversationStore` avec méthodes CRUD + nettoyage | Fait |
@@ -133,13 +135,13 @@ graph TD
 
 1. **Création** : Lorsqu'une chaîne de compétences génère une sous-tâche, une nouvelle conversation est créée avec `parent_conversation_id` défini sur le `conversation_id` du parent.
 
-2. **Archivage indépendant** : Les enfants peuvent être archivés indépendamment du parent. Lorsqu'une tâche enfant se termine, elle est automatiquement archivée après `CHILD_SESSION_RETENTION_DAYS` (par défaut 7 jours).
+1. **Archivage indépendant** : Les enfants peuvent être archivés indépendamment du parent. Lorsqu'une tâche enfant se termine, elle est automatiquement archivée après `CHILD_SESSION_RETENTION_DAYS` (par défaut 7 jours).
 
-3. **Cascade sur archivage du parent** : Lorsqu'un parent est archivé, tous les enfants sont archivés. Lorsqu'un parent est supprimé, tous les enfants sont supprimés.
+1. **Cascade sur archivage du parent** : Lorsqu'un parent est archivé, tous les enfants sont archivés. Lorsqu'un parent est supprimé, tous les enfants sont supprimés.
 
-4. **Gestion des orphelins** : Les conversations avec `parent_conversation_id` pointant vers un parent supprimé/inexistant sont traitées comme orphelines et nettoyées après `ORPHAN_CONVERSATION_TTL_DAYS` (par défaut 30 jours).
+1. **Gestion des orphelins** : Les conversations avec `parent_conversation_id` pointant vers un parent supprimé/inexistant sont traitées comme orphelines et nettoyées après `ORPHAN_CONVERSATION_TTL_DAYS` (par défaut 30 jours).
 
-5. **Éligibilité au compactage** : Les conversations enfants sont éligibles au compactage des messages immédiatement après l'archivage (pas de période de grâce), puisque le parent conserve le résumé.
+1. **Éligibilité au compactage** : Les conversations enfants sont éligibles au compactage des messages immédiatement après l'archivage (pas de période de grâce), puisque le parent conserve le résumé.
 
 ### Requêtes de Nettoyage
 
@@ -170,6 +172,6 @@ DELETE FROM conversations WHERE is_archived = TRUE
   - `cascade_delete_orphaned_children()` — supprime les enfants dont le parent a été supprimé
   - `cleanup_expired_child_conversations()` — nettoyage basé sur TTL pour les enfants archivés
   - `cleanup_orphan_conversations()` — nettoyage des enfants avec parent manquant
-  - `enforce_max_dialogue_records()` — plafond dur sur le nombre de dialogue_events
+  - `enforce_max_dialogue_records()` — plafond dur sur le nombre de `dialogue_events`
   - `enforce_max_conversations()` — plafond dur sur le nombre de conversations actives
 - Toutes enregistrées comme tâches de nettoyage périodiques dans `setup.rs` de scepter

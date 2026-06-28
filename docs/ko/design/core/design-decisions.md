@@ -15,7 +15,7 @@ ADR은 [Michael Nygard ADR 템플릿](https://cognitect.com/blog/2011/11/15/docu
 ## 색인
 
 | ADR | 제목 | 상태 |
-|-----|-------|--------|
+| --- | --- | --- |
 | [ADR-001](en/exec-only-microkernel-tool-surface.md) | Exec-Only 마이크로커널 도구 표면 | 승인됨 |
 | [ADR-002](en/boa-javascript-engine.md) | 임베디드 JavaScript 엔진으로서의 Boa | 승인됨 |
 | [ADR-003](en/postgresql-pgvector-storage.md) | 통합 데이터 저장소를 위한 PostgreSQL + PgVector | 승인됨 |
@@ -25,7 +25,7 @@ ADR은 [Michael Nygard ADR 템플릿](https://cognitect.com/blog/2011/11/15/docu
 ## 언어 디렉터리
 
 | 코드 | 언어 |
-|------|------|
+| --- | --- |
 | `en/` | 영어 (권위) |
 | `zhs/` | 중국어 간체 |
 | `zht/` | 중국어 번체 |

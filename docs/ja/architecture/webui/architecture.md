@@ -17,7 +17,7 @@ subcategory = "webui"
 shittim-chestはハイブリッドCargo + pnpmモノレポです。entelecheiaのエージェントオーケストレーションコアをラップするユーザー向け層を所有します。2つのプロジェクトはJWT認証されたHTTP/WebSocketを通じて通信します — shittim-chestがエージェント操作のためにentelecheiaのデータベースに直接アクセスすることはありません。
 
 | コンポーネント | 技術 | 役割 | 状態 |
-|-----------|------|------|--------|
+| --- | --- | --- | --- |
 | **core** | Rust + Axum | 統合バックエンド: 認証（JWT + OAuth）、独立したLLMルーティング、チャットAPI、画像生成、webhookイングレス、scepterプロキシ、リモートデバイスシグナリング、チャネル統合、課金、RBAC、ワークスペース | 🟢 実装済み |
 | **cli** | Rust | Dockerオーケストレーター: dev、up、down、migrate、logs、status | 🟢 実装済み |
 | **webui** | Vue 3 + Vite (TSX) | フロントエンド: チャット画面、管理パネル（20以上のビュー）、2D SCADAトポロジー、3Dホログラフィックプレビュー | 🟡 部分的 |
@@ -108,6 +108,7 @@ sequenceDiagram
 ### 認証 (`packages/core/src/auth/`)
 
 完全実装:
+
 - argon2ハッシュを用いたユーザー名/パスワード登録およびログイン
 - ローテーション付きJWTアクセス + リフレッシュトークンシステム
 - GitHub OAuth 2.0統合（リダイレクト + コールバック、ユーザーを自動作成）
@@ -117,6 +118,7 @@ sequenceDiagram
 ### チャット (`packages/core/src/chat/`)
 
 完全実装:
+
 - 会話CRUD（作成、一覧、取得、更新、削除）
 - LLMルーティング付きメッセージ送信/受信
 - SSE（Server-Sent Events）ストリーミング応答（`/api/chat/stream`）
@@ -127,6 +129,7 @@ sequenceDiagram
 ### LLM (`packages/core/src/llm/`)
 
 完全実装:
+
 - チャットおよび画像生成用OpenAI互換HTTPクライアント
 - 優先度ベースの選択とフォールバック付きマルチプロバイダールーター
 - APIキー暗号化付きプロバイダーCRUD（AES-256-GCM）
@@ -136,12 +139,14 @@ sequenceDiagram
 ### 生成 (`packages/core/src/generation/`)
 
 完全実装:
+
 - 画像生成エンドポイント（`/api/generation/images`、`/api/generation/models`）
 - 設定済みLLMプロバイダーを使用
 
 ### Webhook (`packages/core/src/webhook.rs`)
 
 完全実装（約1,000行以上）:
+
 - HMAC-SHA256検証付きGitHub webhook
 - トークン検証付きGitLab webhook
 - HMAC + トークンフォールバック付きGitee webhook
@@ -154,6 +159,7 @@ sequenceDiagram
 ### デバイス (`packages/core/src/devices/`)
 
 シグナリングリレーが実装（WebRTCハンドシェイクには外部scepterが必要）:
+
 - デバイス一覧、詳細、セッションCRUD用RESTエンドポイント
 - WebRTC用WebSocketシグナリングリレー — SDPオファー/ICE候補をUnixソケット経由でscepterに転送。SDPアンサーはscepterから来る必要がある（`forward_sdp_to_scepter`はscepterが到達不能の場合空文字列を返す）
 - ターミナルリレー（xterm.jsへのWebSocket経由） — キーストロークをscepterに転送
@@ -167,6 +173,7 @@ sequenceDiagram
 ### チャネル (`packages/core/src/channel/`)
 
 完全実装（22モジュールファイル + `mod.rs`）:
+
 - 12プラットフォームコネクタ: Telegram、Discord、Slack、Lark/Feishu、QQ Bot、WeCom、IRC、Matrix、Mattermost、Google Chat、Microsoft Teams、LINE
 - プラットフォームごとの本物のAPIクライアント実装
 - DMポリシー制御（`dm_policy.rs`）
@@ -180,7 +187,7 @@ sequenceDiagram
 ### 追加バックエンドモジュール
 
 | モジュール | 説明 |
-|--------|-------------|
+| --- | --- |
 | `proxy/` | Scepter HTTP/WSブリッジ（`ws_bridge.rs`はコードベース最大の単一ファイル） |
 | `rbac/` | ロールベースアクセス制御 |
 | `workspace/` | ワークスペース管理 |
@@ -211,7 +218,7 @@ Vue 3 + Viteフロントエンド、TSXで記述（`@vitejs/plugin-vue-jsx`経�
 #### ビュー
 
 | ビューグループ | 説明 |
-|------------|-------------|
+| --- | --- |
 | `demiurge/` | メインチャット画面（DemiurgeView） — ストリーミング応答、エージェント状態、ツール呼び出し |
 | `auth/` | LoginView、RegisterView、SetupView |
 | `admin/` | 20以上の管理ビュー: ダッシュボード、プロバイダー、エージェント、RBAC、Webhook、チャネル、システム、デバイスモデル、デバイス設定、スキル、MCPツール、OAuthプロバイダー、トークン使用量、ワークスペース、音声サービス、リソースクォータ など |
@@ -221,7 +228,7 @@ Vue 3 + Viteフロントエンド、TSXで記述（`@vitejs/plugin-vue-jsx`経�
 #### コンポーネントシステム
 
 | ディレクトリ | 説明 |
-|-----------|-------------|
+| --- | --- |
 | `base/` | 50以上の`S`接頭辞デザインシステムコンポーネント（SButton、SCard、SModal、STable、STabs、STimeline、STreeView、SMarkdownRenderer、SMorphingTabs など） |
 | `chat/` | チャット固有コンポーネント（ChatBubble、AgentStatusBar、FloatingChatBar、ThinkingDots、ReportViewer、NodeMinimap など） |
 | `header/` | ヘッダーコンポーネント（パンくずリストバー、モード切替） |
@@ -237,7 +244,7 @@ webui内のすべてのCSS駆動モーションとフレーム単位のサンプ
 バスは4つの作業登録APIと2つのサイドチャネルフラグを公開します:
 
 | API | 目的 | フレームモデル |
-|-----|---------|-------------|
+| --- | --- | --- |
 | `onFrame(cb, priority?)` | フレームごとのコールバックを登録。`priority` ∈ `sync` / `normal` / `idle`。`{ disconnect() }`を返す。 | 毎フレーム呼び出し（sync）、約30 Hzの予算に間引き（normal）、約0.5 Hzの予算に間引き（idle）。 |
 | `onceFrame(cb)` | 次のフレームでコールバックを実行し、自動切断。ファイアアンドフォーゲット（キャンセルハンドルなし）。 | ワンショット。 |
 | `scheduleFrame(cb)` | 次のフレームでコールバックを実行。発火前にキャンセルするための`{ disconnect() }`を返す。「多数の呼び出しを1つのポストフレームコールバックに集約する」スロットルパターン用（手書きの`if(rafId)cancel; rafId=rAF(cb)`イディオムを置き換え）。 | ワンショット（キャンセル可能）。 |
@@ -273,7 +280,7 @@ DOMバスは意図的に**`packages/webui/src/composables/three/animationBus3D.t
 webuiは自身の`src/`を**意図的に区別された2つのパスエイリアス**（両方とも`vite.config.ts` + `tsconfig.json`で宣言）を通じて消費し、コードベース全体がこの分割に従います:
 
 | エイリアス | 解決先 | 用途 |
-|-------|-------------|-----------|
+| --- | --- | --- |
 | `@/<path>` | `src/*` | **内部の深いインポート** — 特定のモジュールに直接到達（`@/api/client`、`@/composables/useReportedTransition`、`@/theme/animationBus`）。約600箇所。裸のバレルとして使用されることはない。 |
 | `@celestia-island/shared_ui` | `src/`（→ `src/index.ts`バレル） | **厳選された公開APIサーフェスのみ** — 常に裸の指定子で、コードサブパスではない。約92箇所。 |
 
@@ -294,13 +301,11 @@ webuiは**`vue-i18n`**（カスタム実装ではない）を使用し、**11の
 各ロケールには**17の名前空間JSONファイル**があります（admin、auth、chat、cmd、common、devices、errors、footer、help、logs、models、reports、skills、timeline、tokenUsage、tools、workspace）。アプリ内ロケール切り替えはヘッダーのロケールピッカーから利用可能です。
 
 > **翻訳の完全性は大幅に異なります**（950の英語リファレンスキーに対して監査）:
->
 > | 階層 | ロケール | 英語パススルー | キーギャップ |
 > |------|---------|-------------------|---------|
 > | 十分に翻訳 | `ja`、`ko`、`zhs`、`zht` | ~5% | `zhs`は18キー不足。他は112不足 |
 > | ほぼ翻訳 | `de`、`fr`、`pt`、`es`、`ar` | ~9–14% | 共通の112キーブロックが不足 |
 > | 実質的に未翻訳 | `ru` | **~76%** | キー数は完全だが、値は逐語的な英語 |
->
 > 共通の112キーギャップは新しい機能をカバーします: `admin.agents.*`、`admin.deviceModels.*`、`admin.projects.*`、`admin.rbac.*`、`admin.resourceQuota.*`、`auth.protocol.*`、`chat.cruise.*`、`chat.voice_*`。
 
 ## RBACアーキテクチャ
@@ -310,7 +315,7 @@ webuiは**`vue-i18n`**（カスタム実装ではない）を使用し、**11の
 クリーンな境界を維持するために、データ所有権は2つのプロジェクト間で分割されます:
 
 | データ | データベース | 所有者 | 根拠 |
-|------|----------|-------|-----------|
+| --- | --- | --- | --- |
 | ユーザー認証情報（パスワードハッシュ、OAuth、APIキー） | shittim_chest_db | shittim-chest | プレゼンテーション層がログインフローを所有 |
 | アクティブセッション、リフレッシュトークン | shittim_chest_db | shittim-chest | セッション管理はフロントエンドの関心事 |
 | 会話、メッセージ | shittim_chest_db | shittim-chest | チャットデータはユーザー向け |
@@ -322,11 +327,11 @@ webuiは**`vue-i18n`**（カスタム実装ではない）を使用し、**11の
 ### 認証フロー
 
 1. ユーザーがcoreを通じて認証（パスワード / OAuth）
-2. coreがshittim_chest_dbに対して認証情報を検証（パスワードにはargon2）
-3. coreがentelecheiaにユーザーのグループ権限をクエリ（またはTTLキャッシュから読み取り）
-4. coreが`{ sub: user_id, groups: [...] }`を含むJWTを発行
-5. 後続のすべてのリクエストはJWTを保持 → coreが検証 → プロキシルートのためにscepterに転送
-6. scepterがJWTを検証（環境変数経由の共有秘密鍵）し、グループレベルの権限を強制
+1. coreがshittim_chest_dbに対して認証情報を検証（パスワードにはargon2）
+1. coreがentelecheiaにユーザーのグループ権限をクエリ（またはTTLキャッシュから読み取り）
+1. coreが`{ sub: user_id, groups: [...] }`を含むJWTを発行
+1. 後続のすべてのリクエストはJWTを保持 → coreが検証 → プロキシルートのためにscepterに転送
+1. scepterがJWTを検証（環境変数経由の共有秘密鍵）し、グループレベルの権限を強制
 
 ## クロスプロジェクト依存関係
 
@@ -357,7 +362,7 @@ webuiは`arona`クレートのTSバインディングを`@celestia-island/arona`
 以下の機能はshittim-chest内に本物の実装がありますが、完全な機能のためには動作中の[entelecheia/scepter](https://github.com/celestia-island/entelecheia)インスタンスが必要です:
 
 | 機能 | 動作するもの | scepterが必要なもの |
-|---------|-----------|-------------------|
+| --- | --- | --- |
 | トポロジーSCADA | WSトランスポート、SVGレンダリング、パンくずリストナビゲーション | ライブテレメトリデータ（scepterに転送される`topology.*` RPC） |
 | ホログラフィック3D | GLBモデル読み込み、シーン設定、カメラ制御 | テレメトリパラメータチップ |
 | デバイスWebRTC | シグナリングリレー、JWT認証、ICE転送 | SDPアンサー生成 |
@@ -381,7 +386,7 @@ scepterがない場合、トポロジーは`SIMULATED_DEVICES`（ハードコー
 `skills.rs`と`tools.rs` RESTエンドポイントはフォールバック専用のスタブのままです（`[]`を返す）が、**主要なWSパスは`ws_bridge.rs`の汎用通知-応答ブリッジを通じて完全に配線されています**。このブリッジはwebuiのリクエスト-レスポンスメソッドをscepterの通知スタイルのペアアクションに変換します:
 
 | WSメソッド | Scepterペア | 状態 |
-|-----------|-------------|--------|
+| --- | --- | --- |
 | `skills.list` | `Skill.ListSkills` → `SkillsListResponse` | ✅ ブリッジ済み（フィールドマッパー） |
 | `tools.list` | `Mcp.ListTools` → `ToolsListResponse` | ✅ ブリッジ済み（フィールドマッパー） |
 | `layer2.agents.list` | `Tui.Layer2AgentList` → Response | ✅ ブリッジ済み（同一性） |
@@ -399,7 +404,7 @@ scepterがない場合、トポロジーは`SIMULATED_DEVICES`（ハードコー
 ## ライセンス
 
 | パラメータ | 値 |
-|-----------|-------|
+| --- | --- |
 | 商用ライセンス | Business Source License 1.1 (BUSL-1.1) |
 | 非商用利用 | Synthetic Source License 1.0 (SySL-1.0) |
 | 追加利用許諾 | 内部プロダクション、学術、政府、非商用利用が許可 |

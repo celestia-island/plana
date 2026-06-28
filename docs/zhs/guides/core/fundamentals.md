@@ -54,7 +54,7 @@ Skill 是基于 prompt 定义的工作流，会引用相关工具，有时也引
 ### 层级
 
 | 层级 | 当前含义 |
-|------|----------|
+| --- | --- |
 | Layer1 | workspace 中编译启用的核心 Agent |
 | Layer2 | Web Automation 这一活跃内置领域 Agent，加上若干归档设计 |
 | Layer3 | 用户自定义 Agent（计划中，尚未实现） |

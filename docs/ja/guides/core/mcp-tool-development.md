@@ -48,8 +48,8 @@ Skill の TOML frontmatter 内の `related_tools` 宣言が、LLM に送信さ�
 MCP ツールは 3 つの部分で構成されます：
 
 1. **Rust 実装** — 実際のロジック、`packages/agents/<agent>/src/mcp/tools/` に配置
-2. **Registry ディスパッチ** — ルーティング、`packages/agents/<agent>/src/mcp/registry.rs` に配置
-3. **ツール名定数** — 文字列定数、`packages/shared/domain_skills/src/tool_names.rs` に配置
+1. **Registry ディスパッチ** — ルーティング、`packages/agents/<agent>/src/mcp/registry.rs` に配置
+1. **ツール名定数** — 文字列定数、`packages/shared/domain_skills/src/tool_names.rs` に配置
 
 ### mcp/registry.rs でのツール定義
 
@@ -168,7 +168,7 @@ use tokio::sync::RwLock;
 use crate::state::HubrisState;
 use _shared::skills::mcp_tools::{validate_required_params, McpToolResult};
 
-#[derive(Serialize, Debug, Clone)]
+# [derive(Serialize, Debug, Clone)]
 struct MyNewToolResult {
     id: String,
     message: String,
@@ -448,7 +448,7 @@ McpToolResult::failure("Error".into())
 `Value` パラメータを構築し `McpToolResult` をアサートすることで、各ツール関数を直接テストします：
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_report_success() {
     use std::sync::Arc;
     use tokio::sync::RwLock;
@@ -469,7 +469,7 @@ async fn test_report_success() {
     assert_eq!(state.pending_reports[0], "Test report content");
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_report_empty_text() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({
@@ -488,7 +488,7 @@ async fn test_report_empty_text() {
 Registry がツール名を正しくルーティングするかをテストします：
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_routes_known_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({"text": "hello"});
@@ -497,7 +497,7 @@ async fn test_registry_routes_known_tool() {
     assert!(result.success);
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_rejects_unknown_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({});
@@ -513,14 +513,14 @@ async fn test_registry_rejects_unknown_tool() {
 `validate_required_params` ヘルパー関数を直接テストします：
 
 ```rust
-#[test]
+# [test]
 fn test_validate_required_params_all_present() {
     let params = serde_json::json!({"title": "test", "content": "body"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
     assert!(result.is_none());
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_missing() {
     let params = serde_json::json!({"title": "test"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
@@ -530,7 +530,7 @@ fn test_validate_required_params_missing() {
     assert!(failure.error[0].contains("content"));
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_empty_string() {
     let params = serde_json::json!({"title": ""});
     let result = validate_required_params(&params, &["title"], "test_tool");
@@ -543,7 +543,7 @@ fn test_validate_required_params_empty_string() {
 データベース Store に依存するツールの場合、通常はインメモリまたはテストデータベースを使用してテストします：
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_create_todo_success() {
     // セットアップ：テスト TodoStore を作成（テストインフラに依存）
     let todo_store = create_test_store().await;
@@ -583,7 +583,7 @@ cargo test -p hubris -- --nocapture
 ## クイックリファレンス：主要ファイル
 
 | 用途 | パス |
-|---------|------|
+| --- | --- |
 | `McpToolResult` 定義 | `packages/shared/domain_skills/src/mcp_tools.rs` |
 | `validate_required_params` | `packages/shared/domain_skills/src/mcp_tools.rs:12-41` |
 | ツール名定数 | `packages/shared/domain_skills/src/tool_names.rs` |

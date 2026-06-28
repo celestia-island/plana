@@ -15,7 +15,7 @@ subcategory = "core"
 There are three practically usable extension tiers in the current repository.
 
 | Tier | Current meaning |
-|------|----------|
+| --- | --- |
 | Layer1 | Core agents implemented as Rust crates and compiled into the workspace |
 | Layer2 | Web Automation, the active built-in domain agent, plus some archived or planning materials |
 | Layer3 | User-defined agents (planned, not yet implemented) |

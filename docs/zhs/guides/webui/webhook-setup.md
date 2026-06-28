@@ -15,11 +15,11 @@ subcategory = "webui"
 
 Webhook 允许外部服务（GitHub、GitLab、Gitee）将实时事件发送到 shittim-chest。事件经过验证、解析后转发到 scepter，由 scepter 分发给相应的智能体。
 
-```
+```text
 外部服务 → shittim_chest → scepter → 智能体
 ```
 
-shittim_chest 还支持不原生支持的自定义 Webhook 端点。
+`shittim_chest` 还支持不原生支持的自定义 Webhook 端点。
 
 ## GitHub Webhook 设置
 
@@ -41,12 +41,12 @@ openssl rand -hex 32
 ### 步骤 2：在 GitHub 中创建 Webhook
 
 1. 导航到您的仓库 → **Settings** → **Webhooks** → **Add webhook**
-2. 将 **Payload URL** 设置为 `https://your-domain.com/api/webhook/github`
-3. 将 **Content type** 设置为 `application/json`
-4. 将 **Secret** 设置为与 `WEBHOOK_GITHUB_SECRET` 相同的值
-5. 选择事件：`push`、`pull_request`、`issues`、`issue_comment`
-6. 确保 **Active** 已勾选
-7. 点击 **Add webhook**
+1. 将 **Payload URL** 设置为 `https://your-domain.com/api/webhook/github`
+1. 将 **Content type** 设置为 `application/json`
+1. 将 **Secret** 设置为与 `WEBHOOK_GITHUB_SECRET` 相同的值
+1. 选择事件：`push`、`pull_request`、`issues`、`issue_comment`
+1. 确保 **Active** 已勾选
+1. 点击 **Add webhook**
 
 ### 步骤 3：验证
 
@@ -63,11 +63,11 @@ WEBHOOK_GITLAB_SECRET=your-gitlab-secret-token
 ### 步骤 2：在 GitLab 中创建 Webhook
 
 1. 导航到您的项目 → **Settings** → **Webhooks**
-2. 将 **URL** 设置为 `https://your-domain.com/api/webhook/gitlab`
-3. 将 **Secret token** 设置为与 `WEBHOOK_GITLAB_SECRET` 相同的值
-4. 选择触发器：`Push events`、`Merge request events`、`Issue events`
-5. 确保 **Enable SSL verification** 已勾选（HTTPS 环境下）
-6. 点击 **Add webhook**
+1. 将 **URL** 设置为 `https://your-domain.com/api/webhook/gitlab`
+1. 将 **Secret token** 设置为与 `WEBHOOK_GITLAB_SECRET` 相同的值
+1. 选择触发器：`Push events`、`Merge request events`、`Issue events`
+1. 确保 **Enable SSL verification** 已勾选（HTTPS 环境下）
+1. 点击 **Add webhook**
 
 ### 步骤 3：验证
 
@@ -84,28 +84,28 @@ Gitee 使用相同的 `WEBHOOK_GITLAB_SECRET` 进行 HMAC 验证（令牌作为�
 ### 步骤 2：在 Gitee 中创建 Webhook
 
 1. 导航到您的仓库 → **管理** → **Webhooks**
-2. 将 **URL** 设置为 `https://your-domain.com/api/webhook/gitee`
-3. 将 **密码/签名密钥** 设置为相同的密钥
-4. 选择事件：`Push`、`Pull Request`、`Issues`
-5. 点击 **添加**
+1. 将 **URL** 设置为 `https://your-domain.com/api/webhook/gitee`
+1. 将 **密码/签名密钥** 设置为相同的密钥
+1. 选择事件：`Push`、`Pull Request`、`Issues`
+1. 点击 **添加**
 
 ## 自定义 Webhook
 
-shittim_chest 在 `/api/webhook/custom/{name}` 支持通用自定义 Webhook 端点。要添加自定义 Webhook 来源：
+`shittim_chest` 在 `/api/webhook/custom/{name}` 支持通用自定义 Webhook 端点。要添加自定义 Webhook 来源：
 
 1. 在 `.env` 中设置 `WEBHOOK_PUBLIC_URL`
-2. 配置外部服务将 POST 请求发送到 `https://your-domain.com/api/webhook/custom/{name}`
-3. 事件将以该 Webhook 名称作为事件来源转发到 scepter
+1. 配置外部服务将 POST 请求发送到 `https://your-domain.com/api/webhook/custom/{name}`
+1. 事件将以该 Webhook 名称作为事件来源转发到 scepter
 
 在代码层面集成新的 Webhook 提供商：
 
 1. 在 `packages/core/src/webhook.rs` 中添加处理器
-2. 为新提供商实现 HMAC 或令牌验证
-3. 解析自定义事件格式并通过 Unix 套接字转发到 scepter
+1. 为新提供商实现 HMAC 或令牌验证
+1. 解析自定义事件格式并通过 Unix 套接字转发到 scepter
 
 ## IP 白名单
 
-shittim_chest 支持 Webhook 来源的 IP 白名单，以拒绝来自未知来源的请求：
+`shittim_chest` 支持 Webhook 来源的 IP 白名单，以拒绝来自未知来源的请求：
 
 ```bash
 # .env
@@ -119,7 +119,7 @@ WEBHOOK_IP_WHITELIST=140.82.112.0/20,192.30.252.0/22  # GitHub IP
 支持的事件及其到 scepter 触发器的映射：
 
 | 来源 | 事件 | scepter `event_type` |
-|--------|-------|---------------------|
+| --- | --- | --- |
 | GitHub | `push` | `github.push` |
 | GitHub | `pull_request` | `github.pull_request` |
 | GitHub | `issues` | `github.issues` |
@@ -133,7 +133,7 @@ WEBHOOK_IP_WHITELIST=140.82.112.0/20,192.30.252.0/22  # GitHub IP
 
 ## 投递日志
 
-shittim_chest 维护 Webhook 事件的投递日志。使用 LRU 缓存（最多 10,000 个投递 ID）检测重复投递。可通过以下方式访问投递日志：
+`shittim_chest` 维护 Webhook 事件的投递日志。使用 LRU 缓存（最多 10,000 个投递 ID）检测重复投递。可通过以下方式访问投递日志：
 
 - **REST API**：`GET /api/webhook/deliveries`
 - 管理面板：**Webhooks** → **Delivery Log**
@@ -153,9 +153,9 @@ shittim_chest 维护 Webhook 事件的投递日志。使用 LRU 缓存（最多 
 使用管理面板测试 Webhook 集成：
 
 1. 登录管理面板（默认 `:3000`）
-2. 在侧边栏导航到 **Webhooks**
-3. 查看投递日志和配置
-4. 通过外部服务的测试功能测试端点
+1. 在侧边栏导航到 **Webhooks**
+1. 查看投递日志和配置
+1. 通过外部服务的测试功能测试端点
 
 您也可以使用 curl 手动测试：
 
@@ -185,5 +185,5 @@ curl -X POST https://your-domain.com/api/webhook/github \
 
 ### 重复投递
 
-**原因**：外部服务由于超时正在重试。shittim_chest 自动通过 LRU 缓存检测重复。
-**解决方法**：如果合法的重试被阻止，增加投递 ID 缓存大小。确保 shittim_chest 在服务的超时窗口内响应（GitHub：10 秒）。
+**原因**：外部服务由于超时正在重试。`shittim_chest` 自动通过 LRU 缓存检测重复。
+**解决方法**：如果合法的重试被阻止，增加投递 ID 缓存大小。确保 `shittim_chest` 在服务的超时窗口内响应（GitHub：10 秒）。

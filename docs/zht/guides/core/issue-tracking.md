@@ -9,7 +9,6 @@ subcategory = "core"
 # Issue 追蹤整合
 
 > 將外部 Issue 追蹤系統連接到 Entelecheia（玄樞） 的 Agent 工作流
-
 > 當前狀態說明：HubRis 當前確實提供 issue 的建立、更新、搜尋和評論輔助能力，倉庫中也存在 webhook 整合。但本文不應被理解為「已經存在一個完整統一的跨平台 issue 產品面」。
 
 ---
@@ -43,7 +42,7 @@ subcategory = "core"
 Entelecheia 中的容器使用三層 ID 系統，在不同上下文中維護身分：
 
 | 層級 | 格式 | 生命週期 | 用途 |
-|------|------|----------|------|
+| --- | --- | --- | --- |
 | UUID | 標準 UUID（例如 `550e8400-e29b-41d4-a716-446655440000`） | 永久 | 資料庫主鍵、跨重啟追蹤 |
 | 繫結 ID | `@platform#id`（例如 `@github#234`） | 穩定 | 外部資源繫結、分支命名 |
 | 執行時 ID | `#xxx`（例如 `#616`） | 每次工作階段 | TUI 顯示、Unix socket 路由 |
@@ -56,7 +55,7 @@ Entelecheia 中的容器使用三層 ID 系統，在不同上下文中維護身�
 
 繫結 ID 的通用格式為：
 
-```
+```text
 @platform#id[@#floor]
 ```
 
@@ -67,7 +66,7 @@ Entelecheia 中的容器使用三層 ID 系統，在不同上下文中維護身�
 ### 範例
 
 | 繫結 ID | 含義 |
-|---------|------|
+| --- | --- |
 | `@github#123` | GitHub Issue #123 |
 | `@gitee#456` | Gitee Issue #456 |
 | `@gitlab#789` | GitLab Issue #789 |
@@ -90,7 +89,7 @@ Agent 透過 HubRis MCP 工具與外部 Issue 互動。這些工具封裝了平�
 ### 可用的 Issue 操作
 
 | 工具 | 描述 |
-|------|------|
+| --- | --- |
 | `$.agent.HubRis.issue_create()` | 在外部平台上建立新 Issue |
 | `$.agent.HubRis.issue_update()` | 更新現有 Issue（標題、正文、狀態、標籤） |
 | `$.agent.HubRis.issue_search()` | 跨平台搜尋 Issue 並套用篩選器 |
@@ -142,11 +141,11 @@ flowchart TB
 ### 逐步範例
 
 1. 開發者建立了標題為 "Memory leak in container cleanup" 的 Issue `@github#42`
-2. GitHub Webhook 將事件轉發到 Scepter
-3. `issue_triage` 技能將其分類為 **bug**，優先級為 **high**
-4. HubRis 分解任務：(a) 重現洩漏 (b) 找到根因 (c) 實作修復
-5. KaLos 讀取相關原始檔，SkeMma 執行診斷腳本
-6. Agent 提交修復並在 `@github#42` 上評論解決方案
+1. GitHub Webhook 將事件轉發到 Scepter
+1. `issue_triage` 技能將其分類為 **bug**，優先級為 **high**
+1. HubRis 分解任務：(a) 重現洩漏 (b) 找到根因 (c) 實作修復
+1. KaLos 讀取相關原始檔，SkeMma 執行診斷腳本
+1. Agent 提交修復並在 `@github#42` 上評論解決方案
 
 ---
 
@@ -155,7 +154,7 @@ flowchart TB
 平台前綴映射是可設定的。預設註冊表包括：
 
 | 前綴 | 平台 | Issue URL 模式 |
-|------|------|----------------|
+| --- | --- | --- |
 | `github` | GitHub | `https://github.com/{repo}/issues/{id}` |
 | `gitee` | Gitee | `https://gitee.com/{repo}/issues/{id}` |
 | `gitlab` | GitLab | `https://gitlab.com/{repo}/-/issues/{id}` |
@@ -180,20 +179,20 @@ flowchart TB
 
 ### 格式
 
-```
+```text
 cosmos-<binding_id>-<reason>
 ```
 
 或
 
-```
+```text
 cosmos-<uuid8>-<reason>
 ```
 
 ### 範例
 
 | 分支名稱 | 上下文 |
-|----------|--------|
+| --- | --- |
 | `cosmos-@github#42-fix-memory-leak` | 修復 GitHub Issue #42 |
 | `cosmos-@gitee#15-add-ci-pipeline` | Gitee Issue #15 的功能開發 |
 | `cosmos-a1b2c3d4-refactor-auth-module` | 使用 UUID 前綴的內部任務 |

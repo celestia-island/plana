@@ -9,11 +9,8 @@ subcategory = "core"
 # 多模态流水线
 
 > **⚠️ 已归档 Agent 参考 — 不在开发管线中**
->
 > 本文档引用的 `multimedia-creation` Layer2 Agent已经**归档**。其 Rust 代码、`.d.ts` 绑定及 Agent 注册均已删除。本文描述的多模态管线是**设计目标**，不是已交付功能。除非开发者明确要求，否则不要实施或排期此管线的工作。
-
 > 使用 multimedia-creation 和 ApoRia 生成、注册和分析媒体
-
 > 当前状态说明：本文主要描述目标工作流。当前代码库中确实存在 ApoRia 的多模态相关工具，但尚未完全达到下文所描述的集中式资产注册表与完整闭环能力。
 
 ---
@@ -213,11 +210,11 @@ const context_analysis = $.agent.ApoRia.multimodal_chat({
 多模态流水线支持迭代审查周期：
 
 1. **生成** —— multimedia-creation 创建初始媒体
-2. **注册** —— 存储到资产注册表
-3. **分析** —— ApoRia 使用多模态 LLM 评估媒体
-4. **识别问题** —— 从分析中提取具体的改进点
-5. **优化** —— multimedia-creation 根据反馈调整参数重新生成
-6. **重新分析** —— ApoRia 评估优化后的输出
+1. **注册** —— 存储到资产注册表
+1. **分析** —— ApoRia 使用多模态 LLM 评估媒体
+1. **识别问题** —— 从分析中提取具体的改进点
+1. **优化** —— multimedia-creation 根据反馈调整参数重新生成
+1. **重新分析** —— ApoRia 评估优化后的输出
 
 ### exec 代码中的审查循环示例
 

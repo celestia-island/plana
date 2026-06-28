@@ -54,6 +54,7 @@ export async function memory_store(params: {
 ```
 
 Las herramientas pueden ser:
+
 - **TS puro**: Solo lógica, compone otras herramientas o transforma datos
 - **Respaldado por backend**: Llama a una primitiva proporcionada por el Backend MCP
 - **Respaldado por nube**: Llama a una API remota (RAG, modelo, servicio externo)
@@ -70,13 +71,19 @@ conexiones de base de datos). Estas son proporcionadas por un **backend binario*
 un binario Rust que se ejecuta junto al proceso scepter.
 
 - El backend se compila en la imagen Docker y se lleva en el
-  "bolsillo" de scepter (el directorio `/workspace-base/target/`).
+
+"bolsillo" de scepter (el directorio `/workspace-base/target/`).
+
 - En tiempo de ejecución, scepter pasa dinámicamente la ruta del binario al entorno IEPL
-  mediante una importación de módulo `backend`.
+
+mediante una importación de módulo `backend`.
+
 - El backend expone operaciones primitivas; toda la composición y orquestación
-  ocurre en la capa TS.
+
+ocurre en la capa TS.
 
 Ejemplo de interfaz de backend (auto-generada desde Rust):
+
 ```typescript
 // Auto-generado desde backend Rust
 declare module 'backend' {
@@ -118,7 +125,9 @@ agente. Alojada en la infraestructura en la nube de Entelecheia.
 
 - Opcional: un agente puede funcionar sin RAG (capacidad reducida).
 - Limitado por consultas: cuando la cuota se agota, las consultas devuelven vacío — el
-  agente se degrada con gracia.
+
+agente se degrada con gracia.
+
 - Referenciado por URL + clave API en el manifiesto, no empaquetado en el paquete.
 
 ### 5. Modelo Ajustado (Opcional, Alojado en la Nube)
@@ -131,7 +140,7 @@ Un modelo ajustado para el dominio específico del agente. También alojado en l
 
 ## Estructura de Directorios del Paquete
 
-```
+```text
 packages/agents/{nombre_agente}/
 ├── manifest.toml           # Metadatos y configuración del paquete
 ├── mcp/
@@ -215,21 +224,26 @@ en el manifiesto. Proporciona envoltorios tipados alrededor de las primitivas bi
 ## Arquitectura de Capas
 
 | Capa | Agentes | Se Distribuye Como | ¿Paquete? | ¿Contenedor? |
-|-------|--------|-----------|----------|------------|
+| --- | --- | --- | --- | --- |
 | L1 | SkeMma, HapLotes, HubRis, KaLos, NeiKos, ApoRia, EleOs, EpieiKeia, OreXis, PhiLia, PoleMos, SkoPeo | Integrado en imagen | Solo backend (crates Rust) | No (en proceso) |
 | L2 | ClassicSoftwareEngineering, WebAutomation, WebUiPanel, IndustrialIoT | Integrado en imagen | **Paquete completo** (TS + habilidades + alma) | Sí (e-skemma) |
 | L3 | Extensiones instaladas por usuario | Instalación dinámica | **Paquete completo** | Sí (e-skemma) |
 
 - **Capa 1** (12 agentes): Agentes centrales de la plataforma. Sus crates Rust proporcionan
-  las operaciones primitivas (E/S de archivos, memoria, contenedores, hardware, etc.).
-  NO son paquetes — SON la plataforma. Sus herramientas se exponen
-  como módulos importables (ej., `import { file_write } from 'kalos'`).
+
+las operaciones primitivas (E/S de archivos, memoria, contenedores, hardware, etc.).
+NO son paquetes — SON la plataforma. Sus herramientas se exponen
+como módulos importables (ej., `import { file_write } from 'kalos'`).
+
 - **Capa 2** (4 agentes): Los primeros paquetes reales. No tienen **backend
-  binario** — son composiciones TS/IEPL puras de primitivas de Capa 1.
-  Se distribuyen con la imagen como ejemplos del formato de paquete.
+
+binario** — son composiciones TS/IEPL puras de primitivas de Capa 1.
+Se distribuyen con la imagen como ejemplos del formato de paquete.
+
 - **Capa 3**: Paquetes instalados por usuario. Mismo formato que L2, pero cargados
-  dinámicamente. Pueden opcionalmente declarar un backend binario (compilado por el
-  usuario, inyectado mediante scepter).
+
+dinámicamente. Pueden opcionalmente declarar un backend binario (compilado por el
+usuario, inyectado mediante scepter).
 
 ## Ruta de Migración
 

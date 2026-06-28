@@ -18,7 +18,7 @@ subcategory = "core"
 Entelecheia는 주요 분할을 완료했습니다: 사용자 대상 셸 레이어가 형제 프로젝트 **shittim-chest**(`../shittim-chest`)로 이전되었습니다. Entelecheia는 이제 멀티 에이전트 오케스트레이션 코어에만 집중합니다.
 
 | 저장소 | 범위 |
-|------------|-------|
+| --- | --- |
 | **entelecheia** | Scepter 오케스트레이션, 16개 에이전트 (12개 L1 + 4개 L2), Cosmos/IEPL 런타임, 32개 공유 크레이트 |
 | **shittim-chest** | arona (채팅 UI 프론트엔드), plana (관리자 UI), `shittim_chest` 백엔드 (axum 프록시 + 인증 + 웹훅), IDE 플러그인, Tauri 앱 |
 
@@ -40,7 +40,7 @@ Entelecheia는 `packages/scepter`(오케스트레이션 서버)를 중심으로 
 ## 구성 요소 현실 점검
 
 | 구성 요소 | 구현됨 | 설계 전용 / 스텁 | 판정 |
-|-----------|------------|-------------------|---------|
+| --- | --- | --- | --- |
 | **Scepter** (오케스트레이션) | 인증/RBAC, 제공자 라우팅, 에이전트 생명주기, 스킬 체인 실행, WebSocket/HTTP 엔드포인트, 키 암호화. 49개 소스 파일에 걸쳐 351개 단위 테스트. `AppState`는 5개 하위 상태에 대한 `FromRef` 구현 보유; agent_lifecycle 핸들러는 `State<Arc<Persistence>>` 사용 | 완전한 API 표면. 배치 프로세서 정의되었으나 인스턴스화되지 않음. | 🟢 실제 |
 | **TUI** | 전체 생명주기: 스플래시, Docker 초기화, 타임라인, 에이전트 모달, i18n (8개 언어), 제공자 설정, 테마 지원. 47개 소스 파일에 걸쳐 329개 단위 테스트. `ComponentStore`가 5개 하위 구조체로 분할; AppState가 6개 필드로 축소. Unix 소켓(우선) 또는 WebSocket 폴백으로 연결. | Scepter API와 기능 동등. `CancelRequest`/`ExecuteSudoCommand`는 아직 연결되지 않음. | 🟢 실제 |
 | **CLI** | 서비스 관리, 채팅, 타임라인, 에이전트 생명주기 명령어. 28개 단위 테스트. | TUI와 기능 동등하지 않음 | 🟡 일부 |
@@ -162,7 +162,7 @@ block-beta
 **도구 구현 상태:** 모든 147개 도구가 실제 구현을 보유하고 있습니다. 코드베이스 어디에도 `unimplemented!()` 또는 `todo!()` 매크로가 존재하지 않습니다. 실제 로직 없이 단순히 `Ok(())`를 반환하는 도구는 없습니다.
 
 | 에이전트 | 계층 | 현재 책임 | 도구 | 스텁 | 테스트 커버리지 | 완성도 |
-|-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
+| --- | --- | --- |  ---  |  ---  |  ---  | --- |
 | **HapLotes** | 1 | 게이트웨이, 메시지 라우팅, 전송 글루 | 2 | 0 | 21개 테스트 | 🟢 실제 |
 | **SkoPeo** | 1 | 조정 및 LLM 대면 실행 흐름 | 12 | 0 | 41개 테스트 | 🟢 실제 |
 | **HubRis** | 1 | 계획, 할 일 관리, 보고, 이슈 도우미 | 8 | 0 | 65개 테스트 | 🟢 실제 |
@@ -218,11 +218,12 @@ Boa 엔진 + MCP 브리지 부분은 종단 간 작동합니다. SWC 기반 Type
 **2계층 런타임 아키텍처:**
 
 | 계층 | 런타임 | 기본값 | 범위 |
-|-------|---------|---------|-------|
+| --- | --- | --- | --- |
 | **외부** (오케스트레이션) | Docker/Podman | `CONTAINER_RUNTIME=docker` | 인프라 컨테이너: scepter, postgres. init 엔진을 통해 생성, TUI에서 상태 확인. 전체 오케스트레이션 필요(네트워킹, 볼륨, 상태 확인). |
 | **내부** (cosmos 샌드박스) | Youki/libcontainer | `COSMOS_CONTAINER_RUNTIME=youki` | scepter 내의 임시 에이전트 샌드박스. 경량, 빠른 시작, seccomp 제약. |
 
 런타임 선택 헬퍼는 `shared/infra_services/src/container_factory.rs`에 있습니다:
+
 - `outer_runtime_type()` — `CONTAINER_RUNTIME`를 읽고, 기본값은 `docker`
 - `cosmos_runtime_type()` — `COSMOS_CONTAINER_RUNTIME`를 읽고, 기본값은 `youki`
 
@@ -315,7 +316,7 @@ flowchart TB
 ```
 
 | 개념 | 소스 파일 |
-|---------|---------------|
+| --- | --- |
 | 백엔드 구성 | `shared/infra_services/src/container_factory.rs` |
 | `ContainerOps` 트레이트 | `shared/container/src/ops.rs` |
 | Docker 생성/포크 | `shared/container/src/lifecycle.rs`, `image_ops.rs` |
@@ -329,7 +330,7 @@ flowchart TB
 ### 종단 간 경로 연결 상태
 
 | # | 경로 | 상태 | 주요 연결 지점 |
-|---|------|--------|----------------------|
+| --- | --- | --- | --- |
 | 1 | **Scepter 시작 → WS → 스킬 체인** | 🟢 완전 연결 | `scepter/src/app/setup.rs:876-1653`, `scepter/src/lib.rs:139-361`, `scepter/src/tui_connection/core/message_dispatch.rs:10-140` |
 | 2 | **TUI 시작 → scepter 연결** | 🟢 완전 연결 | 전체 핸드셰이크 + 상태 동기화가 있는 Unix 소켓(우선) 또는 WebSocket 폴백 |
 | 3 | **IEPL 파이프라인 (SWC→Boa→MCP)** | 🟡 부분 연결 | 트랜스파일러 작동(37개 테스트). Boa+MCP 디스패치 연결됨. `shared_iepl::client`를 통해 SWC→Boa 연결 가능하나 컨테이너 내 아님. |
@@ -341,7 +342,7 @@ flowchart TB
 ### 이중 샌드박스 격리
 
 | 실행 채널 | 도구 함수 호출 가능 (ES 모듈 임포트를 통해) | 샌드박스 유형 | 목적 |
-|-------------------|--------------------------|--------------|---------|
+| --- | --- | --- | --- |
 | `neikos.exec()` | 예 (ES 모듈 임포트를 통해) | Boa 영구 컨텍스트 | 스킬 오케스트레이션 (에이전트 간 디스패치) |
 | `skemma.script_exec()` | 아니오 | 독립 프로세스 샌드박스 | MCP 도구 백엔드 (계산/I/O) |
 
@@ -387,7 +388,7 @@ flowchart TB
 ## 아키텍처 부채
 
 | 이슈 | 우선순위 | 예상 노력 |
-|-------|----------|-----------------|
+| --- | --- | --- |
 | 21개 파일에 걸쳐 약 60개의 `.map_err(...to_string())` 패턴(정확히 `\|e\| e.to_string()` 8개, 더 넓은 변형 52개). 어댑터 경계(`shared/adapter`, `shared/llm_provider`)와 외부 API 클라이언트(`docker_client`, `plugin_loader`)에 집중. 경계에서 허용 가능한 어댑터 패턴; 내부 코드는 타입화된 오류를 사용해야 함. | P4 | 라이브러리 수준 관심사 |
 | Classic SE 도구의 `maturity: Stub` 메타데이터는 오해의 소지가 있음 — 7개 모두 실제 구현 보유(서브프로세스 기반 분석기, 패턴 감지기, 코드 메트릭, 함수 추출 리팩토링). `Experimental` 이상으로 상향 조정 필요. | P4 | 메타데이터 전용 |
 | `SensorBatch` 파서 정의됨(`trigger_intercept.rs:58-70`)이나 메시지 디스패치 루프에 연결되지 않음. `BatchProcessor` 구조체 정의됨이나 scepter 설정에서 인스턴스화되지 않음. 텔레메트리 수집 경로 존재하나 연결 해제됨. | P3 | 연결 작업 |
@@ -407,14 +408,20 @@ flowchart TB
 ### 연결된 것 (Entelecheia가 실행-안전 계층을 제공)
 
 - **자가 수술 훅** (`scepter/.../skill_chain/execution/surgery_hooks.rs`):
-  `PreSurgeryCheckpoint`(수술 전 git HEAD 기록), `PostSurgeryRollback`
-  (실패 시 자동 롤백), 재배포 로직, `attempt_rollback`. 훅 관리자에 등록됨.
+
+`PreSurgeryCheckpoint`(수술 전 git HEAD 기록), `PostSurgeryRollback`
+(실패 시 자동 롤백), 재배포 로직, `attempt_rollback`. 훅 관리자에 등록됨.
+
 - **YOLO 틱 루프**: 시간 제한 주기(주기적 5분 / 일일 6시간 / 전략적 7일).
-  스킬: `yolo_cycle_report`, `regression_monitor`(일일 계층 성능 저하 예측과 포크 결정 로직 포함).
-  포크 휴리스틱이 `res/prompts/system/yolo-fork-pattern.md`에 문서화됨 — 틱이 예산 내에
-  완료할 수 없는 작업을 발견하면, 잘라내는 대신 `#demiurge.xxx` 세션을 포크합니다.
+
+스킬: `yolo_cycle_report`, `regression_monitor`(일일 계층 성능 저하 예측과 포크 결정 로직 포함).
+포크 휴리스틱이 `res/prompts/system/yolo-fork-pattern.md`에 문서화됨 — 틱이 예산 내에
+완료할 수 없는 작업을 발견하면, 잘라내는 대신 `#demiurge.xxx` 세션을 포크합니다.
+
 - **직렬 병합 조정자**: 파일 잠금, 기능 게이트; 동시 YOLO 포크가 히스토리를 손상시키지
-  않도록 `run_exclusive`를 통해 noa 사후 체인 커밋을 라우팅합니다.
+
+않도록 `run_exclusive`를 통해 noa 사후 체인 커밋을 라우팅합니다.
+
 - 안전한 실험을 위한 **컨테이너 포크/병합**(Docker/Podman 외부 + Youki 내부 샌드박스).
 - 마일스톤 커밋 `37863366e`("初步实现自主思考能力")이 종단 간 루프를 착륙시켰습니다.
 
@@ -450,7 +457,7 @@ flowchart TB
 ### 순수 자가 부트스트랩을 차단하는 남은 공백
 
 | 공백 | 현재 상태 | 필요 사항 | 우선순위 |
-|-----|---------------|----------|----------|
+| --- | --- | --- | --- |
 | **내부 계획 문서 파서** | 외부 에이전트 플랫폼이 ARCHITECTURE.md를 읽고 작업을 자체 분해하기 때문에 루프가 작동함. 내부 스킬 없음. | `hubris::read_iteration_plan` 스킬: 백로그 테이블 파싱 → 구조화된 `Vec<BacklogItem>` 반환하여 Entelecheia 자체 조정자가 루프를 구동할 수 있게 함. | P0 |
 | **조정자-작업자 분리 집행** | 외부 플랫폼이 자체 플래너/작업자 분리 제공; Entelecheia의 파이프라인은 이를 집행하지 않음. 조정자 스킬 체인이 여전히 `file_write`/`host_command_exec`를 직접 호출 가능. | 스킬 프론트매터에 `role` 필드 추가; `pipeline.rs` 도구 화이트리스트 빌더에서 `role = "coordinator"` 체인에서 변경 도구 제거. | P0 |
 | **수락 기준 검증** | `PostSurgeryRollback`이 `cargo check --workspace`(빌드 수준)를 확인하나 작업별 수락 기준은 확인하지 않음. `prompt.rs`에 부분 연결. | `verify_acceptance_criteria` 훅 네임스페이스: 각 백로그 항목이 확인 가능한 기준 선언(테스트 통과, 파일 존재, 함수 구현). | P1 |
@@ -462,7 +469,7 @@ flowchart TB
 > **기계 판독 가능 형식.** 활성 드라이버(현재 제3자 에이전트 플랫폼, 궁극적으로 Entelecheia 자체 조정자)가 이 테이블을 파싱하여 다음 실행 가능한 작업을 찾습니다. 완료 후 `status` 업데이트.
 
 | ID | 제목 | 상태 | 수락 기준 | 비고 |
-|----|-------|--------|---------------------|-------|
+| --- | --- | --- | --- | --- |
 | IB-01 | `hubris::read_iteration_plan` 스킬 | **대체됨** | `res/prompts/agents/hubris/skills/read_iteration_plan.md`의 스킬 문서; ARCHITECTURE.md 백로그 테이블 파싱; 구조화된 작업 목록 반환 | 이 스킬 없이 루프 점화됨 — 외부 에이전트 플랫폼이 계획을 직접 읽음. **순수 자가 부트스트랩**에만 재도입 필요. |
 | IB-02 | 조정자 도구 화이트리스트 집행 | **대체됨** | 조정자 스킬 체인이 `file_write` / `host_command_exec`를 직접 호출 불가; 디스패치된 하위 에이전트를 통해서만 가능 | IB-01과 동일: 외부 플랫폼이 자체 플래너/작업자 분리 제공. 순수 자가 부트스트랩에만 필요. |
 | IB-03 | `verify_acceptance_criteria` 훅 네임스페이스 | **부분** | 훅 네임스페이스 등록됨; 각 백로그 항목의 기준이 사후 체인 확인됨; 실패 시 중단 | `skill_chain/prompt.rs`에 부분 연결. 빌드 수준 검사(`cargo check`) 작동; 작업 수준 기준 아직 안 됨. |
@@ -479,7 +486,7 @@ flowchart TB
 > **인프라**(Entelecheia 소유)와 **자가 부트스트랩**(순수 무외부 드라이버 작동)으로 분할. 점화 마일스톤 착륙; 순수 자가 부트스트랩 지표는 IB-01/IB-02가 재도입될 때까지 N/A.
 
 | 지표 | 목표 | 현재 |
-|--------|--------|---------|
+| --- | --- | --- |
 | 워크스페이스 컴파일 (`cargo check --workspace`) | 0 오류로 클린 | ✅ 클린 (1개 dead_code 경고) |
 | 실제 구현이 있는 MCP 도구 | 100% | 99.3% (147/148) |
 | 스텁 도구 | 0 | 0 |
@@ -538,7 +545,7 @@ flowchart LR
 > **최종 검증**: 2026-06-14 — 이전에 열린 것으로 나열된 3개 공백이 이제 구현됨.
 
 | 공백 | 현재 | 필요 사항 | 우선순위 |
-|-----|---------|----------|----------|
+| --- | --- | --- | --- |
 | **센서 이벤트 → Hubris 계획 브리지** | Hubris가 TUI/CLI를 통해 사용자 프롬프트 수신 | Hubris가 `TriggerEvent { topic: "modbus.19.h2_leak_conc.hh" }`를 계획 시작 이벤트로 수락해야 함. `TriggerDispatcher::dispatch_event()`가 구독된 스킬 호출; 센서 이벤트로부터의 종단 간 Hubris 계획 시작이 통합 테스트에서 아직 검증되지 않음. | P0 |
 | **텔레메트리 배치 수집 연결** | `BatchProcessor` 정의됨, 인스턴스화되지 않음; `try_intercept_sensor_batch()` 파서 존재하나 디스패치 루프에서 호출되지 않음 | `Sensor.Batch` 핸들러를 메시지 디스패치 → `BatchProcessor` → 텔레메트리 저장소로 연결 | P1 |
 | **OreXis의 경보 계층** | ✅ **완전 구현됨.** `alarm_tools.rs`: 경보 규칙 설정/제거/확인 (HH/H/L/LL/ROC 수준, 임계값, 히스테리시스, 디바운스, 에스컬레이션: log→notify_agent→auto_correct→human_notify→emergency_shutdown). `SharedAlarmPolicyStore` 작동. 스테이션 재정의 지원됨. | 누락: hydro-tin-monitor의 97개 오류 코드 사전 로드. | P2 |
@@ -599,7 +606,7 @@ flowchart TB
 `/mnt/sdb1/hydro-tin-monitor/doc/通信端口说明 25.8.7.md`에서:
 
 | 장치 | 스테이션 | 보레이트 | 레지스터 | 비고 |
-|--------|---------|------|-----------|-------|
+| --- | --- | --- | --- | --- |
 | AEM 전해조 (2 Nm3/h) | 21 | 9600 | ~32 IR (0x04), 32비트 float BE | 온도, 압력, 유량, 전압 |
 | ALK 전해조 (3 Nm3/h) | 20 | 9600 | ~32 IR (0x04), 32비트 float BE | AEM과 동일 형식 |
 | PEM 전해조 | 2 | 9600 | ~17 HR (0x03), 16비트 signed | 압력, 수질, 누출, 전압 |

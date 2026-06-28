@@ -324,7 +324,7 @@ Escenario aplicable: ejecución a través de SSH con soporte de terminal mínimo
 #### Comparación de parámetros
 
 | Función | Predeterminado | `--no-image-render` | `--no-ansi` | `--no-ansi-pure` |
-|------|------|---------------------|-------------|-------------------|
+| --- | --- | --- | --- | --- |
 | Color | Completo | Completo | Completo | Desactivado |
 | Captura de ratón | Sí | Sí | No | No |
 | Renderizado de imágenes | Sí | No | No | No |

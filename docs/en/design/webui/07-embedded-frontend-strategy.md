@@ -41,7 +41,7 @@ flowchart TB
 ### Conditional Compilation
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 static ARONA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../dist/arona");
 
 async fn serve_arona() -> impl IntoResponse {
@@ -62,7 +62,7 @@ Conditional compilation operates at the **function body level** rather than the 
 
 The application is a single-page application. All routes not matching static assets return `index.html`:
 
-```
+```text
 GET /               → index.html
 GET /chat/123       → index.html (frontend router handles)
 GET /backend        → index.html
@@ -86,7 +86,7 @@ Static file serving returns the correct Content-Type based on file extension:
 
 ## Frontend Build in Dockerfile
 
-```
+```text
 Stage 1 (frontend):
   node:22-slim → pnpm install → pnpm build:all → /app/dist/arona/
 
@@ -102,6 +102,6 @@ Frontend build and Rust compilation are completed within the same Dockerfile. Th
 ## Design Decisions
 
 1. **Dev mode uses dev.py for auto-rebuild**: `dev.py` watches frontend sources and rebuilds on changes, with the backend serving everything on one port.
-2. **Release mode does not require a reverse proxy**: The binary embeds the SPA, enabling single-process deployment and reducing operational complexity.
-3. **Frontend is not dynamically loaded at runtime**: Avoids filesystem dependencies and version inconsistency. The Release image contains only a single binary file.
-4. **Single SPA**: The frontend is served at `/` with the admin panel at `/backend`.
+1. **Release mode does not require a reverse proxy**: The binary embeds the SPA, enabling single-process deployment and reducing operational complexity.
+1. **Frontend is not dynamically loaded at runtime**: Avoids filesystem dependencies and version inconsistency. The Release image contains only a single binary file.
+1. **Single SPA**: The frontend is served at `/` with the admin panel at `/backend`.

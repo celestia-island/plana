@@ -14,7 +14,7 @@ subcategory = "webui"
 ## Requisitos Previos
 
 | Herramienta | Versión Mínima | Notas |
-|------|----------------|-------|
+| --- | --- | --- |
 | Rust | 1.85+ | Se requiere Edition 2024; instalar mediante <https://rustup.rs> |
 | Node.js | 20+ | Se recomienda LTS |
 | pnpm | 9+ | `corepack enable && corepack prepare pnpm@latest --activate` |
@@ -47,14 +47,14 @@ Edita `.env` después de clonar. Cada variable está documentada en línea; a co
 ### Servidor
 
 | Variable | Por defecto | Propósito |
-|----------|-------------|-----------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_HOST` | `0.0.0.0` | Dirección de escucha |
 | `SHITTIM_CHEST_PORT` | `80` | Puerto de escucha |
 
 ### Base de Datos
 
 | Variable | Por defecto | Propósito |
-|----------|-------------|-----------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_DATABASE_URL` | `postgresql://sc:pass@localhost:5432/shittim_chest` | Cadena de conexión PostgreSQL |
 | `SHITTIM_CHEST_DATABASE_MAX_CONNECTIONS` | `10` | Tamaño del pool de conexiones SeaORM |
 
@@ -68,7 +68,7 @@ CREATE DATABASE shittim_chest OWNER sc;
 ### JWT y Cifrado
 
 | Variable | Por defecto | Propósito |
-|----------|-------------|-----------|
+| --- | --- | --- |
 | `JWT_SECRET` | `change-me-in-production` | Secreto compartido con scepter; **debe coincidir** |
 | `JWT_EXPIRATION_SECONDS` | `3600` | Duración del token de acceso (1 hora) |
 | `JWT_REFRESH_EXPIRATION_SECONDS` | `604800` | Duración del token de refresco (7 días) |
@@ -85,7 +85,7 @@ openssl rand -base64 32
 Configúralos para usar shittim-chest independientemente sin entelecheia:
 
 | Variable | Propósito |
-|----------|-----------|
+| --- | --- |
 | `LLM_DEFAULT_PROVIDER_ENDPOINT` | Endpoint de API compatible con OpenAI (ej. `https://api.deepseek.com/v1`) |
 | `LLM_DEFAULT_PROVIDER_API_KEY` | Clave API para el proveedor |
 | `LLM_DEFAULT_PROVIDER_MODELS` | Lista de modelos separada por comas (ej. `deepseek-chat,deepseek-reasoner`) |
@@ -97,7 +97,7 @@ Configúralos para usar shittim-chest independientemente sin entelecheia:
 ### Dispositivos Remotos
 
 | Variable | Por defecto | Propósito |
-|----------|-------------|-----------|
+| --- | --- | --- |
 | `REMOTE_DEVICES_ENABLED` | `false` | Habilitar funciones de dispositivos remotos |
 | `REMOTE_DEVICES_SCEPTER_SOCK` | `/run/entelecheia/device_stream.sock` | Socket Unix para datos de dispositivos |
 | `REMOTE_DEVICES_FRAME_BUFFER_SIZE` | `4194304` | Tamaño del buffer de frames en bytes |
@@ -107,7 +107,7 @@ Configúralos para usar shittim-chest independientemente sin entelecheia:
 ### GitHub OAuth
 
 | Variable | Propósito |
-|----------|-----------|
+| --- | --- |
 | `GITHUB_CLIENT_ID` | Client ID de la OAuth App de GitHub |
 | `GITHUB_CLIENT_SECRET` | Client Secret de la OAuth App de GitHub |
 | `GITHUB_REDIRECT_URI` | URL de callback OAuth (ej. `https://tu-dominio/api/auth/github/callback`) |
@@ -115,7 +115,7 @@ Configúralos para usar shittim-chest independientemente sin entelecheia:
 ### Conexión Scepter (para funciones proxy)
 
 | Variable | Por defecto | Propósito |
-|----------|-------------|-----------|
+| --- | --- | --- |
 | `ENTELECHEIA_SCEPTER_URL` | `http://localhost:8424` | Endpoint HTTP para scepter |
 | `ENTELECHEIA_SCEPTER_WS_URL` | `ws://localhost:8424` | Endpoint WebSocket para scepter |
 | `ENTELECHEIA_TUI_SOCK` | `/run/entelecheia/entelecheia.sock` | Socket Unix para reenvío de disparadores |
@@ -123,7 +123,7 @@ Configúralos para usar shittim-chest independientemente sin entelecheia:
 ### Webhook
 
 | Variable | Propósito |
-|----------|-----------|
+| --- | --- |
 | `WEBHOOK_GITHUB_SECRET` | Secreto HMAC para validación de webhooks de GitHub |
 | `WEBHOOK_GITLAB_SECRET` | Token para validación de webhooks de GitLab |
 | `WEBHOOK_PUBLIC_URL` | URL pública para endpoints de webhook |
@@ -137,10 +137,10 @@ just db-migrate   # Aplicar migraciones pendientes
 
 ### Resumen del Esquema
 
-shittim_chest_db posee los datos orientados al usuario:
+`shittim_chest_db` posee los datos orientados al usuario:
 
 | Tabla | Propósito |
-|-------|-----------|
+| --- | --- |
 | `auth_users` | Cuentas de usuario con hashes de contraseña argon2 |
 | `sessions` | Sesiones activas con tokens de refresco |
 | `api_keys` | Registros de claves API (hasheadas) |
@@ -187,7 +187,7 @@ cargo watch -x 'run --package shittim_chest -- server'
 ### Resumen de Endpoints API
 
 | Grupo de Rutas | Propósito |
-|-------------|---------|
+| --- | --- |
 | `/api/auth/*` | Inicio de sesión, registro, GitHub OAuth, refresco, cierre de sesión |
 | `/api/chat/*` | Conversaciones, mensajes, streaming SSE/WS, búsqueda, exportación |
 | `/api/providers/*` | CRUD de proveedores LLM, gestión de claves API, pruebas |
@@ -258,7 +258,7 @@ El binario de producción sirve los activos del frontend mediante el middleware 
 
 ### Conexión a la base de datos rechazada
 
-```
+```text
 error: connection to server at "localhost", port 5432 failed
 ```
 
@@ -266,7 +266,7 @@ error: connection to server at "localhost", port 5432 failed
 
 ### Scepter no alcanzable
 
-```
+```text
 error: error sending request for url (http://localhost:8424/...)
 ```
 
@@ -274,7 +274,7 @@ error: error sending request for url (http://localhost:8424/...)
 
 ### Errores CORS en el navegador
 
-```
+```text
 Access-Control-Allow-Origin header is present on the requested resource
 ```
 

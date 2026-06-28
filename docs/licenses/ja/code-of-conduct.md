@@ -72,14 +72,14 @@
 
 ## 帰属
 
-本行動規範は [Contributor Covenant][homepage]（コントリビューター・コヴェナント）バージョン 2.1 から改编されており、[https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1] で閲覧できます。
+本行動規範は [Contributor Covenant][homepage]（コントリビューター・コヴェナント）バージョン 2.1 から改编されており、[https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1] で閲覧できます。
 
 コミュニティ影響ガイドラインは [Mozilla の行動規範執行ラダー][mozilla-coc] にインスピレーションを受けています。
 
 本行動規範に関するよくある質問の回答は、[https://www.contributor-covenant.org/faq][faq] の FAQ を参照してください。翻訳は [https://www.contributor-covenant.org/translations][translations] で入手できます。
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

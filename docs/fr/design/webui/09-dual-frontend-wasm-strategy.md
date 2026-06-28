@@ -43,9 +43,9 @@ flowchart LR
 La version Vue 3 n'est pas simplement une implémentation temporaire ; elle sert de **spécification exécutable** pour la migration WASM :
 
 1. **Complétude fonctionnelle** : Chaque fonctionnalité de la version WASM doit se comporter de manière identique à la version Vue 3
-2. **Contrat API** : Les deux versions utilisent la même API REST et le même protocole WebSocket
-3. **Cohérence visuelle** : Les deux versions rendent la même UI dans des états identiques
-4. **Remplacement progressif** : Les fonctionnalités de chat et d'administration d'arona peuvent migrer vers WASM indépendamment
+1. **Contrat API** : Les deux versions utilisent la même API REST et le même protocole WebSocket
+1. **Cohérence visuelle** : Les deux versions rendent la même UI dans des états identiques
+1. **Remplacement progressif** : Les fonctionnalités de chat et d'administration d'arona peuvent migrer vers WASM indépendamment
 
 ## Seuils de Décision pour la Migration WASM
 
@@ -69,13 +69,14 @@ flowchart TD
 ```
 
 `shared_ui/` contient le code frontend partagé :
+
 - Client API (auth, chat, gestion des fournisseurs, etc.)
 - Utilitaires d'authentification (stockage JWT, rafraîchissement, intercepteurs)
 - Définitions de types (énumérations de domaine, types requête/réponse)
 
 ## Commandes de Développement Frontend
 
-```
+```bash
 just build-frontend  # Construire les deux frontends (pnpm build:all)
 dev.py               # Surveiller + reconstruction automatique lors des modifications
 ```
@@ -85,6 +86,6 @@ En mode Dev, `dev.py` surveille les fichiers source et exécute `pnpm build` lor
 ## Principes de Conception
 
 1. **Vue 3 livre les fonctionnalités d'abord** : Ne pas attendre WASM. Les utilisateurs peuvent utiliser une interface de chat et d'administration complète aujourd'hui.
-2. **WASM est une amélioration, pas un remplacement** : La migration n'affecte pas les utilisateurs existants — les deux versions utilisent la même API backend.
-3. **Backend agnostique du framework** : Le backend shittim_chest ignore l'implémentation frontend. Tout client HTTP/WS peut s'intégrer.
-4. **Tairitsu est une dépendance, pas un développement interne** : Le début de la migration WASM dépend de la maturité du framework Tairitsu externe.
+1. **WASM est une amélioration, pas un remplacement** : La migration n'affecte pas les utilisateurs existants — les deux versions utilisent la même API backend.
+1. **Backend agnostique du framework** : Le backend `shittim_chest` ignore l'implémentation frontend. Tout client HTTP/WS peut s'intégrer.
+1. **Tairitsu est une dépendance, pas un développement interne** : Le début de la migration WASM dépend de la maturité du framework Tairitsu externe.

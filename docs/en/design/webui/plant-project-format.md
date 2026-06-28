@@ -13,10 +13,10 @@ subcategory = "webui"
 ## Design Goals
 
 1. **Single source of truth** — One file describes the entire plant/project: device nodes, 2D topology, 3D scene, industrial networks
-2. **Three-way compatibility** — mock_scepter (fixture), shittim-chest webui (3D rendering), entelecheia PoleMos agent (device management) all read the same file
-3. **Node-centric** — All topology, scene, and sensor data is attached to nodes; the node is the core entity
-4. **Versionable** — `format_version` field + JSON Schema for backward-compatible evolution
-5. **Extensible** — Custom metadata can be appended without breaking existing parsers
+1. **Three-way compatibility** — `mock_scepter` (fixture), shittim-chest webui (3D rendering), entelecheia PoleMos agent (device management) all read the same file
+1. **Node-centric** — All topology, scene, and sensor data is attached to nodes; the node is the core entity
+1. **Versionable** — `format_version` field + JSON Schema for backward-compatible evolution
+1. **Extensible** — Custom metadata can be appended without breaking existing parsers
 
 ## File Conventions
 
@@ -61,7 +61,7 @@ Project metadata.
 Field descriptions:
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
+| --- | --- | --- | --- |
 | name | string | Y | Project name |
 | description | string | N | Description |
 | author | string | N | Creator |
@@ -131,7 +131,7 @@ Field descriptions:
 Field descriptions:
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
+| --- | --- | --- | --- |
 | label | string | Y | Display name |
 | label_i18n | {lang: string} | N | Multilingual names |
 | type | string | Y | Device type identifier (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
@@ -148,7 +148,7 @@ Field descriptions:
 Sensor structure:
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | id | string | Sensor ID (e.g. tt-101) |
 | type | string | temperature / pressure / flow / level / gas / current |
 | label | string | Display label |
@@ -240,7 +240,7 @@ Sensor structure:
 Topology field descriptions:
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | boxes | Box[] | Enclosure groupings; each box contains several nodes |
 | plcs | PLC[] | PLC device list |
 | connections | Connections | Four connection types: signal wires, power cables, water pipes, gas pipes |
@@ -249,7 +249,7 @@ Topology field descriptions:
 Box structure:
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | id | string | Enclosure ID |
 | label | string | Display label |
 | label_i18n | {lang: string} | Multilingual |
@@ -259,7 +259,7 @@ Box structure:
 Connection structure (common):
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | id | string | Connection ID |
 | from | string | Source entity ID (node / sensor / plc / utility) |
 | to | string | Destination entity ID |
@@ -275,7 +275,7 @@ Connection structure (common):
 
 ## Section 4: `scene`
 
-3D holographic scene configuration — used by webui PhysicalPreview's Three.js rendering.
+3D holographic scene configuration — used by webui `PhysicalPreview`'s Three.js rendering.
 
 ```json
 {
@@ -349,7 +349,7 @@ Connection structure (common):
 Scene field descriptions:
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | background_color | string | 3D scene background color |
 | environment_url | string? | HDR environment map URL |
 | camera.overview | CameraView | Initial camera angle (overview of all models) |
@@ -363,7 +363,7 @@ Scene field descriptions:
 CameraView structure:
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | position | [x, y, z] | Camera position |
 | target | [x, y, z] | Look-at target point |
 | fov | number | Field of view (degrees) |
@@ -371,7 +371,7 @@ CameraView structure:
 Model3D structure:
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | node | string | Associated node ID |
 | glb | string | GLB filename (relative to models/ directory) |
 | position | [x, y, z] | 3D world coordinates |
@@ -399,7 +399,8 @@ fixtures/
     └── ...
 ```
 
-On mock_scepter startup:
+On `mock_scepter` startup:
+
 - `fixtures::load_all()` gets a new `load_plant()` call
 - Parse `.plant.json` → split into `DeviceModelResponse[]` + `SceneConfigItem`
 - `get_scene_config` returns from plant data instead of hardcoded values
@@ -411,17 +412,20 @@ On mock_scepter startup:
 Existing API contracts remain unchanged (`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`).
 
 New additions:
+
 - `PhysicalPreview.tsx`'s `BOX_CAMERA_TARGETS` reads from `scene.camera.bookmarks` instead of being hardcoded
 - 3D model CSS2D overlay labels read from `nodes[nodeId].label`
 
 ### 3. entelecheia PoleMos agent
 
 PoleMos reads the plant file via MCP tools:
+
 - `node_discover` → iterate `nodes` + `topology.plcs`
 - `device_self_test` → read `nodes[id].sensors` + `nodes[id].rated`
 - Device management operations → write back `nodes[id].status`
 
 Future extensions:
+
 - PoleMos layer2 agent generates `.plant.json` (AI reads device docs to automatically build topology)
 - Users drag-and-drop 3D layout in webui → write back `.plant.json`
 - CI/CD pipeline validates `.plant.json` schema integrity
@@ -437,7 +441,7 @@ See `scripts/mock/fixtures/hydrogen_corridor.plant.json` for a complete example 
 ## Relationship to Existing Data
 
 | Existing data source | Portion migrated to .plant.json |
-|---------------------|---------------------------------|
+| --- | --- |
 | `http_server.rs` hardcoded 20 DeviceModelResponses | → `scene.models[]` + `nodes{}` |
 | `http_server.rs` hardcoded SceneConfigItem | → `scene{}` (camera, lighting, ground, bloom) |
 | `mock_data/topology.rs` overview() / box_detail() | → `topology{}` (boxes, connections, layout) |
@@ -448,6 +452,6 @@ See `scripts/mock/fixtures/hydrogen_corridor.plant.json` for a complete example 
 ## Schema Validation
 
 The JSON Schema file lives at `schemas/plant-v1.json` and is shared by all three parties.
-mock_scepter validates via `serde_json` deserialization + schema validation at load time.
+`mock_scepter` validates via `serde_json` deserialization + schema validation at load time.
 The webui can validate using `ajv` at build time.
 entelecheia can validate using the `jsonschema` crate.

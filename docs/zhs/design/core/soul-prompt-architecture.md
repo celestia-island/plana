@@ -17,7 +17,7 @@ subcategory = "core"
 ## 目标
 
 1. 将灵魂 Prompt 作为每个 LLM 请求的基础身份层注入。
-1. 建立三层 Prompt 组装模型：**Soul > Skill（含 related_tools）> exec-only 工具面**。
+1. 建立三层 Prompt 组装模型：**Soul > Skill（含 `related_tools`）> exec-only 工具面**。
 1. 为每个 Agent 添加一段基于其**原初驱动力**的简短身份段落，作为主要行为锚点。
 1. 建立 **Soul / Agent** 实体区分：Soul 是具有多技能、共享 MCP 拓扑的身份承载编排者；Agent 是接收委派的聚焦单一技能的 Worker。
 
@@ -133,7 +133,7 @@ flowchart TB
 
 Soul 通过服务端中介的编排协议（`state_machine.rs`）进行通信。典型示例：HubRis 通过 `invoke_aporia_llm_chat()` 调用 ApoRia 的 `llm_chat` 工具。每个 Soul 在整个交换过程中保留自己的身份——HubRis 决定，ApoRia 质疑。
 
-Soul 之间链路是双向的：任何 Soul 都可以通过 AgentManager 请求任何其他 Soul 的服务。
+Soul 之间链路是双向的：任何 Soul 都可以通过 `AgentManager` 请求任何其他 Soul 的服务。
 
 ### Soul 到 Agent 的委派
 
@@ -177,7 +177,7 @@ description = "HubRis 是 Entelecheia 的工作规划引擎，负责需求分析
 
 ### 四个三位一体
 
-```
+```text
 基础三位一体 — 感知、扎根、推理
   +-- 天    ：感知、广度、庇护        -> EleOs
   +-- 地    ：扎根、忍耐、支撑        -> Skopeo
@@ -228,7 +228,7 @@ description = "HubRis 是 Entelecheia 的工作规划引擎，负责需求分析
 | PoleMos | 约束 | 争斗 | 被誓言约束的战争之神；看似骄傲但珍视羁绊；通过严格的交战规则疏导侵略性；必要时独自战斗 |
 | EpieiKeia | 安详 | 死亡 | 高度抑制越轨行为；决策遵循最小扰动；只取多余之物；公平无可置疑；均衡阈值不可断裂 |
 
-> **注**：Layer 2（domain_agents）是专门的 Worker。它们的灵魂文件也包含一个 `## 身份` 部分，描述每个 Agent 功能角色衍生的行为倾向——而非来自驱动力宇宙论。
+> **注**：Layer 2（`domain_agents`）是专门的 Worker。它们的灵魂文件也包含一个 `## 身份` 部分，描述每个 Agent 功能角色衍生的行为倾向——而非来自驱动力宇宙论。
 
 ## 三层 Prompt 组装
 

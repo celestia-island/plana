@@ -16,22 +16,22 @@ subcategory = "core"
 Entelecheia started with a monolithic `packages/shared` crate (38K lines, 187 `.rs` files) that contained all shared infrastructure: types, MCP protocol, LLM providers, container management, database, security, configuration, and more. As the project grew to 12 agents + 1 domain agent + 3 binary packages, several problems emerged:
 
 1. **Compile times**: Any change to `shared` required recompiling all 187 files, even if only one struct was modified.
-2. **Dependency pollution**: Agent crates that only needed MCP types were forced to transitively depend on database drivers, container runtimes, and LLM providers.
-3. **Unclear ownership**: With 187 files in one crate, it was unclear which module "owned" which functionality, making refactoring risky.
-4. **Feature flag explosion**: Conditional compilation via Cargo features was used to avoid pulling in unnecessary dependencies, but this led to combinatorial explosion in test configurations.
+1. **Dependency pollution**: Agent crates that only needed MCP types were forced to transitively depend on database drivers, container runtimes, and LLM providers.
+1. **Unclear ownership**: With 187 files in one crate, it was unclear which module "owned" which functionality, making refactoring risky.
+1. **Feature flag explosion**: Conditional compilation via Cargo features was used to avoid pulling in unnecessary dependencies, but this led to combinatorial explosion in test configurations.
 
 ## Decision
 
 Decompose the monolithic `packages/shared` into **37 focused sub-crates** organized in **6 dependency layers** (L0 through L5), following a strict dependency direction:
 
-```
+```text
 L0 (leaf) → L1 → L2 → L3 → L4 → L5 → consumers (scepter, agents, tui)
 ```
 
 **Layer definitions:**
 
 | Layer | Crates | Rule |
-|-------|--------|------|
+| --- | --- | --- |
 | **L0** | core, logging, macros | Zero internal dependencies on other entelecheia crates |
 | **L1** | domain_enums, mcp_types, text, concurrent | Depend only on L0 |
 | **L2** | config, agent_registry, state_types | Depend on L0-L1 |

@@ -14,7 +14,7 @@ subcategory = "webui"
 ## Предварительные требования
 
 | Инструмент | Минимальная версия | Примечания |
-|------|----------------|-------|
+| --- | --- | --- |
 | Rust | 1.85+ | Требуется Edition 2024; установка через <https://rustup.rs> |
 | Node.js | 20+ | Рекомендуется LTS |
 | pnpm | 9+ | `corepack enable && corepack prepare pnpm@latest --activate` |
@@ -47,14 +47,14 @@ cp .env.example .env
 ### Сервер
 
 | Переменная | По умолчанию | Назначение |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_HOST` | `0.0.0.0` | Адрес прослушивания |
 | `SHITTIM_CHEST_PORT` | `80` | Порт прослушивания |
 
 ### База данных
 
 | Переменная | По умолчанию | Назначение |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_DATABASE_URL` | `postgresql://sc:pass@localhost:5432/shittim_chest` | Строка подключения PostgreSQL |
 | `SHITTIM_CHEST_DATABASE_MAX_CONNECTIONS` | `10` | Размер пула соединений SeaORM |
 
@@ -68,7 +68,7 @@ CREATE DATABASE shittim_chest OWNER sc;
 ### JWT и шифрование
 
 | Переменная | По умолчанию | Назначение |
-|----------|---------|---------|
+| --- | --- | --- |
 | `JWT_SECRET` | `change-me-in-production` | Общий секрет с scepter; **должен совпадать** |
 | `JWT_EXPIRATION_SECONDS` | `3600` | Время жизни токена доступа (1 час) |
 | `JWT_REFRESH_EXPIRATION_SECONDS` | `604800` | Время жизни токена обновления (7 дней) |
@@ -85,7 +85,7 @@ openssl rand -base64 32
 Установите их для использования shittim-chest независимо без entelecheia:
 
 | Переменная | Назначение |
-|----------|---------|
+| --- | --- |
 | `LLM_DEFAULT_PROVIDER_ENDPOINT` | Конечная точка OpenAI-совместимого API (напр. `https://api.deepseek.com/v1`) |
 | `LLM_DEFAULT_PROVIDER_API_KEY` | API-ключ для провайдера |
 | `LLM_DEFAULT_PROVIDER_MODELS` | Список моделей через запятую (напр. `deepseek-chat,deepseek-reasoner`) |
@@ -97,7 +97,7 @@ openssl rand -base64 32
 ### Удалённые устройства
 
 | Переменная | По умолчанию | Назначение |
-|----------|---------|---------|
+| --- | --- | --- |
 | `REMOTE_DEVICES_ENABLED` | `false` | Включить функции удалённых устройств |
 | `REMOTE_DEVICES_SCEPTER_SOCK` | `/run/entelecheia/device_stream.sock` | Unix-сокет для данных устройств |
 | `REMOTE_DEVICES_FRAME_BUFFER_SIZE` | `4194304` | Размер буфера кадров в байтах |
@@ -107,7 +107,7 @@ openssl rand -base64 32
 ### GitHub OAuth
 
 | Переменная | Назначение |
-|----------|---------|
+| --- | --- |
 | `GITHUB_CLIENT_ID` | Client ID приложения GitHub OAuth |
 | `GITHUB_CLIENT_SECRET` | Client secret приложения GitHub OAuth |
 | `GITHUB_REDIRECT_URI` | URL обратного вызова OAuth (напр. `https://your-domain/api/auth/github/callback`) |
@@ -115,7 +115,7 @@ openssl rand -base64 32
 ### Подключение к Scepter (для функций прокси)
 
 | Переменная | По умолчанию | Назначение |
-|----------|---------|---------|
+| --- | --- | --- |
 | `ENTELECHEIA_SCEPTER_URL` | `http://localhost:8424` | HTTP-конечная точка для scepter |
 | `ENTELECHEIA_SCEPTER_WS_URL` | `ws://localhost:8424` | WebSocket-конечная точка для scepter |
 | `ENTELECHEIA_TUI_SOCK` | `/run/entelecheia/entelecheia.sock` | Unix-сокет для пересылки триггеров |
@@ -123,7 +123,7 @@ openssl rand -base64 32
 ### Вебхуки
 
 | Переменная | Назначение |
-|----------|---------|
+| --- | --- |
 | `WEBHOOK_GITHUB_SECRET` | Секрет HMAC для проверки вебхуков GitHub |
 | `WEBHOOK_GITLAB_SECRET` | Токен для проверки вебхуков GitLab |
 | `WEBHOOK_PUBLIC_URL` | Публичный URL для конечных точек вебхуков |
@@ -137,10 +137,10 @@ just db-migrate   # Применить ожидающие миграции
 
 ### Обзор схемы
 
-shittim_chest_db владеет данными, обращёнными к пользователю:
+`shittim_chest_db` владеет данными, обращёнными к пользователю:
 
 | Таблица | Назначение |
-|-------|---------|
+| --- | --- |
 | `auth_users` | Учётные записи пользователей с хешами паролей argon2 |
 | `sessions` | Активные сессии с токенами обновления |
 | `api_keys` | Записи API-ключей (хешированные) |
@@ -187,7 +187,7 @@ cargo watch -x 'run --package shittim_chest -- server'
 ### Обзор конечных точек API
 
 | Группа маршрутов | Назначение |
-|-------------|---------|
+| --- | --- |
 | `/api/auth/*` | Вход, регистрация, GitHub OAuth, обновление, выход |
 | `/api/chat/*` | Диалоги, сообщения, SSE/WS поток, поиск, экспорт |
 | `/api/providers/*` | CRUD провайдеров LLM, управление API-ключами, тестирование |
@@ -258,7 +258,7 @@ just migrate      # выполнить миграции базы данных
 
 ### Отказ в соединении с базой данных
 
-```
+```text
 error: connection to server at "localhost", port 5432 failed
 ```
 
@@ -266,7 +266,7 @@ error: connection to server at "localhost", port 5432 failed
 
 ### Scepter недоступен
 
-```
+```text
 error: error sending request for url (http://localhost:8424/...)
 ```
 
@@ -274,7 +274,7 @@ error: error sending request for url (http://localhost:8424/...)
 
 ### Ошибки CORS в браузере
 
-```
+```text
 Access-Control-Allow-Origin header is present on the requested resource
 ```
 

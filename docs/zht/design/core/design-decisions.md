@@ -15,7 +15,7 @@ ADR 遵循 [Michael Nygard ADR 範本](https://cognitect.com/blog/2011/11/15/doc
 ## 索引
 
 | ADR | 標題 | 狀態 |
-|-----|-------|--------|
+| --- | --- | --- |
 | [ADR-001](en/exec-only-microkernel-tool-surface.md) | 僅執行微核心工具表面 | 已接受 |
 | [ADR-002](en/boa-javascript-engine.md) | Boa 作為嵌入式 JavaScript 引擎 | 已接受 |
 | [ADR-003](en/postgresql-pgvector-storage.md) | PostgreSQL + PgVector 用於統一資料儲存 | 已接受 |
@@ -25,7 +25,7 @@ ADR 遵循 [Michael Nygard ADR 範本](https://cognitect.com/blog/2011/11/15/doc
 ## 語言目錄
 
 | 代碼 | 語言 |
-|------|----------|
+| --- | --- |
 | `en/` | 英文（權威版本） |
 | `zhs/` | 簡體中文 |
 | `zht/` | 繁體中文 |

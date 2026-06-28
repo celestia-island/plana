@@ -20,7 +20,7 @@
 
 Arona is a monorepo that serves as the **central hub** for the celestia-island ecosystem:
 
-```
+```text
 arona/
 ├── docs/                # Unified documentation for the entire ecosystem
 │   ├── meta/            # CLA, CoC, SECURITY, CONTRIBUTING (canonical)
@@ -42,6 +42,7 @@ arona/
 JSON-RPC 2.0 message types, agent taxonomy (16 variants), ~230 WebSocket/HTTP parameter types.
 
 **Rust usage:**
+
 ```toml
 [dependencies]
 arona = { git = "https://github.com/celestia-island/arona.git", branch = "master" }

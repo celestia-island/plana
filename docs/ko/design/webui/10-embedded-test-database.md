@@ -35,7 +35,7 @@ flowchart TD
 ## 주요 결정 사항
 
 | 결정 | 근거 |
-|----------|-----------|
+| --- | --- |
 | `postgresql_embedded`(네이티브 바이너리) 대신 `pglite-oxide`(WASM) | ~100 MB 다운로드 불필요, 플랫폼별 PG 바이너리 불필요, ~96 ms 시작 |
 | `pglite-rust-bindings` 대신 `pglite-oxide` | crates.io에 게시됨(v0.5.0), 더 빠른 시작, 확장 지원이 포함된 성숙한 빌더 API |
 | `reqwest` 대신 `tower::ServiceExt::oneshot` | sqlx 풀 백그라운드 태스크와 hyper HTTP 서버 간의 tokio 런타임 교착 상태 방지 |
@@ -70,7 +70,7 @@ pub async fn start_test_server() -> TestServer {
 
 ```rust
 // tests/xxx_tests.rs
-#[test]
+# [test]
 fn xxx_e2e_tests() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -90,6 +90,6 @@ fn xxx_e2e_tests() {
 ## PGlite 제한 사항
 
 1. **단일 연결**: `max_connections`는 1이어야 한다. 동일한 PGlite 인스턴스에 대한 여러 풀은 중단된다.
-2. **엄격한 타입 캐스팅**: PGlite는 표준 PostgreSQL보다 더 엄격하다. `uuid_column = text_value`와 같은 쿼리는 실패하므로, 항상 명시적으로 캐스팅해야 한다.
-3. **동시 테스트 러너 불가**: 하나의 PGlite 인스턴스를 공유하는 모든 비동기 테스트는 단일 `#[test]` 함수 내에서 순차적으로 실행되어야 한다.
-4. **드롭 시 풀 중단**: `sqlx::PgPool::close()`는 무기한 중단될 수 있다. `std::process::exit(0)`을 사용하여 테스트 프로세스를 종료한다.
+1. **엄격한 타입 캐스팅**: PGlite는 표준 PostgreSQL보다 더 엄격하다. `uuid_column = text_value`와 같은 쿼리는 실패하므로, 항상 명시적으로 캐스팅해야 한다.
+1. **동시 테스트 러너 불가**: 하나의 PGlite 인스턴스를 공유하는 모든 비동기 테스트는 단일 `#[test]` 함수 내에서 순차적으로 실행되어야 한다.
+1. **드롭 시 풀 중단**: `sqlx::PgPool::close()`는 무기한 중단될 수 있다. `std::process::exit(0)`을 사용하여 테스트 프로세스를 종료한다.

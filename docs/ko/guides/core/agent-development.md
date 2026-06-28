@@ -15,7 +15,7 @@ subcategory = "core"
 현재 저장소에는 세 가지 실제 사용 가능한 확장 계층이 있습니다.
 
 | 계층 | 현재 의미 |
-|------|----------|
+| --- | --- |
 | Layer1 | Rust crate으로 구현되어 workspace에 컴파일되는 핵심 Agent |
 | Layer2 | Web Automation이라는 활성 내장 도메인 Agent와 일부 아카이브 또는 계획 자료 |
 | Layer3 | 사용자 정의 Agent（계획 중, 아직 구현되지 않음） |

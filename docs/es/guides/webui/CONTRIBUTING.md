@@ -17,23 +17,32 @@ físicos e industriales, por lo que **la estabilidad y seguridad prevalecen sobr
 contribuciones**. Por favor, lee esto antes de abrir una pull request.
 
 - **Listón de fusión alto, no es una hoja de ruta pública.** Abrir un PR no implica que será
-  fusionado. Aceptamos un número deliberadamente pequeño de cambios, y solo cuando
-  encajan en la arquitectura y pasan la revisión. Es por diseño, no por descortesía.
+
+fusionado. Aceptamos un número deliberadamente pequeño de cambios, y solo cuando
+encajan en la arquitectura y pasan la revisión. Es por diseño, no por descortesía.
+
 - **Lo que damos la bienvenida:** informes de errores, correcciones enfocadas, mejoras bien delimitadas en
-  la **periferia** (plugins IDE, aplicaciones Tauri, integraciones de canal, adaptadores de
-  proveedor y documentación), y discusiones de diseño previas antes del código.
+
+la **periferia** (plugins IDE, aplicaciones Tauri, integraciones de canal, adaptadores de
+proveedor y documentación), y discusiones de diseño previas antes del código.
+
 - **Lo que generalmente no fusionaremos:** grandes reescrituras no solicitadas,
-  cambios arquitectónicos sin una discusión de diseño previa, PRs masivos "vibe-coded",
-  cualquier cosa que reduzca el listón de seguridad o corrección del núcleo, y
-  cambios en el núcleo crítico de seguridad (autenticación, JWT/OAuth, enrutamiento LLM, validación
-  de webhooks, RBAC) sin una invitación explícita y revisión extendida.
+
+cambios arquitectónicos sin una discusión de diseño previa, PRs masivos "vibe-coded",
+cualquier cosa que reduzca el listón de seguridad o corrección del núcleo, y
+cambios en el núcleo crítico de seguridad (autenticación, JWT/OAuth, enrutamiento LLM, validación
+de webhooks, RBAC) sin una invitación explícita y revisión extendida.
+
 - **Núcleo vs. periferia.** El backend central y el modelo auth/RBAC se mantienen con el
-  listón más estricto y son mantenidos principalmente por el equipo central. La periferia
-  (frontends, aplicaciones IDE/móviles, conectores de canal) es donde las contribuciones
-  externas son más útiles y más probablemente aceptadas.
+
+listón más estricto y son mantenidos principalmente por el equipo central. La periferia
+(frontends, aplicaciones IDE/móviles, conectores de canal) es donde las contribuciones
+externas son más útiles y más probablemente aceptadas.
+
 - **CLA requerido.** Cada contribución aceptada requiere un Acuerdo de Licencia del
-  Contribuyente firmado. Ver [`CLA.md`](CLA.md). Los commits deben incluir una
-  línea `Signed-off-by` (`git commit -s`).
+
+Contribuyente firmado. Ver [`CLA.md`](CLA.md). Los commits deben incluir una
+línea `Signed-off-by` (`git commit -s`).
 
 > **La licencia puede abrirse; el listón de fusión no.** El **2030-01-01** este
 > proyecto se convierte de BUSL-1.1 a la Synthetic Source License (SySL-1.0) — ver
@@ -195,7 +204,7 @@ cargo clippy               # lint
 cargo clippy --fix         # auto-corregir
 ```
 
-- Sigue las convenciones estándar de Rust (snake_case para funciones/variables, CamelCase para tipos)
+- Sigue las convenciones estándar de Rust (`snake_case` para funciones/variables, CamelCase para tipos)
 - Usa `workspace = true` para versiones de dependencias compartidas en archivos `Cargo.toml` de crate
 - Manejo de errores: usa `anyhow::Result` para código de aplicación, `thiserror` para tipos de error de crate de biblioteca
 
@@ -226,10 +235,10 @@ Los archivos de locale se organizan como 17 archivos JSON de namespace por idiom
 
 ### Convenciones de Nombrado
 
-Todos los nombres de directorio bajo `packages/` usan **snake_case**:
+Todos los nombres de directorio bajo `packages/` usan **`snake_case`**:
 
 | Tipo | Convención | Ejemplo |
-|------|-----------|---------|
+| --- | --- | --- |
 | Directorio de crate Rust | snake_case | `core/` |
 | Nombre de crate Rust | snake_case | `core` |
 
@@ -260,16 +269,16 @@ just clean                 # limpiar artefactos de build
 ## Proceso de Pull Request
 
 1. Crea una rama de funcionalidad desde `dev`: `git checkout -b feat/mi-funcionalidad dev`
-2. Haz cambios con commits claros y atómicos
-3. Ejecuta `just lint && just test` antes de hacer push
-4. Abre un PR contra la rama `dev`
-5. Asegúrate de que CI pase (build Rust, build npm, lint)
+1. Haz cambios con commits claros y atómicos
+1. Ejecuta `just lint && just test` antes de hacer push
+1. Abre un PR contra la rama `dev`
+1. Asegúrate de que CI pase (build Rust, build npm, lint)
 
 ## Convención de Commits
 
 Usa [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 feat(auth): añadir endpoint de inicio de sesión con contraseña
 fix(proxy): manejar reconexión WebSocket
 docs(readme): añadir logo e insignias

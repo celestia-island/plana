@@ -17,13 +17,13 @@ Shittim Chest est la coque utilisateur pour la plateforme de collaboration multi
 Shittim Chest se compose de plusieurs composants qui fonctionnent ensemble pour fournir une expérience utilisateur complète :
 
 - **arona** — L'interface de chat que vous utilisez actuellement, avec des réponses en streaming, la génération d'images, la surveillance de l'état des agents, la fenêtre de réflexion, la visualisation de périphériques distants et le support multilingue.
-- **shittim_chest** — Le backend unifié Rust + Axum gérant l'authentification (JWT + OAuth), le routage LLM indépendant, l'API de chat, la génération d'images, l'entrée webhook, le proxy scepter et la signalisation de périphériques distants.
+- **`shittim_chest`** — Le backend unifié Rust + Axum gérant l'authentification (JWT + OAuth), le routage LLM indépendant, l'API de chat, la génération d'images, l'entrée webhook, le proxy scepter et la signalisation de périphériques distants.
 
 ## Relation avec Entelecheia
 
 [entelecheia](https://github.com/celestia-island/entelecheia) est le moteur central d'orchestration multi-agent. Il fournit le runtime d'agents (scepter, 13 agents spécialisés, runtime Cosmos/IEPL). Shittim Chest gère tout ce avec quoi l'utilisateur interagit directement — identité, présentation et communication.
 
-Les deux projets sont séparés par conception : entelecheia gère l'orchestration des agents, tandis que shittim-chest gère l'identité et la présentation utilisateur. Ils communiquent via HTTP/WebSocket authentifié par JWT. Les identifiants de connexion résident dans shittim_chest_db ; les autorisations et les données d'identité résident dans entelecheia_db. Cette séparation permet à la coque frontale d'évoluer indépendamment du cœur d'agents.
+Les deux projets sont séparés par conception : entelecheia gère l'orchestration des agents, tandis que shittim-chest gère l'identité et la présentation utilisateur. Ils communiquent via HTTP/WebSocket authentifié par JWT. Les identifiants de connexion résident dans `shittim_chest_db` ; les autorisations et les données d'identité résident dans entelecheia_db. Cette séparation permet à la coque frontale d'évoluer indépendamment du cœur d'agents.
 
 ## Relation avec Hikari
 

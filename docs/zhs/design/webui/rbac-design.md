@@ -23,7 +23,7 @@ subcategory = "webui"
 ### 2.1 角色 (Role)
 
 | 角色 | 说明 |
-|------|------|
+| --- | --- |
 | `admin` | 超级管理员，拥有所有权限，可管理 RBAC 本身 |
 | `operator` | 运营人员，可管理大部分资源（提供商、通道、Agent 等） |
 | `member` | 普通成员，可使用被授权的资源 |
@@ -36,7 +36,7 @@ subcategory = "webui"
 权限格式：`<resource>.<action>`
 
 | 类别 | 权限 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | **提供商** | `provider.list` | 查看提供商列表 |
 | | `provider.create` | 添加提供商 |
 | | `provider.update` | 修改提供商配置 |
@@ -72,7 +72,7 @@ subcategory = "webui"
 ### 2.3 角色默认权限
 
 | 权限 | admin | operator | member | viewer |
-|------|-------|----------|--------|--------|
+| --- | --- | --- | --- | --- |
 | `provider.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `mcp.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `agent.*` | ✅ | ✅ | `list` + `use` | `list` |
@@ -89,7 +89,7 @@ subcategory = "webui"
 对于提供商、MCP、Agent、通道等资源，支持三种授权模式：
 
 | 模式 | 说明 | 适用场景 |
-|------|------|---------|
+| --- | --- | --- |
 | **全局配置** | 所有用户共享相同的权限 | 小团队、个人使用 |
 | **按用户配置** | 每个用户有独立的资源权限 | 需要精细控制的场景 |
 | **按群组配置** | 同一群组的用户共享权限 | 按部门/团队划分 |
@@ -202,7 +202,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.1 用户管理 (`/api/rbac/users`)
 
 | 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/users` | `rbac.manage` | 列出所有用户（含角色、群组） |
 | POST | `/api/rbac/users` | `rbac.manage` | 邀请用户（发邮件或创建账号） |
 | PUT | `/api/rbac/users/:id` | `rbac.manage` | 更新用户角色、启用/禁用 |
@@ -211,7 +211,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.2 群组管理 (`/api/rbac/groups`)
 
 | 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/groups` | `rbac.manage` | 列出所有群组 |
 | POST | `/api/rbac/groups` | `rbac.manage` | 创建群组 |
 | PUT | `/api/rbac/groups/:id` | `rbac.manage` | 更新群组（名称、描述） |
@@ -222,7 +222,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.3 权限管理 (`/api/rbac/grants`)
 
 | 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/grants` | `rbac.manage` | 列出所有权限规则（支持 ?scope=&permission= 过滤） |
 | PUT | `/api/rbac/grants` | `rbac.manage` | 批量设置权限（传入完整规则列表，覆盖对应 scope 的规则） |
 | DELETE | `/api/rbac/grants/:id` | `rbac.manage` | 删除单条规则 |
@@ -230,7 +230,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.4 权限检查 (`/api/rbac/check`)
 
 | 方法 | 路径 | 权限 | 说明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/check?permission=xxx&resource_id=yyy` | (任何认证用户) | 检查当前用户是否有指定权限 |
 | GET | `/api/rbac/my-permissions` | (任何认证用户) | 返回当前用户的所有有效权限列表 |
 
@@ -249,16 +249,19 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 分为三个 Tab：
 
 #### Tab 1：用户管理
+
 - 用户列表表格：头像、用户名、邮箱、角色（下拉切换）、群组标签、状态（活跃/禁用）、操作
 - 邀请用户按钮 → 弹出 Modal（输入用户名/邮箱/密码、选择角色）
 - 行操作：编辑角色、禁用/启用、删除
 
 #### Tab 2：群组管理
+
 - 群组列表表格：名称、描述、成员数、操作
 - 创建群组 → 弹出 Modal
 - 点击群组 → 展开成员列表，可添加/移除成员
 
 #### Tab 3：权限矩阵
+
 - 左上角选择授权模式：全局 / 按群组 / 按用户
 - 选择群组或用户后，显示权限矩阵表格：
   - 行：资源类别（提供商、MCP、Agent、通道、巡航模式...）
@@ -275,25 +278,28 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ## 6. 实现步骤
 
 ### Phase 1：后端基础
-1. 新增数据库迁移（rbac_groups、rbac_user_groups、rbac_grants 表 + auth_users.role 字段）
-2. 新增 SeaORM 实体模型
-3. 实现 RBAC API 路由（users、groups、grants CRUD）
-4. 实现权限检查中间件/extractor
-5. 在 JWT claims 中加入 role 字段
+
+1. 新增数据库迁移（`rbac_groups`、`rbac_user_groups`、`rbac_grants` 表 + auth_users.role 字段）
+1. 新增 SeaORM 实体模型
+1. 实现 RBAC API 路由（users、groups、grants CRUD）
+1. 实现权限检查中间件/extractor
+1. 在 JWT claims 中加入 role 字段
 
 ### Phase 2：后端集成
-6. 在现有资源 API（providers、channels 等）中加入权限检查
-7. 实现 `/api/rbac/check` 和 `/api/rbac/my-permissions`
-8. 修改 arona 的资源请求以适配权限过滤
+
+1. 在现有资源 API（providers、channels 等）中加入权限检查
+1. 实现 `/api/rbac/check` 和 `/api/rbac/my-permissions`
+1. 修改 arona 的资源请求以适配权限过滤
 
 ### Phase 3：前端 UI
-9. 重构 arona 的 RbacView（用户/群组/权限矩阵三个 Tab）
-10. 实现侧边栏和路由的权限守卫
-11. arona 端根据权限隐藏/禁用功能（如巡航模式按钮）
+
+1. 重构 arona 的 RbacView（用户/群组/权限矩阵三个 Tab）
+1. 实现侧边栏和路由的权限守卫
+1. arona 端根据权限隐藏/禁用功能（如巡航模式按钮）
 
 ## 7. 安全考虑
 
-- `admin` 角色的权限不可被 rbac_grants 覆盖（硬编码放行）
+- `admin` 角色的权限不可被 `rbac_grants` 覆盖（硬编码放行）
 - 权限检查在中间件层统一执行，不依赖业务代码手动检查
 - 敏感操作（删除用户、修改权限）记录审计日志
 - JWT 中只包含 role，具体权限每次从 DB 实时查询（避免权限变更后 token 未更新）

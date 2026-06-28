@@ -15,6 +15,7 @@ subcategory = "core"
 - [ ] **1. Выбор режима базы данных**
   - Встроенный pglite: один бинарный файл, без внешней БД. Подходит для <50 одновременных агентов.
   - PostgreSQL: рекомендуется для production. Установите `DATABASE_URL`.
+
   ```bash
   # Встроенный режим
   docker run -d -p 8080:8080 -v data:/data entelecheia:latest
@@ -24,17 +25,21 @@ subcategory = "core"
   ```
 
 - [ ] **2. Настройка идентификации пользователя**
+
   ```bash
   export ENTELECHEIA_USER_UUID=$(uuidgen)
   ```
-  Этот UUID является идентификатором владельца рабочего пространства. Все операции агентов привязаны к нему.
+
+Этот UUID является идентификатором владельца рабочего пространства. Все операции агентов привязаны к нему.
 
 - [ ] **3. Настройка провайдеров LLM**
+
   ```bash
   entelecheia-cli config set-provider openai --api-key sk-...
   entelecheia-cli config set-provider anthropic --api-key sk-ant-...
   ```
-  Ключи API шифруются в состоянии покоя с помощью AES-256-GCM через агента Aporia.
+
+Ключи API шифруются в состоянии покоя с помощью AES-256-GCM через агента Aporia.
 
 - [ ] **4. Настройка контейнерной среды выполнения**
   - Docker (по умолчанию): `--container-backend docker`
@@ -42,6 +47,7 @@ subcategory = "core"
   - Проверьте профиль seccomp: `configs/seccomp/`
 
 - [ ] **5. Проверка политик безопасности**
+
   ```bash
   # Список зарегистрированных политик безопасности
   entelecheia-cli security policy-list
@@ -53,6 +59,7 @@ subcategory = "core"
 ## Развёртывание
 
 - [ ] **6. Сборка или загрузка образа**
+
   ```bash
   # Сборка из исходников
   docker build -t entelecheia:latest .
@@ -62,6 +69,7 @@ subcategory = "core"
   ```
 
 - [ ] **7. Запуск сервиса**
+
   ```bash
   # Используя Docker Compose (рекомендуется)
   docker-compose up -d
@@ -76,20 +84,24 @@ subcategory = "core"
   ```
 
 - [ ] **8. Проверка работоспособности**
+
   ```bash
   entelecheia-cli status
   curl http://localhost:8080/health
   ```
 
 - [ ] **9. Инициализация Docker-образов для агентов**
+
   ```bash
   entelecheia-cli init-docker-images
   ```
-  Это собирает образы контейнеров, используемые каждым агентом Layer-1 для изолированного выполнения.
+
+Это собирает образы контейнеров, используемые каждым агентом Layer-1 для изолированного выполнения.
 
 ## После развёртывания
 
 - [ ] **10. Настройка мониторинга**
+
   ```bash
   # Включить трассировку
   export RUST_LOG=info,entelecheia=debug
@@ -104,6 +116,7 @@ subcategory = "core"
   - Журналы аудита временной шкалы: периодический экспорт
 
 - [ ] **12. Нагрузочное тестирование**
+
   ```bash
   # Отправить тестовое сообщение
   entelecheia-cli send "Привет, проверка работоспособности системы"
@@ -118,7 +131,7 @@ subcategory = "core"
 ## Усиление безопасности (Рекомендуется)
 
 | Проверка | Команда |
-|-------|---------|
+| --- | --- |
 | Проверить отсутствие секретов в env | `env \| grep -i key` |
 | Проверить группы RBAC | `entelecheia-cli security rbac-list` |
 | Проверить ограничения скорости | `entelecheia-cli config show channel.rate_limit` |
@@ -128,7 +141,7 @@ subcategory = "core"
 ## Устранение неполадок
 
 | Симптом | Диагностика |
-|---------|-----------|
+| --- | --- |
 | Агенты не отвечают | `entelecheia-cli status` → проверить, запущен ли scepter |
 | Ошибки вызовов LLM | Проверить ключи API: `entelecheia-cli config show providers` |
 | Ошибки контейнеров | `docker logs entelecheia` → искать ошибки Youki/Docker |

@@ -56,6 +56,7 @@ opencode（一個可比的 AI 程式碼 Agent）在短短 2 個月內累積了 9
 ### conversations 表（entelecheia）
 
 新增欄位：
+
 - `parent_conversation_id UUID REFERENCES conversations(conversation_id)` — 子對話追蹤
 - `is_archived BOOLEAN NOT NULL DEFAULT FALSE` — 歸檔標誌
 - `archived_at TIMESTAMPTZ` — 歸檔時間
@@ -64,6 +65,7 @@ opencode（一個可比的 AI 程式碼 Agent）在短短 2 個月內累積了 9
 ### messages 表（entelecheia）
 
 新增欄位：
+
 - `is_compacted BOOLEAN NOT NULL DEFAULT FALSE` — 標記符合內容清理資格的已壓縮訊息
 - `metadata JSONB NOT NULL DEFAULT '{}'` — 可擴充元資料
 
@@ -78,7 +80,7 @@ kirino 對話持久化的新表（SQL 後端）。
 ## 實作階段
 
 | 階段 | 說明 | 狀態 |
-|-------|-------------|--------|
+| --- | --- | --- |
 | 0.1 | Schema 遷移修正（dialogue_events、conversations/messages 升級） | 已完成 |
 | 1.2 | 統一配置命名空間（`StorageLifecycleConfig`） | 已完成 |
 | 0.2 | 含 CRUD + 清理方法的 `ConversationStore` | 已完成 |
@@ -133,13 +135,13 @@ graph TD
 
 1. **建立**：當技能鏈生成子任務時，建立一個新的對話，其 `parent_conversation_id` 設定為父對話的 `conversation_id`。
 
-2. **獨立歸檔**：子對話可獨立於父對話進行歸檔。當子任務完成時，在 `CHILD_SESSION_RETENTION_DAYS`（預設 7 天）後自動歸檔。
+1. **獨立歸檔**：子對話可獨立於父對話進行歸檔。當子任務完成時，在 `CHILD_SESSION_RETENTION_DAYS`（預設 7 天）後自動歸檔。
 
-3. **父對話歸檔時級聯**：當父對話歸檔時，所有子對話都被歸檔。當父對話刪除時，所有子對話都被刪除。
+1. **父對話歸檔時級聯**：當父對話歸檔時，所有子對話都被歸檔。當父對話刪除時，所有子對話都被刪除。
 
-4. **孤立對話處理**：`parent_conversation_id` 指向已刪除/不存在的父對話的對話被視為孤立對話，在 `ORPHAN_CONVERSATION_TTL_DAYS`（預設 30 天）後清理。
+1. **孤立對話處理**：`parent_conversation_id` 指向已刪除/不存在的父對話的對話被視為孤立對話，在 `ORPHAN_CONVERSATION_TTL_DAYS`（預設 30 天）後清理。
 
-5. **壓縮資格**：子對話在歸檔後立即符合訊息壓縮資格（無寬限期），因為父對話保留了摘要。
+1. **壓縮資格**：子對話在歸檔後立即符合訊息壓縮資格（無寬限期），因為父對話保留了摘要。
 
 ### 清理查詢
 
@@ -170,6 +172,6 @@ DELETE FROM conversations WHERE is_archived = TRUE
   - `cascade_delete_orphaned_children()` — 刪除父對話已刪除的子對話
   - `cleanup_expired_child_conversations()` — 已歸檔子對話的 TTL 清理
   - `cleanup_orphan_conversations()` — 清理缺少父對話的子對話
-  - `enforce_max_dialogue_records()` — dialogue_events 數量的硬上限
+  - `enforce_max_dialogue_records()` — `dialogue_events` 數量的硬上限
   - `enforce_max_conversations()` — 活躍對話數量的硬上限
 - 全部註冊為 scepter `setup.rs` 中的定期清理任務

@@ -56,6 +56,7 @@ export async function memory_store(params: {
 ```
 
 Les outils peuvent être :
+
 - **TS pur** : Logique uniquement, compose d'autres outils ou transforme des données
 - **Soutenu par le backend** : Appelle une primitive fournie par le Backend MCP
 - **Soutenu par le cloud** : Appelle une API distante (RAG, modèle, service externe)
@@ -72,13 +73,19 @@ matériel, connexions base de données). Celles-ci sont fournies par un **backen
 un binaire Rust qui s'exécute aux côtés du processus scepter.
 
 - Le backend est compilé dans l'image Docker et transporté dans la
-  "poche" de scepter (le répertoire `/workspace-base/target/`).
+
+"poche" de scepter (le répertoire `/workspace-base/target/`).
+
 - À l'exécution, scepter passe dynamiquement le chemin du binaire à l'environnement
-  IEPL via un import de module `backend`.
+
+IEPL via un import de module `backend`.
+
 - Le backend expose des opérations primitives ; toute la composition et l'orchestration
-  se font dans la couche TS.
+
+se font dans la couche TS.
 
 Exemple d'interface backend (auto-générée depuis Rust) :
+
 ```typescript
 // Auto-généré depuis le backend Rust
 declare module 'backend' {
@@ -120,7 +127,9 @@ l'agent. Hébergée sur l'infrastructure cloud d'Entelecheia.
 
 - Optionnelle : un agent peut fonctionner sans RAG (capacité réduite).
 - Limitée en requêtes : lorsque le quota est épuisé, les requêtes retournent vides — l'agent
-  se dégrade gracieusement.
+
+se dégrade gracieusement.
+
 - Référencée par URL + clé API dans le manifeste, non regroupée dans le paquet.
 
 ### 5. Modèle Affiné (Optionnel, Hébergé dans le Cloud)
@@ -133,7 +142,7 @@ Un modèle affiné pour le domaine spécifique de l'agent. Également hébergé 
 
 ## Structure de Répertoire du Paquet
 
-```
+```text
 packages/agents/{nom_agent}/
 ├── manifest.toml           # Métadonnées et configuration du paquet
 ├── mcp/
@@ -217,21 +226,26 @@ dans le manifeste. Il fournit des wrappers typés autour des primitives binaires
 ## Architecture en Couches
 
 | Couche | Agents | Distribué Comment | Paquet ? | Conteneur ? |
-|-------|--------|-----------|----------|------------|
+| --- | --- | --- | --- | --- |
 | L1 | SkeMma, HapLotes, HubRis, KaLos, NeiKos, ApoRia, EleOs, EpieiKeia, OreXis, PhiLia, PoleMos, SkoPeo | Intégré à l'image | Backend uniquement (crates Rust) | Non (en processus) |
 | L2 | ClassicSoftwareEngineering, WebAutomation, WebUiPanel, IndustrialIoT | Intégré à l'image | **Paquet complet** (TS + compétences + âme) | Oui (e-skemma) |
 | L3 | Extensions installées par l'utilisateur | Installation dynamique | **Paquet complet** | Oui (e-skemma) |
 
 - **Couche 1** (12 agents) : Agents plateforme centraux. Leurs crates Rust fournissent
-  les opérations primitives (E/S fichier, mémoire, conteneurs, matériel, etc.).
-  Ils ne sont PAS des paquets — ils SONT la plateforme. Leurs outils sont exposés
-  comme modules importables (par exemple, `import { file_write } from 'kalos'`).
+
+les opérations primitives (E/S fichier, mémoire, conteneurs, matériel, etc.).
+Ils ne sont PAS des paquets — ils SONT la plateforme. Leurs outils sont exposés
+comme modules importables (par exemple, `import { file_write } from 'kalos'`).
+
 - **Couche 2** (4 agents) : Les premiers vrais paquets. Ils n'ont **pas de backend
-  binaire** — ce sont des compositions TS/IEPL pures de primitives Couche 1.
-  Ils sont livrés avec l'image comme exemples du format de paquet.
+
+binaire** — ce sont des compositions TS/IEPL pures de primitives Couche 1.
+Ils sont livrés avec l'image comme exemples du format de paquet.
+
 - **Couche 3** : Paquets installés par l'utilisateur. Même format que L2, mais chargés
-  dynamiquement. Peuvent optionnellement déclarer un backend binaire (compilé par
-  l'utilisateur, injecté via scepter).
+
+dynamiquement. Peuvent optionnellement déclarer un backend binaire (compilé par
+l'utilisateur, injecté via scepter).
 
 ## Chemin de Migration
 

@@ -18,7 +18,7 @@ subcategory = "core"
 Entelecheia has completed its major split: the user-facing shell layers have been migrated to a sibling project **shittim-chest** (`../shittim-chest`). Entelecheia now focuses exclusively on the multi-agent orchestration core.
 
 | Repository | Scope |
-|------------|-------|
+| --- | --- |
 | **entelecheia** | Scepter orchestration, 16 agents (12 L1 + 4 L2), Cosmos/IEPL runtime, 32 shared crates |
 | **shittim-chest** | arona (Chat UI frontend), plana (Admin UI), `shittim_chest` backend (axum proxy + auth + webhook), IDE plugins, Tauri apps |
 
@@ -40,7 +40,7 @@ The project has undergone a major decomposition: the old monolithic `packages/sh
 ## Component Reality Check
 
 | Component | Implemented | Design-only / Stub | Verdict |
-|-----------|------------|-------------------|---------|
+| --- | --- | --- | --- |
 | **Scepter** (orchestration) | Auth/RBAC, provider routing, agent lifecycle, skill chain execution, WebSocket/HTTP endpoints, key encryption. 351 unit tests across 49 source files. `AppState` has `FromRef` impls for 5 sub-states; agent_lifecycle handlers use `State<Arc<Persistence>>` | Complete API surface. Batch processor defined but not instantiated. | 🟢 Real |
 | **TUI** | Full lifecycle: splash, Docker init, timeline, agent modals, i18n (8 languages), provider config, theme support. 329 unit tests across 47 source files. `ComponentStore` split into 5 sub-structs; AppState reduced to 6 fields. Connects via Unix socket (preferred) or WebSocket fallback. | Feature parity with Scepter API. `CancelRequest`/`ExecuteSudoCommand` not yet wired. | 🟢 Real |
 | **CLI** | Service management, chat, timeline, agent lifecycle commands. 28 unit tests. | Not at feature parity with TUI | 🟡 Partial |
@@ -162,7 +162,7 @@ The workspace compiles 12 Layer1 agents (111 MCP tools) and 4 Layer2 crates (Web
 **Tool implementation status:** All 147 tools have real implementations. Zero `unimplemented!()` or `todo!()` macros exist anywhere in the codebase. No tool returns a trivial `Ok(())` without real logic.
 
 | Agent | Layer | Current responsibility | Tools | Stubs | Test coverage | Maturity |
-|-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
+| --- | --- | --- |  ---  |  ---  |  ---  | --- |
 | **HapLotes** | 1 | Gateway, message routing, transport glue | 2 | 0 | 21 tests | 🟢 Real |
 | **SkoPeo** | 1 | Coordination and LLM-facing execution flow | 12 | 0 | 41 tests | 🟢 Real |
 | **HubRis** | 1 | Planning, todo management, reporting, issue helpers | 8 | 0 | 65 tests | 🟢 Real |
@@ -218,11 +218,12 @@ The container subsystem is built around a unified `ContainerOps` trait with two 
 **Two-layer runtime architecture:**
 
 | Layer | Runtime | Default | Scope |
-|-------|---------|---------|-------|
+| --- | --- | --- | --- |
 | **Outer** (orchestration) | Docker/Podman | `CONTAINER_RUNTIME=docker` | Infrastructure containers: scepter, postgres. Created via init engine, health-checked by TUI. Requires full orchestration (networking, volumes, health checks). |
 | **Inner** (cosmos sandbox) | Youki/libcontainer | `COSMOS_CONTAINER_RUNTIME=youki` | Ephemeral agent sandboxes inside scepter. Lightweight, fast-start, seccomp-constrained. |
 
 The runtime selection helpers live in `shared/infra_services/src/container_factory.rs`:
+
 - `outer_runtime_type()` — reads `CONTAINER_RUNTIME`, defaults to `docker`
 - `cosmos_runtime_type()` — reads `COSMOS_CONTAINER_RUNTIME`, defaults to `youki`
 
@@ -316,7 +317,7 @@ flowchart TB
 ```
 
 | Concept | Source File(s) |
-|---------|---------------|
+| --- | --- |
 | Backend construction | `shared/infra_services/src/container_factory.rs` |
 | `ContainerOps` trait | `shared/container/src/ops.rs` |
 | Docker create/fork | `shared/container/src/lifecycle.rs`, `image_ops.rs` |
@@ -330,7 +331,7 @@ flowchart TB
 ### End-to-End Path Wiring Status
 
 | # | Path | Status | Key Connection Points |
-|---|------|--------|----------------------|
+| --- | --- | --- | --- |
 | 1 | **Scepter startup → WS → skill chain** | 🟢 Fully wired | `scepter/src/app/setup.rs:876-1653`, `scepter/src/lib.rs:139-361`, `scepter/src/tui_connection/core/message_dispatch.rs:10-140` |
 | 2 | **TUI startup → scepter connection** | 🟢 Fully wired | Unix socket (preferred) or WebSocket fallback with full handshake + state sync |
 | 3 | **IEPL pipeline (SWC→Boa→MCP)** | 🟡 Partially wired | Transpiler functional (37 tests). Boa+MCP dispatch wired. SWC→Boa bridgeable via `shared_iepl::client` but not in-container. |
@@ -342,7 +343,7 @@ flowchart TB
 ### Dual Sandbox Isolation
 
 | Execution channel | Can call tool functions (via ES module imports) | Sandbox type | Purpose |
-|-------------------|--------------------------|--------------|---------|
+| --- | --- | --- | --- |
 | `neikos.exec()` | Yes (via ES module imports) | Boa persistent context | Skill orchestration (agent-to-agent dispatch) |
 | `skemma.script_exec()` | No | Independent process sandbox | MCP tool backends (computation/I/O) |
 
@@ -388,7 +389,7 @@ Knowledge and memory features exist in a simpler form than design documents desc
 ## Architecture Debt
 
 | Issue | Priority | Estimated Effort |
-|-------|----------|-----------------|
+| --- | --- | --- |
 | ~60 `.map_err(...to_string())` patterns across 21 files (8 exact `\|e\| e.to_string()`, 52 broader variants). Concentrated in adapter boundaries (`shared/adapter`, `shared/llm_provider`) and external-API clients (`docker_client`, `plugin_loader`). Acceptable adapter pattern at boundaries; internal code should use typed errors. | P4 | library-level concern |
 | `maturity: Stub` metadata on Classic SE tools is misleading — all 7 have real implementations (subprocess-based analyzers, pattern detectors, code metrics, extract-function refactoring). Should be bumped to `Experimental` or higher. | P4 | metadata only |
 | `SensorBatch` parser defined (`trigger_intercept.rs:58-70`) but not wired into message dispatch loop. `BatchProcessor` struct defined but not instantiated in scepter setup. Telemetry ingestion path exists but disconnected. | P3 | wiring work |
@@ -408,18 +409,26 @@ Knowledge and memory features exist in a simpler form than design documents desc
 ### What Is Wired (Entelecheia provides the execution-safety layer)
 
 - **Self-surgery hooks** (`scepter/.../skill_chain/execution/surgery_hooks.rs`):
-  `PreSurgeryCheckpoint` (records git HEAD before surgery), `PostSurgeryRollback`
-  (auto-revert on failure), redeploy logic, `attempt_rollback`. Registered into the
-  hook manager.
+
+`PreSurgeryCheckpoint` (records git HEAD before surgery), `PostSurgeryRollback`
+(auto-revert on failure), redeploy logic, `attempt_rollback`. Registered into the
+hook manager.
+
 - **YOLO tick loop**: time-boxed cadences (Periodic 5 min / Daily 6 h / Strategic
-  7 d). Skills: `yolo_cycle_report`, `regression_monitor` (Daily-tier degradation
-  prediction with fork decision logic). Forking heuristic documented at
-  `res/prompts/system/yolo-fork-pattern.md` — when a tick discovers work it cannot finish
-  in-budget, it forks a `#demiurge.xxx` session instead of truncating.
+
+7 d). Skills: `yolo_cycle_report`, `regression_monitor` (Daily-tier degradation
+prediction with fork decision logic). Forking heuristic documented at
+`res/prompts/system/yolo-fork-pattern.md` — when a tick discovers work it cannot finish
+in-budget, it forks a `#demiurge.xxx` session instead of truncating.
+
 - **Serial merge coordinator**: file-locked, feature-gated; routes noa post-chain
-  commits through `run_exclusive` so concurrent YOLO forks don't corrupt history.
+
+commits through `run_exclusive` so concurrent YOLO forks don't corrupt history.
+
 - **Container fork/merge** for safe experimentation (Docker/Podman outer + Youki
-  inner sandbox).
+
+inner sandbox).
+
 - Milestone commit `37863366e` ("初步实现自主思考能力") landed the end-to-end loop.
 
 ### Architecture: Current (ignited) vs. Pure Self-Bootstrap (target)
@@ -454,7 +463,7 @@ role. Re-introducing those two mechanisms is what would close the self-bootstrap
 ### Remaining Gaps Blocking Pure Self-Bootstrap
 
 | Gap | Current State | Required | Priority |
-|-----|---------------|----------|----------|
+| --- | --- | --- | --- |
 | **Internal plan-doc parser** | The loop works only because an external agent platform reads ARCHITECTURE.md and decomposes tasks itself. No internal skill exists. | `hubris::read_iteration_plan` skill: parse the backlog table → return structured `Vec<BacklogItem>` so Entelecheia's own coordinator can drive the loop. | P0 |
 | **Coordinator–worker separation enforcement** | The external platform provides its own planner/worker separation; Entelecheia's pipeline does not enforce it. A coordinator skill chain can still call `file_write`/`host_command_exec` directly. | Add `role` field to skill frontmatter; strip mutating tools from `role = "coordinator"` chains in `pipeline.rs` tool-whitelist builder. | P0 |
 | **Acceptance-criteria verification** | `PostSurgeryRollback` checks `cargo check --workspace` (build-level) but not task-specific acceptance criteria. Partial wiring in `prompt.rs`. | `verify_acceptance_criteria` hook namespace: each backlog item declares checkable criteria (test passes, file exists, function implemented). | P1 |
@@ -468,7 +477,7 @@ role. Re-introducing those two mechanisms is what would close the self-bootstrap
 > next actionable work. Update `status` after completion.
 
 | ID | Title | Status | Acceptance Criteria | Notes |
-|----|-------|--------|---------------------|-------|
+| --- | --- | --- | --- | --- |
 | IB-01 | `hubris::read_iteration_plan` skill | **superseded** | Skill doc at `res/prompts/agents/hubris/skills/read_iteration_plan.md`; parses ARCHITECTURE.md backlog table; returns structured task list | The loop ignited without this — the external agent platform reads the plan directly. Re-introducing it is required for **pure self-bootstrap** only. |
 | IB-02 | Coordinator tool whitelist enforcement | **superseded** | Coordinator skill chain cannot invoke `file_write` / `host_command_exec` directly; only via dispatched sub-agent | Same as IB-01: the external platform supplies its own planner/worker separation. Needed only for pure self-bootstrap. |
 | IB-03 | `verify_acceptance_criteria` hook namespace | **partial** | Hook namespace registered; each backlog item's criteria checked post-chain; abort on failure | Partial wiring in `skill_chain/prompt.rs`. Build-level check (`cargo check`) works; task-level criteria not yet. |
@@ -487,7 +496,7 @@ role. Re-introducing those two mechanisms is what would close the self-bootstrap
 > self-bootstrap metrics are N/A until IB-01/IB-02 are re-introduced.
 
 | Metric | Target | Current |
-|--------|--------|---------|
+| --- | --- | --- |
 | Workspace compilation (`cargo check --workspace`) | Clean with 0 errors | ✅ Clean (1 dead_code warning) |
 | MCP tools with real implementations | 100% | 99.3% (147/148) |
 | Stub tools | 0 | 0 |
@@ -546,7 +555,7 @@ flowchart LR
 > **Last verified**: 2026-06-14 — 3 gaps previously listed as open are now implemented.
 
 | Gap | Current | Required | Priority |
-|-----|---------|----------|----------|
+| --- | --- | --- | --- |
 | **Sensor event → Hubris plan bridge** | Hubris receives user prompts via TUI/CLI | Hubris must accept `TriggerEvent { topic: "modbus.19.h2_leak_conc.hh" }` as a plan initiation event. `TriggerDispatcher::dispatch_event()` calls subscribed skills; end-to-end Hubris plan initiation from sensor events not yet verified in integration test. | P0 |
 | **Telemetry batch ingestion wired** | `BatchProcessor` defined but not instantiated; `try_intercept_sensor_batch()` parser exists but not called in dispatch loop | Wire `Sensor.Batch` handler into message dispatch → `BatchProcessor` → telemetry store | P1 |
 | **Alarm hierarchy in OreXis** | ✅ **Fully implemented.** `alarm_tools.rs`: set/remove/acknowledge alarm rules (HH/H/L/LL/ROC levels, threshold, hysteresis, debounce, escalation: log→notify_agent→auto_correct→human_notify→emergency_shutdown). `SharedAlarmPolicyStore` functional. Station overrides supported. | Missing: pre-load 97 fault codes from hydro-tin-monitor. | P2 |
@@ -607,7 +616,7 @@ flowchart TB
 From `/mnt/sdb1/hydro-tin-monitor/doc/通信端口说明 25.8.7.md`:
 
 | Device | Station | Baud | Registers | Notes |
-|--------|---------|------|-----------|-------|
+| --- | --- | --- | --- | --- |
 | AEM Electrolyzer (2 Nm3/h) | 21 | 9600 | ~32 IR (0x04), 32-bit float BE | Temps, pressures, flows, voltages |
 | ALK Electrolyzer (3 Nm3/h) | 20 | 9600 | ~32 IR (0x04), 32-bit float BE | Same format as AEM |
 | PEM Electrolyzer | 2 | 9600 | ~17 HR (0x03), 16-bit signed | Pressures, water quality, leak, voltage |
@@ -620,7 +629,7 @@ From `/mnt/sdb1/hydro-tin-monitor/doc/通信端口说明 25.8.7.md`:
 ## Licensing
 
 | Parameter | Value |
-|-----------|-------|
+| --- | --- |
 | Current license | Business Source License 1.1 (BUSL-1.1) |
 | Free Use License | Synthetic Source License 1.0 (SySL-1.0) (for all Permitted Uses) |
 | Permitted uses (free) | Internal operations, government/public service, academic, non-commercial |

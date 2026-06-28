@@ -65,7 +65,7 @@ graph TB
 
 ## Propagation des Variables d'Environnement
 
-```
+```text
 fichier .env → dotenvy::from_path_iter → HashMap<String, String>
 → Fusionner SHITTIM_CHEST_HOST / PORT / DATABASE_URL
 → Vec<String> = ["CLE=VALEUR", ...]
@@ -86,6 +86,6 @@ Les logs du CLI sont envoyés directement à stderr, utilisant le même format q
 ## Principes de Conception
 
 1. **Le CLI n'effectue pas de logique métier** : Toute la logique métier réside dans le binaire `shittim_chest` à l'intérieur du conteneur
-2. **Les conteneurs sont des unités immuables** : Le CLI crée/détruit des conteneurs, ne modifie jamais ceux en cours d'exécution
-3. **Isolation réseau** : Le port PG n'est pas exposé à l'hôte, uniquement accessible dans le réseau Docker interne
-4. **Sondage passif pour les vérifications de santé** : Ne dépend pas des événements Docker (peu fiables) ; sonde directement les résultats d'inspection
+1. **Les conteneurs sont des unités immuables** : Le CLI crée/détruit des conteneurs, ne modifie jamais ceux en cours d'exécution
+1. **Isolation réseau** : Le port PG n'est pas exposé à l'hôte, uniquement accessible dans le réseau Docker interne
+1. **Sondage passif pour les vérifications de santé** : Ne dépend pas des événements Docker (peu fiables) ; sonde directement les résultats d'inspection

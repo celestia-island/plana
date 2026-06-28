@@ -17,7 +17,7 @@ subcategory = "core"
 ## 目標
 
 1. 在每個 LLM 請求中將靈魂提示作為基礎身份層注入。
-1. 建立三層提示組裝模型：**Soul > Skill（含 related_tools）> exec-only 工具表面**。
+1. 建立三層提示組裝模型：**Soul > Skill（含 `related_tools`）> exec-only 工具表面**。
 1. 為每個 Agent 新增一個簡短的身份段落，扎根於其**原始驅動力**，這是主要的行為錨點。
 1. 建立 **Soul / Agent** 實體區分：Soul 是具有多技能、共享 MCP 拓撲的身份承載編排器；Agent 是接受委派的專注單技能工作者。
 
@@ -133,7 +133,7 @@ flowchart TB
 
 Soul 透過伺服器中介的編排協定進行通訊（`state_machine.rs`）。標準範例：HubRis 透過 `invoke_aporia_llm_chat()` 調用 ApoRia 的 `llm_chat` 工具。每個 Soul 在整個交換過程中保留其自身的身份——HubRis 頒布法令，ApoRia 提出質疑。
 
-Soul 到 Soul 的連結是雙向的：任何 Soul 都可以透過 AgentManager 請求任何其他 Soul 的服務。
+Soul 到 Soul 的連結是雙向的：任何 Soul 都可以透過 `AgentManager` 請求任何其他 Soul 的服務。
 
 ### Soul 對 Agent 的委派
 
@@ -177,7 +177,7 @@ description = "HubRis 是 Entelecheia 的工作規劃引擎，負責需求分析
 
 ### 四個三元組
 
-```
+```text
 基礎三元組 — 感知、根基、推論
   +-- 天    ：感知、廣度、庇護                    -> EleOs
   +-- 地    ：根基、耐久、支撐                    -> Skopeo
@@ -228,7 +228,7 @@ description = "HubRis 是 Entelecheia 的工作規劃引擎，負責需求分析
 | PoleMos | 克制 | 爭 | 受誓言約束的戰神；表面傲慢但重視羈絆；攻擊性透過嚴格的交戰規則輸導；必要時獨自作戰 |
 | EpieiKeia | 寧靜 | 死 | 高度抑制偏差行為；決策遵循最小擾動；只取多餘之物；公正無可置疑；均衡閾值不得被打破 |
 
-> **注意**：第 2 層（domain_agents）是專業工作者。其靈魂檔案也包含一個 `## 身份` 段落，描述從每個 Agent 的功能性角色衍生出的行為傾向——而非來自驅動力宇宙論。
+> **注意**：第 2 層（`domain_agents`）是專業工作者。其靈魂檔案也包含一個 `## 身份` 段落，描述從每個 Agent 的功能性角色衍生出的行為傾向——而非來自驅動力宇宙論。
 
 ## 三層提示組裝
 

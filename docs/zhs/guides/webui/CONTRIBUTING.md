@@ -169,7 +169,7 @@ cargo clippy               # 代码检查
 cargo clippy --fix         # 自动修复
 ```
 
-- 遵循标准 Rust 约定（函数/变量使用 snake_case，类型使用 CamelCase）
+- 遵循标准 Rust 约定（函数/变量使用 `snake_case`，类型使用 CamelCase）
 - 在 crate `Cargo.toml` 文件中使用 `workspace = true` 共享依赖版本
 - 错误处理：应用代码使用 `anyhow::Result`，库 crate 错误类型使用 `thiserror`
 
@@ -200,10 +200,10 @@ import { t } from '@/i18n'
 
 ### 命名约定
 
-`packages/` 下的所有目录名使用 **snake_case**：
+`packages/` 下的所有目录名使用 **`snake_case`**：
 
 | 类型 | 约定 | 示例 |
-|------|-----------|---------|
+| --- | --- | --- |
 | Rust crate 目录 | snake_case | `core/` |
 | Rust crate 名称 | snake_case | `core` |
 
@@ -234,16 +234,16 @@ just clean                 # 清理构建产物
 ## Pull Request 流程
 
 1. 从 `dev` 创建功能分支：`git checkout -b feat/my-feature dev`
-2. 进行修改，保持提交清晰、原子化
-3. 推送前运行 `just lint && just test`
-4. 向 `dev` 分支发起 PR
-5. 确保 CI 通过（Rust 构建、npm 构建、代码检查）
+1. 进行修改，保持提交清晰、原子化
+1. 推送前运行 `just lint && just test`
+1. 向 `dev` 分支发起 PR
+1. 确保 CI 通过（Rust 构建、npm 构建、代码检查）
 
 ## 提交约定
 
 使用 [Conventional Commits](https://www.conventionalcommits.org/)：
 
-```
+```text
 feat(auth): add password login endpoint
 fix(proxy): handle WebSocket reconnect
 docs(readme): add logo and badges

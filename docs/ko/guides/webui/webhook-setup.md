@@ -15,7 +15,7 @@ subcategory = "webui"
 
 웹훅을 통해 외부 서비스(GitHub, GitLab, Gitee)가 shittim-chest에 실시간 이벤트를 보낼 수 있습니다. 이벤트는 검증, 파싱되어 적절한 에이전트로 디스패치하는 scepter로 전달됩니다.
 
-```
+```text
 외부 서비스 → shittim_chest → scepter → 에이전트
 ```
 
@@ -41,12 +41,12 @@ openssl rand -hex 32
 ### 2단계: GitHub에서 웹훅 생성
 
 1. 저장소 → **Settings** → **Webhooks** → **Add webhook**로 이동
-2. **Payload URL**을 `https://your-domain.com/api/webhook/github`로 설정
-3. **Content type**을 `application/json`으로 설정
-4. **Secret**을 `WEBHOOK_GITHUB_SECRET`과 동일한 값으로 설정
-5. 이벤트 선택: `push`, `pull_request`, `issues`, `issue_comment`
-6. **Active**가 체크되었는지 확인
-7. **Add webhook** 클릭
+1. **Payload URL**을 `https://your-domain.com/api/webhook/github`로 설정
+1. **Content type**을 `application/json`으로 설정
+1. **Secret**을 `WEBHOOK_GITHUB_SECRET`과 동일한 값으로 설정
+1. 이벤트 선택: `push`, `pull_request`, `issues`, `issue_comment`
+1. **Active**가 체크되었는지 확인
+1. **Add webhook** 클릭
 
 ### 3단계: 확인
 
@@ -63,11 +63,11 @@ WEBHOOK_GITLAB_SECRET=your-gitlab-secret-token
 ### 2단계: GitLab에서 웹훅 생성
 
 1. 프로젝트 → **Settings** → **Webhooks**로 이동
-2. **URL**을 `https://your-domain.com/api/webhook/gitlab`로 설정
-3. **Secret token**을 `WEBHOOK_GITLAB_SECRET`과 동일한 값으로 설정
-4. 트리거 선택: `Push events`, `Merge request events`, `Issue events`
-5. **Enable SSL verification**이 체크되었는지 확인 (HTTPS의 경우)
-6. **Add webhook** 클릭
+1. **URL**을 `https://your-domain.com/api/webhook/gitlab`로 설정
+1. **Secret token**을 `WEBHOOK_GITLAB_SECRET`과 동일한 값으로 설정
+1. 트리거 선택: `Push events`, `Merge request events`, `Issue events`
+1. **Enable SSL verification**이 체크되었는지 확인 (HTTPS의 경우)
+1. **Add webhook** 클릭
 
 ### 3단계: 확인
 
@@ -84,24 +84,24 @@ Gitee는 HMAC 검증에 동일한 `WEBHOOK_GITLAB_SECRET`을 사용합니다(토
 ### 2단계: Gitee에서 웹훅 생성
 
 1. 저장소 → **Management** → **Webhooks**로 이동
-2. **URL**을 `https://your-domain.com/api/webhook/gitee`로 설정
-3. **Password/Signing Key**를 동일한 비밀키로 설정
-4. 이벤트 선택: `Push`, `Pull Request`, `Issues`
-5. **Add** 클릭
+1. **URL**을 `https://your-domain.com/api/webhook/gitee`로 설정
+1. **Password/Signing Key**를 동일한 비밀키로 설정
+1. 이벤트 선택: `Push`, `Pull Request`, `Issues`
+1. **Add** 클릭
 
 ## 사용자 정의 웹훅
 
 shittim_chest는 `/api/webhook/custom/{name}`에서 일반 사용자 정의 웹훅 엔드포인트를 지원합니다. 사용자 정의 웹훅 소스를 추가하려면:
 
 1. `.env`에 `WEBHOOK_PUBLIC_URL` 설정
-2. 외부 서비스가 `https://your-domain.com/api/webhook/custom/{name}`으로 POST하도록 구성
-3. 이벤트가 웹훅 이름을 이벤트 소스로 하여 scepter로 전달됨
+1. 외부 서비스가 `https://your-domain.com/api/webhook/custom/{name}`으로 POST하도록 구성
+1. 이벤트가 웹훅 이름을 이벤트 소스로 하여 scepter로 전달됨
 
 코드 수준에서 새로운 웹훅 제공자를 통합하려면:
 
 1. `packages/core/src/webhook.rs`에 핸들러 추가
-2. 새 제공자에 대한 HMAC 또는 토큰 검증 구현
-3. 사용자 정의 이벤트 형식 파싱 및 Unix 소켓을 통해 scepter로 전달
+1. 새 제공자에 대한 HMAC 또는 토큰 검증 구현
+1. 사용자 정의 이벤트 형식 파싱 및 Unix 소켓을 통해 scepter로 전달
 
 ## IP 화이트리스트
 
@@ -119,7 +119,7 @@ WEBHOOK_IP_WHITELIST=140.82.112.0/20,192.30.252.0/22  # GitHub IP
 지원되는 이벤트 및 scepter 트리거로의 매핑:
 
 | 소스 | 이벤트 | scepter `event_type` |
-|--------|-------|---------------------|
+| --- | --- | --- |
 | GitHub | `push` | `github.push` |
 | GitHub | `pull_request` | `github.pull_request` |
 | GitHub | `issues` | `github.issues` |
@@ -153,9 +153,9 @@ shittim_chest는 웹훅 이벤트의 배달 로그를 유지합니다. 중복 �
 관리자 패널을 사용하여 웹훅 통합 테스트:
 
 1. 관리자 패널 로그인 (기본 `:3000`)
-2. 사이드바에서 **Webhooks**로 이동
-3. 배달 로그 및 구성 확인
-4. 외부 서비스의 테스트 기능을 통해 엔드포인트 테스트
+1. 사이드바에서 **Webhooks**로 이동
+1. 배달 로그 및 구성 확인
+1. 외부 서비스의 테스트 기능을 통해 엔드포인트 테스트
 
 curl로 수동 테스트도 가능:
 

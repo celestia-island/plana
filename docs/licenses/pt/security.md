@@ -31,7 +31,7 @@ Fora do escopo:
 ## Resposta
 
 | Etapa | Objetivo |
-|-------|--------|
+| --- | --- |
 | Confirmação de recebimento pelo Agent | 10 minutos |
 | Confirmação de recebimento humana | 1 dia corrido |
 | Avaliação inicial | 3 dias corridos |

@@ -78,7 +78,7 @@ entelecheia-cli status
 ## グローバルオプション
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `-l, --log-level <LEVEL>` | ログレベル（trace、debug、info、warn、error） | `warn` |
 | `-d, --daemon` | バックグラウンドでコマンドをディスパッチ後すぐに終了 | — |
 | `-c, --clean` | Cosmos コンテナとソケットファイルをクリーンアップ | — |
@@ -89,6 +89,7 @@ entelecheia-cli status
 | `--format <FORMAT>` | 出力形式（table、json、raw） | `table` |
 
 出力形式オプション：
+
 - `table` — 人間可読なテーブル出力
 - `json` — 機械可読な JSON 出力
 
@@ -121,7 +122,7 @@ entelecheia-cli chat send [OPTIONS]
 ```
 
 | オプション | 説明 |
-|--------|-------------|
+| --- | --- |
 | `-m, --message <MSG>` | 送信するメッセージテキスト |
 | `--stdin` | 標準入力からメッセージを読み取り |
 | `-f, --file <PATH>` | ファイルからメッセージを読み取り |
@@ -150,7 +151,7 @@ entelecheia-cli chat history [OPTIONS]
 ```
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--conversation <ID>` | 会話 ID でフィルタ | — |
 | `--agent <TYPE>` | エージェントタイプでフィルタ | — |
 | `--role <ROLE>` | ロールでフィルタ（user/assistant/system） | — |
@@ -172,7 +173,7 @@ entelecheia-cli chat recent [OPTIONS]
 ```
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--timeline <ID>` | タイムライン/会話 ID でフィルタ | — |
 | `--agent <TYPE>` | エージェントタイプでフィルタ | — |
 | `--limit <N>` | 返す最大メッセージ数 | `20` |
@@ -222,7 +223,7 @@ entelecheia-cli init [OPTIONS]
 完全なサービススタックをセットアップ：PostgreSQL（pgvector 付き）、Docker レジストリ、scepter サーバー、WebUI。必要な Docker ネットワークを作成し、イメージをプル/ビルドします。
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | コンテナ名プレフィックス | `e-` |
 | `--source-build` | プルではなくソースからイメージをビルド | `false` |
 | `--webui-port <PORT>` | WebUI ポート | `3424` |
@@ -242,7 +243,7 @@ entelecheia-cli serve [OPTIONS]
 以前に初期化されたすべてのコンテナを起動します。事前に `init` を実行する必要があります。
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | コンテナ名プレフィックス | `e-` |
 | `--webui-port <PORT>` | WebUI ポート | `3424` |
 
@@ -255,7 +256,7 @@ entelecheia-cli stop [OPTIONS]
 実行中のすべてのコンテナを順番に停止：webui → scepter → registry → postgres。
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | コンテナ名プレフィックス | `e-` |
 
 ### WebUI のみ起動
@@ -267,7 +268,7 @@ entelecheia-cli webui [OPTIONS]
 WebUI コンテナのみを起動または作成します。
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | コンテナ名プレフィックス | `e-` |
 | `--webui-port <PORT>` | WebUI ポート | `3424` |
 
@@ -284,6 +285,7 @@ entelecheia-cli config show
 ```
 
 現在の設定を表示：
+
 - データベース URL と接続設定
 - ApoRia LLM プロバイダー設定（名前、モデル、エンドポイント）
 - WebSocket バインドアドレス
@@ -298,6 +300,7 @@ entelecheia-cli config validate
 ```
 
 検証チェックを実行：
+
 - データベース URL が設定されている
 - 少なくとも 1 つの ApoRia プロバイダーが完全な設定で構成されている
 - WebSocket バインドアドレスが設定されている
@@ -306,7 +309,7 @@ entelecheia-cli config validate
 
 **出力例：**
 
-```
+```text
 Validate Configuration:
 
 Validating database configuration...
@@ -366,6 +369,7 @@ entelecheia-cli context create dev --description "Development server"
 ```
 
 リモートサーバーから Bearer トークンを取得：
+
 ```bash
 # サーバーマシン上で
 docker exec e-scepter cat /home/entelecheia/.config/entelecheia/scepter.token
@@ -421,6 +425,7 @@ entelecheia-cli status
 ```
 
 表示内容：
+
 - サーバーバージョン
 - 接続状態（ソケット状態）
 - LLM プロバイダー概要
@@ -437,7 +442,7 @@ entelecheia-cli status <PATH> [--raw]
 ```
 
 | パス構文 | 説明 |
-|---|---|
+| --- | --- |
 | `timeline.#agent[-N]` | あるエージェントの最近 N 回の skill 呼び出し記録を表示 |
 | `timeline.#agent[N][M]` | N 回目の skill 呼び出しにおける M 番目の MCP/ツール呼び出しを表示 |
 | `history[-N]` | 最近 N 件のチャットメッセージを表示（全ロール） |
@@ -478,7 +483,7 @@ entelecheia-cli logs [OPTIONS]
 ```
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `-a, --agent <NAME>` | エージェント名でログをフィルタ | 全エージェント |
 | `-l, --lines <N>` | 表示する行数（末尾） | `100` |
 
@@ -515,7 +520,7 @@ entelecheia-cli subscribe add [OPTIONS]
 ```
 
 | オプション | 説明 |
-|--------|-------------|
+| --- | --- |
 | `--name <NAME>` | サブスクリプション名（必須） |
 | `--source <SOURCE>` | ソースタイプ：`official`、`github` または `url`（必須） |
 | `--repository <REPO>` | GitHub リポジトリ（github ソース用） |
@@ -565,7 +570,7 @@ entelecheia-cli run <AGENT> [OPTIONS]
 Layer3 エージェントスクリプトを実行します。現在のディレクトリで `.amphoreus/<AGENT>/run.py` を検索します。初回実行時に事前チェック監査が実行されます。
 
 | オプション | 説明 |
-|--------|-------------|
+| --- | --- |
 | `--ci` | CI モードを有効化 |
 | `--auto-pr` | 自動 PR モードを有効化 |
 | `--dry-run` | ドライラン（実際の変更を行わない） |
@@ -619,7 +624,7 @@ entelecheia-cli timeline list [OPTIONS]
 ```
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--agent <TYPE>` | エージェントタイプでフィルタ | — |
 | `--limit <N>` | 最大結果数 | `50` |
 | `--offset <N>` | ページネーションオフセット | `0` |
@@ -631,7 +636,7 @@ entelecheia-cli timeline show <CONVERSATION_ID> [OPTIONS]
 ```
 
 | オプション | 説明 | デフォルト値 |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--include-messages` | 出力にメッセージを含める | `true` |
 
 ---
@@ -645,7 +650,7 @@ entelecheia-cli init-docker-images [OPTIONS]
 プラットフォームに必要な Docker イメージをビルドまたはプルします。
 
 | オプション | 説明 |
-|--------|-------------|
+| --- | --- |
 | `--source-build` | プルではなくソースからイメージをビルド |
 | `--tag <TAG>` | イメージタグ（デフォルト：`latest`） |
 
@@ -660,6 +665,7 @@ entelecheia-cli init-docker-images --tag v0.2.0
 ```
 
 管理対象イメージ：
+
 - `entelecheia` — オーケストレーションサーバー（組み込み cosmos ランタイム付き）
 - `pgvector/pgvector` — ベクトル拡張付き PostgreSQL
 
@@ -693,6 +699,7 @@ entelecheia-cli -l trace send "テストメッセージ"
 ### TUI との併用
 
 CLI と TUI は同じ scepter サーバーに接続します。両方を同時に使用できます：
+
 - TUI を起動してインタラクティブセッション：`cargo run --bin entelecheia-tui`
 - CLI を使用してスクリプト作成、自動化、クイッククエリ
 
@@ -728,6 +735,7 @@ entelecheia-cli init && entelecheia-cli serve
 ### "Configuration validation failed"
 
 `entelecheia-cli config validate` を実行して、どのチェックが失敗したかを確認します。よくある問題：
+
 - `DATABASE_URL` 環境変数が不足
-- ApoRia プロバイダー設定が不完全（名前、モデル、api_key）
+- ApoRia プロバイダー設定が不完全（名前、モデル、`api_key`）
 - WebSocket バインドアドレスが不足

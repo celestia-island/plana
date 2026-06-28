@@ -12,7 +12,7 @@
 
 - **개인 기여자.** 각 커밋에 `Signed-off-by` 줄을 추가하십시오(`git commit`에 `-s` 전달). 이 서명은 본 CLA에 대한 전자적 동의로서, Developer Certificate of Origin(DCO)에 아래 제3절의 부여를 더한 것과 동등합니다:
 
-  ```
+  ```text
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
@@ -48,7 +48,7 @@
 
 귀하가 회사를 대신하여 기여하는 경우, 그 회사는 아래의 기업 CLA 블록에 서명하여 contact@celestia.world으로 반송함으로써 다음 사항을 확인해야 합니다.
 
-```
+```text
 Company: ______________________________________________________
 Address: ______________________________________________________
 Contact name & email: _________________________________________

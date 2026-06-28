@@ -15,7 +15,7 @@ subcategory = "core"
 現在のリポジトリには、実際に利用可能な 3 つの拡張階層があります。
 
 | 階層 | 現在の意味 |
-|------|----------|
+| --- | --- |
 | Layer1 | Rust crate として実装され、workspace にコンパイルされるコア Agent |
 | Layer2 | Web Automation というアクティブな組み込みドメイン Agent、およびいくつかのアーカイブまたは計画資料 |
 | Layer3 | ユーザー定義 Agent（計画中、未実装） |

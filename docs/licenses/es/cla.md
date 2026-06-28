@@ -12,7 +12,7 @@ El presente Acuerdo de Licencia de Colaborador (el «CLA») se aplica a toda con
 
 - **Colaboradores individuales.** Añada una línea `Signed-off-by` a cada uno de sus commits (pase `-s` a `git commit`). La firma es su aceptación electrónica de este CLA, equivalente al Developer Certificate of Origin (DCO) más las concesiones de la Sección 3 siguientes:
 
-  ```
+  ```text
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
@@ -48,7 +48,7 @@ Usted declara que:
 
 Si usted contribuye en nombre de una empresa, esta deberá confirmar lo siguiente firmando y devolviendo el bloque de CLA Corporativo que aparece a continuación a contact@celestia.world:
 
-```
+```text
 Company: ______________________________________________________
 Address: ______________________________________________________
 Contact name & email: _________________________________________

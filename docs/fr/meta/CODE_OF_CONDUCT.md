@@ -28,9 +28,12 @@ communauté :
 * Être respectueux des opinions, points de vue et expériences divergents
 * Donner et accepter gracieusement des retours constructifs
 * Assumer la responsabilité et s'excuser auprès des personnes affectées par nos erreurs,
-  et apprendre de l'expérience
+
+et apprendre de l'expérience
+
 * Se concentrer sur ce qui est le mieux non seulement pour nous en tant qu'individus, mais pour la
-  communauté dans son ensemble
+
+communauté dans son ensemble
 
 Exemples de comportements inacceptables :
 
@@ -38,9 +41,12 @@ Exemples de comportements inacceptables :
 * Le trollage, les commentaires insultants ou dérogatoires, et les attaques personnelles ou politiques
 * Le harcèlement public ou privé
 * La publication d'informations privées d'autrui, telles qu'une adresse physique ou email,
-  sans leur permission explicite
+
+sans leur permission explicite
+
 * Tout autre comportement qui pourrait raisonnablement être considéré comme inapproprié dans un
-  cadre professionnel
+
+cadre professionnel
 
 ## Responsabilités d'Application
 
@@ -121,7 +127,7 @@ communauté.
 
 Ce Code de Conduite est adapté du [Pacte du Contributeur][homepage],
 version 2.1, disponible à
-[https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1].
+[https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1].
 
 Les Directives d'Impact Communautaire ont été inspirées par
 [l'échelle d'application du code de conduite de Mozilla][mozilla-coc].
@@ -131,7 +137,7 @@ Pour les réponses aux questions courantes sur ce code de conduite, consultez la
 [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

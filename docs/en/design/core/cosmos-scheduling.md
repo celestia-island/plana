@@ -122,11 +122,13 @@ sequenceDiagram
 The routing decision happens in `mcp_skill_router.rs`:
 
 1. Check `agent_manager.get_tool_location(tool_name)`
-2. If `ToolLocation::Cosmos` and containerized mode active:
+1. If `ToolLocation::Cosmos` and containerized mode active:
+
    - Call `agent_manager.invoke_tool()` which routes through `BridgeInvoker` → HapLotes bridge → Cosmos's `McpRouter`
    - Cosmos's `McpRouter` dispatches locally (skemma) or back to Scepter via bridge for remote agents
    - Return `McpMessage::ToolResponse` directly to TUI
-3. Otherwise: route through HapLotes gateway to the agent process
+
+1. Otherwise: route through HapLotes gateway to the agent process
 
 ## IV. CosmosConnector / Bridge Architecture
 
@@ -237,7 +239,7 @@ Inside Cosmos containers, only skemma runs locally (Boa JS engine). All other ag
 
 ### Display Format
 
-In the TUI AgentDetailPage, the stats line shows:
+In the TUI `AgentDetailPage`, the stats line shows:
 
 ```mermaid
 flowchart LR

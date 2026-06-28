@@ -47,7 +47,7 @@ flowchart TB
 ### Principios de Diseño
 
 | Principio | Descripción |
-|-----------|-------------|
+| --- | --- |
 | **Fuente Única de Verdad** | Cada namespace tiene exactamente un módulo (`var_namespace.rs`, `ref_namespace.rs`, `namespace.rs`) que genera **todo** el código JS que referencia ese namespace |
 | **Inicialización Perezosa** | `__vars` y `__refs` se inicializan una vez en `JsRuntime::new()` y sobreviven a través de cadenas de habilidades; `__env` se inicializa durante la evaluación JS del namespace |
 | **Instantánea/Restauración** | El estado completo `__vars` + `__refs` es capturable y restaurable, permitiendo la persistencia de sesión |
@@ -133,7 +133,7 @@ flowchart TB
 
 ### 1.3 Secuencia de Inicialización
 
-```
+```text
 JsRuntime::new()
   → context.eval("globalThis.$ = globalThis.$ || {}; globalThis.__vars = {}; globalThis.__refs = {};")
   → __vars inicializado como objeto vacío
@@ -146,7 +146,7 @@ La inicialización se ejecuta **antes** de `build_namespace_js()` (que configura
 ### 1.4 Operaciones
 
 | Operación | Nombre de Herramienta | Tipo | Comportamiento |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | Almacenar string | `write_to_var` | Bloqueante | Escapa contenido para JS, evalúa `vars['nombre'] = 'contenido'` |
 | Almacenar JSON | `write_to_var_json` | Bloqueante | Valida JSON, evalúa `vars['nombre'] = JSON.parse('contenido')` |
 | Leer en exec | `exec` | DispararYOlvidar | Acceso directo: `vars['nombre']` o `import vars from 'vars'` |
@@ -158,7 +158,7 @@ La inicialización se ejecuta **antes** de `build_namespace_js()` (que configura
 
 En `build_runtime_context()` (`prompt.rs:472`), el almacén de variables aparece en el system prompt como:
 
-```
+```text
 ## Contexto de Runtime JS
 
 __vars (de write_to_var / write_to_var_json, N total):
@@ -176,7 +176,7 @@ __vars (de write_to_var / write_to_var_json, N total):
 
 Similar a `env`, el módulo `vars` es un módulo sintético Boa que envuelve `__vars` para importación conveniente:
 
-```
+```python
 import vars from 'vars';
 // vars === __vars (referencia viva)
 const report = vars['resultados_analisis'];
@@ -278,7 +278,7 @@ interface RefAgentOutput {
 ### 2.4 Operaciones
 
 | Operación | Nombre de Herramienta | Tipo | Comportamiento |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | Añadir referencia | `ref_add` | Bloqueante | Valida JSON, evalúa `refs['nombre'] = JSON.parse('...')` |
 | Eliminar referencia | `ref_remove` | DispararYOlvidar | Evalúa `delete refs['nombre']` |
 | Leer en exec | (mediante `exec`) | — | `refs['nombre'].files[0].content` |
@@ -291,7 +291,7 @@ Las refs aparecen en **dos** ubicaciones en el system prompt:
 
 #### Ubicación 1: `refs_section` (tabla de contenidos dedicada)
 
-```
+```text
 ## Recursos Referenciados (refs)
 
 Los siguientes recursos están disponibles mediante `refs['nombre']`.
@@ -304,7 +304,7 @@ Generado por `build_refs_section()` en `prompt.rs:426`. Cada ref muestra **nombr
 
 #### Ubicación 2: `runtime_context` (listado de nombres)
 
-```
+```text
 __refs (recursos referenciados de usuario/agentes, 3 total):
   `code:src/main.rs`, `image:arquitectura`, `agent:orexis/audit-1`
   Acceso: `refs['nombre']` — cada ref tiene .ref_type, .source, .summary
@@ -359,7 +359,7 @@ flowchart LR
 ### 3.3 Operaciones
 
 | Operación | Mecanismo | Comportamiento |
-|-----------|-----------|----------|
+| --- | --- | --- |
 | Inicializar | `build_namespace_js()` | `__env = __env \|\| {}; env.aporia = env.aporia \|\| { language: 'auto' }` |
 | Establecer idioma | llamada `exec` mediante conector cosmos | `env.aporia.language = 'es'` |
 | Leer en IEPL | `import { language } from 'env'` | Devuelve `env.aporia.language` con respaldo `'auto'` |
@@ -414,8 +414,8 @@ Esto permite que el código escrito como `$.variant.tools.agent.method()` se res
 El `LocalCosmosRuntime` ejecuta un **único `JsRuntime` de larga duración** en un hilo dedicado. Entre ejecuciones de cadenas de habilidades, el estado del runtime (`__vars`, `__refs`) persiste naturalmente. Sin embargo, las instantáneas se utilizan para:
 
 1. **Inyección en prompt** — `build_runtime_context()` y `build_refs_section()` leen JSON de instantánea para poblar el system prompt
-2. **Persistencia de sesión** — volcar/restaurar en disco para recuperación de fallos o migración de sesión
-3. **Sincronización de contenedor** — enviar estado a contenedores cosmos mediante `cosmos_set_rag_context()`
+1. **Persistencia de sesión** — volcar/restaurar en disco para recuperación de fallos o migración de sesión
+1. **Sincronización de contenedor** — enviar estado a contenedores cosmos mediante `cosmos_set_rag_context()`
 
 ### 4.2 Formato de Instantánea
 
@@ -569,7 +569,7 @@ flowchart TB
 ### 5.2 Definiciones de Herramientas
 
 | Herramienta | Modo de Llamada | Requiere | Esquema de Parámetros |
-|------|-----------|----------|-----------------|
+| --- | --- | --- | --- |
 | `exec` | DispararYOlvidar | `code: string` | Cadena de código JS única |
 | `write_to_var` | Bloqueante | `var_name, content` | `{var_name: string, content: string}` |
 | `write_to_var_json` | Bloqueante | `var_name, content` | `{var_name: string, content: string (JSON válido)}` |
@@ -614,7 +614,7 @@ fn is_cosmos_internal_tool(tool_name: &str) -> bool {
 Este ayudante sirve a dos propósitos críticos:
 
 1. **Resolución de tipo de agente** — `get_tool_agent_type()` devuelve `Agent::SkeMma` para herramientas internas, ya que se ejecutan en el runtime Cosmos (no en el proceso de un agente de dominio).
-2. **Enrutamiento de respaldo** — Cuando una llamada cosmos contenerizada falla para una herramienta interna, el sistema recurre al runtime cosmos local. Para herramientas no internas, el respaldo va a ejecución en proceso. Esto asegura que las operaciones cosmos nunca fallen silenciosamente en modo contenerizado.
+1. **Enrutamiento de respaldo** — Cuando una llamada cosmos contenerizada falla para una herramienta interna, el sistema recurre al runtime cosmos local. Para herramientas no internas, el respaldo va a ejecución en proceso. Esto asegura que las operaciones cosmos nunca fallen silenciosamente en modo contenerizado.
 
 ### 5.5 Enrutamiento Cosmos Contenerizado vs Local
 
@@ -656,7 +656,7 @@ flowchart TB
 **Diferencias clave:**
 
 | Aspecto | Modo Local | Modo Contenerizado |
-|--------|-----------|-------------------|
+| --- | --- | --- |
 | `__vars` / `__refs` | Compartidos entre todos los agentes | Compartidos dentro del contenedor, aislados entre contenedores |
 | `__env` | Establecido directamente mediante `exec` | Establecido mediante llamada JSON-RPC `CosmosConnector` |
 | Rendimiento | Cero sobrecarga de serialización | Serialización JSON-RPC por llamada |
@@ -683,14 +683,16 @@ pub async fn build_scepter_namespace_config_and_js(
 Esta función:
 
 1. Recopila todas las herramientas MCP de los agentes registrados desde el `AgentRegistry`
-2. Construye un `NamespaceConfig` con listas de herramientas por agente y metadatos (sync/async, unwrap_data)
-3. Genera JS de namespace mediante `build_namespace_js(&config)` que:
+1. Construye un `NamespaceConfig` con listas de herramientas por agente y metadatos (sync/async, `unwrap_data`)
+1. Genera JS de namespace mediante `build_namespace_js(&config)` que:
+
    - Crea `globalThis.$` si falta
    - Inicializa `env.aporia` con `{ language: 'auto' }`
    - Define la propiedad `$.variant` (getter circular que devuelve `globalThis.$`)
    - Registra todos los módulos de herramientas de agente mediante `register_tool_modules_with_rag()`
 
 El JS del namespace se evalúa:
+
 - **Una vez** al inicio de `LocalCosmosRuntime::new()`
 - **Bajo demanda** durante la reconstrucción de cadena de habilidades mediante `CosmosCommand::RebuildNamespace`
 
@@ -700,7 +702,7 @@ El JS del namespace se evalúa:
 
 El system prompt completo ensamblado en `pipeline.rs:869-882`:
 
-```
+```text
 Eres el motor de ejecución de la habilidad {skill_name} del {Agent}. Ejecuta la habilidad fielmente.
 
 [capability_section]
@@ -745,7 +747,7 @@ Eres el motor de ejecución de la habilidad {skill_name} del {Agent}. Ejecuta la
 ### Justificación de la Ubicación de las Secciones
 
 | Sección | Posición | Razón |
-|---------|----------|--------|
+| --- | --- | --- |
 | Identidad del agente + nombre de habilidad | Primera frase | Establece el rol inmediatamente |
 | Declaraciones de herramientas | Antes del alma | El LLM necesita conocer las herramientas disponibles antes de que la personalidad afecte la elección |
 | Alma | Después de herramientas, antes de refs | La personalidad influye en cómo se interpretan las refs |
@@ -766,6 +768,7 @@ globalThis.__refs = globalThis.__refs || {};
 ```
 
 Esto significa:
+
 - **Los valores existentes persisten** — `__vars` y `__refs` se mantienen intactos
 - **Los estados corruptos se recuperan** — si `__refs` fue eliminado accidentalmente, se recrea
 - **El aislamiento de habilidades es opt-in** — las habilidades solo deben leer variables que conocen (por nombre en el prompt de contexto de runtime)
@@ -776,7 +779,7 @@ Esto significa:
 ## 8. Mapa de Archivos de Implementación
 
 | Componente | Archivo | Líneas | Descripción |
-|-----------|------|-------|-------------|
+| --- | --- | --- | --- |
 | Constantes y generadores `__vars` | `packages/shared/core/src/var_namespace.rs` | 1-211 | Toda la generación de código JS para vars |
 | Constantes y generadores `__refs` | `packages/shared/core/src/ref_namespace.rs` | 1-145 | Toda la generación de código JS para refs |
 | Generación `__env` | `packages/shared/iepl/src/namespace.rs` | 193-197 | `build_env_namespace_js()` |
@@ -825,7 +828,7 @@ Esto significa:
 ### 9.2 Límites de Memoria
 
 | Límite | Valor | Aplicado En |
-|-------|-------|-------------|
+| --- | --- | --- |
 | Máx vars en prompt | 30 | `build_runtime_context()` — constante `MAX_NAMES` |
 | Máx refs en prompt | 30 | `build_refs_section()` — `.take(30)` |
 | Máx refs en runtime_context | 30 | `build_runtime_context()` — constante `MAX_NAMES` |
@@ -836,7 +839,7 @@ Esto significa:
 ### 9.3 Manejo de Errores
 
 | Error | Manejo |
-|-------|----------|
+| --- | --- |
 | `write_to_var_json` con JSON inválido | Devuelve error con vista previa (primeros 200 caracteres) |
 | `ref_add` con JSON inválido | Devuelve `SkemmaError::JsEval` con vista previa |
 | Instantánea de referencia circular (`$.variant`) | Captura `TypeError` silenciosamente, omite la clave |
@@ -863,7 +866,7 @@ sequenceDiagram
     JS->>JS: registrar nuevos módulos de herramientas<br/>(__vars y __refs sin cambios)
 ```
 
-> **Invariante clave:** RebuildNamespace solo actualiza registros de herramientas y configuraciones de entorno. **No** reinicia `__vars` o `__refs` — esos se manejan por separado mediante `ResetVars`.
+> **Invariante clave:** `RebuildNamespace` solo actualiza registros de herramientas y configuraciones de entorno. **No** reinicia `__vars` o `__refs` — esos se manejan por separado mediante `ResetVars`.
 
 ### 9.5 Propagación de Idioma en Modo Contenerizado
 
@@ -880,7 +883,7 @@ connector.cosmos_exec(&container_uuid, &lang_code).await?;
 
 Esto envía una llamada MCP `exec` sobre el transporte JSON-RPC al contenedor cosmos, que evalúa la asignación JS en el `JsRuntime` aislado del contenedor. La ruta completa de propagación de idioma es:
 
-```
+```text
 Idioma de solicitud TUI → Scepter (extraer request_language)
   → [modo local] exec directo("env.aporia.language = 'es'")
   → [contenerizado] CosmosConnector::cosmos_exec(llamada_json_rpc)

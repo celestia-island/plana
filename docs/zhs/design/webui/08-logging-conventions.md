@@ -57,7 +57,7 @@ tracing_subscriber::fmt()
 
 CLI 接受 `--log-level` / `-l` 参数（默认 `info`）：
 
-```
+```text
 shittim-chest --log-level debug dev
 shittim-chest -l trace status
 ```
@@ -77,10 +77,10 @@ shittim-chest -l trace status
 ## 设计原则
 
 1. **CLI 不吞没错误**：所有错误通过 `anyhow::Result` 向上传播；`main()` 自动打印错误链。
-2. **每个操作开始均有日志**：`正在创建网络...`、`正在运行迁移...`、`正在构建 shittim_chest...`——用户知道 CLI 正在做什么。
-3. **每个操作完成均有确认**：`shittim-chest 已在 0.0.0.0:80 启动`、`所有服务已启动`。
-4. **静默成功的操作不记录日志**：如果网络已存在，`ensure_network` 不打印日志，避免噪音。
-5. **容器日志通过 Docker API 获取**：CLI 自身不写入业务日志，仅写入编排操作日志。
+1. **每个操作开始均有日志**：`正在创建网络...`、`正在运行迁移...`、`正在构建 shittim_chest...`——用户知道 CLI 正在做什么。
+1. **每个操作完成均有确认**：`shittim-chest 已在 0.0.0.0:80 启动`、`所有服务已启动`。
+1. **静默成功的操作不记录日志**：如果网络已存在，`ensure_network` 不打印日志，避免噪音。
+1. **容器日志通过 Docker API 获取**：CLI 自身不写入业务日志，仅写入编排操作日志。
 
 ## 与 entelecheia 对齐
 

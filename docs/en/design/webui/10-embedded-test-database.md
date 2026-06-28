@@ -35,7 +35,7 @@ flowchart TD
 ## Key Decisions
 
 | Decision | Rationale |
-|----------|-----------|
+| --- | --- |
 | `pglite-oxide` (WASM) over `postgresql_embedded` (native binary) | No ~100 MB download, no platform-specific PG binary, ~96 ms startup |
 | `pglite-oxide` over `pglite-rust-bindings` | Published on crates.io (v0.5.0), faster startup, mature builder API with extension support |
 | `tower::ServiceExt::oneshot` over `reqwest` | Avoids tokio runtime deadlock between sqlx pool background tasks and hyper HTTP server |
@@ -70,7 +70,7 @@ pub async fn start_test_server() -> TestServer {
 
 ```rust
 // tests/xxx_tests.rs
-#[test]
+# [test]
 fn xxx_e2e_tests() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -90,6 +90,6 @@ All 13 tables are created via SeaORM migrations during test setup:
 ## PGlite Limitations
 
 1. **Single connection**: `max_connections` must be 1. Multiple pools to the same PGlite instance will hang.
-2. **Strict type casting**: PGlite is stricter than standard PostgreSQL. Queries like `uuid_column = text_value` will fail — always cast explicitly.
-3. **No concurrent test runners**: All async tests sharing one PGlite instance must run sequentially within a single `#[test]` function.
-4. **Pool hang on drop**: `sqlx::PgPool::close()` may hang indefinitely. Use `std::process::exit(0)` to terminate the test process.
+1. **Strict type casting**: PGlite is stricter than standard PostgreSQL. Queries like `uuid_column = text_value` will fail — always cast explicitly.
+1. **No concurrent test runners**: All async tests sharing one PGlite instance must run sequentially within a single `#[test]` function.
+1. **Pool hang on drop**: `sqlx::PgPool::close()` may hang indefinitely. Use `std::process::exit(0)` to terminate the test process.

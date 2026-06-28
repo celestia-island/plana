@@ -41,7 +41,7 @@ flowchart TB
 ### 条件编译
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 static ARONA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../dist/arona");
 
 async fn serve_arona() -> impl IntoResponse {
@@ -62,7 +62,7 @@ async fn serve_arona() -> impl IntoResponse {
 
 应用为单页应用。所有不匹配静态资源的路由返回 `index.html`：
 
-```
+```text
 GET /               → index.html
 GET /chat/123       → index.html（前端路由器处理）
 GET /backend        → index.html
@@ -86,7 +86,7 @@ GET /backend/providers → index.html（前端路由器处理）
 
 ## Dockerfile 中的前端构建
 
-```
+```text
 Stage 1（前端）：
   node:22-slim → pnpm install → pnpm build:all → /app/dist/arona/
 
@@ -102,6 +102,6 @@ Stage 3（运行时）：
 ## 设计决策
 
 1. **开发模式使用 dev.py 自动重构建**：`dev.py` 监听前端源码并在变更时重构建，后端在单一端口提供所有服务。
-2. **发布模式无需反向代理**：二进制内嵌 SPA，实现单进程部署，降低运维复杂度。
-3. **前端不在运行时动态加载**：避免文件系统依赖和版本不一致。发布镜像仅包含单个二进制文件。
-4. **单 SPA**：前端在 `/` 提供服务，管理面板在 `/backend`。
+1. **发布模式无需反向代理**：二进制内嵌 SPA，实现单进程部署，降低运维复杂度。
+1. **前端不在运行时动态加载**：避免文件系统依赖和版本不一致。发布镜像仅包含单个二进制文件。
+1. **单 SPA**：前端在 `/` 提供服务，管理面板在 `/backend`。

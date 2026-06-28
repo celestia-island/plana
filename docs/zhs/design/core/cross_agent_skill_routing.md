@@ -15,10 +15,10 @@ subcategory = "core"
 ## 设计原则
 
 1. **仅执行微内核**——LLM 永远不会直接获得 MCP 工具定义。它有三个工具：`exec`、`write_to_var` 和 `write_to_var_json`。所有工具调用在 IEPL 引擎的 TS 运行时内部发生。
-2. **`related_tools` 驱动一切**——技能在其 TOML frontmatter 中声明 `related_tools`。这些名称成为注入到 LLM 提示中的 TS API 文档（例如 `file_read()`、`report()`）。
-3. **通过 TS API → McpRouter 路由**——在 `exec` 的 IEPL 运行时内部，ES 模块导入通过 `McpRouter` 路由到正确的 MCP 工具实现。跨 agent 调用（如 `file_read()`）解析到 KaLos agent 的 `file_read` 实现。
-4. **容器隔离**——子容器通过 `docker commit` fork 继承父文件系统。工作区根据技能的 `related_tools` 以只读或读写方式挂载。
-5. **`related_tools` 决定读/写模式**——`skill_needs_write_access()` 检查 `related_tools` 中是否有写工具名称（`file_write`、`file_edit` 等）来决定 fork 容器的挂载模式。
+1. **`related_tools` 驱动一切**——技能在其 TOML frontmatter 中声明 `related_tools`。这些名称成为注入到 LLM 提示中的 TS API 文档（例如 `file_read()`、`report()`）。
+1. **通过 TS API → McpRouter 路由**——在 `exec` 的 IEPL 运行时内部，ES 模块导入通过 `McpRouter` 路由到正确的 MCP 工具实现。跨 agent 调用（如 `file_read()`）解析到 KaLos agent 的 `file_read` 实现。
+1. **容器隔离**——子容器通过 `docker commit` fork 继承父文件系统。工作区根据技能的 `related_tools` 以只读或读写方式挂载。
+1. **`related_tools` 决定读/写模式**——`skill_needs_write_access()` 检查 `related_tools` 中是否有写工具名称（`file_write`、`file_edit` 等）来决定 fork 容器的挂载模式。
 
 ## 架构
 
@@ -69,7 +69,7 @@ flowchart TB
 ### 核心组件
 
 | 组件 | 文件 | 职责 |
-|-----------|------|---------------|
+| --- | --- | --- |
 | `skill_to_agent_name()` | `skill_chain.rs` | 查找拥有给定技能的 agent 名称 |
 | `skill_needs_write_access()` | `skill_chain.rs` | 检查 `related_tools` 中是否有写工具名称以决定 fork 容器挂载模式 |
 | `fork_for_sub_skill()` | `snowflake_manager.rs` | 执行 `docker commit` + `docker run`；根据 `skill_needs_write_access()` 以 ro/rw 挂载工作区 |
@@ -104,15 +104,15 @@ LLM 在其 `exec` 代码中调用这些 API；McpRouter 调度到正确的 agent
 ### Fork 生命周期
 
 1. **创建**：`docker commit` 父容器 → fork 镜像 → `docker run` 子容器
-2. **连接**：CosmosConnector 连接到子容器的 Unix 套接字
-3. **桥接**：Fork 容器内的 HapLotesBridgeClient 连接到 Scepter 的 HapLotesBridgeServer
-4. **执行**：LLM 调用带有 JS 代码的 `exec`；JS 运行时使用 McpRouter → 桥接 → Scepter agent
-5. **清理**：当链结束时，`snowflake.remove()` 销毁容器 + `docker rmi` 清理镜像
+1. **连接**：`CosmosConnector` 连接到子容器的 Unix 套接字
+1. **桥接**：Fork 容器内的 `HapLotesBridgeClient` 连接到 Scepter 的 `HapLotesBridgeServer`
+1. **执行**：LLM 调用带有 JS 代码的 `exec`；JS 运行时使用 McpRouter → 桥接 → Scepter agent
+1. **清理**：当链结束时，`snowflake.remove()` 销毁容器 + `docker rmi` 清理镜像
 
 ### 工作区挂载策略
 
 | 技能类型 | `related_tools` 特征 | 工作区挂载 |
-|-----------|-------------------------------|----------------|
+| --- | --- | --- |
 | 只读（smart_read_file） | 仅 file_read、file_list、file_exists | `:ro`（只读） |
 | 写入（smart_write_file） | 包含 file_write、file_edit、file_delete | `:rw`（读写） |
 
@@ -198,7 +198,7 @@ name = "workplan_execute"
 ## 技能 JS API 参考
 
 | 技能 | Agent | JS API（来自 `related_tools`） | 状态 |
-|-------|-------|-------------------------------|--------|
+| --- | --- | --- | --- |
 | `smart_read_file` | KaLos | `file_read()`、`file_list()`、`file_exists()` | ✅ 已实现 |
 | `smart_write_file` | KaLos | `file_write()`、`file_edit()` | ✅ 已实现 |
 | `exec_script` | SkeMma | `$skeMma.script_exec()` | 待实现 |
@@ -207,8 +207,8 @@ name = "workplan_execute"
 ## 风险与考量
 
 1. **容器资源**——每个 fork 创建一个新的 Docker 容器；链结束时容器自动清理。
-2. **Token 成本**——每个 fork 具有自己的独立 LLM 上下文；JS API 文档为每技能增加适度开销。
-3. **Fork 链深度**——目前无深度限制；仅在 `step_index > 1` 时发生 fork。
-4. **上下文传递**——父 → 子通过报告内容传递；可能需要截断策略。
-5. **并行安全性**——当多个链同时 fork 相同 agent 类型时，反向顺序搜索确保每个链使用其最新的 fork。
-6. **API 表面控制**——LLM 只能调用注入文档中列出的 JS API；McpRouter 拒绝未知工具名称。
+1. **Token 成本**——每个 fork 具有自己的独立 LLM 上下文；JS API 文档为每技能增加适度开销。
+1. **Fork 链深度**——目前无深度限制；仅在 `step_index > 1` 时发生 fork。
+1. **上下文传递**——父 → 子通过报告内容传递；可能需要截断策略。
+1. **并行安全性**——当多个链同时 fork 相同 agent 类型时，反向顺序搜索确保每个链使用其最新的 fork。
+1. **API 表面控制**——LLM 只能调用注入文档中列出的 JS API；McpRouter 拒绝未知工具名称。

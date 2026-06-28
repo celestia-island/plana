@@ -10,119 +10,118 @@ Paramètres
 Concédant :           Celestia Island
 
 Œuvre sous Licence :  Arona — Types de Protocole JSON-RPC 2.0 Partagés pour la Plateforme Multi-Agent Entelecheia
-                      L'Œuvre sous Licence est (c) 2025 langyo <contact@celestia.world>
+L'Œuvre sous Licence est (c) 2025 langyo <contact@celestia.world>
 
 Octroi d'Utilisation
 Supplémentaire :      Le Concédant accorde les droits supplémentaires suivants en
-                      complément des droits de base énoncés dans la section Conditions
-                      ci-dessous. Ces droits sont perpétuels et prennent effet
-                      immédiatement — ils ne sont subordonnés à aucune date ou
-                      événement futur.
+complément des droits de base énoncés dans la section Conditions
+ci-dessous. Ces droits sont perpétuels et prennent effet
+immédiatement — ils ne sont subordonnés à aucune date ou
+événement futur.
 
-                      — Utilisations Autorisées (aucune licence commerciale distincte requise) —
+— Utilisations Autorisées (aucune licence commerciale distincte requise) —
 
-                      (a) Opérations Internes. Vous pouvez faire un usage en production
-                          de l'Œuvre sous Licence pour vos propres opérations internes,
-                          quels que soient la taille ou le chiffre d'affaires de
-                          l'organisation. « Interne » signifie que l'Œuvre sous Licence
-                          est déployée et exploitée exclusivement au bénéfice de votre
-                          propre organisation et de son personnel autorisé, et n'est
-                          pas mise à disposition de tiers en tant que service, produit
-                          ou offre hébergée. Cela inclut les opérations internes des
-                          agences gouvernementales, des institutions publiques et des
-                          organisations à but non lucratif.
+(a) Opérations Internes. Vous pouvez faire un usage en production
+de l'Œuvre sous Licence pour vos propres opérations internes,
+quels que soient la taille ou le chiffre d'affaires de
+l'organisation. « Interne » signifie que l'Œuvre sous Licence
+est déployée et exploitée exclusivement au bénéfice de votre
+propre organisation et de son personnel autorisé, et n'est
+pas mise à disposition de tiers en tant que service, produit
+ou offre hébergée. Cela inclut les opérations internes des
+agences gouvernementales, des institutions publiques et des
+organisations à but non lucratif.
 
-                      (b) Utilisation Non Commerciale. Vous pouvez utiliser l'Œuvre
-                          sous Licence pour la recherche académique, l'enseignement,
-                          l'étude personnelle, l'évaluation, l'expérimentation et la
-                          contribution à l'Œuvre sous Licence elle-même, sans
-                          restriction quant à l'affiliation organisationnelle ou à
-                          la source de financement.
+(b) Utilisation Non Commerciale. Vous pouvez utiliser l'Œuvre
+sous Licence pour la recherche académique, l'enseignement,
+l'étude personnelle, l'évaluation, l'expérimentation et la
+contribution à l'Œuvre sous Licence elle-même, sans
+restriction quant à l'affiliation organisationnelle ou à
+la source de financement.
 
-                      (c) Gouvernement et Service Public. Les agences gouvernementales,
-                          les institutions publiques et les organisations à but non
-                          lucratif peuvent déployer l'Œuvre sous Licence à des fins
-                          de service public, y compris les initiatives de gouvernement
-                          numérique, les programmes pilotes, les projets d'intérêt
-                          public et les opérations administratives internes, à condition
-                          que le déploiement ne constitue pas un service commercial
-                          vendu ou concédé sous licence à des tiers.
+(c) Gouvernement et Service Public. Les agences gouvernementales,
+les institutions publiques et les organisations à but non
+lucratif peuvent déployer l'Œuvre sous Licence à des fins
+de service public, y compris les initiatives de gouvernement
+numérique, les programmes pilotes, les projets d'intérêt
+public et les opérations administratives internes, à condition
+que le déploiement ne constitue pas un service commercial
+vendu ou concédé sous licence à des tiers.
 
-                      (d) Utilisation Éducative. Les établissements d'enseignement
-                          accrédités peuvent utiliser l'Œuvre sous Licence pour
-                          l'enseignement, la recherche académique, l'infrastructure
-                          du campus et les projets étudiants.
+(d) Utilisation Éducative. Les établissements d'enseignement
+accrédités peuvent utiliser l'Œuvre sous Licence pour
+l'enseignement, la recherche académique, l'infrastructure
+du campus et les projets étudiants.
 
-                      (e) Modification et Contribution. Vous pouvez modifier l'Œuvre
-                          sous Licence et contribuer ces modifications au projet
-                          d'origine, sous réserve des conditions de la présente Licence.
+(e) Modification et Contribution. Vous pouvez modifier l'Œuvre
+sous Licence et contribuer ces modifications au projet
+d'origine, sous réserve des conditions de la présente Licence.
 
-                      — Utilisations Nécessitant une Licence Commerciale —
+— Utilisations Nécessitant une Licence Commerciale —
 
-                      Les activités suivantes ne sont pas autorisées sans une licence
-                      commerciale distincte obtenue auprès du Concédant :
+Les activités suivantes ne sont pas autorisées sans une licence
+commerciale distincte obtenue auprès du Concédant :
 
-                      (i)   Proposer l'Œuvre sous Licence, en tout ou en partie
-                            substantielle, en tant que service hébergé, géré ou basé
-                            sur le cloud à des tiers, que ce soit contre rémunération
-                            ou dans le cadre d'une offre commerciale, lorsque l'Œuvre
-                            sous Licence constitue une source substantielle de la
-                            valeur du service.
+(i)   Proposer l'Œuvre sous Licence, en tout ou en partie
+substantielle, en tant que service hébergé, géré ou basé
+sur le cloud à des tiers, que ce soit contre rémunération
+ou dans le cadre d'une offre commerciale, lorsque l'Œuvre
+sous Licence constitue une source substantielle de la
+valeur du service.
 
-                      (ii)  Vendre, concéder sous licence, sous-licencier ou distribuer
-                            de toute autre manière l'Œuvre sous Licence, modifiée ou
-                            non, en tant que produit autonome, ou renommer l'Œuvre
-                            sous Licence sous un nom ou une marque différente à des
-                            fins de distribution commerciale.
+(ii)  Vendre, concéder sous licence, sous-licencier ou distribuer
+de toute autre manière l'Œuvre sous Licence, modifiée ou
+non, en tant que produit autonome, ou renommer l'Œuvre
+sous Licence sous un nom ou une marque différente à des
+fins de distribution commerciale.
 
-                      (iii) Proposer des services de déploiement, d'installation, de
-                            configuration, de maintenance continue ou de support
-                            technique pour l'Œuvre sous Licence à des tiers contre
-                            rémunération, lorsque ces services constituent une activité
-                            commerciale récurrente ou principale.
+(iii) Proposer des services de déploiement, d'installation, de
+configuration, de maintenance continue ou de support
+technique pour l'Œuvre sous Licence à des tiers contre
+rémunération, lorsque ces services constituent une activité
+commerciale récurrente ou principale.
 
-                      (iv)  Inclure l'Œuvre sous Licence, ou une version modifiée de
-                            celle-ci, en tant que composant central ou substantiel
-                            dans un produit ou service que vous vendez, concédez sous
-                            licence ou fournissez de toute autre manière à des tiers
-                            à des fins commerciales.
+(iv)  Inclure l'Œuvre sous Licence, ou une version modifiée de
+celle-ci, en tant que composant central ou substantiel
+dans un produit ou service que vous vendez, concédez sous
+licence ou fournissez de toute autre manière à des tiers
+à des fins commerciales.
 
-                      (v)   Toute utilisation où l'Œuvre sous Licence constitue la
-                            source principale ou substantielle de valeur dans une
-                            offre commerciale mise à disposition de tiers, quel que
-                            soit le mécanisme de livraison ou la marque.
+(v)   Toute utilisation où l'Œuvre sous Licence constitue la
+source principale ou substantielle de valeur dans une
+offre commerciale mise à disposition de tiers, quel que
+soit le mécanisme de livraison ou la marque.
 
 Licence d'Utilisation
 Libre :               Pour toute Utilisation Autorisée décrite aux points
-                      (a) à (e) ci-dessus, les droits accordés sont équivalents
-                      en portée à ceux prévus par votre choix parmi :
+(a) à (e) ci-dessus, les droits accordés sont équivalents
+en portée à ceux prévus par votre choix parmi :
 
-                      — la Licence Apache, Version 2.0
-                        (https://www.apache.org/licenses/LICENSE-2.0), ou
-                      — la Licence MIT
-                        (https://opensource.org/licenses/MIT).
+— la Licence Apache, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0), ou
+— la Licence MIT
+(https://opensource.org/licenses/MIT).
 
-                      Vous pouvez traiter la présente Licence comme l'Apache
-                      License 2.0 ou la MIT License pour toute Utilisation
-                      Autorisée. Pour toute utilisation décrite aux points
-                      (i) à (v) ci-dessus nécessitant une licence commerciale,
-                      les conditions complètes de la présente Business Source
-                      License 1.1 s'appliquent, et une licence commerciale
-                      distincte est requise.
-
+Vous pouvez traiter la présente Licence comme l'Apache
+License 2.0 ou la MIT License pour toute Utilisation
+Autorisée. Pour toute utilisation décrite aux points
+(i) à (v) ci-dessus nécessitant une licence commerciale,
+les conditions complètes de la présente Business Source
+License 1.1 s'appliquent, et une licence commerciale
+distincte est requise.
 
 Date de Changement:    2030-01-01
 
 Licence de Changement: À compter de la Date de Changement, cette Licence se
-                      convertit automatiquement en une double licence au choix du
-                      destinataire :
-                      — la Licence Apache, Version 2.0
-                        (https://www.apache.org/licenses/LICENSE-2.0), ou
-                      — la Licence MIT
-                        (https://opensource.org/licenses/MIT)
-                      pour toutes les versions de l'Œuvre Concédée publiées sous
-                      cette Licence, pour tous les utilisateurs et tous les usages,
-                      sans restriction d'usage et sans licence commerciale distincte.
+convertit automatiquement en une double licence au choix du
+destinataire :
+— la Licence Apache, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0), ou
+— la Licence MIT
+(https://opensource.org/licenses/MIT)
+pour toutes les versions de l'Œuvre Concédée publiées sous
+cette Licence, pour tous les utilisateurs et tous les usages,
+sans restriction d'usage et sans licence commerciale distincte.
 
 ------------------------------------------------------------------------------
 

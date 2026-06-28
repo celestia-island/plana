@@ -56,6 +56,7 @@ entelecheia와 shittim-chest는 해결되지 않으면 동일한 근본적 문�
 ### conversations 테이블 (entelecheia)
 
 추가된 열:
+
 - `parent_conversation_id UUID REFERENCES conversations(conversation_id)` — 자식 세션 추적
 - `is_archived BOOLEAN NOT NULL DEFAULT FALSE` — 아카이브 플래그
 - `archived_at TIMESTAMPTZ` — 아카이브된 시점
@@ -64,6 +65,7 @@ entelecheia와 shittim-chest는 해결되지 않으면 동일한 근본적 문�
 ### messages 테이블 (entelecheia)
 
 추가된 열:
+
 - `is_compacted BOOLEAN NOT NULL DEFAULT FALSE` — 콘텐츠 정리 대상인 압축된 메시지 표시
 - `metadata JSONB NOT NULL DEFAULT '{}'` — 확장 가능한 메타데이터
 
@@ -78,7 +80,7 @@ kirino 세션 영속화(SQL 백엔드)를 위한 새 테이블입니다.
 ## 구현 단계
 
 | 단계 | 설명 | 상태 |
-|-------|-------------|--------|
+| --- | --- | --- |
 | 0.1 | 스키마 마이그레이션 수정 (dialogue_events, conversations/messages 업그레이드) | 완료 |
 | 1.2 | 통합 설정 네임스페이스 (`StorageLifecycleConfig`) | 완료 |
 | 0.2 | CRUD + 정리 메서드를 포함한 `ConversationStore` | 완료 |
@@ -133,13 +135,13 @@ graph TD
 
 1. **생성**: 스킬 체인이 하위 태스크를 생성하면, `parent_conversation_id`가 부모의 `conversation_id`로 설정된 새 대화가 생성됩니다.
 
-2. **독립적 아카이빙**: 자식은 부모와 독립적으로 아카이브될 수 있습니다. 자식 태스크가 완료되면 `CHILD_SESSION_RETENTION_DAYS`(기본 7일) 후에 자동으로 아카이브됩니다.
+1. **독립적 아카이빙**: 자식은 부모와 독립적으로 아카이브될 수 있습니다. 자식 태스크가 완료되면 `CHILD_SESSION_RETENTION_DAYS`(기본 7일) 후에 자동으로 아카이브됩니다.
 
-3. **부모 아카이브 시 연쇄**: 부모가 아카이브되면 모든 자식이 아카이브됩니다. 부모가 삭제되면 모든 자식이 삭제됩니다.
+1. **부모 아카이브 시 연쇄**: 부모가 아카이브되면 모든 자식이 아카이브됩니다. 부모가 삭제되면 모든 자식이 삭제됩니다.
 
-4. **고아 처리**: 삭제되었거나 존재하지 않는 부모를 가리키는 `parent_conversation_id`를 가진 대화는 고아로 처리되며 `ORPHAN_CONVERSATION_TTL_DAYS`(기본 30일) 후에 정리됩니다.
+1. **고아 처리**: 삭제되었거나 존재하지 않는 부모를 가리키는 `parent_conversation_id`를 가진 대화는 고아로 처리되며 `ORPHAN_CONVERSATION_TTL_DAYS`(기본 30일) 후에 정리됩니다.
 
-5. **압축 자격**: 부모가 요약을 보유하므로, 자식 대화는 아카이브 직후(유예 기간 없음) 메시지 압축 대상이 됩니다.
+1. **압축 자격**: 부모가 요약을 보유하므로, 자식 대화는 아카이브 직후(유예 기간 없음) 메시지 압축 대상이 됩니다.
 
 ### 정리 쿼리
 
@@ -170,6 +172,6 @@ DELETE FROM conversations WHERE is_archived = TRUE
   - `cascade_delete_orphaned_children()` — 부모가 삭제된 자식 삭제
   - `cleanup_expired_child_conversations()` — 아카이브된 자식에 대한 TTL 기반 정리
   - `cleanup_orphan_conversations()` — 부모가 누락된 자식 정리
-  - `enforce_max_dialogue_records()` — dialogue_events 수에 대한 하드 상한
+  - `enforce_max_dialogue_records()` — `dialogue_events` 수에 대한 하드 상한
   - `enforce_max_conversations()` — 활성 대화 수에 대한 하드 상한
 - scepter `setup.rs`에 모두 주기적 정리 태스크로 등록됨

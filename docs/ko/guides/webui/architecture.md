@@ -26,7 +26,7 @@ shittim-chest는 Rust 기반 멀티 에이전트 협업 플랫폼인 [entelechei
 
 코어 백엔드(`packages/core`)는 Axum 0.8 애플리케이션입니다. 라우터는 다음 모듈 그룹을 마운트합니다:
 
-```
+```text
 /                   → 상태 확인
 /api/auth/*         → AuthService (로그인, 등록, GitHub OAuth, 리프레시, 로그아웃)
 /api/chat/*         → ChatService (대화, 메시지, SSE/WS 스트리밍, 검색, 내보내기)
@@ -71,7 +71,7 @@ shittim-chest는 entelecheia와 독립적으로 작동하는 자체 LLM 라우�
 
 ### 로그인 순서
 
-```
+```text
 사용자 → shittim_chest: POST /api/auth/login { username, password }
 shittim_chest → shittim_chest_db: SELECT user WHERE username = ? (argon2 해시 검증)
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -83,7 +83,7 @@ shittim_chest: 세션 저장 + RBAC 캐시
 
 ### GitHub OAuth
 
-```
+```text
 사용자 → shittim_chest: GET /api/auth/github
 shittim_chest → 사용자: 302 GitHub OAuth로 리다이렉트
 사용자 → GitHub: 승인
@@ -98,7 +98,7 @@ shittim_chest → 사용자: { access_token, refresh_token } (신규 사용자 �
 
 ### 메시지 흐름 (독립형 LLM)
 
-```
+```text
 사용자 → POST /api/chat/conversations/:id/messages
 shittim_chest: JWT 검증, 대화 로드
 shittim_chest → LlmRouter: 최적 제공자로 요청 라우팅
@@ -118,19 +118,20 @@ shittim_chest: shittim_chest_db에 메시지 저장
 `/api/proxy/*` 엔드포인트는 인증된 요청을 scepter로 전달합니다:
 
 1. 브라우저가 JWT와 함께 `ws://shittim-chest:80/api/proxy/chat` 열기
-2. shittim_chest가 JWT 검증, JWT를 전달하는 scepter 연결 열기
-3. 브라우저와 scepter 간 양방향 메시지 전달
-4. shittim_chest가 속도 제한 집행, 사용량 기록, 연결 생명주기 관리
+1. shittim_chest가 JWT 검증, JWT를 전달하는 scepter 연결 열기
+1. 브라우저와 scepter 간 양방향 메시지 전달
+1. shittim_chest가 속도 제한 집행, 사용량 기록, 연결 생명주기 관리
 
 ## 웹훅 파이프라인
 
 외부 서비스의 웹훅이 `/api/webhook/*`를 통해 진입합니다:
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 검증 → 이벤트 파싱 → Unix 소켓을 통해 scepter로 전달
 ```
 
 지원 소스: GitHub (HMAC-SHA256), GitLab (토큰), Gitee (HMAC + 토큰 폴백), 일반 `/api/webhook/custom/{name}` 엔드포인트 포함. 기능:
+
 - 중복 배달 감지 (LRU 캐시, 10,000 ID)
 - 목록 API가 있는 배달 로그
 - 웹훅 소스를 위한 IP 화이트리스트
@@ -139,11 +140,12 @@ GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 검증 → 이벤트
 
 원격 장치는 시그널링 릴레이를 통해 관리됩니다:
 
-```
+```text
 브라우저 (webui) → WS /api/devices/stream → shittim_chest (시그널 릴레이) → Unix 소켓 → entelecheia/polemos
 ```
 
 기능:
+
 - REST를 통한 장치 목록 및 세션 CRUD
 - WebRTC 시그널링 (SDP offer/answer, ICE candidate)
 - 터미널 릴레이 (WebSocket에서 xterm.js로)
@@ -157,7 +159,7 @@ shittim-chest는 원격 장치에 직접 연결하지 않습니다 — 모든 �
 ### shittim_chest_db
 
 | 데이터 | 테이블 | 근거 |
-|------|-------|-----------|
+| --- | --- | --- |
 | 비밀번호 해시 (argon2) | `auth_users` | 표현 계층이 로그인 흐름 소유 |
 | 활성 세션, 리프레시 토큰 | `sessions` | 세션 관리는 프론트엔드 관심사 |
 | 암호화된 API 키 | `api_keys` | API 키 발행은 사용자 대면 |
@@ -170,7 +172,7 @@ shittim-chest는 원격 장치에 직접 연결하지 않습니다 — 모든 �
 ### entelecheia_db
 
 | 데이터 | 근거 |
-|------|-----------|
+| --- | --- |
 | 사용자 신원, 그룹, 역할 할당 | 코어가 권한 집행 |
 | GroupPermissions (제공자 할당량, 에이전트 화이트리스트) | 에이전트 수준 정책은 에이전트와 함께 |
 | 에이전트 설정, Cosmos/IEPL 상태 | 오케스트레이션 데이터는 코어에 속함 |
@@ -180,13 +182,13 @@ shittim-chest는 원격 장치에 직접 연결하지 않습니다 — 모든 �
 ### 1단계: Vue 3 (현재)
 
 | 패키지 | 기술 | 포트 | 목적 |
-|---------|------|------|---------|
+| --- | --- | --- | --- |
 | `webui` | Vue 3 + Vite + Pinia (TSX) | `:3000 (공유)` | 통합 webui: 채팅, 이미지 생성, 장치, 관리자 (제공자, 에이전트, RBAC, 웹훅) |
 
 ### 2단계: Rust WASM (미래)
 
 | 패키지 | 기술 | 목적 |
-|---------|------|---------|
+| --- | --- | --- |
 | `webui` | Rust → WASM (Tairitsu) | 장기 통합 webui (채팅 + 관리자) |
 
 레거시 프론트엔드는 살아있는 명세로 사용됩니다. 전환 기간 동안 두 버전이 병렬 실행되며, 동일한 사용자 상호작용이 동일한 결과를 생성해야 합니다.
@@ -219,8 +221,8 @@ SHITTIM_CHEST_PROXY_DOMAIN=app.example.com
 CLI가 `shittim-chest-caddy` 컨테이너(이미지 `caddy:2`)를 생성하여:
 
 1. 포트 80/443에서 수신 (`SHITTIM_CHEST_PROXY_HTTP_PORT` / `SHITTIM_CHEST_PROXY_HTTPS_PORT`로 설정 가능)
-2. Let's Encrypt를 통해 TLS 인증서 자동 프로비저닝 (Caddy 내장 ACME)
-3. 모든 요청을 Docker 네트워크의 코어 백엔드로 프록시
+1. Let's Encrypt를 통해 TLS 인증서 자동 프로비저닝 (Caddy 내장 ACME)
+1. 모든 요청을 Docker 네트워크의 코어 백엔드로 프록시
 
 Caddyfile이 필요하지 않습니다 — CLI가 자동 생성합니다. 도메인은 호스트를 가리키는 공용 DNS가 있어야 합니다.
 
@@ -255,7 +257,7 @@ SHITTIM_CHEST_PROXY_CONFIG_PATH=/etc/nginx/conf.d/default.conf
 모든 프록시 컨테이너는 Docker API (`bollard`)를 통해 CLI로 관리됩니다:
 
 | 명령 | 동작 |
-|---------|----------|
+| --- | --- |
 | `just dev` / `chest up` | `PROXY_MODE`가 설정된 경우 프록시 컨테이너 생성/시작 |
 | `just dev-stop` / `chest down` | 프록시 컨테이너 중지 및 제거 |
 | 컨테이너가 이미 실행 중 | 기존 컨테이너 재사용 (멱등) |

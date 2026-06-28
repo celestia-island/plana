@@ -23,7 +23,7 @@ Implémenter un système complet de contrôle d'accès basé sur les rôles pour
 ### 2.1 Rôle (Role)
 
 | Rôle | Description |
-|------|------|
+| --- | --- |
 | `admin` | Super administrateur, possède toutes les permissions, peut gérer le RBAC lui-même |
 | `operator` | Personnel d'exploitation, peut gérer la plupart des ressources (fournisseurs, canaux, Agents, etc.) |
 | `member` | Membre ordinaire, peut utiliser les ressources autorisées |
@@ -36,7 +36,7 @@ Les rôles sont **prédéfinis**, pas de rôles personnalisés (implémentation 
 Format de permission : `<ressource>.<action>`
 
 | Catégorie | Permission | Description |
-|------|------|------|
+| --- | --- | --- |
 | **Fournisseur** | `provider.list` | Voir la liste des fournisseurs |
 | | `provider.create` | Ajouter un fournisseur |
 | | `provider.update` | Modifier la configuration du fournisseur |
@@ -72,7 +72,7 @@ Format de permission : `<ressource>.<action>`
 ### 2.3 Permissions par Défaut des Rôles
 
 | Permission | admin | operator | member | viewer |
-|------|-------|----------|--------|--------|
+| --- | --- | --- | --- | --- |
 | `provider.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `mcp.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `agent.*` | ✅ | ✅ | `list` + `use` | `list` |
@@ -89,7 +89,7 @@ Format de permission : `<ressource>.<action>`
 Pour les ressources telles que les fournisseurs, MCP, Agents, canaux, trois modes d'autorisation sont pris en charge :
 
 | Mode | Description | Scénario applicable |
-|------|------|---------|
+| --- | --- | --- |
 | **Configuration globale** | Tous les utilisateurs partagent les mêmes permissions | Petite équipe, usage personnel |
 | **Configuration par utilisateur** | Chaque utilisateur a des permissions de ressources indépendantes | Scénarios nécessitant un contrôle fin |
 | **Configuration par groupe** | Les utilisateurs du même groupe partagent les permissions | Division par département/équipe |
@@ -202,7 +202,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.1 Gestion des Utilisateurs (`/api/rbac/users`)
 
 | Méthode | Chemin | Permission | Description |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/users` | `rbac.manage` | Lister tous les utilisateurs (y compris rôle, groupes) |
 | POST | `/api/rbac/users` | `rbac.manage` | Inviter un utilisateur (envoyer un email ou créer un compte) |
 | PUT | `/api/rbac/users/:id` | `rbac.manage` | Mettre à jour le rôle de l'utilisateur, activer/désactiver |
@@ -211,7 +211,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.2 Gestion des Groupes (`/api/rbac/groups`)
 
 | Méthode | Chemin | Permission | Description |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/groups` | `rbac.manage` | Lister tous les groupes |
 | POST | `/api/rbac/groups` | `rbac.manage` | Créer un groupe |
 | PUT | `/api/rbac/groups/:id` | `rbac.manage` | Mettre à jour le groupe (nom, description) |
@@ -222,7 +222,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.3 Gestion des Permissions (`/api/rbac/grants`)
 
 | Méthode | Chemin | Permission | Description |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/grants` | `rbac.manage` | Lister toutes les règles de permission (filtre ?scope=&permission= supporté) |
 | PUT | `/api/rbac/grants` | `rbac.manage` | Définir les permissions par lot (transmettre la liste complète des règles, écraser les règles du scope correspondant) |
 | DELETE | `/api/rbac/grants/:id` | `rbac.manage` | Supprimer une règle unique |
@@ -230,7 +230,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.4 Vérification des Permissions (`/api/rbac/check`)
 
 | Méthode | Chemin | Permission | Description |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/check?permission=xxx&resource_id=yyy` | (tout utilisateur authentifié) | Vérifier si l'utilisateur actuel a la permission spécifiée |
 | GET | `/api/rbac/my-permissions` | (tout utilisateur authentifié) | Retourner la liste de toutes les permissions effectives de l'utilisateur actuel |
 
@@ -249,16 +249,19 @@ Les API de ressources existantes doivent ajouter un filtrage par permission :
 Divisé en trois onglets :
 
 #### Onglet 1 : Gestion des utilisateurs
+
 - Tableau de liste d'utilisateurs : avatar, nom d'utilisateur, email, rôle (sélecteur déroulant), étiquettes de groupe, état (actif/désactivé), actions
 - Bouton d'invitation d'utilisateur → ouvre une modale (saisir nom d'utilisateur/email/mot de passe, sélectionner le rôle)
 - Actions de ligne : modifier le rôle, désactiver/activer, supprimer
 
 #### Onglet 2 : Gestion des groupes
+
 - Tableau de liste de groupes : nom, description, nombre de membres, actions
 - Créer un groupe → ouvre une modale
 - Cliquer sur un groupe → déplier la liste des membres, possibilité d'ajouter/retirer des membres
 
 #### Onglet 3 : Matrice de permissions
+
 - Coin supérieur gauche : sélectionner le mode d'autorisation : Global / Par groupe / Par utilisateur
 - Après sélection du groupe ou de l'utilisateur, afficher le tableau de la matrice de permissions :
   - Lignes : catégories de ressources (Fournisseur, MCP, Agent, Canal, Mode croisière...)
@@ -275,25 +278,28 @@ Divisé en trois onglets :
 ## 6. Étapes d'Implémentation
 
 ### Phase 1 : Base backend
-1. Ajouter les migrations de base de données (tables rbac_groups, rbac_user_groups, rbac_grants + champ auth_users.role)
-2. Ajouter les modèles d'entité SeaORM
-3. Implémenter les routes API RBAC (CRUD users, groups, grants)
-4. Implémenter le middleware/extracteur de vérification de permission
-5. Ajouter le champ role dans les claims JWT
+
+1. Ajouter les migrations de base de données (tables `rbac_groups`, `rbac_user_groups`, `rbac_grants` + champ auth_users.role)
+1. Ajouter les modèles d'entité SeaORM
+1. Implémenter les routes API RBAC (CRUD users, groups, grants)
+1. Implémenter le middleware/extracteur de vérification de permission
+1. Ajouter le champ role dans les claims JWT
 
 ### Phase 2 : Intégration backend
-6. Ajouter la vérification de permission dans les API de ressources existantes (providers, channels, etc.)
-7. Implémenter `/api/rbac/check` et `/api/rbac/my-permissions`
-8. Modifier les requêtes de ressources d'arona pour s'adapter au filtrage par permission
+
+1. Ajouter la vérification de permission dans les API de ressources existantes (providers, channels, etc.)
+1. Implémenter `/api/rbac/check` et `/api/rbac/my-permissions`
+1. Modifier les requêtes de ressources d'arona pour s'adapter au filtrage par permission
 
 ### Phase 3 : UI frontend
-9. Refondre la RbacView d'arona (trois onglets : utilisateurs/groupes/matrice de permissions)
-10. Implémenter les gardes de permission pour la barre latérale et les routes
-11. Côté arona, masquer/désactiver les fonctionnalités selon les permissions (comme le bouton de mode croisière)
+
+1. Refondre la RbacView d'arona (trois onglets : utilisateurs/groupes/matrice de permissions)
+1. Implémenter les gardes de permission pour la barre latérale et les routes
+1. Côté arona, masquer/désactiver les fonctionnalités selon les permissions (comme le bouton de mode croisière)
 
 ## 7. Considérations de Sécurité
 
-- Les permissions du rôle `admin` ne peuvent pas être écrasées par rbac_grants (passage codé en dur)
+- Les permissions du rôle `admin` ne peuvent pas être écrasées par `rbac_grants` (passage codé en dur)
 - La vérification des permissions est exécutée uniformément au niveau du middleware, sans dépendre de vérifications manuelles dans le code métier
 - Les opérations sensibles (suppression d'utilisateur, modification de permissions) sont enregistrées dans le journal d'audit
 - Le JWT contient uniquement le rôle, les permissions spécifiques sont interrogées en temps réel depuis la DB à chaque fois (pour éviter que les tokens obsolètes conservent d'anciennes permissions après modification)

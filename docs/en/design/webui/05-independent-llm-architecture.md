@@ -30,7 +30,7 @@ flowchart TB
 
 ### 1. Multi-Provider Priority Routing
 
-```
+```text
 Each Provider has a priority field (lower number = higher priority).
 Requests are attempted from highest to lowest priority:
   → Provider A (priority=1) available → use

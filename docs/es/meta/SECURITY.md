@@ -36,7 +36,7 @@ Fuera del alcance:
 ## Respuesta
 
 | Etapa | Objetivo |
-|-------|----------|
+| --- | --- |
 | Acuse de recibo por agente | 10 minutos |
 | Acuse de recibo humano | 1 día natural |
 | Evaluación inicial | 3 días naturales |

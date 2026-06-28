@@ -15,9 +15,9 @@ HubRis 是一个"纯技能 Agent"——所有能力都是通过 ApoRia `llm_chat
 ## 目标
 
 1. 技能在前言中声明路由行为（而非硬编码）。
-2. 一个通用的技能链执行器取代硬编码的 2-阶段管道。
-3. 人类审查是一等路由目标。
-4. 提示语言清理：技能/MCP 平面文件仅限英语。
+1. 一个通用的技能链执行器取代硬编码的 2-阶段管道。
+1. 人类审查是一等路由目标。
+1. 提示语言清理：技能/MCP 平面文件仅限英语。
 
 ## 技能报告配置（TOML 前言）
 
@@ -29,7 +29,7 @@ next_skill = "workplan_generate"  # 若 target = "next_node" 则必填
 
 ## HubRis 技能链
 
-```
+```text
 task_decompose → workplan_generate → operator → workplan_execute → submit_report → human
 ```
 
@@ -75,7 +75,7 @@ sequenceDiagram
 ## 报告路由目标
 
 | 目标         | 行为                                                              |
-| ------------ | ----------------------------------------------------------------- |
+| --- | --- |
 | `next_node`  | 执行器加载在 `next_skill` 中命名的技能并运行。                    |
 | `parent`     | 将控制权返回给父编排器（保留用于嵌套链）。                        |
 | `human`      | 暂停链，向 TUI 发送 `HumanReviewRequest`，收到 `HumanReviewResponse` 后恢复。 |
@@ -83,7 +83,7 @@ sequenceDiagram
 
 ## 文件结构（阶段 1）
 
-```
+```text
 res/prompts/agents/hubris/skills/
   task_decompose.md
   workplan_generate.md
@@ -105,5 +105,5 @@ Agent 运行时配置包含使用原生语言名称的 `human_language` 字段�
 ## 失败回退策略
 
 1. 如果技能失败：返回失败消息并结束当前链。
-2. 如果 ApoRia 离线：返回 `Agent 未就绪` 消息。
-3. 如果人类审查超时：返回超时通知而不阻塞后续聊天。
+1. 如果 ApoRia 离线：返回 `Agent 未就绪` 消息。
+1. 如果人类审查超时：返回超时通知而不阻塞后续聊天。

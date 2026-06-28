@@ -48,8 +48,8 @@ La declaración `related_tools` en el frontmatter TOML de la skill determina qu�
 Una herramienta MCP consta de tres partes:
 
 1. **Implementación Rust** — Lógica real, ubicada en `packages/agents/<agent>/src/mcp/tools/`
-2. **Despacho de Registry** — Enrutamiento, ubicado en `packages/agents/<agent>/src/mcp/registry.rs`
-3. **Constantes de nombre de herramienta** — Constantes de cadena, ubicadas en `packages/shared/domain_skills/src/tool_names.rs`
+1. **Despacho de Registry** — Enrutamiento, ubicado en `packages/agents/<agent>/src/mcp/registry.rs`
+1. **Constantes de nombre de herramienta** — Constantes de cadena, ubicadas en `packages/shared/domain_skills/src/tool_names.rs`
 
 ### Definición de herramienta en mcp/registry.rs
 
@@ -168,7 +168,7 @@ use tokio::sync::RwLock;
 use crate::state::HubrisState;
 use _shared::skills::mcp_tools::{validate_required_params, McpToolResult};
 
-#[derive(Serialize, Debug, Clone)]
+# [derive(Serialize, Debug, Clone)]
 struct MyNewToolResult {
     id: String,
     message: String,
@@ -448,7 +448,7 @@ McpToolResult::failure("Error".into())
 Prueba cada función de herramienta directamente construyendo parámetros `Value` y verificando `McpToolResult`:
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_report_success() {
     use std::sync::Arc;
     use tokio::sync::RwLock;
@@ -469,7 +469,7 @@ async fn test_report_success() {
     assert_eq!(state.pending_reports[0], "Contenido del informe de prueba");
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_report_empty_text() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({
@@ -488,7 +488,7 @@ async fn test_report_empty_text() {
 Prueba que el registry enrute correctamente los nombres de herramientas:
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_routes_known_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({"text": "hello"});
@@ -497,7 +497,7 @@ async fn test_registry_routes_known_tool() {
     assert!(result.success);
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_rejects_unknown_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({});
@@ -513,14 +513,14 @@ async fn test_registry_rejects_unknown_tool() {
 Prueba directamente la función auxiliar `validate_required_params`:
 
 ```rust
-#[test]
+# [test]
 fn test_validate_required_params_all_present() {
     let params = serde_json::json!({"title": "test", "content": "body"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
     assert!(result.is_none());
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_missing() {
     let params = serde_json::json!({"title": "test"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
@@ -530,7 +530,7 @@ fn test_validate_required_params_missing() {
     assert!(failure.error[0].contains("content"));
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_empty_string() {
     let params = serde_json::json!({"title": ""});
     let result = validate_required_params(&params, &["title"], "test_tool");
@@ -543,7 +543,7 @@ fn test_validate_required_params_empty_string() {
 Para herramientas que dependen de un almacén de base de datos, se suele probar con una base de datos en memoria o de prueba:
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_create_todo_success() {
     // Configuración: crear TodoStore de prueba (depende de infraestructura de prueba)
     let todo_store = create_test_store().await;
@@ -583,7 +583,7 @@ cargo test -p hubris -- --nocapture
 ## Referencia rápida: archivos clave
 
 | Propósito | Ruta |
-|---------|------|
+| --- | --- |
 | Definición de `McpToolResult` | `packages/shared/domain_skills/src/mcp_tools.rs` |
 | `validate_required_params` | `packages/shared/domain_skills/src/mcp_tools.rs:12-41` |
 | Constantes de nombre de herramienta | `packages/shared/domain_skills/src/tool_names.rs` |

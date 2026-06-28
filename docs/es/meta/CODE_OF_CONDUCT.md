@@ -28,20 +28,28 @@ comunidad incluyen:
 * Ser respetuoso con diferentes opiniones, puntos de vista y experiencias
 * Dar y aceptar con elegancia retroalimentación constructiva
 * Aceptar la responsabilidad y disculparse con los afectados por nuestros errores,
-  y aprender de la experiencia
+
+y aprender de la experiencia
+
 * Centrarse en lo que es mejor no solo para nosotros como individuos, sino para la
-  comunidad en general
+
+comunidad en general
 
 Ejemplos de comportamiento inaceptable incluyen:
 
 * El uso de lenguaje o imágenes sexualizadas, y atención o avances sexuales de
-  cualquier tipo
+
+cualquier tipo
+
 * Troleo, comentarios insultantes o despectivos, y ataques personales o políticos
 * Acoso público o privado
 * Publicar información privada de otros, como una dirección física o de correo electrónico,
-  sin su permiso explícito
+
+sin su permiso explícito
+
 * Otras conductas que razonablemente podrían considerarse inapropiadas en un
-  entorno profesional
+
+entorno profesional
 
 ## Responsabilidades de Aplicación
 
@@ -122,7 +130,7 @@ comunidad.
 
 Este Código de Conducta está adaptado del [Contributor Covenant][homepage],
 versión 2.1, disponible en
-[https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1].
+[https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1].
 
 Las Directrices de Impacto Comunitario fueron inspiradas por
 [la escalera de aplicación del código de conducta de Mozilla][mozilla-coc].
@@ -132,7 +140,7 @@ Para respuestas a preguntas comunes sobre este código de conducta, consulta las
 [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

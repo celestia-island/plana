@@ -13,8 +13,8 @@ subcategory = "core"
 El Motor de Ejecución IEPL (In-Execution Prompt Language) es una actualización arquitectónica del runtime JS existente de Cosmos/SkeMma, mejorando el código de ejecución generado por LLM de JavaScript a TypeScript. Los cambios principales incluyen:
 
 1. **Crate SWC integrado**: Verificación estricta de sintaxis, eliminación de tipos y transpilación de TypeScript generado por LLM
-2. **Generación de tipos Rust derive → TypeScript**: Auto-exportación de structs Rust a archivos de declaración `.d.ts` mediante `ts-rs`
-3. **Skill Prompt con seguridad de tipos**: Inyectar declaraciones `.d.ts` completas en lugar de listas de funciones hardcodeadas, mejorando significativamente la robustez
+1. **Generación de tipos Rust derive → TypeScript**: Auto-exportación de structs Rust a archivos de declaración `.d.ts` mediante `ts-rs`
+1. **Skill Prompt con seguridad de tipos**: Inyectar declaraciones `.d.ts` completas en lugar de listas de funciones hardcodeadas, mejorando significativamente la robustez
 
 ## Estado Actual y Problemas
 
@@ -30,7 +30,7 @@ flowchart LR
 ### Problemas Existentes
 
 | Problema | Descripción |
-|---------|-------------|
+| --- | --- |
 | **Sin restricciones de tipo** | El código JS generado por LLM tiene cero información de tipo estático; los errores tipográficos en parámetros solo se detectan en tiempo de ejecución |
 | **Descripciones de interfaz frágiles** | `build_report_tool_instruction()` hardcodea listas de texto como `- file_read (importado de 'kalos')`, incapaz de expresar tipos de parámetros o estructuras de valor de retorno |
 | **Sin pre-validación** | El código LLM va directamente a `eval()` de Boa; los errores de sintaxis solo se descubren en tiempo de ejecución |
@@ -40,7 +40,7 @@ flowchart LR
 ### Archivos Clave Involucrados
 
 | Archivo | Responsabilidad Actual |
-|------|----------------------|
+| --- | --- |
 | `packages/agents/skemma/src/js_runtime/runtime.rs` | Runtime Boa JS, `exec()` llama directamente a `eval()` |
 | `packages/agents/skemma/src/mcp/tools/script_exec.rs` | Solo acepta lenguaje `"javascript"` |
 | `packages/cosmos/src/bin/cosmos/js_repl/js_commands.rs` | Genera dinámicamente `globalThis.$agent.tool = (...) => ...` |
@@ -81,7 +81,7 @@ flowchart TB
 ### 1. Generación de Tipos Rust → TypeScript: `ts-rs`
 
 | Atributo | Valor |
-|-----------|-------|
+| --- | --- |
 | Crate | `ts-rs` (Aleph-Alpha/ts-rs) |
 | Versión | ≥ 12.0 |
 | Estrellas | 1.772 |
@@ -100,7 +100,7 @@ flowchart TB
 **Alternativas Excluidas:**
 
 | Crate | Razón de Exclusión |
-|-------|---------------------|
+| --- | --- |
 | `specta` | Sesgado hacia el ecosistema Tauri/rspc; la exportación de tipos de función no es necesaria en este escenario |
 | `typeshare` | Dirigido por CLI, inconveniente para integración CI; genera `interface` en lugar de `type` (sin diferencia práctica para prompts LLM) |
 | `tsify` | Vinculado a `wasm-bindgen`; este proyecto no es un flujo de trabajo WASM |
@@ -108,7 +108,7 @@ flowchart TB
 ### 2. Análisis y Transpilación TypeScript: SWC
 
 | Crate | Propósito |
-|-------|---------|
+| --- | --- |
 | `swc_core` (feature: `ecma_parser`) | Analizar fuente TS a AST |
 | `swc_core` (feature: `ecma_ast`) | Tipos de nodo AST |
 | `swc_core` (feature: `ecma_visit`) | Recorrido/transformación AST |
@@ -148,16 +148,16 @@ Todas las structs bajo `packages/shared/src/mcp_types/` obtienen derive `ts-rs`:
 // packages/shared/src/mcp_types/kalos.rs
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileReadResult {
     pub path: String,
     pub size_bytes: u64,
     pub content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileListResult {
     pub path: String,
     pub total_count: usize,
@@ -173,7 +173,7 @@ Los enums necesitan adaptación de la macro `str_enum!`:
 // packages/shared/src/mcp_types/enums.rs
 // Los enums existentes generados por la macro str_enum! necesitan derive TS adicional
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+# [derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 pub enum FileType {
     File,
     Directory,
@@ -501,7 +501,8 @@ parts.push(format!("\nAPIs JS disponibles:\n{}", items.join("\n")));
 ```
 
 Esto genera:
-```
+
+```text
 APIs JS disponibles:
 - file_read (importado de 'kalos')
 - file_write (importado de 'kalos')
@@ -536,65 +537,69 @@ Contenido de ejemplo inyectado en el prompt:
 ```typescript
 Estás escribiendo código TypeScript. Declaraciones de tipo de API disponibles:
 
-```typescript
+```
+
 // === Tipos (auto-generados desde Rust) ===
-type FileReadResult = { path: string; size_bytes: number; content: string };
-type FileListResult = { path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> };
-type FileWriteResult = { path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" };
+type `FileReadResult` = { path: string; `size_bytes`: number; content: string };
+type `FileListResult` = { path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> };
+type `FileWriteResult` = { path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" };
 
 // === API (escrita a mano) ===
 interface KalosApi {
-  file_read(params: { path: string }): Promise<FileReadResult>;
-  file_write(params: { path: string; content: string }): Promise<FileWriteResult>;
-  file_list(params: { path: string }): Promise<FileListResult>;
-  // ...
+`file_read`(params: { path: string }): Promise<`FileReadResult`>;
+`file_write`(params: { path: string; content: string }): Promise<`FileWriteResult`>;
+`file_list`(params: { path: string }): Promise<`FileListResult`>;
+// ...
 }
 
 declare const $kalos: KalosApi;
-```
+
+```text
 
 #### 3.3 Cargador de .d.ts
 
-```rust
+```
+
 // packages/shared/src/iepl/decl_loader.rs
 
-use include_dir::{Dir, include_dir};
+use `include_dir`::{Dir, `include_dir`};
 
-static IEPL_BINDINGS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../bindings");
+static IEPL_BINDINGS: Dir = `include_dir`!("$CARGO_MANIFEST_DIR/../../../bindings");
 
-pub struct IeplDeclLoader;
+pub struct `IeplDeclLoader`;
 
-impl IeplDeclLoader {
-    /// Cargar las declaraciones .d.ts requeridas filtradas por related_tools
-    pub fn load_for_tools(related_tools: &[RelatedTool]) -> String {
-        let mut declarations = Vec::new();
+impl `IeplDeclLoader` {
+/// Cargar las declaraciones .d.ts requeridas filtradas por `related_tools`
+pub fn `load_for_tools`(`related_tools`: &[`RelatedTool`]) -> String {
+let mut declarations = Vec::new();
 
-        // Recopilar el conjunto de agentes involucrados
-        let agents: std::collections::HashSet<&str> = related_tools
-            .iter()
-            .map(|t| t.agent_name.as_str())
-            .collect();
+// Recopilar el conjunto de agentes involucrados
+let agents: std::collections::HashSet<&str> = `related_tools`
+.iter()
+.map(|t| t.agent_name.as_str())
+.collect();
 
-        for agent in &agents {
-            // Cargar declaraciones de tipo auto-generadas
-            if let Some(types_file) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(types_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-
-            // Cargar declaraciones de API escritas a mano
-            if let Some(api_file) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(api_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-        }
-
-        declarations.join("\n\n")
-    }
+for agent in &agents {
+// Cargar declaraciones de tipo auto-generadas
+if let Some(`types_file`) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(types_file.contents()) {
+declarations.push(content.to_string());
 }
-```
+}
+
+// Cargar declaraciones de API escritas a mano
+if let Some(`api_file`) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(api_file.contents()) {
+declarations.push(content.to_string());
+}
+}
+}
+
+declarations.join("\n\n")
+}
+}
+
+```text
 
 #### 3.4 Actualización del Constructor de Namespace JS
 
@@ -604,24 +609,28 @@ impl IeplDeclLoader {
 
 ### Actual (JavaScript)
 
-```mermaid
-flowchart TD
-    Meta["Metadatos de Habilidad\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta --> Build["build_report_tool_instruction\n→ '- file_read (importado)'\n→ '- file_write (importado)'\n(texto hardcodeado)"]
-    Build -->|"inyectado en\nsystem prompt"| LLM1["LLM genera JavaScript\nfile_read({path:'x'})\n(sin verificación de tipos)"]
-    LLM1 --> Boa1["Boa eval() ejecución directa\n(sin pre-validación)"]
 ```
+
+flowchart TD
+Meta["Metadatos de Habilidad\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta --> Build["`build_report_tool_instruction`\n→ '- `file_read` (importado)'\n→ '- `file_write` (importado)'\n(texto hardcodeado)"]
+Build -->|"inyectado en\nsystem prompt"| LLM1["LLM genera JavaScript\`nfile_read`({path:'x'})\n(sin verificación de tipos)"]
+LLM1 --> Boa1["Boa eval() ejecución directa\n(sin pre-validación)"]
+
+```text
 
 ### Objetivo (TypeScript + IEPL)
 
-```mermaid
-flowchart TD
-    Meta2["Metadatos de Habilidad\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta2 --> Loader["IeplDeclLoader\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(declaraciones de tipo completas)"]
-    Loader -->|"inyectado en\nsystem prompt"| LLM2["LLM genera TypeScript\nconst r: FileReadResult =\n  await file_read(\n    {path: 'x'}\n  );\n(restringido por tipos)"]
-    LLM2 --> IEPL["Motor IEPL\n1. SWC analizar → AST (verificación sintaxis)\n2. Validador AST (verificación seguridad)\n3. eliminar tipos → JS (eliminación de tipos)\n4. codegen → cadena JS"]
-    IEPL --> Boa2["Boa eval() ejecución"]
 ```
+
+flowchart TD
+Meta2["Metadatos de Habilidad\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta2 --> Loader["`IeplDeclLoader`\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(declaraciones de tipo completas)"]
+Loader -->|"inyectado en\nsystem prompt"| LLM2["LLM genera TypeScript\nconst r: `FileReadResult` =\n  await `file_read`(\n    {path: 'x'}\n  );\n(restringido por tipos)"]
+LLM2 --> IEPL["Motor IEPL\n1. SWC analizar → AST (verificación sintaxis)\n2. Validador AST (verificación seguridad)\n3. eliminar tipos → JS (eliminación de tipos)\n4. codegen → cadena JS"]
+IEPL --> Boa2["Boa eval() ejecución"]
+
+```text
 
 ## Análisis de Mejora de Robustez
 
@@ -642,24 +651,29 @@ flowchart TD
 Fragmento de prompt actual que ve el LLM:
 
 ```
+
 APIs JS disponibles:
-- file_read (importado de 'kalos')
-- file_write (importado de 'kalos')
+
+- `file_read` (importado de 'kalos')
+- `file_write` (importado de 'kalos')
 - report()
-```
+
+```text
 
 Fragmento de prompt que ve el LLM bajo IEPL:
 
-```typescript
+```
+
 declare const $kalos: {
-  file_read(params: { path: string }): Promise<{ path: string; size_bytes: number; content: string }>;
-  file_write(params: { path: string; content: string }): Promise<{ path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" }>;
-  file_list(params: { path: string }): Promise<{ path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> }>;
+`file_read`(params: { path: string }): Promise<{ path: string; `size_bytes`: number; content: string }>;
+`file_write`(params: { path: string; content: string }): Promise<{ path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" }>;
+`file_list`(params: { path: string }): Promise<{ path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> }>;
 };
 // herramientas hubris disponibles mediante import de módulo ES: import { report } from 'hubris'
-  report(params: { summary: string }): Promise<{ summary: string }>;
+report(params: { summary: string }): Promise<{ summary: string }>;
 };
-```
+
+```text
 
 Esto último proporciona:
 - Nombres y tipos de parámetros precisos
@@ -669,39 +683,44 @@ Esto último proporciona:
 
 ## Resumen de Nuevas Dependencias del Workspace
 
-```toml
-# Nuevas
-ts-rs = { version = "12", features = ["serde-compat", "format"] }
-swc_core = { version = "65", features = [
-    "ecma_parser",
-    "ecma_ast",
-    "ecma_visit",
-    "ecma_transforms_base",
-    "ecma_transforms_typescript",
-    "ecma_codegen",
-    "common",
-] }
 ```
+
+# Nuevas
+
+ts-rs = { version = "12", features = ["serde-compat", "format"] }
+`swc_core` = { version = "65", features = [
+"`ecma_parser`",
+"`ecma_ast`",
+"`ecma_visit`",
+"`ecma_transforms_base`",
+"`ecma_transforms_typescript`",
+"`ecma_codegen`",
+"common",
+] }
+
+```text
 
 ## Nueva Estructura de Crates
 
-```mermaid
-flowchart LR
-    SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
-    SkemmaIepl --> SM2["engine.rs\nIeplEngine: transpile(ts_code) -> Result&lt;TranspileResult&gt;"]
-    SkemmaIepl --> SM3["ast_validator.rs\nAstValidator: detección de patrones de seguridad"]
-    SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod decl_loader;"]
-    SharedIepl --> SH2["decl_loader.rs\nIeplDeclLoader: cargar .d.ts filtrado por related_tools"]
-    Bindings["bindings/\nArtefactos generados, rastreados en git"] --> BTypes["types/\nts-rs auto-exportación"]
-    Bindings --> BApi["api/\nEscrito a mano y mantenido"]
-    Bindings --> BIepl["iepl-api.d.ts\nArtefacto fusionado (opcional)"]
-    BTypes --> BT1["kalos.d.ts"]
-    BTypes --> BT2["neikos.d.ts"]
-    BTypes --> BT3["..."]
-    BApi --> BA1["kalos.d.ts"]
-    BApi --> BA2["neikos.d.ts"]
-    BApi --> BA3["..."]
 ```
+
+flowchart LR
+SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod `ast_validator`;"]
+SkemmaIepl --> SM2["engine.rs\`nIeplEngine`: transpile(`ts_code`) -> Result&lt;`TranspileResult`&gt;"]
+SkemmaIepl --> SM3["ast_validator.rs\`nAstValidator`: detección de patrones de seguridad"]
+SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod `decl_loader`;"]
+SharedIepl --> SH2["decl_loader.rs\`nIeplDeclLoader`: cargar .d.ts filtrado por `related_tools`"]
+Bindings["bindings/\`nArtefactos` generados, rastreados en git"] --> BTypes["types/\nts-rs auto-exportación"]
+Bindings --> BApi["api/\nEscrito a mano y mantenido"]
+Bindings --> BIepl["iepl-api.d.ts\nArtefacto fusionado (opcional)"]
+BTypes --> BT1["kalos.d.ts"]
+BTypes --> BT2["neikos.d.ts"]
+BTypes --> BT3["..."]
+BApi --> BA1["kalos.d.ts"]
+BApi --> BA2["neikos.d.ts"]
+BApi --> BA3["..."]
+
+```text
 
 ## Ruta de Implementación
 

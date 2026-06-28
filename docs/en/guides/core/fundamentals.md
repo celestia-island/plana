@@ -54,7 +54,7 @@ A Skill is a prompt-defined workflow that references related tools and sometimes
 ### Tiers
 
 | Tier | Current meaning |
-|------|----------|
+| --- | --- |
 | Layer1 | Core agents compiled and enabled in the workspace |
 | Layer2 | Web Automation, the active built-in domain agent, plus some archived designs |
 | Layer3 | User-defined agents (planned, not yet implemented) |

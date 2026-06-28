@@ -77,7 +77,7 @@ shittim-chest 和 scepter 通过相同的 `JWT_SECRET` 环境变量共享 JWT �
 
 ### 登录流程
 
-```
+```text
 用户 → shittim_chest：POST /api/auth/login
 shittim_chest：验证 argon2 密码
 shittim_chest → scepter：GET /api/user/{id}/permissions
@@ -91,7 +91,7 @@ shittim_chest → 用户：tokens
 
 ### HTTP 代理
 
-```
+```text
 浏览器 → shittim_chest:80/api/proxy/chat（Header 中携带 JWT）
 shittim_chest：验证 JWT
 shittim_chest → scepter:8424/api/chat（转发 JWT）
@@ -100,7 +100,7 @@ scepter → Agent → LLM → scepter → shittim_chest → 浏览器
 
 ### WebSocket 代理
 
-```
+```text
 浏览器 → shittim_chest:80/api/proxy/ws（Header 中携带 JWT）
 shittim_chest：验证 JWT
 shittim_chest ↔ scepter:8424/ws（双向转发 + JWT）
@@ -110,6 +110,7 @@ shittim_chest ↔ scepter:8424/ws（双向转发 + JWT）
 ### 速率限制与监控
 
 在代理层，shittim-chest 负责：
+
 - 速率限制（按用户 / 按 IP）
 - 使用日志
 - 连接生命周期管理
@@ -117,7 +118,7 @@ shittim_chest ↔ scepter:8424/ws（双向转发 + JWT）
 
 ## Webhook 管道
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 验证 → 解析事件 → Unix socket → scepter
 ```
 

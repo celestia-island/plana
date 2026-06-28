@@ -143,7 +143,6 @@ graph LR
 - 타임스탬프는 UTC로 통일
 - 트랜잭션으로 쓰기 원자성 보장
 
-
 # LLM 설정 흐름 설계
 
 ## 개요
@@ -482,7 +481,6 @@ flowchart TB
 | 자동 페일오버 | 프로바이더 불가용 시 자동 전환 | 중간 |
 | 사용 통계 통합 | 사용 통계 시스템과 연동 | 낮음
 
-
 # MCP 프롬프트 주입 및 컨텍스트 압축 메커니즘
 
 ## 개요
@@ -558,9 +556,9 @@ sequenceDiagram
 
 각 MCP 도구의 문서는 JS API 참조로 포맷됩니다:
 
-    $agent.todo_list_view() — 현재 할일 트리 구조 보기
-    $agent.todo_create({ title: String, description: String }) — 새 할일 항목 생성
-    $agent.todo_update_status({ todo_id: String, status: String }) — 할일 항목 상태 갱신
+$agent.todo_list_view() — 현재 할일 트리 구조 보기
+$agent.todo_create({ title: String, description: String }) — 새 할일 항목 생성
+$agent.todo_update_status({ `todo_id`: String, status: String }) — 할일 항목 상태 갱신
 
 ### 설정 예시
 
@@ -590,15 +588,16 @@ flowchart TB
 
 각 `[[related_tools]]` 항목은 선택적으로 `access_mode`를 선언할 수 있습니다:
 
-    [[related_tools]]
-    agent_name = "polemos"
-    tool_name = "node_execute"
-    access_mode = "read"       # 스킬이 읽기 수준 접근만 필요 (기본값: "read")
+[[`related_tools`]]
+`agent_name` = "polemos"
+`tool_name` = "`node_execute`"
+`access_mode` = "read"       # 스킬이 읽기 수준 접근만 필요 (기본값: "read")
 
 이중 인가 게이트웨이는 다음을 확인합니다:
+
 1. 도구의 선언된 `ToolCapability`가 요청된 `access_mode`를 지원하는지
-2. 대상 노드의 `TrustLevel`이 해당 연산을 허용하는지
-3. 외부 노드의 경우 추가 위험 수준 게이팅이 적용됩니다
+1. 대상 노드의 `TrustLevel`이 해당 연산을 허용하는지
+1. 외부 노드의 경우 추가 위험 수준 게이팅이 적용됩니다
 
 전체 내용은 `docs/design/en/22-mcp-tool-permission-model.md`를 참조하십시오.
 
@@ -876,7 +875,7 @@ flowchart TB
 I-VII절에서 설명된 MCP 도구 주입은 LLM에게 **API 참조**를 제공합니다 — LLM에게 도구를 *호출하는 방법*을 알려줍니다. 보완 메커니즘인 RAG 컨텍스트 주입은 LLM에게 **사전 계산된 지식**을 제공합니다 — RAG 쿼리의 *결과*를 시스템 프롬프트에 직접 주입합니다.
 
 | 측면 | MCP 도구 주입 | RAG 컨텍스트 주입 |
-|--------|-------------------|----------------------|
+| --- | --- | --- |
 | LLM이 받는 것 | API 참조 문서 (ES 모듈 임포트) | 실제 지식 콘텐츠 (메모리 노드, 워크스페이스 문서) |
 | 주입 시점 | `related_tools` 기반, 스킬별 | 스킬 컨텍스트 기반, 스킬 단계별 |
 | LLM 관여 | LLM이 도구를 호출해야 함 | LLM 관여 없음 — 사전 계산됨 |
@@ -884,7 +883,6 @@ I-VII절에서 설명된 MCP 도구 주입은 LLM에게 **API 참조**를 제공
 | IEPL 모듈 | `{agent}` (MCP 디스패치) | `rag/{philia,aporia}` (버퍼 읽기) |
 
 두 메커니즘은 공존합니다: MCP 도구는 사전 계산된 컨텍스트가 다루지 않는 쿼리에 대한 폴백으로 사용 가능합니다. 전체 설계는 `docs/design/en/26-rag-context-injection.md`를 참조하십시오.
-
 
 # 에이전트 이중 신원 및 가시성 경계 설계
 
@@ -944,7 +942,6 @@ I-VII절에서 설명된 MCP 도구 주입은 LLM에게 **API 참조**를 제공
   - `agent_number`는 표시 및 상호작용용.
   - `agent_uuid`는 감사 및 이력용.
 
-
 # 요청 동시성 아키텍처
 
 ## 개요
@@ -966,7 +963,7 @@ flowchart LR
 - **고객** (사용자 요청)이 도착하여 동시에 주문합니다
 - **테이블** (Cosmos 컨테이너)이 요청별로 생성됩니다 — 각각 자체 워크스페이스를 가집니다
 - **주방 스테이션** (LLM 프로바이더 동시성)은 제한되어 있습니다 — 예를 들어 총 3개
-- **티켓 시스템** (RequestPool 계층 큐)이 계층별 FIFO 순서를 관리합니다
+- **티켓 시스템** (`RequestPool` 계층 큐)이 계층별 FIFO 순서를 관리합니다
 
 30명의 고객이 한 번에 주문할 수 있지만(scepter가 여러 요청을 수락), 주방은 한 번에 3개의 요리만 할 수 있습니다(LLM API 속도 제한).
 
@@ -997,9 +994,9 @@ N = 활성화된 모든 모델의 총 동시 슬롯 수. 모델 A (3슬롯) + B 
 모델별 세마포어가 있는 계층별 FIFO 큐. 계층 내에서:
 
 1. 수신 LLM 요청이 계층 큐에 진입합니다
-2. 먼저 최우선 모델의 슬롯을 획득하려고 시도합니다
-3. 바쁜 경우 우선순위 순서대로 다음 모델을 시도합니다
-4. 모두 바쁜 경우 FIFO 큐에서 대기 — 어떤 모델이든 먼저 해제되면 다음 요청을 서비스합니다
+1. 먼저 최우선 모델의 슬롯을 획득하려고 시도합니다
+1. 바쁜 경우 우선순위 순서대로 다음 모델을 시도합니다
+1. 모두 바쁜 경우 FIFO 큐에서 대기 — 어떤 모델이든 먼저 해제되면 다음 요청을 서비스합니다
 
 ```mermaid
 flowchart TB
@@ -1025,26 +1022,27 @@ flowchart TB
 
 ### 설정
 
-    # provider_config.toml
-    [[models]]
-    id = "gpt-5.4"
-    tier = "normal"
-    priority = 10
-    max_concurrent = 3        # 이 모델에 대한 3개의 동시 API 호출
+# provider_config.toml
+[[models]]
+id = "gpt-5.4"
+tier = "normal"
+priority = 10
+`max_concurrent` = 3        # 이 모델에 대한 3개의 동시 API 호출
 
-    [[models]]
-    id = "gpt-4o-mini"
-    tier = "normal"
-    priority = 5
-    max_concurrent = 5        # 5개의 동시 API 호출
+[[models]]
+id = "gpt-4o-mini"
+tier = "normal"
+priority = 5
+`max_concurrent` = 5        # 5개의 동시 API 호출
 
-    [[models]]
-    id = "deepseek-v3"
-    tier = "deep"
-    priority = 8
-    max_concurrent = 2
+[[models]]
+id = "deepseek-v3"
+tier = "deep"
+priority = 8
+`max_concurrent` = 2
 
 이 설정으로:
+
 - `normal` 계층: 모델 A (3슬롯) + 모델 B (5슬롯) = 8개 동시 normal 계층 LLM 호출
 - `deep` 계층: 모델 C (2슬롯) = 2개 동시 deep 계층 LLM 호출
 - 요청 세마포어: 3 + 5 + 2 = 10개 동시 사용자 요청
@@ -1052,43 +1050,54 @@ flowchart TB
 ## 흐름: 사용자 메시지 → LLM 응답
 
     1. 사용자가 TUI/CLI/소켓을 통해 메시지 전송
-    2. handle_user_message():
-       a. 요청 세마포어에서 try_acquire() (계층 1)
+    1. `handle_user_message`():
+
+a. 요청 세마포어에서 `try_acquire`() (계층 1)
+
           - 슬롯이 없으면: "busy" 오류 반환
           - 각 슬롯 → 독립적 Cosmos 컨테이너
-       b. execute_skill_chain() → invoke_aporia_llm_chat()
-    3. invoke_aporia_llm_chat():
-       a. RequestPool에서 acquire_tier("normal", excluded_models) (계층 2)
+
+b. `execute_skill_chain`() → `invoke_aporia_llm_chat`()
+
+    1. `invoke_aporia_llm_chat`():
+
+a. RequestPool에서 `acquire_tier`("normal", `excluded_models`) (계층 2)
+
           - 우선순위 순서로 각 모델 시도 (비차단)
           - 모두 바쁨: 어떤 모델 슬롯이든 해제될 때까지 FIFO 대기
-          - TierPermit { model_id, display_name } 반환
-       b. chat_loop → llm_backend.chat() → LlmService::chat_with_tools()
+          - TierPermit { `model_id`, `display_name` } 반환
+
+b. `chat_loop` → llm_backend.chat() → LlmService::`chat_with_tools`()
+
           - 선택된 모델로 API 호출
-       c. TierPermit 해제 → 세마포어 슬롯 릴리스
-    4. finish_handling():
-       a. 요청 세마포어 허용 반환
-       b. Cosmos 컨테이너 정리 (또는 재사용)
+
+c. TierPermit 해제 → 세마포어 슬롯 릴리스
+
+    1. `finish_handling`():
+
+a. 요청 세마포어 허용 반환
+b. Cosmos 컨테이너 정리 (또는 재사용)
 
 ## E2E 테스트
 
 테스트는 절대적 데드라인이 아닌 유휴 타임아웃을 사용합니다. 모든 의미 있는 이벤트마다 타이머가 초기화됩니다:
 
-    # 활동이 유휴 타이머를 초기화 — 체인은 활성 상태인 한 무기한 실행 가능
-    ACTIVE_METHODS = {
-        "Tui.OrchestrationStatus",
-        "Tui.McpToolResult",
-        "Tui.AgentReport",
-        "Tui.AgentStreamingChunk",
-        "Tui.TaskStatusUpdate",
-        "Tui.AskHumanRequest",
-        "Tui.AgentPatch",
-        "Tui.ContainerSnapshot",
-    }
+# 활동이 유휴 타이머를 초기화 — 체인은 활성 상태인 한 무기한 실행 가능
+ACTIVE_METHODS = {
+"Tui.`OrchestrationStatus`",
+"Tui.`McpToolResult`",
+"Tui.`AgentReport`",
+"Tui.`AgentStreamingChunk`",
+"Tui.`TaskStatusUpdate`",
+"Tui.`AskHumanRequest`",
+"Tui.AgentPatch",
+"Tui.`ContainerSnapshot`",
+}
 
 이로써 다음이 보장됩니다:
+
 - 짧은 유휴 타임아웃(120초)이 실제로 정체된 체인을 감지
 - 오래 실행되지만 활성 상태인 체인(복잡한 멀티 스킬)은 조기에 종료되지 않음
-
 
 # 임베디드 개발 DB 및 기능 게이트 생산 격리
 
@@ -1097,7 +1106,7 @@ flowchart TB
 entelecheia는 두 가지 목적으로 [pglite-oxide](https://crates.io/crates/pglite-oxide)를 임베디드 PostgreSQL로 사용합니다:
 
 1. **로컬 개발**: `DATABASE_URL`이 설정되지 않은 경우, scepter가 pgvector 지원이 포함된 인프로세스 PostgreSQL (WASM/wasmer를 통한 PG 17.5)을 자동으로 시작합니다.
-2. **통합 테스트**: PG 통합 테스트는 Docker/testcontainers 대신 pglite-oxide를 사용합니다.
+1. **통합 테스트**: PG 통합 테스트는 Docker/testcontainers 대신 pglite-oxide를 사용합니다.
 
 프로덕션(Docker)에서는 `embedded-db` 기능이 제외되고, scepter는 실제 PostgreSQL 컨테이너에 연결합니다.
 
@@ -1116,7 +1125,7 @@ flowchart TB
 ```
 
 | 빌드 컨텍스트 | 명령 | pglite-oxide | wasmer | DATABASE_URL |
-|---------------|---------|:---:|:---:|---|
+| --- | --- |  ---  |  ---  | --- |
 | `cargo run` (로컬 개발) | 기본 기능 | ✓ | ✓ | 선택 — 없으면 임베디드 PG 자동 시작 |
 | `cargo test` (테스트) | 기본 기능 | ✓ | ✓ | 테스트 하네스에 의해 자동 시작 |
 | `just build` (릴리스) | `--no-default-features --features all-agents` | ✗ | ✗ | 필수 |
@@ -1124,29 +1133,29 @@ flowchart TB
 
 ## 런타임 DB 해결 순서
 
-    // packages/scepter/src/app/setup.rs
-    let db_url = if let Ok(url) = std::env::var("DATABASE_URL") {
-        // 1. 환경 변수 (프로덕션: Docker PG, 개발: .env 파일)
-        url
-    } else if !user_config.database.url.is_empty() {
-        // 2. 사용자 설정 파일 (~/.config/entelecheia/config.toml)
-        user_config.database.url.clone()
-    } else {
-        // 3. 임베디드 pglite-oxide (기능 게이트)
-        #[cfg(feature = "embedded-db")]
-        {
-            let server = PgliteServer::builder()
-                .extension(pglite_oxide::extensions::VECTOR)  // pgvector 지원
-                .start()?;
-            let url = server.database_url();
-            std::mem::forget(server);  // 프로세스 수명 동안 유지
-            url
-        }
-        #[cfg(not(feature = "embedded-db"))]
-        {
-            return Err(/* "DATABASE_URL이 설정되지 않음" */);
-        }
-    };
+// packages/scepter/src/app/setup.rs
+let `db_url` = if let Ok(url) = std::env::var("DATABASE_URL") {
+// 1. 환경 변수 (프로덕션: Docker PG, 개발: .env 파일)
+url
+} else if !user_config.database.url.is_empty() {
+// 2. 사용자 설정 파일 (~/.config/entelecheia/config.toml)
+user_config.database.url.clone()
+} else {
+// 3. 임베디드 pglite-oxide (기능 게이트)
+#[cfg(feature = "embedded-db")]
+{
+let server = `PgliteServer`::builder()
+.extension(`pglite_oxide`::extensions::VECTOR)  // pgvector 지원
+.start()?;
+let url = server.database_url();
+std::mem::forget(server);  // 프로세스 수명 동안 유지
+url
+}
+#[cfg(not(feature = "embedded-db"))]
+{
+return Err(/* "DATABASE_URL이 설정되지 않음" */);
+}
+};
 
 ## 테스트 하네스 패턴
 
@@ -1154,7 +1163,7 @@ flowchart TB
 // tests/pg_integration/auth_test.rs
 static PG: OnceCell<(String, PgliteServer)> = OnceCell::const_new();
 
-#[test]
+# [test]
 fn pg_integration_tests() {
     let rt = tokio::Runtime::new().unwrap();
     rt.block_on(async {
@@ -1185,7 +1194,7 @@ fn pg_integration_tests() {
 ## PGlite 제약
 
 | 제약 | 영향 | 완화 |
-|------------|--------|------------|
+| --- | --- | --- |
 | `max_connections=1` | 한 번에 하나의 풀만 | 서브 테스트 간 DB 연결 공유; 테스트 간 `db.close()` 없음 |
 | 엄격한 타입 캐스팅 | `uuid = text` 실패 | 항상 타입화된 값 전달 (예: UUID 열에 `String`이 아닌 `Uuid`) |
 | 동시 접근 불가 | 테스트는 순차적이어야 함 | 모든 서브 테스트가 인라인된 단일 `#[test]` 러너 |
@@ -1195,8 +1204,8 @@ fn pg_integration_tests() {
 
 모든 프로덕션 Dockerfile은 embedded-db를 제외합니다:
 
-    # Dockerfile
-    RUN cargo build --release -p scepter \
-        --no-default-features --features all-agents
+# Dockerfile
+RUN cargo build --release -p scepter \
+--no-default-features --features all-agents
 
 이로써 프로덕션 이미지에 wasmer/pglite 코드가 전혀 포함되지 않아, 바이너리 크기를 최소화하고 공격 표면을 줄입니다.

@@ -9,11 +9,8 @@ subcategory = "core"
 # Pipeline multimodal
 
 > **⚠️ Referencia de Agent archivado — no está en el pipeline de desarrollo**
->
 > El Agent Layer2 `multimedia-creation` al que hace referencia este documento ha sido **archivado**. Su código Rust, enlaces `.d.ts` y registro de Agent han sido eliminados. El pipeline multimodal descrito aquí es un **objetivo de diseño**, no una funcionalidad entregada. A menos que un desarrollador lo solicite explícitamente, no implementes ni planifiques trabajo en este pipeline.
-
 > Usar multimedia-creation y ApoRia para generar, registrar y analizar medios
-
 > Nota de estado actual: Este documento describe principalmente flujos de trabajo objetivo. En la base de código actual existen herramientas relacionadas con multimodal en ApoRia, pero aún no alcanzan completamente el registro de activos centralizado y las capacidades de ciclo cerrado completo que se describen a continuación.
 
 ---
@@ -213,11 +210,11 @@ const context_analysis = $.agent.ApoRia.multimodal_chat({
 El pipeline multimodal admite ciclos de revisión iterativos:
 
 1. **Generar** — multimedia-creation crea el medio inicial
-2. **Registrar** — almacenar en el registro de activos
-3. **Analizar** — ApoRia evalúa el medio usando LLM multimodal
-4. **Identificar problemas** — extraer puntos de mejora específicos del análisis
-5. **Refinar** — multimedia-creation ajusta parámetros y regenera según la retroalimentación
-6. **Reanalizar** — ApoRia evalúa la salida refinada
+1. **Registrar** — almacenar en el registro de activos
+1. **Analizar** — ApoRia evalúa el medio usando LLM multimodal
+1. **Identificar problemas** — extraer puntos de mejora específicos del análisis
+1. **Refinar** — multimedia-creation ajusta parámetros y regenera según la retroalimentación
+1. **Reanalizar** — ApoRia evalúa la salida refinada
 
 ### Ejemplo de ciclo de revisión en código exec
 

@@ -18,9 +18,9 @@ ApoRia `llm_chat`을 통해 호출되는 프롬프트 전용 스킬입니다. �
 ## 목표
 
 1. 스킬이 프론트 매터에 라우팅 동작을 선언 (하드코딩이 아님).
-2. 제네릭 스킬 체인 실행기가 하드코딩된 2단계 파이프라인을 대체.
-3. 인간 검토가 일급 라우팅 대상이 됨.
-4. 프롬프트 언어 정리: 스킬/MCP 플랫 파일은 영어 전용.
+1. 제네릭 스킬 체인 실행기가 하드코딩된 2단계 파이프라인을 대체.
+1. 인간 검토가 일급 라우팅 대상이 됨.
+1. 프롬프트 언어 정리: 스킬/MCP 플랫 파일은 영어 전용.
 
 ## 스킬 보고서 구성 (TOML 프론트 매터)
 
@@ -32,7 +32,7 @@ next_skill = "workplan_generate"  # target = "next_node"인 경우 필수
 
 ## HubRis 스킬 체인
 
-```
+```text
 task_decompose → workplan_generate → operator → workplan_execute → submit_report → human
 ```
 
@@ -78,7 +78,7 @@ sequenceDiagram
 ## 보고서 라우팅 대상
 
 | 대상         | 동작                                                              |
-| ------------ | ----------------------------------------------------------------- |
+| --- | --- |
 | `next_node`  | 실행기가 `next_skill`에 명명된 스킬을 불러와 실행.                   |
 | `parent`     | 제어를 부모 오케스트레이터에 반환 (중첩 체인용으로 예약).             |
 | `human`      | 체인을 일시 중지, `HumanReviewRequest`를 TUI로 전송, `HumanReviewResponse`에 재개. |
@@ -86,7 +86,7 @@ sequenceDiagram
 
 ## 파일 구조 (1단계)
 
-```
+```text
 res/prompts/agents/hubris/skills/
   task_decompose.md
   workplan_generate.md
@@ -113,5 +113,5 @@ ApoRia `llm_chat`은 개발 및 테스트 비용을 낮게 유지하기 위해 �
 ## 실패 대체 정책
 
 1. 스킬 실패 시: 실패 메시지를 반환하고 현재 체인 종료.
-2. ApoRia 오프라인 시: `Agent not ready` 메시지 반환.
-3. 인간 검토 시간 초과 시: 후속 채팅을 차단하지 않고 시간 초과 알림 반환.
+1. ApoRia 오프라인 시: `Agent not ready` 메시지 반환.
+1. 인간 검토 시간 초과 시: 후속 채팅을 차단하지 않고 시간 초과 알림 반환.

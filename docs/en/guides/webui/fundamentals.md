@@ -27,6 +27,7 @@ shittim-chest supports two operation modes:
 ### Standalone Mode
 
 Runs independently with its own LLM routing layer. Supports:
+
 - Chat with streaming responses (SSE + WebSocket)
 - Image generation via configured providers
 - User authentication (password + GitHub OAuth)
@@ -37,6 +38,7 @@ Does not require entelecheia. Useful for development and simple deployments.
 ### Proxy Mode
 
 Acts as a gateway to entelecheia's agent system. Adds:
+
 - Request forwarding to scepter with JWT passthrough
 - WebSocket bridging for agent-based chat
 - Webhook ingress and trigger forwarding
@@ -47,14 +49,14 @@ Requires a running entelecheia instance. The two modes can coexist — standalon
 
 ## Authentication Model
 
-Authentication uses JWT tokens issued by shittim_chest:
+Authentication uses JWT tokens issued by `shittim_chest`:
 
 1. **Credential storage**: Passwords (argon2 hashes), sessions, refresh tokens, and API keys live in `shittim_chest_db`.
-2. **GitHub OAuth**: Users can sign in with GitHub; accounts are auto-created on first login.
-3. **Permission storage**: User groups, roles, and permission matrices live in `entelecheia_db`.
-4. **JWT flow**: On login, shittim_chest verifies credentials locally, then fetches permissions from scepter. The issued JWT contains `{ sub: user_id, groups: [...] }`.
-5. **Shared secret**: The JWT signing secret is shared with scepter so both services can validate tokens independently.
-6. **Token rotation**: Access tokens expire in 1 hour; refresh tokens in 7 days. Refresh tokens are rotated on each use.
+1. **GitHub OAuth**: Users can sign in with GitHub; accounts are auto-created on first login.
+1. **Permission storage**: User groups, roles, and permission matrices live in `entelecheia_db`.
+1. **JWT flow**: On login, `shittim_chest` verifies credentials locally, then fetches permissions from scepter. The issued JWT contains `{ sub: user_id, groups: [...] }`.
+1. **Shared secret**: The JWT signing secret is shared with scepter so both services can validate tokens independently.
+1. **Token rotation**: Access tokens expire in 1 hour; refresh tokens in 7 days. Refresh tokens are rotated on each use.
 
 ## Frontend (webui)
 
@@ -92,22 +94,23 @@ All device communication flows through entelecheia's polemos agent — shittim-c
 
 ## Proxy Architecture
 
-shittim_chest acts as a gateway between users and scepter:
+`shittim_chest` acts as a gateway between users and scepter:
 
 - **HTTP reverse proxy**: `/api/proxy/*` forwards authenticated requests to scepter with JWT passthrough.
 - **WebSocket bridge**: Chat streaming uses bidirectional WebSocket forwarding (`browser ↔ shittim_chest ↔ scepter`).
 
-This allows shittim_chest to enforce rate limits, log usage, and manage connection lifecycle without scepter needing to handle individual browser connections.
+This allows `shittim_chest` to enforce rate limits, log usage, and manage connection lifecycle without scepter needing to handle individual browser connections.
 
 ## Webhook Pipeline
 
 External events reach the agent core through a webhook pipeline:
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC validation → Parse event → Forward to scepter via Unix socket → Agent dispatch
 ```
 
 Each provider has its own validation mechanism:
+
 - **GitHub**: HMAC-SHA256 via `X-Hub-Signature-256`
 - **GitLab**: Token via `X-Gitlab-Token`
 - **Gitee**: HMAC with token fallback
@@ -125,7 +128,7 @@ Permissions follow a group-based RBAC model:
   - Agent whitelists (which agents the group can access)
   - Administrative capabilities (manage users, configure providers)
 
-shittim_chest caches permissions in-process with a TTL (default 5 minutes). Cache invalidation occurs on TTL expiry, logout, or explicit permission changes propagated from scepter.
+`shittim_chest` caches permissions in-process with a TTL (default 5 minutes). Cache invalidation occurs on TTL expiry, logout, or explicit permission changes propagated from scepter.
 
 ## Frontend Strategy
 
@@ -139,7 +142,7 @@ shittim-chest uses a two-phase frontend approach:
 
 TypeScript types are generated from Rust code via the external `arona` protocol crate, ensuring frontend-backend consistency:
 
-```
+```text
 arona Rust crate (git dependency)
   → #[derive(ts_rs::TS)]
   → ts-rs codegen → packages/webui/src/types/arona/ (TypeScript)

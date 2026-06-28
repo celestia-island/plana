@@ -17,7 +17,7 @@ Shittim Chestは、[entelecheia](https://github.com/celestia-island/entelecheia)
 Shittim Chestは、完全なユーザー体験を提供するために連携する複数のコンポーネントで構成されています：
 
 - **arona** — 現在ご利用いただいているチャットUI。ストリーミング応答、画像生成、エージェント状態監視、シンキングウィンドウ、リモートデバイスビューアー、多言語サポートを備えています。
-- **shittim_chest** — 認証（JWT + OAuth）、独立したLLMルーティング、チャットAPI、画像生成、webhookイングレス、scepterプロキシ、リモートデバイスシグナリングを処理する統合Rust + Axumバックエンド。
+- **`shittim_chest`** — 認証（JWT + OAuth）、独立したLLMルーティング、チャットAPI、画像生成、webhookイングレス、scepterプロキシ、リモートデバイスシグナリングを処理する統合Rust + Axumバックエンド。
 
 ## Entelecheiaとの関係
 

@@ -143,7 +143,6 @@ graph LR
 - 时间戳统一使用 UTC
 - 事务保证写入原子性
 
-
 # LLM 配置流程设计
 
 ## 概述
@@ -482,7 +481,6 @@ flowchart TB
 | 自动故障转移 | Provider 不可用时自动切换 | 中 |
 | 用量统计集成 | 联动用量统计系统 | 低 |
 
-
 # MCP Prompt 注入与上下文压缩机制
 
 ## 概述
@@ -558,9 +556,9 @@ sequenceDiagram
 
 每个 MCP 工具的文档格式化为 JS API 引用：
 
-    $agent.todo_list_view() — 查看当前 Todo 树结构
-    $agent.todo_create({ title: String, description: String }) — 创建新的 Todo 项
-    $agent.todo_update_status({ todo_id: String, status: String }) — 更新 Todo 项的状态
+$agent.todo_list_view() — 查看当前 Todo 树结构
+$agent.todo_create({ title: String, description: String }) — 创建新的 Todo 项
+$agent.todo_update_status({ `todo_id`: String, status: String }) — 更新 Todo 项的状态
 
 ### 配置示例
 
@@ -590,15 +588,16 @@ flowchart TB
 
 每个 `[[related_tools]]` 条目可以可选地声明 `access_mode`：
 
-    [[related_tools]]
-    agent_name = "polemos"
-    tool_name = "node_execute"
-    access_mode = "read"       # 技能仅需读级访问（默认："read"）
+[[`related_tools`]]
+`agent_name` = "polemos"
+`tool_name` = "`node_execute`"
+`access_mode` = "read"       # 技能仅需读级访问（默认："read"）
 
 双重授权网关检查：
+
 1. 工具的 `ToolCapability` 声明是否支持请求的 `access_mode`
-2. 目标节点的 `TrustLevel` 是否允许该操作
-3. 对外部节点，额外的风险等级门控适用
+1. 目标节点的 `TrustLevel` 是否允许该操作
+1. 对外部节点，额外的风险等级门控适用
 
 详见 `docs/design/zh/22-mcp-tool-permission-model.md`。
 
@@ -876,7 +875,7 @@ flowchart TB
 第 I-VII 节描述的 MCP 工具注入为 LLM 提供**API 引用**——它告诉 LLM *如何*调用工具。一个补充机制——RAG 上下文注入——为 LLM 提供**预计算的知识**——它直接将 RAG 查询的*结果*注入到系统提示词中。
 
 | 方面 | MCP 工具注入 | RAG 上下文注入 |
-|--------|-------------------|----------------------|
+| --- | --- | --- |
 | LLM 收到什么 | API 引用文档（ES 模块导入） | 实际知识内容（记忆节点、工作区文档） |
 | 何时注入 | 按技能，基于 `related_tools` | 按技能步骤，基于技能上下文 |
 | LLM 参与 | LLM 必须调用工具 | LLM 无需参与——预计算 |
@@ -884,7 +883,6 @@ flowchart TB
 | IEPL 模块 | `{agent}`（MCP 分发） | `rag/{philia,aporia}`（缓冲区读取） |
 
 两种机制共存：MCP 工具作为回退选项保持可用，用于预计算上下文未覆盖的查询。详见 `docs/design/zh/26-rag-context-injection.md`。
-
 
 # Agent 双重身份与可见性边界设计
 
@@ -944,7 +942,6 @@ flowchart TB
   - `agent_number` 用于显示和交互。
   - `agent_uuid` 用于审计和历史。
 
-
 # 请求并发架构
 
 ## 概述
@@ -966,7 +963,7 @@ flowchart LR
 - **顾客**（用户请求）同时到达并下单
 - **桌子**（Cosmos 容器）为每个请求创建——每个有自己的工作区
 - **厨房工位**（LLM 提供商并发）有限——也许总共 3 个
-- **票务系统**（RequestPool 层级队列）按层级管理 FIFO 排序
+- **票务系统**（`RequestPool` 层级队列）按层级管理 FIFO 排序
 
 30 名顾客可以同时下单（scepter 接受多个请求），但厨房一次只能做 3 道菜（LLM API 速率限制）。
 
@@ -997,9 +994,9 @@ N = 所有已启用模型的总并发槽数。如果模型 A（3 槽）+ B（2 �
 带按模型信号量的每层级 FIFO 队列。在层级内：
 
 1. 传入的 LLM 请求进入层级队列
-2. 首先尝试在最高优先级模型上获取槽位
-3. 若繁忙，按优先级顺序尝试下一个模型
-4. 若全部繁忙，在 FIFO 队列中等待——无论哪个模型先释放槽位，就服务下一个请求
+1. 首先尝试在最高优先级模型上获取槽位
+1. 若繁忙，按优先级顺序尝试下一个模型
+1. 若全部繁忙，在 FIFO 队列中等待——无论哪个模型先释放槽位，就服务下一个请求
 
 ```mermaid
 flowchart TB
@@ -1025,26 +1022,27 @@ flowchart TB
 
 ### 配置
 
-    # provider_config.toml
-    [[models]]
-    id = "gpt-5.4"
-    tier = "normal"
-    priority = 10
-    max_concurrent = 3        # 对此模型同时进行 3 次 API 调用
+# provider_config.toml
+[[models]]
+id = "gpt-5.4"
+tier = "normal"
+priority = 10
+`max_concurrent` = 3        # 对此模型同时进行 3 次 API 调用
 
-    [[models]]
-    id = "gpt-4o-mini"
-    tier = "normal"
-    priority = 5
-    max_concurrent = 5        # 同时进行 5 次 API 调用
+[[models]]
+id = "gpt-4o-mini"
+tier = "normal"
+priority = 5
+`max_concurrent` = 5        # 同时进行 5 次 API 调用
 
-    [[models]]
-    id = "deepseek-v3"
-    tier = "deep"
-    priority = 8
-    max_concurrent = 2
+[[models]]
+id = "deepseek-v3"
+tier = "deep"
+priority = 8
+`max_concurrent` = 2
 
 使用此配置：
+
 - `normal` 层级：模型 A（3 槽）+ 模型 B（5 槽）= 8 个并发的 normal 层级 LLM 调用
 - `deep` 层级：模型 C（2 槽）= 2 个并发的 deep 层级 LLM 调用
 - 请求信号量：3 + 5 + 2 = 10 个并发用户请求
@@ -1052,43 +1050,54 @@ flowchart TB
 ## 流程：用户消息 → LLM 响应
 
     1. 用户通过 TUI/CLI/套接字发送消息
-    2. handle_user_message()：
-       a. 在请求信号量上 try_acquire()（第一层）
+    1. `handle_user_message`()：
+
+a. 在请求信号量上 `try_acquire`()（第一层）
+
           - 若无槽位：返回"繁忙"错误
           - 每个槽位 → 独立 Cosmos 容器
-       b. execute_skill_chain() → invoke_aporia_llm_chat()
-    3. invoke_aporia_llm_chat()：
-       a. 在 RequestPool 上 acquire_tier("normal", excluded_models)（第二层）
+
+b. `execute_skill_chain`() → `invoke_aporia_llm_chat`()
+
+    1. `invoke_aporia_llm_chat`()：
+
+a. 在 `RequestPool` 上 `acquire_tier`("normal", `excluded_models`)（第二层）
+
           - 按优先级顺序尝试每个模型（非阻塞）
           - 若全部繁忙：在 FIFO 中等待，直到任何模型槽位释放
-          - 返回 TierPermit { model_id, display_name }
-       b. chat_loop → llm_backend.chat() → LlmService::chat_with_tools()
+          - 返回 TierPermit { `model_id`, `display_name` }
+
+b. `chat_loop` → llm_backend.chat() → LlmService::`chat_with_tools`()
+
           - 使用选定模型进行 API 调用
-       c. TierPermit 释放 → 信号量槽位释放
-    4. finish_handling()：
-       a. 请求信号量许可归还
-       b. Cosmos 容器可清理（或重用）
+
+c. TierPermit 释放 → 信号量槽位释放
+
+    1. `finish_handling`()：
+
+a. 请求信号量许可归还
+b. Cosmos 容器可清理（或重用）
 
 ## E2E 测试
 
 测试使用空闲超时（而非绝对截止时间）。计时器在每次有意义的事件时重置：
 
-    # 活动重置空闲计时器——只要保持活跃，链可以无限运行
-    ACTIVE_METHODS = {
-        "Tui.OrchestrationStatus",
-        "Tui.McpToolResult",
-        "Tui.AgentReport",
-        "Tui.AgentStreamingChunk",
-        "Tui.TaskStatusUpdate",
-        "Tui.AskHumanRequest",
-        "Tui.AgentPatch",
-        "Tui.ContainerSnapshot",
-    }
+# 活动重置空闲计时器——只要保持活跃，链可以无限运行
+ACTIVE_METHODS = {
+"Tui.`OrchestrationStatus`",
+"Tui.`McpToolResult`",
+"Tui.`AgentReport`",
+"Tui.`AgentStreamingChunk`",
+"Tui.`TaskStatusUpdate`",
+"Tui.`AskHumanRequest`",
+"Tui.AgentPatch",
+"Tui.`ContainerSnapshot`",
+}
 
 这确保：
+
 - 短空闲超时（120s）捕获真正卡住的链
 - 长时间运行但活跃的链（复杂的多 Skill）永远不会被过早终止
-
 
 # 嵌入式开发数据库与功能门控的生产隔离
 
@@ -1097,7 +1106,7 @@ flowchart TB
 entelecheia 使用 [pglite-oxide](https://crates.io/crates/pglite-oxide) 作为嵌入式 PostgreSQL，用于两个目的：
 
 1. **本地开发**：当未配置 `DATABASE_URL` 时，scepter 自动启动一个进程内 PostgreSQL（通过 WASM/wasmer 的 PG 17.5）并支持 pgvector。
-2. **集成测试**：PG 集成测试使用 pglite-oxide 替代 Docker/testcontainers。
+1. **集成测试**：PG 集成测试使用 pglite-oxide 替代 Docker/testcontainers。
 
 在生产环境（Docker）中，`embedded-db` 功能被排除，scepter 连接到真实的 PostgreSQL 容器。
 
@@ -1116,7 +1125,7 @@ flowchart TB
 ```
 
 | 构建上下文 | 命令 | pglite-oxide | wasmer | DATABASE_URL |
-|---------------|---------|:---:|:---:|---|
+| --- | --- |  ---  |  ---  | --- |
 | `cargo run`（本地开发）| 默认 features | ✓ | ✓ | 可选——缺失时自动启动嵌入式 PG |
 | `cargo test`（测试）| 默认 features | ✓ | ✓ | 由测试工具自动启动 |
 | `just build`（发布）| `--no-default-features --features all-agents` | ✗ | ✗ | 必需 |
@@ -1124,29 +1133,29 @@ flowchart TB
 
 ## 运行时 DB 解析顺序
 
-    // packages/scepter/src/app/setup.rs
-    let db_url = if let Ok(url) = std::env::var("DATABASE_URL") {
-        // 1. 环境变量（生产：Docker PG，开发：.env 文件）
-        url
-    } else if !user_config.database.url.is_empty() {
-        // 2. 用户配置文件（~/.config/entelecheia/config.toml）
-        user_config.database.url.clone()
-    } else {
-        // 3. 嵌入式 pglite-oxide（功能门控）
-        #[cfg(feature = "embedded-db")]
-        {
-            let server = PgliteServer::builder()
-                .extension(pglite_oxide::extensions::VECTOR)  // pgvector 支持
-                .start()?;
-            let url = server.database_url();
-            std::mem::forget(server);  // 进程生命周期内保持存活
-            url
-        }
-        #[cfg(not(feature = "embedded-db"))]
-        {
-            return Err(/* "未配置 DATABASE_URL" */);
-        }
-    };
+// packages/scepter/src/app/setup.rs
+let `db_url` = if let Ok(url) = std::env::var("DATABASE_URL") {
+// 1. 环境变量（生产：Docker PG，开发：.env 文件）
+url
+} else if !user_config.database.url.is_empty() {
+// 2. 用户配置文件（~/.config/entelecheia/config.toml）
+user_config.database.url.clone()
+} else {
+// 3. 嵌入式 pglite-oxide（功能门控）
+#[cfg(feature = "embedded-db")]
+{
+let server = `PgliteServer`::builder()
+.extension(`pglite_oxide`::extensions::VECTOR)  // pgvector 支持
+.start()?;
+let url = server.database_url();
+std::mem::forget(server);  // 进程生命周期内保持存活
+url
+}
+#[cfg(not(feature = "embedded-db"))]
+{
+return Err(/* "未配置 DATABASE_URL" */);
+}
+};
 
 ## 测试工具模式
 
@@ -1154,7 +1163,7 @@ flowchart TB
 // tests/pg_integration/auth_test.rs
 static PG: OnceCell<(String, PgliteServer)> = OnceCell::const_new();
 
-#[test]
+# [test]
 fn pg_integration_tests() {
     let rt = tokio::Runtime::new().unwrap();
     rt.block_on(async {
@@ -1185,7 +1194,7 @@ fn pg_integration_tests() {
 ## PGlite 约束
 
 | 约束 | 影响 | 缓解措施 |
-|------------|--------|------------|
+| --- | --- | --- |
 | `max_connections=1` | 一次仅一个池 | 在子测试间共享 DB 连接；测试间不调用 `db.close()` |
 | 严格类型转换 | `uuid = text` 会失败 | 始终传递类型化值（例如对 UUID 列使用 `Uuid` 而非 `String`） |
 | 无并发访问 | 测试必须顺序执行 | 单个 `#[test]` 运行器，所有子测试内联 |
@@ -1195,8 +1204,8 @@ fn pg_integration_tests() {
 
 所有生产 Dockerfile 排除 embedded-db：
 
-    # Dockerfile
-    RUN cargo build --release -p scepter \
-        --no-default-features --features all-agents
+# Dockerfile
+RUN cargo build --release -p scepter \
+--no-default-features --features all-agents
 
 这确保生产镜像中零 wasmer/pglite 代码，保持二进制大小最小化和攻击面减少。

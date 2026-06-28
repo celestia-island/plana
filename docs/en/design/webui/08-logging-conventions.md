@@ -57,7 +57,7 @@ tracing_subscriber::fmt()
 
 The CLI accepts the `--log-level` / `-l` parameter (default `info`):
 
-```
+```text
 shittim-chest --log-level debug dev
 shittim-chest -l trace status
 ```
@@ -77,10 +77,10 @@ Supported levels: `trace`, `debug`, `info`, `warn`, `error`.
 ## Design Principles
 
 1. **CLI does not swallow errors**: All errors propagate upward via `anyhow::Result`; `main()` automatically prints the error chain.
-2. **Every operation start has a log**: `creating network...`, `running migrations...`, `building shittim_chest...` — the user knows what the CLI is doing.
-3. **Every operation completion has confirmation**: `shittim-chest started on 0.0.0.0:80`, `all services started`.
-4. **Silently-succeeding operations are not logged**: `ensure_network` does not print if the network already exists, to avoid noise.
-5. **Container logs are fetched via Docker API**: The CLI itself does not write business logs, only orchestration operation logs.
+1. **Every operation start has a log**: `creating network...`, `running migrations...`, `building shittim_chest...` — the user knows what the CLI is doing.
+1. **Every operation completion has confirmation**: `shittim-chest started on 0.0.0.0:80`, `all services started`.
+1. **Silently-succeeding operations are not logged**: `ensure_network` does not print if the network already exists, to avoid noise.
+1. **Container logs are fetched via Docker API**: The CLI itself does not write business logs, only orchestration operation logs.
 
 ## Alignment with entelecheia
 

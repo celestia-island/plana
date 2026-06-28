@@ -63,6 +63,6 @@ graph TB
 ## Philosophie de Conception
 
 1. **Autonome d'abord** : Toutes les fonctionnalités principales ne dépendent pas d'entelecheia. Les variables d'environnement `LLM_DEFAULT_PROVIDER_*` suffisent pour lancer le chat indépendamment.
-2. **Intégration faiblement couplée** : L'intégration entelecheia est une couche proxy optionnelle. Les utilisateurs peuvent choisir d'utiliser uniquement le chat LLM, ou d'activer l'orchestration d'Agents via entelecheia.
-3. **WASM progressif** : Le frontend Vue 3 est livré d'abord comme « spécification vivante » ; la migration WASM a des seuils de décision clairs (maturité du framework, couverture de l'écosystème, bande passante de développement).
-4. **Docker natif** : Tous les composants côté serveur sont gérés via l'API Docker bollard, sans dépendance à docker-compose.
+1. **Intégration faiblement couplée** : L'intégration entelecheia est une couche proxy optionnelle. Les utilisateurs peuvent choisir d'utiliser uniquement le chat LLM, ou d'activer l'orchestration d'Agents via entelecheia.
+1. **WASM progressif** : Le frontend Vue 3 est livré d'abord comme « spécification vivante » ; la migration WASM a des seuils de décision clairs (maturité du framework, couverture de l'écosystème, bande passante de développement).
+1. **Docker natif** : Tous les composants côté serveur sont gérés via l'API Docker bollard, sans dépendance à docker-compose.

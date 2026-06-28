@@ -23,6 +23,7 @@ subcategory = "core"
 **规模**：~23k+ stars。独立于 LangChain。
 
 ### 架构
+
 - **Agent**：通过 YAML（角色、目标、背景故事）或 Python `Agent` 类定义。每个 agent 包装一个 LLM 并具有工具访问权限。
 - **编排**：两种模式：
   - **Crews**：具有顺序或分层流程的 agent 团队。顺序模式按顺序运行任务；分层模式指定一个"管理者"agent 进行委派。
@@ -31,30 +32,35 @@ subcategory = "core"
 - **流程类型**：`Process.sequential` 和 `Process.hierarchical`。
 
 ### 工具暴露
+
 - 通过 `crewai[tools]` 包提供内置工具（SerperDev 等）。自定义工具为 Python 函数。
 - MCP（模型上下文协议）支持已文档化。
 - 工具在定义时按 agent 分配。
 - 每次 LLM 调用无明确的工具数量限制——所有分配的工具在每轮中都暴露。
 
 ### 安全模型
+
 - **无沙箱**。Agent 在与编排相同的 Python 进程中运行。
 - 企业版"AMP Suite"提供具有可观测性和访问控制的控制平面（专有）。
 - 通过任务上的 `human_input=True` 实现人类参与循环。
 - 未提及代码执行隔离。
 
 ### 内存/上下文
+
 - 短期：通过对话历史实现 agent 内存。
 - 长期：通过 agent 上启用 `memory=True` 提供可选的内存存储。
 - 无显式的上下文压缩或 token 管理——依赖 LLM 上下文窗口。
 - 文档中提到检查点，但 OSS 中细节稀少。
 
 ### 独特特性
+
 - **Flows + Crews 协同**：将自主 agent 团队与精确的事件驱动工作流结合。
 - **YAML优先配置**：Agent 和任务以声明方式定义，适合非开发者。
 - **大型社区**：通过 `learn.crewai.com` 拥有 100k+ 认证开发者。
 - **性能声明**：在特定 QA 任务中比 LangGraph 快 5.76 倍（自行报告）。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - 无代码执行沙箱或隔离。
 - 无工具执行的正式安全模型。
 - 内存相对简单——无分层上下文管理或归档。
@@ -71,29 +77,34 @@ subcategory = "core"
 **许可证**：MIT
 
 ### 架构
+
 - **基于图的状态机**：节点（agent/函数）和边（转换）形成受 Pregel/Beam 启发的有向图。
 - **Agent**：节点可以是 LLM 调用、工具执行或任何 Python 函数。不强制类型化为"agent"——更像是图中的函数。
 - **编排**：具有类型化状态模式的 `StateGraph`。节点读/写状态。用于分支的条件边。用于组合的子图。
 - **通信**：状态对象是单一事实来源。消息追加到状态列表。
 
 ### 工具暴露
+
 - 工具是 LangChain 工具或绑定到图节点的任意可调用对象。
 - 节点中可用的所有工具在该步骤中都暴露给 LLM。
 - 无内置工具节流；开发者管理每个节点传递哪些工具。
 
 ### 安全模型
+
 - **无沙箱**。代码执行是开发者的责任。
 - 通过 `interrupt()` 实现人类参与循环——暂停图执行，允许状态检查/修改。
 - 持久执行：状态持久化，可在失败后恢复（检查点）。
 - 无工具执行或文件系统访问的隔离原语。
 
 ### 内存/上下文
+
 - **短期**：通过状态（消息列表）的工作内存。
 - **长期**：通过 `Store` 抽象（带嵌入的键值）跨会话持久内存。
 - 上下文压缩未内置——开发者管理状态大小。
 - 通过 `MemorySaver` 或 `SqliteSaver` 实现检查点。
 
 ### 独特特性
+
 - **持久执行**：在失败/超时后自动从检查点恢复——非常适合长时间运行的 agent。
 - **通过中断实现人类参与循环**：审批工作流的强大模式。
 - **LangSmith 集成**：深度可观测性、追踪和评估。
@@ -102,6 +113,7 @@ subcategory = "core"
 - **LangChain 生态系统**：与 LangChain 工具、模型和组件无缝集成。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - 与 LangChain 生态系统紧密耦合（尽管"可以不使用 LangChain 使用"）。
 - 无安全模型——无沙箱，无权限系统。
 - 低级框架——需要大量样板代码进行 agent 交互。
@@ -113,12 +125,13 @@ subcategory = "core"
 
 ## 3. MetaGPT
 
-**仓库**：[FoundationAgents/MetaGPT](https://github.com/FoundationAgents/MetaGPT)
+**仓库**：[`FoundationAgents`/MetaGPT](https://github.com/`FoundationAgents`/MetaGPT)
 **语言**：Python
 **许可证**：MIT
 **研究**：发表于 ICLR 2024
 
 ### 架构
+
 - **基于 SOP 的多 agent**：使用预定义角色（PM、架构师、工程师等）建模软件公司。
 - **Agent（角色）**：每个 `Role` 具有配置文件、目标、约束和一组 `Action`。角色使用 ReAct 循环（思考 → 行动），具有三种模式：`REACT`、`BY_ORDER`、`PLAN_AND_ACT`。
 - **编排**：`Team` 类雇佣角色，投入预算，运行轮次。`Environment` 通过发布-订阅管理角色间的消息传递。
@@ -126,12 +139,14 @@ subcategory = "core"
 - **核心哲学**：`Code = SOP(Team)` —— 物化的标准操作程序。
 
 ### 工具暴露
+
 - 行动是预定义的 Python 类（`WriteCode`、`DesignAPI`、`DebugError` 等）——约 40+ 种行动类型。
 - 每个角色在构建时分配特定的行动。
 - 工具包括：网络搜索引擎（Serper、SerpAPI、DuckDuckGo、Google、Bing）、网络浏览器（Playwright、Selenium）、图像生成（DALL-E）、文档存储（Chroma、FAISS、Milvus、LanceDB、Qdrant）。
 - LLM 仅看到其当前分配行动的行动模式，而非完整工具集。
 
 ### 安全模型
+
 - **无沙箱**。代码生成并在同一环境中执行。
 - 提供 Dockerfile 但用于部署，而非每任务隔离。
 - 预算追踪：`investment` 参数限制总 LLM API 成本，超出时抛出异常。
@@ -139,6 +154,7 @@ subcategory = "core"
 - 无工具执行沙箱或权限模型。
 
 ### 内存/上下文
+
 - **短期**：`RoleContext` 中的 `Memory` 类——每个角色的有序消息列表。
 - **长期**：`LongTermMemory` 和 `BrainMemory` 类用于持久知识。
 - **工作内存**：用于规划器操作的独立工作内存。
@@ -146,6 +162,7 @@ subcategory = "core"
 - 上下文压缩未显式处理——角色观察过滤后的消息子集。
 
 ### 独特特性
+
 - **完整 SDLC 仿真**：使用 SOP 建模整个软件公司——用户故事、需求、设计文档、代码、测试。
 - **多种文档存储**：5+ 向量数据库选项。
 - **广泛的提供商支持**：12+ LLM 提供商（OpenAI、Azure、Anthropic、Gemini、Ollama、Bedrock 等）。
@@ -154,6 +171,7 @@ subcategory = "core"
 - **MGX**：基于此构建的自然语言编程产品。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - 刚性 SOP——角色和行动是预定义的；自定义角色需要编码。
 - 完全无安全沙箱。
 - 单机架构——无分布式 agent 部署。
@@ -172,6 +190,7 @@ subcategory = "core"
 **研究**：多篇 NeurIPS/arxiv 论文
 
 ### 架构
+
 - **零代码多 agent 平台**：Agent 和工作流完全在 YAML 配置中定义。无需编码。
 - **YAML 驱动的工作流 DAG**：节点定义 agent，边定义消息流。支持子图。Web UI 中的可视化拖放画布。
 - **核心模块**：`runtime/`（agent 执行）、`workflow/`（DAG 编排）、`entity/`（配置）、`server/`（FastAPI + WebSocket）、`frontend/`（Vue 3 Web 控制台）。
@@ -179,12 +198,14 @@ subcategory = "core"
 - **编排**：多种执行器类型：顺序、DAG、并行、循环、动态边。拓扑构建器将 YAML 配置转换为可执行图。
 
 ### 工具暴露
-- **函数调用系统**：`functions/function_calling/` 包含内置工具（code_executor、file、weather、web、video、deep_research、uv、user）。
+
+- **函数调用系统**：`functions/function_calling/` 包含内置工具（`code_executor`、file、weather、web、video、`deep_research`、uv、user）。
 - **自定义工具注册**：`functions/` 目录中的 Python 函数自动发现。
 - **MCP 支持**：`mcp_example/mcp_server.py` 演示了 MCP 集成。
 - 工具在 YAML 配置中按节点分配。
 
 ### 安全模型
+
 - **代码执行**：专用的 `code_executor.py`，具有可配置的执行参数。
 - Docker Compose 部署可用。
 - **人类参与循环**：`demo_human.yaml` 工作流、用户输入节点、确认流程。
@@ -192,6 +213,7 @@ subcategory = "core"
 - 无显式的 agent 沙箱/隔离模型。
 
 ### 内存/上下文
+
 - **多种内存后端**：简单内存、`mem0` 内存（持久、可学习）、基于文件的内存。
 - **YAML 中的内存配置**：`store`、`context_window_size`、每节点内存类型。
 - **上下文重置节点**：显式的 `context_reset` 工作流节点。
@@ -199,6 +221,7 @@ subcategory = "core"
 - **工作区扫描**：`workspace_scanner.py` 用于基于文件的上下文注入。
 
 ### 独特特性
+
 - **零代码**：无需编写 Python 代码即可构建多 agent 系统——YAML + Web UI。
 - **拖放 Web 控制台**：可视化工作流设计器、实时启动监控。
 - **丰富的工作流模板**：数据可视化、3D 生成（Blender）、游戏开发、深度研究、教学视频。
@@ -209,6 +232,7 @@ subcategory = "core"
 - **多 agent 电子书**：精选的多 agent 研究合集。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - 以 YAML 为中心限制了复杂逻辑的表达能力。
 - 无代码执行的安全沙箱。
 - Web 控制台是主要界面——不太适合无头/嵌入式使用。
@@ -225,6 +249,7 @@ subcategory = "core"
 **许可证**：Apache 2.0
 
 ### 架构
+
 - **代码优先**：Agent、工具和编排在 Python 代码中定义。
 - **基础抽象**：Agent（蓝图）、Tool（能力）、Runner（引擎）、Session（对话状态）、Memory（跨会话回忆）、Artifact Service（文件）。
 - **Agent 类型**：`LlmAgent`（LLM 驱动）、`LoopAgent`、`SequentialAgent`、`ParallelAgent`、`RemoteA2aAgent`。
@@ -233,12 +258,14 @@ subcategory = "core"
 - **LangGraph 集成**：`langgraph_agent.py` 用于将 LangGraph 图嵌入为 agent。
 
 ### 工具暴露
+
 - **丰富的工具生态系统**：50+ 内置工具——Google Search、BigQuery、Bigtable、Spanner、PubSub、Vertex AI Search、MCP 工具、OpenAPI 工具、LangChain 工具、CrewAI 工具、计算机使用、bash、代码执行、Google API。
 - **工具类型**：`FunctionTool`、`AgentTool`（将 agent 包装为工具）、`MCPTool`、`OpenAPITool`、`LangChainTool`、`CrewAiTool`、`SkillToolset`。
 - **工具确认（HITL）**：工具执行前带有自定义输入的显式确认流程。
 - **工具箱模式**：`toolbox_toolset.py` 用于捆绑工具。
 
 ### 安全模型
+
 - **代码执行沙箱**：多种执行器——`container_code_executor.py`、`unsafe_local_code_executor.py`、`vertex_ai_code_executor.py`、`agent_engine_sandbox_code_executor.py`、`gke_code_executor.py`。
 - **认证系统**：完整的 OAuth2 流程、凭据管理、认证预处理器、`authenticated_function_tool.py`。
 - **人类参与循环**：工具确认、中断支持。
@@ -246,6 +273,7 @@ subcategory = "core"
 - **Agent 身份**：`agent_identity/` 用于服务账户的集成。
 
 ### 内存/上下文
+
 - **会话**：每会话完整对话历史，通过 `SessionService` 持久化（内存、SQLite、PostgreSQL、Vertex AI）。
 - **内存**：通过 `MemoryService` 跨会话回忆——内存、Vertex AI Memory Bank、Vertex AI RAG。
 - **上下文压缩**：`compaction.py` 和 `llm_event_summarizer.py` 用于自动上下文摘要。
@@ -254,6 +282,7 @@ subcategory = "core"
 - **回退**：能够将会话回退到之前调用之前。
 
 ### 独特特性
+
 - **多语言支持**：Python、Java、Go 版本的 ADK。
 - **生产部署**：`adk deploy` 到 Cloud Run、Vertex AI Agent Engine、GKE。
 - **A2A 协议**：源自 Google——原生多供应商 agent 通信。
@@ -266,6 +295,7 @@ subcategory = "core"
 - **Agent 优化**：`agent_optimizer.py` 和 GEPA 提示优化器。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - 生产功能对 Google Cloud 有强依赖。
 - Gemini 优化（尽管模型无关）。
 - 复杂的代码库，具有许多抽象层。
@@ -283,37 +313,45 @@ subcategory = "core"
 **状态**：已被 [OpenAI Agents SDK](https://github.com/openai/openai-agents-python) 取代
 
 ### 架构
+
 - **极简原语**：`Agent`（指令 + 函数）和交接（从函数返回另一个 Agent）。
 - **核心循环**（`swarm/core.py` 中约 300 行）：
+
   1. 从当前 Agent 获取补全
-  2. 执行工具调用，追加结果
-  3. 如果函数返回 Agent，则切换 Agent
-  4. 更新上下文变量
-  5. 重复直到没有更多工具调用或达到 max_turns
+  1. 执行工具调用，追加结果
+  1. 如果函数返回 Agent，则切换 Agent
+  1. 更新上下文变量
+  1. 重复直到没有更多工具调用或达到 `max_turns`
+
 - **Agent**：仅名称、模型、指令（字符串或可调用）、函数列表。无 agent 层级——通过交接进行平级委派。
 - **通信**：Chat Completions API 消息。在 `client.run()` 调用之间无状态。
 
 ### 工具暴露
+
 - 工具是普通 Python 函数。从类型提示和文档字符串自动生成模式。
 - 分配给 Agent 的所有函数在每次 LLM 调用中都暴露。
 - 如果函数返回 `Agent`，执行转移（交接）。
 - 如果在函数签名中定义，`context_variables` 参数自动填充。
 
 ### 安全模型
+
 - **无**。无沙箱、无隔离、无权限模型。工具在调用者进程中运行。
 - 明确不是用于生产的教育/实验项目。
 
 ### 内存/上下文
+
 - **无状态**：`client.run()` 调用之间无状态。用户必须传递 `messages` 并接收它们。
 - **上下文变量**：通过函数调用传递的简单字典——可被工具函数读/写。
 - 无内存、无会话持久化、无上下文压缩。
 
 ### 独特特性
+
 - **极度简洁**：整个框架约 4 个源文件。非常适合学习 agent 编排。
 - **交接模式**：优雅——Agent 只是"指令 + 工具"，agent 通过从工具函数返回另一个 Agent 进行委派。
 - **流式支持**：内置流式传输，带有 `{"delim":"start"}` / `{"delim":"end"}` 标记用于 agent 边界。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - 已弃用（被 OpenAI Agents SDK 取代）。
 - 完全无安全模型。
 - 无状态/持久化——完全无状态。
@@ -330,23 +368,28 @@ subcategory = "core"
 **许可证**：Apache 2.0
 
 ### 架构
+
 - **VS Code 扩展** + 独立 CLI。扩展是主要界面；CLI 较新。
 - **核心循环**（在 `src/core/` 中）：
+
   1. 解析用户任务（文本 + 图像）
-  2. 分析工作区（AST、正则搜索、文件读取）
-  3. 在循环中执行工具：文件创建/编辑、终端命令、浏览器操作
-  4. 监控输出（linter 错误、终端输出、浏览器截图）
-  5. 自动修复问题，迭代直到任务完成
+  1. 分析工作区（AST、正则搜索、文件读取）
+  1. 在循环中执行工具：文件创建/编辑、终端命令、浏览器操作
+  1. 监控输出（linter 错误、终端输出、浏览器截图）
+  1. 自动修复问题，迭代直到任务完成
+
 - **工具集**：文件操作（创建、编辑、diff）、终端命令（带 shell 集成）、浏览器（无头、点击/输入/滚动）、MCP 工具。
 - **系统提示**：详细的提示工程，包含上下文管理指令。
 
 ### 工具暴露
+
 - 固定的内置工具集：`read_file`、`write_to_file`、`replace_in_file`、`execute_command`、`browser_action`、`use_mcp_tool` 等。
 - **MCP 扩展**：可以按需创建/安装新的 MCP 服务器（"添加一个工具来实现……"）。也支持社区 MCP 服务器。
 - **@-提及**：`@url`、`@problems`、`@file`、`@folder` 用于上下文注入（降低 API 成本）。
 - 每次调用的工具数量有限——通常 8-12 个内置 + MCP 工具。
 
 ### 安全模型
+
 - **所有操作都需人类参与循环**：每次文件更改和终端命令必须在 GUI 中由用户批准。
 - **检查点系统**：每步之前的工作区快照。可随时 diff/恢复。
 - **权限系统**：`CommandPermissionController` 具有允许/拒绝列表。
@@ -355,6 +398,7 @@ subcategory = "core"
 - **企业版**：SSO、审计追踪、VPC/专用链接、自托管/本地部署。
 
 ### 内存/上下文
+
 - **上下文管理**：项目的 AST 分析、正则搜索相关文件、仔细选择进入上下文窗口的内容。
 - **上下文压缩**：当上下文填满时，生成摘要并压缩旧对话。
 - **检查点**：用于回滚的完整工作区快照。
@@ -362,6 +406,7 @@ subcategory = "core"
 - **循环检测**：`loop-detection.ts` 防止无限工具调用循环。
 
 ### 独特特性
+
 - **完整 IDE 集成**：驻留在 VS Code 内部，可看到整个工作区。
 - **浏览器自动化**：Claude 计算机使用能力用于 Web 测试/调试。
 - **自动修复循环**：监控 linter/编译器错误并无需用户干预自动修复。
@@ -372,6 +417,7 @@ subcategory = "core"
 - **评估框架**：3 层测试（契约、冒烟、端到端/基准）。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - 完整体验绑定到 VS Code（CLI 较新且不太成熟）。
 - 单 agent 架构——无多 agent 协作。
 - 无定义的 agent 角色/专业化。
@@ -389,17 +435,21 @@ subcategory = "core"
 **许可证**：Apache 2.0
 
 ### 架构
+
 - **基于终端的结对编程**：在您的仓库中编辑代码的 CLI 工具。
 - **核心循环**（`base_coder.py`）：
+
   1. 构建仓库映射（基于 Tree-sitter AST 的代码库摘要）
-  2. 发送提示 + 仓库映射 + 文件给 LLM
-  3. 解析 LLM 响应的编辑指令（统一 diff、搜索/替换块、整个文件重写）
-  4. 应用编辑、lint、运行测试、自动修复失败
-  5. 使用合理的消息进行 git 提交
+  1. 发送提示 + 仓库映射 + 文件给 LLM
+  1. 解析 LLM 响应的编辑指令（统一 diff、搜索/替换块、整个文件重写）
+  1. 应用编辑、lint、运行测试、自动修复失败
+  1. 使用合理的消息进行 git 提交
+
 - **多种编辑格式**：`udiff`、`editblock`、`wholefile`、`search_replace`、`diff_fenced`、`editor_editblock`、`editor_whole`、`patch`、`architect`。每种都是一个单独的编码器类，具有自己的提示模板。
 - **架构师/编辑者模式**：双 agent 模式——架构师计划，编辑者实现。在基准测试中证明非常有效。
 
 ### 工具暴露
+
 - **无传统工具调用**。Aider 使用结构化文本响应（而非函数调用）。
 - LLM 输出特定格式的编辑指令（diff 块、搜索/替换），由 Aider 解析并应用。
 - Shell 命令：LLM 可以请求运行 shell 命令（用户确认）。
@@ -408,6 +458,7 @@ subcategory = "core"
 - 图像：可以向聊天添加截图/图像以获取视觉上下文。
 
 ### 安全模型
+
 - **无沙箱**。编辑直接应用于您的文件。Git 提供安全网。
 - **用户确认**：Shell 命令需要明确的用户批准。
 - **Git 集成**：所有更改自动提交——易于回滚。
@@ -416,6 +467,7 @@ subcategory = "core"
 - 无权限系统、无隔离、无基于角色的访问。
 
 ### 内存/上下文
+
 - **仓库映射**：Tree-sitter AST 分析构建整个代码库的简洁映射（函数签名、类定义、导入关系）。这将代码库结构放入上下文，而不包含所有源代码。
 - **聊天历史**：上下文中的完整对话。
 - **文件选择**：LLM 通过语法请求特定文件——仅这些文件的内容被添加到上下文。
@@ -423,6 +475,7 @@ subcategory = "core"
 - **无长期内存**：会话间无状态。每次 `aider` 启动都是全新的。
 
 ### 独特特性
+
 - **仓库映射**：基于 AST 的代码库理解，在代码任务中优于基于嵌入的 RAG。
 - **多种编辑格式**：适应每个模型的最佳工作方式（某些模型用 udiff 效果更好，其他用 search/replace 等）。
 - **架构师/编辑者模式**：具有独立 LLM 调用的两步流程，分别用于规划和执行。
@@ -434,6 +487,7 @@ subcategory = "core"
 - **自我编写**：Aider 自身代码的 88% 由 Aider 编写。
 
 ### 相对于 Entelecheia 设计目标的潜在差距
+
 - **单文件焦点**：主要一次编辑一个文件（尽管仓库映射提供上下文）。
 - **无多 agent 系统**：仅架构师/编辑者对。无可自定义的 agent 角色。
 - **无工具生态系统**：不能使用 API、数据库、Web 服务——仅文件编辑和 shell。
@@ -448,7 +502,7 @@ subcategory = "core"
 ## 对比摘要表
 
 | 维度 | CrewAI | LangGraph | MetaGPT | ChatDev 2.0 | Google ADK | OpenAI Swarm | Cline | Aider |
-|-----------|--------|-----------|---------|-------------|------------|--------------|-------|-------|
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **语言** | Python | Python/TS | Python | Python/Vue | Python/Java/Go | Python | TS/Go | Python |
 | **框架/库** | 框架 | 框架 | 框架 | 平台 | 框架 | 实验 | 应用 | 应用 |
 | **架构** | Crews+Flows | StateGraph | 基于SOP的角色 | YAML DAG | Runner+Session | 交接循环 | 工具循环 | 编辑解析器 |
@@ -470,23 +524,23 @@ subcategory = "core"
 
 1. **安全/沙箱**：几乎所有框架都缺乏沙箱执行。Google ADK 是基于容器/Kubernetes 的沙箱的显著例外。这是一个主要的差异化机会。
 
-2. **多 agent 通信**：仅 Google ADK 有正式的 agent 间协议（A2A）。大多数框架使用临时的消息传递。标准化协议（如 A2A）是一个缺口。
+1. **多 agent 通信**：仅 Google ADK 有正式的 agent 间协议（A2A）。大多数框架使用临时的消息传递。标准化协议（如 A2A）是一个缺口。
 
-3. **内存架构**：大多数框架具有基本的短期内存。少数具有复杂的分层内存（工作、短期、长期）及自动上下文管理。MetaGPT 的过滤和 ADK 的压缩是最佳示例。
+1. **内存架构**：大多数框架具有基本的短期内存。少数具有复杂的分层内存（工作、短期、长期）及自动上下文管理。MetaGPT 的过滤和 ADK 的压缩是最佳示例。
 
-4. **工具暴露管理**：所有框架在每次调用时将全部工具暴露给 LLM。没有框架根据上下文/状态/安全级别动态子集化工具。这是一个架构缺口。
+1. **工具暴露管理**：所有框架在每次调用时将全部工具暴露给 LLM。没有框架根据上下文/状态/安全级别动态子集化工具。这是一个架构缺口。
 
-5. **代码执行**：仅 ADK 具有生产级沙箱代码执行。ChatDev 有基本的代码执行器。Cline/Aider 依赖原生环境。这是整个生态系统的关键安全缺口。
+1. **代码执行**：仅 ADK 具有生产级沙箱代码执行。ChatDev 有基本的代码执行器。Cline/Aider 依赖原生环境。这是整个生态系统的关键安全缺口。
 
-6. **评估**：ADK 和 Cline 有正式的评估框架。其他依赖临时测试或研究基准测试。嵌入式评估是一个差异化因素。
+1. **评估**：ADK 和 Cline 有正式的评估框架。其他依赖临时测试或研究基准测试。嵌入式评估是一个差异化因素。
 
-7. **OpenAI Swarm 的弃用**转为 OpenAI Agents SDK 标志着从教育实验向生产级框架的市场趋势。
+1. **OpenAI Swarm 的弃用**转为 OpenAI Agents SDK 标志着从教育实验向生产级框架的市场趋势。
 
-8. **LangGraph 的持久执行**对于长时间运行的 agent 具有独特的强大能力——大多数框架假设短时任务。
+1. **LangGraph 的持久执行**对于长时间运行的 agent 具有独特的强大能力——大多数框架假设短时任务。
 
-9. **ChatDev 2.0 的零代码方法**面向与大多数框架根本不同的用户画像（非开发者）。这与 Entelecheia 的开发者优先设计是正交的。
+1. **ChatDev 2.0 的零代码方法**面向与大多数框架根本不同的用户画像（非开发者）。这与 Entelecheia 的开发者优先设计是正交的。
 
-10. **Cline 和 Aider** 是应用程序，不是框架。它们展示了紧密工具集成（IDE、git、终端、浏览器）的力量，但不能组合成更大的 agent 系统。
+1. **Cline 和 Aider** 是应用程序，不是框架。它们展示了紧密工具集成（IDE、git、终端、浏览器）的力量，但不能组合成更大的 agent 系统。
 
 ---
 

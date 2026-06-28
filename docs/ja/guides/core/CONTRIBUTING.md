@@ -36,11 +36,11 @@ Entelecheia は物理システムおよび産業システムを駆動できる�
 ## Pull Request フロー
 
 1. Fork して `main` からブランチを作成。
-2. 大きな変更は事前に issue で議論。
-3. コミットはアトミックに、Conventional Commits に従う。
-4. `just ci`（またはリポジトリの CI コマンド）が通過することを確認。
-5. CLA に署名し `Signed-off-by` を追加。
-6. レビューコメントに返信。force-push は rebase の場合のみ使用。
+1. 大きな変更は事前に issue で議論。
+1. コミットはアトミックに、Conventional Commits に従う。
+1. `just ci`（またはリポジトリの CI コマンド）が通過することを確認。
+1. CLA に署名し `Signed-off-by` を追加。
+1. レビューコメントに返信。force-push は rebase の場合のみ使用。
 
 ## ライセンスと CLA
 

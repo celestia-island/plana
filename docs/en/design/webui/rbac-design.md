@@ -23,7 +23,7 @@ Implement a comprehensive role-based access control system for Shittim Chest, su
 ### 2.1 Roles
 
 | Role | Description |
-|------|-------------|
+| --- | --- |
 | `admin` | Super administrator with all permissions; can manage RBAC itself |
 | `operator` | Operations staff; can manage most resources (providers, channels, agents, etc.) |
 | `member` | Regular member; can use authorized resources |
@@ -36,7 +36,7 @@ Roles are **preset** — custom roles are not supported (to simplify implementat
 Permission format: `<resource>.<action>`
 
 | Category | Permission | Description |
-|----------|------------|-------------|
+| --- | --- | --- |
 | **Providers** | `provider.list` | View provider list |
 | | `provider.create` | Add a provider |
 | | `provider.update` | Modify provider configuration |
@@ -72,7 +72,7 @@ Permission format: `<resource>.<action>`
 ### 2.3 Default Role Permissions
 
 | Permission | admin | operator | member | viewer |
-|------------|-------|----------|--------|--------|
+| --- | --- | --- | --- | --- |
 | `provider.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `mcp.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `agent.*` | ✅ | ✅ | `list` + `use` | `list` |
@@ -89,7 +89,7 @@ Permission format: `<resource>.<action>`
 For resources such as providers, MCP, agents, channels, etc., three authorization modes are supported:
 
 | Mode | Description | Use case |
-|------|-------------|----------|
+| --- | --- | --- |
 | **Global config** | All users share the same permissions | Small teams, personal use |
 | **Per-user config** | Each user has independent resource permissions | Scenarios requiring fine-grained control |
 | **Per-group config** | Users in the same group share permissions | Department/team-based partitioning |
@@ -202,7 +202,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.1 User Management (`/api/rbac/users`)
 
 | Method | Path | Permission | Description |
-|--------|------|------------|-------------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/users` | `rbac.manage` | List all users (with role, groups) |
 | POST | `/api/rbac/users` | `rbac.manage` | Invite a user (send email or create account) |
 | PUT | `/api/rbac/users/:id` | `rbac.manage` | Update user role, enable/disable |
@@ -211,7 +211,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.2 Group Management (`/api/rbac/groups`)
 
 | Method | Path | Permission | Description |
-|--------|------|------------|-------------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/groups` | `rbac.manage` | List all groups |
 | POST | `/api/rbac/groups` | `rbac.manage` | Create a group |
 | PUT | `/api/rbac/groups/:id` | `rbac.manage` | Update group (name, description) |
@@ -222,7 +222,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.3 Permission Management (`/api/rbac/grants`)
 
 | Method | Path | Permission | Description |
-|--------|------|------------|-------------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/grants` | `rbac.manage` | List all permission rules (supports ?scope=&permission= filtering) |
 | PUT | `/api/rbac/grants` | `rbac.manage` | Batch set permissions (provide full rule list, overwrites the corresponding scope's rules) |
 | DELETE | `/api/rbac/grants/:id` | `rbac.manage` | Delete a single rule |
@@ -230,7 +230,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.4 Permission Check (`/api/rbac/check`)
 
 | Method | Path | Permission | Description |
-|--------|------|------------|-------------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/check?permission=xxx&resource_id=yyy` | (any authenticated user) | Check whether the current user has the specified permission |
 | GET | `/api/rbac/my-permissions` | (any authenticated user) | Return the current user's full list of effective permissions |
 
@@ -249,16 +249,19 @@ Existing resource APIs need permission filtering:
 Split into three tabs:
 
 #### Tab 1: User Management
+
 - User list table: avatar, username, email, role (dropdown switch), group tags, status (active/disabled), actions
 - Invite user button → opens modal (enter username/email/password, select role)
 - Row actions: edit role, disable/enable, delete
 
 #### Tab 2: Group Management
+
 - Group list table: name, description, member count, actions
 - Create group → opens modal
 - Click a group → expand member list, can add/remove members
 
 #### Tab 3: Permission Matrix
+
 - Top-left: select authorization mode: global / per-group / per-user
 - After selecting a group or user, display the permission matrix table:
   - Rows: resource categories (providers, MCP, agents, channels, cruise mode...)
@@ -275,25 +278,28 @@ Split into three tabs:
 ## 6. Implementation Steps
 
 ### Phase 1: Backend Foundation
-1. Add database migration (rbac_groups, rbac_user_groups, rbac_grants tables + auth_users.role field)
-2. Add SeaORM entity models
-3. Implement RBAC API routes (users, groups, grants CRUD)
-4. Implement permission check middleware/extractor
-5. Add role field to JWT claims
+
+1. Add database migration (`rbac_groups`, `rbac_user_groups`, `rbac_grants` tables + auth_users.role field)
+1. Add SeaORM entity models
+1. Implement RBAC API routes (users, groups, grants CRUD)
+1. Implement permission check middleware/extractor
+1. Add role field to JWT claims
 
 ### Phase 2: Backend Integration
-6. Add permission checks to existing resource APIs (providers, channels, etc.)
-7. Implement `/api/rbac/check` and `/api/rbac/my-permissions`
-8. Modify arona's resource requests to accommodate permission filtering
+
+1. Add permission checks to existing resource APIs (providers, channels, etc.)
+1. Implement `/api/rbac/check` and `/api/rbac/my-permissions`
+1. Modify arona's resource requests to accommodate permission filtering
 
 ### Phase 3: Frontend UI
-9. Refactor arona's RbacView (user/group/permission-matrix tabs)
-10. Implement sidebar and route permission guards
-11. Show/hide features based on permissions in arona (e.g., cruise mode button)
+
+1. Refactor arona's RbacView (user/group/permission-matrix tabs)
+1. Implement sidebar and route permission guards
+1. Show/hide features based on permissions in arona (e.g., cruise mode button)
 
 ## 7. Security Considerations
 
-- The `admin` role's permissions cannot be overridden by rbac_grants (hardcoded allow)
+- The `admin` role's permissions cannot be overridden by `rbac_grants` (hardcoded allow)
 - Permission checks are enforced uniformly at the middleware layer, not relying on business code to manually check
 - Sensitive operations (deleting users, modifying permissions) are recorded in an audit log
 - JWT only contains the role; specific permissions are queried from the DB in real time (to avoid stale tokens after permission changes)

@@ -30,7 +30,7 @@ flowchart TB
 
 ### 1. Routage Prioritaire Multi-Fournisseurs
 
-```
+```text
 Chaque fournisseur a un champ de priorité (nombre plus bas = priorité plus élevée).
 Les requêtes sont tentées de la priorité la plus élevée à la plus basse :
   → Fournisseur A (priorité=1) disponible → utiliser

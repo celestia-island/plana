@@ -16,15 +16,15 @@ subcategory = "core"
 En un sistema multi-agente donde los agentes ejecutan código generado por LLM, el aislamiento entre agentes es crítico para:
 
 1. **Seguridad**: La salida no confiable del LLM no debe poder acceder a la memoria, archivos o conexiones de red de otro agente.
-2. **Aislamiento de estado**: El estado REPL de cada agente (variables JavaScript, bindings, snapshots) debe ser independiente.
-3. **Control de recursos**: Un agente que se comporta mal no debe consumir CPU, memoria o PIDs ilimitados.
-4. **Reproducibilidad**: El estado del agente debe ser capturable y restaurable para depuración y reversión.
-5. **Flujos de trabajo fork/merge**: El sistema necesita soportar ramificación de ejecución de agentes (fork) y fusión de resultados (merge), similar a la ramificación de git.
+1. **Aislamiento de estado**: El estado REPL de cada agente (variables JavaScript, bindings, snapshots) debe ser independiente.
+1. **Control de recursos**: Un agente que se comporta mal no debe consumir CPU, memoria o PIDs ilimitados.
+1. **Reproducibilidad**: El estado del agente debe ser capturable y restaurable para depuración y reversión.
+1. **Flujos de trabajo fork/merge**: El sistema necesita soportar ramificación de ejecución de agentes (fork) y fusión de resultados (merge), similar a la ramificación de git.
 
 Se evaluaron varios enfoques de aislamiento:
 
 | Enfoque | Fuerza de Aislamiento | Control de Recursos | Snapshot/Fork | Sobrecarga |
-|----------|-------------------|-----------------|---------------|----------|
+| --- | --- | --- | --- | --- |
 | **Contenedor por agente (Docker/OCI)** | Fuerte (nivel kernel) | Completo (cgroups, seccomp, capabilities) | Nativo (commit/snapshot) | Moderada (~100ms inicio, ~50MB por contenedor) |
 | **Proceso por agente** | Moderado (UID/seccomp) | Parcial (rlimit) | Manual (serializar estado) | Baja |
 | **Hilo por agente** | Débil (memoria compartida) | Mínimo | Manual | Mínima |
@@ -36,10 +36,12 @@ Se evaluaron varios enfoques de aislamiento:
 Elegimos una **arquitectura de contenedores de dos capas** con **COSMOS** como proceso init dentro del contenedor de cada agente:
 
 **Capa externa (infraestructura de orquestación):**
+
 - Docker/Podman vía Bollard para contenedores de infraestructura (PostgreSQL, demonio Scepter).
 - Capacidades completas de orquestación: redes, volúmenes, health checks, compose.
 
 **Capa interna (sandboxes de agente):**
+
 - Youki/libcontainer (predeterminado) o Docker para contenedores COSMOS por agente.
 - Cada agente obtiene su propio contenedor con COSMOS como PID 1.
 - COSMOS es el **proceso frontal** que media todas las interacciones — proporciona el servidor Unix socket JSON-RPC, el REPL Boa JS, el router MCP y la conexión del puente HapLotes de vuelta a Scepter.
@@ -49,9 +51,9 @@ Elegimos una **arquitectura de contenedores de dos capas** con **COSMOS** como p
 Todas las interacciones con un agente contenedorizado deben pasar por COSMOS. La manipulación directa del contenedor (ej., `docker exec` en un contenedor) elude el modelo de seguridad, la gestión de estado y la pista de auditoría. COSMOS proporciona:
 
 1. **Mediación de despacho de herramientas**: El `McpRouter` aplica listas de permitidos, doble autorización y niveles de confianza antes de que cualquier herramienta llegue al agente.
-2. **Persistencia de estado**: El sistema de snapshot de doble búfer asegura que el estado REPL sobreviva a fallos.
-3. **Comunicación puente**: El puente HapLotes conecta COSMOS de vuelta a Scepter para coordinación entre agentes.
-4. **Aplicación de seguridad**: Los perfiles Seccomp, políticas de egreso y restricciones de capabilities se aplican en la creación del contenedor y son aplicadas por el kernel.
+1. **Persistencia de estado**: El sistema de snapshot de doble búfer asegura que el estado REPL sobreviva a fallos.
+1. **Comunicación puente**: El puente HapLotes conecta COSMOS de vuelta a Scepter para coordinación entre agentes.
+1. **Aplicación de seguridad**: Los perfiles Seccomp, políticas de egreso y restricciones de capabilities se aplican en la creación del contenedor y son aplicadas por el kernel.
 
 **Por qué Youki/libcontainer para sandboxes internos:**
 
@@ -64,7 +66,7 @@ Todas las interacciones con un agente contenedorizado deben pasar por COSMOS. La
 
 ### Positivas
 
-- **Aislamiento fuerte mediante aplicación del kernel**: cgroups (límites de CPU/memoria/PID), seccomp (filtrado de syscalls), capabilities (cap_drop=ALL), namespaces (aislamiento de PID/red/montaje).
+- **Aislamiento fuerte mediante aplicación del kernel**: cgroups (límites de CPU/memoria/PID), seccomp (filtrado de syscalls), capabilities (`cap_drop`=ALL), namespaces (aislamiento de PID/red/montaje).
 - **Fork/merge nativo**: El commit de contenedor crea una imagen snapshot; se pueden crear nuevos contenedores desde el snapshot. Los sistemas de archivos overlay rastrean solo archivos modificados.
 - **Límites de recursos por agente**: 512MB de memoria, 1 CPU, 100 PIDs por defecto, configurables por contenedor.
 - **Pista de auditoría**: Todas las llamadas a herramientas pasan por el router MCP de COSMOS, que registra cada despacho para auditoría de seguridad OreXis.

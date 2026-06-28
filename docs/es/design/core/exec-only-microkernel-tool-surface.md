@@ -16,17 +16,18 @@ subcategory = "core"
 En un sistema de orquestación multi-agente con LLM, el modelo debe decidir qué herramientas llamar y cómo componerlas. El enfoque ingenuo es exponer cada herramienta MCP (118+ en 12 agentes) directamente al LLM como definiciones de función separadas en el prompt.
 
 Esto crea varios problemas:
+
 1. **Consumo de ventana de contexto**: 118+ definiciones de herramientas consumen miles de tokens, dejando menos espacio para razonamiento y conversación.
-2. **Superficie de seguridad**: Cada herramienta expuesta al LLM es un vector de ataque potencial para inyección de prompts o jailbreaking.
-3. **Fragmentación de aplicación de permisos**: Si las herramientas se despachan directamente por la salida del LLM, cada herramienta debe validar permisos independientemente — llevando a aplicación inconsistente y brechas.
-4. **Confusión del modelo**: La investigación muestra que el rendimiento del LLM se degrada cuando se presentan demasiadas opciones de herramientas (el problema de "sobrecarga de herramientas").
+1. **Superficie de seguridad**: Cada herramienta expuesta al LLM es un vector de ataque potencial para inyección de prompts o jailbreaking.
+1. **Fragmentación de aplicación de permisos**: Si las herramientas se despachan directamente por la salida del LLM, cada herramienta debe validar permisos independientemente — llevando a aplicación inconsistente y brechas.
+1. **Confusión del modelo**: La investigación muestra que el rendimiento del LLM se degrada cuando se presentan demasiadas opciones de herramientas (el problema de "sobrecarga de herramientas").
 
 ## Decisión
 
 Adoptamos un diseño de **microkernel solo-ejecución**. El LLM ve exactamente **3 primitivas de ejecución** como su superficie de herramientas:
 
 | Primitiva | Propósito |
-|-----------|---------|
+| --- | --- |
 | `exec` | Ejecutar código TypeScript/JavaScript a través del pipeline IEPL |
 | `write_to_var` | Escribir un valor de cadena en una variable REPL nombrada |
 | `write_to_var_json` | Escribir un valor JSON en una variable REPL nombrada |

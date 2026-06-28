@@ -35,7 +35,7 @@ flowchart TD
 ## Décisions Clés
 
 | Décision | Justification |
-|----------|-----------|
+| --- | --- |
 | `pglite-oxide` (WASM) plutôt que `postgresql_embedded` (binaire natif) | Pas de téléchargement ~100 Mo, pas de binaire PG spécifique à la plateforme, démarrage ~96 ms |
 | `pglite-oxide` plutôt que `pglite-rust-bindings` | Publié sur crates.io (v0.5.0), démarrage plus rapide, API builder mature avec support d'extensions |
 | `tower::ServiceExt::oneshot` plutôt que `reqwest` | Évite le blocage du runtime tokio entre les tâches d'arrière-plan du pool sqlx et le serveur HTTP hyper |
@@ -70,7 +70,7 @@ pub async fn start_test_server() -> TestServer {
 
 ```rust
 // tests/xxx_tests.rs
-#[test]
+# [test]
 fn xxx_e2e_tests() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -90,6 +90,6 @@ Les 13 tables sont créées via les migrations SeaORM pendant la configuration d
 ## Limitations de PGlite
 
 1. **Connexion unique** : `max_connections` doit être 1. Plusieurs pools vers la même instance PGlite bloqueront.
-2. **Cast de type strict** : PGlite est plus strict que PostgreSQL standard. Les requêtes comme `uuid_column = text_value` échoueront — toujours caster explicitement.
-3. **Pas de runners de test concurrents** : Tous les tests async partageant une instance PGlite doivent s'exécuter séquentiellement dans une seule fonction `#[test]`.
-4. **Blocage du pool à la libération** : `sqlx::PgPool::close()` peut bloquer indéfiniment. Utilisez `std::process::exit(0)` pour terminer le processus de test.
+1. **Cast de type strict** : PGlite est plus strict que PostgreSQL standard. Les requêtes comme `uuid_column = text_value` échoueront — toujours caster explicitement.
+1. **Pas de runners de test concurrents** : Tous les tests async partageant une instance PGlite doivent s'exécuter séquentiellement dans une seule fonction `#[test]`.
+1. **Blocage du pool à la libération** : `sqlx::PgPool::close()` peut bloquer indéfiniment. Utilisez `std::process::exit(0)` pour terminer le processus de test.

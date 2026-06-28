@@ -65,7 +65,7 @@ graph TB
 
 ## 环境变量传播
 
-```
+```text
 .env 文件 → dotenvy::from_path_iter → HashMap<String, String>
 → 合并 SHITTIM_CHEST_HOST / PORT / DATABASE_URL
 → Vec<String> = ["KEY=VALUE", ...]
@@ -86,6 +86,6 @@ CLI 日志直接输出到 stderr，采用与 entelecheia 相同的格式：
 ## 设计原则
 
 1. **CLI 不执行业务逻辑**：所有业务逻辑位于容器内的 `shittim_chest` 二进制中
-2. **容器是不可变单元**：CLI 创建/销毁容器，从不修改运行中的容器
-3. **网络隔离**：PG 端口不暴露给宿主机，仅在 Docker 内部网络中可达
-4. **被动轮询健康检查**：不依赖 Docker 事件（不可靠）；直接轮询 inspect 结果
+1. **容器是不可变单元**：CLI 创建/销毁容器，从不修改运行中的容器
+1. **网络隔离**：PG 端口不暴露给宿主机，仅在 Docker 内部网络中可达
+1. **被动轮询健康检查**：不依赖 Docker 事件（不可靠）；直接轮询 inspect 结果

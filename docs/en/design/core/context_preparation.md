@@ -44,7 +44,7 @@ This is not a compression question. It is an **information retrieval** question 
 ### Proactive Extraction vs. Compression
 
 | Aspect | Compression | Context Preparation |
-|--------|------------|-------------------|
+| --- | --- | --- |
 | Direction | Past → shorter past | Past → future-ready extract |
 | Knowledge of future | None | Queries anticipate upcoming needs |
 | Information loss | Inevitable, untargeted | Targeted, intentional |
@@ -57,7 +57,7 @@ Context Preparation treats the old context as a **data source** — similar to h
 
 The mechanism uses a letter-based notation to describe the information flow:
 
-```
+```text
 Old Context:  A + B + C + D + E
                     ↓ (analyze)
 Queries:       ABCDE+H  ABCDE+I  ABCDE+J
@@ -78,9 +78,9 @@ New Context:  F + G + K + L + M
 Once Context Preparation exists, traditional compression becomes unnecessary because:
 
 1. **No information is lost to guessing** — queries are generated based on what the new context will actually need
-2. **Extraction is deterministic in structure** — the same query strategy always produces the same category of answer
-3. **Multiple angles ensure coverage** — H/I/J queries cover different dimensions (task state, error context, decision rationale)
-4. **The old context remains accessible** — it is not discarded but rather *queried on demand* during the preparation phase
+1. **Extraction is deterministic in structure** — the same query strategy always produces the same category of answer
+1. **Multiple angles ensure coverage** — H/I/J queries cover different dimensions (task state, error context, decision rationale)
+1. **The old context remains accessible** — it is not discarded but rather *queried on demand* during the preparation phase
 
 ## Architecture
 
@@ -244,12 +244,14 @@ The query generation process takes the segmented old context (A–E) and produce
 **Purpose**: Ensure the new context can resume the current task without loss of progress.
 
 **Generation logic**:
+
 1. Identify active tasks from segments A and E (task state + implicit knowledge)
-2. Extract current progress indicators (what's done, what's in progress, what's blocked)
-3. Generate a query that asks: *"What is the current state of all active tasks, and what are the next steps?"*
+1. Extract current progress indicators (what's done, what's in progress, what's blocked)
+1. Generate a query that asks: *"What is the current state of all active tasks, and what are the next steps?"*
 
 **Example query**:
-```
+
+```text
 Given the conversation history, identify:
 1. All tasks currently in progress and their completion status
 2. Any blockers or unresolved errors
@@ -262,12 +264,14 @@ Given the conversation history, identify:
 **Purpose**: Preserve the *why* behind decisions, not just the *what*.
 
 **Generation logic**:
+
 1. Scan segments B and C (decisions + error history) for choice points
-2. Identify decisions where alternatives were considered and rejected
-3. Generate a query that asks: *"What decisions were made, what alternatives were rejected, and why?"*
+1. Identify decisions where alternatives were considered and rejected
+1. Generate a query that asks: *"What decisions were made, what alternatives were rejected, and why?"*
 
 **Example query**:
-```
+
+```text
 From this conversation, extract:
 1. All architectural or implementation decisions made
 2. For each decision: what alternatives were considered
@@ -280,12 +284,14 @@ From this conversation, extract:
 **Purpose**: Capture relationships between code elements, files, and concepts.
 
 **Generation logic**:
+
 1. Scan segments D and E (code references + implicit knowledge) for entity relationships
-2. Map which files depend on which, which functions call which, which concepts relate
-3. Generate a query that asks: *"What are the key dependencies and relationships between the entities discussed?"*
+1. Map which files depend on which, which functions call which, which concepts relate
+1. Generate a query that asks: *"What are the key dependencies and relationships between the entities discussed?"*
 
 **Example query**:
-```
+
+```text
 Analyze the conversation and map:
 1. All files/modules mentioned and their relationships
 2. Function call chains discussed or modified
@@ -340,8 +346,8 @@ fn check_context_health(&mut self) {
 The skill chain executor must be aware of context preparation. When a skill chain spans multiple context windows, the preparation mechanism ensures that:
 
 1. The skill chain state is captured in segment A (task state)
-2. The current skill's input/output is captured in segment D (code references)
-3. The chain's remaining steps are preserved in the extraction result K (task continuity)
+1. The current skill's input/output is captured in segment D (code references)
+1. The chain's remaining steps are preserved in the extraction result K (task continuity)
 
 ```rust
 // skill_chain.rs (conceptual integration)
@@ -428,6 +434,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 **Scenario**: An agent is refactoring a Rust crate, modifying 15 files across 3 modules. The context window fills up after modifying file 10.
 
 **Old context (A–E)**:
+
 - **A** (Task State): 10/15 files modified, module `auth` and `storage` complete, `api` in progress
 - **B** (Decisions): Chose trait-based abstraction over enum dispatch; kept backward compatibility via `#[deprecated]`
 - **C** (Errors): Encountered lifetime issue in `storage/mod.rs:142`, resolved with `Arc<Mutex<>>`
@@ -435,6 +442,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 - **E** (Implicit): The `User` struct must remain `Clone` for downstream crates; test coverage is tracked
 
 **Generated queries**:
+
 - **H** (Task Continuity): "What files remain to be modified, what is the pattern being applied, and what is the next file to refactor?"
 - **I** (Decision Rationale): "Why was trait-based abstraction chosen over enum dispatch, and what backward compatibility constraints exist?"
 - **J** (Dependency Map): "Map the dependencies between `auth`, `storage`, and `api` modules, noting which structs/traits cross module boundaries."
@@ -446,6 +454,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 **Scenario**: Debugging a WebSocket connection issue that spans multiple hypotheses and test attempts.
 
 **Old context (A–E)**:
+
 - **A** (Task State): Issue is narrowed to the handshake phase; heartbeat is not the cause
 - **B** (Decisions): Ruled out TLS misconfiguration; ruled out proxy interference; current hypothesis is header ordering
 - **C** (Errors): `ConnectionReset` at 3s mark, reproduced consistently with curl but not browser
@@ -459,6 +468,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 **Scenario**: PhiLia delegates a task chain to Skemma (schema design) then Logos (documentation). The context fills during Logos's work.
 
 **Old context (A–E)**:
+
 - **A** (Task State): Schema design complete, documentation 60% done
 - **B** (Decisions): Schema uses junction tables for M:N relations per PhiLia's architecture guidance
 - **C** (Errors): Skemma reported ambiguity in `user_roles` cardinality, resolved by adding `UNIQUE` constraint

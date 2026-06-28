@@ -12,7 +12,7 @@ Le présent Accord de licence contributeur (« CLA ») s'applique à toute contr
 
 - **Contributeurs individuels.** Ajoutez une ligne `Signed-off-by` à chacun de vos commits (transmettez `-s` à `git commit`). Cette signature constitue votre acceptation électronique de la présente CLA ; elle équivaut au Developer Certificate of Origin (DCO) complété des concessions visées à la section 3 ci-dessous :
 
-  ```
+  ```text
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
@@ -48,7 +48,7 @@ Vous déclarez que :
 
 Si Vous contribuez au nom d'une entreprise, celle-ci doit confirmer les éléments suivants en signant et en renvoyant le bloc de CLA d'entreprise ci-dessous à contact@celestia.world :
 
-```
+```text
 Company: ______________________________________________________
 Address: ______________________________________________________
 Contact name & email: _________________________________________

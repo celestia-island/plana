@@ -56,6 +56,7 @@ entelecheiaとshittim-chestは、未対策のままでは同じ根本的な問�
 ### conversationsテーブル（entelecheia）
 
 追加カラム：
+
 - `parent_conversation_id UUID REFERENCES conversations(conversation_id)` — 子セッション追跡
 - `is_archived BOOLEAN NOT NULL DEFAULT FALSE` — アーカイブフラグ
 - `archived_at TIMESTAMPTZ` — アーカイブ日時
@@ -64,6 +65,7 @@ entelecheiaとshittim-chestは、未対策のままでは同じ根本的な問�
 ### messagesテーブル（entelecheia）
 
 追加カラム：
+
 - `is_compacted BOOLEAN NOT NULL DEFAULT FALSE` — 圧縮済みメッセージを内容クリーンアップ対象としてマーク
 - `metadata JSONB NOT NULL DEFAULT '{}'` — 拡張可能なメタデータ
 
@@ -78,7 +80,7 @@ kirinoセッション永続化（SQLバックエンド）用の新規テーブ�
 ## 実装フェーズ
 
 | フェーズ | 説明 | ステータス |
-|-------|-------------|--------|
+| --- | --- | --- |
 | 0.1 | スキーママイグレーション修正（dialogue_events、conversations/messages アップグレード） | 完了 |
 | 1.2 | 統合設定名前空間（`StorageLifecycleConfig`） | 完了 |
 | 0.2 | CRUD + クリーンアップメソッドを持つ `ConversationStore` | 完了 |
@@ -133,13 +135,13 @@ graph TD
 
 1. **作成**: スキルチェーンがサブタスクを生成する際、`parent_conversation_id` を親の `conversation_id` に設定した新しい会話が作成される。
 
-2. **独立したアーカイブ**: 子は親とは独立してアーカイブ可能。子タスクが完了すると、`CHILD_SESSION_RETENTION_DAYS`（デフォルト7日）後に自動的にアーカイブされる。
+1. **独立したアーカイブ**: 子は親とは独立してアーカイブ可能。子タスクが完了すると、`CHILD_SESSION_RETENTION_DAYS`（デフォルト7日）後に自動的にアーカイブされる。
 
-3. **親アーカイブ時のカスケード**: 親がアーカイブされると、すべての子がアーカイブされる。親が削除されると、すべての子が削除される。
+1. **親アーカイブ時のカスケード**: 親がアーカイブされると、すべての子がアーカイブされる。親が削除されると、すべての子が削除される。
 
-4. **孤立処理**: 削除された/存在しない親を指す `parent_conversation_id` を持つ会話は孤立として扱われ、`ORPHAN_CONVERSATION_TTL_DAYS`（デフォルト30日）後にクリーンアップされる。
+1. **孤立処理**: 削除された/存在しない親を指す `parent_conversation_id` を持つ会話は孤立として扱われ、`ORPHAN_CONVERSATION_TTL_DAYS`（デフォルト30日）後にクリーンアップされる。
 
-5. **圧縮適格性**: 子会話はアーカイブ後すぐにメッセージ圧縮の対象となる（猶予期間なし）。親が要約を保持しているため。
+1. **圧縮適格性**: 子会話はアーカイブ後すぐにメッセージ圧縮の対象となる（猶予期間なし）。親が要約を保持しているため。
 
 ### クリーンアップクエリ
 

@@ -48,11 +48,11 @@ cargo clippy -- -D warnings
 ## プルリクエストプロセス
 
 1. `main`からフォークしてブランチを作成します。
-2. 大規模またはプロトコルに影響する変更については、まずIssueで議論してください。
-3. [Conventional Commits](https://www.conventionalcommits.org/)に従ってアトミックなコミットを行ってください。
-4. `cargo fmt`、`cargo clippy -D warnings`、`cargo test`がすべて成功することを確認してください。
-5. CLAに署名し、各コミットに`Signed-off-by`を追加してください。
-6. レビューフィードバックに対応してください。フォースプッシュはリベースのみに限定してください。
+1. 大規模またはプロトコルに影響する変更については、まずIssueで議論してください。
+1. [Conventional Commits](https://www.conventionalcommits.org/)に従ってアトミックなコミットを行ってください。
+1. `cargo fmt`、`cargo clippy -D warnings`、`cargo test`がすべて成功することを確認してください。
+1. CLAに署名し、各コミットに`Signed-off-by`を追加してください。
+1. レビューフィードバックに対応してください。フォースプッシュはリベースのみに限定してください。
 
 ## ライセンスとCLA
 

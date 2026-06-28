@@ -122,11 +122,13 @@ sequenceDiagram
 ルーティング決定は`mcp_skill_router.rs`で行われます：
 
 1. `agent_manager.get_tool_location(tool_name)`をチェック
-2. `ToolLocation::Cosmos`でコンテナ化モードがアクティブな場合：
+1. `ToolLocation::Cosmos`でコンテナ化モードがアクティブな場合：
+
    - `agent_manager.invoke_tool()`を呼び出し、`BridgeInvoker` → HapLotesブリッジ → Cosmosの`McpRouter`を通じてルーティング
    - Cosmosの`McpRouter`はローカル（skemma）でディスパッチするか、リモートエージェントの場合はブリッジ経由でScepterに戻す
    - `McpMessage::ToolResponse`を直接TUIに返す
-3. それ以外：HapLotesゲートウェイを通じてエージェントプロセスにルーティング
+
+1. それ以外：HapLotesゲートウェイを通じてエージェントプロセスにルーティング
 
 ## IV. CosmosConnector / ブリッジアーキテクチャ
 

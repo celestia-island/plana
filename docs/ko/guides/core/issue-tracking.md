@@ -9,7 +9,6 @@ subcategory = "core"
 # Issue 추적 통합
 
 > 외부 Issue 추적 시스템을 Entelecheia(현추)의 Agent 워크플로에 연결
-
 > 현재 상태 설명: HubRis는 현재 실제로 issue 생성, 갱신, 검색 및 댓글 보조 기능을 제공하며, 저장소에도 webhook 통합이 존재합니다. 그러나 본 문서를 "완전히 통합된 크로스 플랫폼 issue 제품 표면이 이미 존재한다"고 이해해서는 안 됩니다.
 
 ---
@@ -43,7 +42,7 @@ subcategory = "core"
 Entelecheia의 컨테이너는 서로 다른 컨텍스트에서 신원을 유지하기 위해 3계층 ID 시스템을 사용합니다:
 
 | 계층 | 형식 | 수명 주기 | 용도 |
-|------|------|----------|------|
+| --- | --- | --- | --- |
 | UUID | 표준 UUID(예: `550e8400-e29b-41d4-a716-446655440000`) | 영구 | 데이터베이스 기본 키, 재시작 간 추적 |
 | 바인딩 ID | `@platform#id`(예: `@github#234`) | 안정적 | 외부 자원 바인딩, 브랜치 네이밍 |
 | 런타임 ID | `#xxx`(예: `#616`) | 세션별 | TUI 표시, Unix socket 라우팅 |
@@ -56,7 +55,7 @@ Entelecheia의 컨테이너는 서로 다른 컨텍스트에서 신원을 유지
 
 바인딩 ID의 일반 형식:
 
-```
+```text
 @platform#id[@#floor]
 ```
 
@@ -67,7 +66,7 @@ Entelecheia의 컨테이너는 서로 다른 컨텍스트에서 신원을 유지
 ### 예시
 
 | 바인딩 ID | 의미 |
-|---------|------|
+| --- | --- |
 | `@github#123` | GitHub Issue #123 |
 | `@gitee#456` | Gitee Issue #456 |
 | `@gitlab#789` | GitLab Issue #789 |
@@ -90,7 +89,7 @@ Agent는 HubRis MCP 도구를 통해 외부 Issue와 상호 작용합니다. 이
 ### 사용 가능한 Issue 작업
 
 | 도구 | 설명 |
-|------|------|
+| --- | --- |
 | `$.agent.HubRis.issue_create()` | 외부 플랫폼에 새 Issue 생성 |
 | `$.agent.HubRis.issue_update()` | 기존 Issue 갱신(제목, 본문, 상태, 라벨) |
 | `$.agent.HubRis.issue_search()` | 플랫폼 간 Issue 검색 및 필터 적용 |
@@ -142,11 +141,11 @@ flowchart TB
 ### 단계별 예시
 
 1. 개발자가 "Memory leak in container cleanup" 제목의 Issue `@github#42` 생성
-2. GitHub Webhook이 이벤트를 Scepter에 전달
-3. `issue_triage` 스킬이 이를 **bug**, 우선순위 **high**로 분류
-4. HubRis가 작업 분해: (a) 누수 재현 (b) 근본 원인 찾기 (c) 수정 구현
-5. KaLos가 관련 소스 파일 읽기, SkeMma가 진단 스크립트 실행
-6. Agent가 수정 사항을 커밋하고 `@github#42`에 해결 방안 댓글 작성
+1. GitHub Webhook이 이벤트를 Scepter에 전달
+1. `issue_triage` 스킬이 이를 **bug**, 우선순위 **high**로 분류
+1. HubRis가 작업 분해: (a) 누수 재현 (b) 근본 원인 찾기 (c) 수정 구현
+1. KaLos가 관련 소스 파일 읽기, SkeMma가 진단 스크립트 실행
+1. Agent가 수정 사항을 커밋하고 `@github#42`에 해결 방안 댓글 작성
 
 ---
 
@@ -155,7 +154,7 @@ flowchart TB
 플랫폼 프리픽스 매핑은 구성 가능합니다. 기본 레지스트리에는 다음이 포함됩니다:
 
 | 프리픽스 | 플랫폼 | Issue URL 패턴 |
-|------|------|----------------|
+| --- | --- | --- |
 | `github` | GitHub | `https://github.com/{repo}/issues/{id}` |
 | `gitee` | Gitee | `https://gitee.com/{repo}/issues/{id}` |
 | `gitlab` | GitLab | `https://gitlab.com/{repo}/-/issues/{id}` |
@@ -180,20 +179,20 @@ Agent가 Issue 기반 작업을 위해 브랜치를 생성할 때, 브랜치는 
 
 ### 형식
 
-```
+```text
 cosmos-<binding_id>-<reason>
 ```
 
 또는
 
-```
+```text
 cosmos-<uuid8>-<reason>
 ```
 
 ### 예시
 
 | 브랜치 이름 | 컨텍스트 |
-|----------|--------|
+| --- | --- |
 | `cosmos-@github#42-fix-memory-leak` | GitHub Issue #42 수정 |
 | `cosmos-@gitee#15-add-ci-pipeline` | Gitee Issue #15 기능 개발 |
 | `cosmos-a1b2c3d4-refactor-auth-module` | UUID 프리픽스를 사용한 내부 작업 |

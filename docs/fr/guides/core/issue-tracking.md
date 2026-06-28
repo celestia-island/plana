@@ -9,7 +9,6 @@ subcategory = "core"
 # Intégration du suivi d'issues
 
 > Connecter les systèmes externes de suivi d'issues aux flux de travail d'Agent d'Entelecheia
-
 > Note sur l'état actuel : HubRis fournit actuellement des capacités d'assistance pour la création, la mise à jour, la recherche et les commentaires d'issues, et une intégration webhook existe dans le dépôt. Mais ce document ne doit pas être interprété comme « il existe déjà une surface produit d'issue inter-plateforme complète et unifiée ».
 
 ---
@@ -43,7 +42,7 @@ L'automatisation inter-plateforme des issues peut être considérée comme une d
 Les conteneurs dans Entelecheia utilisent un système d'ID à trois niveaux, maintenant l'identité dans différents contextes :
 
 | Niveau | Format | Cycle de vie | Utilisation |
-|------|------|----------|------|
+| --- | --- | --- | --- |
 | UUID | UUID standard (par ex. `550e8400-e29b-41d4-a716-446655440000`) | Permanent | Clé primaire de base de données, traçabilité inter-redémarrages |
 | ID de liaison | `@platform#id` (par ex. `@github#234`) | Stable | Liaison de ressources externes, nommage de branches |
 | ID d'exécution | `#xxx` (par ex. `#616`) | Par session | Affichage TUI, routage socket Unix |
@@ -56,7 +55,7 @@ L'**ID de liaison** lie un conteneur à une ressource de plateforme externe. Il 
 
 Le format général de l'ID de liaison est :
 
-```
+```text
 @platform#id[@#floor]
 ```
 
@@ -67,7 +66,7 @@ Le format général de l'ID de liaison est :
 ### Exemples
 
 | ID de liaison | Signification |
-|---------|------|
+| --- | --- |
 | `@github#123` | GitHub Issue #123 |
 | `@gitee#456` | Gitee Issue #456 |
 | `@gitlab#789` | GitLab Issue #789 |
@@ -90,7 +89,7 @@ Les Agents interagissent avec les issues externes via les outils MCP HubRis. Ces
 ### Opérations d'issue disponibles
 
 | Outil | Description |
-|------|------|
+| --- | --- |
 | `$.agent.HubRis.issue_create()` | Créer une nouvelle issue sur une plateforme externe |
 | `$.agent.HubRis.issue_update()` | Mettre à jour une issue existante (titre, corps, état, étiquettes) |
 | `$.agent.HubRis.issue_search()` | Rechercher des issues inter-plateformes avec filtres |
@@ -142,11 +141,11 @@ flowchart TB
 ### Exemple étape par étape
 
 1. Un développeur crée l'issue `@github#42` avec le titre "Memory leak in container cleanup"
-2. Le Webhook GitHub transmet l'événement à Scepter
-3. La compétence `issue_triage` la classe comme **bug**, priorité **high**
-4. HubRis décompose la tâche : (a) reproduire la fuite (b) trouver la cause racine (c) implémenter le correctif
-5. KaLos lit les fichiers source pertinents, SkeMma exécute des scripts de diagnostic
-6. L'Agent soumet le correctif et commente la solution sur `@github#42`
+1. Le Webhook GitHub transmet l'événement à Scepter
+1. La compétence `issue_triage` la classe comme **bug**, priorité **high**
+1. HubRis décompose la tâche : (a) reproduire la fuite (b) trouver la cause racine (c) implémenter le correctif
+1. KaLos lit les fichiers source pertinents, SkeMma exécute des scripts de diagnostic
+1. L'Agent soumet le correctif et commente la solution sur `@github#42`
 
 ---
 
@@ -155,7 +154,7 @@ flowchart TB
 Le mappage des préfixes de plateforme est configurable. Le registre par défaut inclut :
 
 | Préfixe | Plateforme | Modèle d'URL d'issue |
-|------|------|----------------|
+| --- | --- | --- |
 | `github` | GitHub | `https://github.com/{repo}/issues/{id}` |
 | `gitee` | Gitee | `https://gitee.com/{repo}/issues/{id}` |
 | `gitlab` | GitLab | `https://gitlab.com/{repo}/-/issues/{id}` |
@@ -180,20 +179,20 @@ Lorsque les Agents créent des branches pour le travail piloté par les issues, 
 
 ### Format
 
-```
+```text
 cosmos-<binding_id>-<reason>
 ```
 
 ou
 
-```
+```text
 cosmos-<uuid8>-<reason>
 ```
 
 ### Exemples
 
 | Nom de branche | Contexte |
-|----------|--------|
+| --- | --- |
 | `cosmos-@github#42-fix-memory-leak` | Correction de GitHub Issue #42 |
 | `cosmos-@gitee#15-add-ci-pipeline` | Développement de fonctionnalité pour Gitee Issue #15 |
 | `cosmos-a1b2c3d4-refactor-auth-module` | Tâche interne utilisant le préfixe UUID |

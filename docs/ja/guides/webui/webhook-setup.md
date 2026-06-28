@@ -15,7 +15,7 @@ subcategory = "webui"
 
 Webhookを使用すると、外部サービス（GitHub、GitLab、Gitee）がリアルタイムイベントをshittim-chestに送信できます。イベントは検証、解析され、適切なエージェントにディスパッチするscepterに転送されます。
 
-```
+```text
 外部サービス → shittim_chest → scepter → エージェント
 ```
 
@@ -41,12 +41,12 @@ openssl rand -hex 32
 ### ステップ2: GitHubでWebhookを作成
 
 1. リポジトリに移動 → **Settings** → **Webhooks** → **Add webhook**
-2. **Payload URL**を`https://your-domain.com/api/webhook/github`に設定
-3. **Content type**を`application/json`に設定
-4. **Secret**を`WEBHOOK_GITHUB_SECRET`と同じ値に設定
-5. イベントを選択: `push`、`pull_request`、`issues`、`issue_comment`
-6. **Active**がチェックされていることを確認
-7. **Add webhook**をクリック
+1. **Payload URL**を`https://your-domain.com/api/webhook/github`に設定
+1. **Content type**を`application/json`に設定
+1. **Secret**を`WEBHOOK_GITHUB_SECRET`と同じ値に設定
+1. イベントを選択: `push`、`pull_request`、`issues`、`issue_comment`
+1. **Active**がチェックされていることを確認
+1. **Add webhook**をクリック
 
 ### ステップ3: 検証
 
@@ -63,11 +63,11 @@ WEBHOOK_GITLAB_SECRET=your-gitlab-secret-token
 ### ステップ2: GitLabでWebhookを作成
 
 1. プロジェクトに移動 → **Settings** → **Webhooks**
-2. **URL**を`https://your-domain.com/api/webhook/gitlab`に設定
-3. **Secret token**を`WEBHOOK_GITLAB_SECRET`と同じ値に設定
-4. トリガーを選択: `Push events`、`Merge request events`、`Issue events`
-5. **Enable SSL verification**がチェックされていることを確認（HTTPSの場合）
-6. **Add webhook**をクリック
+1. **URL**を`https://your-domain.com/api/webhook/gitlab`に設定
+1. **Secret token**を`WEBHOOK_GITLAB_SECRET`と同じ値に設定
+1. トリガーを選択: `Push events`、`Merge request events`、`Issue events`
+1. **Enable SSL verification**がチェックされていることを確認（HTTPSの場合）
+1. **Add webhook**をクリック
 
 ### ステップ3: 検証
 
@@ -84,24 +84,24 @@ GiteeはHMAC検証に同じ`WEBHOOK_GITLAB_SECRET`を使用します（トーク
 ### ステップ2: GiteeでWebhookを作成
 
 1. リポジトリに移動 → **Management** → **Webhooks**
-2. **URL**を`https://your-domain.com/api/webhook/gitee`に設定
-3. **Password/Signing Key**を同じシークレットに設定
-4. イベントを選択: `Push`、`Pull Request`、`Issues`
-5. **Add**をクリック
+1. **URL**を`https://your-domain.com/api/webhook/gitee`に設定
+1. **Password/Signing Key**を同じシークレットに設定
+1. イベントを選択: `Push`、`Pull Request`、`Issues`
+1. **Add**をクリック
 
 ## カスタムWebhook
 
 shittim_chestは`/api/webhook/custom/{name}`で汎用カスタムwebhookエンドポイントをサポートしています。カスタムwebhookソースを追加するには:
 
 1. `.env`に`WEBHOOK_PUBLIC_URL`を設定
-2. 外部サービスが`https://your-domain.com/api/webhook/custom/{name}`にPOSTするように設定
-3. イベントはwebhook名をイベントソースとしてscepterに転送されます
+1. 外部サービスが`https://your-domain.com/api/webhook/custom/{name}`にPOSTするように設定
+1. イベントはwebhook名をイベントソースとしてscepterに転送されます
 
 コードレベルで新しいwebhookプロバイダーを統合するには:
 
 1. `packages/core/src/webhook.rs`にハンドラを追加
-2. 新しいプロバイダー用のHMACまたはトークン検証を実装
-3. カスタムイベント形式を解析し、Unixソケット経由でscepterに転送
+1. 新しいプロバイダー用のHMACまたはトークン検証を実装
+1. カスタムイベント形式を解析し、Unixソケット経由でscepterに転送
 
 ## IPホワイトリスト
 
@@ -119,7 +119,7 @@ WEBHOOK_IP_WHITELIST=140.82.112.0/20,192.30.252.0/22  # GitHub IP
 サポートされるイベントとscepterトリガーへのマッピング:
 
 | ソース | イベント | scepter `event_type` |
-|--------|-------|---------------------|
+| --- | --- | --- |
 | GitHub | `push` | `github.push` |
 | GitHub | `pull_request` | `github.pull_request` |
 | GitHub | `issues` | `github.issues` |
@@ -153,9 +153,9 @@ shittim_chestはwebhookイベントの配信ログを保持します。重複配
 管理パネルを使用してwebhook統合をテストします:
 
 1. 管理パネルにログイン（デフォルト`:3000`）
-2. サイドバーの**Webhooks**に移動
-3. 配信ログと設定を表示
-4. 外部サービスのテスト機能を通じてエンドポイントをテスト
+1. サイドバーの**Webhooks**に移動
+1. 配信ログと設定を表示
+1. 外部サービスのテスト機能を通じてエンドポイントをテスト
 
 curlを使用して手動でテストすることもできます:
 

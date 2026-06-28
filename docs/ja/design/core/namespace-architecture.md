@@ -47,7 +47,7 @@ flowchart TB
 ### 設計原則
 
 | 原則 | 説明 |
-|-----------|-------------|
+| --- | --- |
 | **単一の真実源** | 各名前空間は、その名前空間を参照する**すべての**JSコード文字列を生成する単一のモジュール（`var_namespace.rs`、`ref_namespace.rs`、`namespace.rs`）を持つ |
 | **遅延初期化** | `__vars` と `__refs` は `JsRuntime::new()` で一度初期化され、スキルチェーンをまたいで存続する。`__env` は名前空間JS評価時に初期化される |
 | **スナップショット/リストア** | 完全な `__vars` + `__refs` 状態はスナップショットおよびリストア可能であり、セッション永続化を可能にする |
@@ -133,7 +133,7 @@ flowchart TB
 
 ### 1.3 初期化シーケンス
 
-```
+```text
 JsRuntime::new()
   → context.eval("globalThis.$ = globalThis.$ || {}; globalThis.__vars = {}; globalThis.__refs = {};")
   → __vars が空オブジェクトとして初期化
@@ -146,7 +146,7 @@ JsRuntime::new()
 ### 1.4 操作
 
 | 操作 | ツール名 | 型 | 動作 |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | 文字列保存 | `write_to_var` | ブロッキング | JS用にコンテンツをエスケープ、`vars['name'] = 'content'` を評価 |
 | JSON保存 | `write_to_var_json` | ブロッキング | JSON検証、`vars['name'] = JSON.parse('content')` を評価 |
 | execで読み取り | `exec` | FireAndForget | 直接アクセス: `vars['name']` または `import vars from 'vars'` |
@@ -158,7 +158,7 @@ JsRuntime::new()
 
 `build_runtime_context()`（`prompt.rs:472`）では、変数ストアがシステムプロンプトに以下のように表示される：
 
-```
+```text
 ## JS ランタイムコンテキスト
 
 __vars（write_to_var / write_to_var_json から、N 件）:
@@ -176,7 +176,7 @@ __vars（write_to_var / write_to_var_json から、N 件）:
 
 `env` と同様に、`vars` モジュールは便利なインポートのために `__vars` をラップするBoa合成モジュールである：
 
-```
+```python
 import vars from 'vars';
 // vars === __vars（ライブ参照）
 const report = vars['analysis_results'];
@@ -278,7 +278,7 @@ interface RefAgentOutput {
 ### 2.4 操作
 
 | 操作 | ツール名 | 型 | 動作 |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | 参照追加 | `ref_add` | ブロッキング | JSON検証、`refs['name'] = JSON.parse('...')` を評価 |
 | 参照削除 | `ref_remove` | FireAndForget | `delete refs['name']` を評価 |
 | execで読み取り | (`exec`経由) | — | `refs['name'].files[0].content` |
@@ -291,7 +291,7 @@ Refsはシステムプロンプト内の**2箇所**に表示される：
 
 #### 場所1: `refs_section`（専用目次）
 
-```
+```text
 ## 参照リソース（refs）
 
 以下のリソースが `refs['name']` 経由で利用可能です。
@@ -304,7 +304,7 @@ Refsはシステムプロンプト内の**2箇所**に表示される：
 
 #### 場所2: `runtime_context`（名前一覧）
 
-```
+```text
 __refs（ユーザー/エージェントからの参照リソース、3件）:
   `code:src/main.rs`, `image:architecture`, `agent:orexis/audit-1`
   アクセス: `refs['name']` — 各refは .ref_type, .source, .summary を持つ
@@ -359,7 +359,7 @@ flowchart LR
 ### 3.3 操作
 
 | 操作 | 機構 | 動作 |
-|-----------|-----------|----------|
+| --- | --- | --- |
 | 初期化 | `build_namespace_js()` | `__env = __env \|\| {}; env.aporia = env.aporia \|\| { language: 'auto' }` |
 | 言語設定 | cosmosコネクタ経由の `exec` 呼び出し | `env.aporia.language = 'zh'` |
 | IEPLで読み取り | `import { language } from 'env'` | `'auto'` フォールバック付きで `env.aporia.language` を返す |
@@ -414,8 +414,8 @@ Object.defineProperty(globalThis.$, 'variant', {
 `LocalCosmosRuntime` は専用スレッドで**単一の長寿命 `JsRuntime`** を実行する。スキルチェーン実行の合間に、ランタイム状態（`__vars`、`__refs`）は自然に持続する。しかし、スナップショットは以下のために使用される：
 
 1. **プロンプト注入** — `build_runtime_context()` と `build_refs_section()` がスナップショットJSONを読み取り、システムプロンプトを生成する
-2. **セッション永続化** — クラッシュリカバリやセッション移行のためのディスクへのダンプ/リストア
-3. **コンテナ同期** — `cosmos_set_rag_context()` 経由でcosmosコンテナに状態をプッシュ
+1. **セッション永続化** — クラッシュリカバリやセッション移行のためのディスクへのダンプ/リストア
+1. **コンテナ同期** — `cosmos_set_rag_context()` 経由でcosmosコンテナに状態をプッシュ
 
 ### 4.2 スナップショット形式
 
@@ -569,7 +569,7 @@ flowchart TB
 ### 5.2 ツール定義
 
 | ツール | 呼び出しモード | 要件 | パラメータスキーマ |
-|------|-----------|----------|-----------------|
+| --- | --- | --- | --- |
 | `exec` | FireAndForget | `code: string` | 単一JSコード文字列 |
 | `write_to_var` | ブロッキング | `var_name, content` | `{var_name: string, content: string}` |
 | `write_to_var_json` | ブロッキング | `var_name, content` | `{var_name: string, content: string（有効なJSON）}` |
@@ -614,7 +614,7 @@ fn is_cosmos_internal_tool(tool_name: &str) -> bool {
 このヘルパーは2つの重要な目的を果たす：
 
 1. **エージェント型解決** — 内部ツールはCosmosランタイムで実行されるため（ドメインエージェントのプロセスではない）、`get_tool_agent_type()` は `Agent::SkeMma` を返す。
-2. **フォールバックルーティング** — 内部ツールに対するコンテナ化cosmos呼び出しが失敗した場合、システムはローカルcosmosランタイムにフォールバックする。非内部ツールの場合、フォールバックは代わりにプロセス内実行に移行する。これにより、cosmos操作がコンテナ化モードで黙って失敗しないことを保証する。
+1. **フォールバックルーティング** — 内部ツールに対するコンテナ化cosmos呼び出しが失敗した場合、システムはローカルcosmosランタイムにフォールバックする。非内部ツールの場合、フォールバックは代わりにプロセス内実行に移行する。これにより、cosmos操作がコンテナ化モードで黙って失敗しないことを保証する。
 
 ### 5.5 コンテナ化 vs ローカルCosmosルーティング
 
@@ -656,7 +656,7 @@ flowchart TB
 **主な違い:**
 
 | 側面 | ローカルモード | コンテナ化モード |
-|--------|-----------|-------------------|
+| --- | --- | --- |
 | `__vars` / `__refs` | 全エージェントで共有 | コンテナ内で共有、コンテナ間で隔離 |
 | `__env` | `exec` 経由で直接設定 | `CosmosConnector` JSON-RPC呼び出し経由で設定 |
 | パフォーマンス | シリアライズオーバーヘッドゼロ | 呼び出しごとにJSON-RPCシリアライズ |
@@ -683,14 +683,16 @@ pub async fn build_scepter_namespace_config_and_js(
 この関数は：
 
 1. `AgentRegistry` から登録されたすべてのエージェントのMCPツールを収集する
-2. エージェントごとのツールリストとメタデータ（同期/非同期、unwrap_data）を持つ `NamespaceConfig` を構築する
-3. `build_namespace_js(&config)` を介して名前空間JSを生成する。これは：
+1. エージェントごとのツールリストとメタデータ（同期/非同期、`unwrap_data`）を持つ `NamespaceConfig` を構築する
+1. `build_namespace_js(&config)` を介して名前空間JSを生成する。これは：
+
    - 欠落時は `globalThis.$` を作成
    - `env.aporia` を `{ language: 'auto' }` で初期化
    - `$.variant` プロパティ（`globalThis.$` を返す循環ゲッター）を定義
    - `register_tool_modules_with_rag()` を介してすべてのエージェントツールモジュールを登録
 
 名前空間JSは以下のタイミングで評価される：
+
 - **1回** `LocalCosmosRuntime::new()` 起動時
 - `CosmosCommand::RebuildNamespace` 経由でスキルチェーン再構築時に**オンデマンド**
 
@@ -700,7 +702,7 @@ pub async fn build_scepter_namespace_config_and_js(
 
 `pipeline.rs:869-882` でアセンブルされる完全なシステムプロンプト：
 
-```
+```text
 あなたは {エージェント} {スキル名} スキル実行エンジンです。スキルを忠実に実行してください。
 
 [capability_section]
@@ -745,7 +747,7 @@ pub async fn build_scepter_namespace_config_and_js(
 ### セクション配置の根拠
 
 | セクション | 位置 | 理由 |
-|---------|----------|--------|
+| --- | --- | --- |
 | エージェントアイデンティティ + スキル名 | 最初の文 | 即座に役割を設定 |
 | ツール宣言 | ソウルの前 | LLMはパーソナリティが選択に影響する前に利用可能なツールを知る必要がある |
 | ソウル | ツールの後、refsの前 | パーソナリティがrefsの解釈方法に影響する |
@@ -766,6 +768,7 @@ globalThis.__refs = globalThis.__refs || {};
 ```
 
 これは以下を意味する：
+
 - **既存の値が持続** — `__vars` と `__refs` はそのまま保持
 - **破損状態が回復** — `__refs` が誤って削除された場合、再作成される
 - **スキル隔離はオプトイン** — スキルは自分が知っている変数（ランタイムコンテキストプロンプト内の名前による）のみを読み取るべき
@@ -776,7 +779,7 @@ globalThis.__refs = globalThis.__refs || {};
 ## 8. 実装ファイルマップ
 
 | コンポーネント | ファイル | 行数 | 説明 |
-|-----------|------|-------|-------------|
+| --- | --- | --- | --- |
 | `__vars` 定数 & ジェネレーター | `packages/shared/core/src/var_namespace.rs` | 1-211 | vars用の全JSコード生成 |
 | `__refs` 定数 & ジェネレーター | `packages/shared/core/src/ref_namespace.rs` | 1-145 | refs用の全JSコード生成 |
 | `__env` 生成 | `packages/shared/iepl/src/namespace.rs` | 193-197 | `build_env_namespace_js()` |
@@ -825,7 +828,7 @@ globalThis.__refs = globalThis.__refs || {};
 ### 9.2 メモリ制限
 
 | 制限 | 値 | 強制箇所 |
-|-------|-------|-------------|
+| --- | --- | --- |
 | プロンプト内の最大vars数 | 30 | `build_runtime_context()` — `MAX_NAMES` 定数 |
 | プロンプト内の最大refs数 | 30 | `build_refs_section()` — `.take(30)` |
 | runtime_context内の最大refs数 | 30 | `build_runtime_context()` — `MAX_NAMES` 定数 |
@@ -836,7 +839,7 @@ globalThis.__refs = globalThis.__refs || {};
 ### 9.3 エラーハンドリング
 
 | エラー | 処理 |
-|-------|----------|
+| --- | --- |
 | 無効なJSONでの `write_to_var_json` | プレビュー付きエラーを返す（最初の200文字） |
 | 無効なJSONでの `ref_add` | プレビュー付き `SkemmaError::JsEval` を返す |
 | 循環参照のスナップショット（`$.variant`） | `TypeError` を黙ってキャッチ、キーをスキップ |
@@ -880,7 +883,7 @@ connector.cosmos_exec(&container_uuid, &lang_code).await?;
 
 これはJSON-RPCトランスポートを介してcosmosコンテナに `exec` MCP呼び出しを送信し、コンテナの隔離された `JsRuntime` でJS代入を評価する。完全な言語伝播パスは：
 
-```
+```text
 TUIリクエスト言語 → Scepter（request_languageを抽出）
   → [ローカルモード] 直接 exec("env.aporia.language = 'zh'")
   → [コンテナ化] CosmosConnector::cosmos_exec(json_rpc_call)

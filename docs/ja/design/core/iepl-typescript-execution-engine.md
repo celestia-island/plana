@@ -13,8 +13,8 @@ subcategory = "core"
 IEPL（In-Execution Prompt Language）実行エンジンは、既存のCosmos/SkeMma JSランタイムに対するアーキテクチャアップグレードであり、LLM生成実行コードをJavaScriptからTypeScriptにアップグレードします。主な変更点は以下を含みます：
 
 1. **SWCクレートの組み込み**: LLM生成TypeScriptの厳格な構文チェック、型除去、トランスパイル
-2. **Rust derive → TypeScript型生成**: `ts-rs`を通じてRust構造体を`.d.ts`宣言ファイルに自動エクスポート
-3. **型安全なスキルプロンプト**: ハードコードされた関数リストの代わりに完全な`.d.ts`宣言を注入し、堅牢性を大幅に向上
+1. **Rust derive → TypeScript型生成**: `ts-rs`を通じてRust構造体を`.d.ts`宣言ファイルに自動エクスポート
+1. **型安全なスキルプロンプト**: ハードコードされた関数リストの代わりに完全な`.d.ts`宣言を注入し、堅牢性を大幅に向上
 
 ## 現状と問題点
 
@@ -30,7 +30,7 @@ flowchart LR
 ### 既存の問題
 
 | 問題 | 説明 |
-|---------|-------------|
+| --- | --- |
 | **型制約なし** | LLM生成JSコードは静的な型情報がゼロ；パラメータのタイプミスは実行時まで検出されない |
 | **脆弱なインターフェース記述** | `build_report_tool_instruction()`が`- file_read ('kalos'からインポート)`のようなテキストリストをハードコード、パラメータ型や戻り値の構造を表現できない |
 | **事前検証なし** | LLMコードが直接Boa `eval()`に渡される；構文エラーは実行時まで発見されない |
@@ -40,7 +40,7 @@ flowchart LR
 ### 関与する主要ファイル
 
 | ファイル | 現在の責任 |
-|------|----------------------|
+| --- | --- |
 | `packages/agents/skemma/src/js_runtime/runtime.rs` | Boa JSランタイム、`exec()`が直接`eval()`を呼び出す |
 | `packages/agents/skemma/src/mcp/tools/script_exec.rs` | `"javascript"`言語のみを受け付ける |
 | `packages/cosmos/src/bin/cosmos/js_repl/js_commands.rs` | `globalThis.$agent.tool = (...) => ...` を動的に生成 |
@@ -81,7 +81,7 @@ flowchart TB
 ### 1. Rust → TypeScript型生成: `ts-rs`
 
 | 属性 | 値 |
-|-----------|-------|
+| --- | --- |
 | クレート | `ts-rs` (Aleph-Alpha/ts-rs) |
 | バージョン | ≥ 12.0 |
 | スター | 1,772 |
@@ -100,7 +100,7 @@ flowchart TB
 **除外された代替案:**
 
 | クレート | 除外理由 |
-|-------|---------------------|
+| --- | --- |
 | `specta` | Tauri/rspcエコシステムに偏っている；このシナリオでは関数型エクスポートは不要 |
 | `typeshare` | CLI駆動、CI統合に不便；`type`の代わりに`interface`を生成（LLMプロンプトには実質的な違いなし） |
 | `tsify` | `wasm-bindgen`に結合；このプロジェクトはWASMワークフローではない |
@@ -108,7 +108,7 @@ flowchart TB
 ### 2. TypeScript解析とトランスパイル: SWC
 
 | クレート | 目的 |
-|-------|---------|
+| --- | --- |
 | `swc_core`（機能: `ecma_parser`） | TSソースをASTに解析 |
 | `swc_core`（機能: `ecma_ast`） | ASTノード型 |
 | `swc_core`（機能: `ecma_visit`） | AST走査/変換 |
@@ -148,16 +148,16 @@ ts-rs = { version = "12", features = ["serde-compat", "format"] }
 // packages/shared/src/mcp_types/kalos.rs
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileReadResult {
     pub path: String,
     pub size_bytes: u64,
     pub content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileListResult {
     pub path: String,
     pub total_count: usize,
@@ -173,7 +173,7 @@ pub struct FileListResult {
 // packages/shared/src/mcp_types/enums.rs
 // 既存のstr_enum!マクロ生成列挙型は追加のTS deriveが必要
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+# [derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 pub enum FileType {
     File,
     Directory,
@@ -501,7 +501,8 @@ parts.push(format!("\n利用可能なJS API:\n{}", items.join("\n")));
 ```
 
 これは以下を生成します：
-```
+
+```text
 利用可能なJS API:
 - file_read ('kalos'からインポート)
 - file_write ('kalos'からインポート)
@@ -536,65 +537,69 @@ pub(super) fn build_report_tool_instruction(
 ```typescript
 あなたはTypeScriptコードを書いています。利用可能なAPI型宣言:
 
-```typescript
+```
+
 // === 型（Rustから自動生成） ===
-type FileReadResult = { path: string; size_bytes: number; content: string };
-type FileListResult = { path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> };
-type FileWriteResult = { path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" };
+type `FileReadResult` = { path: string; `size_bytes`: number; content: string };
+type `FileListResult` = { path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> };
+type `FileWriteResult` = { path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" };
 
 // === API（手書き） ===
 interface KalosApi {
-  file_read(params: { path: string }): Promise<FileReadResult>;
-  file_write(params: { path: string; content: string }): Promise<FileWriteResult>;
-  file_list(params: { path: string }): Promise<FileListResult>;
-  // ...
+`file_read`(params: { path: string }): Promise<`FileReadResult`>;
+`file_write`(params: { path: string; content: string }): Promise<`FileWriteResult`>;
+`file_list`(params: { path: string }): Promise<`FileListResult`>;
+// ...
 }
 
 declare const $kalos: KalosApi;
-```
+
+```text
 
 #### 3.3 .d.tsローダー
 
-```rust
+```
+
 // packages/shared/src/iepl/decl_loader.rs
 
-use include_dir::{Dir, include_dir};
+use `include_dir`::{Dir, `include_dir`};
 
-static IEPL_BINDINGS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../bindings");
+static IEPL_BINDINGS: Dir = `include_dir`!("$CARGO_MANIFEST_DIR/../../../bindings");
 
-pub struct IeplDeclLoader;
+pub struct `IeplDeclLoader`;
 
-impl IeplDeclLoader {
-    /// related_toolsでフィルタリングされた必要な.d.ts宣言をロード
-    pub fn load_for_tools(related_tools: &[RelatedTool]) -> String {
-        let mut declarations = Vec::new();
+impl `IeplDeclLoader` {
+/// related_toolsでフィルタリングされた必要な.d.ts宣言をロード
+pub fn `load_for_tools`(`related_tools`: &[`RelatedTool`]) -> String {
+let mut declarations = Vec::new();
 
-        // 関与するエージェントのセットを収集
-        let agents: std::collections::HashSet<&str> = related_tools
-            .iter()
-            .map(|t| t.agent_name.as_str())
-            .collect();
+// 関与するエージェントのセットを収集
+let agents: std::collections::HashSet<&str> = `related_tools`
+.iter()
+.map(|t| t.agent_name.as_str())
+.collect();
 
-        for agent in &agents {
-            // 自動生成された型宣言をロード
-            if let Some(types_file) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(types_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-
-            // 手書きAPI宣言をロード
-            if let Some(api_file) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(api_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-        }
-
-        declarations.join("\n\n")
-    }
+for agent in &agents {
+// 自動生成された型宣言をロード
+if let Some(`types_file`) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(types_file.contents()) {
+declarations.push(content.to_string());
 }
-```
+}
+
+// 手書きAPI宣言をロード
+if let Some(`api_file`) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(api_file.contents()) {
+declarations.push(content.to_string());
+}
+}
+}
+
+declarations.join("\n\n")
+}
+}
+
+```text
 
 #### 3.4 JS名前空間ビルダーのアップグレード
 
@@ -604,24 +609,28 @@ impl IeplDeclLoader {
 
 ### 現在（JavaScript）
 
-```mermaid
-flowchart TD
-    Meta["スキルメタデータ\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta --> Build["build_report_tool_instruction\n→ '- file_read (インポート)'\n→ '- file_write (インポート)'\n(ハードコードテキスト)"]
-    Build -->|"システムプロンプトに\n注入"| LLM1["LLMがJavaScriptを生成\nfile_read({path:'x'})\n(型チェックなし)"]
-    LLM1 --> Boa1["Boa eval() 直接実行\n(事前検証なし)"]
 ```
+
+flowchart TD
+Meta["スキルメタデータ\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta --> Build["`build_report_tool_instruction`\n→ '- `file_read` (インポート)'\n→ '- `file_write` (インポート)'\n(ハードコードテキスト)"]
+Build -->|"システムプロンプトに\n注入"| LLM1["LLMがJavaScriptを生成\`nfile_read`({path:'x'})\n(型チェックなし)"]
+LLM1 --> Boa1["Boa eval() 直接実行\n(事前検証なし)"]
+
+```text
 
 ### ターゲット（TypeScript + IEPL）
 
-```mermaid
-flowchart TD
-    Meta2["スキルメタデータ\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta2 --> Loader["IeplDeclLoader\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(完全な型宣言)"]
-    Loader -->|"システムプロンプトに\n注入"| LLM2["LLMがTypeScriptを生成\nconst r: FileReadResult =\n  await file_read(\n    {path: 'x'}\n  );\n(型制約付き)"]
-    LLM2 --> IEPL["IEPLエンジン\n1. SWC parse → AST (構文チェック)\n2. AST validator (安全チェック)\n3. strip types → JS (型除去)\n4. codegen → JS文字列"]
-    IEPL --> Boa2["Boa eval() 実行"]
 ```
+
+flowchart TD
+Meta2["スキルメタデータ\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta2 --> Loader["`IeplDeclLoader`\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(完全な型宣言)"]
+Loader -->|"システムプロンプトに\n注入"| LLM2["LLMがTypeScriptを生成\nconst r: `FileReadResult` =\n  await `file_read`(\n    {path: 'x'}\n  );\n(型制約付き)"]
+LLM2 --> IEPL["IEPLエンジン\n1. SWC parse → AST (構文チェック)\n2. AST validator (安全チェック)\n3. strip types → JS (型除去)\n4. codegen → JS文字列"]
+IEPL --> Boa2["Boa eval() 実行"]
+
+```text
 
 ## 堅牢性改善分析
 
@@ -642,24 +651,29 @@ flowchart TD
 LLMが見る現在のプロンプト断片：
 
 ```
+
 利用可能なJS API:
-- file_read ('kalos'からインポート)
-- file_write ('kalos'からインポート)
+
+- `file_read` ('kalos'からインポート)
+- `file_write` ('kalos'からインポート)
 - report()
-```
+
+```text
 
 IEPL下でLLMが見るプロンプト断片：
 
-```typescript
+```
+
 declare const $kalos: {
-  file_read(params: { path: string }): Promise<{ path: string; size_bytes: number; content: string }>;
-  file_write(params: { path: string; content: string }): Promise<{ path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" }>;
-  file_list(params: { path: string }): Promise<{ path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> }>;
+`file_read`(params: { path: string }): Promise<{ path: string; `size_bytes`: number; content: string }>;
+`file_write`(params: { path: string; content: string }): Promise<{ path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" }>;
+`file_list`(params: { path: string }): Promise<{ path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> }>;
 };
 // hubrisツールはESモジュールインポートで利用可能: import { report } from 'hubris'
-  report(params: { summary: string }): Promise<{ summary: string }>;
+report(params: { summary: string }): Promise<{ summary: string }>;
 };
-```
+
+```text
 
 後者は以下を提供します：
 - 正確なパラメータ名と型
@@ -669,39 +683,44 @@ declare const $kalos: {
 
 ## 新しいワークスペース依存関係の要約
 
-```toml
-# 新規
-ts-rs = { version = "12", features = ["serde-compat", "format"] }
-swc_core = { version = "65", features = [
-    "ecma_parser",
-    "ecma_ast",
-    "ecma_visit",
-    "ecma_transforms_base",
-    "ecma_transforms_typescript",
-    "ecma_codegen",
-    "common",
-] }
 ```
+
+# 新規
+
+ts-rs = { version = "12", features = ["serde-compat", "format"] }
+`swc_core` = { version = "65", features = [
+"`ecma_parser`",
+"`ecma_ast`",
+"`ecma_visit`",
+"`ecma_transforms_base`",
+"`ecma_transforms_typescript`",
+"`ecma_codegen`",
+"common",
+] }
+
+```text
 
 ## 新しいクレート構造
 
-```mermaid
-flowchart LR
-    SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod ast_validator;"]
-    SkemmaIepl --> SM2["engine.rs\nIeplEngine: transpile(ts_code) -> Result&lt;TranspileResult&gt;"]
-    SkemmaIepl --> SM3["ast_validator.rs\nAstValidator: 安全パターン検出"]
-    SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod decl_loader;"]
-    SharedIepl --> SH2["decl_loader.rs\nIeplDeclLoader: related_toolsでフィルタリングされた.d.tsをロード"]
-    Bindings["bindings/\n生成されたアーティファクト、gitで追跡"] --> BTypes["types/\nts-rs自動エクスポート"]
-    Bindings --> BApi["api/\n手書きで保守"]
-    Bindings --> BIepl["iepl-api.d.ts\nマージされたアーティファクト（オプション）"]
-    BTypes --> BT1["kalos.d.ts"]
-    BTypes --> BT2["neikos.d.ts"]
-    BTypes --> BT3["..."]
-    BApi --> BA1["kalos.d.ts"]
-    BApi --> BA2["neikos.d.ts"]
-    BApi --> BA3["..."]
 ```
+
+flowchart LR
+SkemmaIepl["packages/agents/skemma/src/iepl/"] --> SM1["mod.rs\npub mod engine; pub mod `ast_validator`;"]
+SkemmaIepl --> SM2["engine.rs\`nIeplEngine`: transpile(`ts_code`) -> Result&lt;`TranspileResult`&gt;"]
+SkemmaIepl --> SM3["ast_validator.rs\`nAstValidator`: 安全パターン検出"]
+SharedIepl["packages/shared/src/iepl/"] --> SH1["mod.rs\npub mod `decl_loader`;"]
+SharedIepl --> SH2["decl_loader.rs\`nIeplDeclLoader`: related_toolsでフィルタリングされた.d.tsをロード"]
+Bindings["bindings/\n生成されたアーティファクト、gitで追跡"] --> BTypes["types/\nts-rs自動エクスポート"]
+Bindings --> BApi["api/\n手書きで保守"]
+Bindings --> BIepl["iepl-api.d.ts\nマージされたアーティファクト（オプション）"]
+BTypes --> BT1["kalos.d.ts"]
+BTypes --> BT2["neikos.d.ts"]
+BTypes --> BT3["..."]
+BApi --> BA1["kalos.d.ts"]
+BApi --> BA2["neikos.d.ts"]
+BApi --> BA3["..."]
+
+```text
 
 ## 実装パス
 

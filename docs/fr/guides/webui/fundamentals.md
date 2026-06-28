@@ -27,6 +27,7 @@ shittim-chest prend en charge deux modes de fonctionnement :
 ### Mode Autonome
 
 Fonctionne indépendamment avec sa propre couche de routage LLM. Prend en charge :
+
 - Chat avec réponses en streaming (SSE + WebSocket)
 - Génération d'images via les fournisseurs configurés
 - Authentification utilisateur (mot de passe + GitHub OAuth)
@@ -37,6 +38,7 @@ Ne nécessite pas entelecheia. Utile pour le développement et les déploiements
 ### Mode Proxy
 
 Agit comme une passerelle vers le système d'agents d'entelecheia. Ajoute :
+
 - Transfert de requêtes vers scepter avec transfert JWT
 - Pont WebSocket pour le chat basé sur les agents
 - Entrée webhook et transfert de déclencheurs
@@ -47,14 +49,14 @@ Nécessite une instance entelecheia en cours d'exécution. Les deux modes peuven
 
 ## Modèle d'Authentification
 
-L'authentification utilise des tokens JWT émis par shittim_chest :
+L'authentification utilise des tokens JWT émis par `shittim_chest` :
 
 1. **Stockage des identifiants** : Les mots de passe (hachages argon2), sessions, tokens de rafraîchissement et clés API résident dans `shittim_chest_db`.
-2. **GitHub OAuth** : Les utilisateurs peuvent se connecter avec GitHub ; les comptes sont créés automatiquement à la première connexion.
-3. **Stockage des permissions** : Les groupes d'utilisateurs, rôles et matrices de permissions résident dans `entelecheia_db`.
-4. **Flux JWT** : À la connexion, shittim_chest vérifie les identifiants localement, puis récupère les permissions depuis scepter. Le JWT émis contient `{ sub: user_id, groups: [...] }`.
-5. **Secret partagé** : Le secret de signature JWT est partagé avec scepter afin que les deux services puissent valider les tokens indépendamment.
-6. **Rotation des tokens** : Les tokens d'accès expirent en 1 heure ; les tokens de rafraîchissement en 7 jours. Les tokens de rafraîchissement sont renouvelés à chaque utilisation.
+1. **GitHub OAuth** : Les utilisateurs peuvent se connecter avec GitHub ; les comptes sont créés automatiquement à la première connexion.
+1. **Stockage des permissions** : Les groupes d'utilisateurs, rôles et matrices de permissions résident dans `entelecheia_db`.
+1. **Flux JWT** : À la connexion, `shittim_chest` vérifie les identifiants localement, puis récupère les permissions depuis scepter. Le JWT émis contient `{ sub: user_id, groups: [...] }`.
+1. **Secret partagé** : Le secret de signature JWT est partagé avec scepter afin que les deux services puissent valider les tokens indépendamment.
+1. **Rotation des tokens** : Les tokens d'accès expirent en 1 heure ; les tokens de rafraîchissement en 7 jours. Les tokens de rafraîchissement sont renouvelés à chaque utilisation.
 
 ## Frontend (webui)
 
@@ -92,22 +94,23 @@ Toute la communication des périphériques passe par l'agent polemos d'enteleche
 
 ## Architecture Proxy
 
-shittim_chest agit comme une passerelle entre les utilisateurs et scepter :
+`shittim_chest` agit comme une passerelle entre les utilisateurs et scepter :
 
 - **Proxy inverse HTTP** : `/api/proxy/*` transfère les requêtes authentifiées vers scepter avec transfert JWT.
 - **Pont WebSocket** : Le streaming de chat utilise le transfert WebSocket bidirectionnel (`navigateur ↔ shittim_chest ↔ scepter`).
 
-Cela permet à shittim_chest d'appliquer des limites de débit, de journaliser l'usage et de gérer le cycle de vie des connexions sans que scepter ait besoin de gérer les connexions individuelles des navigateurs.
+Cela permet à `shittim_chest` d'appliquer des limites de débit, de journaliser l'usage et de gérer le cycle de vie des connexions sans que scepter ait besoin de gérer les connexions individuelles des navigateurs.
 
 ## Pipeline Webhook
 
 Les événements externes atteignent le cœur d'agents via un pipeline webhook :
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → Validation HMAC → Analyser l'événement → Transférer à scepter via socket Unix → Distribution d'agent
 ```
 
 Chaque fournisseur a son propre mécanisme de validation :
+
 - **GitHub** : HMAC-SHA256 via `X-Hub-Signature-256`
 - **GitLab** : Token via `X-Gitlab-Token`
 - **Gitee** : HMAC avec token de secours
@@ -125,7 +128,7 @@ Les permissions suivent un modèle RBAC basé sur les groupes :
   - Listes blanches d'agents (quels agents le groupe peut accéder)
   - Capacités administratives (gérer les utilisateurs, configurer les fournisseurs)
 
-shittim_chest met en cache les permissions en processus avec un TTL (par défaut 5 minutes). L'invalidation du cache se produit à l'expiration du TTL, à la déconnexion ou lors de changements de permissions explicites propagés depuis scepter.
+`shittim_chest` met en cache les permissions en processus avec un TTL (par défaut 5 minutes). L'invalidation du cache se produit à l'expiration du TTL, à la déconnexion ou lors de changements de permissions explicites propagés depuis scepter.
 
 ## Stratégie Frontend
 
@@ -139,7 +142,7 @@ shittim-chest utilise une approche frontend en deux phases :
 
 Les types TypeScript sont générés à partir du code Rust via la crate de protocole `arona` externe, assurant la cohérence frontend-backend :
 
-```
+```text
 Crate Rust arona (dépendance git)
   → #[derive(ts_rs::TS)]
   → codegen ts-rs → packages/webui/src/types/arona/ (TypeScript)

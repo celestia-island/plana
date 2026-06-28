@@ -23,8 +23,9 @@ subcategory = "core"
 ## 錯誤類別
 
 ### 資料庫（`DB_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `DB_CONNECT_FAILED` | `database connection failed: {}` | `scepter/src/app/setup.rs` |
 | `DB_MIGRATE_FAILED` | `database migration failed: {}` | `scepter/src/app/setup.rs` |
 | `DB_TABLE_CHECK_FAILED` | `failed to check table existence: {}` | `packages/shared/infra_services/src/persistence.rs` |
@@ -35,8 +36,9 @@ subcategory = "core"
 | `DB_CLEANUP_FAILED` | `failed to clean up old logs: {}` | `packages/shared/infra_services/src/persistence.rs` |
 
 ### 配置（`CFG_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `CFG_CREDENTIAL_INIT_FAILED` | `credential storage initialization failed: {}` | `scepter/src/app/setup.rs` |
 | `CFG_PROVIDER_INIT_FAILED` | `provider config initialization failed: {}` | `scepter/src/app/setup.rs` |
 | `CFG_MODEL_INIT_FAILED` | `model config initialization failed: {}` | `scepter/src/app/setup.rs` |
@@ -44,24 +46,27 @@ subcategory = "core"
 | `CFG_KEY_STORE_INIT_FAILED` | `key storage service initialization failed: {}` | `scepter/src/app/setup.rs` |
 
 ### 狀態（`ST_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `ST_SERIALIZE_FAILED` | `state serialization failed: {}` | `scepter/src/state/state_persistence.rs` |
 | `ST_WRITE_FAILED` | `temp file write failed: {}` | `scepter/src/state/state_persistence.rs` |
 | `ST_READ_FAILED` | `state file read failed: {}` | `scepter/src/state/state_persistence.rs` |
 | `ST_PARSE_FAILED` | `state file parse failed: {}` | `scepter/src/state/state_persistence.rs` |
 
 ### WebSocket（`WS_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `WS_SEND_FAILED` | `failed to send message: {}` | `packages/shared/infra_services/src/ws_transport.rs` |
 | `WS_TIMEOUT` | `response wait timeout or channel closed` | `packages/shared/infra_services/src/ws_transport.rs` |
 | `WS_PARSE_FAILED` | `failed to parse agent list: {}` | `packages/shared/infra_services/src/ws_transport.rs` |
 | `WS_NOT_CONNECTED` | `websocket connection not established` | `packages/shared/infra_services/src/ws_transport.rs` |
 
 ### 代理（`AG_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `AG_CONNECT_FAILED` | `connection failed: {}` | `packages/shared/core/src/errors.rs:7-28` |
 | `AG_SEND_FAILED` | `send failed: {}` | `packages/shared/core/src/errors.rs:7-28` |
 | `AG_CHANNEL_NOT_INIT` | `send channel not initialized` | `packages/shared/core/src/errors.rs:7-28` |
@@ -69,25 +74,29 @@ subcategory = "core"
 | `AG_RE_REGISTER_FAILED` | `internal agent re-registration failed` | `scepter/src/state/state_restoration.rs` |
 
 ### LLM（`LLM_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `LLM_CALL_FAILED` | `LLM call failed: {}` | `scepter/src/state_machine/llm_chat/chat_loop.rs` |
 
 ### 第二層代理（`L2_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `L2_INIT_FAILED` | `layer2 agent config initialization failed: {}` | `scepter/src/app/setup.rs` |
 | `L2_SKILLS_VALIDATE_FAILED` | `layer2 agent skills validation failed: {}` | `scepter/src/app/setup.rs` |
 
 ### 技能（`SK_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `SK_PROMPT_LOAD_FAILED` | `prompt loader error` | `packages/shared/prompt/src/prompt_loader.rs` |
 | `SK_TOML_PARSE_FAILED` | `TOML parse failed: {}` | `packages/shared/prompt/src/prompt_loader.rs` |
 
 ### 執行時期（`RT_*`）
+
 | 代碼 | 訊息模式 | 來源 |
-|------|----------------|--------|
+| --- | --- | --- |
 | `RT_ARC_UNWRAP_DOMAIN` | `Arc::try_unwrap failed for llm_domain/agent_domain` | `scepter/src/state_machine/mod.rs` |
 | `RT_UNDO_NO_ACTIVE_SKILL` | `active_streaming_skill is None, defaulting to HubRis` | `scepter/src/state_machine/mod.rs` |
 

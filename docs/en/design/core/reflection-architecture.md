@@ -19,8 +19,8 @@ produces output, the orchestrator checks structural correctness (did it call
 no phase where the system asks:
 
 1. *Was this step's reasoning sound?* (semantic reflection)
-2. *Given what just happened, should we change direction?* (adaptive reflection)
-3. *What should we remember for next time?* (lesson sedimentation)
+1. *Given what just happened, should we change direction?* (adaptive reflection)
+1. *What should we remember for next time?* (lesson sedimentation)
 
 The existing mechanisms — verify nudges, post-surgery rollback, YOLO daily audits —
 are all **reactive and binary**: they detect technical failures, not reasoning
@@ -31,28 +31,33 @@ reviews the final output.
 ## Design Principles
 
 1. **Reflection is a pipeline phase, not an afterthought hook.** It gets its own
-   slot between output validation and report dispatch — the same structural
-   weight as every other phase.
 
-2. **Three tiers, three costs.** Not every step deserves deep philosophical
-   critique. The system must automatically select the appropriate reflection
-   depth based on what just happened.
+slot between output validation and report dispatch — the same structural
+weight as every other phase.
 
-3. **OreXis is the reflection agent.** Its existing design — the questioning
-   Titan, the one that pushes uncertainty to the operator — maps perfectly onto
-   the reflection role. No new agent needed.
+1. **Three tiers, three costs.** Not every step deserves deep philosophical
 
-4. **Lessons must flow forward.** A reflection that doesn't change future
-   behavior is just a diary. The lesson store must feed back into context
-   preparation so that the next chain benefits from the last chain's mistakes.
+critique. The system must automatically select the appropriate reflection
+depth based on what just happened.
 
-5. **Self-triggered reflection is a first-class tool.** Any agent should be able
-   to request a reflection cycle from within its IEPL script, not just wait for
-   the orchestrator to schedule one.
+1. **OreXis is the reflection agent.** Its existing design — the questioning
+
+Titan, the one that pushes uncertainty to the operator — maps perfectly onto
+the reflection role. No new agent needed.
+
+1. **Lessons must flow forward.** A reflection that doesn't change future
+
+behavior is just a diary. The lesson store must feed back into context
+preparation so that the next chain benefits from the last chain's mistakes.
+
+1. **Self-triggered reflection is a first-class tool.** Any agent should be able
+
+to request a reflection cycle from within its IEPL script, not just wait for
+the orchestrator to schedule one.
 
 ## Three-Tier Reflection System
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────┐
 │                    SKILL CHAIN PIPELINE                          │
 │                                                                  │
@@ -110,15 +115,19 @@ reviews the final output.
 goal? Is the reasoning chain internally consistent?"
 
 **When**: Triggered by:
+
 - Tier 0 escalation (`NeedsTier1`)
 - Skills explicitly marked as `requires_reflection` in their skill definition
 - Skills at chain decision points (after `task_decompose`, `plan_execute`,
-  `workplan_generate`)
+
+`workplan_generate`)
+
 - First occurrence of a skill in a chain (novelty trigger)
 - Self-triggered by any agent via `orexis::request_reflection` tool
 
 **How**: OreXis agent invoked with a reflection-specific skill prompt. The prompt
 includes:
+
 - The skill's stated goal
 - The skill's output
 - The execution trace summary (tool calls made, their results)
@@ -136,12 +145,14 @@ includes:
 approach correct? What assumptions were wrong? What should we learn?"
 
 **When**: Triggered by:
+
 - Tier 1 escalation (`NeedsTier2`)
 - Chain completion (success or failure) — runs as a post-chain hook
 - Operator-configured periodicity (e.g., every N chains)
 - YOLO Strategic tier
 
 **How**: OreXis agent with `deep_critique` skill. Reviews:
+
 - The full chain trace (all skills, all outputs, all tool calls)
 - The original goal vs. achieved outcome
 - Historical lessons from the lesson store (for pattern matching)
@@ -149,6 +160,7 @@ approach correct? What assumptions were wrong? What should we learn?"
 **Cost**: 1-2 LLM calls (~1000-5000 output tokens).
 
 **Verdict**: Produces a `DeepCritiqueReport` containing:
+
 - Root-cause analysis (if chain failed)
 - Assumption audit (which assumptions were valid, which weren't)
 - Lesson candidates (to be written to lesson store)
@@ -287,9 +299,9 @@ agent until the reflection completes.
 
 ### 4. Post-Chain Deep Critique Hook
 
-Register a new pipeline hook in the surgery_hooks namespace:
+Register a new pipeline hook in the `surgery_hooks` namespace:
 
-```
+```text
 pipeline.reflection.post_chain  (priority 30, after PostSurgeryRollback)
 ```
 
@@ -298,7 +310,7 @@ lessons that benefit future chains.
 
 ## Lesson Lifecycle
 
-```
+```text
 ┌─────────────┐     ┌──────────────┐     ┌───────────────┐
 │  Created    │────▶│  Applied     │────▶│  Evaluated    │
 │  (Tier 2)   │     │  (injected   │     │  (did it help?│
@@ -316,6 +328,7 @@ lessons that benefit future chains.
 ```
 
 Lessons are living artifacts:
+
 - **Reinforced** when applying them correlates with successful outcomes
 - **Adjusted** when the lesson text needs refinement based on new evidence
 - **Deprecated** when they consistently fail to help or become irrelevant
@@ -323,7 +336,7 @@ Lessons are living artifacts:
 ## Cost Management
 
 | Tier | Token Cost | Frequency | Daily Token Budget |
-|------|-----------|-----------|-------------------|
+| --- | --- | --- | --- |
 | Heuristic | 0 | Every skill | 0 |
 | Semantic | ~2K tokens | Decision points (~30% of skills) | ~20K tokens/chain |
 | Deep | ~5K tokens | Per chain + escalations | ~5K-10K tokens/chain |
@@ -349,7 +362,7 @@ REFLECTION_BACKTRACK_MAX=2                       # max backtracks per chain
 ## Relationship to Existing Systems
 
 | Existing System | Relationship |
-|----------------|-------------|
+| --- | --- |
 | `validate_report_capture()` | Subsumed by Tier 0 as one heuristic among many |
 | Verify nudge | Becomes a Tier 0 heuristic that can escalate to Tier 1 |
 | `PostSurgeryRollback` | Remains as-is; reflection runs before it, not replacing it |
@@ -366,8 +379,13 @@ The reflection system's internal components follow the existing Greek
 philosophical naming convention:
 
 - **OreXis** (ὄρεξις, "desire/yearning") — already the questioning agent.
-  Its desire is to know whether things are *right*, not just *done*.
+
+Its desire is to know whether things are *right*, not just *done*.
+
 - **Lesson** — consistent with the existing `quality_score` / `lesson` field
-  names in `TaskState`.
-- **ReflectionResult** — functional naming, matching `ReportCaptureDecision`
-  and other pipeline types.
+
+names in `TaskState`.
+
+- **`ReflectionResult`** — functional naming, matching `ReportCaptureDecision`
+
+and other pipeline types.

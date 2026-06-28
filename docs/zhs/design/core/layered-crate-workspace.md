@@ -16,22 +16,22 @@ subcategory = "core"
 Entelecheia 最初采用单体 `packages/shared` crate（38K 行，187 个 `.rs` 文件），包含所有共享基础设施：类型、MCP 协议、LLM 提供商、容器管理、数据库、安全、配置等。随着项目增长到 12 个 Agent + 1 个领域 Agent + 3 个二进制包，出现了若干问题：
 
 1. **编译时间**：对 `shared` 的任何修改都需要重新编译所有 187 个文件，即使只修改了一个结构体。
-2. **依赖污染**：只需要 MCP 类型的 Agent crate 被迫传递依赖数据库驱动、容器运行时和 LLM 提供商。
-3. **所有权不明确**：单个 crate 中的 187 个文件使得哪个模块"拥有"哪个功能不清晰，重构风险高。
-4. **feature flag 爆炸**：使用 Cargo features 进行条件编译以避免引入不必要的依赖，但这导致测试配置的组合爆炸。
+1. **依赖污染**：只需要 MCP 类型的 Agent crate 被迫传递依赖数据库驱动、容器运行时和 LLM 提供商。
+1. **所有权不明确**：单个 crate 中的 187 个文件使得哪个模块"拥有"哪个功能不清晰，重构风险高。
+1. **feature flag 爆炸**：使用 Cargo features 进行条件编译以避免引入不必要的依赖，但这导致测试配置的组合爆炸。
 
 ## 决策
 
 将单体 `packages/shared` 分解为 **37 个专注的子 crate**，组织在 **6 个依赖层级**（L0 到 L5）中，遵循严格的依赖方向：
 
-```
+```text
 L0（叶子） → L1 → L2 → L3 → L4 → L5 → 消费者（scepter, agents, tui）
 ```
 
 **层级定义：**
 
 | 层级 | Crate | 规则 |
-|-------|--------|------|
+| --- | --- | --- |
 | **L0** | core, logging, macros | 不依赖任何其他 entelecheia crate |
 | **L1** | domain_enums, mcp_types, text, concurrent | 仅依赖 L0 |
 | **L2** | config, agent_registry, state_types | 依赖 L0-L1 |

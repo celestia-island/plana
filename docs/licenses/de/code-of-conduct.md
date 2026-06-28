@@ -72,14 +72,14 @@ Die Leitenden der Gemeinschaft werden bei der Bestimmung der Konsequenzen für j
 
 ## Namensnennung
 
-Dieser Verhaltenskodex ist angelehnt an den [Contributor Covenant][homepage], Version 2.1, verfügbar unter [https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1].
+Dieser Verhaltenskodex ist angelehnt an den [Contributor Covenant][homepage], Version 2.1, verfügbar unter [https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1].
 
 Die Leitfäden zu Auswirkungen auf die Gemeinschaft wurden von [Mozillas Durchsetzungsleiter für den Verhaltenskodex][mozilla-coc] inspiriert.
 
 Antworten auf häufige Fragen zu diesem Verhaltenskodex finden Sie in den FAQ unter [https://www.contributor-covenant.org/faq][faq]. Übersetzungen sind verfügbar unter [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

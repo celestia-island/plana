@@ -28,7 +28,7 @@ subcategory = "core"
 
 著者メールは単一の信頼名前空間 — `celestia.world` — を使用し、ローカル部分が**誰がモデルを提供したか**をエンコードします：
 
-```
+```text
 Display Name <provider-or-platform-id@celestia.world>
 ```
 
@@ -39,7 +39,7 @@ Display Name <provider-or-platform-id@celestia.world>
 
 これは、異なる経路を通じて到達した*同じ*モデルが区別可能であることを意味します：
 
-```
+```text
 GLM 5 <zhipuai.cn@celestia.world>              # Zhipu AIから直接
 GLM 5 <jdcloud.com@celestia.world>           # JD Cloud経由で提供されたGLM 5
 Deepseek V4 Pro <deepseek.com@celestia.world> # DeepSeekから直接
@@ -58,13 +58,14 @@ Deepseek V4 Pro <opencode.ai@celestia.world>  # opencode経由で提供された
 
 コミットを生成した思考チェーン全体が**YOLOクルーズコントロール**（自律的反復）の下で実行された場合、追加の共著者が先頭に追加されます：
 
-```
+```text
 Co-authored-by: Entelecheia <demiurge@celestia.world>
 ```
 
 YOLOモードは以下のいずれかから検出されます：
+
 1. セッションチャットログに`YOLO cruise control` / `YOLO auto`マーカーが含まれている、または
-2. `/run/entelecheia/yolo_active`センチネルファイルの存在。
+1. `/run/entelecheia/yolo_active`センチネルファイルの存在。
 
 これにより、人間は「このコミットは人間がループ内にいない状態で行われた」ことをすぐに確認できます。
 
@@ -72,19 +73,20 @@ YOLOモードは以下のいずれかから検出されます：
 
 各モデルの表示名内に`Co-authored-by`トレーラーに埋め込まれます（GitHubが正しく解析する1つのトレーラーブロック）：
 
-```
+```text
 Co-authored-by: Claude Opus 4.8 (↑ 12.5k ↓ 8.3k ●45.2k) <anthropic.com@celestia.world>
 Co-authored-by: Deepseek V4 Pro (↑ 5.1k ↓ 3.2k) <deepseek.com@celestia.world>
 ```
 
 ルール：
+
 - 使用量は`(↑ upload ↓ download)`としてインライン埋め込みされ、キャッシュされた入力トークンが報告され0より大きい場合のみ`●cache`が追加されます。
 - `↑` = プロンプト/入力トークン; `↓` = 補完/出力トークン。
 - カウントは千単位（`k`）、小数点以下1桁、末尾のゼロは切り捨てられます。
 
 ## 完全なコミットメッセージの例
 
-```
+```python
 fix(auto_fix): raise clippy/check timeouts from 180s to 300s
 
 The previous 180s timeout was too tight for clean builds on a loaded
@@ -118,9 +120,9 @@ noa co-author resolve [--repo <path>] [--chat-log-dir <dir>]
 リゾルバは：
 
 1. プロバイダマップをロード：組み込みレジストリと`aporia.toml`プロバイダ設定をマージ（正確なmodel→endpoint→providerマッピングを提供）。
-2. 最新のentelecheiaチャットログを読み取り、モデルごとのトークン使用量を集計。`--lookback-secs 0`（デフォルト）では最新のログのみが使用されます。
-3. YOLOモードを検出（チャットログマーカーまたはセンチネルファイル）。
-4. 共著者リスト（YOLOの場合は`Entelecheia`権限が最初、次にモデル）とトークン使用量ブロックを構築し、トレーラーブロックをstdoutに出力します。
+1. 最新のentelecheiaチャットログを読み取り、モデルごとのトークン使用量を集計。`--lookback-secs 0`（デフォルト）では最新のログのみが使用されます。
+1. YOLOモードを検出（チャットログマーカーまたはセンチネルファイル）。
+1. 共著者リスト（YOLOの場合は`Entelecheia`権限が最初、次にモデル）とトークン使用量ブロックを構築し、トレーラーブロックをstdoutに出力します。
 
 ## データフロー
 

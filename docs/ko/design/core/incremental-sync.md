@@ -70,7 +70,7 @@ flowchart TB
 ## 동기화 전략 매트릭스
 
 | 패널 | 동기화 방식 | 트리거 | 빈도 | 메시지 유형 |
-|-------|-------------|---------|-----------|---------------|
+| --- | --- | --- | --- | --- |
 | **에이전트 타임라인** | 증분 + 전체 | 연결 시 동기화 + 실시간 푸시 | 연결 시 / 실시간 | `AgentPatch` / `GlobalSnapshot` |
 | **컨테이너** | 증분 + 전체 | 연결 시 동기화 + 실시간 푸시 | 연결 시 / 실시간 | `ContainerPatch` / `GlobalSnapshot` |
 | **태스크** | 증분 + 전체 | 연결 시 동기화 + 실시간 푸시 | 연결 시 / 실시간 | `TaskPatch` / `GlobalSnapshot` |
@@ -172,6 +172,7 @@ sequenceDiagram
 ## 데이터 구조
 
 ### AgentPatch (증분 업데이트)
+
 ```rust
 pub struct AgentPatch {
     pub agent_id: String,
@@ -188,6 +189,7 @@ pub struct AgentPatch {
 ```
 
 ### AgentSnapshot (전체 스냅샷)
+
 ```rust
 pub struct AgentSnapshot {
     pub version: u64,
@@ -197,6 +199,7 @@ pub struct AgentSnapshot {
 ```
 
 ### GlobalSnapshot (전역 스냅샷)
+
 ```rust
 pub struct GlobalSnapshot {
     pub version: u64,
@@ -209,6 +212,7 @@ pub struct GlobalSnapshot {
 ```
 
 ### ModelsSnapshot (모델 목록)
+
 ```rust
 pub struct ModelsSnapshot {
     pub models: Vec<ModelInfo>,
@@ -216,6 +220,7 @@ pub struct ModelsSnapshot {
 ```
 
 ### ContainerPatch (컨테이너 상태 증분)
+
 ```rust
 pub struct ContainerPatch {
     pub container_id: String,
@@ -227,6 +232,7 @@ pub struct ContainerPatch {
 ```
 
 ### ContainerSnapshot (컨테이너 상태 전체)
+
 ```rust
 pub struct ContainerSnapshot {
     pub version: u64,
@@ -236,6 +242,7 @@ pub struct ContainerSnapshot {
 ```
 
 ### TaskPatch (태스크 상태 증분)
+
 ```rust
 pub struct TaskPatch {
     pub task_id: Uuid,
@@ -246,6 +253,7 @@ pub struct TaskPatch {
 ```
 
 ### TasksSnapshot (태스크 상태 전체)
+
 ```rust
 pub struct TasksSnapshot {
     pub version: u64,
@@ -257,7 +265,7 @@ pub struct TasksSnapshot {
 ## 동기화 전략
 
 | 유형 | 방향 | 트리거 | 빈도 |
-|------|-----------|---------|-----------|
+| --- | --- | --- | --- |
 | 에이전트 증분 업데이트 | 서버 → 클라이언트 | 상태 변경 | 실시간 |
 | 에이전트 전체 동기화 | 서버 → 클라이언트 | 연결 시 | 연결 / 재연결 시 |
 | 컨테이너 증분 | 서버 → 클라이언트 | 상태 변경 | 실시간 |

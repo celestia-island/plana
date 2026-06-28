@@ -35,7 +35,7 @@ Docker 이벤트 스트림에서 `container` 필터는 `health_status` 이벤트
 
 ## 폴링 전략
 
-```
+```text
 while true:
     sleep 1s
     state = docker.inspect_container(PG)
@@ -86,7 +86,7 @@ pg18은 데이터 디렉터리를 `/var/lib/postgresql/data`에서 `/var/lib/pos
 
 데이터베이스 마이그레이션은 독립적인 5회 재시도 로직을 갖는다:
 
-```
+```text
 for retry in 0..5:
     execute docker run --rm ... shittim_chest db-migrate
     if success: break

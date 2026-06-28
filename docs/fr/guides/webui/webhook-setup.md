@@ -15,11 +15,11 @@ subcategory = "webui"
 
 Les webhooks permettent aux services externes (GitHub, GitLab, Gitee) d'envoyer des événements en temps réel à shittim-chest. Les événements sont validés, analysés et transférés à scepter qui les distribue à l'agent approprié.
 
-```
+```text
 Service Externe → shittim_chest → scepter → Agent
 ```
 
-shittim_chest prend également en charge les points de terminaison webhook personnalisés pour les services non supportés nativement.
+`shittim_chest` prend également en charge les points de terminaison webhook personnalisés pour les services non supportés nativement.
 
 ## Configuration du Webhook GitHub
 
@@ -41,12 +41,12 @@ openssl rand -hex 32
 ### Étape 2 : Créer le Webhook dans GitHub
 
 1. Accédez à votre dépôt → **Settings** → **Webhooks** → **Add webhook**
-2. Définissez **Payload URL** sur `https://votre-domaine.com/api/webhook/github`
-3. Définissez **Content type** sur `application/json`
-4. Définissez **Secret** sur la même valeur que `WEBHOOK_GITHUB_SECRET`
-5. Sélectionnez les événements : `push`, `pull_request`, `issues`, `issue_comment`
-6. Assurez-vous que **Active** est coché
-7. Cliquez sur **Add webhook**
+1. Définissez **Payload URL** sur `https://votre-domaine.com/api/webhook/github`
+1. Définissez **Content type** sur `application/json`
+1. Définissez **Secret** sur la même valeur que `WEBHOOK_GITHUB_SECRET`
+1. Sélectionnez les événements : `push`, `pull_request`, `issues`, `issue_comment`
+1. Assurez-vous que **Active** est coché
+1. Cliquez sur **Add webhook**
 
 ### Étape 3 : Vérifier
 
@@ -63,11 +63,11 @@ WEBHOOK_GITLAB_SECRET=votre-token-secret-gitlab
 ### Étape 2 : Créer le Webhook dans GitLab
 
 1. Accédez à votre projet → **Settings** → **Webhooks**
-2. Définissez **URL** sur `https://votre-domaine.com/api/webhook/gitlab`
-3. Définissez **Secret token** sur la même valeur que `WEBHOOK_GITLAB_SECRET`
-4. Sélectionnez les déclencheurs : `Push events`, `Merge request events`, `Issue events`
-5. Assurez-vous que **Enable SSL verification** est coché (pour HTTPS)
-6. Cliquez sur **Add webhook**
+1. Définissez **URL** sur `https://votre-domaine.com/api/webhook/gitlab`
+1. Définissez **Secret token** sur la même valeur que `WEBHOOK_GITLAB_SECRET`
+1. Sélectionnez les déclencheurs : `Push events`, `Merge request events`, `Issue events`
+1. Assurez-vous que **Enable SSL verification** est coché (pour HTTPS)
+1. Cliquez sur **Add webhook**
 
 ### Étape 3 : Vérifier
 
@@ -84,28 +84,28 @@ Gitee utilise le même `WEBHOOK_GITLAB_SECRET` pour la validation HMAC (avec tok
 ### Étape 2 : Créer le Webhook dans Gitee
 
 1. Accédez à votre dépôt → **Management** → **Webhooks**
-2. Définissez **URL** sur `https://votre-domaine.com/api/webhook/gitee`
-3. Définissez **Password/Signing Key** sur le même secret
-4. Sélectionnez les événements : `Push`, `Pull Request`, `Issues`
-5. Cliquez sur **Add**
+1. Définissez **URL** sur `https://votre-domaine.com/api/webhook/gitee`
+1. Définissez **Password/Signing Key** sur le même secret
+1. Sélectionnez les événements : `Push`, `Pull Request`, `Issues`
+1. Cliquez sur **Add**
 
 ## Webhooks Personnalisés
 
-shittim_chest prend en charge un point de terminaison webhook personnalisé générique à `/api/webhook/custom/{name}`. Pour ajouter une source webhook personnalisée :
+`shittim_chest` prend en charge un point de terminaison webhook personnalisé générique à `/api/webhook/custom/{name}`. Pour ajouter une source webhook personnalisée :
 
 1. Définissez `WEBHOOK_PUBLIC_URL` dans `.env`
-2. Configurez votre service externe pour POSTer vers `https://votre-domaine.com/api/webhook/custom/{name}`
-3. Les événements sont transférés à scepter avec le nom du webhook comme source d'événement
+1. Configurez votre service externe pour POSTer vers `https://votre-domaine.com/api/webhook/custom/{name}`
+1. Les événements sont transférés à scepter avec le nom du webhook comme source d'événement
 
 Pour intégrer de nouveaux fournisseurs de webhook au niveau du code :
 
 1. Ajoutez un gestionnaire dans `packages/core/src/webhook.rs`
-2. Implémentez la validation HMAC ou token pour le nouveau fournisseur
-3. Analysez le format d'événement personnalisé et transférez à scepter via socket Unix
+1. Implémentez la validation HMAC ou token pour le nouveau fournisseur
+1. Analysez le format d'événement personnalisé et transférez à scepter via socket Unix
 
 ## Liste Blanche IP
 
-shittim_chest prend en charge la liste blanche IP pour les sources de webhook afin de rejeter les requêtes d'origines inconnues :
+`shittim_chest` prend en charge la liste blanche IP pour les sources de webhook afin de rejeter les requêtes d'origines inconnues :
 
 ```bash
 # .env
@@ -119,7 +119,7 @@ Configurez les plages CIDR pour chaque fournisseur de webhook. Les requêtes pro
 Événements supportés et leur correspondance vers les déclencheurs scepter :
 
 | Source | Événement | `event_type` scepter |
-|--------|-------|---------------------|
+| --- | --- | --- |
 | GitHub | `push` | `github.push` |
 | GitHub | `pull_request` | `github.pull_request` |
 | GitHub | `issues` | `github.issues` |
@@ -133,7 +133,7 @@ Configurez les plages CIDR pour chaque fournisseur de webhook. Les requêtes pro
 
 ## Journal de Livraison
 
-shittim_chest maintient un journal de livraison des événements webhook. Les livraisons en double sont détectées à l'aide d'un cache LRU (jusqu'à 10 000 IDs de livraison). Accédez aux journaux de livraison via :
+`shittim_chest` maintient un journal de livraison des événements webhook. Les livraisons en double sont détectées à l'aide d'un cache LRU (jusqu'à 10 000 IDs de livraison). Accédez aux journaux de livraison via :
 
 - **API REST** : `GET /api/webhook/deliveries`
 - Panneau d'administration : **Webhooks** → **Delivery Log**
@@ -153,9 +153,9 @@ Les requêtes sans signatures valides sont rejetées avec `401 Unauthorized`. N'
 Utilisez le panneau d'administration pour tester l'intégration webhook :
 
 1. Connectez-vous au panneau d'administration (`:3000` par défaut)
-2. Accédez à **Webhooks** dans la barre latérale
-3. Consultez les journaux de livraison et la configuration
-4. Testez les points de terminaison via la fonctionnalité de test du service externe
+1. Accédez à **Webhooks** dans la barre latérale
+1. Consultez les journaux de livraison et la configuration
+1. Testez les points de terminaison via la fonctionnalité de test du service externe
 
 Vous pouvez également tester manuellement avec curl :
 
@@ -185,5 +185,5 @@ curl -X POST https://votre-domaine.com/api/webhook/github \
 
 ### Livraisons en double
 
-**Cause** : Le service externe réessaie en raison d'un timeout. shittim_chest détecte automatiquement les doublons via le cache LRU.
-**Correctif** : Si des réessais valides sont bloqués, augmentez la taille du cache d'IDs de livraison. Assurez-vous que shittim_chest répond dans la fenêtre de timeout du service (GitHub : 10 secondes).
+**Cause** : Le service externe réessaie en raison d'un timeout. `shittim_chest` détecte automatiquement les doublons via le cache LRU.
+**Correctif** : Si des réessais valides sont bloqués, augmentez la taille du cache d'IDs de livraison. Assurez-vous que `shittim_chest` répond dans la fenêtre de timeout du service (GitHub : 10 secondes).

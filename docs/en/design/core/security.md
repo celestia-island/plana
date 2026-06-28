@@ -17,7 +17,7 @@ Entelecheia implements a **defense-in-depth security architecture** spanning 14 
 ## Security Layer Index
 
 | # | Layer | Crate(s) | Threat Mitigated |
-|---|-------|----------|-----------------|
+| --- | --- | --- | --- |
 | 1 | Exec-Only Microkernel | `scepter`, `mcp_types` | Unrestricted tool access by LLM |
 | 2 | Dual-Authorization Permission Gate | `security_policy` | Unauthorized MCP tool invocation |
 | 3 | Trust-Level Skill Authorization | `domain_skills_permissions` | Privilege escalation via skill chaining |
@@ -37,13 +37,13 @@ Entelecheia implements a **defense-in-depth security architecture** spanning 14 
 
 ## Layer 1: Exec-Only Microkernel
 
-**Crates:** `scepter`, `mcp_types`  
+**Crates:** `scepter`, `mcp_types`
 **Design Philosophy:** Minimize LLM attack surface
 
 The LLM operates in an **exec-only sandbox** where it can invoke only three primitive operations:
 
 | Tool | Purpose | Parameters |
-|------|---------|------------|
+| --- | --- | --- |
 | `exec` | Execute a script string | JavaScript code (transpiled from TypeScript via IEPL) |
 | `write_to_var` | Store a string value | Variable name + value |
 | `write_to_var_json` | Store a JSON value | Variable name + JSON value |
@@ -76,10 +76,11 @@ pub enum PermissionLevel {
 ```
 
 **Authorization flow:**
+
 1. Skill declares: "I need `System` access to `ssh_exec`"
-2. Tool declares: "I require `System` permission"
-3. Permission gate checks: `skill_level >= tool_requirement` AND `skill is explicitly granted this tool`
-4. If either check fails: call is blocked, logged, and reported to OreXis sentinel
+1. Tool declares: "I require `System` permission"
+1. Permission gate checks: `skill_level >= tool_requirement` AND `skill is explicitly granted this tool`
+1. If either check fails: call is blocked, logged, and reported to OreXis sentinel
 
 **Implementation:** `packages/shared/security_policy/src/` — 107 test annotations, 4 tokio tests.
 
@@ -92,7 +93,7 @@ pub enum PermissionLevel {
 Skills are classified into **trust levels** that determine their default permission scope:
 
 | Trust Level | Description | Default Permissions |
-|-------------|-------------|---------------------|
+| --- | --- | --- |
 | `Builtin` | Ships with the platform | Full tool access |
 | `Verified` | Reviewed and signed by maintainers | Read + Write |
 | `Community` | Submitted by users | Read only |
@@ -107,6 +108,7 @@ Each skill's trust level is verified at load time and cached. Attempts to escala
 **Crate:** `container` (5,742 lines)
 
 Every agent execution occurs inside a **Docker or Podman container** with:
+
 - Network namespace isolation
 - Read-only root filesystem (except workspace mount)
 - Seccomp profile restricting syscalls
@@ -162,6 +164,7 @@ Role-based access control governing all API operations:
 **Crate:** `aporia` (5,802 lines)
 
 All LLM provider API keys are encrypted at rest using **AES-256-GCM** with:
+
 - Unique nonce per encryption operation
 - Key derived from a master secret (environment-configured)
 - Zeroization of plaintext keys from memory after use
@@ -174,6 +177,7 @@ All LLM provider API keys are encrypted at rest using **AES-256-GCM** with:
 **Crate:** `orexis` (5,239 lines) — the "immune system" agent
 
 OreXis is a Layer-1 Agent that:
+
 - **Audits code** for security vulnerabilities and license compliance
 - **Inspects tool calls** against registered security policies
 - **Blocks/unblocks** any agent's tools by pattern
@@ -190,10 +194,10 @@ MCP tools (24): `standard_check`, `compliance_report`, `audit_alignment`, `audit
 The **Entelecheia Plugin Language** (IEPL) pipeline ensures type safety between LLM-generated code and native tool dispatch:
 
 1. LLM generates TypeScript code using ES module imports
-2. **SWC** transpiles TypeScript → JavaScript (syntax validation)
-3. **Boa engine** executes JavaScript in a sandboxed context
-4. ES module imports are resolved to `__native_dispatch` calls
-5. Each dispatch is routed through `McpRouter` with full type checking
+1. **SWC** transpiles TypeScript → JavaScript (syntax validation)
+1. **Boa engine** executes JavaScript in a sandboxed context
+1. ES module imports are resolved to `__native_dispatch` calls
+1. Each dispatch is routed through `McpRouter` with full type checking
 
 **Threat mitigated:** Injection attacks via untyped tool calls (common in Python-based agent frameworks where tool schemas are validated only at runtime).
 
@@ -205,7 +209,7 @@ The **Entelecheia Plugin Language** (IEPL) pipeline ensures type safety between 
 
 Entelecheia maintains a **hardcoded whitelist** of trusted package registries across 15 ecosystems:
 
-crates.io, PyPI, npm, Go modules, Docker Hub, Maven Central, NuGet, RubyGems, Hackage, Alpine APK, Debian APT, GitHub, GitLab, HuggingFace, PyTorch.
+crates.io, PyPI, npm, Go modules, Docker Hub, Maven Central, NuGet, RubyGems, Hackage, Alpine APK, Debian APT, GitHub, GitLab, `HuggingFace`, PyTorch.
 
 Any package import from a non-whitelisted registry is **blocked at the container level** before execution.
 
@@ -216,6 +220,7 @@ Any package import from a non-whitelisted registry is **blocked at the container
 **Mechanism:** IEPL sandbox boundary
 
 The LLM's `exec` output is executed in an **isolated Boa JS context** with no access to:
+
 - The host filesystem
 - Network sockets
 - Environment variables
@@ -230,6 +235,7 @@ Tool outputs returned to the LLM are **sanitized** — binary data is base64-enc
 **Module:** shittim-chest `channel/rate_limit.rs` (118 lines)
 
 Per-user, per-channel rate limiting using the **GCRA (Generic Cell Rate Algorithm)**:
+
 - Configurable burst size and sustained rate
 - Per-user DashMap for O(1) lookup
 - Automatic backoff on limit exceeded
@@ -242,17 +248,18 @@ Per-user, per-channel rate limiting using the **GCRA (Generic Cell Rate Algorith
 **Crates:** `orexis`, `timeline` (3,096 lines)
 
 Every tool invocation, agent decision, and security event is:
+
 1. Recorded in the **timeline** with full context (agent badge, skill name, parameters, result)
-2. Hash-linked to previous events for tamper detection
-3. Persisted to PostgreSQL with configurable retention
-4. Queryable via the CLI (`entelecheia-cli trace-chain <badge>`)
+1. Hash-linked to previous events for tamper detection
+1. Persisted to PostgreSQL with configurable retention
+1. Queryable via the CLI (`entelecheia-cli trace-chain <badge>`)
 
 ---
 
 ## Security Comparison with Other Frameworks
 
 | Feature | Entelecheia | OpenFANG | LangChain | Claude Code |
-|---------|:-----------:|:--------:|:---------:|:-----------:|
+| --- |  ---  |  ---  |  ---  |  ---  |
 | LLM-visible tools | **3 (exec-only)** | 53 (all visible) | All visible | 33 (all visible) |
 | Container isolation | **Dual-layer** (Docker + Youki) | WASM only | None | OS-level (Seatbelt/Landlock) |
 | Tool permission model | **Dual-authorization** | RBAC | None | None |
@@ -266,12 +273,14 @@ Every tool invocation, agent decision, and security event is:
 ## Threat Model
 
 ### Out of Scope
+
 - Physical access to host machines
 - Compromised Docker/Podman daemon (assumed trusted)
 - Kernel exploits (mitigated but not prevented by user-space isolation)
 - Supply chain attacks on Rust crate dependencies (partially mitigated by `cargo-deny`)
 
 ### Accepted Risks
+
 - Boa JS engine vulnerabilities (sandboxed within container)
 - LLM provider outages (no fallback execution path)
 - PostgreSQL data corruption (mitigated by backups, not prevented)

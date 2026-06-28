@@ -17,18 +17,27 @@ Arona 定义了在 Entelecheia 平台中共享的 JSON-RPC 2.0 协议类型，
 pull request 之前，请先阅读本部分。
 
 - **高合并门槛，非公开路线图。** 提交 PR 并不意味着它会被合并。
-  我们仅接受有意为之的少量变更，且仅当其符合架构要求并通过审核时
-  才会合并。这是设计使然，并非无礼之举。
+
+我们仅接受有意为之的少量变更，且仅当其符合架构要求并通过审核时
+才会合并。这是设计使然，并非无礼之举。
+
 - **我们欢迎的内容：** 缺陷报告、针对性修复、非破坏性的新增协议
-  字段、改进的文档，以及在编写代码之前进行的设计讨论。
+
+字段、改进的文档，以及在编写代码之前进行的设计讨论。
+
 - **我们通常不会合并的内容：** 未经请求的大规模重写、对协议类型
-  接口的破坏性变更、未经事先设计讨论的架构变更、大量"氛围编码"
-  的 PR，以及任何降低类型契约兼容性标准的内容。
+
+接口的破坏性变更、未经事先设计讨论的架构变更、大量"氛围编码"
+的 PR，以及任何降低类型契约兼容性标准的内容。
+
 - **核心与外围。** 协议类型定义及其序列化接口受到最严格的标准
-  约束，由核心团队维护。
+
+约束，由核心团队维护。
+
 - **需要 CLA。** 所有被接受的贡献都需要签署贡献者许可协议。
-  参见 [`CLA.md`](CLA.md)。提交必须包含 `Signed-off-by` 行
-  （`git commit -s`）。
+
+参见 [`CLA.md`](CLA.md)。提交必须包含 `Signed-off-by` 行
+（`git commit -s`）。
 
 > **许可可能会开放；合并门槛不会。** 在 **2030-01-01**，本项目
 > 将从 BUSL-1.1 转换为 Apache-2.0 或 MIT（接收方自行选择）—— 参见
@@ -61,19 +70,24 @@ cargo clippy -- -D warnings
 
 - Rust 1.85+。
 - 类型派生 `ts-rs`（`#[derive(TS)]`）以生成 TypeScript 绑定——请保持
-  `serde` 属性和 `ts-rs` 注解的一致性。
+
+`serde` 属性和 `ts-rs` 注解的一致性。
+
 - 不要对现有协议类型引入破坏性变更；优先使用带
-  `#[serde(default)]` 的增量字段。
+
+`#[serde(default)]` 的增量字段。
 
 ## Pull Request 流程
 
 1. 从 `main` 分支 fork 并创建新分支。
-2. 先通过 issue 讨论影响广泛或涉及协议的变更。
-3. 制作遵循 [Conventional Commits](https://www.conventionalcommits.org/) 的
-   原子化提交。
-4. 确保 `cargo fmt`、`cargo clippy -D warnings` 和 `cargo test` 全部通过。
-5. 签署 CLA 并在每个提交中添加 `Signed-off-by`。
-6. 回应审核反馈；仅在变基时使用 force-push。
+1. 先通过 issue 讨论影响广泛或涉及协议的变更。
+1. 制作遵循 [Conventional Commits](https://www.conventionalcommits.org/) 的
+
+原子化提交。
+
+1. 确保 `cargo fmt`、`cargo clippy -D warnings` 和 `cargo test` 全部通过。
+1. 签署 CLA 并在每个提交中添加 `Signed-off-by`。
+1. 回应审核反馈；仅在变基时使用 force-push。
 
 ## 许可与 CLA
 

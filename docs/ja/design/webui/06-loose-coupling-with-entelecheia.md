@@ -77,7 +77,7 @@ shittim-chestとscepterは同じ`JWT_SECRET`環境変数を介してJWT署名キ
 
 ### ログインフロー
 
-```
+```text
 ユーザー → shittim_chest: POST /api/auth/login
 shittim_chest: argon2パスワードを検証
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -91,7 +91,7 @@ shittim_chest → ユーザー: トークン
 
 ### HTTPプロキシ
 
-```
+```text
 ブラウザ → shittim_chest:80/api/proxy/chat（ヘッダーにJWT）
 shittim_chest: JWTを検証
 shittim_chest → scepter:8424/api/chat（JWTを転送）
@@ -100,7 +100,7 @@ scepter → エージェント → LLM → scepter → shittim_chest → ブラ�
 
 ### WebSocketプロキシ
 
-```
+```text
 ブラウザ → shittim_chest:80/api/proxy/ws（ヘッダーにJWT）
 shittim_chest: JWTを検証
 shittim_chest ↔ scepter:8424/ws（双方向転送 + JWT）
@@ -110,6 +110,7 @@ shittim_chest ↔ scepter:8424/ws（双方向転送 + JWT）
 ### レート制限と監視
 
 プロキシレイヤーで、shittim-chestは以下を担当します：
+
 - レート制限（ユーザーごと / IPごと）
 - 使用量ログ
 - 接続ライフサイクル管理
@@ -117,7 +118,7 @@ shittim_chest ↔ scepter:8424/ws（双方向転送 + JWT）
 
 ## Webhookパイプライン
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC検証 → イベント解析 → Unixソケット → scepter
 ```
 

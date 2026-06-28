@@ -15,11 +15,11 @@ subcategory = "webui"
 
 Los webhooks permiten que servicios externos (GitHub, GitLab, Gitee) envíen eventos en tiempo real a shittim-chest. Los eventos se validan, parsean y reenvían a scepter, que los despacha al agente apropiado.
 
-```
+```text
 Servicio Externo → shittim_chest → scepter → Agente
 ```
 
-shittim_chest también soporta endpoints de webhook personalizados para servicios no soportados nativamente.
+`shittim_chest` también soporta endpoints de webhook personalizados para servicios no soportados nativamente.
 
 ## Configuración de Webhook de GitHub
 
@@ -41,12 +41,12 @@ openssl rand -hex 32
 ### Paso 2: Crear el Webhook en GitHub
 
 1. Navega a tu repositorio → **Settings** → **Webhooks** → **Add webhook**
-2. Configura **Payload URL** a `https://tu-dominio.com/api/webhook/github`
-3. Configura **Content type** a `application/json`
-4. Configura **Secret** al mismo valor que `WEBHOOK_GITHUB_SECRET`
-5. Selecciona eventos: `push`, `pull_request`, `issues`, `issue_comment`
-6. Asegúrate de que **Active** esté marcado
-7. Haz clic en **Add webhook**
+1. Configura **Payload URL** a `https://tu-dominio.com/api/webhook/github`
+1. Configura **Content type** a `application/json`
+1. Configura **Secret** al mismo valor que `WEBHOOK_GITHUB_SECRET`
+1. Selecciona eventos: `push`, `pull_request`, `issues`, `issue_comment`
+1. Asegúrate de que **Active** esté marcado
+1. Haz clic en **Add webhook**
 
 ### Paso 3: Verificar
 
@@ -63,11 +63,11 @@ WEBHOOK_GITLAB_SECRET=tu-token-secreto-gitlab
 ### Paso 2: Crear el Webhook en GitLab
 
 1. Navega a tu proyecto → **Settings** → **Webhooks**
-2. Configura **URL** a `https://tu-dominio.com/api/webhook/gitlab`
-3. Configura **Secret token** al mismo valor que `WEBHOOK_GITLAB_SECRET`
-4. Selecciona disparadores: `Push events`, `Merge request events`, `Issue events`
-5. Asegúrate de que **Enable SSL verification** esté marcado (para HTTPS)
-6. Haz clic en **Add webhook**
+1. Configura **URL** a `https://tu-dominio.com/api/webhook/gitlab`
+1. Configura **Secret token** al mismo valor que `WEBHOOK_GITLAB_SECRET`
+1. Selecciona disparadores: `Push events`, `Merge request events`, `Issue events`
+1. Asegúrate de que **Enable SSL verification** esté marcado (para HTTPS)
+1. Haz clic en **Add webhook**
 
 ### Paso 3: Verificar
 
@@ -84,28 +84,28 @@ Gitee usa el mismo `WEBHOOK_GITLAB_SECRET` para validación HMAC (con token como
 ### Paso 2: Crear el Webhook en Gitee
 
 1. Navega a tu repositorio → **Management** → **Webhooks**
-2. Configura **URL** a `https://tu-dominio.com/api/webhook/gitee`
-3. Configura **Password/Signing Key** al mismo secreto
-4. Selecciona eventos: `Push`, `Pull Request`, `Issues`
-5. Haz clic en **Add**
+1. Configura **URL** a `https://tu-dominio.com/api/webhook/gitee`
+1. Configura **Password/Signing Key** al mismo secreto
+1. Selecciona eventos: `Push`, `Pull Request`, `Issues`
+1. Haz clic en **Add**
 
 ## Webhooks Personalizados
 
-shittim_chest soporta un endpoint de webhook personalizado genérico en `/api/webhook/custom/{name}`. Para añadir una fuente de webhook personalizada:
+`shittim_chest` soporta un endpoint de webhook personalizado genérico en `/api/webhook/custom/{name}`. Para añadir una fuente de webhook personalizada:
 
 1. Configura `WEBHOOK_PUBLIC_URL` en `.env`
-2. Configura tu servicio externo para hacer POST a `https://tu-dominio.com/api/webhook/custom/{name}`
-3. Los eventos se reenvían a scepter con el nombre del webhook como fuente del evento
+1. Configura tu servicio externo para hacer POST a `https://tu-dominio.com/api/webhook/custom/{name}`
+1. Los eventos se reenvían a scepter con el nombre del webhook como fuente del evento
 
 Para integrar nuevos proveedores de webhook a nivel de código:
 
 1. Añade un manejador en `packages/core/src/webhook.rs`
-2. Implementa validación HMAC o token para el nuevo proveedor
-3. Parsea el formato de evento personalizado y reenvía a scepter mediante socket Unix
+1. Implementa validación HMAC o token para el nuevo proveedor
+1. Parsea el formato de evento personalizado y reenvía a scepter mediante socket Unix
 
 ## Lista Blanca de IPs
 
-shittim_chest soporta listas blancas de IPs para fuentes de webhook para rechazar solicitudes de orígenes desconocidos:
+`shittim_chest` soporta listas blancas de IPs para fuentes de webhook para rechazar solicitudes de orígenes desconocidos:
 
 ```bash
 # .env
@@ -119,7 +119,7 @@ Configura rangos CIDR para cada proveedor de webhook. Las solicitudes desde IPs 
 Eventos soportados y su mapeo a disparadores de scepter:
 
 | Fuente | Evento | `event_type` de scepter |
-|--------|-------|--------------------------|
+| --- | --- | --- |
 | GitHub | `push` | `github.push` |
 | GitHub | `pull_request` | `github.pull_request` |
 | GitHub | `issues` | `github.issues` |
@@ -133,7 +133,7 @@ Eventos soportados y su mapeo a disparadores de scepter:
 
 ## Registro de Entregas
 
-shittim_chest mantiene un registro de entregas de eventos de webhook. Las entregas duplicadas se detectan usando una caché LRU (hasta 10,000 IDs de entrega). Accede a los registros de entrega mediante:
+`shittim_chest` mantiene un registro de entregas de eventos de webhook. Las entregas duplicadas se detectan usando una caché LRU (hasta 10,000 IDs de entrega). Accede a los registros de entrega mediante:
 
 - **API REST**: `GET /api/webhook/deliveries`
 - Panel de administración: **Webhooks** → **Registro de Entregas**
@@ -153,9 +153,9 @@ Las solicitudes sin firmas válidas son rechazadas con `401 Unauthorized`. Nunca
 Usa el panel de administración para probar la integración de webhooks:
 
 1. Inicia sesión en el panel de administración (por defecto `:3000`)
-2. Navega a **Webhooks** en la barra lateral
-3. Visualiza los registros de entrega y la configuración
-4. Prueba los endpoints mediante la funcionalidad de prueba del servicio externo
+1. Navega a **Webhooks** en la barra lateral
+1. Visualiza los registros de entrega y la configuración
+1. Prueba los endpoints mediante la funcionalidad de prueba del servicio externo
 
 También puedes probar manualmente con curl:
 
@@ -185,5 +185,5 @@ curl -X POST https://tu-dominio.com/api/webhook/github \
 
 ### Entregas duplicadas
 
-**Causa**: El servicio externo está reintentando debido a timeout. shittim_chest detecta automáticamente duplicados mediante caché LRU.
-**Solución**: Si los reintentos válidos están siendo bloqueados, aumenta el tamaño de la caché de IDs de entrega. Asegúrate de que shittim_chest responda dentro de la ventana de timeout del servicio (GitHub: 10 segundos).
+**Causa**: El servicio externo está reintentando debido a timeout. `shittim_chest` detecta automáticamente duplicados mediante caché LRU.
+**Solución**: Si los reintentos válidos están siendo bloqueados, aumenta el tamaño de la caché de IDs de entrega. Asegúrate de que `shittim_chest` responda dentro de la ventana de timeout del servicio (GitHub: 10 segundos).

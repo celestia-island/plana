@@ -17,23 +17,32 @@ physiques et industriels, donc **la stabilité et la sécurité priment sur le d
 de contribution**. Veuillez lire ceci avant d'ouvrir une pull request.
 
 - **Barre de fusion élevée, pas une feuille de route publique.** Ouvrir une PR n'implique pas qu'elle sera
-  fusionnée. Nous acceptons un nombre délibérément restreint de modifications, et seulement lorsqu'elles
-  correspondent à l'architecture et passent la revue. C'est par conception, pas par impolitesse.
+
+fusionnée. Nous acceptons un nombre délibérément restreint de modifications, et seulement lorsqu'elles
+correspondent à l'architecture et passent la revue. C'est par conception, pas par impolitesse.
+
 - **Ce que nous accueillons :** rapports de bugs, correctifs ciblés, améliorations bien délimitées de
-  la **périphérie** (plugins IDE, applications Tauri, intégrations de canaux, adaptateurs
-  de fournisseurs et documentation), et discussions de conception préalables avant le code.
+
+la **périphérie** (plugins IDE, applications Tauri, intégrations de canaux, adaptateurs
+de fournisseurs et documentation), et discussions de conception préalables avant le code.
+
 - **Ce que nous ne fusionnerons généralement pas :** réécritures massives non sollicitées,
-  changements architecturaux sans discussion de conception préalable, PR « vibe-codées »
-  en masse, tout ce qui abaisse la barre de sécurité ou de justesse du cœur, et
-  les modifications du cœur critique pour la sécurité (auth, JWT/OAuth, routage LLM, validation
-  webhook, RBAC) sans invitation explicite et revue approfondie.
+
+changements architecturaux sans discussion de conception préalable, PR « vibe-codées »
+en masse, tout ce qui abaisse la barre de sécurité ou de justesse du cœur, et
+les modifications du cœur critique pour la sécurité (auth, JWT/OAuth, routage LLM, validation
+webhook, RBAC) sans invitation explicite et revue approfondie.
+
 - **Cœur vs. périphérie.** Le backend cœur et le modèle auth/RBAC sont tenus à la
-  barre la plus stricte et maintenus principalement par l'équipe cœur. La périphérie
-  (frontends, applications IDE/mobile, connecteurs de canaux) est là où les contributions
-  externes sont les plus utiles et les plus susceptibles d'être acceptées.
+
+barre la plus stricte et maintenus principalement par l'équipe cœur. La périphérie
+(frontends, applications IDE/mobile, connecteurs de canaux) est là où les contributions
+externes sont les plus utiles et les plus susceptibles d'être acceptées.
+
 - **CLA requis.** Chaque contribution acceptée nécessite un Accord de Licence du Contributeur
-  signé. Voir [`CLA.md`](CLA.md). Les commits doivent porter une
-  ligne `Signed-off-by` (`git commit -s`).
+
+signé. Voir [`CLA.md`](CLA.md). Les commits doivent porter une
+ligne `Signed-off-by` (`git commit -s`).
 
 > **La licence peut s'ouvrir ; la barre de fusion ne le fera pas.** Le **2030-01-01** ce
 > projet passe de BUSL-1.1 à la Synthetic Source License (SySL-1.0) — voir
@@ -195,7 +204,7 @@ cargo clippy               # lint
 cargo clippy --fix         # correction automatique
 ```
 
-- Suivre les conventions Rust standard (snake_case pour fonctions/variables, CamelCase pour types)
+- Suivre les conventions Rust standard (`snake_case` pour fonctions/variables, CamelCase pour types)
 - Utiliser `workspace = true` pour les versions de dépendances partagées dans les fichiers `Cargo.toml` des crates
 - Gestion d'erreurs : utiliser `anyhow::Result` pour le code applicatif, `thiserror` pour les types d'erreur des crates bibliothèque
 
@@ -226,10 +235,10 @@ Les fichiers de locale sont organisés en 17 fichiers JSON namespace par langue 
 
 ### Conventions de Nommage
 
-Tous les noms de répertoire sous `packages/` utilisent **snake_case** :
+Tous les noms de répertoire sous `packages/` utilisent **`snake_case`** :
 
 | Type | Convention | Exemple |
-|------|-----------|---------|
+| --- | --- | --- |
 | Répertoire de crate Rust | snake_case | `core/` |
 | Nom de crate Rust | snake_case | `core` |
 
@@ -260,16 +269,16 @@ just clean                 # nettoyer les artefacts de build
 ## Processus de Pull Request
 
 1. Créer une branche de fonctionnalité depuis `dev` : `git checkout -b feat/ma-fonctionnalite dev`
-2. Faire des modifications avec des commits clairs et atomiques
-3. Exécuter `just lint && just test` avant de pousser
-4. Ouvrir une PR contre la branche `dev`
-5. S'assurer que la CI passe (build Rust, build npm, lint)
+1. Faire des modifications avec des commits clairs et atomiques
+1. Exécuter `just lint && just test` avant de pousser
+1. Ouvrir une PR contre la branche `dev`
+1. S'assurer que la CI passe (build Rust, build npm, lint)
 
 ## Convention de Commit
 
 Utiliser [Conventional Commits](https://www.conventionalcommits.org/) :
 
-```
+```text
 feat(auth): ajouter le point de terminaison de connexion par mot de passe
 fix(proxy): gérer la reconnexion WebSocket
 docs(readme): ajouter le logo et les badges

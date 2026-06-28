@@ -17,9 +17,9 @@ HubRis 是一個「純技能代理」— 所有能力都是透過 ApoRia `llm_ch
 ## 目標
 
 1. 技能在前言中宣告路由行為（非硬編碼）。
-2. 通用的技能鏈執行器取代硬編碼的兩階段管線。
-3. 人類審查是第一級路由目標。
-4. 提示語言清理：技能/MCP 扁平檔案僅限英文。
+1. 通用的技能鏈執行器取代硬編碼的兩階段管線。
+1. 人類審查是第一級路由目標。
+1. 提示語言清理：技能/MCP 扁平檔案僅限英文。
 
 ## 技能報告配置（TOML 前言）
 
@@ -31,7 +31,7 @@ next_skill = "workplan_generate"  # 當 target = "next_node" 時為必要
 
 ## HubRis 技能鏈
 
-```
+```text
 task_decompose → workplan_generate → operator → workplan_execute → submit_report → human
 ```
 
@@ -77,7 +77,7 @@ sequenceDiagram
 ## 報告路由目標
 
 | 目標         | 行為                                                        |
-| ------------ | --------------------------------------------------------------- |
+| --- | --- |
 | `next_node`  | 執行器載入 `next_skill` 中命名的技能並執行它。     |
 | `parent`     | 將控制權傳回父編排器（保留用於巢狀鏈）。 |
 | `human`      | 暫停鏈，發送 `HumanReviewRequest` 至 TUI，收到 `HumanReviewResponse` 時恢復。 |
@@ -85,7 +85,7 @@ sequenceDiagram
 
 ## 檔案結構（階段 1）
 
-```
+```text
 res/prompts/agents/hubris/skills/
   task_decompose.md
   workplan_generate.md
@@ -112,6 +112,7 @@ ApoRia `llm_chat` 預設使用該模型，以保持開發和
 ## 失敗後備策略
 
 1. 如果技能失敗：傳回失敗訊息並結束當前鏈。
-2. 如果 ApoRia 離線：傳回 `Agent not ready` 訊息。
-3. 如果人類審查逾時：傳回逾時通知而不阻塞
-   後續聊天。
+1. 如果 ApoRia 離線：傳回 `Agent not ready` 訊息。
+1. 如果人類審查逾時：傳回逾時通知而不阻塞
+
+後續聊天。

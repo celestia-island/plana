@@ -54,7 +54,7 @@ Une Skill est un flux de travail défini par prompt, qui référence les outils 
 ### Niveaux
 
 | Niveau | Signification actuelle |
-|------|----------|
+| --- | --- |
 | Layer1 | Agents principaux compilés et activés dans le workspace |
 | Layer2 | Web Automation, l'Agent de domaine intégré actif, avec quelques conceptions archivées |
 | Layer3 | Agents personnalisés par l'utilisateur (planifié, pas encore implémenté) |

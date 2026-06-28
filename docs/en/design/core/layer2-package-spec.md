@@ -56,6 +56,7 @@ export async function memory_store(params: {
 ```
 
 Tools can be:
+
 - **Pure TS**: Logic-only, composes other tools or transforms data
 - **Backend-backed**: Calls a primitive provided by the MCP Backend
 - **Cloud-backed**: Calls a remote API (RAG, model, external service)
@@ -72,13 +73,19 @@ access, database connections). These are provided by a **binary backend** —
 a Rust binary that runs alongside the scepter process.
 
 - The backend is compiled into the Docker image and carried in scepter's
-  "pocket" (the `/workspace-base/target/` directory).
+
+"pocket" (the `/workspace-base/target/` directory).
+
 - At runtime, scepter dynamically passes the binary path to the IEPL
-  environment via a `backend` module import.
+
+environment via a `backend` module import.
+
 - The backend exposes primitive operations; all composition and orchestration
-  happens in the TS layer.
+
+happens in the TS layer.
 
 Example backend interface (auto-generated from Rust):
+
 ```typescript
 // Auto-generated from Rust backend
 declare module 'backend' {
@@ -120,7 +127,9 @@ agent. Hosted on Entelecheia's cloud infrastructure.
 
 - Optional: an agent can function without RAG (reduced capability).
 - Query-limited: when quota is exhausted, queries return empty — the
-  agent degrades gracefully.
+
+agent degrades gracefully.
+
 - Referenced by URL + API key in the manifest, not bundled in the package.
 
 ### 5. Fine-tuned Model (Optional, Cloud-Hosted)
@@ -217,21 +226,26 @@ list in the manifest. It provides typed wrappers around the binary primitives.
 ## Layer Architecture
 
 | Layer | Agents | Ships How | Package? | Container? |
-|-------|--------|-----------|----------|------------|
+| --- | --- | --- | --- | --- |
 | L1 | SkeMma, HapLotes, HubRis, KaLos, NeiKos, ApoRia, EleOs, EpieiKeia, OreXis, PhiLia, PoleMos, SkoPeo | Built into image | Backend only (Rust crates) | No (in-process) |
 | L2 | ClassicSoftwareEngineering, WebAutomation, WebUiPanel, IndustrialIoT | Built into image | **Full package** (TS + skills + soul) | Yes (e-skemma) |
 | L3 | User-installed extensions | Dynamic install | **Full package** | Yes (e-skemma) |
 
 - **Layer 1** (12 agents): Core platform agents. Their Rust crates provide
-  the primitive operations (file I/O, memory, containers, hardware, etc.).
-  They are NOT packages — they ARE the platform. Their tools are exposed
-  as importable modules (e.g., `import { file_write } from 'kalos'`).
+
+the primitive operations (file I/O, memory, containers, hardware, etc.).
+They are NOT packages — they ARE the platform. Their tools are exposed
+as importable modules (e.g., `import { file_write } from 'kalos'`).
+
 - **Layer 2** (4 agents): The first real packages. They have **no binary
-  backend** — they are pure TS/IEPL compositions of Layer 1 primitives.
-  They ship with the image as examples of the package format.
+
+backend** — they are pure TS/IEPL compositions of Layer 1 primitives.
+They ship with the image as examples of the package format.
+
 - **Layer 3**: User-installed packages. Same format as L2, but loaded
-  dynamically. Can optionally declare a binary backend (compiled by the
-  user, injected via scepter).
+
+dynamically. Can optionally declare a binary backend (compiled by the
+user, injected via scepter).
 
 ## Migration Path
 

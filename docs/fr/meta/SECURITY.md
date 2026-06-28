@@ -36,7 +36,7 @@ Hors périmètre :
 ## Réponse
 
 | Étape | Objectif |
-|-------|--------|
+| --- | --- |
 | Accusé de réception par l'agent | 10 minutes |
 | Accusé de réception humain | 1 jour calendaire |
 | Évaluation initiale | 3 jours calendaires |

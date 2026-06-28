@@ -53,6 +53,7 @@ export async function memory_store(params: {
 ```
 
 工具可分为：
+
 - **纯 TS**：仅逻辑，组合其他工具或转换数据
 - **后端支持**：调用 MCP 后端提供的原语
 - **云端支持**：调用远程 API（RAG、模型、外部服务）
@@ -68,6 +69,7 @@ TypeScript 源码是纯文本——可以版本控制、审查和分发，无需
 - 后端暴露原语操作；所有组合和编排在 TS 层完成。
 
 后端接口示例（从 Rust 自动生成）：
+
 ```typescript
 // 从 Rust 后端自动生成
 declare module 'backend' {
@@ -200,7 +202,7 @@ export function vars_set(key: string, value: unknown): void;
 ## 层级架构
 
 | 层级 | Agent | 分发方式 | 包？ | 容器？ |
-|-------|--------|-----------|----------|------------|
+| --- | --- | --- | --- | --- |
 | L1 | SkeMma, HapLotes, HubRis, KaLos, NeiKos, ApoRia, EleOs, EpieiKeia, OreXis, PhiLia, PoleMos, SkoPeo | 内置在镜像中 | 仅后端（Rust crates） | 否（进程内） |
 | L2 | ClassicSoftwareEngineering, WebAutomation, WebUiPanel, IndustrialIoT | 内置在镜像中 | **完整包**（TS + 技能 + 灵魂） | 是（e-skemma） |
 | L3 | 用户安装的扩展 | 动态安装 | **完整包** | 是（e-skemma） |

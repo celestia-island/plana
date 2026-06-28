@@ -57,7 +57,7 @@ tracing_subscriber::fmt()
 
 El CLI acepta el parámetro `--log-level` / `-l` (por defecto `info`):
 
-```
+```text
 shittim-chest --log-level debug dev
 shittim-chest -l trace status
 ```
@@ -77,10 +77,10 @@ Niveles soportados: `trace`, `debug`, `info`, `warn`, `error`.
 ## Principios de Diseño
 
 1. **El CLI no traga errores**: Todos los errores se propagan hacia arriba mediante `anyhow::Result`; `main()` imprime automáticamente la cadena de error.
-2. **Cada inicio de operación tiene un log**: `creando red...`, `ejecutando migraciones...`, `construyendo shittim_chest...` — el usuario sabe lo que el CLI está haciendo.
-3. **Cada finalización de operación tiene confirmación**: `shittim-chest iniciado en 0.0.0.0:80`, `todos los servicios iniciados`.
-4. **Las operaciones que tienen éxito silenciosamente no se registran**: `ensure_network` no imprime si la red ya existe, para evitar ruido.
-5. **Los logs de contenedores se obtienen mediante la API Docker**: El CLI en sí no escribe logs de negocio, solo logs de operaciones de orquestación.
+1. **Cada inicio de operación tiene un log**: `creando red...`, `ejecutando migraciones...`, `construyendo shittim_chest...` — el usuario sabe lo que el CLI está haciendo.
+1. **Cada finalización de operación tiene confirmación**: `shittim-chest iniciado en 0.0.0.0:80`, `todos los servicios iniciados`.
+1. **Las operaciones que tienen éxito silenciosamente no se registran**: `ensure_network` no imprime si la red ya existe, para evitar ruido.
+1. **Los logs de contenedores se obtienen mediante la API Docker**: El CLI en sí no escribe logs de negocio, solo logs de operaciones de orquestación.
 
 ## Alineación con entelecheia
 

@@ -122,11 +122,13 @@ sequenceDiagram
 Решение о маршрутизации происходит в `mcp_skill_router.rs`:
 
 1. Проверить `agent_manager.get_tool_location(имя_инструмента)`
-2. Если `ToolLocation::Cosmos` и активен контейнеризованный режим:
+1. Если `ToolLocation::Cosmos` и активен контейнеризованный режим:
+
    - Вызвать `agent_manager.invoke_tool()`, который маршрутизирует через `BridgeInvoker` → мост HapLotes → `McpRouter` Cosmos
    - `McpRouter` Cosmos диспетчеризует локально (skemma) или обратно в Scepter через мост для удалённых агентов
    - Вернуть `McpMessage::ToolResponse` напрямую в TUI
-3. Иначе: маршрутизировать через шлюз HapLotes к процессу агента
+
+1. Иначе: маршрутизировать через шлюз HapLotes к процессу агента
 
 ## IV. Архитектура CosmosConnector / Моста
 
@@ -237,7 +239,7 @@ stateDiagram-v2
 
 ### Формат Отображения
 
-В AgentDetailPage TUI строка статистики показывает:
+В `AgentDetailPage` TUI строка статистики показывает:
 
 ```mermaid
 flowchart LR

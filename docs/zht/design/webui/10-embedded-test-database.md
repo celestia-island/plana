@@ -35,7 +35,7 @@ flowchart TD
 ## 關鍵決策
 
 | 決策 | 理由 |
-|----------|-----------|
+| --- | --- |
 | `pglite-oxide` (WASM) 優於 `postgresql_embedded`（原生二進位檔） | 無需約 100 MB 下載、無平台特定 PG 二進位檔、約 96 毫秒啟動 |
 | `pglite-oxide` 優於 `pglite-rust-bindings` | 發布於 crates.io (v0.5.0)、更快的啟動速度、成熟的建置器 API 及擴充功能支援 |
 | `tower::ServiceExt::oneshot` 優於 `reqwest` | 避免 sqlx 連線池背景任務與 hyper HTTP 伺服器之間的 tokio 執行時期死結 |
@@ -70,7 +70,7 @@ pub async fn start_test_server() -> TestServer {
 
 ```rust
 // tests/xxx_tests.rs
-#[test]
+# [test]
 fn xxx_e2e_tests() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -90,6 +90,6 @@ fn xxx_e2e_tests() {
 ## PGlite 限制
 
 1. **單一連線**：`max_connections` 必須為 1。多個連線池連接到同一個 PGlite 實例將會懸掛。
-2. **嚴格的類型轉換**：PGlite 比標準 PostgreSQL 更嚴格。像 `uuid_column = text_value` 這樣的查詢將會失敗——必須始終明確轉換類型。
-3. **不支援並行測試執行器**：所有共享一個 PGlite 實例的非同步測試必須在單一 `#[test]` 函式中循序執行。
-4. **連線池丟棄時懸掛**：`sqlx::PgPool::close()` 可能無限期懸掛。使用 `std::process::exit(0)` 終止測試程序。
+1. **嚴格的類型轉換**：PGlite 比標準 PostgreSQL 更嚴格。像 `uuid_column = text_value` 這樣的查詢將會失敗——必須始終明確轉換類型。
+1. **不支援並行測試執行器**：所有共享一個 PGlite 實例的非同步測試必須在單一 `#[test]` 函式中循序執行。
+1. **連線池丟棄時懸掛**：`sqlx::PgPool::close()` 可能無限期懸掛。使用 `std::process::exit(0)` 終止測試程序。

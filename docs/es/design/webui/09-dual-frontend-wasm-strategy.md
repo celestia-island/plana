@@ -43,9 +43,9 @@ flowchart LR
 La versión Vue 3 no es meramente una implementación temporal; sirve como la **especificación ejecutable** para la migración WASM:
 
 1. **Completitud de características**: Cada característica en la versión WASM debe comportarse idénticamente a la versión Vue 3
-2. **Contrato API**: Ambas versiones usan la misma API REST y protocolo WebSocket
-3. **Consistencia visual**: Ambas versiones renderizan la misma UI en estados idénticos
-4. **Reemplazo progresivo**: Las características de chat y admin de arona pueden migrarse a WASM independientemente
+1. **Contrato API**: Ambas versiones usan la misma API REST y protocolo WebSocket
+1. **Consistencia visual**: Ambas versiones renderizan la misma UI en estados idénticos
+1. **Reemplazo progresivo**: Las características de chat y admin de arona pueden migrarse a WASM independientemente
 
 ## Umbrales de Decisión para la Migración WASM
 
@@ -69,13 +69,14 @@ flowchart TD
 ```
 
 `shared_ui/` contiene código de frontend compartido:
+
 - Cliente API (autenticación, chat, gestión de proveedores, etc.)
 - Utilidades de autenticación (almacenamiento JWT, refresco, interceptores)
 - Definiciones de tipos (enums de dominio, tipos de solicitud/respuesta)
 
 ## Comandos de Desarrollo del Frontend
 
-```
+```bash
 just build-frontend  # Construir ambos frontends (pnpm build:all)
 dev.py               # Vigilar + reconstrucción automática ante cambios de archivos
 ```
@@ -85,6 +86,6 @@ En modo Dev, `dev.py` vigila los archivos fuente y ejecuta `pnpm build` ante cam
 ## Principios de Diseño
 
 1. **Vue 3 entrega características primero**: No esperar a WASM. Los usuarios pueden usar una interfaz de chat y admin completamente funcional hoy.
-2. **WASM es mejora, no reemplazo**: La migración no afecta a los usuarios existentes — ambas versiones usan la misma API backend.
-3. **Backend independiente del framework**: El backend shittim_chest no conoce la implementación del frontend. Cualquier cliente HTTP/WS puede integrarse.
-4. **Tairitsu es una dependencia, no un desarrollo interno**: El inicio de la migración WASM depende de la madurez del framework externo Tairitsu.
+1. **WASM es mejora, no reemplazo**: La migración no afecta a los usuarios existentes — ambas versiones usan la misma API backend.
+1. **Backend independiente del framework**: El backend `shittim_chest` no conoce la implementación del frontend. Cualquier cliente HTTP/WS puede integrarse.
+1. **Tairitsu es una dependencia, no un desarrollo interno**: El inicio de la migración WASM depende de la madurez del framework externo Tairitsu.

@@ -16,22 +16,22 @@ subcategory = "core"
 Entelecheia 始於一個單體式的 `packages/shared` crate（38K 行，187 個 `.rs` 檔案），包含所有共享基礎設施：型別、MCP 協定、LLM 提供者、容器管理、資料庫、安全、配置等。隨著專案成長為 12 個 Agent + 1 個領域 Agent + 3 個二進位套件，若干問題浮現：
 
 1. **編譯時間**：對 `shared` 的任何修改都需要重新編譯全部 187 個檔案，即使只修改了一個結構體。
-2. **依賴污染**：僅需要 MCP 型別的 Agent crate 被迫傳遞依賴於資料庫驅動程式、容器執行時和 LLM 提供者。
-3. **所有權不明確**：一個 crate 中有 187 個檔案，不清楚哪個模組「擁有」哪個功能，使重構充滿風險。
-4. **功能標誌爆炸**：使用 Cargo feature 進行條件編譯以避免引入不必要的依賴，但導致測試配置的組合爆炸。
+1. **依賴污染**：僅需要 MCP 型別的 Agent crate 被迫傳遞依賴於資料庫驅動程式、容器執行時和 LLM 提供者。
+1. **所有權不明確**：一個 crate 中有 187 個檔案，不清楚哪個模組「擁有」哪個功能，使重構充滿風險。
+1. **功能標誌爆炸**：使用 Cargo feature 進行條件編譯以避免引入不必要的依賴，但導致測試配置的組合爆炸。
 
 ## 決策
 
 將單體式的 `packages/shared` 分解為 **37 個專注的子 crate**，組織於 **6 個依賴層**（L0 到 L5），遵循嚴格的依賴方向：
 
-```
+```text
 L0（葉節點）→ L1 → L2 → L3 → L4 → L5 → 消費者（scepter、agents、tui）
 ```
 
 **層級定義：**
 
 | 層級 | Crate | 規則 |
-|-------|--------|------|
+| --- | --- | --- |
 | **L0** | core、logging、macros | 對其他 entelecheia crate 零內部依賴 |
 | **L1** | domain_enums、mcp_types、text、concurrent | 僅依賴 L0 |
 | **L2** | config、agent_registry、state_types | 依賴 L0-L1 |

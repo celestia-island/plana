@@ -48,8 +48,8 @@ Skill의 TOML frontmatter에 있는 `related_tools` 선언은 LLM에 전송되�
 MCP 도구는 세 부분으로 구성됩니다:
 
 1. **Rust 구현** — 실제 로직, `packages/agents/<agent>/src/mcp/tools/`에 위치
-2. **Registry 디스패치** — 라우팅, `packages/agents/<agent>/src/mcp/registry.rs`에 위치
-3. **도구 이름 상수** — 문자열 상수, `packages/shared/domain_skills/src/tool_names.rs`에 위치
+1. **Registry 디스패치** — 라우팅, `packages/agents/<agent>/src/mcp/registry.rs`에 위치
+1. **도구 이름 상수** — 문자열 상수, `packages/shared/domain_skills/src/tool_names.rs`에 위치
 
 ### mcp/registry.rs의 도구 정의
 
@@ -168,7 +168,7 @@ use tokio::sync::RwLock;
 use crate::state::HubrisState;
 use _shared::skills::mcp_tools::{validate_required_params, McpToolResult};
 
-#[derive(Serialize, Debug, Clone)]
+# [derive(Serialize, Debug, Clone)]
 struct MyNewToolResult {
     id: String,
     message: String,
@@ -448,7 +448,7 @@ McpToolResult::failure("Error".into())
 `Value` 매개변수를 구성하고 `McpToolResult`를 어설션하여 각 도구 함수를 직접 테스트합니다:
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_report_success() {
     use std::sync::Arc;
     use tokio::sync::RwLock;
@@ -469,7 +469,7 @@ async fn test_report_success() {
     assert_eq!(state.pending_reports[0], "Test report content");
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_report_empty_text() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({
@@ -488,7 +488,7 @@ async fn test_report_empty_text() {
 registry가 도구 이름을 올바르게 라우팅하는지 테스트합니다:
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_routes_known_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({"text": "hello"});
@@ -497,7 +497,7 @@ async fn test_registry_routes_known_tool() {
     assert!(result.success);
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_rejects_unknown_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({});
@@ -513,14 +513,14 @@ async fn test_registry_rejects_unknown_tool() {
 `validate_required_params` 보조 함수를 직접 테스트합니다:
 
 ```rust
-#[test]
+# [test]
 fn test_validate_required_params_all_present() {
     let params = serde_json::json!({"title": "test", "content": "body"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
     assert!(result.is_none());
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_missing() {
     let params = serde_json::json!({"title": "test"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
@@ -530,7 +530,7 @@ fn test_validate_required_params_missing() {
     assert!(failure.error[0].contains("content"));
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_empty_string() {
     let params = serde_json::json!({"title": ""});
     let result = validate_required_params(&params, &["title"], "test_tool");
@@ -543,7 +543,7 @@ fn test_validate_required_params_empty_string() {
 데이터베이스 Store에 의존하는 도구의 경우, 일반적으로 인메모리 또는 테스트 데이터베이스를 사용하여 테스트합니다:
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_create_todo_success() {
     // 설정: 테스트 TodoStore 생성(테스트 인프라에 의존)
     let todo_store = create_test_store().await;
@@ -583,7 +583,7 @@ cargo test -p hubris -- --nocapture
 ## 빠른 참조: 주요 파일
 
 | 용도 | 경로 |
-|---------|------|
+| --- | --- |
 | `McpToolResult` 정의 | `packages/shared/domain_skills/src/mcp_tools.rs` |
 | `validate_required_params` | `packages/shared/domain_skills/src/mcp_tools.rs:12-41` |
 | 도구 이름 상수 | `packages/shared/domain_skills/src/tool_names.rs` |

@@ -17,7 +17,7 @@ Entelecheia는 하드웨어 수준 컨테이너 격리부터 LLM 대면 도구 �
 ## 보안 계층 색인
 
 | # | 계층 | 크레이트 | 완화되는 위협 |
-|---|-------|----------|-----------------|
+| --- | --- | --- | --- |
 | 1 | Exec-Only 마이크로커널 | `scepter`, `mcp_types` | LLM의 무제한 도구 접근 |
 | 2 | 이중 인가 권한 게이트 | `security_policy` | 인가되지 않은 MCP 도구 호출 |
 | 3 | 신뢰 수준 스킬 인가 | `domain_skills_permissions` | 스킬 체인을 통한 권한 상승 |
@@ -37,13 +37,13 @@ Entelecheia는 하드웨어 수준 컨테이너 격리부터 LLM 대면 도구 �
 
 ## 계층 1: Exec-Only 마이크로커널
 
-**크레이트:** `scepter`, `mcp_types`  
+**크레이트:** `scepter`, `mcp_types`
 **설계 철학:** LLM 공격 표면 최소화
 
 LLM은 세 가지 프리미티브 연산만 호출할 수 있는 **exec-only 샌드박스**에서 작동합니다:
 
 | 도구 | 목적 | 매개변수 |
-|------|---------|------------|
+| --- | --- | --- |
 | `exec` | 스크립트 문자열 실행 | JavaScript 코드 (IEPL을 통해 TypeScript에서 트랜스파일됨) |
 | `write_to_var` | 문자열 값 저장 | 변수명 + 값 |
 | `write_to_var_json` | JSON 값 저장 | 변수명 + JSON 값 |
@@ -76,10 +76,11 @@ pub enum PermissionLevel {
 ```
 
 **인가 흐름:**
+
 1. 스킬 선언: "나는 `ssh_exec`에 `System` 접근이 필요합니다"
-2. 도구 선언: "나는 `System` 권한이 필요합니다"
-3. 권한 게이트 확인: `skill_level >= tool_requirement` AND `스킬이 이 도구에 명시적으로 부여됨`
-4. 둘 중 하나라도 실패: 호출 차단, 로깅, OreXis 센티넬에 보고
+1. 도구 선언: "나는 `System` 권한이 필요합니다"
+1. 권한 게이트 확인: `skill_level >= tool_requirement` AND `스킬이 이 도구에 명시적으로 부여됨`
+1. 둘 중 하나라도 실패: 호출 차단, 로깅, OreXis 센티넬에 보고
 
 **구현:** `packages/shared/security_policy/src/` — 107개 테스트 어노테이션, 4개 tokio 테스트.
 
@@ -92,7 +93,7 @@ pub enum PermissionLevel {
 스킬은 기본 권한 범위를 결정하는 **신뢰 수준**으로 분류됩니다:
 
 | 신뢰 수준 | 설명 | 기본 권한 |
-|-------------|-------------|---------------------|
+| --- | --- | --- |
 | `Builtin` | 플랫폼과 함께 제공됨 | 전체 도구 접근 |
 | `Verified` | 관리자에 의해 검토 및 서명됨 | 읽기 + 쓰기 |
 | `Community` | 사용자 제출 | 읽기 전용 |
@@ -107,6 +108,7 @@ pub enum PermissionLevel {
 **크레이트:** `container` (5,742 라인)
 
 모든 에이전트 실행은 다음과 같은 설정이 적용된 **Docker 또는 Podman 컨테이너** 내에서 발생합니다:
+
 - 네트워크 네임스페이스 격리
 - 읽기 전용 루트 파일시스템 (워크스페이스 마운트 제외)
 - 시스템 호출을 제한하는 Seccomp 프로필
@@ -162,6 +164,7 @@ Docker 컨테이너 내부에서, Entelecheia는 **두 번째 격리 계층**으
 **크레이트:** `aporia` (5,802 라인)
 
 모든 LLM 프로바이더 API 키는 **AES-256-GCM**을 사용하여 저장 시 암호화됩니다:
+
 - 암호화 연산당 고유 논스
 - 마스터 시크릿에서 파생된 키 (환경 구성)
 - 사용 후 메모리에서 평문 키 제로화
@@ -174,6 +177,7 @@ Docker 컨테이너 내부에서, Entelecheia는 **두 번째 격리 계층**으
 **크레이트:** `orexis` (5,239 라인) — "면역 체계" 에이전트
 
 OreXis는 다음과 같은 역할을 하는 레이어 1 에이전트입니다:
+
 - 보안 취약점 및 라이선스 준수에 대한 **코드 감사**
 - 등록된 보안 정책에 대한 **도구 호출 검사**
 - 패턴별로 모든 에이전트의 도구 **차단/차단 해제**
@@ -190,10 +194,10 @@ MCP 도구 (24개): `standard_check`, `compliance_report`, `audit_alignment`, `a
 **Entelecheia 플러그인 언어** (IEPL) 파이프라인은 LLM 생성 코드와 네이티브 도구 디스패치 간의 타입 안전성을 보장합니다:
 
 1. LLM이 ES 모듈 임포트를 사용하여 TypeScript 코드 생성
-2. **SWC**가 TypeScript → JavaScript 트랜스파일 (구문 검증)
-3. **Boa 엔진**이 샌드박스 컨텍스트에서 JavaScript 실행
-4. ES 모듈 임포트가 `__native_dispatch` 호출로 해석됨
-5. 각 디스패치는 완전한 타입 검사와 함께 `McpRouter`를 통해 라우팅됨
+1. **SWC**가 TypeScript → JavaScript 트랜스파일 (구문 검증)
+1. **Boa 엔진**이 샌드박스 컨텍스트에서 JavaScript 실행
+1. ES 모듈 임포트가 `__native_dispatch` 호출로 해석됨
+1. 각 디스패치는 완전한 타입 검사와 함께 `McpRouter`를 통해 라우팅됨
 
 **완화되는 위협:** 비타입화 도구 호출을 통한 주입 공격 (도구 스키마가 런타임에만 검증되는 Python 기반 에이전트 프레임워크에서 흔함).
 
@@ -205,7 +209,7 @@ MCP 도구 (24개): `standard_check`, `compliance_report`, `audit_alignment`, `a
 
 Entelecheia는 15개 생태계에 걸쳐 신뢰할 수 있는 패키지 레지스트리의 **하드코딩된 화이트리스트**를 유지합니다:
 
-crates.io, PyPI, npm, Go modules, Docker Hub, Maven Central, NuGet, RubyGems, Hackage, Alpine APK, Debian APT, GitHub, GitLab, HuggingFace, PyTorch.
+crates.io, PyPI, npm, Go modules, Docker Hub, Maven Central, NuGet, RubyGems, Hackage, Alpine APK, Debian APT, GitHub, GitLab, `HuggingFace`, PyTorch.
 
 화이트리스트에 없는 레지스트리로부터의 모든 패키지 임포트는 실행 전에 **컨테이너 수준에서 차단**됩니다.
 
@@ -216,6 +220,7 @@ crates.io, PyPI, npm, Go modules, Docker Hub, Maven Central, NuGet, RubyGems, Ha
 **메커니즘:** IEPL 샌드박스 경계
 
 LLM의 `exec` 출력은 다음에 접근할 수 없는 **격리된 Boa JS 컨텍스트**에서 실행됩니다:
+
 - 호스트 파일시스템
 - 네트워크 소켓
 - 환경 변수
@@ -230,6 +235,7 @@ LLM에 반환되는 도구 출력은 **살균 처리**됩니다 — 바이너리
 **모듈:** shittim-chest `channel/rate_limit.rs` (118 라인)
 
 **GCRA (Generic Cell Rate Algorithm)**를 사용한 사용자별, 채널별 속도 제한:
+
 - 설정 가능한 버스트 크기와 지속 속도
 - O(1) 조회를 위한 사용자별 DashMap
 - 제한 초과 시 자동 백오프
@@ -242,17 +248,18 @@ LLM에 반환되는 도구 출력은 **살균 처리**됩니다 — 바이너리
 **크레이트:** `orexis`, `timeline` (3,096 라인)
 
 모든 도구 호출, 에이전트 결정, 보안 이벤트는:
+
 1. 전체 컨텍스트(에이전트 배지, 스킬명, 매개변수, 결과)와 함께 **타임라인**에 기록됨
-2. 훼손 감지를 위해 이전 이벤트와 해시 연결됨
-3. 설정 가능한 보존 기간으로 PostgreSQL에 영속화됨
-4. CLI를 통해 조회 가능 (`entelecheia-cli trace-chain <badge>`)
+1. 훼손 감지를 위해 이전 이벤트와 해시 연결됨
+1. 설정 가능한 보존 기간으로 PostgreSQL에 영속화됨
+1. CLI를 통해 조회 가능 (`entelecheia-cli trace-chain <badge>`)
 
 ---
 
 ## 다른 프레임워크와의 보안 비교
 
 | 기능 | Entelecheia | OpenFANG | LangChain | Claude Code |
-|---------|:-----------:|:--------:|:---------:|:-----------:|
+| --- |  ---  |  ---  |  ---  |  ---  |
 | LLM 가시 도구 | **3 (exec-only)** | 53 (모두 가시) | 모두 가시 | 33 (모두 가시) |
 | 컨테이너 격리 | **이중 계층** (Docker + Youki) | WASM 전용 | 없음 | OS 수준 (Seatbelt/Landlock) |
 | 도구 권한 모델 | **이중 인가** | RBAC | 없음 | 없음 |
@@ -266,12 +273,14 @@ LLM에 반환되는 도구 출력은 **살균 처리**됩니다 — 바이너리
 ## 위협 모델
 
 ### 범위 외
+
 - 호스트 머신에 대한 물리적 접근
 - 침해된 Docker/Podman 데몬 (신뢰 가정)
 - 커널 익스플로잇 (사용자 공간 격리에 의해 완화되나 방지되지는 않음)
 - Rust 크레이트 의존성에 대한 공급망 공격 (`cargo-deny`에 의해 부분적으로 완화)
 
 ### 수용된 위험
+
 - Boa JS 엔진 취약점 (컨테이너 내에서 샌드박스됨)
 - LLM 프로바이더 중단 (폴백 실행 경로 없음)
 - PostgreSQL 데이터 손상 (백업으로 완화, 방지되지 않음)

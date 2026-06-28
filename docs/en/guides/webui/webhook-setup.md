@@ -15,11 +15,11 @@ subcategory = "webui"
 
 Webhooks allow external services (GitHub, GitLab, Gitee) to send real-time events to shittim-chest. Events are validated, parsed, and forwarded to scepter which dispatches them to the appropriate agent.
 
-```
+```text
 External Service → shittim_chest → scepter → Agent
 ```
 
-shittim_chest also supports custom webhook endpoints for services not natively supported.
+`shittim_chest` also supports custom webhook endpoints for services not natively supported.
 
 ## GitHub Webhook Setup
 
@@ -41,12 +41,12 @@ openssl rand -hex 32
 ### Step 2: Create the Webhook in GitHub
 
 1. Navigate to your repository → **Settings** → **Webhooks** → **Add webhook**
-2. Set **Payload URL** to `https://your-domain.com/api/webhook/github`
-3. Set **Content type** to `application/json`
-4. Set **Secret** to the same value as `WEBHOOK_GITHUB_SECRET`
-5. Select events: `push`, `pull_request`, `issues`, `issue_comment`
-6. Ensure **Active** is checked
-7. Click **Add webhook**
+1. Set **Payload URL** to `https://your-domain.com/api/webhook/github`
+1. Set **Content type** to `application/json`
+1. Set **Secret** to the same value as `WEBHOOK_GITHUB_SECRET`
+1. Select events: `push`, `pull_request`, `issues`, `issue_comment`
+1. Ensure **Active** is checked
+1. Click **Add webhook**
 
 ### Step 3: Verify
 
@@ -63,11 +63,11 @@ WEBHOOK_GITLAB_SECRET=your-gitlab-secret-token
 ### Step 2: Create the Webhook in GitLab
 
 1. Navigate to your project → **Settings** → **Webhooks**
-2. Set **URL** to `https://your-domain.com/api/webhook/gitlab`
-3. Set **Secret token** to the same value as `WEBHOOK_GITLAB_SECRET`
-4. Select triggers: `Push events`, `Merge request events`, `Issue events`
-5. Ensure **Enable SSL verification** is checked (for HTTPS)
-6. Click **Add webhook**
+1. Set **URL** to `https://your-domain.com/api/webhook/gitlab`
+1. Set **Secret token** to the same value as `WEBHOOK_GITLAB_SECRET`
+1. Select triggers: `Push events`, `Merge request events`, `Issue events`
+1. Ensure **Enable SSL verification** is checked (for HTTPS)
+1. Click **Add webhook**
 
 ### Step 3: Verify
 
@@ -84,28 +84,28 @@ Gitee uses the same `WEBHOOK_GITLAB_SECRET` for HMAC validation (with token as f
 ### Step 2: Create the Webhook in Gitee
 
 1. Navigate to your repository → **Management** → **Webhooks**
-2. Set **URL** to `https://your-domain.com/api/webhook/gitee`
-3. Set **Password/Signing Key** to the same secret
-4. Select events: `Push`, `Pull Request`, `Issues`
-5. Click **Add**
+1. Set **URL** to `https://your-domain.com/api/webhook/gitee`
+1. Set **Password/Signing Key** to the same secret
+1. Select events: `Push`, `Pull Request`, `Issues`
+1. Click **Add**
 
 ## Custom Webhooks
 
-shittim_chest supports a generic custom webhook endpoint at `/api/webhook/custom/{name}`. To add a custom webhook source:
+`shittim_chest` supports a generic custom webhook endpoint at `/api/webhook/custom/{name}`. To add a custom webhook source:
 
 1. Set `WEBHOOK_PUBLIC_URL` in `.env`
-2. Configure your external service to POST to `https://your-domain.com/api/webhook/custom/{name}`
-3. Events are forwarded to scepter with the webhook name as the event source
+1. Configure your external service to POST to `https://your-domain.com/api/webhook/custom/{name}`
+1. Events are forwarded to scepter with the webhook name as the event source
 
 For integrating new webhook providers at the code level:
 
 1. Add a handler in `packages/core/src/webhook.rs`
-2. Implement HMAC or token validation for the new provider
-3. Parse the custom event format and forward to scepter via Unix socket
+1. Implement HMAC or token validation for the new provider
+1. Parse the custom event format and forward to scepter via Unix socket
 
 ## IP Whitelist
 
-shittim_chest supports IP whitelisting for webhook sources to reject requests from unknown origins:
+`shittim_chest` supports IP whitelisting for webhook sources to reject requests from unknown origins:
 
 ```bash
 # .env
@@ -119,7 +119,7 @@ Configure CIDR ranges for each webhook provider. Requests from IPs outside the w
 Supported events and their mapping to scepter triggers:
 
 | Source | Event | scepter `event_type` |
-|--------|-------|---------------------|
+| --- | --- | --- |
 | GitHub | `push` | `github.push` |
 | GitHub | `pull_request` | `github.pull_request` |
 | GitHub | `issues` | `github.issues` |
@@ -133,7 +133,7 @@ Supported events and their mapping to scepter triggers:
 
 ## Delivery Log
 
-shittim_chest maintains a delivery log of webhook events. Duplicate deliveries are detected using a LRU cache (up to 10,000 delivery IDs). Access delivery logs via:
+`shittim_chest` maintains a delivery log of webhook events. Duplicate deliveries are detected using a LRU cache (up to 10,000 delivery IDs). Access delivery logs via:
 
 - **REST API**: `GET /api/webhook/deliveries`
 - Admin panel: **Webhooks** → **Delivery Log**
@@ -153,9 +153,9 @@ Requests without valid signatures are rejected with `401 Unauthorized`. Never ex
 Use the admin panel to test webhook integration:
 
 1. Log in to admin panel (default `:3000`)
-2. Navigate to **Webhooks** in the sidebar
-3. View delivery logs and configuration
-4. Test endpoints via the external service's test functionality
+1. Navigate to **Webhooks** in the sidebar
+1. View delivery logs and configuration
+1. Test endpoints via the external service's test functionality
 
 You can also test manually with curl:
 
@@ -185,5 +185,5 @@ curl -X POST https://your-domain.com/api/webhook/github \
 
 ### Duplicate deliveries
 
-**Cause**: The external service is retrying due to timeout. shittim_chest automatically detects duplicates via LRU cache.
-**Fix**: If valid retries are being blocked, increase the delivery ID cache size. Ensure shittim_chest responds within the service's timeout window (GitHub: 10 seconds).
+**Cause**: The external service is retrying due to timeout. `shittim_chest` automatically detects duplicates via LRU cache.
+**Fix**: If valid retries are being blocked, increase the delivery ID cache size. Ensure `shittim_chest` responds within the service's timeout window (GitHub: 10 seconds).

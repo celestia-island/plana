@@ -77,7 +77,7 @@ shittim-chest et scepter partagent la clé de signature JWT via la même variabl
 
 ### Flux de Connexion
 
-```
+```text
 Utilisateur → shittim_chest : POST /api/auth/login
 shittim_chest : Vérifier le mot de passe argon2
 shittim_chest → scepter : GET /api/user/{id}/permissions
@@ -91,7 +91,7 @@ shittim_chest → Utilisateur : tokens
 
 ### Proxy HTTP
 
-```
+```text
 Navigateur → shittim_chest:80/api/proxy/chat (JWT dans l'en-tête)
 shittim_chest : Vérifier JWT
 shittim_chest → scepter:8424/api/chat (Transférer JWT)
@@ -100,7 +100,7 @@ scepter → Agent → LLM → scepter → shittim_chest → Navigateur
 
 ### Proxy WebSocket
 
-```
+```text
 Navigateur → shittim_chest:80/api/proxy/ws (JWT dans l'en-tête)
 shittim_chest : Vérifier JWT
 shittim_chest ↔ scepter:8424/ws (Transfert bidirectionnel + JWT)
@@ -110,6 +110,7 @@ Navigateur ↔ scepter : Interaction Agent full-duplex
 ### Limitation de Débit & Surveillance
 
 Au niveau de la couche proxy, shittim-chest est responsable de :
+
 - Limitation de débit (par utilisateur / par IP)
 - Journalisation d'usage
 - Gestion du cycle de vie des connexions
@@ -117,7 +118,7 @@ Au niveau de la couche proxy, shittim-chest est responsable de :
 
 ## Pipeline Webhook
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → Vérification HMAC → Analyser l'événement → Socket Unix → scepter
 ```
 

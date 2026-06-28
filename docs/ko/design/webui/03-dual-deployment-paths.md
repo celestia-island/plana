@@ -78,6 +78,7 @@ let config = Config::<String> {
 ```
 
 주요 사항:
+
 - 바이너리는 읽기 전용(`:ro`)으로 마운트되어 실수로 인한 컨테이너 내 수정을 방지한다
 - 바이너리 위치는 `/usr/local/bin/shittim_chest`이며, 컨테이너 내부에서 직접 실행된다
 - 베이스 이미지 `debian:bookworm-slim`이 필요한 glibc 런타임을 제공한다
@@ -86,7 +87,7 @@ let config = Config::<String> {
 
 마이그레이션은 원샷 컨테이너를 통해 실행된다:
 
-```
+```bash
 docker run --rm --network shittim-chest \
   -v $PWD/target/debug/shittim_chest:/usr/local/bin/shittim_chest:ro \
   -e SHITTIM_CHEST_DATABASE_URL=... \
@@ -109,7 +110,7 @@ PG가 아직 완전히 준비되지 않은 경우를 처리하기 위해 자동�
 ### embedded-frontend 기능
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 {
     static FRONTEND_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../dist");
     // Axum 라우터에 /static/* 경로로 마운트됨

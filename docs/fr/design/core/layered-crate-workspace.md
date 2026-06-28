@@ -16,22 +16,22 @@ subcategory = "core"
 Entelecheia a commencé avec une crate monolithique `packages/shared` (38K lignes, 187 fichiers `.rs`) qui contenait toute l'infrastructure partagée : types, protocole MCP, fournisseurs LLM, gestion de conteneurs, base de données, sécurité, configuration, etc. Au fur et à mesure que le projet a grandi à 12 agents + 1 agent de domaine + 3 paquets binaires, plusieurs problèmes sont apparus :
 
 1. **Temps de compilation** : Toute modification de `shared` nécessitait de recompiler les 187 fichiers, même si un seul struct était modifié.
-2. **Pollution des dépendances** : Les crates d'agent qui n'avaient besoin que des types MCP étaient forcées de dépendre transitivement des pilotes de base de données, des runtimes de conteneurs et des fournisseurs LLM.
-3. **Propriété peu claire** : Avec 187 fichiers dans une crate, il n'était pas clair quel module "possédait" quelle fonctionnalité, rendant le refactoring risqué.
-4. **Explosion des drapeaux de fonctionnalités** : La compilation conditionnelle via les fonctionnalités Cargo était utilisée pour éviter de tirer des dépendances inutiles, mais cela conduisait à une explosion combinatoire dans les configurations de test.
+1. **Pollution des dépendances** : Les crates d'agent qui n'avaient besoin que des types MCP étaient forcées de dépendre transitivement des pilotes de base de données, des runtimes de conteneurs et des fournisseurs LLM.
+1. **Propriété peu claire** : Avec 187 fichiers dans une crate, il n'était pas clair quel module "possédait" quelle fonctionnalité, rendant le refactoring risqué.
+1. **Explosion des drapeaux de fonctionnalités** : La compilation conditionnelle via les fonctionnalités Cargo était utilisée pour éviter de tirer des dépendances inutiles, mais cela conduisait à une explosion combinatoire dans les configurations de test.
 
 ## Décision
 
 Décomposer le `packages/shared` monolithique en **37 sous-crates ciblées** organisées en **6 couches de dépendance** (L0 à L5), suivant une direction de dépendance stricte :
 
-```
+```text
 L0 (feuille) → L1 → L2 → L3 → L4 → L5 → consommateurs (scepter, agents, tui)
 ```
 
 **Définitions des couches :**
 
 | Couche | Crates | Règle |
-|-------|--------|------|
+| --- | --- | --- |
 | **L0** | core, logging, macros | Zéro dépendance interne sur les autres crates entelecheia |
 | **L1** | domain_enums, mcp_types, text, concurrent | Dépendent uniquement de L0 |
 | **L2** | config, agent_registry, state_types | Dépendent de L0-L1 |

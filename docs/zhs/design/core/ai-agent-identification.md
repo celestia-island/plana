@@ -28,18 +28,18 @@ subcategory = "core"
 
 作者邮箱使用单一信任命名空间——`celestia.world`——本地部分编码**谁提供了模型服务**：
 
-```
+```text
 显示名称 <provider-or-platform-id@celestia.world>
 ```
 
-提供商 ID 是每个提供商配置中声明的**强制性 `website_domain`** 字段（提供商注册入口 TOML 和本地 `aporia.toml`）。它**不是**从 API base_url 派生的——单个提供商可能暴露多个 base_url 主机（例如 zhipu_glm 同时提供 `open.bigmodel.cn` 和 `api.z.ai`，但其规范域名为 `zhipuai.cn`）。如果提供商缺少 `website_domain`，则不会为其归属共同作者（解析器跳过它，而不是从 URL 或模型前缀猜测）。
+提供商 ID 是每个提供商配置中声明的**强制性 `website_domain`** 字段（提供商注册入口 TOML 和本地 `aporia.toml`）。它**不是**从 API `base_url` 派生的——单个提供商可能暴露多个 `base_url` 主机（例如 `zhipu_glm` 同时提供 `open.bigmodel.cn` 和 `api.z.ai`，但其规范域名为 `zhipuai.cn`）。如果提供商缺少 `website_domain`，则不会为其归属共同作者（解析器跳过它，而不是从 URL 或模型前缀猜测）。
 
 - **第一方提供商**由其规范域名标识：`anthropic.com`、`deepseek.com`、`openai.com`、`zhipuai.cn`、`google.com` 等。
 - **第三方/中转提供商**保留自己的域名，以便中转可见：`opencode.ai`、`jdcloud.com`、`openrouter.ai`、`dashscope.aliyuncs.com` 等。
 
 这意味着通过不同路由访问的*相同*模型是可区分的：
 
-```
+```text
 GLM 5 <zhipuai.cn@celestia.world>              # 直接来自智谱 AI
 GLM 5 <jdcloud.com@celestia.world>           # GLM 5 通过京东云提供
 Deepseek V4 Pro <deepseek.com@celestia.world> # 直接来自 DeepSeek
@@ -58,13 +58,14 @@ Deepseek V4 Pro <opencode.ai@celestia.world>  # DeepSeek 通过 opencode 提供
 
 当生成提交的整个思维链在 **YOLO 巡航控制**（自主迭代）下运行时，会前置一个额外的共同作者：
 
-```
+```text
 Co-authored-by: Entelecheia <demiurge@celestia.world>
 ```
 
 YOLO 模式从以下两者之一检测：
+
 1. 会话聊天日志包含 `YOLO cruise control` / `YOLO auto` 标记，或
-2. 存在 `/run/entelecheia/yolo_active` 哨兵文件。
+1. 存在 `/run/entelecheia/yolo_active` 哨兵文件。
 
 这让人类可以立即看到"此提交是在没有人类参与循环的情况下完成的"。
 
@@ -72,19 +73,20 @@ YOLO 模式从以下两者之一检测：
 
 嵌入在 `Co-authored-by` 尾部信息中每个模型的显示名称内（GitHub 正确解析的一个尾部信息块）：
 
-```
+```text
 Co-authored-by: Claude Opus 4.8 (↑ 12.5k ↓ 8.3k ●45.2k) <anthropic.com@celestia.world>
 Co-authored-by: Deepseek V4 Pro (↑ 5.1k ↓ 3.2k) <deepseek.com@celestia.world>
 ```
 
 规则：
+
 - 使用量以内联方式嵌入为 `(↑ 上传 ↓ 下载)`，仅当报告了缓存输入 token 且 > 0 时追加 `●缓存`。
 - `↑` = 提示/输入 token；`↓` = 补全/输出 token。
 - 计数以千（`k`）为单位显示，保留一位小数，去除尾部零。
 
 ## 完整提交信息示例
 
-```
+```python
 fix(auto_fix): raise clippy/check timeouts from 180s to 300s
 
 The previous 180s timeout was too tight for clean builds on a loaded
@@ -118,9 +120,9 @@ noa co-author resolve [--repo <path>] [--chat-log-dir <dir>]
 解析器：
 
 1. 加载提供商映射：内置注册表与 `aporia.toml` 提供商配置合并（后者给出精确的 model→endpoint→provider 映射）。
-2. 读取最近的 entelecheia 聊天日志并按模型聚合 token 使用量。使用 `--lookback-secs 0`（默认）时仅使用最近的一个日志。
-3. 检测 YOLO 模式（聊天日志标记或哨兵文件）。
-4. 构建共同作者列表（如果是 YOLO 模式则 `Entelecheia` 权威在前，然后是各模型）和 token 使用块，并将尾部信息块打印到 stdout。
+1. 读取最近的 entelecheia 聊天日志并按模型聚合 token 使用量。使用 `--lookback-secs 0`（默认）时仅使用最近的一个日志。
+1. 检测 YOLO 模式（聊天日志标记或哨兵文件）。
+1. 构建共同作者列表（如果是 YOLO 模式则 `Entelecheia` 权威在前，然后是各模型）和 token 使用块，并将尾部信息块打印到 stdout。
 
 ## 数据流
 

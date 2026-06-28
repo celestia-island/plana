@@ -18,9 +18,9 @@ section `[report]`, remplaçant la logique d'orchestration codée en dur.
 ## Objectifs
 
 1. Les compétences déclarent le comportement de routage dans le frontmatter (pas codé en dur).
-2. Un exécuteur de chaîne de compétences générique remplace le pipeline à 2 étapes codé en dur.
-3. La revue humaine est une cible de routage de première classe.
-4. Nettoyage du langage des prompts : les fichiers plats de compétence/MCP sont en anglais uniquement.
+1. Un exécuteur de chaîne de compétences générique remplace le pipeline à 2 étapes codé en dur.
+1. La revue humaine est une cible de routage de première classe.
+1. Nettoyage du langage des prompts : les fichiers plats de compétence/MCP sont en anglais uniquement.
 
 ## Configuration de Rapport de Compétence (Frontmatter TOML)
 
@@ -32,7 +32,7 @@ next_skill = "workplan_generate"  # requis si target = "next_node"
 
 ## Chaîne de Compétences HubRis
 
-```
+```text
 task_decompose → workplan_generate → operator → workplan_execute → submit_report → human
 ```
 
@@ -78,7 +78,7 @@ sequenceDiagram
 ## Cibles de Routage de Rapport
 
 | Cible       | Comportement                                                        |
-| ------------ | --------------------------------------------------------------- |
+| --- | --- |
 | `next_node`  | L'exécuteur charge la compétence nommée dans `next_skill` et l'exécute.     |
 | `parent`     | Rend le contrôle à l'orchestrateur parent (réservé pour les chaînes imbriquées). |
 | `human`      | Met en pause la chaîne, envoie `HumanReviewRequest` à TUI, reprend sur `HumanReviewResponse`. |
@@ -86,7 +86,7 @@ sequenceDiagram
 
 ## Structure de Fichiers (Phase 1)
 
-```
+```text
 res/prompts/agents/hubris/skills/
   task_decompose.md
   workplan_generate.md
@@ -113,6 +113,7 @@ de test bas.
 ## Politique de Repli en Cas d'Échec
 
 1. Si une compétence échoue : retourner un message d'échec et terminer la chaîne actuelle.
-2. Si ApoRia est hors ligne : retourner le message `Agent non prêt`.
-3. Si la revue humaine expire : retourner un avis de délai sans bloquer
-   les conversations suivantes.
+1. Si ApoRia est hors ligne : retourner le message `Agent non prêt`.
+1. Si la revue humaine expire : retourner un avis de délai sans bloquer
+
+les conversations suivantes.

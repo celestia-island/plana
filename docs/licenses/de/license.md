@@ -10,108 +10,108 @@ Parameter
 Lizenzgeber:           Celestia Island
 
 Lizenziertes Werk:     Arona — Gemeinsame JSON-RPC-2.0-Protokolltypen für die
-                      Entelecheia-Multi-Agenten-Plattform
-                       Das lizenzierte Werk ist (c) 2025 langyo <contact@celestia.world>
+Entelecheia-Multi-Agenten-Plattform
+Das lizenzierte Werk ist (c) 2025 langyo <contact@celestia.world>
 
 Zusätzliche            Der Lizenzgeber gewährt neben den in den nachstehenden
 Nutzungsberechtigung: Grundrechten die folgenden zusätzlichen Rechte. Diese
-                       Rechte sind dauerhaft und gelten ab sofort — sie sind nicht
-                       von einem zukünftigen Datum oder Ereignis abhängig.
+Rechte sind dauerhaft und gelten ab sofort — sie sind nicht
+von einem zukünftigen Datum oder Ereignis abhängig.
 
-                       — Erlaubte Nutzungen (keine separate kommerzielle Lizenz erforderlich) —
+— Erlaubte Nutzungen (keine separate kommerzielle Lizenz erforderlich) —
 
-                       (a) Interne Nutzung. Sie dürfen das lizenzierte Werk für Ihre
-                           eigenen internen Abläufe produktiv einsetzen, unabhängig von
-                           der Größe oder dem Umsatz der Organisation. "Intern" bedeutet,
-                           dass das lizenzierte Werk ausschließlich zum Nutzen Ihrer
-                           eigenen Organisation und ihrer autorisierten Mitarbeiter
-                           eingesetzt und betrieben wird und nicht Dritten als Dienstleistung,
-                           Produkt oder gehostetes Angebot zur Verfügung gestellt wird.
-                           Dies schließt interne Abläufe von Regierungsbehörden, öffentlichen
-                           Einrichtungen und gemeinnützigen Organisationen ein.
+(a) Interne Nutzung. Sie dürfen das lizenzierte Werk für Ihre
+eigenen internen Abläufe produktiv einsetzen, unabhängig von
+der Größe oder dem Umsatz der Organisation. "Intern" bedeutet,
+dass das lizenzierte Werk ausschließlich zum Nutzen Ihrer
+eigenen Organisation und ihrer autorisierten Mitarbeiter
+eingesetzt und betrieben wird und nicht Dritten als Dienstleistung,
+Produkt oder gehostetes Angebot zur Verfügung gestellt wird.
+Dies schließt interne Abläufe von Regierungsbehörden, öffentlichen
+Einrichtungen und gemeinnützigen Organisationen ein.
 
-                       (b) Nicht-kommerzielle Nutzung. Sie dürfen das lizenzierte Werk für
-                           akademische Forschung, Lehre, persönliches Studium, Bewertung,
-                           Experimentierung und Beiträge zum lizenzierten Werk selbst
-                           verwenden, ohne Einschränkung hinsichtlich der organisatorischen
-                           Zugehörigkeit oder der Finanzierungsquelle.
+(b) Nicht-kommerzielle Nutzung. Sie dürfen das lizenzierte Werk für
+akademische Forschung, Lehre, persönliches Studium, Bewertung,
+Experimentierung und Beiträge zum lizenzierten Werk selbst
+verwenden, ohne Einschränkung hinsichtlich der organisatorischen
+Zugehörigkeit oder der Finanzierungsquelle.
 
-                       (c) Regierung und öffentlicher Dienst. Regierungsbehörden, öffentliche
-                           Einrichtungen und gemeinnützige Organisationen dürfen das
-                           lizenzierte Werk für öffentliche Dienstleistungen einsetzen,
-                           einschließlich digitaler Regierungsinitiativen, Pilotprojekte,
-                           gemeinnütziger Projekte und interner Verwaltungsvorgänge, sofern
-                           der Einsatz keinen kommerziellen Dienst darstellt, der an Dritte
-                           verkauft oder lizenziert wird.
+(c) Regierung und öffentlicher Dienst. Regierungsbehörden, öffentliche
+Einrichtungen und gemeinnützige Organisationen dürfen das
+lizenzierte Werk für öffentliche Dienstleistungen einsetzen,
+einschließlich digitaler Regierungsinitiativen, Pilotprojekte,
+gemeinnütziger Projekte und interner Verwaltungsvorgänge, sofern
+der Einsatz keinen kommerziellen Dienst darstellt, der an Dritte
+verkauft oder lizenziert wird.
 
-                       (d) Bildungszwecke. Akkreditierte Bildungseinrichtungen dürfen das
-                           lizenzierte Werk für Lehre, akademische Forschung,
-                           Campusinfrastruktur und studentische Projekte verwenden.
+(d) Bildungszwecke. Akkreditierte Bildungseinrichtungen dürfen das
+lizenzierte Werk für Lehre, akademische Forschung,
+Campusinfrastruktur und studentische Projekte verwenden.
 
-                       (e) Änderung und Beitrag. Sie dürfen das lizenzierte Werk ändern und
-                           solche Änderungen dem Upstream-Projekt beitragen, vorbehaltlich
-                           der Bedingungen dieser Lizenz.
+(e) Änderung und Beitrag. Sie dürfen das lizenzierte Werk ändern und
+solche Änderungen dem Upstream-Projekt beitragen, vorbehaltlich
+der Bedingungen dieser Lizenz.
 
-                       — Nutzungen, die eine kommerzielle Lizenz erfordern —
+— Nutzungen, die eine kommerzielle Lizenz erfordern —
 
-                       Die folgenden Aktivitäten sind ohne eine separate, vom Lizenzgeber
-                       erhältliche kommerzielle Lizenz nicht gestattet:
+Die folgenden Aktivitäten sind ohne eine separate, vom Lizenzgeber
+erhältliche kommerzielle Lizenz nicht gestattet:
 
-                       (i)   Anbieten des lizenzierten Werks, ganz oder in wesentlichem
-                             Teil, als gehosteter, verwalteter oder cloudbasierter Dienst
-                             für Dritte, ob gegen Gebühr oder als Teil eines kommerziellen
-                             Angebots, sofern das lizenzierte Werk eine wesentliche Wertquelle
-                             des Dienstes darstellt.
+(i)   Anbieten des lizenzierten Werks, ganz oder in wesentlichem
+Teil, als gehosteter, verwalteter oder cloudbasierter Dienst
+für Dritte, ob gegen Gebühr oder als Teil eines kommerziellen
+Angebots, sofern das lizenzierte Werk eine wesentliche Wertquelle
+des Dienstes darstellt.
 
-                       (ii)  Verkaufen, Lizenzieren, Unterlizenzieren oder anderweitige
-                             Verbreitung des lizenzierten Werks, ob geändert oder unverändert,
-                             als eigenständiges Produkt, oder Umbenennen des lizenzierten
-                             Werks unter einem anderen Namen oder einer anderen Marke für die
-                             kommerzielle Verbreitung.
+(ii)  Verkaufen, Lizenzieren, Unterlizenzieren oder anderweitige
+Verbreitung des lizenzierten Werks, ob geändert oder unverändert,
+als eigenständiges Produkt, oder Umbenennen des lizenzierten
+Werks unter einem anderen Namen oder einer anderen Marke für die
+kommerzielle Verbreitung.
 
-                       (iii) Anbieten von Bereitstellungs-, Installations-, Konfigurations-,
-                             laufenden Wartungs- oder technischen Supportdienstleistungen für
-                             das lizenzierte Werk an Dritte gegen Gebühr, sofern diese
-                             Dienstleistungen eine wiederkehrende oder hauptsächliche
-                             geschäftliche Aktivität darstellen.
+(iii) Anbieten von Bereitstellungs-, Installations-, Konfigurations-,
+laufenden Wartungs- oder technischen Supportdienstleistungen für
+das lizenzierte Werk an Dritte gegen Gebühr, sofern diese
+Dienstleistungen eine wiederkehrende oder hauptsächliche
+geschäftliche Aktivität darstellen.
 
-                       (iv)  Einbeziehen des lizenzierten Werks oder einer geänderten Version
-                             davon als Kern- oder wesentlicher Bestandteil in ein Produkt oder
-                             eine Dienstleistung, die Sie an Dritte zu kommerziellen Zwecken
-                             verkaufen, lizenzieren oder anderweitig bereitstellen.
+(iv)  Einbeziehen des lizenzierten Werks oder einer geänderten Version
+davon als Kern- oder wesentlicher Bestandteil in ein Produkt oder
+eine Dienstleistung, die Sie an Dritte zu kommerziellen Zwecken
+verkaufen, lizenzieren oder anderweitig bereitstellen.
 
-                       (v)   Jede Nutzung, bei der das lizenzierte Werk die Haupt- oder
-                             wesentliche Wertquelle in einem kommerziellen Angebot darstellt,
-                             das Dritten zur Verfügung gestellt wird, unabhängig vom
-                             Bereitstellungsmechanismus oder der Markenbildung.
+(v)   Jede Nutzung, bei der das lizenzierte Werk die Haupt- oder
+wesentliche Wertquelle in einem kommerziellen Angebot darstellt,
+das Dritten zur Verfügung gestellt wird, unabhängig vom
+Bereitstellungsmechanismus oder der Markenbildung.
 
 Freie Nutzungslizenz: Für jede unter den Punkten (a) bis (e) oben beschriebene erlaubte
-                       Nutzung sind die gewährten Rechte im Umfang gleichwertig mit den
-                       Rechten, die unter Ihrer Wahl aus folgendem bereitgestellt werden:
+Nutzung sind die gewährten Rechte im Umfang gleichwertig mit den
+Rechten, die unter Ihrer Wahl aus folgendem bereitgestellt werden:
 
-                       — Apache License, Version 2.0
-                         (https://www.apache.org/licenses/LICENSE-2.0), oder
-                       — MIT License
-                         (https://opensource.org/licenses/MIT).
+— Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0), oder
+— MIT License
+(https://opensource.org/licenses/MIT).
 
-                       Sie dürfen diese Lizenz für jede erlaubte Nutzung als Apache
-                       License 2.0 oder MIT License behandeln. Für jede unter den Punkten
-                       (i) bis (v) oben beschriebene eingeschränkte Nutzung gelten die
-                       vollständigen Bedingungen dieser Business Source License 1.1, und
-                        eine separate kommerzielle Lizenz ist erforderlich.
+Sie dürfen diese Lizenz für jede erlaubte Nutzung als Apache
+License 2.0 oder MIT License behandeln. Für jede unter den Punkten
+(i) bis (v) oben beschriebene eingeschränkte Nutzung gelten die
+vollständigen Bedingungen dieser Business Source License 1.1, und
+eine separate kommerzielle Lizenz ist erforderlich.
 
 Änderungsdatum:        2030-01-01
 
 Änderungslizenz:       Ab dem Änderungsdatum wandelt sich diese Lizenz automatisch
-                      in eine Doppellizenz nach Wahl des Empfängers um:
-                      — die Apache License, Version 2.0
-                        (https://www.apache.org/licenses/LICENSE-2.0) oder
-                      — die MIT License
-                        (https://opensource.org/licenses/MIT)
-                      für alle Versionen des lizenzierten Werks, die unter dieser
-                      Lizenz veröffentlicht wurden, für alle Nutzer und alle
-                      Nutzungen, ohne Nutzungsbeschränkung und ohne separate
-                      kommerzielle Lizenz.
+in eine Doppellizenz nach Wahl des Empfängers um:
+— die Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0) oder
+— die MIT License
+(https://opensource.org/licenses/MIT)
+für alle Versionen des lizenzierten Werks, die unter dieser
+Lizenz veröffentlicht wurden, für alle Nutzer und alle
+Nutzungen, ohne Nutzungsbeschränkung und ohne separate
+kommerzielle Lizenz.
 
 ------------------------------------------------------------------------------
 

@@ -122,11 +122,13 @@ sequenceDiagram
 路由决策在 `mcp_skill_router.rs` 中发生：
 
 1. 检查 `agent_manager.get_tool_location(tool_name)`
-2. 如果 `ToolLocation::Cosmos` 且容器化模式激活：
+1. 如果 `ToolLocation::Cosmos` 且容器化模式激活：
+
    - 调用 `agent_manager.invoke_tool()`，通过 `BridgeInvoker` → HapLotes 桥接 → Cosmos 的 `McpRouter` 路由
    - Cosmos 的 `McpRouter` 在本地调度（skemma）或通过桥接回到 Scepter 调度远程 agent
    - 直接向 TUI 返回 `McpMessage::ToolResponse`
-3. 否则：通过 HapLotes 网关路由到 agent 进程
+
+1. 否则：通过 HapLotes 网关路由到 agent 进程
 
 ## IV. CosmosConnector / 桥接架构
 
@@ -237,7 +239,7 @@ stateDiagram-v2
 
 ### 显示格式
 
-在 TUI AgentDetailPage 中，统计行显示：
+在 TUI `AgentDetailPage` 中，统计行显示：
 
 ```mermaid
 flowchart LR

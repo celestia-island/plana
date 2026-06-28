@@ -35,7 +35,7 @@ In Docker events streams, the `container` filter is unreliable for `health_statu
 
 ## Polling Strategy
 
-```
+```text
 while true:
     sleep 1s
     state = docker.inspect_container(PG)
@@ -86,7 +86,7 @@ pg18 changed the data directory from `/var/lib/postgresql/data` to `/var/lib/pos
 
 Database migrations have an independent 5-retry logic:
 
-```
+```text
 for retry in 0..5:
     execute docker run --rm ... shittim_chest db-migrate
     if success: break

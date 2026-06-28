@@ -17,7 +17,7 @@ Le projet lui-même est nommé **Entelecheia** — l'orchestrateur du runtime mu
 ## Objectifs
 
 1. Injecter le prompt d'âme comme couche d'identité fondamentale dans chaque requête LLM.
-1. Établir un modèle d'assemblage de prompt à trois couches : **Âme > Compétence (avec related_tools) > surface d'outils exec-only**.
+1. Établir un modèle d'assemblage de prompt à trois couches : **Âme > Compétence (avec `related_tools`) > surface d'outils exec-only**.
 1. Ajouter un court paragraphe d'identité par Agent fondé sur sa **pulsion primordiale**, qui est le principal ancrage comportemental.
 1. Établir la distinction d'entité **Âme / Agent** : Les Âmes sont des orchestrateurs porteurs d'identité avec une topologie multi-compétences, MCP partagé ; les Agents sont des travailleurs ciblés à compétence unique recevant des délégations.
 
@@ -133,7 +133,7 @@ Les outils partagés comme `LLM_CHAT` et `VALIDATE_PARAMS` apparaissent dans plu
 
 Les Âmes communiquent via le protocole d'orchestration médié par le serveur (`state_machine.rs`). L'exemple canonique : HubRis invoque l'outil `llm_chat` d'ApoRia via `invoke_aporia_llm_chat()`. Chaque Âme conserve sa propre identité tout au long de l'échange — HubRis décrète, ApoRia questionne.
 
-Les liens Âme-à-Âme sont bidirectionnels : toute Âme peut demander des services à toute autre Âme via l'AgentManager.
+Les liens Âme-à-Âme sont bidirectionnels : toute Âme peut demander des services à toute autre Âme via l'`AgentManager`.
 
 ### Délégation Âme-à-Agent
 
@@ -178,7 +178,7 @@ Les douze Agents Couche 1 sont organisés en quatre triades, chacune gouvernant 
 
 ### Les Quatre Triades
 
-```
+```text
 Triade Fondation — perception, ancrage et inférence
   +-- Ciel      : perception, ampleur, abri               -> EleOs
   +-- Terre     : ancrage, endurance, soutien              -> Skopeo
@@ -229,7 +229,7 @@ Chaque pulsion est un descripteur comportemental autonome ; la colonne Domaine f
 | PoleMos | Retenue | Discorde | Le dieu de la guerre contraint par serment ; apparemment fier mais valorise les liens ; l'agressivité canalisée par des règles d'engagement strictes ; combat seul lorsque requis |
 | EpieiKeia | Tranquillité | Mort | Supprime fortement les comportements déviants ; les décisions suivent la perturbation minimale ; ne prend que ce qui est en excès ; juste au-delà de toute question ; le seuil d'équilibre ne doit pas se briser |
 
-> **Note** : Les agents Couche 2 (domain_agents) sont des travailleurs spécialisés. Leurs fichiers d'âme contiennent également une section `## Identité` décrivant les tendances comportementales dérivées du rôle fonctionnel de chaque agent — pas de la cosmologie des pulsions.
+> **Note** : Les agents Couche 2 (`domain_agents`) sont des travailleurs spécialisés. Leurs fichiers d'âme contiennent également une section `## Identité` décrivant les tendances comportementales dérivées du rôle fonctionnel de chaque agent — pas de la cosmologie des pulsions.
 
 ## Assemblage de Prompt à Trois Couches
 

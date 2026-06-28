@@ -18,17 +18,26 @@ Entelecheia can drive physical and industrial systems, so **stability and safety
 Please read this section before opening a Pull Request.
 
 - **The merge bar is high; this is not a public roadmap.** Opening a PR does not mean it will be merged. We only accept a
-  deliberately small number of changes that fit the architecture and pass review. This is intentional, not rude.
+
+deliberately small number of changes that fit the architecture and pass review. This is intentional, not rude.
+
 - **Welcomed contributions:** bug reports, focused fixes, well-scoped improvements to **extensions** (Layer 3 plugins,
-  device profiles, LLM provider adapters, integrations, documentation), and design discussions before writing code.
+
+device profiles, LLM provider adapters, integrations, documentation), and design discussions before writing code.
+
 - **Usually not merged:** large unsolicited rewrites, architectural changes without prior design discussion, bulk
-  "vibe-coded" PRs, any change that lowers the core safety or correctness bar, and uninvited changes to the
-  safety-critical core that would extend review.
+
+"vibe-coded" PRs, any change that lowers the core safety or correctness bar, and uninvited changes to the
+safety-critical core that would extend review.
+
 - **Core vs. extensions.** The core (orchestration, microkernel, security) maintains the strictest standards and is
-  primarily maintained by the core team. Extensions are where external contributions are most useful and most likely to
-  be accepted.
+
+primarily maintained by the core team. Extensions are where external contributions are most useful and most likely to
+be accepted.
+
 - **A CLA must be signed.** Every accepted contribution requires signing the Contributor License Agreement, see
-  [`CLA.md`](../../../CLA.md). Commits must carry `Signed-off-by` (`git commit -s`).
+
+[`CLA.md`](../../../CLA.md). Commits must carry `Signed-off-by` (`git commit -s`).
 
 > **The license will open up; the merge bar will not.** On **2030-01-01**, this project transitions from BUSL-1.1 to
 > SySL-1.0 (recipient's choice), see [`LICENSE`](../../../LICENSE). This relaxes *what you may do with the code*, but
@@ -49,11 +58,11 @@ Please be respectful, constructive, and inclusive. We follow the
 ## Pull Request Process
 
 1. Fork and branch from `main`.
-2. Discuss large changes in an issue first.
-3. Make atomic commits that follow Conventional Commits.
-4. Ensure `just ci` (or the repository's CI command) passes.
-5. Sign the CLA and add `Signed-off-by`.
-6. Respond to review feedback; use force-push only for rebasing.
+1. Discuss large changes in an issue first.
+1. Make atomic commits that follow Conventional Commits.
+1. Ensure `just ci` (or the repository's CI command) passes.
+1. Sign the CLA and add `Signed-off-by`.
+1. Respond to review feedback; use force-push only for rebasing.
 
 ## License & CLA
 

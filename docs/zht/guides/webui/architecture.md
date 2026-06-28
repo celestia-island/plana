@@ -26,7 +26,7 @@ shittim-chest 是 [entelecheia](https://github.com/celestia-island/entelecheia) 
 
 核心後端（`packages/core`）是一個 Axum 0.8 應用程式。路由器掛載以下模組群組：
 
-```
+```text
 /                   → 健康檢查
 /api/auth/*         → AuthService（登入、註冊、GitHub OAuth、刷新、登出）
 /api/chat/*         → ChatService（對話、訊息、SSE/WS 串流、搜尋、匯出）
@@ -53,7 +53,7 @@ shittim-chest 是 [entelecheia](https://github.com/celestia-island/entelecheia) 
 
 ### JWT 身分驗證
 
-shittim_chest 發出包含 `{ sub: user_id, groups: [...] }` 的 JWT。JWT 金鑰與 scepter 共享，因此兩個服務可以獨立驗證權杖。存取權杖在 1 小時後過期；刷新權杖在 7 天後過期，每次使用時輪換。
+`shittim_chest` 發出包含 `{ sub: user_id, groups: [...] }` 的 JWT。JWT 金鑰與 scepter 共享，因此兩個服務可以獨立驗證權杖。存取權杖在 1 小時後過期；刷新權杖在 7 天後過期，每次使用時輪換。
 
 ## 獨立 LLM 能力
 
@@ -71,7 +71,7 @@ shittim-chest 有自己的 LLM 路由層，獨立於 entelecheia 運作：
 
 ### 登入序列
 
-```
+```text
 使用者 → shittim_chest：POST /api/auth/login { username, password }
 shittim_chest → shittim_chest_db：SELECT user WHERE username = ?（驗證 argon2 雜湊）
 shittim_chest → scepter：GET /api/user/{id}/permissions
@@ -83,7 +83,7 @@ shittim_chest：儲存會話 + 快取 RBAC
 
 ### GitHub OAuth
 
-```
+```text
 使用者 → shittim_chest：GET /api/auth/github
 shittim_chest → 使用者：302 重定向到 GitHub OAuth
 使用者 → GitHub：授權
@@ -98,7 +98,7 @@ shittim_chest → 使用者：{ access_token, refresh_token }（新使用者自�
 
 ### 訊息流程（獨立 LLM）
 
-```
+```text
 使用者 → POST /api/chat/conversations/:id/messages
 shittim_chest：驗證 JWT，載入對話
 shittim_chest → LlmRouter：將請求路由到最佳提供者
@@ -118,19 +118,20 @@ shittim_chest：將訊息持久化到 shittim_chest_db
 `/api/proxy/*` 端點將已驗證的請求轉發到 scepter：
 
 1. 瀏覽器以 JWT 開啟 `ws://shittim-chest:80/api/proxy/chat`
-2. shittim_chest 驗證 JWT，開啟到 scepter 的連線並轉發 JWT
-3. 瀏覽器和 scepter 之間的雙向訊息轉發
-4. shittim_chest 強制執行速率限制、記錄使用情況、管理連線生命週期
+1. `shittim_chest` 驗證 JWT，開啟到 scepter 的連線並轉發 JWT
+1. 瀏覽器和 scepter 之間的雙向訊息轉發
+1. `shittim_chest` 強制執行速率限制、記錄使用情況、管理連線生命週期
 
 ## Webhook 管線
 
 來自外部服務的 Webhook 透過 `/api/webhook/*` 進入：
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 驗證 → 解析事件 → 透過 Unix socket 轉發到 scepter
 ```
 
 支援的來源：GitHub（HMAC-SHA256）、GitLab（權杖）、Gitee（HMAC + 權杖備援），加上一個通用的 `/api/webhook/custom/{name}` 端點。功能：
+
 - 重複傳遞偵測（LRU 快取，10,000 個 ID）
 - 帶有列表 API 的傳遞日誌
 - webhook 來源的 IP 白名單
@@ -139,11 +140,12 @@ GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 驗證 → 解析事
 
 遠端裝置透過信號中繼管理：
 
-```
+```text
 瀏覽器 (webui) → WS /api/devices/stream → shittim_chest（信號中繼）→ Unix socket → entelecheia/polemos
 ```
 
 功能：
+
 - 透過 REST 的裝置列表和會話 CRUD
 - WebRTC 信號（SDP offer/answer、ICE 候選）
 - 終端中繼（WebSocket 到 xterm.js）
@@ -157,7 +159,7 @@ shittim-chest 從不直接連線到遠端裝置 — 所有資料流都透過 ent
 ### shittim_chest_db
 
 | 資料 | 資料表 | 理由 |
-|------|-------|-----------|
+| --- | --- | --- |
 | 密碼雜湊（argon2） | `auth_users` | 呈現層掌管登入流程 |
 | 活動會話、刷新權杖 | `sessions` | 會話管理是前端關注事項 |
 | 加密的 API 金鑰 | `api_keys` | API 金鑰發放是使用者面向的 |
@@ -170,7 +172,7 @@ shittim-chest 從不直接連線到遠端裝置 — 所有資料流都透過 ent
 ### entelecheia_db
 
 | 資料 | 理由 |
-|------|-----------|
+| --- | --- |
 | 使用者身份、群組、角色指派 | 核心強制執行權限 |
 | GroupPermissions（提供者配額、代理白名單） | 代理層級政策與代理同在 |
 | 代理設定、Cosmos/IEPL 狀態 | 編排資料屬於核心 |
@@ -180,13 +182,13 @@ shittim-chest 從不直接連線到遠端裝置 — 所有資料流都透過 ent
 ### 第一階段：Vue 3（目前）
 
 | 套件 | 技術 | 連接埠 | 用途 |
-|---------|------|------|---------|
+| --- | --- | --- | --- |
 | `webui` | Vue 3 + Vite + Pinia (TSX) | `:3000 (共享)` | 統一 webui：聊天、圖片生成、裝置、管理（提供者、代理、RBAC、webhook） |
 
 ### 第二階段：Rust WASM（未來）
 
 | 套件 | 技術 | 用途 |
-|---------|------|---------|
+| --- | --- | --- |
 | `webui` | Rust → WASM (Tairitsu) | 長期統一 webui（聊天 + 管理） |
 
 舊版前端作為活的規格。在過渡期間，兩個版本並行執行，相同的使用者互動必須產生相同的結果。
@@ -219,8 +221,8 @@ SHITTIM_CHEST_PROXY_DOMAIN=app.example.com
 CLI 建立一個 `shittim-chest-caddy` 容器（映像 `caddy:2`），該容器：
 
 1. 監聽連接埠 80/443（可透過 `SHITTIM_CHEST_PROXY_HTTP_PORT` / `SHITTIM_CHEST_PROXY_HTTPS_PORT` 設定）
-2. 透過 Let's Encrypt（Caddy 內建的 ACME）自動佈建 TLS 憑證
-3. 將所有請求代理到 Docker 網路上的核心後端
+1. 透過 Let's Encrypt（Caddy 內建的 ACME）自動佈建 TLS 憑證
+1. 將所有請求代理到 Docker 網路上的核心後端
 
 不需要 Caddyfile — CLI 會自動生成一個。網域必須有指向主機的公開 DNS。
 
@@ -255,7 +257,7 @@ SHITTIM_CHEST_PROXY_CONFIG_PATH=/etc/nginx/conf.d/default.conf
 所有代理容器由 CLI 透過 Docker API（`bollard`）管理：
 
 | 命令 | 行為 |
-|---------|----------|
+| --- | --- |
 | `just dev` / `chest up` | 若設定了 `PROXY_MODE`，則建立/啟動代理容器 |
 | `just dev-stop` / `chest down` | 停止並移除代理容器 |
 | 容器已在執行 | 重複使用現有容器（冪等） |

@@ -53,6 +53,7 @@ export async function memory_store(params: {
 ```
 
 ツールには以下の種類がある：
+
 - **純粋TS**: ロジックのみ、他のツールの合成やデータ変換を行う
 - **バックエンド連携**: MCPバックエンドが提供するプリミティブを呼び出す
 - **クラウド連携**: リモートAPI（RAG、モデル、外部サービス）を呼び出す
@@ -68,6 +69,7 @@ TypeScriptソースは純粋なテキストであり、コンパイルなしで�
 - バックエンドはプリミティブ操作を公開し、すべての合成とオーケストレーションはTSレイヤーで行われる。
 
 バックエンドインターフェースの例（Rustから自動生成）：
+
 ```typescript
 // Rustバックエンドから自動生成
 declare module 'backend' {
@@ -117,7 +119,7 @@ tier = "worker"
 
 ## パッケージディレクトリ構造
 
-```
+```text
 packages/agents/{agent_name}/
 ├── manifest.toml           # パッケージメタデータと設定
 ├── mcp/
@@ -200,7 +202,7 @@ export function vars_set(key: string, value: unknown): void;
 ## レイヤーアーキテクチャ
 
 | レイヤー | エージェント | 出荷方法 | パッケージ？ | コンテナ？ |
-|-------|--------|-----------|----------|------------|
+| --- | --- | --- | --- | --- |
 | L1 | SkeMma, HapLotes, HubRis, KaLos, NeiKos, ApoRia, EleOs, EpieiKeia, OreXis, PhiLia, PoleMos, SkoPeo | イメージに内蔵 | バックエンドのみ（Rustクレート） | なし（プロセス内） |
 | L2 | ClassicSoftwareEngineering, WebAutomation, WebUiPanel, IndustrialIoT | イメージに内蔵 | **完全パッケージ**（TS + スキル + ソウル） | あり（e-skemma） |
 | L3 | ユーザーインストール拡張 | 動的インストール | **完全パッケージ** | あり（e-skemma） |

@@ -13,9 +13,9 @@ subcategory = "core"
 Система плагинов WASI заменяет предыдущую инфраструктуру вебхуков на Python/TypeScript плагинами на основе **компонентной модели WASM**, предоставляя изолированные, независимые от языка интеграции с платформами (Layer 2) и расширения бизнес-логики (Layer 3). Ключевые цели дизайна:
 
 1. **Двойной механизм расширения**: Layer 2 (интеграция с платформами) и Layer 3 (бизнес-логика) оба поддерживают модули WASI и расширения boa TS.
-2. **Унифицированная регистрация MCP**: Все плагины регистрируют инструменты под `$.agents.xxx` независимо от языка реализации.
-3. **Управляемый хостом I/O**: Хост (axum-сервер Scepter) обрабатывает HTTP-маршрутизацию, WebSocket и долгоживущие соединения; плагины только обрабатывают логику.
-4. **Строгая изоляция**: WASM-модули работают под wasmtime с ограничениями топлива (fuel) и прерыванием по эпохе.
+1. **Унифицированная регистрация MCP**: Все плагины регистрируют инструменты под `$.agents.xxx` независимо от языка реализации.
+1. **Управляемый хостом I/O**: Хост (axum-сервер Scepter) обрабатывает HTTP-маршрутизацию, WebSocket и долгоживущие соединения; плагины только обрабатывают логику.
+1. **Строгая изоляция**: WASM-модули работают под wasmtime с ограничениями топлива (fuel) и прерыванием по эпохе.
 
 ## Архитектура
 
@@ -123,7 +123,7 @@ export!(GithubWebhookPlugin);
 ### Крейт: `_shared_plugin_host` (`packages/shared/plugin_host/`)
 
 | Модуль | Роль |
-|--------|------|
+| --- | --- |
 | `plugin_state.rs` | `HostFunctions` — реализует все функции `host-api` (HTTP, KV, config, events) |
 | `plugin_loader.rs` | `TypedPlugin` — создаёт контейнеры wasmtime, регистрирует импорты хоста, вызывает экспорты гостя через динамический `call_guest_raw_desc` |
 | `plugin_router.rs` | `PluginRouter` — управляет загруженными плагинами, диспетчеризует запросы вебхуков/ботов, авто-сканирует директорию `plugins/` |
@@ -146,7 +146,7 @@ flowchart TB
 
 Поскольку `wit_bindgen::generate!` на стороне гостя экспортирует функции под именем интерфейса WIT, хост использует полные имена для динамического вызова:
 
-```
+```text
 entelecheia:plugin/webhook-handler#name
 entelecheia:plugin/webhook-handler#handle-request
 entelecheia:plugin/webhook-handler#on-message
@@ -221,13 +221,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-2. Скопируйте файл WIT:
+1. Скопируйте файл WIT:
 
-```
+```text
 plugins/my-platform/wit/plugin.wit  <- symlink или копия из packages/shared/plugin_host/wit/
 ```
 
-3. Реализуйте трейт `Guest`:
+1. Реализуйте трейт `Guest`:
 
 ```rust
 // plugins/my-platform/src/lib.rs
@@ -250,25 +250,25 @@ impl Guest for MyPlatformPlugin {
 export!(MyPlatformPlugin);
 ```
 
-4. Настройте `.cargo/config.toml`:
+1. Настройте `.cargo/config.toml`:
 
 ```toml
 [target.wasm32-wasip2]
 rustflags = ["--cfg=unstable_wasi_extension", "--cfg=unstable_wasi_export_wasi_reactor"]
 ```
 
-5. Сборка:
+1. Сборка:
 
 ```bash
 cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ```
 
-6. Развёртывание: скопируйте файл `.wasm` в директорию `plugins/` (или установите `PLUGIN_DIR`).
+1. Развёртывание: скопируйте файл `.wasm` в директорию `plugins/` (или установите `PLUGIN_DIR`).
 
 ## Справочник функций хоста
 
 | Функция | Сигнатура | Описание |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `http-request` | `(method, url, headers, body) -> result<string, string>` | Выполнение HTTP-запросов (для ответа внешним платформам) |
 | `forward-event` | `(event-json) -> result<_, string>` | Пересылка структурированных событий в Scepter |
 | `query-ai` | `(message, context?) -> result<string, string>` | Запрос к конвейеру AI (ещё не подключено) |
@@ -281,7 +281,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## Модель безопасности
 
 | Механизм | Реализация |
-|-----------|---------------|
+| --- | --- |
 | **Песочница** | Песочница компонентной модели wasmtime — нет файловой системы, нет сетевого доступа по умолчанию |
 | **Ограничения ресурсов** | Учёт топлива (поинструкционный учёт) + прерывание по эпохе (таймаут) через построитель tairitsu Container |
 | **I/O только через хост** | Весь I/O проходит через функции хоста; плагины не могут открывать сокеты или файлы |
@@ -291,7 +291,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## Статус реализации
 
 | Фаза | Компонент | Статус |
-|-------|-----------|--------|
+| --- | --- | --- |
 | **P0** | WASI-плагин вебхуков GitHub | ✅ Готово |
 | **P0** | PluginRouter + интеграция со Scepter | ✅ Готово |
 | **P0** | HostFunctions (все 8 функций host-api) | ✅ Готово |
@@ -303,7 +303,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## Ключевые файлы
 
 | Файл | Назначение |
-|------|---------|
+| --- | --- |
 | `packages/shared/plugin_host/Cargo.toml` | wasmtime 43, среда выполнения tairitsu, reqwest |
 | `packages/shared/plugin_host/wit/plugin.wit` | Каноническое определение интерфейса WIT |
 | `packages/shared/plugin_host/src/plugin_state.rs` | HostFunctions, трейт HostApiProvider |

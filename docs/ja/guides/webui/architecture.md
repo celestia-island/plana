@@ -26,7 +26,7 @@ shittim-chestは、Rustベースのマルチエージェントコラボレーシ
 
 コアバックエンド（`packages/core`）はAxum 0.8アプリケーションです。ルーターは以下のモジュールグループをマウントします:
 
-```
+```text
 /                   → ヘルスチェック
 /api/auth/*         → AuthService（ログイン、登録、GitHub OAuth、リフレッシュ、ログアウト）
 /api/chat/*         → ChatService（会話、メッセージ、SSE/WSストリーミング、検索、エクスポート）
@@ -71,7 +71,7 @@ shittim-chestはentelecheiaから独立して動作する独自のLLMルーテ�
 
 ### ログインシーケンス
 
-```
+```text
 ユーザー → shittim_chest: POST /api/auth/login { username, password }
 shittim_chest → shittim_chest_db: SELECT user WHERE username = ? (argon2ハッシュ検証)
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -83,7 +83,7 @@ shittim_chest: セッション保存 + RBACキャッシュ
 
 ### GitHub OAuth
 
-```
+```text
 ユーザー → shittim_chest: GET /api/auth/github
 shittim_chest → ユーザー: 302 GitHub OAuthにリダイレクト
 ユーザー → GitHub: 認可
@@ -98,7 +98,7 @@ shittim_chest → ユーザー: { access_token, refresh_token } (新規ユーザ
 
 ### メッセージフロー（スタンドアロンLLM）
 
-```
+```text
 ユーザー → POST /api/chat/conversations/:id/messages
 shittim_chest: JWT検証、会話読み込み
 shittim_chest → LlmRouter: 最適なプロバイダーにリクエストをルーティング
@@ -118,19 +118,20 @@ shittim_chest: shittim_chest_dbにメッセージを永続化
 `/api/proxy/*`エンドポイントは認証済みリクエストをscepterに転送します:
 
 1. ブラウザがJWT付きで`ws://shittim-chest:80/api/proxy/chat`を開く
-2. shittim_chestがJWTを検証し、JWTを転送してscepterへの接続を開く
-3. ブラウザとscepter間の双方向メッセージ転送
-4. shittim_chestがレート制限を強制し、使用量をログに記録し、接続ライフサイクルを管理
+1. shittim_chestがJWTを検証し、JWTを転送してscepterへの接続を開く
+1. ブラウザとscepter間の双方向メッセージ転送
+1. shittim_chestがレート制限を強制し、使用量をログに記録し、接続ライフサイクルを管理
 
 ## Webhookパイプライン
 
 外部サービスからのWebhookは`/api/webhook/*`を通じて入ります:
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC検証 → イベント解析 → Unixソケット経由でscepterに転送
 ```
 
 サポートされるソース: GitHub（HMAC-SHA256）、GitLab（トークン）、Gitee（HMAC + トークンフォールバック）、および汎用`/api/webhook/custom/{name}`エンドポイント。機能:
+
 - 重複配信検出（LRUキャッシュ、10,000 ID）
 - 一覧API付き配信ログ
 - webhookソース用IPホワイトリスト
@@ -139,11 +140,12 @@ GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC検証 → イベン�
 
 リモートデバイスはシグナリングリレーを通じて管理されます:
 
-```
+```text
 ブラウザ（webui） → WS /api/devices/stream → shittim_chest（シグナルリレー） → Unixソケット → entelecheia/polemos
 ```
 
 機能:
+
 - REST経由のデバイス一覧およびセッションCRUD
 - WebRTCシグナリング（SDPオファー/アンサー、ICE候補）
 - ターミナルリレー（WebSocketからxterm.jsへ）
@@ -157,7 +159,7 @@ shittim-chestがリモートデバイスに直接接続することは決して�
 ### shittim_chest_db
 
 | データ | テーブル | 根拠 |
-|------|-------|-----------|
+| --- | --- | --- |
 | パスワードハッシュ（argon2） | `auth_users` | プレゼンテーション層がログインフローを所有 |
 | アクティブセッション、リフレッシュトークン | `sessions` | セッション管理はフロントエンドの関心事 |
 | 暗号化APIキー | `api_keys` | APIキー発行はユーザー向け |
@@ -170,7 +172,7 @@ shittim-chestがリモートデバイスに直接接続することは決して�
 ### entelecheia_db
 
 | データ | 根拠 |
-|------|-----------|
+| --- | --- |
 | ユーザーID、グループ、ロール割り当て | コアが権限を強制 |
 | GroupPermissions（プロバイダークォータ、エージェントホワイトリスト） | エージェントレベルのポリシーはエージェントと共に存在 |
 | エージェント設定、Cosmos/IEPL状態 | オーケストレーションデータはコアに属する |
@@ -180,13 +182,13 @@ shittim-chestがリモートデバイスに直接接続することは決して�
 ### フェーズ1: Vue 3（現在）
 
 | パッケージ | 技術 | ポート | 目的 |
-|---------|------|------|---------|
+| --- | --- | --- | --- |
 | `webui` | Vue 3 + Vite + Pinia (TSX) | `:3000（共有）` | 統合webui: チャット、画像生成、デバイス、管理（プロバイダー、エージェント、RBAC、webhook） |
 
 ### フェーズ2: Rust WASM（将来）
 
 | パッケージ | 技術 | 目的 |
-|---------|------|---------|
+| --- | --- | --- |
 | `webui` | Rust → WASM (Tairitsu) | 長期的な統合webui（チャット + 管理） |
 
 レガシーフロントエンドは生きた仕様として機能します。移行期間中、両方のバージョンが並行して実行され、同一のユーザー操作は同一の結果を生成しなければなりません。
@@ -219,8 +221,8 @@ SHITTIM_CHEST_PROXY_DOMAIN=app.example.com
 CLIが以下のことを行う`shittim-chest-caddy`コンテナ（イメージ`caddy:2`）を作成します:
 
 1. ポート80/443でリッスン（`SHITTIM_CHEST_PROXY_HTTP_PORT` / `SHITTIM_CHEST_PROXY_HTTPS_PORT`で設定可能）
-2. Let's Encrypt（Caddyの組み込みACME）を通じてTLS証明書を自動プロビジョニング
-3. すべてのリクエストをDockerネットワーク上のコアバックエンドにプロキシ
+1. Let's Encrypt（Caddyの組み込みACME）を通じてTLS証明書を自動プロビジョニング
+1. すべてのリクエストをDockerネットワーク上のコアバックエンドにプロキシ
 
 Caddyfileは不要です — CLIが自動生成します。ドメインはパブリックDNSがホストを指している必要があります。
 
@@ -255,7 +257,7 @@ SHITTIM_CHEST_PROXY_CONFIG_PATH=/etc/nginx/conf.d/default.conf
 すべてのプロキシコンテナはDocker API（`bollard`）を通じてCLIによって管理されます:
 
 | コマンド | 動作 |
-|---------|----------|
+| --- | --- |
 | `just dev` / `chest up` | `PROXY_MODE`が設定されている場合、プロキシコンテナを作成/起動 |
 | `just dev-stop` / `chest down` | プロキシコンテナを停止および削除 |
 | コンテナが既に実行中 | 既存のコンテナを再利用（冪等） |

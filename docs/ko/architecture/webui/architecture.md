@@ -17,7 +17,7 @@ subcategory = "webui"
 shittim-chest는 하이브리드 Cargo + pnpm 모노레포입니다. entelecheia의 에이전트 오케스트레이션 코어를 감싸는 사용자 대면 계층을 소유합니다. 두 프로젝트는 JWT 인증 HTTP/WebSocket을 통해 통신하며 — shittim-chest는 에이전트 작업을 위해 entelecheia의 데이터베이스에 직접 접근하지 않습니다.
 
 | 구성 요소 | 기술 | 역할 | 상태 |
-|-----------|------|------|--------|
+| --- | --- | --- | --- |
 | **core** | Rust + Axum | 통합 백엔드: 인증(JWT + OAuth), 독립적 LLM 라우팅, 채팅 API, 이미지 생성, 웹훅 수신, scepter 프록시, 원격 장치 시그널링, 채널 통합, 결제, RBAC, 워크스페이스 | 🟢 구현됨 |
 | **cli** | Rust | Docker 오케스트레이터: dev, up, down, migrate, logs, status | 🟢 구현됨 |
 | **webui** | Vue 3 + Vite (TSX) | 프론트엔드: 채팅 화면, 관리자 패널(20개 이상 뷰), 2D SCADA 토폴로지, 3D 홀로그래픽 미리보기 | 🟡 일부 |
@@ -108,6 +108,7 @@ sequenceDiagram
 ### 인증 (`packages/core/src/auth/`)
 
 완전히 구현됨:
+
 - argon2 해싱을 통한 사용자명/비밀번호 등록 및 로그인
 - 순환 방식의 JWT 액세스 + 리프레시 토큰 시스템
 - GitHub OAuth 2.0 통합 (리다이렉트 + 콜백, 사용자 자동 생성)
@@ -117,6 +118,7 @@ sequenceDiagram
 ### 채팅 (`packages/core/src/chat/`)
 
 완전히 구현됨:
+
 - 대화 CRUD (생성, 목록, 조회, 업데이트, 삭제)
 - LLM 라우팅을 통한 메시지 전송/수신
 - SSE (Server-Sent Events) 스트리밍 응답 (`/api/chat/stream`)
@@ -127,6 +129,7 @@ sequenceDiagram
 ### LLM (`packages/core/src/llm/`)
 
 완전히 구현됨:
+
 - 채팅 및 이미지 생성을 위한 OpenAI 호환 HTTP 클라이언트
 - 우선순위 기반 선택 및 폴백이 있는 다중 제공자 라우터
 - API 키 암호화(AES-256-GCM)가 있는 제공자 CRUD
@@ -136,12 +139,14 @@ sequenceDiagram
 ### 생성 (`packages/core/src/generation/`)
 
 완전히 구현됨:
+
 - 이미지 생성 엔드포인트 (`/api/generation/images`, `/api/generation/models`)
 - 구성된 LLM 제공자 사용
 
 ### 웹훅 (`packages/core/src/webhook.rs`)
 
 완전히 구현됨 (~1,000+ 라인):
+
 - HMAC-SHA256 검증이 있는 GitHub 웹훅
 - 토큰 검증이 있는 GitLab 웹훅
 - HMAC + 토큰 폴백이 있는 Gitee 웹훅
@@ -154,6 +159,7 @@ sequenceDiagram
 ### 장치 (`packages/core/src/devices/`)
 
 시그널링 릴레이 구현됨 (WebRTC 핸드셰이크에 외부 scepter 필요):
+
 - 장치 목록, 상세, 세션 CRUD를 위한 REST 엔드포인트
 - WebRTC용 WebSocket 시그널링 릴레이 — SDP offer/ICE candidate를 Unix 소켓을 통해 scepter로 전달; SDP answer는 scepter에서 와야 함(scepter 연결 불가 시 `forward_sdp_to_scepter`가 빈 문자열 반환)
 - 터미널 릴레이 (WebSocket에서 xterm.js로) — 키 입력을 scepter로 전달
@@ -167,6 +173,7 @@ sequenceDiagram
 ### 채널 (`packages/core/src/channel/`)
 
 완전히 구현됨 (22개 모듈 파일 + `mod.rs`):
+
 - 12개 플랫폼 커넥터: Telegram, Discord, Slack, Lark/Feishu, QQ Bot, WeCom, IRC, Matrix, Mattermost, Google Chat, Microsoft Teams, LINE
 - 플랫폼별 실제 API 클라이언트 구현
 - DM 정책 제어 (`dm_policy.rs`)
@@ -180,7 +187,7 @@ sequenceDiagram
 ### 추가 백엔드 모듈
 
 | 모듈 | 설명 |
-|--------|-------------|
+| --- | --- |
 | `proxy/` | Scepter HTTP/WS 브리지 (`ws_bridge.rs`는 코드베이스에서 가장 큰 단일 파일) |
 | `rbac/` | 역할 기반 접근 제어 |
 | `workspace/` | 워크스페이스 관리 |
@@ -211,7 +218,7 @@ TSX로 작성된 Vue 3 + Vite 프론트엔드 (`@vitejs/plugin-vue-jsx`를 통�
 #### 뷰
 
 | 뷰 그룹 | 설명 |
-|------------|-------------|
+| --- | --- |
 | `demiurge/` | 메인 채팅 화면 (DemiurgeView) — 스트리밍 응답, 에이전트 상태, 도구 호출 |
 | `auth/` | LoginView, RegisterView, SetupView |
 | `admin/` | 20개 이상의 관리자 뷰: 대시보드, 제공자, 에이전트, RBAC, 웹훅, 채널, 시스템, 장치 모델, 장치 설정, 스킬, MCP 도구, OAuth 제공자, 토큰 사용량, 워크스페이스, 음성 서비스, 리소스 할당량 등 |
@@ -221,7 +228,7 @@ TSX로 작성된 Vue 3 + Vite 프론트엔드 (`@vitejs/plugin-vue-jsx`를 통�
 #### 구성 요소 시스템
 
 | 디렉터리 | 설명 |
-|-----------|-------------|
+| --- | --- |
 | `base/` | 50개 이상의 `S` 접두사 디자인 시스템 구성 요소 (SButton, SCard, SModal, STable, STabs, STimeline, STreeView, SMarkdownRenderer, SMorphingTabs 등) |
 | `chat/` | 채팅 전용 구성 요소 (ChatBubble, AgentStatusBar, FloatingChatBar, ThinkingDots, ReportViewer, NodeMinimap 등) |
 | `header/` | 헤더 구성 요소 (breadcrumb 바, 모드 전환) |
@@ -237,7 +244,7 @@ webui의 모든 CSS 구동 모션과 프레임별 샘플링은 `packages/webui/s
 버스는 네 가지 작업 등록 API와 두 개의 부채널 플래그를 노출합니다:
 
 | API | 목적 | 프레임 모델 |
-|-----|---------|-------------|
+| --- | --- | --- |
 | `onFrame(cb, priority?)` | 프레임별 콜백 등록. `priority` ∈ `sync` / `normal` / `idle`. `{ disconnect() }` 반환. | 매 프레임 호출(sync), ~30 Hz 예산으로 스로틀(normal), 또는 ~0.5 Hz 예산(idle). |
 | `onceFrame(cb)` | 다음 프레임에 콜백 실행 후 자동 연결 해제. Fire-and-forget (취소 핸들 없음). | 일회성. |
 | `scheduleFrame(cb)` | 다음 프레임에 콜백 실행; 실행 전 취소할 `{ disconnect() }` 반환. "많은 호출을 하나의 포스트 프레임 콜백으로 통합"하는 스로틀 패턴용(수동 `if(rafId)cancel; rafId=rAF(cb)` 관용구 대체). | 일회성 (취소 가능). |
@@ -273,7 +280,7 @@ DOM 버스는 의도적으로 three.js 렌더 파이프라인을 위한 자체 r
 webui는 **두 개의 의도적으로 구별된 경로 별칭**(둘 다 `vite.config.ts` + `tsconfig.json`에서 선언)을 통해 자체 `src/`를 소비하며, 전체 코드베이스가 이 분할을 준수합니다:
 
 | 별칭 | 해결 위치 | 사용 용도 |
-|-------|-------------|-----------|
+| --- | --- | --- |
 | `@/<path>` | `src/*` | **내부 딥 임포트** — 특정 모듈에 직접 접근 (`@/api/client`, `@/composables/useReportedTransition`, `@/theme/animationBus`). 약 600곳; 베어 배럴로 사용된 적 없음. |
 | `@celestia-island/shared_ui` | `src/` (→ `src/index.ts` 배럴) | **큐레이션된 공개 API 표면만** — 항상 베어 지정자, 절대 코드 하위 경로 아님. 약 92곳. |
 
@@ -294,13 +301,11 @@ webui는 **`vue-i18n`**(사용자 정의 구현 아님)을 사용하며 **11개 
 각 로케일은 **17개 네임스페이스 JSON 파일**(admin, auth, chat, cmd, common, devices, errors, footer, help, logs, models, reports, skills, timeline, tokenUsage, tools, workspace)을 가집니다. 인앱 로케일 전환은 헤더 로케일 선택기를 통해 사용 가능합니다.
 
 > **번역 완전성은 상당히 다양합니다** (950개 영어 참조 키 기준 감사):
->
 > | 계층 | 로케일 | 영어 패스스루 | 키 공백 |
 > |------|---------|-------------------|---------|
 > | 잘 번역됨 | `ja`, `ko`, `zhs`, `zht` | ~5% | `zhs` 18개 키 누락; 기타 112개 누락 |
 > | 대부분 번역됨 | `de`, `fr`, `pt`, `es`, `ar` | ~9–14% | 공유 112개 키 블록 누락 |
 > | 사실상 미번역 | `ru` | **~76%** | 전체 키 동등하나 값이 그대로 영어 |
->
 > 공유 112개 키 공백은 최신 기능을 다룹니다: `admin.agents.*`, `admin.deviceModels.*`, `admin.projects.*`, `admin.rbac.*`, `admin.resourceQuota.*`, `auth.protocol.*`, `chat.cruise.*`, `chat.voice_*`.
 
 ## RBAC 아키텍처
@@ -310,7 +315,7 @@ webui는 **`vue-i18n`**(사용자 정의 구현 아님)을 사용하며 **11개 
 데이터 소유권은 깨끗한 경계 유지를 위해 두 프로젝트 간에 분할됩니다:
 
 | 데이터 | 데이터베이스 | 소유자 | 근거 |
-|------|----------|-------|-----------|
+| --- | --- | --- | --- |
 | 사용자 자격 증명 (비밀번호 해시, OAuth, API 키) | shittim_chest_db | shittim-chest | 표현 계층이 로그인 흐름 소유 |
 | 활성 세션, 리프레시 토큰 | shittim_chest_db | shittim-chest | 세션 관리는 프론트엔드 관심사 |
 | 대화, 메시지 | shittim_chest_db | shittim-chest | 채팅 데이터는 사용자 대면 |
@@ -322,11 +327,11 @@ webui는 **`vue-i18n`**(사용자 정의 구현 아님)을 사용하며 **11개 
 ### 인증 흐름
 
 1. 사용자가 core를 통해 인증 (비밀번호 / OAuth)
-2. core가 shittim_chest_db에 대해 자격 증명 검증 (비밀번호는 argon2)
-3. core가 사용자의 그룹 권한을 entelecheia에 쿼리 (또는 TTL 캐시에서 읽음)
-4. core가 `{ sub: user_id, groups: [...] }`를 포함한 JWT 발행
-5. 모든 후속 요청이 JWT 전달 → core 검증 → 프록시 라우트에 대해 scepter로 전달
-6. scepter가 JWT 검증 (환경 변수를 통한 공유 비밀키) 및 그룹 수준 권한 집행
+1. core가 shittim_chest_db에 대해 자격 증명 검증 (비밀번호는 argon2)
+1. core가 사용자의 그룹 권한을 entelecheia에 쿼리 (또는 TTL 캐시에서 읽음)
+1. core가 `{ sub: user_id, groups: [...] }`를 포함한 JWT 발행
+1. 모든 후속 요청이 JWT 전달 → core 검증 → 프록시 라우트에 대해 scepter로 전달
+1. scepter가 JWT 검증 (환경 변수를 통한 공유 비밀키) 및 그룹 수준 권한 집행
 
 ## 프로젝트 간 의존성
 
@@ -357,7 +362,7 @@ webui는 `@celestia-island/arona` 경로 별칭을 통해 `arona` 크레이트�
 다음 기능은 shittim-chest에 실제 구현이 있으나 완전한 기능을 위해 실행 중인 [entelecheia/scepter](https://github.com/celestia-island/entelecheia) 인스턴스가 필요합니다:
 
 | 기능 | 작동하는 것 | scepter가 필요한 것 |
-|---------|-----------|-------------------|
+| --- | --- | --- |
 | 토폴로지 SCADA | WS 전송, SVG 렌더링, breadcrumb 탐색 | 실시간 텔레메트리 데이터 (scepter로 전달되는 `topology.*` RPC) |
 | 홀로그래픽 3D | GLB 모델 로딩, 장면 구성, 카메라 제어 | 텔레메트리 매개변수 칩 |
 | 장치 WebRTC | 시그널링 릴레이, JWT 인증, ICE 전달 | SDP answer 생성 |
@@ -381,7 +386,7 @@ scepter가 없으면 토폴로지는 `SIMULATED_DEVICES`(하드코딩된 데모 
 `skills.rs`와 `tools.rs` REST 엔드포인트는 폴백 전용 스텁으로 남아 있으나(`[]` 반환), **기본 WS 경로는 완전히 연결됨** — `ws_bridge.rs`의 일반화된 알림-응답 브리지를 통해. 이 브리지는 webui 요청-응답 메서드를 scepter의 알림 스타일 페어링된 작업으로 변환합니다:
 
 | WS 메서드 | Scepter 페어 | 상태 |
-|-----------|-------------|--------|
+| --- | --- | --- |
 | `skills.list` | `Skill.ListSkills` → `SkillsListResponse` | ✅ 브리지됨 (필드 매퍼) |
 | `tools.list` | `Mcp.ListTools` → `ToolsListResponse` | ✅ 브리지됨 (필드 매퍼) |
 | `layer2.agents.list` | `Tui.Layer2AgentList` → Response | ✅ 브리지됨 (신원) |
@@ -399,7 +404,7 @@ scepter가 없으면 토폴로지는 `SIMULATED_DEVICES`(하드코딩된 데모 
 ## 라이선스
 
 | 매개변수 | 값 |
-|-----------|-------|
+| --- | --- |
 | 상업 라이선스 | Business Source License 1.1 (BUSL-1.1) |
 | 비상업적 사용 | Synthetic Source License 1.0 (SySL-1.0) |
 | 추가 사용 허가 | 내부 프로덕션, 학술, 정부, 비상업적 사용 허용 |

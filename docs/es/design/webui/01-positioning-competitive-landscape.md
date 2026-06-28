@@ -63,6 +63,6 @@ graph TB
 ## Filosofía de Diseño
 
 1. **Primero independiente**: Todas las características principales no dependen de entelecheia. Las variables de entorno `LLM_DEFAULT_PROVIDER_*` bastan para lanzar el chat de forma independiente.
-2. **Integración débilmente acoplada**: La integración con entelecheia es una capa proxy opcional. Los usuarios pueden elegir usar solo el chat LLM, o habilitar la orquestación de agentes mediante entelecheia.
-3. **WASM progresivo**: El frontend Vue 3 se entrega primero como una "especificación viva"; la migración a WASM tiene umbrales de decisión claros (madurez del framework, cobertura del ecosistema, ancho de banda de desarrollo).
-4. **Nativo Docker**: Todos los componentes del lado del servidor se gestionan mediante la API Docker de bollard, sin dependencia de docker-compose.
+1. **Integración débilmente acoplada**: La integración con entelecheia es una capa proxy opcional. Los usuarios pueden elegir usar solo el chat LLM, o habilitar la orquestación de agentes mediante entelecheia.
+1. **WASM progresivo**: El frontend Vue 3 se entrega primero como una "especificación viva"; la migración a WASM tiene umbrales de decisión claros (madurez del framework, cobertura del ecosistema, ancho de banda de desarrollo).
+1. **Nativo Docker**: Todos los componentes del lado del servidor se gestionan mediante la API Docker de bollard, sin dependencia de docker-compose.

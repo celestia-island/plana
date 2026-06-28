@@ -13,10 +13,10 @@ subcategory = "webui"
 ## Цели дизайна
 
 1. **Единый источник данных** — один файл описывает весь завод/проект: узлы устройств, 2D-топологию, 3D-сцену, промышленную сеть
-2. **Трёхсторонняя совместимость** — mock_scepter (fixture), shittim-chest webui (3D-рендеринг), агент entelecheia PoleMos (управление устройствами) читают один и тот же файл
-3. **Узел как центр** — вся топология, сцены, датчики привязаны к node, node является основной сущностью
-4. **Версионируемость** — поле `format_version` + JSON Schema, поддержка эволюции с обратной совместимостью
-5. **Расширяемость** — возможность добавления пользовательских метаданных без нарушения существующих парсеров
+1. **Трёхсторонняя совместимость** — `mock_scepter` (fixture), shittim-chest webui (3D-рендеринг), агент entelecheia PoleMos (управление устройствами) читают один и тот же файл
+1. **Узел как центр** — вся топология, сцены, датчики привязаны к node, node является основной сущностью
+1. **Версионируемость** — поле `format_version` + JSON Schema, поддержка эволюции с обратной совместимостью
+1. **Расширяемость** — возможность добавления пользовательских метаданных без нарушения существующих парсеров
 
 ## Соглашения о файле
 
@@ -61,7 +61,7 @@ subcategory = "webui"
 Описание полей:
 
 | Поле | Тип | Обязательное | Описание |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | name | string | Y | Название проекта |
 | description | string | N | Описание |
 | author | string | N | Создатель |
@@ -131,7 +131,7 @@ subcategory = "webui"
 Описание полей:
 
 | Поле | Тип | Обязательное | Описание |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | label | string | Y | Отображаемое имя |
 | label_i18n | {lang: string} | N | Многоязычное имя |
 | type | string | Y | Идентификатор типа устройства (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
@@ -148,7 +148,7 @@ subcategory = "webui"
 Структура Sensor:
 
 | Поле | Тип | Описание |
-|------|------|------|
+| --- | --- | --- |
 | id | string | ID датчика (напр. tt-101) |
 | type | string | temperature / pressure / flow / level / gas / current |
 | label | string | Отображаемая метка |
@@ -240,7 +240,7 @@ subcategory = "webui"
 Описание полей topology:
 
 | Поле | Тип | Описание |
-|------|------|------|
+| --- | --- | --- |
 | boxes | Box[] | Группировка корпусов, каждый box содержит несколько node |
 | plcs | PLC[] | Список устройств PLC |
 | connections | Connections | Четыре типа соединений: сигнальные линии, силовые кабели, водопроводы, газопроводы |
@@ -249,7 +249,7 @@ subcategory = "webui"
 Структура Box:
 
 | Поле | Тип | Описание |
-|------|------|------|
+| --- | --- | --- |
 | id | string | ID корпуса |
 | label | string | Отображаемая метка |
 | label_i18n | {lang: string} | Многоязычность |
@@ -259,7 +259,7 @@ subcategory = "webui"
 Структура Connection (общая):
 
 | Поле | Тип | Описание |
-|------|------|------|
+| --- | --- | --- |
 | id | string | ID соединения |
 | from | string | ID начальной сущности (node / sensor / plc / utility) |
 | to | string | ID конечной сущности |
@@ -275,7 +275,7 @@ subcategory = "webui"
 
 ## Раздел 4: `scene`
 
-Конфигурация 3D-голографической сцены — для рендеринга Three.js в PhysicalPreview webui.
+Конфигурация 3D-голографической сцены — для рендеринга Three.js в `PhysicalPreview` webui.
 
 ```json
 {
@@ -349,7 +349,7 @@ subcategory = "webui"
 Описание полей scene:
 
 | Поле | Тип | Описание |
-|------|------|------|
+| --- | --- | --- |
 | background_color | string | Цвет фона 3D-сцены |
 | environment_url | string? | URL HDR-карты окружения |
 | camera.overview | CameraView | Начальный вид камеры (панорама модели) |
@@ -363,7 +363,7 @@ subcategory = "webui"
 Структура CameraView:
 
 | Поле | Тип | Описание |
-|------|------|------|
+| --- | --- | --- |
 | position | [x, y, z] | Позиция камеры |
 | target | [x, y, z] | Точка обзора |
 | fov | number | Угол обзора (градусы) |
@@ -371,7 +371,7 @@ subcategory = "webui"
 Структура Model3D:
 
 | Поле | Тип | Описание |
-|------|------|------|
+| --- | --- | --- |
 | node | string | Связанный ID узла |
 | glb | string | Имя файла GLB (относительно директории models/) |
 | position | [x, y, z] | 3D-координаты в мире |
@@ -388,7 +388,7 @@ subcategory = "webui"
 
 Путь загрузки: `fixtures/{project}.plant.json`
 
-```
+```text
 fixtures/
 ├── agents.json
 ├── devices.json
@@ -399,7 +399,8 @@ fixtures/
     └── ...
 ```
 
-При запуске mock_scepter:
+При запуске `mock_scepter`:
+
 - `fixtures::load_all()` добавляет вызов `load_plant()`
 - Разбор `.plant.json` → разделение на `DeviceModelResponse[]` + `SceneConfigItem`
 - `get_scene_config` возвращает из данных plant, больше не жёстко закодировано
@@ -411,17 +412,20 @@ fixtures/
 Существующий контракт API не меняется (`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`).
 
 Новое:
+
 - `BOX_CAMERA_TARGETS` в `PhysicalPreview.tsx` читается из `scene.camera.bookmarks`, больше не жёстко закодировано
 - Оверлейные метки CSS2D 3D-моделей читаются из `nodes[nodeId].label`
 
 ### 3. Агент entelecheia PoleMos
 
 PoleMos читает файл plant через инструмент MCP:
+
 - `node_discover` → обход `nodes` + `topology.plcs`
 - `device_self_test` → чтение `nodes[id].sensors` + `nodes[id].rated`
 - Операции управления устройствами → запись обратно в `nodes[id].status`
 
 Будущие расширения:
+
 - Агент PoleMos layer2 генерирует `.plant.json` (чтение документации устройств через AI для автоматического построения топологии)
 - Человек редактирует 3D-макет перетаскиванием в webui → запись обратно в `.plant.json`
 - Конвейер CI/CD проверяет целостность схемы `.plant.json`
@@ -437,7 +441,7 @@ PoleMos читает файл plant через инструмент MCP:
 ## Связь с существующими данными
 
 | Существующий источник данных | Часть, переносимая в .plant.json |
-|-----------|--------------------------|
+| --- | --- |
 | Жёстко закодированные 20 DeviceModelResponse в `http_server.rs` | → `scene.models[]` + `nodes{}` |
 | Жёстко закодированный SceneConfigItem в `http_server.rs` | → `scene{}` (camera, lighting, ground, bloom) |
 | overview() / box_detail() в `mock_data/topology.rs` | → `topology{}` (boxes, connections, layout) |
@@ -448,6 +452,6 @@ PoleMos читает файл plant через инструмент MCP:
 ## Проверка схемы
 
 Файл JSON Schema находится в `schemas/plant-v1.json`, общий для трёх сторон.
-mock_scepter при загрузке: десериализация `serde_json` + проверка схемы.
+`mock_scepter` при загрузке: десериализация `serde_json` + проверка схемы.
 webui при сборке: можно проверять через `ajv`.
 entelecheia: можно проверять через крейт `jsonschema`.

@@ -63,6 +63,6 @@ graph TB
 ## Design Philosophy
 
 1. **Standalone-first**: All core features do not depend on entelecheia. `LLM_DEFAULT_PROVIDER_*` environment variables suffice to launch chat independently.
-2. **Loosely-coupled integration**: entelecheia integration is an optional proxy layer. Users can choose to use only LLM chat, or enable Agent orchestration via entelecheia.
-3. **Progressive WASM**: The Vue 3 frontend is delivered first as a "living specification"; WASM migration has clear decision thresholds (framework maturity, ecosystem coverage, development bandwidth).
-4. **Docker native**: All server-side components are managed via the bollard Docker API, with no dependency on docker-compose.
+1. **Loosely-coupled integration**: entelecheia integration is an optional proxy layer. Users can choose to use only LLM chat, or enable Agent orchestration via entelecheia.
+1. **Progressive WASM**: The Vue 3 frontend is delivered first as a "living specification"; WASM migration has clear decision thresholds (framework maturity, ecosystem coverage, development bandwidth).
+1. **Docker native**: All server-side components are managed via the bollard Docker API, with no dependency on docker-compose.

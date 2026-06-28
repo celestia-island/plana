@@ -18,20 +18,29 @@ prevalecen sobre el volumen de contribuciones**. Por favor, lee esto antes de ab
 request.
 
 - **Listón de fusión alto, no es una hoja de ruta pública.** Abrir un PR no implica que será
-  fusionado. Aceptamos un número deliberadamente pequeño de cambios, y solo cuando
-  encajan en la arquitectura y pasan la revisión. Es por diseño, no por descortesía.
+
+fusionado. Aceptamos un número deliberadamente pequeño de cambios, y solo cuando
+encajan en la arquitectura y pasan la revisión. Es por diseño, no por descortesía.
+
 - **Lo que damos la bienvenida:** informes de errores, correcciones enfocadas, campos de protocolo
-  aditivos (no disruptivos), documentación mejorada y discusiones de diseño previas antes del
-  código.
+
+aditivos (no disruptivos), documentación mejorada y discusiones de diseño previas antes del
+código.
+
 - **Lo que generalmente no fusionaremos:** grandes reescrituras no solicitadas, cambios
-  disruptivos en la superficie de tipos del protocolo, cambios arquitectónicos sin una
-  discusión de diseño previa, PRs masivos "vibe-coded", y cualquier cosa que baje el
-  listón de compatibilidad del contrato de tipos.
+
+disruptivos en la superficie de tipos del protocolo, cambios arquitectónicos sin una
+discusión de diseño previa, PRs masivos "vibe-coded", y cualquier cosa que baje el
+listón de compatibilidad del contrato de tipos.
+
 - **Núcleo vs. periferia.** Las definiciones de tipos del protocolo y su superficie de
-  serialización se mantienen con el listón más estricto y son mantenidas por el equipo central.
+
+serialización se mantienen con el listón más estricto y son mantenidas por el equipo central.
+
 - **CLA requerido.** Cada contribución aceptada requiere un Acuerdo de Licencia del
-  Contribuyente firmado. Ver [`CLA.md`](CLA.md). Los commits deben incluir una
-  línea `Signed-off-by` (`git commit -s`).
+
+Contribuyente firmado. Ver [`CLA.md`](CLA.md). Los commits deben incluir una
+línea `Signed-off-by` (`git commit -s`).
 
 > **La licencia puede abrirse; el listón de fusión no.** El **2030-01-01** este
 > proyecto se convierte de BUSL-1.1 a Apache-2.0 o MIT (a elección del destinatario) — ver
@@ -64,18 +73,21 @@ cargo clippy -- -D warnings
 
 - Rust 1.85+.
 - Los tipos derivan `ts-rs` (`#[derive(TS)]`) para generar bindings de TypeScript — mantén
-  los atributos `serde` y las anotaciones `ts-rs` consistentes.
+
+los atributos `serde` y las anotaciones `ts-rs` consistentes.
+
 - No introduzcas cambios disruptivos en los tipos de protocolo existentes; prefiere campos
-  aditivos con `#[serde(default)]`.
+
+aditivos con `#[serde(default)]`.
 
 ## Proceso de pull request
 
 1. Haz un fork y crea una rama desde `main`.
-2. Discute los cambios grandes o que afecten al protocolo en un issue primero.
-3. Haz commits atómicos siguiendo [Conventional Commits](https://www.conventionalcommits.org/).
-4. Asegúrate de que `cargo fmt`, `cargo clippy -D warnings` y `cargo test` pasen.
-5. Firma el CLA y añade `Signed-off-by` a cada commit.
-6. Atiende los comentarios de revisión; limita los force-pushes solo a rebase.
+1. Discute los cambios grandes o que afecten al protocolo en un issue primero.
+1. Haz commits atómicos siguiendo [Conventional Commits](https://www.conventionalcommits.org/).
+1. Asegúrate de que `cargo fmt`, `cargo clippy -D warnings` y `cargo test` pasen.
+1. Firma el CLA y añade `Signed-off-by` a cada commit.
+1. Atiende los comentarios de revisión; limita los force-pushes solo a rebase.
 
 ## Licencia y CLA
 

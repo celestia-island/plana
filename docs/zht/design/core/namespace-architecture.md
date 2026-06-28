@@ -47,7 +47,7 @@ flowchart TB
 ### 設計原則
 
 | 原則 | 說明 |
-|-----------|-------------|
+| --- | --- |
 | **單一事實來源** | 每個命名空間有且只有一個模組（`var_namespace.rs`、`ref_namespace.rs`、`namespace.rs`）生成引用該命名空間的**所有** JS 程式碼字串 |
 | **惰性初始化** | `__vars` 和 `__refs` 在 `JsRuntime::new()` 時初始化一次，並在技能鏈之間持久存在；`__env` 在命名空間 JS 求值期間初始化 |
 | **快照/還原** | 完整的 `__vars` + `__refs` 狀態可快照和還原，實現對話持久化 |
@@ -133,7 +133,7 @@ flowchart TB
 
 ### 1.3 初始化序列
 
-```
+```text
 JsRuntime::new()
   → context.eval("globalThis.$ = globalThis.$ || {}; globalThis.__vars = {}; globalThis.__refs = {};")
   → __vars 初始化為空物件
@@ -146,7 +146,7 @@ JsRuntime::new()
 ### 1.4 操作
 
 | 操作 | 工具名稱 | 類型 | 行為 |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | 儲存字串 | `write_to_var` | 阻塞 | 為 JS 逸出內容，eval `vars['name'] = 'content'` |
 | 儲存 JSON | `write_to_var_json` | 阻塞 | 驗證 JSON，eval `vars['name'] = JSON.parse('content')` |
 | 在 exec 中讀取 | `exec` | FireAndForget | 直接存取：`vars['name']` 或 `import vars from 'vars'` |
@@ -158,7 +158,7 @@ JsRuntime::new()
 
 在 `build_runtime_context()`（`prompt.rs:472`）中，變數儲存在系統提示中顯示為：
 
-```
+```text
 ## JS 執行時上下文
 
 __vars（來自 write_to_var / write_to_var_json，共 N 個）：
@@ -176,7 +176,7 @@ __vars（來自 write_to_var / write_to_var_json，共 N 個）：
 
 與 `env` 類似，`vars` 模組是一個 Boa 合成模組，包裝 `__vars` 以便於導入：
 
-```
+```python
 import vars from 'vars';
 // vars === __vars（即時引用）
 const report = vars['analysis_results'];
@@ -278,7 +278,7 @@ interface RefAgentOutput {
 ### 2.4 操作
 
 | 操作 | 工具名稱 | 類型 | 行為 |
-|-----------|-----------|------|----------|
+| --- | --- | --- | --- |
 | 新增引用 | `ref_add` | 阻塞 | 驗證 JSON，eval `refs['name'] = JSON.parse('...')` |
 | 移除引用 | `ref_remove` | FireAndForget | Eval `delete refs['name']` |
 | 在 exec 中讀取 | （透過 `exec`） | — | `refs['name'].files[0].content` |
@@ -291,7 +291,7 @@ Refs 出現在系統提示的**兩個**位置：
 
 #### 位置 1：`refs_section`（專用目錄）
 
-```
+```text
 ## 引用的資源（refs）
 
 以下資源可透過 `refs['name']` 存取。
@@ -304,7 +304,7 @@ Refs 出現在系統提示的**兩個**位置：
 
 #### 位置 2：`runtime_context`（名稱列表）
 
-```
+```text
 __refs（來自使用者/Agent 的引用資源，共 3 個）：
   `code:src/main.rs`、`image:architecture`、`agent:orexis/audit-1`
   存取：`refs['name']` — 每個 ref 有 .ref_type、.source、.summary
@@ -359,7 +359,7 @@ flowchart LR
 ### 3.3 操作
 
 | 操作 | 機制 | 行為 |
-|-----------|-----------|----------|
+| --- | --- | --- |
 | 初始化 | `build_namespace_js()` | `__env = __env \|\| {}; env.aporia = env.aporia \|\| { language: 'auto' }` |
 | 設定語言 | 透過 cosmos connector 的 `exec` 調用 | `env.aporia.language = 'zh'` |
 | 在 IEPL 中讀取 | `import { language } from 'env'` | 回傳 `env.aporia.language`，預設為 `'auto'` |
@@ -414,8 +414,8 @@ Object.defineProperty(globalThis.$, 'variant', {
 `LocalCosmosRuntime` 在一個專用執行緒中執行一個**單一的長期存活的 `JsRuntime`**。在技能鏈執行之間，執行時狀態（`__vars`、`__refs`）自然持久存在。然而，快照用於：
 
 1. **提示注入** — `build_runtime_context()` 和 `build_refs_section()` 讀取快照 JSON 以填充系統提示
-2. **對話持久化** — 在磁碟上傾印/還原以用於崩潰恢復或對話遷移
-3. **容器同步** — 透過 `cosmos_set_rag_context()` 推送狀態到 cosmos 容器
+1. **對話持久化** — 在磁碟上傾印/還原以用於崩潰恢復或對話遷移
+1. **容器同步** — 透過 `cosmos_set_rag_context()` 推送狀態到 cosmos 容器
 
 ### 4.2 快照格式
 
@@ -569,7 +569,7 @@ flowchart TB
 ### 5.2 工具定義
 
 | 工具 | 調用模式 | 需求 | 參數結構 |
-|------|-----------|----------|-----------------|
+| --- | --- | --- | --- |
 | `exec` | FireAndForget | `code: string` | 單一 JS 程式碼字串 |
 | `write_to_var` | Blocking | `var_name、content` | `{var_name: string, content: string}` |
 | `write_to_var_json` | Blocking | `var_name、content` | `{var_name: string, content: string（有效 JSON）}` |
@@ -614,7 +614,7 @@ fn is_cosmos_internal_tool(tool_name: &str) -> bool {
 此輔助函式服務兩個關鍵目的：
 
 1. **Agent 型別解析** — `get_tool_agent_type()` 對內部工具回傳 `Agent::SkeMma`，因為它們在 Cosmos 執行時中執行（而非在領域 Agent 的程序中）。
-2. **備援路由** — 當容器化的 cosmos 調用對內部工具失敗時，系統備援到本地 cosmos 執行時。對於非內部工具，備援改為進入程序內執行。這確保 cosmos 操作在容器化模式下永遠不會靜默失敗。
+1. **備援路由** — 當容器化的 cosmos 調用對內部工具失敗時，系統備援到本地 cosmos 執行時。對於非內部工具，備援改為進入程序內執行。這確保 cosmos 操作在容器化模式下永遠不會靜默失敗。
 
 ### 5.5 容器化 vs 本地 Cosmos 路由
 
@@ -656,7 +656,7 @@ flowchart TB
 **關鍵差異：**
 
 | 方面 | 本地模式 | 容器化模式 |
-|--------|-----------|-------------------|
+| --- | --- | --- |
 | `__vars` / `__refs` | 在所有 Agent 間共享 | 在容器內共享，容器間隔離 |
 | `__env` | 直接透過 `exec` 設定 | 透過 `CosmosConnector` JSON-RPC 調用設定 |
 | 效能 | 零序列化開銷 | 每次調用需要 JSON-RPC 序列化 |
@@ -683,14 +683,16 @@ pub async fn build_scepter_namespace_config_and_js(
 此函式：
 
 1. 從 `AgentRegistry` 收集所有已註冊 Agent 的 MCP 工具
-2. 建構帶有各 Agent 工具清單和元資料（sync/async、unwrap_data）的 `NamespaceConfig`
-3. 透過 `build_namespace_js(&config)` 生成命名空間 JS，該函式：
+1. 建構帶有各 Agent 工具清單和元資料（sync/async、`unwrap_data`）的 `NamespaceConfig`
+1. 透過 `build_namespace_js(&config)` 生成命名空間 JS，該函式：
+
    - 建立 `globalThis.$`（若缺失）
    - 初始化 `env.aporia` 為 `{ language: 'auto' }`
    - 定義 `$.variant` 屬性（回傳 `globalThis.$` 的循環 getter）
    - 透過 `register_tool_modules_with_rag()` 註冊所有 Agent 工具模組
 
 命名空間 JS 的求值時機：
+
 - **一次** 在 `LocalCosmosRuntime::new()` 啟動時
 - **按需** 在技能鏈重建期間透過 `CosmosCommand::RebuildNamespace`
 
@@ -700,7 +702,7 @@ pub async fn build_scepter_namespace_config_and_js(
 
 在 `pipeline.rs:869-882` 中組裝的完整系統提示：
 
-```
+```text
 你是 {Agent} {skill_name} 技能執行引擎。忠實地執行該技能。
 
 [capability_section]
@@ -745,7 +747,7 @@ pub async fn build_scepter_namespace_config_and_js(
 ### 段落位置理由
 
 | 段落 | 位置 | 理由 |
-|---------|----------|--------|
+| --- | --- | --- |
 | Agent 身份 + 技能名稱 | 第一句 | 立即設定角色 |
 | 工具宣告 | soul 之前 | LLM 需要知道可用工具後，人格才能影響選擇 |
 | Soul | 工具之後、refs 之前 | 人格影響如何解讀 refs |
@@ -766,6 +768,7 @@ globalThis.__refs = globalThis.__refs || {};
 ```
 
 這意味著：
+
 - **現有值持久存在** — `__vars` 和 `__refs` 保持完好
 - **損壞狀態可恢復** — 若 `__refs` 被意外刪除，會重新建立
 - **技能隔離是可選的** — 技能應該只讀取它們知道的變數（透過執行時上下文提示中的名稱）
@@ -776,7 +779,7 @@ globalThis.__refs = globalThis.__refs || {};
 ## 8. 實作檔案地圖
 
 | 元件 | 檔案 | 行數 | 說明 |
-|-----------|------|-------|-------------|
+| --- | --- | --- | --- |
 | `__vars` 常數與生成器 | `packages/shared/core/src/var_namespace.rs` | 1-211 | 所有 vars 的 JS 程式碼生成 |
 | `__refs` 常數與生成器 | `packages/shared/core/src/ref_namespace.rs` | 1-145 | 所有 refs 的 JS 程式碼生成 |
 | `__env` 生成 | `packages/shared/iepl/src/namespace.rs` | 193-197 | `build_env_namespace_js()` |
@@ -825,7 +828,7 @@ globalThis.__refs = globalThis.__refs || {};
 ### 9.2 記憶體限制
 
 | 限制 | 值 | 執行位置 |
-|-------|-------|-------------|
+| --- | --- | --- |
 | 提示中的最大 vars 數 | 30 | `build_runtime_context()` — `MAX_NAMES` 常數 |
 | 提示中的最大 refs 數 | 30 | `build_refs_section()` — `.take(30)` |
 | runtime_context 中的最大 refs 數 | 30 | `build_runtime_context()` — `MAX_NAMES` 常數 |
@@ -836,7 +839,7 @@ globalThis.__refs = globalThis.__refs || {};
 ### 9.3 錯誤處理
 
 | 錯誤 | 處理方式 |
-|-------|----------|
+| --- | --- |
 | `write_to_var_json` 含無效 JSON | 回傳含預覽的錯誤（前 200 字元） |
 | `ref_add` 含無效 JSON | 回傳 `SkemmaError::JsEval` 含預覽 |
 | 循環引用的快照（`$.variant`） | 靜默捕獲 `TypeError`，跳過該鍵 |
@@ -863,7 +866,7 @@ sequenceDiagram
     JS->>JS: 註冊新工具模組<br/>（__vars 和 __refs 不變）
 ```
 
-> **關鍵不變量：** RebuildNamespace 僅更新工具註冊和環境設定。它**不**重置 `__vars` 或 `__refs`——這些由 `ResetVars` 單獨處理。
+> **關鍵不變量：** `RebuildNamespace` 僅更新工具註冊和環境設定。它**不**重置 `__vars` 或 `__refs`——這些由 `ResetVars` 單獨處理。
 
 ### 9.5 容器化模式中的語言傳播
 
@@ -880,7 +883,7 @@ connector.cosmos_exec(&container_uuid, &lang_code).await?;
 
 這透過 JSON-RPC 傳輸向 cosmos 容器發送一個 `exec` MCP 調用，該調用在容器的隔離 `JsRuntime` 中求值 JS 賦值。完整的語言傳播路徑為：
 
-```
+```text
 TUI 請求語言 → Scepter（提取 request_language）
   → [本地模式] 直接 exec("env.aporia.language = 'zh'")
   → [容器化] CosmosConnector::cosmos_exec(json_rpc_call)

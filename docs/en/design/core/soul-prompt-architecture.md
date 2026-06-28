@@ -17,7 +17,7 @@ The project itself is named **Entelecheia** — the orchestrator of the multi-ag
 ## Goals
 
 1. Inject the soul prompt as the foundational identity layer in every LLM request.
-1. Establish a three-layer prompt assembly model: **Soul > Skill (with related_tools) > exec-only tool surface**.
+1. Establish a three-layer prompt assembly model: **Soul > Skill (with `related_tools`) > exec-only tool surface**.
 1. Add a short identity paragraph per Agent grounded in its **primordial drive**, which is the primary behavioral anchor.
 1. Establish the **Soul / Agent** entity distinction: Souls are identity-bearing orchestrators with multi-skill, shared-MCP topology; Agents are focused single-skill workers receiving delegation.
 
@@ -133,7 +133,7 @@ Shared tools like `LLM_CHAT` and `VALIDATE_PARAMS` appear across multiple skills
 
 Souls communicate via the server-mediated orchestration protocol (`state_machine.rs`). The canonical example: HubRis invokes ApoRia's `llm_chat` tool through `invoke_aporia_llm_chat()`. Each Soul retains its own identity throughout the exchange — HubRis decrees, ApoRia questions.
 
-Soul-to-Soul links are bidirectional: any Soul can request services from any other Soul through the AgentManager.
+Soul-to-Soul links are bidirectional: any Soul can request services from any other Soul through the `AgentManager`.
 
 ### Soul-to-Agent Delegation
 
@@ -178,7 +178,7 @@ The twelve Layer-1 Agents are organized into four triads, each governing a funda
 
 ### The Four Triads
 
-```
+```text
 Foundation Triad — perception, grounding, and inference
   +-- Sky     : perception, breadth, shelter            -> EleOs
   +-- Earth   : grounding, endurance, support           -> Skopeo
@@ -229,8 +229,7 @@ Each drive is a self-contained behavioral descriptor; the Domain column provides
 | PoleMos | Restraint | Strife | The war-god constrained by oath; seemingly proud but values bonds; aggression channeled through strict rules of engagement; fights alone when required |
 | EpieiKeia | Tranquility | Death | Highly suppresses deviant behavior; decisions follow minimal disturbance; takes only what is excess; fair beyond question; the equilibrium threshold must not break |
 
-
-> **Note**: Layer 2 (domain_agents) are specialized workers. Their soul files also contain an `## Identity` section describing behavioral tendencies derived from each agent's functional role — not from the drive cosmology.
+> **Note**: Layer 2 (`domain_agents`) are specialized workers. Their soul files also contain an `## Identity` section describing behavioral tendencies derived from each agent's functional role — not from the drive cosmology.
 
 ## Three-Layer Prompt Assembly
 

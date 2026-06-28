@@ -41,7 +41,7 @@ flowchart TB
 ### 조건부 컴파일
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 static ARONA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../dist/arona");
 
 async fn serve_arona() -> impl IntoResponse {
@@ -62,7 +62,7 @@ async fn serve_arona() -> impl IntoResponse {
 
 애플리케이션은 단일 페이지 애플리케이션이다. 정적 에셋과 일치하지 않는 모든 경로는 `index.html`을 반환한다:
 
-```
+```text
 GET /               → index.html
 GET /chat/123       → index.html (프론트엔드 라우터가 처리)
 GET /backend        → index.html
@@ -86,7 +86,7 @@ GET /backend/providers → index.html (프론트엔드 라우터가 처리)
 
 ## Dockerfile 내 프론트엔드 빌드
 
-```
+```text
 Stage 1 (프론트엔드):
   node:22-slim → pnpm install → pnpm build:all → /app/dist/arona/
 
@@ -102,6 +102,6 @@ Stage 3 (런타임):
 ## 설계 결정
 
 1. **Dev 모드는 자동 재빌드를 위해 dev.py를 사용한다**: `dev.py`가 프론트엔드 소스를 감시하고 변경 시 재빌드하며, 백엔드가 하나의 포트에서 모든 것을 제공한다.
-2. **Release 모드는 리버스 프록시가 필요하지 않다**: 바이너리가 SPA를 내장하여 단일 프로세스 배포를 가능하게 하고 운영 복잡성을 줄인다.
-3. **프론트엔드는 런타임에 동적으로 로드되지 않는다**: 파일시스템 의존성과 버전 불일치를 방지한다. Release 이미지에는 단일 바이너리 파일만 포함된다.
-4. **단일 SPA**: 프론트엔드는 `/`에서 제공되며, 관리자 패널은 `/backend`에 위치한다.
+1. **Release 모드는 리버스 프록시가 필요하지 않다**: 바이너리가 SPA를 내장하여 단일 프로세스 배포를 가능하게 하고 운영 복잡성을 줄인다.
+1. **프론트엔드는 런타임에 동적으로 로드되지 않는다**: 파일시스템 의존성과 버전 불일치를 방지한다. Release 이미지에는 단일 바이너리 파일만 포함된다.
+1. **단일 SPA**: 프론트엔드는 `/`에서 제공되며, 관리자 패널은 `/backend`에 위치한다.

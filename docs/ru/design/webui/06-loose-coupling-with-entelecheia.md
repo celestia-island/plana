@@ -77,7 +77,7 @@ shittim-chest и scepter разделяют ключ подписи JWT чере
 
 ### Поток входа
 
-```
+```text
 Пользователь → shittim_chest: POST /api/auth/login
 shittim_chest: Проверить пароль argon2
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -91,7 +91,7 @@ shittim_chest → Пользователь: токены
 
 ### HTTP-прокси
 
-```
+```text
 Браузер → shittim_chest:80/api/proxy/chat (JWT в заголовке)
 shittim_chest: Проверить JWT
 shittim_chest → scepter:8424/api/chat (Переслать JWT)
@@ -100,7 +100,7 @@ scepter → Агент → LLM → scepter → shittim_chest → Браузер
 
 ### WebSocket-прокси
 
-```
+```text
 Браузер → shittim_chest:80/api/proxy/ws (JWT в заголовке)
 shittim_chest: Проверить JWT
 shittim_chest ↔ scepter:8424/ws (Двунаправленная пересылка + JWT)
@@ -110,6 +110,7 @@ shittim_chest ↔ scepter:8424/ws (Двунаправленная пересыл
 ### Ограничение скорости и мониторинг
 
 На уровне прокси shittim-chest отвечает за:
+
 - Ограничение скорости (на пользователя / на IP)
 - Логирование использования
 - Управление жизненным циклом соединения
@@ -117,7 +118,7 @@ shittim_chest ↔ scepter:8424/ws (Двунаправленная пересыл
 
 ## Конвейер вебхуков
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → проверка HMAC → Разбор события → Unix сокет → scepter
 ```
 

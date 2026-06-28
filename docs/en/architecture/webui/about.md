@@ -17,13 +17,13 @@ Shittim Chest is the user-facing shell for the [entelecheia](https://github.com/
 Shittim Chest consists of several components that work together to provide a complete user experience:
 
 - **arona** — The chat UI you are currently using, featuring streaming responses, image generation, agent status monitoring, thinking window, remote device viewer, and multi-language support.
-- **shittim_chest** — The unified Rust + Axum backend handling authentication (JWT + OAuth), independent LLM routing, chat API, image generation, webhook ingress, scepter proxy, and remote device signaling.
+- **`shittim_chest`** — The unified Rust + Axum backend handling authentication (JWT + OAuth), independent LLM routing, chat API, image generation, webhook ingress, scepter proxy, and remote device signaling.
 
 ## Relationship with Entelecheia
 
 [entelecheia](https://github.com/celestia-island/entelecheia) is the core multi-agent orchestration engine. It provides the agent runtime (scepter, 13 specialized agents, Cosmos/IEPL runtime). Shittim Chest handles everything the user directly interacts with — identity, presentation, and communication.
 
-The two projects are separated by design: entelecheia manages agent orchestration, while shittim-chest manages user identity and presentation. They communicate via JWT-authenticated HTTP/WebSocket. Login credentials live in shittim_chest_db; permissions and identity data live in entelecheia_db. This separation allows the frontend shell to evolve independently of the agent core.
+The two projects are separated by design: entelecheia manages agent orchestration, while shittim-chest manages user identity and presentation. They communicate via JWT-authenticated HTTP/WebSocket. Login credentials live in `shittim_chest_db`; permissions and identity data live in entelecheia_db. This separation allows the frontend shell to evolve independently of the agent core.
 
 ## Relationship with Hikari
 

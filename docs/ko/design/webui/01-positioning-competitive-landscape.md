@@ -63,6 +63,6 @@ graph TB
 ## 설계 철학
 
 1. **독립형 우선**: 모든 핵심 기능은 entelecheia에 의존하지 않는다. `LLM_DEFAULT_PROVIDER_*` 환경 변수만으로 독립적으로 채팅을 실행할 수 있다.
-2. **느슨한 결합 통합**: entelecheia 통합은 선택적 프록시 계층이다. 사용자는 LLM 채팅만 사용하거나, entelecheia를 통한 Agent 오케스트레이션을 활성화할 수 있다.
-3. **점진적 WASM**: Vue 3 프론트엔드를 "살아있는 명세"로 먼저 제공하며, WASM 마이그레이션은 명확한 의사 결정 기준(프레임워크 성숙도, 생태계 적용 범위, 개발 대역폭)을 갖는다.
-4. **Docker 네이티브**: 모든 서버 측 컴포넌트는 bollard Docker API를 통해 관리되며, docker-compose에 의존하지 않는다.
+1. **느슨한 결합 통합**: entelecheia 통합은 선택적 프록시 계층이다. 사용자는 LLM 채팅만 사용하거나, entelecheia를 통한 Agent 오케스트레이션을 활성화할 수 있다.
+1. **점진적 WASM**: Vue 3 프론트엔드를 "살아있는 명세"로 먼저 제공하며, WASM 마이그레이션은 명확한 의사 결정 기준(프레임워크 성숙도, 생태계 적용 범위, 개발 대역폭)을 갖는다.
+1. **Docker 네이티브**: 모든 서버 측 컴포넌트는 bollard Docker API를 통해 관리되며, docker-compose에 의존하지 않는다.

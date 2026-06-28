@@ -13,10 +13,10 @@ subcategory = "webui"
 ## Objectifs de Conception
 
 1. **Source de données unique** — un fichier décrit l'ensemble de l'usine/du projet : nœuds d'équipement, topologie 2D, scène 3D, réseau industriel
-2. **Compatibilité tripartite** — mock_scepter (fixture), shittim-chest webui (rendu 3D), agent entelecheia PoleMos (gestion de périphériques) lisent tous le même fichier
-3. **Centré sur les nœuds** — toute la topologie, les scènes, les capteurs sont rattachés au nœud, le nœud est l'entité centrale
-4. **Versionnable** — champ `format_version` + Schéma JSON, prend en charge l'évolution rétrocompatible
-5. **Extensible** — permet l'ajout de métadonnées personnalisées sans briser les analyseurs existants
+1. **Compatibilité tripartite** — `mock_scepter` (fixture), shittim-chest webui (rendu 3D), agent entelecheia PoleMos (gestion de périphériques) lisent tous le même fichier
+1. **Centré sur les nœuds** — toute la topologie, les scènes, les capteurs sont rattachés au nœud, le nœud est l'entité centrale
+1. **Versionnable** — champ `format_version` + Schéma JSON, prend en charge l'évolution rétrocompatible
+1. **Extensible** — permet l'ajout de métadonnées personnalisées sans briser les analyseurs existants
 
 ## Conventions de Fichier
 
@@ -61,7 +61,7 @@ Métadonnées du projet.
 Description des champs :
 
 | Champ | Type | Requis | Description |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | name | string | O | Nom du projet |
 | description | string | N | Description |
 | author | string | N | Créateur |
@@ -131,7 +131,7 @@ Description des champs :
 Description des champs :
 
 | Champ | Type | Requis | Description |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | label | string | O | Nom d'affichage |
 | label_i18n | {lang: string} | N | Nom multilingue |
 | type | string | O | Identifiant de type d'équipement (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
@@ -148,7 +148,7 @@ Description des champs :
 Structure Sensor :
 
 | Champ | Type | Description |
-|------|------|------|
+| --- | --- | --- |
 | id | string | ID du capteur (ex. tt-101) |
 | type | string | temperature / pressure / flow / level / gas / current |
 | label | string | Étiquette d'affichage |
@@ -240,7 +240,7 @@ Topologie du panneau 2D — pour la vue de panneau de type SCADA, les diagrammes
 Description des champs de topology :
 
 | Champ | Type | Description |
-|------|------|------|
+| --- | --- | --- |
 | boxes | Box[] | Groupement par boîtiers, chaque boîte contient plusieurs nœuds |
 | plcs | PLC[] | Liste des équipements PLC |
 | connections | Connections | Quatre types de connexions : câbles de signal, câbles d'alimentation, conduites d'eau, conduites de gaz |
@@ -249,7 +249,7 @@ Description des champs de topology :
 Structure Box :
 
 | Champ | Type | Description |
-|------|------|------|
+| --- | --- | --- |
 | id | string | ID du boîtier |
 | label | string | Étiquette d'affichage |
 | label_i18n | {lang: string} | Multilingue |
@@ -259,7 +259,7 @@ Structure Box :
 Structure Connection (générique) :
 
 | Champ | Type | Description |
-|------|------|------|
+| --- | --- | --- |
 | id | string | ID de connexion |
 | from | string | ID de l'entité source (nœud / capteur / plc / utilitaire) |
 | to | string | ID de l'entité destination |
@@ -275,7 +275,7 @@ Structure Connection (générique) :
 
 ## Section 4 : `scene`
 
-Configuration de scène holographique 3D — pour le rendu Three.js du PhysicalPreview de la webui.
+Configuration de scène holographique 3D — pour le rendu Three.js du `PhysicalPreview` de la webui.
 
 ```json
 {
@@ -349,7 +349,7 @@ Configuration de scène holographique 3D — pour le rendu Three.js du PhysicalP
 Description des champs de scene :
 
 | Champ | Type | Description |
-|------|------|------|
+| --- | --- | --- |
 | background_color | string | Couleur de fond de la scène 3D |
 | environment_url | string? | URL de la carte d'environnement HDR |
 | camera.overview | CameraView | Vue initiale de la caméra (face au panorama du modèle) |
@@ -363,7 +363,7 @@ Description des champs de scene :
 Structure CameraView :
 
 | Champ | Type | Description |
-|------|------|------|
+| --- | --- | --- |
 | position | [x, y, z] | Position de la caméra |
 | target | [x, y, z] | Point cible du regard |
 | fov | number | Champ de vision (degrés) |
@@ -371,7 +371,7 @@ Structure CameraView :
 Structure Model3D :
 
 | Champ | Type | Description |
-|------|------|------|
+| --- | --- | --- |
 | node | string | ID du nœud associé |
 | glb | string | Nom du fichier GLB (relatif au répertoire models/) |
 | position | [x, y, z] | Coordonnées mondiales 3D |
@@ -388,7 +388,7 @@ Structure Model3D :
 
 Chemin de chargement : `fixtures/{project}.plant.json`
 
-```
+```text
 fixtures/
 ├── agents.json
 ├── devices.json
@@ -399,7 +399,8 @@ fixtures/
     └── ...
 ```
 
-Au démarrage de mock_scepter :
+Au démarrage de `mock_scepter` :
+
 - `fixtures::load_all()` ajoute un appel `load_plant()`
 - Analyse `.plant.json` → décomposé en `DeviceModelResponse[]` + `SceneConfigItem`
 - `get_scene_config` retourne depuis les données plant, plus codé en dur
@@ -411,17 +412,20 @@ Au démarrage de mock_scepter :
 Le contrat API existant est inchangé (`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`).
 
 Nouveautés :
+
 - `PhysicalPreview.tsx` `BOX_CAMERA_TARGETS` lit depuis `scene.camera.bookmarks`, plus codé en dur
 - Les étiquettes CSS2D overlay des modèles 3D lisent depuis `nodes[nodeId].label`
 
 ### 3. Agent entelecheia PoleMos
 
 PoleMos lit les fichiers plant via l'outil MCP :
+
 - `node_discover` → parcourt `nodes` + `topology.plcs`
 - `device_self_test` → lit `nodes[id].sensors` + `nodes[id].rated`
 - Opérations de gestion de périphériques → écrit `nodes[id].status`
 
 Extensions futures :
+
 - L'agent PoleMos layer2 génère `.plant.json` (l'IA lit la documentation de l'équipement et établit automatiquement la topologie)
 - Édition par glisser-déposer de la disposition 3D dans la webui → écriture dans `.plant.json`
 - Pipeline CI/CD valide l'intégrité du schéma `.plant.json`
@@ -437,7 +441,7 @@ L'exemple complet se trouve dans `scripts/mock/fixtures/hydrogen_corridor.plant.
 ## Relation avec les Données Existantes
 
 | Source de données existante | Partie migrée vers .plant.json |
-|-----------|--------------------------|
+| --- | --- |
 | 20 DeviceModelResponse codés en dur dans `http_server.rs` | → `scene.models[]` + `nodes{}` |
 | SceneConfigItem codé en dur dans `http_server.rs` | → `scene{}` (camera, lighting, ground, bloom) |
 | overview() / box_detail() de `mock_data/topology.rs` | → `topology{}` (boxes, connections, layout) |
@@ -448,6 +452,6 @@ L'exemple complet se trouve dans `scripts/mock/fixtures/hydrogen_corridor.plant.
 ## Validation de Schéma
 
 Le fichier JSON Schema est placé dans `schemas/plant-v1.json`, partagé entre les trois plateformes.
-mock_scepter au chargement : désérialisation `serde_json` + validation de schéma.
+`mock_scepter` au chargement : désérialisation `serde_json` + validation de schéma.
 La webui peut utiliser `ajv` pour la validation lors de la construction.
 entelecheia peut utiliser la crate `jsonschema` pour la validation.

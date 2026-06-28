@@ -8,7 +8,7 @@ subcategory = "core"
 
 # 다중 에이전트 프레임워크 경쟁 분석
 
-**일자**: 2026년 5월 12일 (43 crates × 1500+ 소스 파일 전체 소스 코드 감사 후 갱신)  
+**일자**: 2026년 5월 12일 (43 crates × 1500+ 소스 파일 전체 소스 코드 감사 후 갱신)
 **맥락**: Entelecheia（玄枢） 설계 차원에 대한 구조화된 비교.
 
 > 현재 상태 참고: 본 문서의 Entelecheia 참조는 현재 코드 현실과 의도된 아키텍처를 혼합합니다. "vs. Entelecheia" 섹션은 모든 기능이 현재 완전히 출시되었다는 주장이 아닌 Entelecheia의 설계 목표와의 비교로 읽어 주십시오. 현재 구현 현실에 대해서는 여기의 부록과 2026-05-13 진단 보고서를 우선하십시오.
@@ -17,12 +17,13 @@ subcategory = "core"
 
 ## 1. CrewAI
 
-**리포**: [crewAIInc/crewAI](https://github.com/crewAIInc/crewAI)  
-**언어**: Python  
-**라이선스**: MIT  
+**리포**: [crewAIInc/crewAI](https://github.com/crewAIInc/crewAI)
+**언어**: Python
+**라이선스**: MIT
 **규모**: ~23k+ 스타. LangChain 독립적.
 
 ### 아키텍처
+
 - **에이전트**: YAML(role, goal, backstory) 또는 Python `Agent` 클래스로 정의. 각 에이전트는 도구 접근이 가능한 LLM을 래핑합니다.
 - **오케스트레이션**: 두 가지 모드:
   - **Crews**: 순차적 또는 계층적 프로세스를 가진 에이전트 팀. 순차적은 작업을 순서대로 실행; 계층적은 위임을 위한 "관리자" 에이전트 할당.
@@ -31,30 +32,35 @@ subcategory = "core"
 - **프로세스 유형**: `Process.sequential` 및 `Process.hierarchical`.
 
 ### 도구 노출
+
 - `crewai[tools]` 패키지를 통한 내장 도구(SerperDev 등). 사용자 정의 도구는 Python 함수로.
 - MCP(Model Context Protocol) 지원 문서화됨.
 - 정의 시점에 에이전트별로 도구 할당.
 - LLM 호출당 도구 수에 대한 명시적 제한 없음 — 모든 할당된 도구가 매 턴마다 노출됨.
 
 ### 보안 모델
+
 - **샌드박싱 없음**. 에이전트가 오케스트레이션과 동일한 Python 프로세스에서 실행됨.
 - 엔터프라이즈 "AMP Suite"가 관찰성 및 접근 제어를 갖춘 제어 평면 제공(독점).
 - 작업에 `human_input=True`를 통한 인간 개입.
 - 코드 실행 격리 언급 없음.
 
 ### 메모리/컨텍스트
+
 - 단기: 대화 이력을 통한 에이전트 메모리.
 - 장기: 에이전트에 `memory=True` 활성화로 선택적 메모리 저장소.
 - 명시적 컨텍스트 압축이나 토큰 관리 없음 — LLM 컨텍스트 윈도우에 의존.
 - 문서에 체크포인팅 언급되었으나 OSS에서는 세부 사항 희소.
 
 ### 고유 기능
+
 - **Flows + Crews 시너지**: 자율 에이전트 팀과 정밀한 이벤트 주도 워크플로우 결합.
 - **YAML 우선 구성**: 에이전트와 작업을 선언적으로 정의, 비개발자에게 적합.
 - **대규모 커뮤니티**: `learn.crewai.com`을 통해 10만 명 이상의 인증 개발자.
 - **성능 주장**: 특정 QA 작업에서 LangGraph 대비 5.76배 빠름(자체 보고).
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - 코드 실행 샌드박싱 또는 격리 없음.
 - 도구 실행을 위한 공식 보안 모델 없음.
 - 메모리가 비교적 단순 — 계층적 컨텍스트 관리나 아카이빙 없음.
@@ -66,34 +72,39 @@ subcategory = "core"
 
 ## 2. LangGraph
 
-**리포**: [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph)  
-**언어**: Python (또한 `langgraphjs`를 통한 JS/TS)  
-**라이선스**: MIT  
+**리포**: [langchain-ai/langgraph](https://github.com/langchain-ai/langgraph)
+**언어**: Python (또한 `langgraphjs`를 통한 JS/TS)
+**라이선스**: MIT
 
 ### 아키텍처
+
 - **그래프 기반 상태 머신**: 노드(에이전트/함수)와 엣지(전이)가 Pregel/Beam에서 영감을 받은 방향 그래프를 형성.
 - **에이전트**: 노드는 LLM 호출, 도구 실행, 또는 임의의 Python 함수가 될 수 있음. "에이전트"로 강력하게 타입 지정되지 않음 — 그래프 내 함수에 가까움.
 - **오케스트레이션**: 타입 상태 스키마를 가진 `StateGraph`. 노드가 상태를 읽기/쓰기. 분기를 위한 조건부 엣지. 구성을 위한 서브그래프.
 - **통신**: 상태 객체가 진리의 단일 원천. 메시지가 상태 리스트에 추가됨.
 
 ### 도구 노출
+
 - 도구는 LangChain 도구 또는 그래프 노드에 바인딩된 임의의 호출 가능 객체.
 - 노드에서 사용 가능한 모든 도구가 해당 단계에서 LLM에 노출됨.
 - 내장 도구 제한 없음; 개발자가 노드별로 전달할 도구를 관리.
 
 ### 보안 모델
+
 - **샌드박싱 없음**. 코드 실행은 개발자의 책임.
 - `interrupt()`를 통한 인간 개입 — 그래프 실행을 일시 중지하고 상태 검사/수정 허용.
 - 지속적 실행: 상태가 영속화되고 오류 후 재개 가능(체크포인팅).
 - 도구 실행이나 파일 시스템 접근을 위한 격리 원시 요소 없음.
 
 ### 메모리/컨텍스트
+
 - **단기**: 상태(메시지 리스트)를 통한 작업 메모리.
 - **장기**: `Store` 추상화(임베딩이 있는 키-값)를 통한 세션 간 영속 메모리.
 - 컨텍스트 압축은 내장되지 않음 — 개발자가 상태 크기를 관리.
 - `MemorySaver` 또는 `SqliteSaver`를 통한 체크포인팅.
 
 ### 고유 기능
+
 - **지속적 실행**: 오류/제한 시간 후 체크포인트에서 자동 재개 — 장기 실행 에이전트에 이상적.
 - **인터럽트를 통한 인간 개입**: 승인 워크플로우를 위한 강력한 패턴.
 - **LangSmith 통합**: 심층 관찰성, 추적, 평가.
@@ -102,6 +113,7 @@ subcategory = "core"
 - **LangChain 생태계**: LangChain 도구, 모델, 컴포넌트와의 원활한 통합.
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - LangChain 생태계에 긴밀하게 결합됨 ("LangChain 없이 사용 가능"하지만).
 - 보안 모델 없음 — 샌드박싱 없음, 권한 시스템 없음.
 - 저수준 프레임워크 — 에이전트 상호작용에 상당한 보일러플레이트 필요.
@@ -113,12 +125,13 @@ subcategory = "core"
 
 ## 3. MetaGPT
 
-**리포**: [FoundationAgents/MetaGPT](https://github.com/FoundationAgents/MetaGPT)  
-**언어**: Python  
-**라이선스**: MIT  
+**리포**: [`FoundationAgents`/MetaGPT](https://github.com/`FoundationAgents`/MetaGPT)
+**언어**: Python
+**라이선스**: MIT
 **연구**: ICLR 2024 발표
 
 ### 아키텍처
+
 - **SOP 기반 다중 에이전트**: 사전 정의된 역할(PM, Architect, Engineer 등)을 가진 소프트웨어 회사 모델링.
 - **에이전트 (Roles)**: 각 `Role`은 프로필, 목표, 제약 조건, 그리고 `Action` 집합을 가짐. 역할은 세 가지 모드(`REACT`, `BY_ORDER`, `PLAN_AND_ACT`)로 ReAct 루프(think → act) 사용.
 - **오케스트레이션**: `Team` 클래스가 역할을 고용하고, 예산을 투자하며, 라운드를 실행. `Environment`가 발행-구독을 통해 역할 간 메시지 전달 관리.
@@ -126,12 +139,14 @@ subcategory = "core"
 - **핵심 철학**: `Code = SOP(Team)` — 구체화된 표준 운영 절차.
 
 ### 도구 노출
+
 - 액션은 사전 정의된 Python 클래스(`WriteCode`, `DesignAPI`, `DebugError` 등) — ~40+개 액션 유형.
 - 각 역할은 생성 시 특정 액션을 할당받음.
 - 도구 포함: 웹 검색 엔진(Serper, SerpAPI, DuckDuckGo, Google, Bing), 웹 브라우저(Playwright, Selenium), 이미지 생성(DALL-E), 문서 저장소(Chroma, FAISS, Milvus, LanceDB, Qdrant).
 - LLM은 전체 도구 집합이 아닌 현재 할당된 액션의 액션 스키마만 봄.
 
 ### 보안 모델
+
 - **샌드박싱 없음**. 코드가 동일한 환경에서 생성 및 실행됨.
 - Dockerfile이 제공되지만 작업별 격리가 아닌 배포용.
 - 예산 추적: `investment` 매개변수가 총 LLM API 비용을 제한하고 초과 시 예외 발생.
@@ -139,6 +154,7 @@ subcategory = "core"
 - 도구 실행 샌드박싱 또는 권한 모델 없음.
 
 ### 메모리/컨텍스트
+
 - **단기**: `RoleContext`의 `Memory` 클래스 — 역할별 순서 있는 메시지 목록.
 - **장기**: 영속 지식을 위한 `LongTermMemory` 및 `BrainMemory` 클래스.
 - **작업 메모리**: 플래너 작업을 위한 별도 작업 메모리.
@@ -146,6 +162,7 @@ subcategory = "core"
 - 컨텍스트 압축은 명시적으로 처리되지 않음 — 역할이 구독 태그로 필터링된 메시지의 부분 집합만 관찰.
 
 ### 고유 기능
+
 - **전체 SDLC 에뮬레이션**: SOP로 전체 소프트웨어 회사 모델링 — 사용자 스토리, 요구사항, 설계 문서, 코드, 테스트.
 - **다중 문서 저장소**: 5개 이상의 벡터 DB 옵션.
 - **광범위한 제공자 지원**: 12개 이상의 LLM 제공자(OpenAI, Azure, Anthropic, Gemini, Ollama, Bedrock 등).
@@ -154,6 +171,7 @@ subcategory = "core"
 - **MGX**: 그 위에 구축된 자연어 프로그래밍 제품.
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - 경직된 SOP — 역할과 액션이 사전 정의됨; 사용자 정의 역할에는 코딩 필요.
 - 보안 샌드박싱 전무.
 - 단일 머신 아키텍처 — 분산 에이전트 배포 없음.
@@ -166,12 +184,13 @@ subcategory = "core"
 
 ## 4. ChatDev 2.0 (DevAll)
 
-**리포**: [OpenBMB/ChatDev](https://github.com/OpenBMB/ChatDev)  
-**언어**: Python (백엔드), Vue 3 (프론트엔드)  
-**라이선스**: Apache 2.0  
+**리포**: [OpenBMB/ChatDev](https://github.com/OpenBMB/ChatDev)
+**언어**: Python (백엔드), Vue 3 (프론트엔드)
+**라이선스**: Apache 2.0
 **연구**: 다수의 NeurIPS/arxiv 논문
 
 ### 아키텍처
+
 - **제로 코드 다중 에이전트 플랫폼**: 에이전트와 워크플로우가 완전히 YAML 구성으로 정의됨. 코딩 불필요.
 - **YAML 주도 워크플로우 DAG**: 노드가 에이전트를 정의하고 엣지가 메시지 흐름을 정의. 서브그래프 지원. 웹 UI에 시각적 드래그 앤 드롭 캔버스.
 - **핵심 모듈**: `runtime/` (에이전트 실행), `workflow/` (DAG 오케스트레이션), `entity/` (구성), `server/` (FastAPI + WebSocket), `frontend/` (Vue 3 웹 콘솔).
@@ -179,12 +198,14 @@ subcategory = "core"
 - **오케스트레이션**: 다중 실행기 유형: 순차, DAG, 병렬, 순환, 동적 엣지. 토폴로지 빌더가 YAML 구성을 실행 가능한 그래프로 변환.
 
 ### 도구 노출
-- **함수 호출 시스템**: `functions/function_calling/`에 내장 도구 포함(code_executor, file, weather, web, video, deep_research, uv, user).
+
+- **함수 호출 시스템**: `functions/function_calling/`에 내장 도구 포함(`code_executor`, file, weather, web, video, `deep_research`, uv, user).
 - **사용자 정의 도구 등록**: `functions/` 디렉터리의 Python 함수가 자동 발견됨.
 - **MCP 지원**: `mcp_example/mcp_server.py`가 MCP 통합 시연.
 - 도구는 YAML 구성에서 노드별로 할당됨.
 
 ### 보안 모델
+
 - **코드 실행**: 구성 가능한 실행 매개변수를 가진 전용 `code_executor.py`.
 - Docker Compose 배포 가능.
 - **인간 개입**: `demo_human.yaml` 워크플로우, 사용자 입력 노드, 확인 흐름.
@@ -192,6 +213,7 @@ subcategory = "core"
 - 에이전트에 대한 명시적 샌드박싱/격리 모델 없음.
 
 ### 메모리/컨텍스트
+
 - **다중 메모리 백엔드**: 단순 메모리, `mem0` 메모리(영속적, 학습 가능), 파일 기반 메모리.
 - **YAML 메모리 구성**: `store`, `context_window_size`, 노드별 메모리 유형.
 - **컨텍스트 초기화 노드**: 명시적 `context_reset` 워크플로우 노드.
@@ -199,6 +221,7 @@ subcategory = "core"
 - **워크스페이스 스캔**: 파일 기반 컨텍스트 주입을 위한 `workspace_scanner.py`.
 
 ### 고유 기능
+
 - **제로 코드**: Python 코드 작성 없이 다중 에이전트 시스템 구축 — YAML + 웹 UI.
 - **드래그 앤 드롭 웹 콘솔**: 시각적 워크플로우 디자이너, 실시간 실행 모니터링.
 - **풍부한 워크플로우 템플릿**: 데이터 시각화, 3D 생성(Blender), 게임 개발, 심층 조사, 교육 비디오.
@@ -209,6 +232,7 @@ subcategory = "core"
 - **다중 에이전트 전자책**: 다중 에이전트 연구의 선별된 컬렉션.
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - YAML 중심이 복잡한 로직에 대한 표현력을 제한.
 - 코드 실행을 위한 보안 샌드박싱 없음.
 - 웹 콘솔이 주요 인터페이스 — 헤드리스/임베디드 사용에 덜 적합.
@@ -220,11 +244,12 @@ subcategory = "core"
 
 ## 5. Google ADK (Agent Development Kit)
 
-**리포**: [google/adk-python](https://github.com/google/adk-python)  
-**언어**: Python (또한 Java, Go 에디션)  
-**라이선스**: Apache 2.0  
+**리포**: [google/adk-python](https://github.com/google/adk-python)
+**언어**: Python (또한 Java, Go 에디션)
+**라이선스**: Apache 2.0
 
 ### 아키텍처
+
 - **코드 우선**: 에이전트, 도구, 오케스트레이션이 Python 코드로 정의됨.
 - **기초 추상화**: Agent(청사진), Tool(기능), Runner(엔진), Session(대화 상태), Memory(세션 간 회상), Artifact Service(파일).
 - **에이전트 유형**: `LlmAgent`(LLM 주도), `LoopAgent`, `SequentialAgent`, `ParallelAgent`, `RemoteA2aAgent`.
@@ -233,12 +258,14 @@ subcategory = "core"
 - **LangGraph 통합**: LangGraph 그래프를 에이전트로 임베딩하기 위한 `langgraph_agent.py`.
 
 ### 도구 노출
+
 - **풍부한 도구 생태계**: 50개 이상의 내장 도구 — Google Search, BigQuery, Bigtable, Spanner, PubSub, Vertex AI Search, MCP 도구, OpenAPI 도구, LangChain 도구, CrewAI 도구, 컴퓨터 사용, bash, 코드 실행, Google API.
 - **도구 유형**: `FunctionTool`, `AgentTool`(에이전트를 도구로 래핑), `MCPTool`, `OpenAPITool`, `LangChainTool`, `CrewAiTool`, `SkillToolset`.
 - **도구 확인 (HITL)**: 사용자 정의 입력을 통한 도구 실행 전 명시적 확인 흐름.
 - **도구 상자 패턴**: 도구 묶음을 위한 `toolbox_toolset.py`.
 
 ### 보안 모델
+
 - **코드 실행 샌드박싱**: 다중 실행기 — `container_code_executor.py`, `unsafe_local_code_executor.py`, `vertex_ai_code_executor.py`, `agent_engine_sandbox_code_executor.py`, `gke_code_executor.py`.
 - **인증 시스템**: 전체 OAuth2 흐름, 자격 증명 관리, 인증 전처리기, `authenticated_function_tool.py`.
 - **인간 개입**: 도구 확인, 인터럽트 지원.
@@ -246,6 +273,7 @@ subcategory = "core"
 - **에이전트 신원**: 서비스 계정을 위한 `agent_identity/` 통합.
 
 ### 메모리/컨텍스트
+
 - **세션**: 세션별 전체 대화 이력, `SessionService`를 통해 영속화(인메모리, SQLite, PostgreSQL, Vertex AI).
 - **메모리**: `MemoryService`를 통한 세션 간 회상 — 인메모리, Vertex AI Memory Bank, Vertex AI RAG.
 - **컨텍스트 압축**: 자동 컨텍스트 요약을 위한 `compaction.py` 및 `llm_event_summarizer.py`.
@@ -254,6 +282,7 @@ subcategory = "core"
 - **되감기**: 이전 호출 전으로 세션을 되감는 기능.
 
 ### 고유 기능
+
 - **다중 언어 지원**: Python, Java, Go 에디션의 ADK.
 - **프로덕션 배포**: Cloud Run, Vertex AI Agent Engine, GKE로 `adk deploy`.
 - **A2A 프로토콜**: Google로부터 탄생 — 네이티브 다중 벤더 에이전트 통신.
@@ -266,6 +295,7 @@ subcategory = "core"
 - **에이전트 최적화**: `agent_optimizer.py` 및 GEPA 프롬프트 최적화기.
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - 프로덕션 기능에 대한 강한 Google Cloud 의존성.
 - Gemini 최적화(모델 무관하지만).
 - 많은 추상화 계층을 가진 복잡한 코드베이스.
@@ -277,43 +307,51 @@ subcategory = "core"
 
 ## 6. OpenAI Swarm (실험적, 현재 폐기됨)
 
-**리포**: [openai/swarm](https://github.com/openai/swarm)  
-**언어**: Python  
-**라이선스**: MIT  
+**리포**: [openai/swarm](https://github.com/openai/swarm)
+**언어**: Python
+**라이선스**: MIT
 **상태**: [OpenAI Agents SDK](https://github.com/openai/openai-agents-python)로 대체됨
 
 ### 아키텍처
+
 - **최소주의적 원시 요소**: `Agent`(instructions + functions)와 핸드오프(함수에서 다른 Agent 반환).
 - **핵심 루프** (`swarm/core.py`의 ~300줄):
+
   1. 현재 Agent로부터 completion 가져오기
-  2. 도구 호출 실행, 결과 추가
-  3. 함수가 Agent를 반환하면 Agent 전환
-  4. 컨텍스트 변수 갱신
-  5. 더 이상 도구 호출이 없거나 max_turns 도달까지 반복
+  1. 도구 호출 실행, 결과 추가
+  1. 함수가 Agent를 반환하면 Agent 전환
+  1. 컨텍스트 변수 갱신
+  1. 더 이상 도구 호출이 없거나 `max_turns` 도달까지 반복
+
 - **에이전트**: 단지 이름, 모델, instructions(문자열 또는 호출 가능), 함수 리스트. 에이전트 계층 없음 — 핸드오프를 통한 단순 위임.
 - **통신**: Chat Completions API 메시지. `client.run()` 호출 간 무상태.
 
 ### 도구 노출
+
 - 도구는 평범한 Python 함수. 타입 힌트와 docstring에서 자동 스키마.
 - Agent에 할당된 모든 함수가 각 LLM 호출에 노출됨.
 - 함수가 `Agent`를 반환하면 실행이 이전됨(핸드오프).
 - 함수 시그니처에 정의된 경우 `context_variables` 매개변수 자동 채워짐.
 
 ### 보안 모델
+
 - **없음**. 샌드박싱 없음, 격리 없음, 권한 모델 없음. 도구가 호출자 프로세스에서 실행됨.
 - 명시적으로 프로덕션용이 아닌 교육/실험 프로젝트.
 
 ### 메모리/컨텍스트
+
 - **무상태**: `client.run()` 호출 간 상태 없음. 사용자가 `messages`를 전달하고 반환받아야 함.
 - **컨텍스트 변수**: 함수 호출을 통해 전달되는 단순 dict — 도구 함수가 읽기/쓰기 가능.
 - 메모리 없음, 세션 영속성 없음, 컨텍스트 압축 없음.
 
 ### 고유 기능
+
 - **극단적 단순성**: 전체 프레임워크가 ~4개 소스 파일. 에이전트 오케스트레이션 학습에 탁월.
 - **핸드오프 패턴**: 우아함 — 에이전트가 "instructions + tools"일 뿐이며, 에이전트가 도구 함수에서 다른 Agent를 반환하여 위임.
 - **스트리밍 지원**: 에이전트 경계를 위한 `{"delim":"start"}` / `{"delim":"end"}` 마커가 있는 내장 스트리밍.
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - 폐기됨 (OpenAI Agents SDK로 대체).
 - 보안 모델 전무.
 - 상태/영속성 없음 — 완전 무상태.
@@ -325,28 +363,33 @@ subcategory = "core"
 
 ## 7. Cline
 
-**리포**: [cline/cline](https://github.com/cline/cline)  
-**언어**: TypeScript (VS Code 확장) + Go (CLI)  
-**라이선스**: Apache 2.0  
+**리포**: [cline/cline](https://github.com/cline/cline)
+**언어**: TypeScript (VS Code 확장) + Go (CLI)
+**라이선스**: Apache 2.0
 
 ### 아키텍처
+
 - **VS Code 확장** + 독립형 CLI. 확장이 주요 인터페이스; CLI는 더 새로운.
 - **핵심 루프** (`src/core/`에):
+
   1. 사용자 작업 파싱(텍스트 + 이미지)
-  2. 워크스페이스 분석(AST, 정규식 검색, 파일 읽기)
-  3. 루프로 도구 실행: 파일 생성/편집, 터미널 명령, 브라우저 액션
-  4. 출력 모니터링(린터 오류, 터미널 출력, 브라우저 스크린샷)
-  5. 자동 수정, 작업 완료까지 반복
+  1. 워크스페이스 분석(AST, 정규식 검색, 파일 읽기)
+  1. 루프로 도구 실행: 파일 생성/편집, 터미널 명령, 브라우저 액션
+  1. 출력 모니터링(린터 오류, 터미널 출력, 브라우저 스크린샷)
+  1. 자동 수정, 작업 완료까지 반복
+
 - **도구 집합**: 파일 작업(생성, 편집, diff), 터미널 명령(셸 통합 포함), 브라우저(헤드리스, 클릭/타이핑/스크롤), MCP 도구.
 - **시스템 프롬프트**: 컨텍스트 관리 지침을 포함한 상세 프롬프트 엔지니어링.
 
 ### 도구 노출
+
 - 고정된 내장 도구 집합: `read_file`, `write_to_file`, `replace_in_file`, `execute_command`, `browser_action`, `use_mcp_tool` 등.
 - **MCP 확장**: 요청 시 새 MCP 서버 생성/설치 가능("...하는 도구 추가"). 커뮤니티 MCP 서버도 지원.
 - **@-멘션**: 컨텍스트 주입을 위한 `@url`, `@problems`, `@file`, `@folder` (API 비용 절감).
 - 호출당 제한된 수의 도구 — 일반적으로 8-12개 내장 + MCP 도구.
 
 ### 보안 모델
+
 - **모든 액션에 대한 인간 개입**: 모든 파일 변경과 터미널 명령은 GUI에서 사용자가 승인해야 함.
 - **체크포인트 시스템**: 각 단계 전의 워크스페이스 스냅샷. 어느 지점에서든 diff/복원 가능.
 - **권한 시스템**: 허용/거부 목록을 가진 `CommandPermissionController`.
@@ -355,6 +398,7 @@ subcategory = "core"
 - **엔터프라이즈**: SSO, 감사 추적, VPC/프라이빗 링크, 자체 호스팅/온프레미스.
 
 ### 메모리/컨텍스트
+
 - **컨텍스트 관리**: 프로젝트의 AST 분석, 관련 파일에 대한 정규식 검색, 컨텍스트 윈도우에 들어갈 내용의 신중한 선택.
 - **컨텍스트 압축**: 컨텍스트가 가득 차면 요약 생성 및 이전 대화 압축.
 - **체크포인트**: 롤백을 위한 전체 워크스페이스 스냅샷.
@@ -362,6 +406,7 @@ subcategory = "core"
 - **루프 감지**: `loop-detection.ts`가 무한 도구 호출 루프 방지.
 
 ### 고유 기능
+
 - **완전한 IDE 통합**: VS Code 내에서 동작, 전체 워크스페이스를 볼 수 있음.
 - **브라우저 자동화**: 웹 테스트/디버깅을 위한 Claude Computer Use 기능.
 - **자동 수정 루프**: 린터/컴파일러 오류를 모니터링하고 사용자 개입 없이 자동 수정.
@@ -372,6 +417,7 @@ subcategory = "core"
 - **평가 프레임워크**: 3계층 테스트(계약, 스모크, E2E/벤치).
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - 전체 경험에 VS Code 필요 (CLI는 더 새롭고 덜 성숙).
 - 단일 에이전트 아키텍처 — 다중 에이전트 협업 없음.
 - 정의된 에이전트 역할/전문화 없음.
@@ -384,22 +430,26 @@ subcategory = "core"
 
 ## 8. Aider
 
-**리포**: [Aider-AI/aider](https://github.com/Aider-AI/aider)  
-**언어**: Python  
-**라이선스**: Apache 2.0  
+**리포**: [Aider-AI/aider](https://github.com/Aider-AI/aider)
+**언어**: Python
+**라이선스**: Apache 2.0
 
 ### 아키텍처
+
 - **터미널 기반 페어 프로그래밍**: 리포지토리에서 코드를 편집하는 CLI 도구.
 - **핵심 루프** (`base_coder.py`):
+
   1. 리포 맵 구축 (Tree-sitter AST 기반 코드베이스 요약)
-  2. 프롬프트 + 리포 맵 + 파일을 LLM으로 전송
-  3. LLM 응답에서 편집 지시 파싱 (통합 diff, 검색/치환 블록, 전체 파일 재작성)
-  4. 편집 적용, 린트, 테스트 실행, 실패 자동 수정
-  5. 합리적인 메시지로 Git 커밋
+  1. 프롬프트 + 리포 맵 + 파일을 LLM으로 전송
+  1. LLM 응답에서 편집 지시 파싱 (통합 diff, 검색/치환 블록, 전체 파일 재작성)
+  1. 편집 적용, 린트, 테스트 실행, 실패 자동 수정
+  1. 합리적인 메시지로 Git 커밋
+
 - **다중 편집 형식**: `udiff`, `editblock`, `wholefile`, `search_replace`, `diff_fenced`, `editor_editblock`, `editor_whole`, `patch`, `architect`. 각각은 자체 프롬프트 템플릿을 가진 별도 코더 클래스.
 - **Architect/Editor 모드**: 두 에이전트 패턴 — architect가 계획, editor가 구현. 벤치마크에서 높은 효과 입증.
 
 ### 도구 노출
+
 - **전통적인 도구 호출 없음**. Aider는 구조화된 텍스트 응답 사용 (함수 호출 아님).
 - LLM이 특정 형식(diff 블록, 검색/치환)으로 편집 지시를 출력, Aider가 파싱하고 적용.
 - 셸 명령: LLM이 셸 명령 실행 요청 가능 (사용자 확인).
@@ -408,6 +458,7 @@ subcategory = "core"
 - 이미지: 시각적 컨텍스트를 위해 스크린샷/이미지를 채팅에 추가 가능.
 
 ### 보안 모델
+
 - **샌드박싱 없음**. 편집이 파일에 직접 적용됨. Git이 안전망 제공.
 - **사용자 확인**: 셸 명령은 명시적 사용자 승인 필요.
 - **Git 통합**: 모든 변경사항 자동 커밋 — 쉬운 롤백.
@@ -416,6 +467,7 @@ subcategory = "core"
 - 권한 시스템 없음, 격리 없음, 역할 기반 접근 없음.
 
 ### 메모리/컨텍스트
+
 - **리포 맵**: Tree-sitter AST 분석이 전체 코드베이스의 간결한 맵 구축 (함수 시그니처, 클래스 정의, 임포트 관계). 모든 소스를 포함하지 않고 코드베이스 구조를 컨텍스트에 맞춤.
 - **채팅 이력**: 컨텍스트 내 전체 대화.
 - **파일 선택**: LLM이 구문을 통해 특정 파일 요청 — 해당 파일의 내용만 컨텍스트에 추가됨.
@@ -423,6 +475,7 @@ subcategory = "core"
 - **장기 메모리 없음**: 세션 간 무상태. 각 `aider` 실행이 새로 시작.
 
 ### 고유 기능
+
 - **리포 맵**: 코드 작업에 대해 임베딩 기반 RAG를 능가하는 AST 기반 코드베이스 이해.
 - **다중 편집 형식**: 각 모델에 가장 잘 작동하는 방식에 적응 (일부 모델은 udiff, 다른 모델은 검색/치환에 더 우수).
 - **Architect/Editor 모드**: 계획과 실행에 별도 LLM 호출을 사용하는 2단계 프로세스.
@@ -434,6 +487,7 @@ subcategory = "core"
 - **자체 작성**: Aider 자체 코드의 88%가 Aider에 의해 작성됨.
 
 ### Entelecheia 설계 목표 대비 잠재적 격차
+
 - **단일 파일 중심**: 주로 한 번에 한 파일 편집 (리포 맵이 컨텍스트 제공하지만).
 - **다중 에이전트 시스템 없음**: architect/editor 쌍만. 사용자 정의 가능한 에이전트 역할 없음.
 - **도구 생태계 없음**: API, 데이터베이스, 웹 서비스 사용 불가 — 파일 편집과 셸만.
@@ -448,7 +502,7 @@ subcategory = "core"
 ## 비교 요약 표
 
 | 차원 | CrewAI | LangGraph | MetaGPT | ChatDev 2.0 | Google ADK | OpenAI Swarm | Cline | Aider |
-|-----------|--------|-----------|---------|-------------|------------|--------------|-------|-------|
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **언어** | Python | Python/TS | Python | Python/Vue | Python/Java/Go | Python | TS/Go | Python |
 | **프레임워크/라이브러리** | 프레임워크 | 프레임워크 | 프레임워크 | 플랫폼 | 프레임워크 | 실험 | 애플리케이션 | 애플리케이션 |
 | **아키텍처** | Crews+Flows | StateGraph | SOP 기반 역할 | YAML DAG | Runner+Session | 핸드오프 루프 | 도구 루프 | 편집 파서 |
@@ -470,23 +524,23 @@ subcategory = "core"
 
 1. **보안/샌드박싱**: 거의 모든 프레임워크에 샌드박스 실행이 부재. Google ADK가 컨테이너/Kubernetes 기반 샌드박싱을 갖춘 주목할 만한 예외. 이는 주요 차별화 기회.
 
-2. **다중 에이전트 통신**: Google ADK만 공식 에이전트 간 프로토콜(A2A) 보유. 대부분의 프레임워크가 임시 메시지 전달 사용. 표준화된 프로토콜(A2A 같은)이 격차.
+1. **다중 에이전트 통신**: Google ADK만 공식 에이전트 간 프로토콜(A2A) 보유. 대부분의 프레임워크가 임시 메시지 전달 사용. 표준화된 프로토콜(A2A 같은)이 격차.
 
-3. **메모리 아키텍처**: 대부분의 프레임워크가 기본적 단기 메모리 보유. 정교한 계층적 메모리(작업, 단기, 장기)와 자동 컨텍스트 관리를 갖춘 경우는 드묾. MetaGPT의 필터링과 ADK의 압축이 최상의 예시.
+1. **메모리 아키텍처**: 대부분의 프레임워크가 기본적 단기 메모리 보유. 정교한 계층적 메모리(작업, 단기, 장기)와 자동 컨텍스트 관리를 갖춘 경우는 드묾. MetaGPT의 필터링과 ADK의 압축이 최상의 예시.
 
-4. **도구 노출 관리**: 모든 프레임워크가 호출별로 모든 도구를 LLM에 노출. 컨텍스트/상태/보안 수준에 따라 동적으로 도구를 부분 집합화하는 프레임워크 없음. 이는 아키텍처적 격차.
+1. **도구 노출 관리**: 모든 프레임워크가 호출별로 모든 도구를 LLM에 노출. 컨텍스트/상태/보안 수준에 따라 동적으로 도구를 부분 집합화하는 프레임워크 없음. 이는 아키텍처적 격차.
 
-5. **코드 실행**: ADK만 프로덕션 등급 샌드박스 코드 실행 보유. ChatDev는 기본 코드 실행기 보유. Cline/Aider는 네이티브 환경에 의존. 이는 생태계 전반의 중요한 보안 격차.
+1. **코드 실행**: ADK만 프로덕션 등급 샌드박스 코드 실행 보유. ChatDev는 기본 코드 실행기 보유. Cline/Aider는 네이티브 환경에 의존. 이는 생태계 전반의 중요한 보안 격차.
 
-6. **평가**: ADK와 Cline이 공식 평가 프레임워크 보유. 다른 것들은 임시 테스트나 연구 벤치마크에 의존. 내장 평가는 차별화 요소.
+1. **평가**: ADK와 Cline이 공식 평가 프레임워크 보유. 다른 것들은 임시 테스트나 연구 벤치마크에 의존. 내장 평가는 차별화 요소.
 
-7. **OpenAI Swarm의 폐기**가 OpenAI Agents SDK로 이어짐은 교육 실험보다 프로덕션 등급 프레임워크로의 시장 추세 신호.
+1. **OpenAI Swarm의 폐기**가 OpenAI Agents SDK로 이어짐은 교육 실험보다 프로덕션 등급 프레임워크로의 시장 추세 신호.
 
-8. **LangGraph의 지속적 실행**은 장기 실행 에이전트에 유일하게 강력 — 대부분의 프레임워크가 단기 작업 가정.
+1. **LangGraph의 지속적 실행**은 장기 실행 에이전트에 유일하게 강력 — 대부분의 프레임워크가 단기 작업 가정.
 
-9. **ChatDev 2.0의 제로 코드 접근**은 대부분의 프레임워크와 근본적으로 다른 사용자 페르소나(비개발자) 대상. 이는 Entelecheia의 개발자 우선 설계와 직교.
+1. **ChatDev 2.0의 제로 코드 접근**은 대부분의 프레임워크와 근본적으로 다른 사용자 페르소나(비개발자) 대상. 이는 Entelecheia의 개발자 우선 설계와 직교.
 
-10. **Cline과 Aider**는 프레임워크가 아닌 애플리케이션. 긴밀한 도구 통합(IDE, git, 터미널, 브라우저)의 강력함을 입증하지만, 더 큰 에이전트 시스템으로 구성 불가.
+1. **Cline과 Aider**는 프레임워크가 아닌 애플리케이션. 긴밀한 도구 통합(IDE, git, 터미널, 브라우저)의 강력함을 입증하지만, 더 큰 에이전트 시스템으로 구성 불가.
 
 ---
 

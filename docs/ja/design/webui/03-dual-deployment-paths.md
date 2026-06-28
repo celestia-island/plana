@@ -78,6 +78,7 @@ let config = Config::<String> {
 ```
 
 主なポイント：
+
 - バイナリは読み取り専用（`:ro`）でマウントされ、コンテナ内での誤った変更を防止
 - バイナリの場所は`/usr/local/bin/shittim_chest`で、コンテナ内で直接実行
 - ベースイメージ`debian:bookworm-slim`が必要なglibcランタイムを提供
@@ -86,7 +87,7 @@ let config = Config::<String> {
 
 マイグレーションはワンショットコンテナを介して実行されます：
 
-```
+```bash
 docker run --rm --network shittim-chest \
   -v $PWD/target/debug/shittim_chest:/usr/local/bin/shittim_chest:ro \
   -e SHITTIM_CHEST_DATABASE_URL=... \
@@ -109,7 +110,7 @@ PGがまだ完全に準備できていない場合に対応するため、自動
 ### embedded-frontend機能
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 {
     static FRONTEND_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../dist");
     // Axumルーターの/static/*パスにマウント

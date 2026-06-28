@@ -13,9 +13,9 @@ subcategory = "core"
 WASIプラグインシステムは、以前のPython/TypeScript Webhookスキャフォールディングを**WASMコンポーネントモデル**プラグインに置き換え、サンドボックス化された言語非依存のプラットフォーム統合（レイヤー2）とビジネスロジック拡張（レイヤー3）を提供する。主要な設計目標：
 
 1. **二重拡張機構**: レイヤー2（プラットフォーム統合）とレイヤー3（ビジネスロジック）の両方がWASIモジュールとboa TS拡張をサポートする。
-2. **統一MCP登録**: すべてのプラグインは実装言語に関わらず `$.agents.xxx` の下にツールを登録する。
-3. **ホスト管理I/O**: ホスト（Scepter axumサーバー）がHTTPルーティング、WebSocket、永続接続を処理する。プラグインはロジックのみを処理する。
-4. **強力なサンドボックス化**: WASMモジュールは燃料制限とエポック割り込み付きでwasmtimeの下で実行される。
+1. **統一MCP登録**: すべてのプラグインは実装言語に関わらず `$.agents.xxx` の下にツールを登録する。
+1. **ホスト管理I/O**: ホスト（Scepter axumサーバー）がHTTPルーティング、WebSocket、永続接続を処理する。プラグインはロジックのみを処理する。
+1. **強力なサンドボックス化**: WASMモジュールは燃料制限とエポック割り込み付きでwasmtimeの下で実行される。
 
 ## アーキテクチャ
 
@@ -123,7 +123,7 @@ export!(GithubWebhookPlugin);
 ### クレート: `_shared_plugin_host` (`packages/shared/plugin_host/`)
 
 | モジュール | 役割 |
-|--------|------|
+| --- | --- |
 | `plugin_state.rs` | `HostFunctions` — すべての `host-api` 関数を実装（HTTP、KV、設定、イベント） |
 | `plugin_loader.rs` | `TypedPlugin` — wasmtimeコンテナを構築、ホストインポートを登録、動的 `call_guest_raw_desc` を介してゲストエクスポートを呼び出す |
 | `plugin_router.rs` | `PluginRouter` — ロード済みプラグインを管理、webhook/botリクエストをディスパッチ、`plugins/` ディレクトリを自動スキャン |
@@ -146,7 +146,7 @@ flowchart TB
 
 ゲスト側の `wit_bindgen::generate!` はWITインターフェース名の下に関数をエクスポートするため、ホストは動的呼び出しに完全修飾名を使用する：
 
-```
+```text
 entelecheia:plugin/webhook-handler#name
 entelecheia:plugin/webhook-handler#handle-request
 entelecheia:plugin/webhook-handler#on-message
@@ -221,13 +221,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-2. WITファイルをコピーする：
+1. WITファイルをコピーする：
 
-```
+```text
 plugins/my-platform/wit/plugin.wit  ← packages/shared/plugin_host/wit/ からシンボリックリンクまたはコピー
 ```
 
-3. `Guest` トレイトを実装する：
+1. `Guest` トレイトを実装する：
 
 ```rust
 // plugins/my-platform/src/lib.rs
@@ -250,25 +250,25 @@ impl Guest for MyPlatformPlugin {
 export!(MyPlatformPlugin);
 ```
 
-4. `.cargo/config.toml` を設定する：
+1. `.cargo/config.toml` を設定する：
 
 ```toml
 [target.wasm32-wasip2]
 rustflags = ["--cfg=unstable_wasi_extension", "--cfg=unstable_wasi_export_wasi_reactor"]
 ```
 
-5. ビルドする：
+1. ビルドする：
 
 ```bash
 cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ```
 
-6. デプロイ: `.wasm` ファイルを `plugins/` ディレクトリにコピーする（または `PLUGIN_DIR` を設定する）。
+1. デプロイ: `.wasm` ファイルを `plugins/` ディレクトリにコピーする（または `PLUGIN_DIR` を設定する）。
 
 ## ホスト関数リファレンス
 
 | 関数 | シグネチャ | 説明 |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `http-request` | `(method, url, headers, body) → result<string, string>` | HTTPリクエストを実行（外部プラットフォームへの応答用） |
 | `forward-event` | `(event-json) → result<_, string>` | 構造化イベントをScepterに転送 |
 | `query-ai` | `(message, context?) → result<string, string>` | AIパイプラインにクエリ（未接続） |
@@ -281,7 +281,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## セキュリティモデル
 
 | 機構 | 実装 |
-|-----------|---------------|
+| --- | --- |
 | **サンドボックス** | wasmtimeコンポーネントモデルサンドボックス — デフォルトでファイルシステム・ネットワークアクセスなし |
 | **リソース制限** | tairitsu Containerビルダーによる燃料メータリング（命令単位の課金）+ エポック割り込み（タイムアウト） |
 | **ホスト専用I/O** | すべてのI/Oはホスト関数を経由。プラグインはソケットやファイルを開けない |
@@ -291,7 +291,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 実装状況
 
 | フェーズ | コンポーネント | ステータス |
-|-------|-----------|--------|
+| --- | --- | --- |
 | **P0** | GitHub Webhook WASIプラグイン | ✅ 完了 |
 | **P0** | PluginRouter + Scepter統合 | ✅ 完了 |
 | **P0** | HostFunctions（全8つのhost-api関数） | ✅ 完了 |
@@ -303,7 +303,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 主要ファイル
 
 | ファイル | 目的 |
-|------|---------|
+| --- | --- |
 | `packages/shared/plugin_host/Cargo.toml` | wasmtime 43, tairitsuランタイム, reqwest |
 | `packages/shared/plugin_host/wit/plugin.wit` | 標準WITインターフェース定義 |
 | `packages/shared/plugin_host/src/plugin_state.rs` | HostFunctions, HostApiProviderトレイト |

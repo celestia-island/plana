@@ -30,7 +30,7 @@ flowchart TB
 
 ### 1. 멀티 Provider 우선순위 라우팅
 
-```
+```text
 각 Provider는 우선순위 필드를 가진다 (낮은 숫자 = 높은 우선순위).
 요청은 높은 우선순위부터 낮은 순서로 시도된다:
   → Provider A (priority=1) 사용 가능 → 사용

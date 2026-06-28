@@ -15,7 +15,7 @@ ADRs follow the [Michael Nygard ADR template](https://cognitect.com/blog/2011/11
 ## Index
 
 | ADR | Title | Status |
-|-----|-------|--------|
+| --- | --- | --- |
 | [ADR-001](en/exec-only-microkernel-tool-surface.md) | Exec-Only Microkernel Tool Surface | Accepted |
 | [ADR-002](en/boa-javascript-engine.md) | Boa as Embedded JavaScript Engine | Accepted |
 | [ADR-003](en/postgresql-pgvector-storage.md) | PostgreSQL + PgVector for Unified Data Storage | Accepted |
@@ -25,7 +25,7 @@ ADRs follow the [Michael Nygard ADR template](https://cognitect.com/blog/2011/11
 ## Language Directories
 
 | Code | Language |
-|------|----------|
+| --- | --- |
 | `en/` | English (authoritative) |
 | `zhs/` | Simplified Chinese |
 | `zht/` | Traditional Chinese |

@@ -9,11 +9,8 @@ subcategory = "core"
 # Multimodal Pipeline
 
 > **⚠️ Archived agent reference — not in the development pipeline**
->
 > The `multimedia-creation` Layer2 agent referenced in this document has been **archived**. Its Rust code, `.d.ts` bindings, and agent registration have all been removed. The multimodal pipeline described here is a **design goal**, not a delivered feature. Unless a developer explicitly requests it, do not implement or schedule work on this pipeline.
-
 > Generate, register, and analyze media using multimedia-creation and ApoRia
-
 > Current status note: This document primarily describes the target workflow. The codebase does contain ApoRia's multimodal-related tools, but it has not yet fully reached the centralized asset registry and full closed-loop capabilities described below.
 
 ---
@@ -213,11 +210,11 @@ const context_analysis = $.agent.ApoRia.multimodal_chat({
 The multimodal pipeline supports an iterative review cycle:
 
 1. **Generate** — multimedia-creation creates the initial media
-2. **Register** — store it in the asset registry
-3. **Analyze** — ApoRia evaluates the media with a multimodal LLM
-4. **Identify issues** — extract concrete improvement points from the analysis
-5. **Refine** — multimedia-creation regenerates with adjusted parameters based on the feedback
-6. **Re-analyze** — ApoRia evaluates the refined output
+1. **Register** — store it in the asset registry
+1. **Analyze** — ApoRia evaluates the media with a multimodal LLM
+1. **Identify issues** — extract concrete improvement points from the analysis
+1. **Refine** — multimedia-creation regenerates with adjusted parameters based on the feedback
+1. **Re-analyze** — ApoRia evaluates the refined output
 
 ### Review-loop example in exec code
 

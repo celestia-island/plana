@@ -15,11 +15,11 @@ subcategory = "webui"
 
 Webhook 允許外部服務（GitHub、GitLab、Gitee）向 shittim-chest 發送即時事件。事件經過驗證、解析後轉發到 scepter，scepter 會將其分派給適當的代理。
 
-```
+```text
 外部服務 → shittim_chest → scepter → 代理
 ```
 
-shittim_chest 也支援非原生支援服務的自訂 webhook 端點。
+`shittim_chest` 也支援非原生支援服務的自訂 webhook 端點。
 
 ## GitHub Webhook 設定
 
@@ -41,12 +41,12 @@ openssl rand -hex 32
 ### 步驟 2：在 GitHub 中建立 Webhook
 
 1. 前往您的倉庫 → **Settings** → **Webhooks** → **Add webhook**
-2. 設定 **Payload URL** 為 `https://your-domain.com/api/webhook/github`
-3. 設定 **Content type** 為 `application/json`
-4. 設定 **Secret** 與 `WEBHOOK_GITHUB_SECRET` 的值相同
-5. 選取事件：`push`、`pull_request`、`issues`、`issue_comment`
-6. 確保 **Active** 已勾選
-7. 點擊 **Add webhook**
+1. 設定 **Payload URL** 為 `https://your-domain.com/api/webhook/github`
+1. 設定 **Content type** 為 `application/json`
+1. 設定 **Secret** 與 `WEBHOOK_GITHUB_SECRET` 的值相同
+1. 選取事件：`push`、`pull_request`、`issues`、`issue_comment`
+1. 確保 **Active** 已勾選
+1. 點擊 **Add webhook**
 
 ### 步驟 3：驗證
 
@@ -63,11 +63,11 @@ WEBHOOK_GITLAB_SECRET=your-gitlab-secret-token
 ### 步驟 2：在 GitLab 中建立 Webhook
 
 1. 前往您的專案 → **Settings** → **Webhooks**
-2. 設定 **URL** 為 `https://your-domain.com/api/webhook/gitlab`
-3. 設定 **Secret token** 與 `WEBHOOK_GITLAB_SECRET` 的值相同
-4. 選取觸發器：`Push events`、`Merge request events`、`Issue events`
-5. 確保 **Enable SSL verification** 已勾選（適用於 HTTPS）
-6. 點擊 **Add webhook**
+1. 設定 **URL** 為 `https://your-domain.com/api/webhook/gitlab`
+1. 設定 **Secret token** 與 `WEBHOOK_GITLAB_SECRET` 的值相同
+1. 選取觸發器：`Push events`、`Merge request events`、`Issue events`
+1. 確保 **Enable SSL verification** 已勾選（適用於 HTTPS）
+1. 點擊 **Add webhook**
 
 ### 步驟 3：驗證
 
@@ -84,28 +84,28 @@ Gitee 使用相同的 `WEBHOOK_GITLAB_SECRET` 進行 HMAC 驗證（以權杖作�
 ### 步驟 2：在 Gitee 中建立 Webhook
 
 1. 前往您的倉庫 → **管理** → **Webhooks**
-2. 設定 **URL** 為 `https://your-domain.com/api/webhook/gitee`
-3. 設定 **Password/Signing Key** 為相同的金鑰
-4. 選取事件：`Push`、`Pull Request`、`Issues`
-5. 點擊 **Add**
+1. 設定 **URL** 為 `https://your-domain.com/api/webhook/gitee`
+1. 設定 **Password/Signing Key** 為相同的金鑰
+1. 選取事件：`Push`、`Pull Request`、`Issues`
+1. 點擊 **Add**
 
 ## 自訂 Webhook
 
-shittim_chest 在 `/api/webhook/custom/{name}` 支援通用的自訂 webhook 端點。要新增自訂 webhook 來源：
+`shittim_chest` 在 `/api/webhook/custom/{name}` 支援通用的自訂 webhook 端點。要新增自訂 webhook 來源：
 
 1. 在 `.env` 中設定 `WEBHOOK_PUBLIC_URL`
-2. 設定您的外部服務 POST 到 `https://your-domain.com/api/webhook/custom/{name}`
-3. 事件將以 webhook 名稱作為事件來源轉發到 scepter
+1. 設定您的外部服務 POST 到 `https://your-domain.com/api/webhook/custom/{name}`
+1. 事件將以 webhook 名稱作為事件來源轉發到 scepter
 
 若要在程式碼層級整合新的 webhook 提供者：
 
 1. 在 `packages/core/src/webhook.rs` 中新增處理常式
-2. 為新提供者實作 HMAC 或權杖驗證
-3. 解析自訂事件格式並透過 Unix socket 轉發到 scepter
+1. 為新提供者實作 HMAC 或權杖驗證
+1. 解析自訂事件格式並透過 Unix socket 轉發到 scepter
 
 ## IP 白名單
 
-shittim_chest 支援 webhook 來源的 IP 白名單，以拒絕來自未知來源的請求：
+`shittim_chest` 支援 webhook 來源的 IP 白名單，以拒絕來自未知來源的請求：
 
 ```bash
 # .env
@@ -119,7 +119,7 @@ WEBHOOK_IP_WHITELIST=140.82.112.0/20,192.30.252.0/22  # GitHub IP
 支援的事件及其到 scepter 觸發器的對應：
 
 | 來源 | 事件 | scepter `event_type` |
-|--------|-------|---------------------|
+| --- | --- | --- |
 | GitHub | `push` | `github.push` |
 | GitHub | `pull_request` | `github.pull_request` |
 | GitHub | `issues` | `github.issues` |
@@ -133,7 +133,7 @@ WEBHOOK_IP_WHITELIST=140.82.112.0/20,192.30.252.0/22  # GitHub IP
 
 ## 傳遞日誌
 
-shittim_chest 維護一個 webhook 事件的傳遞日誌。使用 LRU 快取（最多 10,000 個傳遞 ID）偵測重複傳遞。透過以下方式存取傳遞日誌：
+`shittim_chest` 維護一個 webhook 事件的傳遞日誌。使用 LRU 快取（最多 10,000 個傳遞 ID）偵測重複傳遞。透過以下方式存取傳遞日誌：
 
 - **REST API**：`GET /api/webhook/deliveries`
 - 管理面板：**Webhooks** → **Delivery Log**
@@ -153,9 +153,9 @@ shittim_chest 維護一個 webhook 事件的傳遞日誌。使用 LRU 快取（�
 使用管理面板測試 webhook 整合：
 
 1. 登入管理面板（預設 `:3000`）
-2. 前往側邊欄中的 **Webhooks**
-3. 檢視傳遞日誌和設定
-4. 透過外部服務的測試功能測試端點
+1. 前往側邊欄中的 **Webhooks**
+1. 檢視傳遞日誌和設定
+1. 透過外部服務的測試功能測試端點
 
 您也可以使用 curl 手動測試：
 
@@ -185,5 +185,5 @@ curl -X POST https://your-domain.com/api/webhook/github \
 
 ### 重複傳遞
 
-**原因**：外部服務因超時而重試。shittim_chest 透過 LRU 快取自動偵測重複項目。
-**修復**：若有效的重試被封鎖，請增加傳遞 ID 快取大小。確保 shittim_chest 在服務的超時時間窗內回應（GitHub：10 秒）。
+**原因**：外部服務因超時而重試。`shittim_chest` 透過 LRU 快取自動偵測重複項目。
+**修復**：若有效的重試被封鎖，請增加傳遞 ID 快取大小。確保 `shittim_chest` 在服務的超時時間窗內回應（GitHub：10 秒）。

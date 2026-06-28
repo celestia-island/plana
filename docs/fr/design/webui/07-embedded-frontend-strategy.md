@@ -41,7 +41,7 @@ flowchart TB
 ### Compilation Conditionnelle
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 static ARONA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../dist/arona");
 
 async fn serve_arona() -> impl IntoResponse {
@@ -62,7 +62,7 @@ La compilation conditionnelle opère au **niveau du corps de fonction** plutôt 
 
 L'application est une application monopage. Toutes les routes ne correspondant pas à des assets statiques retournent `index.html` :
 
-```
+```text
 GET /               → index.html
 GET /chat/123       → index.html (le routeur frontend gère)
 GET /backend        → index.html
@@ -86,7 +86,7 @@ Le service de fichiers statiques retourne le Content-Type correct basé sur l'ex
 
 ## Construction Frontend dans le Dockerfile
 
-```
+```text
 Étape 1 (frontend) :
   node:22-slim → pnpm install → pnpm build:all → /app/dist/arona/
 
@@ -102,6 +102,6 @@ La construction frontend et la compilation Rust sont terminées dans le même Do
 ## Décisions de Conception
 
 1. **Le mode Dev utilise dev.py pour la reconstruction automatique** : `dev.py` surveille les sources frontend et reconstruit lors des modifications, le backend servant tout sur un seul port.
-2. **Le mode Release ne nécessite pas de proxy inverse** : Le binaire intègre la SPA, permettant un déploiement en processus unique et réduisant la complexité opérationnelle.
-3. **Le frontend n'est pas chargé dynamiquement au runtime** : Évite les dépendances de système de fichiers et l'incohérence de version. L'image Release contient uniquement un seul fichier binaire.
-4. **SPA unique** : Le frontend est servi à `/` avec le panneau d'administration à `/backend`.
+1. **Le mode Release ne nécessite pas de proxy inverse** : Le binaire intègre la SPA, permettant un déploiement en processus unique et réduisant la complexité opérationnelle.
+1. **Le frontend n'est pas chargé dynamiquement au runtime** : Évite les dépendances de système de fichiers et l'incohérence de version. L'image Release contient uniquement un seul fichier binaire.
+1. **SPA unique** : Le frontend est servi à `/` avec le panneau d'administration à `/backend`.

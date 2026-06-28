@@ -65,7 +65,7 @@ graph TB
 
 ## Environment Variable Propagation
 
-```
+```text
 .env file → dotenvy::from_path_iter → HashMap<String, String>
 → Merge SHITTIM_CHEST_HOST / PORT / DATABASE_URL
 → Vec<String> = ["KEY=VALUE", ...]
@@ -86,6 +86,6 @@ CLI logs output directly to stderr, using the same format as entelecheia:
 ## Design Principles
 
 1. **CLI does not perform business logic**: All business logic resides in the `shittim_chest` binary inside the container
-2. **Containers are immutable units**: The CLI creates/destroys containers, never modifies running ones
-3. **Network isolation**: PG port is not exposed to the host, only reachable within the internal Docker network
-4. **Passive polling for health checks**: Does not rely on Docker events (unreliable); directly polls inspect results
+1. **Containers are immutable units**: The CLI creates/destroys containers, never modifies running ones
+1. **Network isolation**: PG port is not exposed to the host, only reachable within the internal Docker network
+1. **Passive polling for health checks**: Does not rely on Docker events (unreliable); directly polls inspect results

@@ -10,113 +10,112 @@ Parámetros
 Licenciante:          Celestia Island
 
 Obra Licenciada:      Arona — Tipos de Protocolo JSON-RPC 2.0 Compartidos para la Plataforma Multi-Agente Entelecheia
-                      La Obra Licenciada es (c) 2025 langyo <contact@celestia.world>
+La Obra Licenciada es (c) 2025 langyo <contact@celestia.world>
 
 Concesión de Uso
 Adicional:            El Licenciante otorga los siguientes derechos adicionales junto
-                      con los derechos básicos establecidos en la sección de Términos
-                      a continuación. Estos derechos son perpetuos y surten efecto
-                      inmediato — no dependen de ninguna fecha o evento futuro.
+con los derechos básicos establecidos en la sección de Términos
+a continuación. Estos derechos son perpetuos y surten efecto
+inmediato — no dependen de ninguna fecha o evento futuro.
 
-                      — Usos Permitidos (no se requiere licencia comercial separada) —
+— Usos Permitidos (no se requiere licencia comercial separada) —
 
-                      (a) Operaciones Internas. Usted puede hacer uso en producción
-                          de la Obra Licenciada para sus propias operaciones internas,
-                          independientemente del tamaño organizativo o los ingresos.
-                          "Interno" significa que la Obra Licenciada se despliega y
-                          opera exclusivamente en beneficio de su propia organización
-                          y su personal autorizado, y no se pone a disposición de
-                          terceros como servicio, producto u oferta alojada. Esto
-                          incluye las operaciones internas de agencias gubernamentales,
-                          instituciones públicas y organizaciones sin fines de lucro.
+(a) Operaciones Internas. Usted puede hacer uso en producción
+de la Obra Licenciada para sus propias operaciones internas,
+independientemente del tamaño organizativo o los ingresos.
+"Interno" significa que la Obra Licenciada se despliega y
+opera exclusivamente en beneficio de su propia organización
+y su personal autorizado, y no se pone a disposición de
+terceros como servicio, producto u oferta alojada. Esto
+incluye las operaciones internas de agencias gubernamentales,
+instituciones públicas y organizaciones sin fines de lucro.
 
-                      (b) Uso No Comercial. Usted puede utilizar la Obra Licenciada
-                          para investigación académica, enseñanza, estudio personal,
-                          evaluación, experimentación y contribución a la propia Obra
-                          Licenciada, sin restricción de afiliación organizativa o
-                          fuente de financiación.
+(b) Uso No Comercial. Usted puede utilizar la Obra Licenciada
+para investigación académica, enseñanza, estudio personal,
+evaluación, experimentación y contribución a la propia Obra
+Licenciada, sin restricción de afiliación organizativa o
+fuente de financiación.
 
-                      (c) Gobierno y Servicio Público. Las agencias gubernamentales,
-                          instituciones públicas y organizaciones sin fines de lucro
-                          pueden desplegar la Obra Licenciada con fines de servicio
-                          público, incluyendo iniciativas de gobierno digital,
-                          programas piloto, proyectos de interés público y operaciones
-                          administrativas internas, siempre que el despliegue no
-                          constituya un servicio comercial vendido o licenciado a
-                          terceros.
+(c) Gobierno y Servicio Público. Las agencias gubernamentales,
+instituciones públicas y organizaciones sin fines de lucro
+pueden desplegar la Obra Licenciada con fines de servicio
+público, incluyendo iniciativas de gobierno digital,
+programas piloto, proyectos de interés público y operaciones
+administrativas internas, siempre que el despliegue no
+constituya un servicio comercial vendido o licenciado a
+terceros.
 
-                      (d) Uso Educativo. Las instituciones educativas acreditadas
-                          pueden utilizar la Obra Licenciada para la enseñanza, la
-                          investigación académica, la infraestructura del campus y
-                          los proyectos de los estudiantes.
+(d) Uso Educativo. Las instituciones educativas acreditadas
+pueden utilizar la Obra Licenciada para la enseñanza, la
+investigación académica, la infraestructura del campus y
+los proyectos de los estudiantes.
 
-                      (e) Modificación y Contribución. Usted puede modificar la
-                          Obra Licenciada y contribuir dichas modificaciones al
-                          proyecto original, sujeto a los términos de esta Licencia.
+(e) Modificación y Contribución. Usted puede modificar la
+Obra Licenciada y contribuir dichas modificaciones al
+proyecto original, sujeto a los términos de esta Licencia.
 
-                      — Usos que Requieren una Licencia Comercial —
+— Usos que Requieren una Licencia Comercial —
 
-                      Las siguientes actividades no están permitidas sin una licencia
-                      comercial separada obtenida del Licenciante:
+Las siguientes actividades no están permitidas sin una licencia
+comercial separada obtenida del Licenciante:
 
-                      (i)   Ofrecer la Obra Licenciada, total o sustancialmente,
-                            como un servicio alojado, gestionado o basado en la nube
-                            a terceros, ya sea por una tarifa o como parte de una
-                            oferta comercial, cuando la Obra Licenciada constituya
-                            una fuente sustancial del valor del servicio.
+(i)   Ofrecer la Obra Licenciada, total o sustancialmente,
+como un servicio alojado, gestionado o basado en la nube
+a terceros, ya sea por una tarifa o como parte de una
+oferta comercial, cuando la Obra Licenciada constituya
+una fuente sustancial del valor del servicio.
 
-                      (ii)  Vender, licenciar, sublicenciar o distribuir de otro
-                            modo la Obra Licenciada, modificada o no, como producto
-                            independiente, o cambiar la marca de la Obra Licenciada
-                            bajo un nombre o marca diferente para su distribución
-                            comercial.
+(ii)  Vender, licenciar, sublicenciar o distribuir de otro
+modo la Obra Licenciada, modificada o no, como producto
+independiente, o cambiar la marca de la Obra Licenciada
+bajo un nombre o marca diferente para su distribución
+comercial.
 
-                      (iii) Ofrecer servicios de despliegue, instalación, configuración,
-                            mantenimiento continuo o soporte técnico para la Obra
-                            Licenciada a terceros por una tarifa, cuando dichos
-                            servicios constituyan una actividad comercial recurrente
-                            o principal.
+(iii) Ofrecer servicios de despliegue, instalación, configuración,
+mantenimiento continuo o soporte técnico para la Obra
+Licenciada a terceros por una tarifa, cuando dichos
+servicios constituyan una actividad comercial recurrente
+o principal.
 
-                      (iv)  Incluir la Obra Licenciada, o una versión modificada de
-                            la misma, como componente central o sustancial en un
-                            producto o servicio que usted venda, licencie o proporcione
-                            de otro modo a terceros con fines comerciales.
+(iv)  Incluir la Obra Licenciada, o una versión modificada de
+la misma, como componente central o sustancial en un
+producto o servicio que usted venda, licencie o proporcione
+de otro modo a terceros con fines comerciales.
 
-                      (v)   Cualquier uso en el que la Obra Licenciada constituya la
-                            fuente principal o sustancial de valor en una oferta
-                            comercial puesta a disposición de terceros, independientemente
-                            del mecanismo de entrega o la marca.
+(v)   Cualquier uso en el que la Obra Licenciada constituya la
+fuente principal o sustancial de valor en una oferta
+comercial puesta a disposición de terceros, independientemente
+del mecanismo de entrega o la marca.
 
 Licencia de Uso Libre: Para cualquier Uso Permitido descrito en los puntos
-                       (a) a (e) anteriores, los derechos otorgados son
-                       equivalentes en alcance a los proporcionados bajo
-                       su elección de:
+(a) a (e) anteriores, los derechos otorgados son
+equivalentes en alcance a los proporcionados bajo
+su elección de:
 
-                       — la Licencia Apache, Versión 2.0
-                         (https://www.apache.org/licenses/LICENSE-2.0), o
-                       — la Licencia MIT
-                         (https://opensource.org/licenses/MIT).
+— la Licencia Apache, Versión 2.0
+(https://www.apache.org/licenses/LICENSE-2.0), o
+— la Licencia MIT
+(https://opensource.org/licenses/MIT).
 
-                       Puede tratar esta Licencia como la Apache License 2.0
-                       o la MIT License para cualquier Uso Permitido. Para
-                       cualquier Uso Restringido descrito en los puntos (i)
-                       a (v) anteriores, se aplican los términos completos
-                       de esta Business Source License 1.1, y se requiere
-                       una licencia comercial separada.
-
+Puede tratar esta Licencia como la Apache License 2.0
+o la MIT License para cualquier Uso Permitido. Para
+cualquier Uso Restringido descrito en los puntos (i)
+a (v) anteriores, se aplican los términos completos
+de esta Business Source License 1.1, y se requiere
+una licencia comercial separada.
 
 Fecha de Cambio:       2030-01-01
 
 Licencia de Cambio:    A partir de la Fecha de Cambio, esta Licencia se convierte
-                      automáticamente en una licencia doble a elección del
-                      destinatario:
-                      — la Licencia Apache, Versión 2.0
-                        (https://www.apache.org/licenses/LICENSE-2.0), o
-                      — la Licencia MIT
-                        (https://opensource.org/licenses/MIT)
-                      para todas las versiones de la Obra Licenciada publicada bajo
-                      esta Licencia, para todos los usuarios y todos los usos, sin
-                      restricción de uso y sin licencia comercial separada.
+automáticamente en una licencia doble a elección del
+destinatario:
+— la Licencia Apache, Versión 2.0
+(https://www.apache.org/licenses/LICENSE-2.0), o
+— la Licencia MIT
+(https://opensource.org/licenses/MIT)
+para todas las versiones de la Obra Licenciada publicada bajo
+esta Licencia, para todos los usuarios y todos los usos, sin
+restricción de uso y sin licencia comercial separada.
 
 ------------------------------------------------------------------------------
 

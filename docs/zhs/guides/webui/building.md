@@ -14,7 +14,7 @@ subcategory = "webui"
 ## 前置条件
 
 | 工具 | 最低版本 | 说明 |
-|------|----------------|-------|
+| --- | --- | --- |
 | Rust | 1.85+ | 需要 Edition 2024；通过 <https://rustup.rs> 安装 |
 | Node.js | 20+ | 推荐 LTS 版本 |
 | pnpm | 9+ | `corepack enable && corepack prepare pnpm@latest --activate` |
@@ -47,14 +47,14 @@ cp .env.example .env
 ### 服务器
 
 | 变量 | 默认值 | 用途 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_HOST` | `0.0.0.0` | 监听地址 |
 | `SHITTIM_CHEST_PORT` | `80` | 监听端口 |
 
 ### 数据库
 
 | 变量 | 默认值 | 用途 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_DATABASE_URL` | `postgresql://sc:pass@localhost:5432/shittim_chest` | PostgreSQL 连接字符串 |
 | `SHITTIM_CHEST_DATABASE_MAX_CONNECTIONS` | `10` | SeaORM 连接池大小 |
 
@@ -68,7 +68,7 @@ CREATE DATABASE shittim_chest OWNER sc;
 ### JWT 与加密
 
 | 变量 | 默认值 | 用途 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `JWT_SECRET` | `change-me-in-production` | 与 scepter 共享的密钥；**必须一致** |
 | `JWT_EXPIRATION_SECONDS` | `3600` | 访问令牌有效期（1 小时） |
 | `JWT_REFRESH_EXPIRATION_SECONDS` | `604800` | 刷新令牌有效期（7 天） |
@@ -85,7 +85,7 @@ openssl rand -base64 32
 设置这些变量可让 shittim-chest 在无 entelecheia 的情况下独立运行：
 
 | 变量 | 用途 |
-|----------|---------|
+| --- | --- |
 | `LLM_DEFAULT_PROVIDER_ENDPOINT` | OpenAI 兼容的 API 端点（例如 `https://api.deepseek.com/v1`） |
 | `LLM_DEFAULT_PROVIDER_API_KEY` | 提供商的 API 密钥 |
 | `LLM_DEFAULT_PROVIDER_MODELS` | 逗号分隔的模型列表（例如 `deepseek-chat,deepseek-reasoner`） |
@@ -97,7 +97,7 @@ openssl rand -base64 32
 ### 远程设备
 
 | 变量 | 默认值 | 用途 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `REMOTE_DEVICES_ENABLED` | `false` | 启用远程设备功能 |
 | `REMOTE_DEVICES_SCEPTER_SOCK` | `/run/entelecheia/device_stream.sock` | 设备数据的 Unix 套接字 |
 | `REMOTE_DEVICES_FRAME_BUFFER_SIZE` | `4194304` | 帧缓冲区大小（字节） |
@@ -107,7 +107,7 @@ openssl rand -base64 32
 ### GitHub OAuth
 
 | 变量 | 用途 |
-|----------|---------|
+| --- | --- |
 | `GITHUB_CLIENT_ID` | GitHub OAuth App 客户端 ID |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth App 客户端密钥 |
 | `GITHUB_REDIRECT_URI` | OAuth 回调 URL（例如 `https://your-domain/api/auth/github/callback`） |
@@ -115,7 +115,7 @@ openssl rand -base64 32
 ### Scepter 连接（用于代理功能）
 
 | 变量 | 默认值 | 用途 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `ENTELECHEIA_SCEPTER_URL` | `http://localhost:8424` | scepter 的 HTTP 端点 |
 | `ENTELECHEIA_SCEPTER_WS_URL` | `ws://localhost:8424` | scepter 的 WebSocket 端点 |
 | `ENTELECHEIA_TUI_SOCK` | `/run/entelecheia/entelecheia.sock` | 用于触发器转发的 Unix 套接字 |
@@ -123,7 +123,7 @@ openssl rand -base64 32
 ### Webhook
 
 | 变量 | 用途 |
-|----------|---------|
+| --- | --- |
 | `WEBHOOK_GITHUB_SECRET` | GitHub Webhook 验证的 HMAC 密钥 |
 | `WEBHOOK_GITLAB_SECRET` | GitLab Webhook 验证的令牌 |
 | `WEBHOOK_PUBLIC_URL` | Webhook 端点的公开访问 URL |
@@ -137,10 +137,10 @@ just db-migrate   # 应用待处理的迁移
 
 ### Schema 概览
 
-shittim_chest_db 管理面向用户的数据：
+`shittim_chest_db` 管理面向用户的数据：
 
 | 表 | 用途 |
-|-------|---------|
+| --- | --- |
 | `auth_users` | 使用 argon2 密码哈希的用户账户 |
 | `sessions` | 包含刷新令牌的活跃会话 |
 | `api_keys` | API 密钥记录（已哈希） |
@@ -187,7 +187,7 @@ cargo watch -x 'run --package shittim_chest -- server'
 ### API 端点概览
 
 | 路由组 | 用途 |
-|-------------|---------|
+| --- | --- |
 | `/api/auth/*` | 登录、注册、GitHub OAuth、刷新、登出 |
 | `/api/chat/*` | 对话、消息、SSE/WS 流式传输、搜索、导出 |
 | `/api/providers/*` | LLM 提供商 CRUD、API 密钥管理、测试 |
@@ -258,7 +258,7 @@ just migrate      # 运行数据库迁移
 
 ### 数据库连接被拒绝
 
-```
+```text
 error: connection to server at "localhost", port 5432 failed
 ```
 
@@ -266,7 +266,7 @@ error: connection to server at "localhost", port 5432 failed
 
 ### Scepter 不可达
 
-```
+```text
 error: error sending request for url (http://localhost:8424/...)
 ```
 
@@ -274,7 +274,7 @@ error: error sending request for url (http://localhost:8424/...)
 
 ### 浏览器中出现 CORS 错误
 
-```
+```text
 Access-Control-Allow-Origin header is present on the requested resource
 ```
 

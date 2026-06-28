@@ -13,10 +13,10 @@ subcategory = "webui"
 ## 설계 목표
 
 1. **단일 데이터 소스** — 하나의 파일이 전체 공장/프로젝트를 기술한다: 장치 노드, 2D 토폴로지, 3D 장면, 산업 네트워크
-2. **3자 호환** — mock_scepter (fixture), shittim-chest webui (3D 렌더링), entelecheia PoleMos agent (장치 관리) 모두 동일한 파일을 읽는다
-3. **노드 중심** — 모든 토폴로지, 장면, 센서가 node에 연결되며, node가 핵심 엔티티이다
-4. **버전 관리 가능** — `format_version` 필드 + JSON Schema, 하위 호환 진화 지원
-5. **확장 가능** — 기존 파서를 깨지 않고 사용자 정의 metadata 추가 허용
+1. **3자 호환** — `mock_scepter` (fixture), shittim-chest webui (3D 렌더링), entelecheia PoleMos agent (장치 관리) 모두 동일한 파일을 읽는다
+1. **노드 중심** — 모든 토폴로지, 장면, 센서가 node에 연결되며, node가 핵심 엔티티이다
+1. **버전 관리 가능** — `format_version` 필드 + JSON Schema, 하위 호환 진화 지원
+1. **확장 가능** — 기존 파서를 깨지 않고 사용자 정의 metadata 추가 허용
 
 ## 파일 규칙
 
@@ -61,7 +61,7 @@ subcategory = "webui"
 필드 설명:
 
 | 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | name | string | Y | 프로젝트 이름 |
 | description | string | N | 설명 |
 | author | string | N | 작성자 |
@@ -131,7 +131,7 @@ subcategory = "webui"
 필드 설명:
 
 | 필드 | 타입 | 필수 | 설명 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | label | string | Y | 표시 이름 |
 | label_i18n | {lang: string} | N | 다국어 이름 |
 | type | string | Y | 장치 타입 식별자 (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
@@ -148,7 +148,7 @@ subcategory = "webui"
 Sensor 구조:
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 센서 ID (예: tt-101) |
 | type | string | temperature / pressure / flow / level / gas / current |
 | label | string | 표시 라벨 |
@@ -240,7 +240,7 @@ Sensor 구조:
 topology 필드 설명:
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | boxes | Box[] | 함체 그룹화, 각 box는 여러 node를 포함 |
 | plcs | PLC[] | PLC 장치 목록 |
 | connections | Connections | 4종 연결: 신호선, 전력 케이블, 수도관, 가스관 |
@@ -249,7 +249,7 @@ topology 필드 설명:
 Box 구조:
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 함체 ID |
 | label | string | 표시 라벨 |
 | label_i18n | {lang: string} | 다국어 |
@@ -259,7 +259,7 @@ Box 구조:
 Connection 구조 (공통):
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 연결 ID |
 | from | string | 시작점 엔티티 ID (node / sensor / plc / utility) |
 | to | string | 종료점 엔티티 ID |
@@ -349,7 +349,7 @@ Connection 구조 (공통):
 scene 필드 설명:
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | background_color | string | 3D 장면 배경색 |
 | environment_url | string? | HDR 환경 맵 URL |
 | camera.overview | CameraView | 초기 카메라 시점 (모델 파노라마 정면) |
@@ -363,7 +363,7 @@ scene 필드 설명:
 CameraView 구조:
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | position | [x, y, z] | 카메라 위치 |
 | target | [x, y, z] | 주시 목표점 |
 | fov | number | 시야각 (도) |
@@ -371,7 +371,7 @@ CameraView 구조:
 Model3D 구조:
 
 | 필드 | 타입 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | node | string | 연결된 node ID |
 | glb | string | GLB 파일명 (models/ 디렉터리 기준) |
 | position | [x, y, z] | 3D 월드 좌표 |
@@ -388,7 +388,7 @@ Model3D 구조:
 
 로드 경로: `fixtures/{project}.plant.json`
 
-```
+```text
 fixtures/
 ├── agents.json
 ├── devices.json
@@ -399,7 +399,8 @@ fixtures/
     └── ...
 ```
 
-mock_scepter 시작 시:
+`mock_scepter` 시작 시:
+
 - `fixtures::load_all()`에 `load_plant()` 호출 추가
 - `.plant.json` 파싱 → `DeviceModelResponse[]` + `SceneConfigItem`으로 분할
 - `get_scene_config`가 plant 데이터에서 반환, 하드코딩 제거
@@ -411,17 +412,20 @@ mock_scepter 시작 시:
 기존 API 계약 불변 (`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`).
 
 신규:
+
 - `PhysicalPreview.tsx`의 `BOX_CAMERA_TARGETS`가 `scene.camera.bookmarks`에서 읽기, 하드코딩 제거
 - 3D 모델의 CSS2D 오버레이 라벨이 `nodes[nodeId].label`에서 읽기
 
 ### 3. entelecheia PoleMos agent
 
 PoleMos가 MCP tool을 통해 plant 파일 읽기:
+
 - `node_discover` → `nodes` + `topology.plcs` 순회
 - `device_self_test` → `nodes[id].sensors` + `nodes[id].rated` 읽기
 - 장치 관리 작업 → `nodes[id].status`에 쓰기
 
 향후 확장 가능:
+
 - PoleMos layer2 agent가 `.plant.json` 생성 (AI가 장치 문서를 읽어 자동 토폴로지 구축)
 - 사용자가 webui에서 3D 레이아웃 드래그 편집 → `.plant.json`에 쓰기
 - CI/CD 파이프라인이 `.plant.json`의 스키마 완전성 검증
@@ -437,7 +441,7 @@ PoleMos가 MCP tool을 통해 plant 파일 읽기:
 ## 기존 데이터와의 관계
 
 | 기존 데이터 소스 | .plant.json으로 마이그레이션되는 부분 |
-|-----------|--------------------------|
+| --- | --- |
 | `http_server.rs`에 하드코딩된 20개 DeviceModelResponse | → `scene.models[]` + `nodes{}` |
 | `http_server.rs`에 하드코딩된 SceneConfigItem | → `scene{}` (camera, lighting, ground, bloom) |
 | `mock_data/topology.rs`의 overview() / box_detail() | → `topology{}` (boxes, connections, layout) |
@@ -448,6 +452,6 @@ PoleMos가 MCP tool을 통해 plant 파일 읽기:
 ## 스키마 검증
 
 JSON Schema 파일은 `schemas/plant-v1.json`에 위치하며, 3단이 공유한다.
-mock_scepter 로드 시 `serde_json` 역직렬화 + 스키마 검증.
+`mock_scepter` 로드 시 `serde_json` 역직렬화 + 스키마 검증.
 webui 빌드 시 `ajv`로 검증 가능.
 entelecheia는 `jsonschema` crate으로 검증 가능.

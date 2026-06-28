@@ -48,8 +48,8 @@ La déclaration `related_tools` dans le frontmatter TOML de la Skill détermine 
 Un outil MCP se compose de trois parties :
 
 1. **Implémentation Rust** — la logique réelle, située dans `packages/agents/<agent>/src/mcp/tools/`
-2. **Distribution par Registry** — le routage, situé dans `packages/agents/<agent>/src/mcp/registry.rs`
-3. **Constantes de nom d'outil** — constantes de chaîne, situées dans `packages/shared/domain_skills/src/tool_names.rs`
+1. **Distribution par Registry** — le routage, situé dans `packages/agents/<agent>/src/mcp/registry.rs`
+1. **Constantes de nom d'outil** — constantes de chaîne, situées dans `packages/shared/domain_skills/src/tool_names.rs`
 
 ### Définition d'outil dans mcp/registry.rs
 
@@ -168,7 +168,7 @@ use tokio::sync::RwLock;
 use crate::state::HubrisState;
 use _shared::skills::mcp_tools::{validate_required_params, McpToolResult};
 
-#[derive(Serialize, Debug, Clone)]
+# [derive(Serialize, Debug, Clone)]
 struct MyNewToolResult {
     id: String,
     message: String,
@@ -448,7 +448,7 @@ McpToolResult::failure("Error".into())
 Testez chaque fonction d'outil directement en construisant des paramètres `Value` et en assertant le `McpToolResult` :
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_report_success() {
     use std::sync::Arc;
     use tokio::sync::RwLock;
@@ -469,7 +469,7 @@ async fn test_report_success() {
     assert_eq!(state.pending_reports[0], "Test report content");
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_report_empty_text() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({
@@ -488,7 +488,7 @@ async fn test_report_empty_text() {
 Testez que le registry route correctement les noms d'outils :
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_routes_known_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({"text": "hello"});
@@ -497,7 +497,7 @@ async fn test_registry_routes_known_tool() {
     assert!(result.success);
 }
 
-#[tokio::test]
+# [tokio::test]
 async fn test_registry_rejects_unknown_tool() {
     let state = Arc::new(RwLock::new(HubrisState::new()));
     let params = serde_json::json!({});
@@ -513,14 +513,14 @@ async fn test_registry_rejects_unknown_tool() {
 Testez directement la fonction auxiliaire `validate_required_params` :
 
 ```rust
-#[test]
+# [test]
 fn test_validate_required_params_all_present() {
     let params = serde_json::json!({"title": "test", "content": "body"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
     assert!(result.is_none());
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_missing() {
     let params = serde_json::json!({"title": "test"});
     let result = validate_required_params(&params, &["title", "content"], "test_tool");
@@ -530,7 +530,7 @@ fn test_validate_required_params_missing() {
     assert!(failure.error[0].contains("content"));
 }
 
-#[test]
+# [test]
 fn test_validate_required_params_empty_string() {
     let params = serde_json::json!({"title": ""});
     let result = validate_required_params(&params, &["title"], "test_tool");
@@ -543,7 +543,7 @@ fn test_validate_required_params_empty_string() {
 Pour les outils qui dépendent d'un Store de base de données, testez généralement avec une base de données en mémoire ou de test :
 
 ```rust
-#[tokio::test]
+# [tokio::test]
 async fn test_create_todo_success() {
     // Configuration : créer un TodoStore de test (dépend de l'infrastructure de test)
     let todo_store = create_test_store().await;
@@ -583,7 +583,7 @@ cargo test -p hubris -- --nocapture
 ## Référence rapide : fichiers clés
 
 | Usage | Chemin |
-|---------|------|
+| --- | --- |
 | Définition `McpToolResult` | `packages/shared/domain_skills/src/mcp_tools.rs` |
 | `validate_required_params` | `packages/shared/domain_skills/src/mcp_tools.rs:12-41` |
 | Constantes de nom d'outil | `packages/shared/domain_skills/src/tool_names.rs` |

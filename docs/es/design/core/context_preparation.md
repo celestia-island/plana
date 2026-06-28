@@ -44,7 +44,7 @@ Esta no es una pregunta de compresión. Es una pregunta de **recuperación de in
 ### Extracción Proactiva vs. Compresión
 
 | Aspecto | Compresión | Preparación de Contexto |
-|--------|------------|------------------------|
+| --- | --- | --- |
 | Dirección | Pasado → pasado más corto | Pasado → extracto listo para el futuro |
 | Conocimiento del futuro | Ninguno | Las consultas anticipan necesidades próximas |
 | Pérdida de información | Inevitable, no dirigida | Dirigida, intencional |
@@ -57,7 +57,7 @@ La Preparación de Contexto trata el contexto antiguo como una **fuente de datos
 
 El mecanismo utiliza una notación basada en letras para describir el flujo de información:
 
-```
+```text
 Contexto Antiguo:  A + B + C + D + E
                          ↓ (analizar)
 Consultas:          ABCDE+H  ABCDE+I  ABCDE+J
@@ -78,9 +78,9 @@ Nuevo Contexto:     F + G + K + L + M
 Una vez que existe la Preparación de Contexto, la compresión tradicional se vuelve innecesaria porque:
 
 1. **No se pierde información por adivinación** — las consultas se generan basándose en lo que el nuevo contexto realmente necesitará
-2. **La extracción es determinista en estructura** — la misma estrategia de consulta siempre produce la misma categoría de respuesta
-3. **Múltiples ángulos aseguran cobertura** — las consultas H/I/J cubren diferentes dimensiones (estado de tarea, contexto de error, justificación de decisiones)
-4. **El contexto antiguo permanece accesible** — no se descarta, sino que se *consulta bajo demanda* durante la fase de preparación
+1. **La extracción es determinista en estructura** — la misma estrategia de consulta siempre produce la misma categoría de respuesta
+1. **Múltiples ángulos aseguran cobertura** — las consultas H/I/J cubren diferentes dimensiones (estado de tarea, contexto de error, justificación de decisiones)
+1. **El contexto antiguo permanece accesible** — no se descarta, sino que se *consulta bajo demanda* durante la fase de preparación
 
 ## Arquitectura
 
@@ -244,12 +244,14 @@ El proceso de generación de consultas toma el contexto antiguo segmentado (A–
 **Propósito**: Asegurar que el nuevo contexto pueda reanudar la tarea actual sin pérdida de progreso.
 
 **Lógica de generación**:
+
 1. Identificar tareas activas de los segmentos A y E (estado de tarea + conocimiento implícito)
-2. Extraer indicadores de progreso actual (qué está hecho, qué está en progreso, qué está bloqueado)
-3. Generar una consulta que pregunte: *"¿Cuál es el estado actual de todas las tareas activas y cuáles son los próximos pasos?"*
+1. Extraer indicadores de progreso actual (qué está hecho, qué está en progreso, qué está bloqueado)
+1. Generar una consulta que pregunte: *"¿Cuál es el estado actual de todas las tareas activas y cuáles son los próximos pasos?"*
 
 **Consulta de ejemplo**:
-```
+
+```text
 Dado el historial de conversación, identificar:
 1. Todas las tareas actualmente en progreso y su estado de finalización
 2. Cualquier bloqueo o error no resuelto
@@ -262,12 +264,14 @@ Dado el historial de conversación, identificar:
 **Propósito**: Preservar el *por qué* detrás de las decisiones, no solo el *qué*.
 
 **Lógica de generación**:
+
 1. Escanear los segmentos B y C (decisiones + historial de errores) en busca de puntos de elección
-2. Identificar decisiones donde se consideraron y rechazaron alternativas
-3. Generar una consulta que pregunte: *"¿Qué decisiones se tomaron, qué alternativas se rechazaron y por qué?"*
+1. Identificar decisiones donde se consideraron y rechazaron alternativas
+1. Generar una consulta que pregunte: *"¿Qué decisiones se tomaron, qué alternativas se rechazaron y por qué?"*
 
 **Consulta de ejemplo**:
-```
+
+```text
 De esta conversación, extraer:
 1. Todas las decisiones arquitectónicas o de implementación tomadas
 2. Para cada decisión: qué alternativas se consideraron
@@ -280,12 +284,14 @@ De esta conversación, extraer:
 **Propósito**: Capturar relaciones entre elementos de código, archivos y conceptos.
 
 **Lógica de generación**:
+
 1. Escanear los segmentos D y E (referencias de código + conocimiento implícito) en busca de relaciones entre entidades
-2. Mapear qué archivos dependen de cuáles, qué funciones llaman a cuáles, qué conceptos se relacionan
-3. Generar una consulta que pregunte: *"¿Cuáles son las dependencias y relaciones clave entre las entidades discutidas?"*
+1. Mapear qué archivos dependen de cuáles, qué funciones llaman a cuáles, qué conceptos se relacionan
+1. Generar una consulta que pregunte: *"¿Cuáles son las dependencias y relaciones clave entre las entidades discutidas?"*
 
 **Consulta de ejemplo**:
-```
+
+```text
 Analizar la conversación y mapear:
 1. Todos los archivos/módulos mencionados y sus relaciones
 2. Cadenas de llamadas a funciones discutidas o modificadas
@@ -340,8 +346,8 @@ fn check_context_health(&mut self) {
 El ejecutor de cadena de habilidades debe ser consciente de la preparación de contexto. Cuando una cadena de habilidades abarca múltiples ventanas de contexto, el mecanismo de preparación asegura que:
 
 1. El estado de la cadena de habilidades se capture en el segmento A (estado de tarea)
-2. La entrada/salida de la habilidad actual se capture en el segmento D (referencias de código)
-3. Los pasos restantes de la cadena se preserven en el resultado de extracción K (continuidad de tarea)
+1. La entrada/salida de la habilidad actual se capture en el segmento D (referencias de código)
+1. Los pasos restantes de la cadena se preserven en el resultado de extracción K (continuidad de tarea)
 
 ```rust
 // skill_chain.rs (integración conceptual)
@@ -428,6 +434,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 **Escenario**: Un agente está refactorizando un crate de Rust, modificando 15 archivos en 3 módulos. La ventana de contexto se llena después de modificar el archivo 10.
 
 **Contexto antiguo (A–E)**:
+
 - **A** (Estado de Tarea): 10/15 archivos modificados, módulos `auth` y `storage` completos, `api` en progreso
 - **B** (Decisiones): Se eligió abstracción basada en traits sobre despacho por enum; se mantuvo compatibilidad hacia atrás mediante `#[deprecated]`
 - **C** (Errores): Se encontró problema de lifetime en `storage/mod.rs:142`, resuelto con `Arc<Mutex<>>`
@@ -435,6 +442,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 - **E** (Implícito): La struct `User` debe permanecer `Clone` para crates descendentes; la cobertura de pruebas está rastreada
 
 **Consultas generadas**:
+
 - **H** (Continuidad de Tarea): "¿Qué archivos quedan por modificar, cuál es el patrón que se está aplicando y cuál es el siguiente archivo a refactorizar?"
 - **I** (Justificación de Decisiones): "¿Por qué se eligió la abstracción basada en traits sobre el despacho por enum, y qué restricciones de compatibilidad hacia atrás existen?"
 - **J** (Mapa de Dependencias): "Mapear las dependencias entre los módulos `auth`, `storage` y `api`, anotando qué structs/traits cruzan los límites de módulo."
@@ -446,6 +454,7 @@ Los **resultados de extracción (K, L, M)** se ensamblan con el nuevo system pro
 **Escenario**: Depurando un problema de conexión WebSocket que abarca múltiples hipótesis e intentos de prueba.
 
 **Contexto antiguo (A–E)**:
+
 - **A** (Estado de Tarea): El problema se ha acotado a la fase de handshake; el heartbeat no es la causa
 - **B** (Decisiones): Se descartó mala configuración TLS; se descartó interferencia de proxy; la hipótesis actual es orden de cabeceras
 - **C** (Errores): `ConnectionReset` a los 3s, reproducido consistentemente con curl pero no con navegador
@@ -459,6 +468,7 @@ Las **consultas generadas** extraen el estado de depuración, las hipótesis rec
 **Escenario**: PhiLia delega una cadena de tareas a Skemma (diseño de esquema) y luego a Logos (documentación). El contexto se llena durante el trabajo de Logos.
 
 **Contexto antiguo (A–E)**:
+
 - **A** (Estado de Tarea): Diseño de esquema completo, documentación al 60%
 - **B** (Decisiones): El esquema usa tablas de unión para relaciones M:N según la guía de arquitectura de PhiLia
 - **C** (Errores): Skemma reportó ambigüedad en la cardinalidad `user_roles`, resuelta añadiendo restricción `UNIQUE`

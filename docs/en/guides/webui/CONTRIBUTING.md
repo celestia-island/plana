@@ -17,23 +17,32 @@ and industrial systems, so **stability and safety outweigh contribution
 throughput**. Please read this before opening a pull request.
 
 - **High merge bar, not a public roadmap.** Opening a PR does not imply it will
-  be merged. We accept a deliberately small number of changes, and only when
-  they fit the architecture and pass review. This is by design, not rudeness.
+
+be merged. We accept a deliberately small number of changes, and only when
+they fit the architecture and pass review. This is by design, not rudeness.
+
 - **What we welcome:** bug reports, focused fixes, well-scoped improvements to
-  the **periphery** (IDE plugins, Tauri apps, channel integrations, provider
-  adapters, and documentation), and prior design discussions before code.
+
+the **periphery** (IDE plugins, Tauri apps, channel integrations, provider
+adapters, and documentation), and prior design discussions before code.
+
 - **What we generally will not merge:** large unsolicited rewrites,
-  architectural changes without a prior design discussion, bulk "vibe-coded"
-  PRs, anything that lowers the security or correctness bar of the core, and
-  changes to the security-critical core (auth, JWT/OAuth, LLM routing, webhook
-  validation, RBAC) without an explicit invitation and extended review.
+
+architectural changes without a prior design discussion, bulk "vibe-coded"
+PRs, anything that lowers the security or correctness bar of the core, and
+changes to the security-critical core (auth, JWT/OAuth, LLM routing, webhook
+validation, RBAC) without an explicit invitation and extended review.
+
 - **Core vs. periphery.** The core backend and auth/RBAC model are held to the
-  strictest bar and maintained primarily by the core team. The periphery
-  (frontends, IDE/mobile apps, channel connectors) is where external
-  contributions are most useful and most likely to be accepted.
+
+strictest bar and maintained primarily by the core team. The periphery
+(frontends, IDE/mobile apps, channel connectors) is where external
+contributions are most useful and most likely to be accepted.
+
 - **CLA required.** Every accepted contribution requires a signed Contributor
-  License Agreement. See [`CLA.md`](CLA.md). Commits must carry a
-  `Signed-off-by` line (`git commit -s`).
+
+License Agreement. See [`CLA.md`](CLA.md). Commits must carry a
+`Signed-off-by` line (`git commit -s`).
 
 > **The license may open; the merge bar will not.** On **2030-01-01** this
 > project converts from BUSL-1.1 to the Synthetic Source License (SySL-1.0) — see
@@ -195,7 +204,7 @@ cargo clippy               # lint
 cargo clippy --fix         # auto-fix
 ```
 
-- Follow standard Rust conventions (snake_case for functions/variables, CamelCase for types)
+- Follow standard Rust conventions (`snake_case` for functions/variables, CamelCase for types)
 - Use `workspace = true` for shared dependency versions in crate `Cargo.toml` files
 - Error handling: use `anyhow::Result` for application code, `thiserror` for library crate error types
 
@@ -226,10 +235,10 @@ Locale files are organized as 17 namespace JSON files per language under `i18n/l
 
 ### Naming Conventions
 
-All directory names under `packages/` use **snake_case**:
+All directory names under `packages/` use **`snake_case`**:
 
 | Type | Convention | Example |
-|------|-----------|---------|
+| --- | --- | --- |
 | Rust crate directory | snake_case | `core/` |
 | Rust crate name | snake_case | `core` |
 
@@ -260,16 +269,16 @@ just clean                 # clean build artifacts
 ## Pull Request Process
 
 1. Create a feature branch from `dev`: `git checkout -b feat/my-feature dev`
-2. Make changes with clear, atomic commits
-3. Run `just lint && just test` before pushing
-4. Open a PR against the `dev` branch
-5. Ensure CI passes (Rust build, npm build, lint)
+1. Make changes with clear, atomic commits
+1. Run `just lint && just test` before pushing
+1. Open a PR against the `dev` branch
+1. Ensure CI passes (Rust build, npm build, lint)
 
 ## Commit Convention
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 feat(auth): add password login endpoint
 fix(proxy): handle WebSocket reconnect
 docs(readme): add logo and badges

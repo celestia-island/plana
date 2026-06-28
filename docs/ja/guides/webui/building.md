@@ -14,7 +14,7 @@ subcategory = "webui"
 ## 前提条件
 
 | ツール | 最小バージョン | 備考 |
-|------|----------------|-------|
+| --- | --- | --- |
 | Rust | 1.85以上 | Edition 2024が必要。<https://rustup.rs>からインストール |
 | Node.js | 20以上 | LTS推奨 |
 | pnpm | 9以上 | `corepack enable && corepack prepare pnpm@latest --activate` |
@@ -47,14 +47,14 @@ cp .env.example .env
 ### サーバー
 
 | 変数 | デフォルト | 目的 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_HOST` | `0.0.0.0` | リッスンアドレス |
 | `SHITTIM_CHEST_PORT` | `80` | リッスンポート |
 
 ### データベース
 
 | 変数 | デフォルト | 目的 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_DATABASE_URL` | `postgresql://sc:pass@localhost:5432/shittim_chest` | PostgreSQL接続文字列 |
 | `SHITTIM_CHEST_DATABASE_MAX_CONNECTIONS` | `10` | SeaORM接続プールサイズ |
 
@@ -68,7 +68,7 @@ CREATE DATABASE shittim_chest OWNER sc;
 ### JWTと暗号化
 
 | 変数 | デフォルト | 目的 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `JWT_SECRET` | `change-me-in-production` | scepterと共有する秘密鍵。**一致させる必要あり** |
 | `JWT_EXPIRATION_SECONDS` | `3600` | アクセストークン有効期間（1時間） |
 | `JWT_REFRESH_EXPIRATION_SECONDS` | `604800` | リフレッシュトークン有効期間（7日間） |
@@ -85,7 +85,7 @@ openssl rand -base64 32
 entelecheiaなしでshittim-chestを独立して使用するためにこれらを設定します:
 
 | 変数 | 目的 |
-|----------|---------|
+| --- | --- |
 | `LLM_DEFAULT_PROVIDER_ENDPOINT` | OpenAI互換APIエンドポイント（例: `https://api.deepseek.com/v1`） |
 | `LLM_DEFAULT_PROVIDER_API_KEY` | プロバイダーのAPIキー |
 | `LLM_DEFAULT_PROVIDER_MODELS` | カンマ区切りモデルリスト（例: `deepseek-chat,deepseek-reasoner`） |
@@ -97,7 +97,7 @@ entelecheiaなしでshittim-chestを独立して使用するためにこれら�
 ### リモートデバイス
 
 | 変数 | デフォルト | 目的 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `REMOTE_DEVICES_ENABLED` | `false` | リモートデバイス機能を有効化 |
 | `REMOTE_DEVICES_SCEPTER_SOCK` | `/run/entelecheia/device_stream.sock` | デバイスデータ用Unixソケット |
 | `REMOTE_DEVICES_FRAME_BUFFER_SIZE` | `4194304` | フレームバッファサイズ（バイト単位） |
@@ -107,7 +107,7 @@ entelecheiaなしでshittim-chestを独立して使用するためにこれら�
 ### GitHub OAuth
 
 | 変数 | 目的 |
-|----------|---------|
+| --- | --- |
 | `GITHUB_CLIENT_ID` | GitHub OAuth AppクライアントID |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth Appクライアントシークレット |
 | `GITHUB_REDIRECT_URI` | OAuthコールバックURL（例: `https://your-domain/api/auth/github/callback`） |
@@ -115,7 +115,7 @@ entelecheiaなしでshittim-chestを独立して使用するためにこれら�
 ### Scepter接続（プロキシ機能用）
 
 | 変数 | デフォルト | 目的 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `ENTELECHEIA_SCEPTER_URL` | `http://localhost:8424` | scepterのHTTPエンドポイント |
 | `ENTELECHEIA_SCEPTER_WS_URL` | `ws://localhost:8424` | scepterのWebSocketエンドポイント |
 | `ENTELECHEIA_TUI_SOCK` | `/run/entelecheia/entelecheia.sock` | トリガー転送用Unixソケット |
@@ -123,7 +123,7 @@ entelecheiaなしでshittim-chestを独立して使用するためにこれら�
 ### Webhook
 
 | 変数 | 目的 |
-|----------|---------|
+| --- | --- |
 | `WEBHOOK_GITHUB_SECRET` | GitHub webhook検証用HMAC秘密鍵 |
 | `WEBHOOK_GITLAB_SECRET` | GitLab webhook検証用トークン |
 | `WEBHOOK_PUBLIC_URL` | webhookエンドポイントの公開URL |
@@ -140,7 +140,7 @@ just db-migrate   # 保留中のマイグレーションを適用
 shittim_chest_dbはユーザー向けデータを所有します:
 
 | テーブル | 目的 |
-|-------|---------|
+| --- | --- |
 | `auth_users` | argon2パスワードハッシュ付きユーザーアカウント |
 | `sessions` | リフレッシュトークン付きアクティブセッション |
 | `api_keys` | APIキーレコード（ハッシュ化） |
@@ -187,7 +187,7 @@ cargo watch -x 'run --package shittim_chest -- server'
 ### APIエンドポイント概要
 
 | ルートグループ | 目的 |
-|-------------|---------|
+| --- | --- |
 | `/api/auth/*` | ログイン、登録、GitHub OAuth、リフレッシュ、ログアウト |
 | `/api/chat/*` | 会話、メッセージ、SSE/WSストリーミング、検索、エクスポート |
 | `/api/providers/*` | LLMプロバイダーCRUD、APIキー管理、テスト |
@@ -258,7 +258,7 @@ just migrate      # データベースマイグレーション実行
 
 ### データベース接続拒否
 
-```
+```text
 error: connection to server at "localhost", port 5432 failed
 ```
 
@@ -266,7 +266,7 @@ error: connection to server at "localhost", port 5432 failed
 
 ### Scepterに到達不能
 
-```
+```text
 error: error sending request for url (http://localhost:8424/...)
 ```
 
@@ -274,7 +274,7 @@ error: error sending request for url (http://localhost:8424/...)
 
 ### ブラウザでCORSエラー
 
-```
+```text
 Access-Control-Allow-Origin header is present on the requested resource
 ```
 

@@ -17,15 +17,24 @@ Entelecheia puede impulsar sistemas físicos e industriales, por lo tanto, **la 
 un Pull Request, por favor lee esta sección.
 
 - **El umbral de fusión es alto, no es una hoja de ruta pública.** Enviar un PR no significa que será fusionado. Solo aceptamos cambios deliberadamente escasos,
-  que se ajusten a la arquitectura y pasen la revisión. Esto es intencional, no es descortesía.
+
+que se ajusten a la arquitectura y pasen la revisión. Esto es intencional, no es descortesía.
+
 - **Contribuciones bienvenidas:** reportes de bugs, correcciones enfocadas, mejoras de alcance claro en la **periferia** (plugins Layer 3, perfiles de dispositivo,
-  adaptadores de proveedor LLM, integraciones, documentación), y discusiones de diseño antes de escribir código.
+
+adaptadores de proveedor LLM, integraciones, documentación), y discusiones de diseño antes de escribir código.
+
 - **Generalmente no se fusionan:** reescrituras masivas no propuestas, cambios arquitectónicos sin discusión de diseño previa, PR masivos "vibe-coded",
-  cualquier cambio que reduzca el umbral de seguridad o corrección del núcleo, y modificaciones al núcleo crítico de seguridad sin invitación y revisión extendida.
+
+cualquier cambio que reduzca el umbral de seguridad o corrección del núcleo, y modificaciones al núcleo crítico de seguridad sin invitación y revisión extendida.
+
 - **Núcleo vs. Periferia.** El núcleo (orquestación, micronúcleo, seguridad) mantiene los estándares más estrictos y es mantenido principalmente por el equipo central.
-  La periferia es donde las contribuciones externas son más útiles y tienen más probabilidades de ser aceptadas.
+
+La periferia es donde las contribuciones externas son más útiles y tienen más probabilidades de ser aceptadas.
+
 - **Debes firmar el CLA.** Cada contribución aceptada requiere la firma del Acuerdo de Licencia de Contribuidor, ver [`CLA.md`](../../../CLA.md).
-  Los envíos deben incluir `Signed-off-by` (`git commit -s`).
+
+Los envíos deben incluir `Signed-off-by` (`git commit -s`).
 
 > **La licencia se abrirá, el umbral de fusión no.** El **2030-01-01**, este proyecto pasará de BUSL-1.1 a SySL-1.0 (a elección del receptor), ver [`LICENSE`](../../../LICENSE). Esto flexibiliza *lo que puedes hacer con el código*, pero
 > **no** reduce el umbral de revisión, no cancela el CLA, ni significa que aceptaremos más PR. La política de contribución permanece sin cambios antes y después de la fecha de cambio.
@@ -43,11 +52,11 @@ Por favor, mantén el respeto, la constructividad y la inclusión. Seguimos el [
 ## Proceso de Pull Request
 
 1. Haz un Fork y crea una rama desde `main`.
-2. Para cambios grandes, discute primero en un issue.
-3. Haz commits atómicos, siguiendo Conventional Commits.
-4. Asegúrate de que `just ci` (o el comando CI del repositorio) pase.
-5. Firma el CLA y añade `Signed-off-by`.
-6. Responde a los comentarios de revisión; usa force-push solo para rebase.
+1. Para cambios grandes, discute primero en un issue.
+1. Haz commits atómicos, siguiendo Conventional Commits.
+1. Asegúrate de que `just ci` (o el comando CI del repositorio) pase.
+1. Firma el CLA y añade `Signed-off-by`.
+1. Responde a los comentarios de revisión; usa force-push solo para rebase.
 
 ## Licencia y CLA
 

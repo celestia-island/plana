@@ -36,26 +36,29 @@ proveedor tocó el código.
 El email del autor usa un único espacio de nombres de confianza — `celestia.world` — con la parte
 local codificando **quién sirvió el modelo**:
 
-```
+```text
 Nombre para Mostrar <id-del-proveedor-o-plataforma@celestia.world>
 ```
 
 El id del proveedor es el campo obligatorio **`website_domain`** declarado en cada
 config de proveedor (los TOML de punto de entrada del registro de proveedores y el
-`aporia.toml` local). **No** se deriva de la API base_url — un solo proveedor puede
-exponer varios hosts base_url (ej. zhipu_glm sirve tanto `open.bigmodel.cn` como
+`aporia.toml` local). **No** se deriva de la API `base_url` — un solo proveedor puede
+exponer varios hosts `base_url` (ej. `zhipu_glm` sirve tanto `open.bigmodel.cn` como
 `api.z.ai`, pero su dominio canónico es `zhipuai.cn`). Si un proveedor carece de
 `website_domain`, no se le atribuye co-autoría (el resolvedor lo omite en lugar de
 adivinar desde la URL o el prefijo del modelo).
 
 - **Proveedores de primera parte** se identifican por su dominio canónico:
-  `anthropic.com`, `deepseek.com`, `openai.com`, `zhipuai.cn`, `google.com`, ...
+
+`anthropic.com`, `deepseek.com`, `openai.com`, `zhipuai.cn`, `google.com`, ...
+
 - **Proveedores de tercera parte / relay** mantienen su propio dominio para que el relay sea visible:
-  `opencode.ai`, `jdcloud.com`, `openrouter.ai`, `dashscope.aliyuncs.com`, ...
+
+`opencode.ai`, `jdcloud.com`, `openrouter.ai`, `dashscope.aliyuncs.com`, ...
 
 Esto significa que el *mismo* modelo alcanzado a través de diferentes rutas es distinguible:
 
-```
+```text
 GLM 5 <zhipuai.cn@celestia.world>              # directo desde Zhipu AI
 GLM 5 <jdcloud.com@celestia.world>           # GLM 5 servido vía JD Cloud
 Deepseek V4 Pro <deepseek.com@celestia.world> # directo desde DeepSeek
@@ -75,13 +78,14 @@ Deepseek V4 Pro <opencode.ai@celestia.world>  # DeepSeek servido vía opencode
 Cuando toda la cadena de pensamiento que produjo un commit se ejecutó bajo **control de crucero
 YOLO** (iteración autónoma), se antepone un co-autor adicional:
 
-```
+```text
 Co-authored-by: Entelecheia <demiurge@celestia.world>
 ```
 
 El modo YOLO se detecta desde:
+
 1. El registro de chat de sesión que contiene un marcador `YOLO cruise control` / `YOLO auto`, o
-2. La presencia del archivo centinela `/run/entelecheia/yolo_active`.
+1. La presencia del archivo centinela `/run/entelecheia/yolo_active`.
 
 Esto permite a un humano ver inmediatamente "este commit se hizo sin humano en el bucle".
 
@@ -89,20 +93,23 @@ Esto permite a un humano ver inmediatamente "este commit se hizo sin humano en e
 
 Incrustado en el nombre para mostrar de cada modelo dentro del tráiler `Co-authored-by` (un bloque de tráiler que GitHub analiza correctamente):
 
-```
+```text
 Co-authored-by: Claude Opus 4.8 (↑ 12.5k ↓ 8.3k ●45.2k) <anthropic.com@celestia.world>
 Co-authored-by: Deepseek V4 Pro (↑ 5.1k ↓ 3.2k) <deepseek.com@celestia.world>
 ```
 
 Reglas:
+
 - El uso se incrusta en línea como `(↑ subida ↓ descarga)`, con `●caché` añadido solo
-  cuando se reportaron tokens de entrada en caché y son > 0.
+
+cuando se reportaron tokens de entrada en caché y son > 0.
+
 - `↑` = tokens de prompt/entrada; `↓` = tokens de completado/salida.
 - Los conteos se representan en miles (`k`), un decimal, ceros finales recortados.
 
 ## Ejemplo de Mensaje de Commit Completo
 
-```
+```text
 fix(auto_fix): subir timeouts de clippy/check de 180s a 300s
 
 El timeout anterior de 180s era demasiado ajustado para compilaciones limpias en una máquina
@@ -122,10 +129,14 @@ noa hook install --repo <ruta> [--force] [--noa-bin <ruta>]
 
 - Escribe `.git/hooks/commit-msg` (modo `0755`).
 - El hook llama a `<noa> co-author resolve` y añade su stdout al archivo de mensaje
-  de commit (`$1`).
+
+de commit (`$1`).
+
 - El hook **nunca bloquea un commit**: ante cualquier fallo del resolvedor sale `0` silenciosamente.
 - Si un mensaje de commit ya contiene un tráiler `Co-authored-by:`, el hook es un
-  no-op (nunca duplica ni sobrescribe).
+
+no-op (nunca duplica ni sobrescribe).
+
 - `NOA_COAUTHOR_DISABLE=1` en el entorno deshabilita el hook para un commit.
 
 ## Resolución de Co-autor de noa
@@ -138,12 +149,17 @@ noa co-author resolve [--repo <ruta>] [--chat-log-dir <dir>]
 El resolvedor:
 
 1. Carga el mapa de proveedores: registro incorporado fusionado con la configuración de proveedor
-   `aporia.toml` (que proporciona el mapeo preciso modelo→endpoint→proveedor).
-2. Lee el(los) registro(s) de chat de entelecheia más reciente(s) y agrega el uso de tokens por
-   modelo. Con `--lookback-secs 0` (predeterminado) solo se usa el registro más reciente.
-3. Detecta el modo YOLO (marcador de registro de chat o archivo centinela).
-4. Construye la lista de co-autores (autoridad `Entelecheia` primero si YOLO, luego modelos)
-   y el bloque de uso de tokens, e imprime el bloque de tráiler en stdout.
+
+`aporia.toml` (que proporciona el mapeo preciso modelo→endpoint→proveedor).
+
+1. Lee el(los) registro(s) de chat de entelecheia más reciente(s) y agrega el uso de tokens por
+
+modelo. Con `--lookback-secs 0` (predeterminado) solo se usa el registro más reciente.
+
+1. Detecta el modo YOLO (marcador de registro de chat o archivo centinela).
+1. Construye la lista de co-autores (autoridad `Entelecheia` primero si YOLO, luego modelos)
+
+y el bloque de uso de tokens, e imprime el bloque de tráiler en stdout.
 
 ## Flujo de Datos
 
@@ -163,11 +179,14 @@ flowchart LR
 
 - El hook `commit-msg` se instala en `/mnt/sdb1/entelecheia/.git/hooks/`.
 - Todos los commits producidos por el pipeline de cirugía (hook `NoaMergeCommit` en
-  `packages/scepter/src/state_machine/skill_chain/execution/noa_post_chain.rs`) y
-  por el bucle de auto-curación `KaLos:auto_fix` pasan a través del hook `commit-msg` de git,
-  por lo que se sellan automáticamente.
+
+`packages/scepter/src/state_machine/skill_chain/execution/noa_post_chain.rs`) y
+por el bucle de auto-curación `KaLos:auto_fix` pasan a través del hook `commit-msg` de git,
+por lo que se sellan automáticamente.
+
 - No se requiere ningún cambio en los sitios de llamada de commit: el hook es el único punto
-  de inserción.
+
+de inserción.
 
 ## Integración con evernight
 
@@ -181,11 +200,16 @@ auditable.
 ## Consideraciones de Seguridad
 
 - Los tráilers de co-autor son procedencia **auto-reportada**, no prueba criptográfica.
-  Trabajo futuro puede añadir atestaciones firmadas.
+
+Trabajo futuro puede añadir atestaciones firmadas.
+
 - El resolvedor se degrada de forma segura: un registro de chat faltante, `noa` faltante o un error de análisis
-  resultan en un bloque vacío y el commit procede intacto.
+
+resultan en un bloque vacío y el commit procede intacto.
+
 - Los identificadores de proveedor provienen del `aporia.toml` local, por lo que un usuario siempre ve los
-  proveedores *que ellos* configuraron.
+
+proveedores *que ellos* configuraron.
 
 ## Referencia de Identificadores de Proveedor (registro inicial)
 

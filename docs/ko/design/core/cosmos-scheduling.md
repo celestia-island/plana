@@ -122,11 +122,13 @@ sequenceDiagram
 라우팅 결정은 `mcp_skill_router.rs`에서 발생합니다:
 
 1. `agent_manager.get_tool_location(tool_name)` 확인
-2. `ToolLocation::Cosmos`이고 컨테이너화 모드 활성 시:
+1. `ToolLocation::Cosmos`이고 컨테이너화 모드 활성 시:
+
    - `agent_manager.invoke_tool()`을 호출하여 `BridgeInvoker` → HapLotes 브리지 → Cosmos의 `McpRouter`로 라우팅
    - Cosmos의 `McpRouter`가 로컬(skemma)로 디스패치하거나 원격 에이전트를 위해 브리지를 통해 Scepter로 다시 디스패치
    - `McpMessage::ToolResponse`를 TUI로 직접 반환
-3. 그렇지 않으면: HapLotes 게이트웨이를 통해 에이전트 프로세스로 라우팅
+
+1. 그렇지 않으면: HapLotes 게이트웨이를 통해 에이전트 프로세스로 라우팅
 
 ## IV. CosmosConnector / 브리지 아키텍처
 

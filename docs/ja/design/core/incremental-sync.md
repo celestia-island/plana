@@ -70,7 +70,7 @@ flowchart TB
 ## 同期戦略マトリックス
 
 | パネル | 同期方式 | トリガー | 頻度 | メッセージタイプ |
-|-------|-------------|---------|-----------|---------------|
+| --- | --- | --- | --- | --- |
 | **エージェントタイムライン** | 増分 + 完全 | 接続時同期 + リアルタイムプッシュ | 接続時 / リアルタイム | `AgentPatch` / `GlobalSnapshot` |
 | **コンテナ** | 増分 + 完全 | 接続時同期 + リアルタイムプッシュ | 接続時 / リアルタイム | `ContainerPatch` / `GlobalSnapshot` |
 | **タスク** | 増分 + 完全 | 接続時同期 + リアルタイムプッシュ | 接続時 / リアルタイム | `TaskPatch` / `GlobalSnapshot` |
@@ -172,6 +172,7 @@ sequenceDiagram
 ## データ構造
 
 ### AgentPatch（増分更新）
+
 ```rust
 pub struct AgentPatch {
     pub agent_id: String,
@@ -188,6 +189,7 @@ pub struct AgentPatch {
 ```
 
 ### AgentSnapshot（完全スナップショット）
+
 ```rust
 pub struct AgentSnapshot {
     pub version: u64,
@@ -197,6 +199,7 @@ pub struct AgentSnapshot {
 ```
 
 ### GlobalSnapshot（グローバルスナップショット）
+
 ```rust
 pub struct GlobalSnapshot {
     pub version: u64,
@@ -209,6 +212,7 @@ pub struct GlobalSnapshot {
 ```
 
 ### ModelsSnapshot（モデル一覧）
+
 ```rust
 pub struct ModelsSnapshot {
     pub models: Vec<ModelInfo>,
@@ -216,6 +220,7 @@ pub struct ModelsSnapshot {
 ```
 
 ### ContainerPatch（コンテナ状態増分）
+
 ```rust
 pub struct ContainerPatch {
     pub container_id: String,
@@ -227,6 +232,7 @@ pub struct ContainerPatch {
 ```
 
 ### ContainerSnapshot（コンテナ状態完全）
+
 ```rust
 pub struct ContainerSnapshot {
     pub version: u64,
@@ -236,6 +242,7 @@ pub struct ContainerSnapshot {
 ```
 
 ### TaskPatch（タスク状態増分）
+
 ```rust
 pub struct TaskPatch {
     pub task_id: Uuid,
@@ -246,6 +253,7 @@ pub struct TaskPatch {
 ```
 
 ### TasksSnapshot（タスク状態完全）
+
 ```rust
 pub struct TasksSnapshot {
     pub version: u64,
@@ -257,7 +265,7 @@ pub struct TasksSnapshot {
 ## 同期戦略
 
 | 種別 | 方向 | トリガー | 頻度 |
-|------|-----------|---------|-----------|
+| --- | --- | --- | --- |
 | エージェント増分更新 | サーバー → クライアント | 状態変更 | リアルタイム |
 | エージェント完全同期 | サーバー → クライアント | 接続時 | 接続/再接続時 |
 | コンテナ増分 | サーバー → クライアント | 状態変更 | リアルタイム |

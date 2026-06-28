@@ -35,7 +35,7 @@ Dockerイベントストリームでは、`container`フィルターは特にPG�
 
 ## ポーリング戦略
 
-```
+```text
 while true:
     sleep 1s
     state = docker.inspect_container(PG)
@@ -86,7 +86,7 @@ pg18はデータディレクトリを`/var/lib/postgresql/data`から`/var/lib/p
 
 データベースマイグレーションには独立した5回のリトライロジックがあります：
 
-```
+```text
 for retry in 0..5:
     execute docker run --rm ... shittim_chest db-migrate
     if success: break

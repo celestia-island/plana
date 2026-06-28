@@ -26,7 +26,7 @@ They communicate via JWT-authenticated HTTP and WebSocket. shittim-chest never d
 
 The core backend (`packages/core`) is an Axum 0.8 application. The router mounts these module groups:
 
-```
+```text
 /                   → health check
 /api/auth/*         → AuthService (login, register, GitHub OAuth, refresh, logout)
 /api/chat/*         → ChatService (conversations, messages, SSE/WS streaming, search, export)
@@ -53,7 +53,7 @@ Database access uses SeaORM 1.x with PostgreSQL. The `shittim_chest_db` stores:
 
 ### JWT Authentication
 
-shittim_chest issues JWTs containing `{ sub: user_id, groups: [...] }`. The JWT secret is shared with scepter so both services can validate tokens independently. Access tokens expire in 1 hour; refresh tokens in 7 days with rotation on each use.
+`shittim_chest` issues JWTs containing `{ sub: user_id, groups: [...] }`. The JWT secret is shared with scepter so both services can validate tokens independently. Access tokens expire in 1 hour; refresh tokens in 7 days with rotation on each use.
 
 ## Independent LLM Capability
 
@@ -71,7 +71,7 @@ This means shittim-chest can run as a standalone chat application without entele
 
 ### Login Sequence
 
-```
+```text
 User → shittim_chest: POST /api/auth/login { username, password }
 shittim_chest → shittim_chest_db: SELECT user WHERE username = ? (verify argon2 hash)
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -83,7 +83,7 @@ shittim_chest: Store session + cache RBAC
 
 ### GitHub OAuth
 
-```
+```text
 User → shittim_chest: GET /api/auth/github
 shittim_chest → User: 302 redirect to GitHub OAuth
 User → GitHub: authorize
@@ -98,7 +98,7 @@ shittim_chest → User: { access_token, refresh_token } (auto-creates user if ne
 
 ### Message Flow (Standalone LLM)
 
-```
+```text
 User → POST /api/chat/conversations/:id/messages
 shittim_chest: validate JWT, load conversation
 shittim_chest → LlmRouter: route request to best provider
@@ -118,19 +118,20 @@ shittim_chest: persist message to shittim_chest_db
 The `/api/proxy/*` endpoint forwards authenticated requests to scepter:
 
 1. Browser opens `ws://shittim-chest:80/api/proxy/chat` with JWT
-2. shittim_chest validates JWT, opens connection to scepter forwarding the JWT
-3. Bidirectional message forwarding between browser and scepter
-4. shittim_chest enforces rate limits, logs usage, manages connection lifecycle
+1. `shittim_chest` validates JWT, opens connection to scepter forwarding the JWT
+1. Bidirectional message forwarding between browser and scepter
+1. `shittim_chest` enforces rate limits, logs usage, manages connection lifecycle
 
 ## Webhook Pipeline
 
 Webhooks from external services enter through `/api/webhook/*`:
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC validation → Parse event → Forward to scepter via Unix socket
 ```
 
 Supported sources: GitHub (HMAC-SHA256), GitLab (token), Gitee (HMAC + token fallback), plus a generic `/api/webhook/custom/{name}` endpoint. Features:
+
 - Duplicate delivery detection (LRU cache, 10,000 IDs)
 - Delivery log with listing API
 - IP whitelist for webhook sources
@@ -139,11 +140,12 @@ Supported sources: GitHub (HMAC-SHA256), GitLab (token), Gitee (HMAC + token fal
 
 Remote devices are managed through a signaling relay:
 
-```
+```text
 Browser (webui) → WS /api/devices/stream → shittim_chest (signal relay) → Unix socket → entelecheia/polemos
 ```
 
 Features:
+
 - Device listing and session CRUD via REST
 - WebRTC signaling (SDP offer/answer, ICE candidates)
 - Terminal relay (WebSocket to xterm.js)
@@ -157,7 +159,7 @@ shittim-chest never connects to remote devices directly — all data flows throu
 ### shittim_chest_db
 
 | Data | Table | Rationale |
-|------|-------|-----------|
+| --- | --- | --- |
 | Password hashes (argon2) | `auth_users` | Presentation layer owns login flow |
 | Active sessions, refresh tokens | `sessions` | Session management is a frontend concern |
 | Encrypted API keys | `api_keys` | API key issuance is user-facing |
@@ -170,7 +172,7 @@ shittim-chest never connects to remote devices directly — all data flows throu
 ### entelecheia_db
 
 | Data | Rationale |
-|------|-----------|
+| --- | --- |
 | User identity, groups, role assignments | Core enforces permissions |
 | GroupPermissions (provider quotas, agent whitelists) | Agent-level policy lives with agents |
 | Agent configurations, Cosmos/IEPL state | Orchestration data belongs to the core |
@@ -180,13 +182,13 @@ shittim-chest never connects to remote devices directly — all data flows throu
 ### Phase 1: Vue 3 (Current)
 
 | Package | Tech | Port | Purpose |
-|---------|------|------|---------|
+| --- | --- | --- | --- |
 | `webui` | Vue 3 + Vite + Pinia (TSX) | `:3000 (shared)` | Unified webui: chat, image gen, devices, admin (providers, agents, RBAC, webhooks) |
 
 ### Phase 2: Rust WASM (Future)
 
 | Package | Tech | Purpose |
-|---------|------|---------|
+| --- | --- | --- |
 | `webui` | Rust → WASM (Tairitsu) | Long-term unified webui (chat + admin) |
 
 The legacy frontends serve as living specifications. During transition, both versions run in parallel, and identical user interactions must produce identical outcomes.
@@ -219,8 +221,8 @@ SHITTIM_CHEST_PROXY_DOMAIN=app.example.com
 The CLI creates a `shittim-chest-caddy` container (image `caddy:2`) that:
 
 1. Listens on ports 80/443 (configurable via `SHITTIM_CHEST_PROXY_HTTP_PORT` / `SHITTIM_CHEST_PROXY_HTTPS_PORT`)
-2. Automatically provisions TLS certificates via Let's Encrypt (Caddy's built-in ACME)
-3. Proxies all requests to the core backend on the Docker network
+1. Automatically provisions TLS certificates via Let's Encrypt (Caddy's built-in ACME)
+1. Proxies all requests to the core backend on the Docker network
 
 No Caddyfile needed — the CLI generates one automatically. The domain must have public DNS pointing to the host.
 
@@ -255,7 +257,7 @@ Creates an `nginx:bookworm` container with your config file. You manage TLS cert
 All proxy containers are managed by the CLI via the Docker API (`bollard`):
 
 | Command | Behavior |
-|---------|----------|
+| --- | --- |
 | `just dev` / `chest up` | Creates/starts proxy container if `PROXY_MODE` is set |
 | `just dev-stop` / `chest down` | Stops and removes proxy container |
 | Container already running | Reuses existing container (idempotent) |

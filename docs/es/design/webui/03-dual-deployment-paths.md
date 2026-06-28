@@ -78,6 +78,7 @@ let config = Config::<String> {
 ```
 
 Puntos clave:
+
 - El binario se monta en solo lectura (`:ro`) para evitar modificaciones accidentales dentro del contenedor
 - La ubicación del binario es `/usr/local/bin/shittim_chest`, ejecutado directamente dentro del contenedor
 - La imagen base `debian:bookworm-slim` proporciona el runtime glibc requerido
@@ -86,7 +87,7 @@ Puntos clave:
 
 Las migraciones se ejecutan mediante un contenedor de un solo uso:
 
-```
+```bash
 docker run --rm --network shittim-chest \
   -v $PWD/target/debug/shittim_chest:/usr/local/bin/shittim_chest:ro \
   -e SHITTIM_CHEST_DATABASE_URL=... \
@@ -109,7 +110,7 @@ Reintenta automáticamente hasta 5 veces (intervalo de 2 segundos) para manejar 
 ### Feature embedded-frontend
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 {
     static FRONTEND_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../dist");
     // Montado en el Router Axum en las rutas /static/*

@@ -4,7 +4,7 @@ Unified documentation hub for the **celestia-island** ecosystem.
 
 ## Structure
 
-```
+```text
 docs/
 ├── PLAN.md                # i18n & format alignment roadmap
 ├── README.md              # This index

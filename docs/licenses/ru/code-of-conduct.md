@@ -72,14 +72,14 @@
 
 ## Атрибуция
 
-Настоящий Кодекс поведения адаптирован из [Contributor Covenant][homepage], версия 2.1, доступного по адресу [https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1].
+Настоящий Кодекс поведения адаптирован из [Contributor Covenant][homepage], версия 2.1, доступного по адресу [https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1].
 
 Руководства по влиянию на сообщество были вдохновлены [лестницей применения кодекса поведения Mozilla][mozilla-coc].
 
 Ответы на часто задаваемые вопросы об этом кодексе поведения см. в FAQ по адресу [https://www.contributor-covenant.org/faq][faq]. Переводы доступны по адресу [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

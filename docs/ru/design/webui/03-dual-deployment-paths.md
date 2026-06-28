@@ -78,6 +78,7 @@ let config = Config::<String> {
 ```
 
 Ключевые моменты:
+
 - Бинарник монтируется только для чтения (`:ro`) для предотвращения случайной модификации в контейнере
 - Расположение бинарника: `/usr/local/bin/shittim_chest`, выполняется напрямую внутри контейнера
 - Базовый образ `debian:bookworm-slim` предоставляет требуемую среду выполнения glibc
@@ -86,7 +87,7 @@ let config = Config::<String> {
 
 Миграции выполняются через одноразовый контейнер:
 
-```
+```bash
 docker run --rm --network shittim-chest \
   -v $PWD/target/debug/shittim_chest:/usr/local/bin/shittim_chest:ro \
   -e SHITTIM_CHEST_DATABASE_URL=... \
@@ -109,7 +110,7 @@ docker run --rm --network shittim-chest \
 ### Функция embedded-frontend
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 {
     static FRONTEND_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../dist");
     // Монтируется на маршрутизатор Axum по путям /static/*

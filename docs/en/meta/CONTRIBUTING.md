@@ -18,20 +18,29 @@ outweigh contribution throughput**. Please read this before opening a pull
 request.
 
 - **High merge bar, not a public roadmap.** Opening a PR does not imply it will
-  be merged. We accept a deliberately small number of changes, and only when
-  they fit the architecture and pass review. This is by design, not rudeness.
+
+be merged. We accept a deliberately small number of changes, and only when
+they fit the architecture and pass review. This is by design, not rudeness.
+
 - **What we welcome:** bug reports, focused fixes, additive (non-breaking)
-  protocol fields, improved documentation, and prior design discussions before
-  code.
+
+protocol fields, improved documentation, and prior design discussions before
+code.
+
 - **What we generally will not merge:** large unsolicited rewrites, breaking
-  changes to the protocol type surface, architectural changes without a prior
-  design discussion, bulk "vibe-coded" PRs, and anything that lowers the
-  compatibility bar of the type contract.
+
+changes to the protocol type surface, architectural changes without a prior
+design discussion, bulk "vibe-coded" PRs, and anything that lowers the
+compatibility bar of the type contract.
+
 - **Core vs. periphery.** The protocol type definitions and their serialization
-  surface are held to the strictest bar and maintained by the core team.
+
+surface are held to the strictest bar and maintained by the core team.
+
 - **CLA required.** Every accepted contribution requires a signed Contributor
-  License Agreement. See [`CLA.md`](CLA.md). Commits must carry a
-  `Signed-off-by` line (`git commit -s`).
+
+License Agreement. See [`CLA.md`](CLA.md). Commits must carry a
+`Signed-off-by` line (`git commit -s`).
 
 > **The license may open; the merge bar will not.** On **2030-01-01** this
 > project converts from BUSL-1.1 to Apache-2.0 or MIT (recipient's choice) — see
@@ -64,18 +73,21 @@ cargo clippy -- -D warnings
 
 - Rust 1.85+.
 - Types derive `ts-rs` (`#[derive(TS)]`) to generate TypeScript bindings — keep
-  `serde` attributes and `ts-rs` annotations consistent.
+
+`serde` attributes and `ts-rs` annotations consistent.
+
 - Do not introduce breaking changes to existing protocol types; prefer additive
-  fields with `#[serde(default)]`.
+
+fields with `#[serde(default)]`.
 
 ## Pull request process
 
 1. Fork and branch from `main`.
-2. Discuss large or protocol-affecting changes in an issue first.
-3. Make atomic commits following [Conventional Commits](https://www.conventionalcommits.org/).
-4. Ensure `cargo fmt`, `cargo clippy -D warnings`, and `cargo test` pass.
-5. Sign the CLA and add `Signed-off-by` to each commit.
-6. Address review feedback; keep force-pushes to rebase only.
+1. Discuss large or protocol-affecting changes in an issue first.
+1. Make atomic commits following [Conventional Commits](https://www.conventionalcommits.org/).
+1. Ensure `cargo fmt`, `cargo clippy -D warnings`, and `cargo test` pass.
+1. Sign the CLA and add `Signed-off-by` to each commit.
+1. Address review feedback; keep force-pushes to rebase only.
 
 ## License & CLA
 

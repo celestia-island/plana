@@ -23,7 +23,7 @@ Shittim Chest를 위한 완전한 역할 기반 접근 제어 시스템을 구�
 ### 2.1 역할 (Role)
 
 | 역할 | 설명 |
-|------|------|
+| --- | --- |
 | `admin` | 슈퍼 관리자, 모든 권한 보유, RBAC 자체 관리 가능 |
 | `operator` | 운영자, 대부분의 리소스 관리 가능 (Provider, 채널, Agent 등) |
 | `member` | 일반 멤버, 승인된 리소스 사용 가능 |
@@ -36,7 +36,7 @@ Shittim Chest를 위한 완전한 역할 기반 접근 제어 시스템을 구�
 권한 형식: `<resource>.<action>`
 
 | 카테고리 | 권한 | 설명 |
-|------|------|------|
+| --- | --- | --- |
 | **Provider** | `provider.list` | Provider 목록 보기 |
 | | `provider.create` | Provider 추가 |
 | | `provider.update` | Provider 설정 수정 |
@@ -72,7 +72,7 @@ Shittim Chest를 위한 완전한 역할 기반 접근 제어 시스템을 구�
 ### 2.3 역할 기본 권한
 
 | 권한 | admin | operator | member | viewer |
-|------|-------|----------|--------|--------|
+| --- | --- | --- | --- | --- |
 | `provider.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `mcp.*` | ✅ | ✅ | `list` + `use` | `list` |
 | `agent.*` | ✅ | ✅ | `list` + `use` | `list` |
@@ -89,7 +89,7 @@ Shittim Chest를 위한 완전한 역할 기반 접근 제어 시스템을 구�
 Provider, MCP, Agent, 채널 등 리소스에 대해 세 가지 권한 부여 모드를 지원한다:
 
 | 모드 | 설명 | 적용 시나리오 |
-|------|------|---------|
+| --- | --- | --- |
 | **전역 설정** | 모든 사용자가 동일한 권한 공유 | 소규모 팀, 개인 사용 |
 | **사용자별 설정** | 각 사용자가 독립적인 리소스 권한 보유 | 세밀한 제어가 필요한 시나리오 |
 | **그룹별 설정** | 동일 그룹의 사용자가 권한 공유 | 부서/팀별 구분 |
@@ -202,7 +202,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.1 사용자 관리 (`/api/rbac/users`)
 
 | 메서드 | 경로 | 권한 | 설명 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/users` | `rbac.manage` | 모든 사용자 목록 (역할, 그룹 포함) |
 | POST | `/api/rbac/users` | `rbac.manage` | 사용자 초대 (이메일 발송 또는 계정 생성) |
 | PUT | `/api/rbac/users/:id` | `rbac.manage` | 사용자 역할 업데이트, 활성화/비활성화 |
@@ -211,7 +211,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.2 그룹 관리 (`/api/rbac/groups`)
 
 | 메서드 | 경로 | 권한 | 설명 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/groups` | `rbac.manage` | 모든 그룹 목록 |
 | POST | `/api/rbac/groups` | `rbac.manage` | 그룹 생성 |
 | PUT | `/api/rbac/groups/:id` | `rbac.manage` | 그룹 업데이트 (이름, 설명) |
@@ -222,7 +222,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.3 권한 관리 (`/api/rbac/grants`)
 
 | 메서드 | 경로 | 권한 | 설명 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/grants` | `rbac.manage` | 모든 권한 규칙 목록 (?scope=&permission= 필터 지원) |
 | PUT | `/api/rbac/grants` | `rbac.manage` | 권한 일괄 설정 (전체 규칙 목록 전달, 해당 scope의 규칙 덮어쓰기) |
 | DELETE | `/api/rbac/grants/:id` | `rbac.manage` | 단일 규칙 삭제 |
@@ -230,7 +230,7 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ### 4.4 권한 확인 (`/api/rbac/check`)
 
 | 메서드 | 경로 | 권한 | 설명 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | GET | `/api/rbac/check?permission=xxx&resource_id=yyy` | (모든 인증 사용자) | 현재 사용자에게 지정된 권한이 있는지 확인 |
 | GET | `/api/rbac/my-permissions` | (모든 인증 사용자) | 현재 사용자의 모든 유효 권한 목록 반환 |
 
@@ -249,16 +249,19 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 세 개의 탭으로 구분:
 
 #### 탭 1: 사용자 관리
+
 - 사용자 목록 테이블: 아바타, 사용자명, 이메일, 역할 (드롭다운 전환), 그룹 태그, 상태 (활성/비활성), 작업
 - 사용자 초대 버튼 → 모달 팝업 (사용자명/이메일/비밀번호 입력, 역할 선택)
 - 행 작업: 역할 편집, 비활성화/활성화, 삭제
 
 #### 탭 2: 그룹 관리
+
 - 그룹 목록 테이블: 이름, 설명, 멤버 수, 작업
 - 그룹 생성 → 모달 팝업
 - 그룹 클릭 → 멤버 목록 확장, 멤버 추가/제거 가능
 
 #### 탭 3: 권한 매트릭스
+
 - 좌측 상단에서 권한 부여 모드 선택: 전역 / 그룹별 / 사용자별
 - 그룹 또는 사용자 선택 후 권한 매트릭스 테이블 표시:
   - 행: 리소스 카테고리 (Provider, MCP, Agent, 채널, 순항 모드...)
@@ -275,21 +278,24 @@ fn has_permission(user, permission, resource_id=None) -> bool {
 ## 6. 구현 단계
 
 ### Phase 1: 백엔드 기초
-1. 신규 데이터베이스 마이그레이션 추가 (rbac_groups, rbac_user_groups, rbac_grants 테이블 + auth_users.role 필드)
-2. 신규 SeaORM 엔티티 모델 추가
-3. RBAC API 라우트 구현 (users, groups, grants CRUD)
-4. 권한 확인 미들웨어/extractor 구현
-5. JWT claims에 role 필드 추가
+
+1. 신규 데이터베이스 마이그레이션 추가 (`rbac_groups`, `rbac_user_groups`, `rbac_grants` 테이블 + auth_users.role 필드)
+1. 신규 SeaORM 엔티티 모델 추가
+1. RBAC API 라우트 구현 (users, groups, grants CRUD)
+1. 권한 확인 미들웨어/extractor 구현
+1. JWT claims에 role 필드 추가
 
 ### Phase 2: 백엔드 통합
-6. 기존 리소스 API (providers, channels 등)에 권한 확인 추가
-7. `/api/rbac/check` 및 `/api/rbac/my-permissions` 구현
-8. arona의 리소스 요청을 권한 필터링에 맞게 수정
+
+1. 기존 리소스 API (providers, channels 등)에 권한 확인 추가
+1. `/api/rbac/check` 및 `/api/rbac/my-permissions` 구현
+1. arona의 리소스 요청을 권한 필터링에 맞게 수정
 
 ### Phase 3: 프론트엔드 UI
-9. arona의 RbacView 재구성 (사용자/그룹/권한 매트릭스 세 개 탭)
-10. 사이드바 및 라우트의 권한 가드 구현
-11. arona에서 권한에 따라 기능 숨김/비활성화 (예: 순항 모드 버튼)
+
+1. arona의 RbacView 재구성 (사용자/그룹/권한 매트릭스 세 개 탭)
+1. 사이드바 및 라우트의 권한 가드 구현
+1. arona에서 권한에 따라 기능 숨김/비활성화 (예: 순항 모드 버튼)
 
 ## 7. 보안 고려사항
 

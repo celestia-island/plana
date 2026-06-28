@@ -27,31 +27,36 @@ contributing on behalf of a company).
 ## 1. How to sign
 
 - **Individual contributors.** Add a `Signed-off-by` line to each of your
-  commits (pass `-s` to `git commit`). The sign-off is your electronic
-  acceptance of this CLA, equivalent to the Developer Certificate of Origin
-  (DCO) plus the grants in Section 3 below:
 
-  ```
+commits (pass `-s` to `git commit`). The sign-off is your electronic
+acceptance of this CLA, equivalent to the Developer Certificate of Origin
+(DCO) plus the grants in Section 3 below:
+
+  ```text
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
 - **Corporate contributors.** If you are contributing on behalf of an employer,
-  the employer must also sign the Corporate CLA in Section 6 and return it to
-  the Licensor at contact@celestia.world (or the contact in `LICENSE`). A
-  `Signed-off-by` from an employee is valid only after the employer's Corporate
-  CLA is on file.
+
+the employer must also sign the Corporate CLA in Section 6 and return it to
+the Licensor at contact@celestia.world (or the contact in `LICENSE`). A
+`Signed-off-by` from an employee is valid only after the employer's Corporate
+CLA is on file.
 
 ## 2. Definitions
 
 - "**You**" / "**Contributor**" means the individual or entity accepting this CLA.
 - "**Contribution**" means any original work of authorship, including any
-  modifications or additions to an existing work, that is intentionally submitted
-  by You to the Project for inclusion. "Intentionally submitted" includes code
-  and documentation you send via pull request, commit, issue, review comment, or
-  equivalent channel, but excludes work that is clearly marked by You as "Not a
-  Contribution."
+
+modifications or additions to an existing work, that is intentionally submitted
+by You to the Project for inclusion. "Intentionally submitted" includes code
+and documentation you send via pull request, commit, issue, review comment, or
+equivalent channel, but excludes work that is clearly marked by You as "Not a
+Contribution."
+
 - "**Licensor**" / "**maintainers**" means the copyright holder of the Project
-  (Celestia Island / langyo) and those designated to act on its behalf.
+
+(Celestia Island / langyo) and those designated to act on its behalf.
 
 ## 3. Grant of copyright license
 
@@ -86,16 +91,16 @@ You represent that:
 (a) You authored or otherwise have the right to submit the Contribution;
 
 (b) each Contribution is your original creation (or, if submitted on behalf of a
-    third party, You have the right to submit it on their behalf and have secured
-    the rights required under this CLA);
+third party, You have the right to submit it on their behalf and have secured
+the rights required under this CLA);
 
 (c) the Contribution does not, to your knowledge, infringe the intellectual
-    property rights of any third party; and
+property rights of any third party; and
 
 (d) You are legally entitled to grant the licenses in Sections 3 and 4, and, if
-    your employer(s) have rights to intellectual property that you create, your
-    employer has obtained a waiver or consent for your Contributions, or has
-    signed the Corporate CLA in Section 6.
+your employer(s) have rights to intellectual property that you create, your
+employer has obtained a waiver or consent for your Contributions, or has
+signed the Corporate CLA in Section 6.
 
 ## 6. Corporate CLA
 
@@ -103,7 +108,7 @@ If You are contributing on behalf of a company, the company must confirm the
 following by signing and returning the Corporate CLA block below to
 contact@celestia.world:
 
-```
+```text
 Company: ______________________________________________________
 Address: ______________________________________________________
 Contact name & email: _________________________________________

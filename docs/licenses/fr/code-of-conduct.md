@@ -72,14 +72,14 @@ Les responsables de la communauté suivront ces Directives d'impact sur la commu
 
 ## Attribution
 
-Ce Code de conduite est adapté du [Contributor Covenant][homepage], version 2.1, disponible à l'adresse [https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1].
+Ce Code de conduite est adapté du [Contributor Covenant][homepage], version 2.1, disponible à l'adresse [https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1].
 
 Les Directives d'impact sur la communauté ont été inspirées par [l'échelle d'application du code de conduite de Mozilla][mozilla-coc].
 
 Pour des réponses aux questions fréquentes sur ce code de conduite, consultez la FAQ à l'adresse [https://www.contributor-covenant.org/faq][faq]. Des traductions sont disponibles à l'adresse [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

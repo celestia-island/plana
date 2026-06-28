@@ -122,11 +122,13 @@ sequenceDiagram
 La décision de routage se produit dans `mcp_skill_router.rs` :
 
 1. Vérifier `agent_manager.get_tool_location(tool_name)`
-2. Si `ToolLocation::Cosmos` et mode conteneurisé actif :
+1. Si `ToolLocation::Cosmos` et mode conteneurisé actif :
+
    - Appeler `agent_manager.invoke_tool()` qui route via `BridgeInvoker` → pont HapLotes → `McpRouter` de Cosmos
    - Le `McpRouter` de Cosmos distribue localement (skemma) ou retourne à Scepter via le pont pour les agents distants
    - Retourner `McpMessage::ToolResponse` directement à TUI
-3. Sinon : router via la passerelle HapLotes vers le processus de l'agent
+
+1. Sinon : router via la passerelle HapLotes vers le processus de l'agent
 
 ## IV. Architecture CosmosConnector / Pont
 
@@ -237,7 +239,7 @@ stateDiagram-v2
 
 ### Format d'Affichage
 
-Dans la TUI AgentDetailPage, la ligne de statistiques affiche :
+Dans la TUI `AgentDetailPage`, la ligne de statistiques affiche :
 
 ```mermaid
 flowchart LR

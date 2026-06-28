@@ -13,10 +13,10 @@ subcategory = "webui"
 ## 設計目標
 
 1. **単一データソース** — 1つのファイルで工場/プロジェクト全体を記述：デバイスノード、2Dトポロジー、3Dシーン、工業ネットワーク
-2. **三者互換** — mock_scepter（フィクスチャ）、shittim-chest webui（3Dレンダリング）、entelecheia PoleMosエージェント（デバイス管理）のすべてが同一ファイルを読み取ります
-3. **ノード中心** — すべてのトポロジー、シーン、センサーはnodeに紐付けられ、nodeが核心エンティティです
-4. **バージョン管理可能** — `format_version`フィールド + JSON Schema、後方互換性のある進化をサポート
-5. **拡張可能** — 既存のパーサーを破壊せずにカスタムメタデータの追加を許可
+1. **三者互換** — `mock_scepter`（フィクスチャ）、shittim-chest webui（3Dレンダリング）、entelecheia PoleMosエージェント（デバイス管理）のすべてが同一ファイルを読み取ります
+1. **ノード中心** — すべてのトポロジー、シーン、センサーはnodeに紐付けられ、nodeが核心エンティティです
+1. **バージョン管理可能** — `format_version`フィールド + JSON Schema、後方互換性のある進化をサポート
+1. **拡張可能** — 既存のパーサーを破壊せずにカスタムメタデータの追加を許可
 
 ## ファイル規約
 
@@ -61,7 +61,7 @@ subcategory = "webui"
 フィールド説明：
 
 | フィールド | 型 | 必須 | 説明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | name | string | Y | プロジェクト名 |
 | description | string | N | 説明 |
 | author | string | N | 作成者 |
@@ -131,7 +131,7 @@ subcategory = "webui"
 フィールド説明：
 
 | フィールド | 型 | 必須 | 説明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | label | string | Y | 表示名 |
 | label_i18n | {lang: string} | N | 多言語名 |
 | type | string | Y | デバイスタイプ識別子 (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
@@ -148,7 +148,7 @@ subcategory = "webui"
 Sensor構造：
 
 | フィールド | 型 | 説明 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | センサーID (例: tt-101) |
 | type | string | temperature / pressure / flow / level / gas / current |
 | label | string | 表示ラベル |
@@ -240,7 +240,7 @@ Sensor構造：
 topologyフィールド説明：
 
 | フィールド | 型 | 説明 |
-|------|------|------|
+| --- | --- | --- |
 | boxes | Box[] | 筐体グループ、各boxは複数のnodeを含む |
 | plcs | PLC[] | PLCデバイスリスト |
 | connections | Connections | 4種類の接続：信号線、電力ケーブル、水管、ガス管 |
@@ -249,7 +249,7 @@ topologyフィールド説明：
 Box構造：
 
 | フィールド | 型 | 説明 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 筐体ID |
 | label | string | 表示ラベル |
 | label_i18n | {lang: string} | 多言語 |
@@ -259,7 +259,7 @@ Box構造：
 Connection構造（共通）：
 
 | フィールド | 型 | 説明 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 接続ID |
 | from | string | 起点エンティティID (node / sensor / plc / utility) |
 | to | string | 終点エンティティID |
@@ -349,7 +349,7 @@ Connection構造（共通）：
 sceneフィールド説明：
 
 | フィールド | 型 | 説明 |
-|------|------|------|
+| --- | --- | --- |
 | background_color | string | 3Dシーン背景色 |
 | environment_url | string? | HDR環境マップURL |
 | camera.overview | CameraView | 初期カメラ視点（モデル全景を正対） |
@@ -363,7 +363,7 @@ sceneフィールド説明：
 CameraView構造：
 
 | フィールド | 型 | 説明 |
-|------|------|------|
+| --- | --- | --- |
 | position | [x, y, z] | カメラ位置 |
 | target | [x, y, z] | 注視ターゲット点 |
 | fov | number | 視野角（度） |
@@ -371,7 +371,7 @@ CameraView構造：
 Model3D構造：
 
 | フィールド | 型 | 説明 |
-|------|------|------|
+| --- | --- | --- |
 | node | string | 関連node ID |
 | glb | string | GLBファイル名（models/ディレクトリからの相対パス） |
 | position | [x, y, z] | 3Dワールド座標 |
@@ -388,7 +388,7 @@ Model3D構造：
 
 ロードパス：`fixtures/{project}.plant.json`
 
-```
+```text
 fixtures/
 ├── agents.json
 ├── devices.json
@@ -400,6 +400,7 @@ fixtures/
 ```
 
 mock_scepter起動時：
+
 - `fixtures::load_all()`に`load_plant()`呼び出しを新規追加
 - `.plant.json`を解析 → `DeviceModelResponse[]` + `SceneConfigItem`に分割
 - `get_scene_config`はplantデータから返し、ハードコードを廃止
@@ -411,17 +412,20 @@ mock_scepter起動時：
 既存API契約は変更なし（`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`）。
 
 新規追加：
+
 - `PhysicalPreview.tsx`の`BOX_CAMERA_TARGETS`を`scene.camera.bookmarks`から読み取り、ハードコードを廃止
 - 3DモデルのCSS2Dオーバーレイラベルを`nodes[nodeId].label`から読み取り
 
 ### 3. entelecheia PoleMosエージェント
 
 PoleMosはMCPツール経由でplantファイルを読み取ります：
+
 - `node_discover` → `nodes` + `topology.plcs`を走査
 - `device_self_test` → `nodes[id].sensors` + `nodes[id].rated`を読み取り
 - デバイス管理操作 → `nodes[id].status`に書き戻し
 
 将来の拡張：
+
 - PoleMos layer2エージェントが`.plant.json`を生成（AIがデバイスドキュメントを読み取り自動的にトポロジーを構築）
 - ユーザーがwebuiで3Dレイアウトをドラッグ編集 → `.plant.json`に書き戻し
 - CI/CDパイプラインで`.plant.json`のスキーマ完全性を検証
@@ -437,7 +441,7 @@ PoleMosはMCPツール経由でplantファイルを読み取ります：
 ## 既存データとの関係
 
 | 既存データソース | .plant.jsonに移行する部分 |
-|-----------|--------------------------|
+| --- | --- |
 | `http_server.rs`にハードコードされた20個のDeviceModelResponse | → `scene.models[]` + `nodes{}` |
 | `http_server.rs`にハードコードされたSceneConfigItem | → `scene{}` (camera, lighting, ground, bloom) |
 | `mock_data/topology.rs`のoverview() / box_detail() | → `topology{}` (boxes, connections, layout) |

@@ -13,9 +13,9 @@ subcategory = "core"
 WASI 플러그인 시스템은 이전 Python/TypeScript 웹훅 스캐폴딩을 **WASM 컴포넌트 모델** 플러그인으로 대체하여, 샌드박스형 언어 독립적 플랫폼 통합(레이어 2) 및 비즈니스 로직 확장(레이어 3)을 제공합니다. 주요 설계 목표:
 
 1. **이중 확장 메커니즘**: 레이어 2(플랫폼 통합) 및 레이어 3(비즈니스 로직) 모두 WASI 모듈과 boa TS 확장을 지원합니다.
-2. **통합 MCP 등록**: 모든 플러그인이 구현 언어와 관계없이 `$.agents.xxx` 아래에 도구를 등록합니다.
-3. **호스트 관리 I/O**: 호스트(Scepter axum 서버)가 HTTP 라우팅, WebSocket, 장수명 연결을 처리하며, 플러그인은 로직만 처리합니다.
-4. **강력한 샌드박싱**: WASM 모듈은 연료 제한 및 에포크 중단이 적용된 wasmtime에서 실행됩니다.
+1. **통합 MCP 등록**: 모든 플러그인이 구현 언어와 관계없이 `$.agents.xxx` 아래에 도구를 등록합니다.
+1. **호스트 관리 I/O**: 호스트(Scepter axum 서버)가 HTTP 라우팅, WebSocket, 장수명 연결을 처리하며, 플러그인은 로직만 처리합니다.
+1. **강력한 샌드박싱**: WASM 모듈은 연료 제한 및 에포크 중단이 적용된 wasmtime에서 실행됩니다.
 
 ## 아키텍처
 
@@ -123,7 +123,7 @@ export!(GithubWebhookPlugin);
 ### 크레이트: `_shared_plugin_host` (`packages/shared/plugin_host/`)
 
 | 모듈 | 역할 |
-|--------|------|
+| --- | --- |
 | `plugin_state.rs` | `HostFunctions` — 모든 `host-api` 함수(HTTP, KV, 설정, 이벤트) 구현 |
 | `plugin_loader.rs` | `TypedPlugin` — wasmtime 컨테이너 빌드, 호스트 임포트 등록, 동적 `call_guest_raw_desc`를 통해 게스트 익스포트 호출 |
 | `plugin_router.rs` | `PluginRouter` — 로드된 플러그인 관리, 웹훅/봇 요청 디스패치, `plugins/` 디렉터리 자동 스캔 |
@@ -146,7 +146,7 @@ flowchart TB
 
 게스트 측의 `wit_bindgen::generate!`가 WIT 인터페이스 이름 아래에 함수를 익스포트하므로, 호스트는 동적 호출을 위해 완전 수식명을 사용합니다:
 
-```
+```text
 entelecheia:plugin/webhook-handler#name
 entelecheia:plugin/webhook-handler#handle-request
 entelecheia:plugin/webhook-handler#on-message
@@ -221,13 +221,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-2. WIT 파일 복사:
+1. WIT 파일 복사:
 
-```
+```text
 plugins/my-platform/wit/plugin.wit  ← packages/shared/plugin_host/wit/에서 심볼릭 링크 또는 복사
 ```
 
-3. `Guest` 트레이트 구현:
+1. `Guest` 트레이트 구현:
 
 ```rust
 // plugins/my-platform/src/lib.rs
@@ -250,25 +250,25 @@ impl Guest for MyPlatformPlugin {
 export!(MyPlatformPlugin);
 ```
 
-4. `.cargo/config.toml` 구성:
+1. `.cargo/config.toml` 구성:
 
 ```toml
 [target.wasm32-wasip2]
 rustflags = ["--cfg=unstable_wasi_extension", "--cfg=unstable_wasi_export_wasi_reactor"]
 ```
 
-5. 빌드:
+1. 빌드:
 
 ```bash
 cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ```
 
-6. 배포: `.wasm` 파일을 `plugins/` 디렉터리에 복사 (또는 `PLUGIN_DIR` 설정).
+1. 배포: `.wasm` 파일을 `plugins/` 디렉터리에 복사 (또는 `PLUGIN_DIR` 설정).
 
 ## 호스트 함수 참조
 
 | 함수 | 시그니처 | 설명 |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `http-request` | `(method, url, headers, body) → result<string, string>` | HTTP 요청 수행 (외부 플랫폼 응답용) |
 | `forward-event` | `(event-json) → result<_, string>` | 구조화된 이벤트를 Scepter로 전달 |
 | `query-ai` | `(message, context?) → result<string, string>` | AI 파이프라인 쿼리 (아직 연결 안 됨) |
@@ -281,7 +281,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 보안 모델
 
 | 메커니즘 | 구현 |
-|-----------|---------------|
+| --- | --- |
 | **샌드박스** | wasmtime 컴포넌트 모델 샌드박스 — 기본적으로 파일시스템, 네트워크 접근 없음 |
 | **리소스 제한** | tairitsu Container 빌더를 통한 연료 계량(명령어별 계정) + 에포크 중단(타임아웃) |
 | **호스트 전용 I/O** | 모든 I/O는 호스트 함수를 통해 이루어집니다; 플러그인은 소켓이나 파일을 열 수 없음 |
@@ -291,7 +291,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 구현 현황
 
 | 단계 | 구성 요소 | 상태 |
-|-------|-----------|--------|
+| --- | --- | --- |
 | **P0** | GitHub 웹훅 WASI 플러그인 | ✅ 완료 |
 | **P0** | PluginRouter + Scepter 통합 | ✅ 완료 |
 | **P0** | HostFunctions (8개 host-api 함수 모두) | ✅ 완료 |
@@ -303,7 +303,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 주요 파일
 
 | 파일 | 목적 |
-|------|---------|
+| --- | --- |
 | `packages/shared/plugin_host/Cargo.toml` | wasmtime 43, tairitsu 런타임, reqwest |
 | `packages/shared/plugin_host/wit/plugin.wit` | 표준 WIT 인터페이스 정의 |
 | `packages/shared/plugin_host/src/plugin_state.rs` | HostFunctions, HostApiProvider 트레이트 |

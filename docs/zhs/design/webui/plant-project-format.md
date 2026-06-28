@@ -13,10 +13,10 @@ subcategory = "webui"
 ## 设计目标
 
 1. **单一数据源** — 一个文件描述整个工厂/项目：设备节点、2D 拓扑、3D 场景、工业网络
-2. **三方兼容** — mock_scepter (fixture)、shittim-chest webui (3D 渲染)、entelecheia PoleMos agent (设备管理) 都读同一份文件
-3. **节点为中心** — 所有拓扑、场景、传感器都挂在 node 上，node 是核心实体
-4. **可版本管理** — `format_version` 字段 + JSON Schema，支持向后兼容演进
-5. **可扩展** — 允许追加自定义 metadata 不破坏现有解析器
+1. **三方兼容** — `mock_scepter` (fixture)、shittim-chest webui (3D 渲染)、entelecheia PoleMos agent (设备管理) 都读同一份文件
+1. **节点为中心** — 所有拓扑、场景、传感器都挂在 node 上，node 是核心实体
+1. **可版本管理** — `format_version` 字段 + JSON Schema，支持向后兼容演进
+1. **可扩展** — 允许追加自定义 metadata 不破坏现有解析器
 
 ## 文件约定
 
@@ -61,7 +61,7 @@ subcategory = "webui"
 字段说明：
 
 | 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | name | string | Y | 工程名称 |
 | description | string | N | 描述 |
 | author | string | N | 创建者 |
@@ -131,7 +131,7 @@ subcategory = "webui"
 字段说明：
 
 | 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | label | string | Y | 显示名称 |
 | label_i18n | {lang: string} | N | 多语言名称 |
 | type | string | Y | 设备类型标识 (rsoc / pem / tank / compressor / fuelcell / synthesis / chp / structure / ...) |
@@ -148,7 +148,7 @@ subcategory = "webui"
 Sensor 结构：
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 传感器 ID (如 tt-101) |
 | type | string | temperature / pressure / flow / level / gas / current |
 | label | string | 显示标签 |
@@ -240,7 +240,7 @@ Sensor 结构：
 topology 字段说明：
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | boxes | Box[] | 箱体分组，每个 box 包含若干 node |
 | plcs | PLC[] | PLC 设备列表 |
 | connections | Connections | 四类连接：信号线、电力电缆、水管、气管 |
@@ -249,7 +249,7 @@ topology 字段说明：
 Box 结构：
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 箱体 ID |
 | label | string | 显示标签 |
 | label_i18n | {lang: string} | 多语言 |
@@ -259,7 +259,7 @@ Box 结构：
 Connection 结构（通用）：
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | id | string | 连接 ID |
 | from | string | 起点实体 ID (node / sensor / plc / utility) |
 | to | string | 终点实体 ID |
@@ -275,7 +275,7 @@ Connection 结构（通用）：
 
 ## Section 4：`scene`
 
-3D 全息场景配置 — 用于 webui PhysicalPreview 的 Three.js 渲染。
+3D 全息场景配置 — 用于 webui `PhysicalPreview` 的 Three.js 渲染。
 
 ```json
 {
@@ -349,7 +349,7 @@ Connection 结构（通用）：
 scene 字段说明：
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | background_color | string | 3D 场景背景色 |
 | environment_url | string? | HDR 环境贴图 URL |
 | camera.overview | CameraView | 初始摄像机视角（正对模型全景） |
@@ -363,7 +363,7 @@ scene 字段说明：
 CameraView 结构：
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | position | [x, y, z] | 摄像机位置 |
 | target | [x, y, z] | 注视目标点 |
 | fov | number | 视场角 (度) |
@@ -371,7 +371,7 @@ CameraView 结构：
 Model3D 结构：
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | node | string | 关联的 node ID |
 | glb | string | GLB 文件名 (相对于 models/ 目录) |
 | position | [x, y, z] | 3D 世界坐标 |
@@ -388,7 +388,7 @@ Model3D 结构：
 
 加载路径：`fixtures/{project}.plant.json`
 
-```
+```text
 fixtures/
 ├── agents.json
 ├── devices.json
@@ -399,7 +399,8 @@ fixtures/
     └── ...
 ```
 
-mock_scepter 启动时：
+`mock_scepter` 启动时：
+
 - `fixtures::load_all()` 新增 `load_plant()` 调用
 - 解析 `.plant.json` → 拆分为 `DeviceModelResponse[]` + `SceneConfigItem`
 - `get_scene_config` 从 plant 数据返回，不再硬编码
@@ -411,17 +412,20 @@ mock_scepter 启动时：
 现有 API 契约不变（`/projects/{pid}/device-models` + `/projects/{pid}/device-models/scene-config`）。
 
 新增：
+
 - `PhysicalPreview.tsx` 的 `BOX_CAMERA_TARGETS` 从 `scene.camera.bookmarks` 读取，不再硬编码
 - 3D 模型的 CSS2D overlay 标签从 `nodes[nodeId].label` 读取
 
 ### 3. entelecheia PoleMos agent
 
 PoleMos 通过 MCP tool 读取 plant 文件：
+
 - `node_discover` → 遍历 `nodes` + `topology.plcs`
 - `device_self_test` → 读取 `nodes[id].sensors` + `nodes[id].rated`
 - 设备管理操作 → 写回 `nodes[id].status`
 
 未来可扩展：
+
 - PoleMos layer2 agent 生成 `.plant.json`（通过 AI 读取设备文档自动建立拓扑）
 - 人在 webui 里拖拽编辑 3D 布局 → 写回 `.plant.json`
 - CI/CD 管线验证 `.plant.json` 的 schema 完整性
@@ -437,7 +441,7 @@ PoleMos 通过 MCP tool 读取 plant 文件：
 ## 与现有数据的关系
 
 | 现有数据源 | 迁移到 .plant.json 的部分 |
-|-----------|--------------------------|
+| --- | --- |
 | `http_server.rs` 硬编码的 20 个 DeviceModelResponse | → `scene.models[]` + `nodes{}` |
 | `http_server.rs` 硬编码的 SceneConfigItem | → `scene{}` (camera, lighting, ground, bloom) |
 | `mock_data/topology.rs` 的 overview() / box_detail() | → `topology{}` (boxes, connections, layout) |
@@ -448,6 +452,6 @@ PoleMos 通过 MCP tool 读取 plant 文件：
 ## Schema 校验
 
 JSON Schema 文件放在 `schemas/plant-v1.json`，三端共享。
-mock_scepter 加载时 `serde_json` 反序列化 + schema 校验。
+`mock_scepter` 加载时 `serde_json` 反序列化 + schema 校验。
 webui 构建时可用 `ajv` 校验。
 entelecheia 可用 `jsonschema` crate 校验。

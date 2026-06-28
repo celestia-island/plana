@@ -41,7 +41,7 @@ flowchart TB
 ### Compilación Condicional
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 static ARONA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../dist/arona");
 
 async fn serve_arona() -> impl IntoResponse {
@@ -62,7 +62,7 @@ La compilación condicional opera a **nivel de cuerpo de función** en lugar de 
 
 La aplicación es una single-page application. Todas las rutas que no coinciden con activos estáticos devuelven `index.html`:
 
-```
+```text
 GET /               → index.html
 GET /chat/123       → index.html (el enrutador del frontend maneja)
 GET /backend        → index.html
@@ -86,7 +86,7 @@ El servidor de archivos estáticos devuelve el Content-Type correcto basado en l
 
 ## Build del Frontend en el Dockerfile
 
-```
+```text
 Etapa 1 (frontend):
   node:22-slim → pnpm install → pnpm build:all → /app/dist/arona/
 
@@ -102,6 +102,6 @@ El build del frontend y la compilación Rust se completan dentro del mismo Docke
 ## Decisiones de Diseño
 
 1. **El modo Dev usa dev.py para reconstrucción automática**: `dev.py` vigila las fuentes del frontend y reconstruye ante cambios, con el backend sirviendo todo en un solo puerto.
-2. **El modo Release no requiere un proxy inverso**: El binario incrusta la SPA, permitiendo despliegue en un solo proceso y reduciendo la complejidad operativa.
-3. **El frontend no se carga dinámicamente en tiempo de ejecución**: Evita dependencias del sistema de archivos e inconsistencia de versiones. La imagen Release contiene solo un único archivo binario.
-4. **SPA única**: El frontend se sirve en `/` con el panel de administración en `/backend`.
+1. **El modo Release no requiere un proxy inverso**: El binario incrusta la SPA, permitiendo despliegue en un solo proceso y reduciendo la complejidad operativa.
+1. **El frontend no se carga dinámicamente en tiempo de ejecución**: Evita dependencias del sistema de archivos e inconsistencia de versiones. La imagen Release contiene solo un único archivo binario.
+1. **SPA única**: El frontend se sirve en `/` con el panel de administración en `/backend`.

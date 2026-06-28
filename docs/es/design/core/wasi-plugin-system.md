@@ -13,9 +13,9 @@ subcategory = "core"
 El Sistema de Plugins WASI reemplaza el andamiaje anterior de webhooks Python/TypeScript con plugins del **modelo de componentes WASM**, proporcionando integraciones de plataforma en sandbox e independientes del lenguaje (Capa 2) y extensiones de lógica de negocio (Capa 3). Objetivos clave de diseño:
 
 1. **Mecanismo de extensión dual**: Capa 2 (integración de plataforma) y Capa 3 (lógica de negocio) ambas soportan módulos WASI y extensiones boa TS.
-2. **Registro MCP unificado**: Todos los plugins registran herramientas bajo `$.agents.xxx` independientemente del lenguaje de implementación.
-3. **E/S gestionada por el host**: El host (servidor axum Scepter) maneja el enrutamiento HTTP, WebSocket y conexiones de larga duración; los plugins solo procesan lógica.
-4. **Sandboxing fuerte**: Los módulos WASM se ejecutan bajo wasmtime con límites de combustible e interrupción por época.
+1. **Registro MCP unificado**: Todos los plugins registran herramientas bajo `$.agents.xxx` independientemente del lenguaje de implementación.
+1. **E/S gestionada por el host**: El host (servidor axum Scepter) maneja el enrutamiento HTTP, WebSocket y conexiones de larga duración; los plugins solo procesan lógica.
+1. **Sandboxing fuerte**: Los módulos WASM se ejecutan bajo wasmtime con límites de combustible e interrupción por época.
 
 ## Arquitectura
 
@@ -123,7 +123,7 @@ export!(GithubWebhookPlugin);
 ### Crate: `_shared_plugin_host` (`packages/shared/plugin_host/`)
 
 | Módulo | Rol |
-|--------|------|
+| --- | --- |
 | `plugin_state.rs` | `HostFunctions` — implementa todas las funciones `host-api` (HTTP, KV, config, eventos) |
 | `plugin_loader.rs` | `TypedPlugin` — construye contenedores wasmtime, registra importaciones del host, llama a exportaciones del guest mediante `call_guest_raw_desc` dinámico |
 | `plugin_router.rs` | `PluginRouter` — gestiona plugins cargados, despacha solicitudes webhook/bot, auto-escanear directorio `plugins/` |
@@ -146,7 +146,7 @@ flowchart TB
 
 Dado que `wit_bindgen::generate!` en el lado del guest exporta funciones bajo el nombre de la interfaz WIT, el host usa nombres completamente calificados para la invocación dinámica:
 
-```
+```text
 entelecheia:plugin/webhook-handler#name
 entelecheia:plugin/webhook-handler#handle-request
 entelecheia:plugin/webhook-handler#on-message
@@ -221,13 +221,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-2. Copiar el archivo WIT:
+1. Copiar el archivo WIT:
 
-```
+```text
 plugins/mi-plataforma/wit/plugin.wit  ← enlace simbólico o copia desde packages/shared/plugin_host/wit/
 ```
 
-3. Implementar el trait `Guest`:
+1. Implementar el trait `Guest`:
 
 ```rust
 // plugins/mi-plataforma/src/lib.rs
@@ -249,25 +249,25 @@ impl Guest for MiPlataformaPlugin {
 export!(MiPlataformaPlugin);
 ```
 
-4. Configurar `.cargo/config.toml`:
+1. Configurar `.cargo/config.toml`:
 
 ```toml
 [target.wasm32-wasip2]
 rustflags = ["--cfg=unstable_wasi_extension", "--cfg=unstable_wasi_export_wasi_reactor"]
 ```
 
-5. Compilar:
+1. Compilar:
 
 ```bash
 cargo build --target wasm32-wasip2 --release -p plugin-mi-plataforma --lib
 ```
 
-6. Desplegar: copiar el archivo `.wasm` al directorio `plugins/` (o establecer `PLUGIN_DIR`).
+1. Desplegar: copiar el archivo `.wasm` al directorio `plugins/` (o establecer `PLUGIN_DIR`).
 
 ## Referencia de Funciones del Host
 
 | Función | Firma | Descripción |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `http-request` | `(method, url, headers, body) → result<string, string>` | Realizar solicitudes HTTP (para responder a plataformas externas) |
 | `forward-event` | `(event-json) → result<_, string>` | Reenviar eventos estructurados a Scepter |
 | `query-ai` | `(message, context?) → result<string, string>` | Consultar el pipeline de IA (aún no conectado) |
@@ -280,7 +280,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-mi-plataforma --lib
 ## Modelo de Seguridad
 
 | Mecanismo | Implementación |
-|-----------|---------------|
+| --- | --- |
 | **Sandbox** | Sandbox del modelo de componentes wasmtime — sin sistema de archivos, sin acceso de red por defecto |
 | **Límites de recursos** | Medición de combustible (contabilidad por instrucción) + interrupción por época (timeout) mediante el constructor tairitsu Container |
 | **Solo E/S del host** | Toda la E/S pasa por funciones del host; los plugins no pueden abrir sockets ni archivos |
@@ -290,7 +290,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-mi-plataforma --lib
 ## Estado de Implementación
 
 | Fase | Componente | Estado |
-|-------|-----------|--------|
+| --- | --- | --- |
 | **P0** | Plugin WASI de webhook GitHub | ✅ Hecho |
 | **P0** | PluginRouter + integración Scepter | ✅ Hecho |
 | **P0** | HostFunctions (las 8 funciones host-api) | ✅ Hecho |
@@ -302,7 +302,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-mi-plataforma --lib
 ## Archivos Clave
 
 | Archivo | Propósito |
-|------|---------|
+| --- | --- |
 | `packages/shared/plugin_host/Cargo.toml` | wasmtime 43, runtime tairitsu, reqwest |
 | `packages/shared/plugin_host/wit/plugin.wit` | Definición de interfaz WIT canónica |
 | `packages/shared/plugin_host/src/plugin_state.rs` | HostFunctions, trait HostApiProvider |

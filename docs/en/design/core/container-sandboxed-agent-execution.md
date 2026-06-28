@@ -16,15 +16,15 @@ subcategory = "core"
 In a multi-agent system where agents execute LLM-generated code, isolation between agents is critical for:
 
 1. **Security**: Untrusted LLM output should not be able to access another agent's memory, files, or network connections.
-2. **State isolation**: Each agent's REPL state (JavaScript variables, bindings, snapshots) must be independent.
-3. **Resource control**: A misbehaving agent should not consume unlimited CPU, memory, or PIDs.
-4. **Reproducibility**: Agent state should be snapshotable and restorable for debugging and rollback.
-5. **Fork/merge workflows**: The system needs to support branching agent execution (fork) and merging results back (merge), similar to git branching.
+1. **State isolation**: Each agent's REPL state (JavaScript variables, bindings, snapshots) must be independent.
+1. **Resource control**: A misbehaving agent should not consume unlimited CPU, memory, or PIDs.
+1. **Reproducibility**: Agent state should be snapshotable and restorable for debugging and rollback.
+1. **Fork/merge workflows**: The system needs to support branching agent execution (fork) and merging results back (merge), similar to git branching.
 
 Several isolation approaches were evaluated:
 
 | Approach | Isolation Strength | Resource Control | Snapshot/Fork | Overhead |
-|----------|-------------------|-----------------|---------------|----------|
+| --- | --- | --- | --- | --- |
 | **Container per agent (Docker/OCI)** | Strong (kernel-level) | Full (cgroups, seccomp, capabilities) | Native (commit/snapshot) | Moderate (~100ms startup, ~50MB per container) |
 | **Process per agent** | Moderate (UID/seccomp) | Partial (rlimit) | Manual (serialize state) | Low |
 | **Thread per agent** | Weak (shared memory) | Minimal | Manual | Minimal |
@@ -36,10 +36,12 @@ Several isolation approaches were evaluated:
 We chose a **two-layer container architecture** with **COSMOS** as the init process inside each agent's container:
 
 **Outer layer (orchestration infrastructure):**
+
 - Docker/Podman via Bollard for infrastructure containers (PostgreSQL, Scepter daemon).
 - Full orchestration capabilities: networking, volumes, health checks, compose.
 
 **Inner layer (agent sandboxes):**
+
 - Youki/libcontainer (default) or Docker for per-agent COSMOS containers.
 - Each agent gets its own container with COSMOS as PID 1.
 - COSMOS is the **front-end process** that mediates all interactions — it provides the JSON-RPC Unix socket server, the Boa JS REPL, the MCP router, and the HapLotes bridge connection back to Scepter.
@@ -49,9 +51,9 @@ We chose a **two-layer container architecture** with **COSMOS** as the init proc
 All interactions with a containerized agent must go through COSMOS. Direct container manipulation (e.g., `docker exec` into a container) bypasses the security model, state management, and audit trail. COSMOS provides:
 
 1. **Tool dispatch mediation**: The `McpRouter` enforces allowlists, dual-authorization, and trust levels before any tool reaches the agent.
-2. **State persistence**: Double-buffered snapshot system ensures REPL state survives crashes.
-3. **Bridge communication**: The HapLotes bridge connects COSMOS back to Scepter for inter-agent coordination.
-4. **Security enforcement**: Seccomp profiles, egress policies, and capability restrictions are applied at container creation and enforced by the kernel.
+1. **State persistence**: Double-buffered snapshot system ensures REPL state survives crashes.
+1. **Bridge communication**: The HapLotes bridge connects COSMOS back to Scepter for inter-agent coordination.
+1. **Security enforcement**: Seccomp profiles, egress policies, and capability restrictions are applied at container creation and enforced by the kernel.
 
 **Why Youki/libcontainer for inner sandboxes:**
 
@@ -64,7 +66,7 @@ All interactions with a containerized agent must go through COSMOS. Direct conta
 
 ### Positive
 
-- **Strong isolation via kernel enforcement**: cgroups (CPU/memory/PID limits), seccomp (syscall filtering), capabilities (cap_drop=ALL), namespaces (PID/network/mount isolation).
+- **Strong isolation via kernel enforcement**: cgroups (CPU/memory/PID limits), seccomp (syscall filtering), capabilities (`cap_drop`=ALL), namespaces (PID/network/mount isolation).
 - **Native fork/merge**: Container commit creates an image snapshot; new containers can be created from the snapshot. Overlay filesystems track only changed files.
 - **Resource limits per agent**: 512MB memory, 1 CPU, 100 PIDs by default, configurable per container.
 - **Audit trail**: All tool calls pass through COSMOS's MCP router, which logs every dispatch for OreXis security auditing.

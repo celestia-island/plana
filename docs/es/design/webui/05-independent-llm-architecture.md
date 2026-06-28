@@ -30,7 +30,7 @@ flowchart TB
 
 ### 1. Enrutamiento Multi-Proveedor con Prioridad
 
-```
+```text
 Cada Proveedor tiene un campo de prioridad (número menor = mayor prioridad).
 Las solicitudes se intentan de mayor a menor prioridad:
   → Proveedor A (prioridad=1) disponible → usar

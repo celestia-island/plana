@@ -18,7 +18,7 @@ subcategory = "core"
 Entelecheia 已完成重大拆分：面向用户的壳层已迁移至兄弟项目 **shittim-chest**（`../shittim-chest`）。Entelecheia 现在专注于多智能体编排核心。
 
 | 仓库 | 范围 |
-|------------|-------|
+| --- | --- |
 | **entelecheia** | Scepter 编排，16 个智能体（12 个 L1 + 4 个 L2），Cosmos/IEPL 运行时，32 个共享 crate |
 | **shittim-chest** | arona（聊天 UI 前端），plana（管理 UI），`shittim_chest` 后端（axum 代理 + 认证 + webhook），IDE 插件，Tauri 应用 |
 
@@ -40,7 +40,7 @@ Entelecheia 是一个包含 **56 个 crate** 的 Rust 工作空间，核心为 `
 ## 组件实况核查
 
 | 组件 | 已实现 | 仅设计/桩代码 | 结论 |
-|-----------|------------|-------------------|---------|
+| --- | --- | --- | --- |
 | **Scepter**（编排） | 认证/RBAC、提供商路由、智能体生命周期、技能链执行、WebSocket/HTTP 端点、密钥加密。49 个源文件中包含 351 个单元测试。`AppState` 为 5 个子状态实现了 `FromRef`；智能体生命周期处理程序使用 `State<Arc<Persistence>>` | 完整的 API 接口。批量处理器已定义但未实例化。 | 🟢 真实 |
 | **TUI** | 完整生命周期：启动画面、Docker 初始化、时间线、智能体模态框、i18n（8 种语言）、提供商配置、主题支持。47 个源文件中包含 329 个单元测试。`ComponentStore` 拆分为 5 个子结构体；AppState 精简为 6 个字段。通过 Unix 套接字（首选）或 WebSocket 回退连接。 | 与 Scepter API 功能对等。`CancelRequest`/`ExecuteSudoCommand` 尚未接入。 | 🟢 真实 |
 | **CLI** | 服务管理、聊天、时间线、智能体生命周期命令。28 个单元测试。 | 未达到与 TUI 的功能对等 | 🟡 部分 |
@@ -162,7 +162,7 @@ block-beta
 **工具实现状态：** 全部 147 个工具均具有真实实现。代码库中任何地方都不存在 `unimplemented!()` 或 `todo!()` 宏。没有工具返回无真实逻辑的空 `Ok(())`。
 
 | 智能体 | 层级 | 当前职责 | 工具数 | 桩 | 测试覆盖 | 成熟度 |
-|-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
+| --- | --- | --- |  ---  |  ---  |  ---  | --- |
 | **HapLotes** | 1 | 网关、消息路由、传输胶水 | 2 | 0 | 21 个测试 | 🟢 真实 |
 | **SkoPeo** | 1 | 协调和面向 LLM 的执行流 | 12 | 0 | 41 个测试 | 🟢 真实 |
 | **HubRis** | 1 | 规划、待办管理、报告、问题辅助 | 8 | 0 | 65 个测试 | 🟢 真实 |
@@ -218,11 +218,12 @@ Boa 引擎 + MCP 桥接部分端到端工作。基于 SWC 的 TypeScript 转译�
 **双层运行时架构：**
 
 | 层级 | 运行时 | 默认值 | 范围 |
-|-------|---------|---------|-------|
+| --- | --- | --- | --- |
 | **外部**（编排） | Docker/Podman | `CONTAINER_RUNTIME=docker` | 基础设施容器：scepter、postgres。通过初始化引擎创建，由 TUI 进行健康检查。需要完整的编排（网络、卷、健康检查）。 |
 | **内部**（cosmos 沙箱） | Youki/libcontainer | `COSMOS_CONTAINER_RUNTIME=youki` | scepter 内部的临时智能体沙箱。轻量级、快速启动、seccomp 约束。 |
 
 运行时选择辅助函数位于 `shared/infra_services/src/container_factory.rs`：
+
 - `outer_runtime_type()` — 读取 `CONTAINER_RUNTIME`，默认为 `docker`
 - `cosmos_runtime_type()` — 读取 `COSMOS_CONTAINER_RUNTIME`，默认为 `youki`
 
@@ -316,7 +317,7 @@ flowchart TB
 ```
 
 | 概念 | 源文件 |
-|---------|---------------|
+| --- | --- |
 | 后端构造 | `shared/infra_services/src/container_factory.rs` |
 | `ContainerOps` trait | `shared/container/src/ops.rs` |
 | Docker 创建/分支 | `shared/container/src/lifecycle.rs`、`image_ops.rs` |
@@ -330,7 +331,7 @@ flowchart TB
 ### 端到端路径接入状态
 
 | # | 路径 | 状态 | 关键连接点 |
-|---|------|--------|----------------------|
+| --- | --- | --- | --- |
 | 1 | **Scepter 启动 → WS → 技能链** | 🟢 全面接入 | `scepter/src/app/setup.rs:876-1653`、`scepter/src/lib.rs:139-361`、`scepter/src/tui_connection/core/message_dispatch.rs:10-140` |
 | 2 | **TUI 启动 → scepter 连接** | 🟢 全面接入 | Unix 套接字（首选）或 WebSocket 回退，含完整握手 + 状态同步 |
 | 3 | **IEPL 管道（SWC→Boa→MCP）** | 🟡 部分接入 | 转译器功能正常（37 个测试）。Boa+MCP 分发已接入。SWC→Boa 可通过 `shared_iepl::client` 桥接但未在容器内完成。 |
@@ -342,7 +343,7 @@ flowchart TB
 ### 双沙箱隔离
 
 | 执行通道 | 可以调用工具函数（通过 ES 模块导入） | 沙箱类型 | 用途 |
-|-------------------|--------------------------|--------------|---------|
+| --- | --- | --- | --- |
 | `neikos.exec()` | 是（通过 ES 模块导入） | Boa 持久上下文 | 技能编排（智能体到智能体分发） |
 | `skemma.script_exec()` | 否 | 独立进程沙箱 | MCP 工具后端（计算/IO） |
 
@@ -375,7 +376,7 @@ flowchart TB
 - **容器安全差距**：自定义 seccomp 配置文件已实现。AppArmor 配置文件未实现。`read_only_rootfs` 默认未启用。资源限制（512MB 内存、1 CPU、100 PID）在容器创建、分支和重建时强制执行。双层运行时（Docker/Podman 外部 + Youki/libcontainer 内部）功能齐全。
 - **OreXis 全面运行**：安全智能体通过 `SecurityPolicySet` 在调用时强制执行工具拒绝列表、允许列表、紧急锁定和会话特定的策略覆盖。告警层级（`alarm_tools.rs`）含 HH/H/L/LL/ROC 阈值、滞后、防抖和升级路径已实现。`audit_only` 模式（默认关闭）可切换。19 个测试。缺失：从 hydro-tin-monitor 预加载 97 个故障代码。
 - **记忆/RAG 栈大部分已接入**：所有 3 个嵌入后端（API、ONNX fastembed、SHA-256 哈希回退）全部实现。PgVector 后端功能正常。图遍历可操作。嵌入→RAG 连接已解耦（调用方提供预计算的嵌入，而非自动内联计算）。RAG 订阅同步保留（尚未实现）。
-- **遥测/批量读取部分接入**：`BatchProcessor` 结构体已定义但在 scepter 设置中未实例化。`try_intercept_sensor_batch()` 解析器已定义但在消息分发循环中未被调用。`SensorBatch` 消息格式解析存在于 trigger_intercept 中。
+- **遥测/批量读取部分接入**：`BatchProcessor` 结构体已定义但在 scepter 设置中未实例化。`try_intercept_sensor_batch()` 解析器已定义但在消息分发循环中未被调用。`SensorBatch` 消息格式解析存在于 `trigger_intercept` 中。
 - **JSON-RPC id 类型不一致**：Rust/TypeScript/Kotlin 使用不同的 JSON-RPC id 类型。
 - **测试覆盖**：约 2,070 个 `#[test]` 函数。scepter（351）和 tui（329）测试最多。5 个 crate 零测试（philia、concurrent、e2e_events、github-webhook、plugins/examples）。大多数共享 crate（30/33）仅依赖内联单元测试。工作空间级别的 E2E 测试 crate（`tests/rust`）有 95 个测试。
 
@@ -388,7 +389,7 @@ flowchart TB
 ## 架构债务
 
 | 问题 | 优先级 | 预估工作量 |
-|-------|----------|-----------------|
+| --- | --- | --- |
 | 21 个文件中约 60 处 `.map_err(...to_string())` 模式（8 处精确 `\|e\| e.to_string()`，52 处更广泛的变体）。集中在适配器边界（`shared/adapter`、`shared/llm_provider`）和外部 API 客户端中（`docker_client`、`plugin_loader`）。在边界处是可接受的适配器模式；内部代码应使用类型化错误。 | P4 | 库级别的问题 |
 | Classic SE 工具上的 `maturity: Stub` 元数据具有误导性 — 全部 7 个都有真实实现（基于子进程的分析器、模式检测器、代码度量、提取函数重构）。应提升到 `Experimental` 或更高。 | P4 | 仅元数据 |
 | `SensorBatch` 解析器已定义（`trigger_intercept.rs:58-70`）但未接入消息分发循环。`BatchProcessor` 结构体已定义但在 scepter 设置中未实例化。遥测摄入路径存在但断开。 | P3 | 接入工作 |
@@ -407,18 +408,26 @@ flowchart TB
 ### 已接入的内容（Entelecheia 提供执行安全层）
 
 - **自我手术钩子**（`scepter/.../skill_chain/execution/surgery_hooks.rs`）：
-  `PreSurgeryCheckpoint`（手术前记录 git HEAD）、`PostSurgeryRollback`
-  （失败时自动回滚）、重新部署逻辑、`attempt_rollback`。已注册到
-  钩子管理器。
+
+`PreSurgeryCheckpoint`（手术前记录 git HEAD）、`PostSurgeryRollback`
+（失败时自动回滚）、重新部署逻辑、`attempt_rollback`。已注册到
+钩子管理器。
+
 - **YOLO 滴答循环**：限时的节奏（Periodic 5 分钟 / Daily 6 小时 / Strategic
-  7 天）。技能：`yolo_cycle_report`、`regression_monitor`（Daily 层级降级
-  预测，含分支决策逻辑）。分支启发式文档位于
-  `res/prompts/system/yolo-fork-pattern.md` — 当滴答发现无法在预算内完成的工作时，
-  它分支一个 `#demiurge.xxx` 会话，而非截断。
+
+7 天）。技能：`yolo_cycle_report`、`regression_monitor`（Daily 层级降级
+预测，含分支决策逻辑）。分支启发式文档位于
+`res/prompts/system/yolo-fork-pattern.md` — 当滴答发现无法在预算内完成的工作时，
+它分支一个 `#demiurge.xxx` 会话，而非截断。
+
 - **串行合并协调器**：文件锁定、特性门控；通过 `run_exclusive` 路由 noa
-  链后提交，以便并发的 YOLO 分支不会破坏历史。
+
+链后提交，以便并发的 YOLO 分支不会破坏历史。
+
 - **容器分支/合并**，用于安全实验（Docker/Podman 外部 + Youki
-  内部沙箱）。
+
+内部沙箱）。
+
 - 里程碑提交 `37863366e`（"初步实现自主思考能力"）落地了端到端循环。
 
 ### 架构：当前（已点燃）vs. 纯自举（目标）
@@ -452,7 +461,7 @@ flowchart TB
 ### 阻塞纯自举的剩余差距
 
 | 差距 | 当前状态 | 所需 | 优先级 |
-|-----|---------------|----------|----------|
+| --- | --- | --- | --- |
 | **内部计划文档解析器** | 循环仅因外部智能体平台读取 ARCHITECTURE.md 并自行分解任务才工作。无内部技能。 | `hubris::read_iteration_plan` 技能：解析待办表 → 返回结构化的 `Vec<BacklogItem>`，以便 Entelecheia 自身的协调器可以驱动循环。 | P0 |
 | **协调器-工作者分离强制执行** | 外部平台提供其自身的规划器/工作者分离；Entelecheia 的管道不强制执行它。协调器技能链仍可直接调用 `file_write`/`host_command_exec`。 | 向技能 frontmatter 添加 `role` 字段；在 `pipeline.rs` 工具白名单构建器中，从 `role = "coordinator"` 链中剥离变异工具。 | P0 |
 | **验收标准验证** | `PostSurgeryRollback` 检查 `cargo check --workspace`（构建级别），但不检查任务特定的验收标准。`prompt.rs` 中有部分接入。 | `verify_acceptance_criteria` 钩子命名空间：每个待办项声明可检查的标准（测试通过、文件存在、函数实现）。 | P1 |
@@ -464,7 +473,7 @@ flowchart TB
 > **机器可读格式。** 活动驱动程序（当前为第三方智能体平台，最终为 Entelecheia 自身的协调器）解析此表以找到下一个可执行的工作。完成后更新 `status`。
 
 | ID | 标题 | 状态 | 验收标准 | 备注 |
-|----|-------|--------|---------------------|-------|
+| --- | --- | --- | --- | --- |
 | IB-01 | `hubris::read_iteration_plan` 技能 | **已替代** | 技能文档位于 `res/prompts/agents/hubris/skills/read_iteration_plan.md`；解析 ARCHITECTURE.md 待办表；返回结构化的任务列表 | 循环已无此点燃 — 外部智能体平台直接读取计划。重新引入它仅对**纯自举**是必需的。 |
 | IB-02 | 协调器工具白名单强制执行 | **已替代** | 协调器技能链不能直接调用 `file_write` / `host_command_exec`；仅通过分派的子智能体 | 与 IB-01 相同：外部平台提供其自身的规划器/工作者分离。仅纯自举需要。 |
 | IB-03 | `verify_acceptance_criteria` 钩子命名空间 | **部分** | 钩子命名空间已注册；每个待办项的标准在链后检查；失败时中止 | `skill_chain/prompt.rs` 中有部分接入。构建级别检查（`cargo check`）有效；任务级别标准尚未完成。 |
@@ -481,7 +490,7 @@ flowchart TB
 > 分为**基础设施**（Entelecheia 拥有的内容）和**自举**（纯无外部驱动程序操作）。点火里程碑已落地；在 IB-01/IB-02 重新引入之前，纯自举指标不适用。
 
 | 指标 | 目标 | 当前 |
-|--------|--------|---------|
+| --- | --- | --- |
 | 工作空间编译（`cargo check --workspace`） | 零错误，干净 | ✅ 干净（1 个 dead_code 警告） |
 | 具有真实实现的 MCP 工具 | 100% | 99.3%（147/148） |
 | 桩工具 | 0 | 0 |
@@ -540,7 +549,7 @@ flowchart LR
 > **最后验证时间**：2026-06-14 — 之前列为未解决的 3 个差距现已实现。
 
 | 差距 | 当前 | 所需 | 优先级 |
-|-----|---------|----------|----------|
+| --- | --- | --- | --- |
 | **传感器事件 → Hubris 计划桥接** | Hubris 通过 TUI/CLI 接收用户提示 | Hubris 必须接受 `TriggerEvent { topic: "modbus.19.h2_leak_conc.hh" }` 作为计划启动事件。`TriggerDispatcher::dispatch_event()` 调用已订阅的技能；传感器事件的端到端 Hubris 计划启动尚未在集成测试中验证。 | P0 |
 | **遥测批量摄入已接入** | `BatchProcessor` 已定义但未实例化；`try_intercept_sensor_batch()` 解析器存在但在分发循环中未被调用 | 将 `Sensor.Batch` 处理程序接入消息分发 → `BatchProcessor` → 遥测存储 | P1 |
 | **OreXis 中的告警层级** | ✅ **全面实现。** `alarm_tools.rs`：设置/移除/确认告警规则（HH/H/L/LL/ROC 级别、阈值、滞后、防抖、升级：log→notify_agent→auto_correct→human_notify→emergency_shutdown）。`SharedAlarmPolicyStore` 功能正常。支持站点覆盖。 | 缺失：从 hydro-tin-monitor 预加载 97 个故障代码。 | P2 |
@@ -601,7 +610,7 @@ flowchart TB
 来自 `/mnt/sdb1/hydro-tin-monitor/doc/通信端口说明 25.8.7.md`：
 
 | 设备 | 站号 | 波特率 | 寄存器 | 备注 |
-|--------|---------|------|-----------|-------|
+| --- | --- | --- | --- | --- |
 | AEM 电解槽（2 Nm3/h） | 21 | 9600 | ~32 IR（0x04），32 位浮点，大端 | 温度、压力、流量、电压 |
 | ALK 电解槽（3 Nm3/h） | 20 | 9600 | ~32 IR（0x04），32 位浮点，大端 | 与 AEM 格式相同 |
 | PEM 电解槽 | 2 | 9600 | ~17 HR（0x03），16 位有符号 | 压力、水质、泄漏、电压 |
@@ -614,7 +623,7 @@ flowchart TB
 ## 许可证
 
 | 参数 | 值 |
-|-----------|-------|
+| --- | --- |
 | 当前许可证 | Business Source License 1.1（BUSL-1.1） |
 | 免费使用许可证 | Synthetic Source License 1.0（SySL-1.0）（适用于所有允许的使用） |
 | 允许的使用（免费） | 内部运营、政府/公共服务、学术、非商业 |

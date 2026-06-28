@@ -35,7 +35,7 @@ flowchart TD
 ## Decisiones Clave
 
 | Decisión | Justificación |
-|----------|--------------|
+| --- | --- |
 | `pglite-oxide` (WASM) sobre `postgresql_embedded` (binario nativo) | Sin descarga de ~100 MB, sin binario PG específico de plataforma, ~96 ms de inicio |
 | `pglite-oxide` sobre `pglite-rust-bindings` | Publicado en crates.io (v0.5.0), inicio más rápido, API builder madura con soporte de extensiones |
 | `tower::ServiceExt::oneshot` sobre `reqwest` | Evita el deadlock del runtime tokio entre las tareas en segundo plano del pool sqlx y el servidor HTTP hyper |
@@ -70,7 +70,7 @@ pub async fn start_test_server() -> TestServer {
 
 ```rust
 // tests/xxx_tests.rs
-#[test]
+# [test]
 fn xxx_e2e_tests() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -90,6 +90,6 @@ Las 13 tablas se crean mediante migraciones SeaORM durante la configuración de 
 ## Limitaciones de PGlite
 
 1. **Conexión única**: `max_connections` debe ser 1. Múltiples pools a la misma instancia PGlite se bloquearán.
-2. **Casting de tipos estricto**: PGlite es más estricto que PostgreSQL estándar. Consultas como `uuid_column = text_value` fallarán — siempre hacer cast explícito.
-3. **Sin runners de prueba concurrentes**: Todas las pruebas asíncronas que comparten una instancia PGlite deben ejecutarse secuencialmente dentro de una sola función `#[test]`.
-4. **Bloqueo del pool al droppear**: `sqlx::PgPool::close()` puede bloquearse indefinidamente. Usar `std::process::exit(0)` para terminar el proceso de prueba.
+1. **Casting de tipos estricto**: PGlite es más estricto que PostgreSQL estándar. Consultas como `uuid_column = text_value` fallarán — siempre hacer cast explícito.
+1. **Sin runners de prueba concurrentes**: Todas las pruebas asíncronas que comparten una instancia PGlite deben ejecutarse secuencialmente dentro de una sola función `#[test]`.
+1. **Bloqueo del pool al droppear**: `sqlx::PgPool::close()` puede bloquearse indefinidamente. Usar `std::process::exit(0)` para terminar el proceso de prueba.

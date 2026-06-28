@@ -65,7 +65,7 @@ graph TB
 
 ## 環境變數傳遞
 
-```
+```text
 .env 檔案 → dotenvy::from_path_iter → HashMap<String, String>
 → 合併 SHITTIM_CHEST_HOST / PORT / DATABASE_URL
 → Vec<String> = ["KEY=VALUE", ...]
@@ -86,6 +86,6 @@ CLI 日誌直接輸出到 stderr，使用與 entelecheia 相同的格式：
 ## 設計原則
 
 1. **CLI 不執行業務邏輯**：所有業務邏輯位於容器內的 `shittim_chest` 二進位檔中
-2. **容器是不可變單元**：CLI 建立/銷毀容器，絕不修改執行中的容器
-3. **網路隔離**：PG 連接埠不暴露給主機，僅可在內部 Docker 網路中存取
-4. **被動輪詢健康檢查**：不依賴 Docker 事件（不可靠）；直接輪詢 inspect 結果
+1. **容器是不可變單元**：CLI 建立/銷毀容器，絕不修改執行中的容器
+1. **網路隔離**：PG 連接埠不暴露給主機，僅可在內部 Docker 網路中存取
+1. **被動輪詢健康檢查**：不依賴 Docker 事件（不可靠）；直接輪詢 inspect 結果

@@ -27,31 +27,36 @@ contribuyendo en nombre de una empresa).
 ## 1. Cómo firmar
 
 - **Contribuyentes individuales.** Añade una línea `Signed-off-by` a cada uno de tus
-  commits (usa `-s` con `git commit`). La firma es tu aceptación
-  electrónica de este CLA, equivalente al Certificado de Origen del Desarrollador
-  (DCO) más las concesiones de la Sección 3 a continuación:
 
-  ```
+commits (usa `-s` con `git commit`). La firma es tu aceptación
+electrónica de este CLA, equivalente al Certificado de Origen del Desarrollador
+(DCO) más las concesiones de la Sección 3 a continuación:
+
+  ```text
   Signed-off-by: Jane Doe <jane@example.com>
   ```
 
 - **Contribuyentes corporativos.** Si contribuyes en nombre de un empleador,
-  el empleador también debe firmar el CLA Corporativo en la Sección 6 y enviarlo al
-  Licenciante a contact@celestia.world (o al contacto en `LICENSE`). Un
-  `Signed-off-by` de un empleado es válido solo después de que el CLA Corporativo
-  del empleador esté registrado.
+
+el empleador también debe firmar el CLA Corporativo en la Sección 6 y enviarlo al
+Licenciante a contact@celestia.world (o al contacto en `LICENSE`). Un
+`Signed-off-by` de un empleado es válido solo después de que el CLA Corporativo
+del empleador esté registrado.
 
 ## 2. Definiciones
 
 - "**Tú**" / "**Contribuyente**" significa la persona física o entidad que acepta este CLA.
 - "**Contribución**" significa cualquier obra original de autoría, incluyendo
-  modificaciones o adiciones a una obra existente, que sea enviada intencionalmente
-  por Ti al Proyecto para su inclusión. "Enviada intencionalmente" incluye código
-  y documentación que envíes mediante pull request, commit, issue, comentario de revisión, o
-  canal equivalente, pero excluye trabajos que hayas marcado claramente como "No es una
-  Contribución."
+
+modificaciones o adiciones a una obra existente, que sea enviada intencionalmente
+por Ti al Proyecto para su inclusión. "Enviada intencionalmente" incluye código
+y documentación que envíes mediante pull request, commit, issue, comentario de revisión, o
+canal equivalente, pero excluye trabajos que hayas marcado claramente como "No es una
+Contribución."
+
 - "**Licenciante**" / "**mantenedores**" significa el titular de los derechos de autor del Proyecto
-  (Celestia Island / langyo) y aquellos designados para actuar en su nombre.
+
+(Celestia Island / langyo) y aquellos designados para actuar en su nombre.
 
 ## 3. Concesión de licencia de derechos de autor
 
@@ -86,16 +91,16 @@ Declaras que:
 (a) Eres el autor o tienes el derecho de enviar la Contribución;
 
 (b) cada Contribución es tu creación original (o, si se envía en nombre de un
-    tercero, tienes el derecho de enviarla en su nombre y has asegurado
-    los derechos requeridos bajo este CLA);
+tercero, tienes el derecho de enviarla en su nombre y has asegurado
+los derechos requeridos bajo este CLA);
 
 (c) la Contribución no infringe, según tu conocimiento, los derechos de propiedad
-    intelectual de ningún tercero; y
+intelectual de ningún tercero; y
 
 (d) tienes derecho legal a conceder las licencias de las Secciones 3 y 4, y, si
-    tu(s) empleador(es) tienen derechos sobre la propiedad intelectual que creas, tu
-    empleador ha obtenido una renuncia o consentimiento para tus Contribuciones, o ha
-    firmado el CLA Corporativo en la Sección 6.
+tu(s) empleador(es) tienen derechos sobre la propiedad intelectual que creas, tu
+empleador ha obtenido una renuncia o consentimiento para tus Contribuciones, o ha
+firmado el CLA Corporativo en la Sección 6.
 
 ## 6. CLA Corporativo
 
@@ -103,7 +108,7 @@ Si estás contribuyendo en nombre de una empresa, la empresa debe confirmar lo
 siguiente firmando y devolviendo el bloque de CLA Corporativo a continuación a
 contact@celestia.world:
 
-```
+```text
 Empresa: ______________________________________________________
 Dirección: ____________________________________________________
 Nombre y email de contacto: ____________________________________

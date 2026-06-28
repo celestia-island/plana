@@ -15,7 +15,7 @@ Los ADR siguen la [plantilla ADR de Michael Nygard](https://cognitect.com/blog/2
 ## Índice
 
 | ADR | Título | Estado |
-|-----|-------|--------|
+| --- | --- | --- |
 | [ADR-001](en/exec-only-microkernel-tool-surface.md) | Superficie de Herramientas de Microkernel Solo-Ejecución | Aceptado |
 | [ADR-002](en/boa-javascript-engine.md) | Boa como Motor JavaScript Embebido | Aceptado |
 | [ADR-003](en/postgresql-pgvector-storage.md) | PostgreSQL + PgVector para Almacenamiento de Datos Unificado | Aceptado |
@@ -25,7 +25,7 @@ Los ADR siguen la [plantilla ADR de Michael Nygard](https://cognitect.com/blog/2
 ## Directorios de Idiomas
 
 | Código | Idioma |
-|------|----------|
+| --- | --- |
 | `en/` | Inglés (autoritativo) |
 | `zhs/` | Chino Simplificado |
 | `zht/` | Chino Tradicional |

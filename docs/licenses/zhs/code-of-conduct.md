@@ -73,7 +73,7 @@
 ## 署名
 
 本行为准则改编自 [Contributor Covenant][homepage]（贡献者公约）2.1 版本，可在
-[https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1] 查看。
+[https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1] 查看。
 
 社区影响指南受 [Mozilla 的行为准则执行阶梯][mozilla-coc] 启发。
 
@@ -81,7 +81,7 @@
 [https://www.contributor-covenant.org/translations][translations]。
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

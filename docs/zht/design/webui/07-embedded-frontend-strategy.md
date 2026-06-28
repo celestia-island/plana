@@ -41,7 +41,7 @@ flowchart TB
 ### 條件編譯
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 static ARONA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../dist/arona");
 
 async fn serve_arona() -> impl IntoResponse {
@@ -62,7 +62,7 @@ async fn serve_arona() -> impl IntoResponse {
 
 應用程式為單頁應用。所有不匹配靜態資源的路由皆回傳 `index.html`：
 
-```
+```text
 GET /               → index.html
 GET /chat/123       → index.html（前端路由器處理）
 GET /backend        → index.html
@@ -86,7 +86,7 @@ GET /backend/providers → index.html（前端路由器處理）
 
 ## Dockerfile 中的前端建置
 
-```
+```text
 階段 1（前端）：
   node:22-slim → pnpm install → pnpm build:all → /app/dist/arona/
 
@@ -102,6 +102,6 @@ GET /backend/providers → index.html（前端路由器處理）
 ## 設計決策
 
 1. **開發模式使用 dev.py 進行自動重建**：`dev.py` 監視前端原始碼並在變更時重建，後端在單一埠上提供所有服務。
-2. **發布模式無需反向代理**：二進位檔內嵌 SPA，實現單一程序部署，降低運維複雜度。
-3. **前端不在執行時期動態載入**：避免檔案系統依賴和版本不一致。發布映像僅包含單一二進位檔案。
-4. **單一 SPA**：前端在 `/` 提供服務，管理面板在 `/backend`。
+1. **發布模式無需反向代理**：二進位檔內嵌 SPA，實現單一程序部署，降低運維複雜度。
+1. **前端不在執行時期動態載入**：避免檔案系統依賴和版本不一致。發布映像僅包含單一二進位檔案。
+1. **單一 SPA**：前端在 `/` 提供服務，管理面板在 `/backend`。

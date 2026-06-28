@@ -77,7 +77,7 @@ shittim-chest와 scepter는 동일한 `JWT_SECRET` 환경 변수를 통해 JWT �
 
 ### 로그인 흐름
 
-```
+```text
 사용자 → shittim_chest: POST /api/auth/login
 shittim_chest: argon2 비밀번호 검증
 shittim_chest → scepter: GET /api/user/{id}/permissions
@@ -91,7 +91,7 @@ shittim_chest → 사용자: tokens
 
 ### HTTP 프록시
 
-```
+```text
 브라우저 → shittim_chest:80/api/proxy/chat (헤더에 JWT)
 shittim_chest: JWT 검증
 shittim_chest → scepter:8424/api/chat (JWT 전달)
@@ -100,7 +100,7 @@ scepter → Agent → LLM → scepter → shittim_chest → 브라우저
 
 ### WebSocket 프록시
 
-```
+```text
 브라우저 → shittim_chest:80/api/proxy/ws (헤더에 JWT)
 shittim_chest: JWT 검증
 shittim_chest ↔ scepter:8424/ws (양방향 전달 + JWT)
@@ -110,6 +110,7 @@ shittim_chest ↔ scepter:8424/ws (양방향 전달 + JWT)
 ### 속도 제한 및 모니터링
 
 프록시 계층에서 shittim-chest는 다음을 담당한다:
+
 - 속도 제한 (사용자별 / IP별)
 - 사용량 로깅
 - 연결 수명 주기 관리
@@ -117,7 +118,7 @@ shittim_chest ↔ scepter:8424/ws (양방향 전달 + JWT)
 
 ## Webhook 파이프라인
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 검증 → 이벤트 파싱 → Unix 소켓 → scepter
 ```
 

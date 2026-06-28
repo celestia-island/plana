@@ -16,17 +16,18 @@ subcategory = "core"
 Dans un système d'orchestration LLM multi-agent, le modèle doit décider quels outils appeler et comment les composer. L'approche naïve consiste à exposer chaque outil MCP (118+ à travers 12 agents) directement au LLM comme définitions de fonctions séparées dans le prompt.
 
 Cela crée plusieurs problèmes :
+
 1. **Consommation de la fenêtre de contexte** : 118+ définitions d'outils consomment des milliers de jetons, laissant moins de place pour le raisonnement et la conversation.
-2. **Surface de sécurité** : Chaque outil exposé au LLM est un vecteur d'attaque potentiel pour l'injection de prompt ou le jailbreaking.
-3. **Fragmentation de l'application des permissions** : Si les outils sont distribués directement par la sortie LLM, chaque outil doit valider indépendamment les permissions — conduisant à une application incohérente et des lacunes.
-4. **Confusion du modèle** : La recherche montre que les performances du LLM se dégradent lorsqu'on lui présente trop de choix d'outils (le problème de "surcharge d'outils").
+1. **Surface de sécurité** : Chaque outil exposé au LLM est un vecteur d'attaque potentiel pour l'injection de prompt ou le jailbreaking.
+1. **Fragmentation de l'application des permissions** : Si les outils sont distribués directement par la sortie LLM, chaque outil doit valider indépendamment les permissions — conduisant à une application incohérente et des lacunes.
+1. **Confusion du modèle** : La recherche montre que les performances du LLM se dégradent lorsqu'on lui présente trop de choix d'outils (le problème de "surcharge d'outils").
 
 ## Décision
 
 Nous adoptons une conception de **micro-noyau exec-only**. Le LLM voit exactement **3 primitives d'exécution** comme surface d'outils :
 
 | Primitive | Objectif |
-|-----------|---------|
+| --- | --- |
 | `exec` | Exécuter du code TypeScript/JavaScript via le pipeline IEPL |
 | `write_to_var` | Écrire une valeur chaîne dans une variable REPL nommée |
 | `write_to_var_json` | Écrire une valeur JSON dans une variable REPL nommée |

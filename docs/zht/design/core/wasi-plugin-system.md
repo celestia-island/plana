@@ -13,9 +13,9 @@ subcategory = "core"
 WASI 外掛系統以 **WASM 元件模型**外掛取代先前的 Python/TypeScript webhook 鷹架，提供沙箱化、語言無關的平台整合（第 2 層）與業務邏輯擴充（第 3 層）。核心設計目標：
 
 1. **雙重擴充機制**：第 2 層（平台整合）與第 3 層（業務邏輯）均支援 WASI 模組與 boa TS 擴充。
-2. **統一 MCP 註冊**：所有外掛無論實作語言，均在 `$.agents.xxx` 下註冊工具。
-3. **主機管理的 I/O**：主機（Scepter axum 伺服器）處理 HTTP 路由、WebSocket 與長連線；外掛僅處理邏輯。
-4. **強沙箱化**：WASM 模組在 wasmtime 下執行，具有燃料限制與時代中斷。
+1. **統一 MCP 註冊**：所有外掛無論實作語言，均在 `$.agents.xxx` 下註冊工具。
+1. **主機管理的 I/O**：主機（Scepter axum 伺服器）處理 HTTP 路由、WebSocket 與長連線；外掛僅處理邏輯。
+1. **強沙箱化**：WASM 模組在 wasmtime 下執行，具有燃料限制與時代中斷。
 
 ## 架構
 
@@ -123,7 +123,7 @@ export!(GithubWebhookPlugin);
 ### Crate: `_shared_plugin_host`（`packages/shared/plugin_host/`）
 
 | 模組 | 角色 |
-|--------|------|
+| --- | --- |
 | `plugin_state.rs` | `HostFunctions` — 實作所有 `host-api` 函式（HTTP、KV、配置、事件） |
 | `plugin_loader.rs` | `TypedPlugin` — 建置 wasmtime 容器，註冊主機導入，透過動態 `call_guest_raw_desc` 調用 guest 匯出 |
 | `plugin_router.rs` | `PluginRouter` — 管理已載入的外掛，分派 webhook/bot 請求，自動掃描 `plugins/` 目錄 |
@@ -146,7 +146,7 @@ flowchart TB
 
 由於 guest 端的 `wit_bindgen::generate!` 以 WIT 介面名稱匯出函式，主機使用完整限定名稱進行動態調用：
 
-```
+```text
 entelecheia:plugin/webhook-handler#name
 entelecheia:plugin/webhook-handler#handle-request
 entelecheia:plugin/webhook-handler#on-message
@@ -221,13 +221,13 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-2. 複製 WIT 檔案：
+1. 複製 WIT 檔案：
 
-```
+```text
 plugins/my-platform/wit/plugin.wit  ← 符號連結或從 packages/shared/plugin_host/wit/ 複製
 ```
 
-3. 實作 `Guest` trait：
+1. 實作 `Guest` trait：
 
 ```rust
 // plugins/my-platform/src/lib.rs
@@ -250,25 +250,25 @@ impl Guest for MyPlatformPlugin {
 export!(MyPlatformPlugin);
 ```
 
-4. 配置 `.cargo/config.toml`：
+1. 配置 `.cargo/config.toml`：
 
 ```toml
 [target.wasm32-wasip2]
 rustflags = ["--cfg=unstable_wasi_extension", "--cfg=unstable_wasi_export_wasi_reactor"]
 ```
 
-5. 建置：
+1. 建置：
 
 ```bash
 cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ```
 
-6. 部署：將 `.wasm` 檔案複製到 `plugins/` 目錄（或設定 `PLUGIN_DIR`）。
+1. 部署：將 `.wasm` 檔案複製到 `plugins/` 目錄（或設定 `PLUGIN_DIR`）。
 
 ## 主機函式參考
 
 | 函式 | 簽章 | 說明 |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `http-request` | `(method, url, headers, body) → result<string, string>` | 發送 HTTP 請求（用於回覆外部平台） |
 | `forward-event` | `(event-json) → result<_, string>` | 將結構化事件轉發給 Scepter |
 | `query-ai` | `(message, context?) → result<string, string>` | 查詢 AI 管線（尚未連接） |
@@ -281,7 +281,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 安全模型
 
 | 機制 | 實作 |
-|-----------|---------------|
+| --- | --- |
 | **沙箱** | wasmtime 元件模型沙箱 — 預設無檔案系統、無網路存取 |
 | **資源限制** | 燃料計量（每個指令記帳）+ 時代中斷（逾時），透過 tairitsu Container 建構器 |
 | **僅主機 I/O** | 所有 I/O 透過主機函式進行；外掛無法開啟 sockets 或檔案 |
@@ -291,7 +291,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 實作狀態
 
 | 階段 | 元件 | 狀態 |
-|-------|-----------|--------|
+| --- | --- | --- |
 | **P0** | GitHub webhook WASI 外掛 | ✅ 已完成 |
 | **P0** | PluginRouter + Scepter 整合 | ✅ 已完成 |
 | **P0** | HostFunctions（全部 8 個 host-api 函式） | ✅ 已完成 |
@@ -303,7 +303,7 @@ cargo build --target wasm32-wasip2 --release -p plugin-my-platform --lib
 ## 關鍵檔案
 
 | 檔案 | 用途 |
-|------|---------|
+| --- | --- |
 | `packages/shared/plugin_host/Cargo.toml` | wasmtime 43、tairitsu runtime、reqwest |
 | `packages/shared/plugin_host/wit/plugin.wit` | 標準 WIT 介面定義 |
 | `packages/shared/plugin_host/src/plugin_state.rs` | HostFunctions、HostApiProvider trait |

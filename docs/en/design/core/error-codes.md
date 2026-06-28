@@ -25,8 +25,9 @@ with descriptive messages.
 ## Error Categories
 
 ### Database (`DB_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `DB_CONNECT_FAILED` | `database connection failed: {}` | `scepter/src/app/setup.rs` |
 | `DB_MIGRATE_FAILED` | `database migration failed: {}` | `scepter/src/app/setup.rs` |
 | `DB_TABLE_CHECK_FAILED` | `failed to check table existence: {}` | `packages/shared/infra_services/src/persistence.rs` |
@@ -37,8 +38,9 @@ with descriptive messages.
 | `DB_CLEANUP_FAILED` | `failed to clean up old logs: {}` | `packages/shared/infra_services/src/persistence.rs` |
 
 ### Configuration (`CFG_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `CFG_CREDENTIAL_INIT_FAILED` | `credential storage initialization failed: {}` | `scepter/src/app/setup.rs` |
 | `CFG_PROVIDER_INIT_FAILED` | `provider config initialization failed: {}` | `scepter/src/app/setup.rs` |
 | `CFG_MODEL_INIT_FAILED` | `model config initialization failed: {}` | `scepter/src/app/setup.rs` |
@@ -46,24 +48,27 @@ with descriptive messages.
 | `CFG_KEY_STORE_INIT_FAILED` | `key storage service initialization failed: {}` | `scepter/src/app/setup.rs` |
 
 ### State (`ST_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `ST_SERIALIZE_FAILED` | `state serialization failed: {}` | `scepter/src/state/state_persistence.rs` |
 | `ST_WRITE_FAILED` | `temp file write failed: {}` | `scepter/src/state/state_persistence.rs` |
 | `ST_READ_FAILED` | `state file read failed: {}` | `scepter/src/state/state_persistence.rs` |
 | `ST_PARSE_FAILED` | `state file parse failed: {}` | `scepter/src/state/state_persistence.rs` |
 
 ### WebSocket (`WS_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `WS_SEND_FAILED` | `failed to send message: {}` | `packages/shared/infra_services/src/ws_transport.rs` |
 | `WS_TIMEOUT` | `response wait timeout or channel closed` | `packages/shared/infra_services/src/ws_transport.rs` |
 | `WS_PARSE_FAILED` | `failed to parse agent list: {}` | `packages/shared/infra_services/src/ws_transport.rs` |
 | `WS_NOT_CONNECTED` | `websocket connection not established` | `packages/shared/infra_services/src/ws_transport.rs` |
 
 ### Agent (`AG_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `AG_CONNECT_FAILED` | `connection failed: {}` | `packages/shared/core/src/errors.rs:7-28` |
 | `AG_SEND_FAILED` | `send failed: {}` | `packages/shared/core/src/errors.rs:7-28` |
 | `AG_CHANNEL_NOT_INIT` | `send channel not initialized` | `packages/shared/core/src/errors.rs:7-28` |
@@ -71,25 +76,29 @@ with descriptive messages.
 | `AG_RE_REGISTER_FAILED` | `internal agent re-registration failed` | `scepter/src/state/state_restoration.rs` |
 
 ### LLM (`LLM_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `LLM_CALL_FAILED` | `LLM call failed: {}` | `scepter/src/state_machine/llm_chat/chat_loop.rs` |
 
 ### Layer2 Agents (`L2_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `L2_INIT_FAILED` | `layer2 agent config initialization failed: {}` | `scepter/src/app/setup.rs` |
 | `L2_SKILLS_VALIDATE_FAILED` | `layer2 agent skills validation failed: {}` | `scepter/src/app/setup.rs` |
 
 ### Skills (`SK_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `SK_PROMPT_LOAD_FAILED` | `prompt loader error` | `packages/shared/prompt/src/prompt_loader.rs` |
 | `SK_TOML_PARSE_FAILED` | `TOML parse failed: {}` | `packages/shared/prompt/src/prompt_loader.rs` |
 
 ### Runtime (`RT_*`)
+
 | Code | Message Pattern | Source |
-|------|----------------|--------|
+| --- | --- | --- |
 | `RT_ARC_UNWRAP_DOMAIN` | `Arc::try_unwrap failed for llm_domain/agent_domain` | `scepter/src/state_machine/mod.rs` |
 | `RT_UNDO_NO_ACTIVE_SKILL` | `active_streaming_skill is None, defaulting to HubRis` | `scepter/src/state_machine/mod.rs` |
 

@@ -30,7 +30,7 @@ flowchart TB
 
 ### 1. 多 Provider 优先级路由
 
-```
+```text
 每个 Provider 有优先级字段（数字越小优先级越高）。
 请求从高到低依次尝试：
   → Provider A（priority=1）可用 → 使用

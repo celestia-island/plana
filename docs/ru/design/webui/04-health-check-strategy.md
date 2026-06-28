@@ -35,7 +35,7 @@ flowchart LR
 
 ## Стратегия опроса
 
-```
+```text
 while true:
     sleep 1s
     state = docker.inspect_container(PG)
@@ -86,7 +86,7 @@ pg18 изменил директорию данных с `/var/lib/postgresql/da
 
 Миграции базы данных имеют независимую логику 5 повторных попыток:
 
-```
+```text
 for retry in 0..5:
     выполнить docker run --rm ... shittim_chest db-migrate
     если успех: break

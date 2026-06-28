@@ -143,7 +143,6 @@ graph LR
 - Timestamps use UTC uniformly
 - Transactions guarantee write atomicity
 
-
 # LLM Configuration Flow Design
 
 ## Overview
@@ -482,7 +481,6 @@ flowchart TB
 | Auto Failover | Auto-switch when Provider unavailable | Medium |
 | Usage Stats Integration | Link with usage statistics system | Low |
 
-
 # MCP Prompt Injection and Context Compression Mechanism
 
 ## Overview
@@ -558,9 +556,9 @@ sequenceDiagram
 
 Each MCP tool's documentation is formatted as a JS API reference:
 
-    $agent.todo_list_view() — View the current todo tree structure
-    $agent.todo_create({ title: String, description: String }) — Create a new todo item
-    $agent.todo_update_status({ todo_id: String, status: String }) — Update the status of a todo item
+$agent.todo_list_view() — View the current todo tree structure
+$agent.todo_create({ title: String, description: String }) — Create a new todo item
+$agent.todo_update_status({ `todo_id`: String, status: String }) — Update the status of a todo item
 
 ### Configuration Example
 
@@ -590,15 +588,16 @@ flowchart TB
 
 Each `[[related_tools]]` entry can optionally declare an `access_mode`:
 
-    [[related_tools]]
-    agent_name = "polemos"
-    tool_name = "node_execute"
-    access_mode = "read"       # Skill only needs read-level access (default: "read")
+[[`related_tools`]]
+`agent_name` = "polemos"
+`tool_name` = "`node_execute`"
+`access_mode` = "read"       # Skill only needs read-level access (default: "read")
 
 The dual-authorization gateway checks that:
+
 1. The tool's declared `ToolCapability` supports the requested `access_mode`
-2. The target node's `TrustLevel` permits the operation
-3. For external nodes, additional risk-level gating applies
+1. The target node's `TrustLevel` permits the operation
+1. For external nodes, additional risk-level gating applies
 
 See `docs/design/en/22-mcp-tool-permission-model.md` for full details.
 
@@ -876,7 +875,7 @@ flowchart TB
 The MCP tool injection described in Sections I-VII provides the LLM with **API references** — it tells the LLM *how* to call tools. A complementary mechanism, RAG Context Injection, provides the LLM with **pre-computed knowledge** — it injects the *results* of RAG queries directly into the system prompt.
 
 | Aspect | MCP Tool Injection | RAG Context Injection |
-|--------|-------------------|----------------------|
+| --- | --- | --- |
 | What LLM receives | API reference docs (ES module imports) | Actual knowledge content (memory nodes, workspace docs) |
 | When injected | Per skill, based on `related_tools` | Per skill step, based on skill context |
 | LLM involvement | LLM must call the tool | No LLM involvement — pre-computed |
@@ -884,7 +883,6 @@ The MCP tool injection described in Sections I-VII provides the LLM with **API r
 | IEPL modules | `{agent}` (MCP dispatch) | `rag/{philia,aporia}` (buffer read) |
 
 Both mechanisms coexist: MCP tools remain available as a fallback for queries the pre-computed context doesn't cover. See `docs/design/en/26-rag-context-injection.md` for the full design.
-
 
 # Agent Dual Identity and Visibility Boundary Design
 
@@ -944,7 +942,6 @@ Both mechanisms coexist: MCP tools remain available as a fallback for queries th
   - `agent_number` is for display and interaction.
   - `agent_uuid` is for audit and history.
 
-
 # Request Concurrency Architecture
 
 ## Overview
@@ -966,7 +963,7 @@ Think of a restaurant:
 - **Customers** (user requests) arrive and place orders simultaneously
 - **Tables** (Cosmos containers) are created per request — each gets its own workspace
 - **Kitchen stations** (LLM provider concurrency) are limited — maybe 3 total
-- **Ticket system** (RequestPool tier queue) manages FIFO ordering per tier
+- **Ticket system** (`RequestPool` tier queue) manages FIFO ordering per tier
 
 30 customers can order at once (scepter accepts multiple requests), but the kitchen can only cook 3 dishes at a time (LLM API rate limit).
 
@@ -997,9 +994,9 @@ Previously this was `AtomicBool` (N=1), now it's `Semaphore(N)`.
 Per-tier FIFO queue with per-model semaphores. Within a tier:
 
 1. Incoming LLM requests enter the tier queue
-2. Try to acquire a slot on the highest-priority model first
-3. If busy, try next model in priority order
-4. If all busy, wait in FIFO queue — whichever model frees up first serves the next request
+1. Try to acquire a slot on the highest-priority model first
+1. If busy, try next model in priority order
+1. If all busy, wait in FIFO queue — whichever model frees up first serves the next request
 
 ```mermaid
 flowchart TB
@@ -1025,26 +1022,27 @@ flowchart TB
 
 ### Configuration
 
-    # provider_config.toml
-    [[models]]
-    id = "gpt-5.4"
-    tier = "normal"
-    priority = 10
-    max_concurrent = 3        # 3 simultaneous API calls to this model
+# provider_config.toml
+[[models]]
+id = "gpt-5.4"
+tier = "normal"
+priority = 10
+`max_concurrent` = 3        # 3 simultaneous API calls to this model
 
-    [[models]]
-    id = "gpt-4o-mini"
-    tier = "normal"
-    priority = 5
-    max_concurrent = 5        # 5 simultaneous API calls
+[[models]]
+id = "gpt-4o-mini"
+tier = "normal"
+priority = 5
+`max_concurrent` = 5        # 5 simultaneous API calls
 
-    [[models]]
-    id = "deepseek-v3"
-    tier = "deep"
-    priority = 8
-    max_concurrent = 2
+[[models]]
+id = "deepseek-v3"
+tier = "deep"
+priority = 8
+`max_concurrent` = 2
 
 With this config:
+
 - `normal` tier: Model A (3 slots) + Model B (5 slots) = 8 concurrent normal-tier LLM calls
 - `deep` tier: Model C (2 slots) = 2 concurrent deep-tier LLM calls
 - Request Semaphore: 3 + 5 + 2 = 10 concurrent user requests
@@ -1052,43 +1050,54 @@ With this config:
 ## Flow: User Message → LLM Response
 
     1. User sends message via TUI/CLI/socket
-    2. handle_user_message():
-       a. try_acquire() on Request Semaphore (Layer 1)
+    1. `handle_user_message`():
+
+a. `try_acquire`() on Request Semaphore (Layer 1)
+
           - If no slots: return "busy" error
           - Each slot → independent Cosmos container
-       b. execute_skill_chain() → invoke_aporia_llm_chat()
-    3. invoke_aporia_llm_chat():
-       a. acquire_tier("normal", excluded_models) on RequestPool (Layer 2)
+
+b. `execute_skill_chain`() → `invoke_aporia_llm_chat`()
+
+    1. `invoke_aporia_llm_chat`():
+
+a. `acquire_tier`("normal", `excluded_models`) on `RequestPool` (Layer 2)
+
           - Try each model in priority order (non-blocking)
           - If all busy: wait in FIFO until any model slot frees
-          - Returns TierPermit { model_id, display_name }
-       b. chat_loop → llm_backend.chat() → LlmService::chat_with_tools()
+          - Returns TierPermit { `model_id`, `display_name` }
+
+b. `chat_loop` → llm_backend.chat() → LlmService::`chat_with_tools`()
+
           - Uses selected model for API call
-       c. TierPermit dropped → semaphore slot released
-    4. finish_handling():
-       a. Request Semaphore permit returned
-       b. Cosmos container can be cleaned up (or reused)
+
+c. TierPermit dropped → semaphore slot released
+
+    1. `finish_handling`():
+
+a. Request Semaphore permit returned
+b. Cosmos container can be cleaned up (or reused)
 
 ## E2E Testing
 
 Tests use idle-timeout (not absolute deadline). Timer resets on every meaningful event:
 
-    # Activity resets the idle timer — chain can run indefinitely as long as it stays active
-    ACTIVE_METHODS = {
-        "Tui.OrchestrationStatus",
-        "Tui.McpToolResult",
-        "Tui.AgentReport",
-        "Tui.AgentStreamingChunk",
-        "Tui.TaskStatusUpdate",
-        "Tui.AskHumanRequest",
-        "Tui.AgentPatch",
-        "Tui.ContainerSnapshot",
-    }
+# Activity resets the idle timer — chain can run indefinitely as long as it stays active
+ACTIVE_METHODS = {
+"Tui.`OrchestrationStatus`",
+"Tui.`McpToolResult`",
+"Tui.`AgentReport`",
+"Tui.`AgentStreamingChunk`",
+"Tui.`TaskStatusUpdate`",
+"Tui.`AskHumanRequest`",
+"Tui.AgentPatch",
+"Tui.`ContainerSnapshot`",
+}
 
 This ensures:
+
 - Short idle timeout (120s) catches truly stuck chains
 - Long-running but active chains (complex multi-skill) are never prematurely killed
-
 
 # Embedded Dev Database & Feature-Gated Production Isolation
 
@@ -1097,7 +1106,7 @@ This ensures:
 entelecheia uses [pglite-oxide](https://crates.io/crates/pglite-oxide) as an embedded PostgreSQL for two purposes:
 
 1. **Local development**: When no `DATABASE_URL` is configured, scepter automatically starts an in-process PostgreSQL (PG 17.5 via WASM/wasmer) with pgvector support.
-2. **Integration tests**: PG integration tests use pglite-oxide instead of Docker/testcontainers.
+1. **Integration tests**: PG integration tests use pglite-oxide instead of Docker/testcontainers.
 
 In production (Docker), the `embedded-db` feature is excluded, and scepter connects to a real PostgreSQL container.
 
@@ -1116,7 +1125,7 @@ flowchart TB
 ```
 
 | Build Context | Command | pglite-oxide | wasmer | DATABASE_URL |
-|---------------|---------|:---:|:---:|---|
+| --- | --- |  ---  |  ---  | --- |
 | `cargo run` (local dev) | default features | ✓ | ✓ | Optional — auto-starts embedded PG if missing |
 | `cargo test` (tests) | default features | ✓ | ✓ | Auto-started by test harness |
 | `just build` (release) | `--no-default-features --features all-agents` | ✗ | ✗ | Required |
@@ -1124,29 +1133,29 @@ flowchart TB
 
 ## Runtime DB Resolution Order
 
-    // packages/scepter/src/app/setup.rs
-    let db_url = if let Ok(url) = std::env::var("DATABASE_URL") {
-        // 1. Environment variable (production: Docker PG, dev: .env file)
-        url
-    } else if !user_config.database.url.is_empty() {
-        // 2. User config file (~/.config/entelecheia/config.toml)
-        user_config.database.url.clone()
-    } else {
-        // 3. Embedded pglite-oxide (feature-gated)
-        #[cfg(feature = "embedded-db")]
-        {
-            let server = PgliteServer::builder()
-                .extension(pglite_oxide::extensions::VECTOR)  // pgvector support
-                .start()?;
-            let url = server.database_url();
-            std::mem::forget(server);  // keep alive for process lifetime
-            url
-        }
-        #[cfg(not(feature = "embedded-db"))]
-        {
-            return Err(/* "no DATABASE_URL configured" */);
-        }
-    };
+// packages/scepter/src/app/setup.rs
+let `db_url` = if let Ok(url) = std::env::var("DATABASE_URL") {
+// 1. Environment variable (production: Docker PG, dev: .env file)
+url
+} else if !user_config.database.url.is_empty() {
+// 2. User config file (~/.config/entelecheia/config.toml)
+user_config.database.url.clone()
+} else {
+// 3. Embedded pglite-oxide (feature-gated)
+#[cfg(feature = "embedded-db")]
+{
+let server = `PgliteServer`::builder()
+.extension(`pglite_oxide`::extensions::VECTOR)  // pgvector support
+.start()?;
+let url = server.database_url();
+std::mem::forget(server);  // keep alive for process lifetime
+url
+}
+#[cfg(not(feature = "embedded-db"))]
+{
+return Err(/* "no DATABASE_URL configured" */);
+}
+};
 
 ## Test Harness Pattern
 
@@ -1154,7 +1163,7 @@ flowchart TB
 // tests/pg_integration/auth_test.rs
 static PG: OnceCell<(String, PgliteServer)> = OnceCell::const_new();
 
-#[test]
+# [test]
 fn pg_integration_tests() {
     let rt = tokio::Runtime::new().unwrap();
     rt.block_on(async {
@@ -1185,7 +1194,7 @@ All 23 tables + 1 schema-scoped table + 4 views are created via SeaORM migration
 ## PGlite Constraints
 
 | Constraint | Impact | Mitigation |
-|------------|--------|------------|
+| --- | --- | --- |
 | `max_connections=1` | Only one pool at a time | Shared DB connection across sub-tests; no `db.close()` between tests |
 | Strict type casting | `uuid = text` fails | Always pass typed values (e.g., `Uuid` not `String` for UUID columns) |
 | No concurrent access | Tests must be sequential | Single `#[test]` runner with all sub-tests inline |
@@ -1195,9 +1204,8 @@ All 23 tables + 1 schema-scoped table + 4 views are created via SeaORM migration
 
 All production Dockerfiles exclude embedded-db:
 
-    # Dockerfile
-    RUN cargo build --release -p scepter \
-        --no-default-features --features all-agents
+# Dockerfile
+RUN cargo build --release -p scepter \
+--no-default-features --features all-agents
 
 This ensures zero wasmer/pglite code in production images, keeping binary size minimal and attack surface reduced.
-

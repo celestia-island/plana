@@ -17,13 +17,13 @@ Shittim Chest es la interfaz de usuario para la plataforma de colaboración mult
 Shittim Chest consta de varios componentes que trabajan juntos para proporcionar una experiencia de usuario completa:
 
 - **arona** — La interfaz de chat que estás usando actualmente, con respuestas en streaming, generación de imágenes, monitorización de estado de agentes, ventana de pensamiento, visor de dispositivos remotos y soporte multi-idioma.
-- **shittim_chest** — El backend unificado en Rust + Axum que maneja autenticación (JWT + OAuth), enrutamiento LLM independiente, API de chat, generación de imágenes, ingreso de webhooks, proxy scepter y señalización de dispositivos remotos.
+- **`shittim_chest`** — El backend unificado en Rust + Axum que maneja autenticación (JWT + OAuth), enrutamiento LLM independiente, API de chat, generación de imágenes, ingreso de webhooks, proxy scepter y señalización de dispositivos remotos.
 
 ## Relación con Entelecheia
 
 [entelecheia](https://github.com/celestia-island/entelecheia) es el motor central de orquestación multi-agente. Proporciona el runtime de agentes (scepter, 13 agentes especializados, runtime Cosmos/IEPL). Shittim Chest maneja todo con lo que el usuario interactúa directamente — identidad, presentación y comunicación.
 
-Los dos proyectos están separados por diseño: entelecheia gestiona la orquestación de agentes, mientras que shittim-chest gestiona la identidad de usuario y la presentación. Se comunican mediante HTTP/WebSocket autenticado con JWT. Las credenciales de inicio de sesión residen en shittim_chest_db; los permisos y datos de identidad residen en entelecheia_db. Esta separación permite que la interfaz de usuario evolucione independientemente del núcleo de agentes.
+Los dos proyectos están separados por diseño: entelecheia gestiona la orquestación de agentes, mientras que shittim-chest gestiona la identidad de usuario y la presentación. Se comunican mediante HTTP/WebSocket autenticado con JWT. Las credenciales de inicio de sesión residen en `shittim_chest_db`; los permisos y datos de identidad residen en entelecheia_db. Esta separación permite que la interfaz de usuario evolucione independientemente del núcleo de agentes.
 
 ## Relación con Hikari
 

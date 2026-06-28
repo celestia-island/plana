@@ -200,10 +200,10 @@ import { t } from '@/i18n'
 
 ### 命名規則
 
-`packages/`配下のすべてのディレクトリ名は**snake_case**を使用します:
+`packages/`配下のすべてのディレクトリ名は**`snake_case`**を使用します:
 
 | 型 | 規則 | 例 |
-|------|-----------|---------|
+| --- | --- | --- |
 | Rustクレートディレクトリ | snake_case | `core/` |
 | Rustクレート名 | snake_case | `core` |
 
@@ -234,16 +234,16 @@ just clean                 # ビルド成果物をクリーン
 ## プルリクエストプロセス
 
 1. `dev`からフィーチャーブランチを作成: `git checkout -b feat/my-feature dev`
-2. 明確でアトミックなコミットで変更を行う
-3. プッシュ前に`just lint && just test`を実行
-4. `dev`ブランチに対してPRを作成
-5. CIが通過することを確認（Rustビルド、npmビルド、リント）
+1. 明確でアトミックなコミットで変更を行う
+1. プッシュ前に`just lint && just test`を実行
+1. `dev`ブランチに対してPRを作成
+1. CIが通過することを確認（Rustビルド、npmビルド、リント）
 
 ## コミット規約
 
 [Conventional Commits](https://www.conventionalcommits.org/)を使用:
 
-```
+```text
 feat(auth): パスワードログインエンドポイントを追加
 fix(proxy): WebSocket再接続を処理
 docs(readme): ロゴとバッジを追加

@@ -27,6 +27,7 @@ shittim-chest는 두 가지 운영 모드를 지원합니다:
 ### 독립형 모드
 
 자체 LLM 라우팅 계층으로 독립 실행. 지원:
+
 - 스트리밍 응답이 있는 채팅 (SSE + WebSocket)
 - 구성된 제공자를 통한 이미지 생성
 - 사용자 인증 (비밀번호 + GitHub OAuth)
@@ -37,6 +38,7 @@ entelecheia가 필요하지 않습니다. 개발 및 단순 배포에 유용.
 ### 프록시 모드
 
 entelecheia의 에이전트 시스템으로의 게이트웨이 역할. 추가:
+
 - JWT 통과가 있는 scepter로의 요청 전달
 - 에이전트 기반 채팅을 위한 WebSocket 브리징
 - 웹훅 수신 및 트리거 전달
@@ -50,11 +52,11 @@ entelecheia의 에이전트 시스템으로의 게이트웨이 역할. 추가:
 인증은 shittim_chest가 발행한 JWT 토큰을 사용:
 
 1. **자격 증명 저장**: 비밀번호(argon2 해시), 세션, 리프레시 토큰, API 키는 `shittim_chest_db`에 저장.
-2. **GitHub OAuth**: 사용자가 GitHub으로 로그인 가능; 첫 로그인 시 계정 자동 생성.
-3. **권한 저장**: 사용자 그룹, 역할, 권한 매트릭스는 `entelecheia_db`에 저장.
-4. **JWT 흐름**: 로그인 시 shittim_chest가 로컬에서 자격 증명 검증, 그런 다음 scepter에서 권한 조회. 발행된 JWT는 `{ sub: user_id, groups: [...] }` 포함.
-5. **공유 비밀키**: JWT 서명 비밀키가 scepter와 공유되어 두 서비스가 독립적으로 토큰 검증 가능.
-6. **토큰 순환**: 액세스 토큰은 1시간 후 만료; 리프레시 토큰은 7일. 리프레시 토큰은 각 사용 시 순환.
+1. **GitHub OAuth**: 사용자가 GitHub으로 로그인 가능; 첫 로그인 시 계정 자동 생성.
+1. **권한 저장**: 사용자 그룹, 역할, 권한 매트릭스는 `entelecheia_db`에 저장.
+1. **JWT 흐름**: 로그인 시 shittim_chest가 로컬에서 자격 증명 검증, 그런 다음 scepter에서 권한 조회. 발행된 JWT는 `{ sub: user_id, groups: [...] }` 포함.
+1. **공유 비밀키**: JWT 서명 비밀키가 scepter와 공유되어 두 서비스가 독립적으로 토큰 검증 가능.
+1. **토큰 순환**: 액세스 토큰은 1시간 후 만료; 리프레시 토큰은 7일. 리프레시 토큰은 각 사용 시 순환.
 
 ## 프론트엔드 (webui)
 
@@ -103,11 +105,12 @@ shittim_chest는 사용자와 scepter 사이의 게이트웨이 역할:
 
 외부 이벤트가 웹훅 파이프라인을 통해 에이전트 코어에 도달:
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 검증 → 이벤트 파싱 → Unix 소켓을 통해 scepter로 전달 → 에이전트 디스패치
 ```
 
 각 제공자는 자체 검증 메커니즘 보유:
+
 - **GitHub**: `X-Hub-Signature-256`을 통한 HMAC-SHA256
 - **GitLab**: `X-Gitlab-Token`을 통한 토큰
 - **Gitee**: 토큰 폴백이 있는 HMAC
@@ -139,7 +142,7 @@ shittim-chest는 2단계 프론트엔드 접근 방식 사용:
 
 TypeScript 타입은 외부 `arona` 프로토콜 크레이트를 통해 Rust 코드에서 생성되어 프론트엔드-백엔드 일관성 보장:
 
-```
+```text
 arona Rust 크레이트 (git 의존성)
   → #[derive(ts_rs::TS)]
   → ts-rs codegen → packages/webui/src/types/arona/ (TypeScript)

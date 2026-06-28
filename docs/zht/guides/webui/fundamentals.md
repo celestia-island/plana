@@ -27,6 +27,7 @@ shittim-chest 支援兩種運作模式：
 ### 獨立模式
 
 使用自己的 LLM 路由層獨立執行。支援：
+
 - 帶有串流回應的聊天（SSE + WebSocket）
 - 透過已設定的提供者進行圖片生成
 - 使用者身分驗證（密碼 + GitHub OAuth）
@@ -37,6 +38,7 @@ shittim-chest 支援兩種運作模式：
 ### 代理模式
 
 作為 entelecheia 代理系統的閘道。新增：
+
 - 帶有 JWT 傳遞的請求轉發到 scepter
 - 用於基於代理聊天的 WebSocket 橋接
 - Webhook 入口和觸發轉發
@@ -47,14 +49,14 @@ shittim-chest 支援兩種運作模式：
 
 ## 身分驗證模型
 
-身分驗證使用由 shittim_chest 發出的 JWT 權杖：
+身分驗證使用由 `shittim_chest` 發出的 JWT 權杖：
 
 1. **憑證儲存**：密碼（argon2 雜湊）、會話、刷新權杖和 API 金鑰儲存在 `shittim_chest_db` 中。
-2. **GitHub OAuth**：使用者可以使用 GitHub 登入；帳號在首次登入時自動建立。
-3. **權限儲存**：使用者群組、角色和權限矩陣儲存在 `entelecheia_db` 中。
-4. **JWT 流程**：登入時，shittim_chest 在本機驗證憑證，然後從 scepter 取得權限。發出的 JWT 包含 `{ sub: user_id, groups: [...] }`。
-5. **共享金鑰**：JWT 簽署金鑰與 scepter 共享，以便兩個服務可以獨立驗證權杖。
-6. **權杖輪換**：存取權杖在 1 小時後過期；刷新權杖在 7 天後過期。刷新權杖在每次使用時輪換。
+1. **GitHub OAuth**：使用者可以使用 GitHub 登入；帳號在首次登入時自動建立。
+1. **權限儲存**：使用者群組、角色和權限矩陣儲存在 `entelecheia_db` 中。
+1. **JWT 流程**：登入時，`shittim_chest` 在本機驗證憑證，然後從 scepter 取得權限。發出的 JWT 包含 `{ sub: user_id, groups: [...] }`。
+1. **共享金鑰**：JWT 簽署金鑰與 scepter 共享，以便兩個服務可以獨立驗證權杖。
+1. **權杖輪換**：存取權杖在 1 小時後過期；刷新權杖在 7 天後過期。刷新權杖在每次使用時輪換。
 
 ## 前端（webui）
 
@@ -92,22 +94,23 @@ shittim-chest 為由 entelecheia/polemos 管理的遠端裝置提供基於瀏覽
 
 ## 代理架構
 
-shittim_chest 作為使用者和 scepter 之間的閘道：
+`shittim_chest` 作為使用者和 scepter 之間的閘道：
 
 - **HTTP 反向代理**：`/api/proxy/*` 將已驗證的請求透過 JWT 傳遞轉發到 scepter。
 - **WebSocket 橋接**：聊天串流使用雙向 WebSocket 轉發（`瀏覽器 ↔ shittim_chest ↔ scepter`）。
 
-這允許 shittim_chest 強制執行速率限制、記錄使用情況和管理連線生命週期，而無需 scepter 處理各個瀏覽器連線。
+這允許 `shittim_chest` 強制執行速率限制、記錄使用情況和管理連線生命週期，而無需 scepter 處理各個瀏覽器連線。
 
 ## Webhook 管線
 
 外部事件透過 webhook 管線到達代理核心：
 
-```
+```text
 GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 驗證 → 解析事件 → 透過 Unix socket 轉發到 scepter → 代理分派
 ```
 
 每個提供者都有自己的驗證機制：
+
 - **GitHub**：透過 `X-Hub-Signature-256` 的 HMAC-SHA256
 - **GitLab**：透過 `X-Gitlab-Token` 的權杖
 - **Gitee**：帶有權杖備援的 HMAC
@@ -125,7 +128,7 @@ GitHub/GitLab/Gitee → POST /api/webhook/{source} → HMAC 驗證 → 解析事
   - 代理白名單（群組可以存取哪些代理）
   - 管理能力（管理使用者、設定提供者）
 
-shittim_chest 在處理程序中快取權限，具有 TTL（預設 5 分鐘）。快取失效發生在 TTL 過期、登出或從 scepter 傳播的明確權限變更時。
+`shittim_chest` 在處理程序中快取權限，具有 TTL（預設 5 分鐘）。快取失效發生在 TTL 過期、登出或從 scepter 傳播的明確權限變更時。
 
 ## 前端策略
 
@@ -139,7 +142,7 @@ shittim-chest 使用兩階段前端方法：
 
 TypeScript 型別是透過外部的 `arona` 協定 crate 從 Rust 程式碼生成的，確保前後端一致性：
 
-```
+```text
 arona Rust crate（git 依賴）
   → #[derive(ts_rs::TS)]
   → ts-rs 程式碼生成 → packages/webui/src/types/arona/（TypeScript）

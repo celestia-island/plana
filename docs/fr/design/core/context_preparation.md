@@ -44,7 +44,7 @@ Ce n'est pas une question de compression. C'est une question de **recherche d'in
 ### Extraction Proactive vs. Compression
 
 | Aspect | Compression | Préparation de Contexte |
-|--------|------------|-------------------|
+| --- | --- | --- |
 | Direction | Passé → passé plus court | Passé → extrait prêt pour le futur |
 | Connaissance du futur | Aucune | Les requêtes anticipent les besoins à venir |
 | Perte d'information | Inévitable, non ciblée | Ciblée, intentionnelle |
@@ -57,7 +57,7 @@ La Préparation de Contexte traite l'ancien contexte comme une **source de donn�
 
 Le mécanisme utilise une notation basée sur des lettres pour décrire le flux d'information :
 
-```
+```text
 Ancien Contexte :  A + B + C + D + E
                      ↓ (analyser)
 Requêtes :       ABCDE+H  ABCDE+I  ABCDE+J
@@ -78,9 +78,9 @@ Nouveau Contexte :  F + G + K + L + M
 Une fois que la Préparation de Contexte existe, la compression traditionnelle devient inutile car :
 
 1. **Aucune information n'est perdue par conjecture** — les requêtes sont générées en fonction de ce dont le nouveau contexte aura réellement besoin
-2. **L'extraction est déterministe dans sa structure** — la même stratégie de requête produit toujours la même catégorie de réponse
-3. **Des angles multiples assurent la couverture** — les requêtes H/I/J couvrent différentes dimensions (état de la tâche, contexte d'erreur, justification des décisions)
-4. **L'ancien contexte reste accessible** — il n'est pas jeté mais plutôt *interrogé à la demande* pendant la phase de préparation
+1. **L'extraction est déterministe dans sa structure** — la même stratégie de requête produit toujours la même catégorie de réponse
+1. **Des angles multiples assurent la couverture** — les requêtes H/I/J couvrent différentes dimensions (état de la tâche, contexte d'erreur, justification des décisions)
+1. **L'ancien contexte reste accessible** — il n'est pas jeté mais plutôt *interrogé à la demande* pendant la phase de préparation
 
 ## Architecture
 
@@ -244,12 +244,14 @@ Le processus de génération de requêtes prend l'ancien contexte segmenté (A�
 **Objectif** : S'assurer que le nouveau contexte peut reprendre la tâche en cours sans perte de progression.
 
 **Logique de génération** :
+
 1. Identifier les tâches actives à partir des segments A et E (état de la tâche + connaissances implicites)
-2. Extraire les indicateurs de progression actuels (ce qui est fait, ce qui est en cours, ce qui est bloqué)
-3. Générer une requête qui demande : *"Quel est l'état actuel de toutes les tâches actives, et quelles sont les prochaines étapes ?"*
+1. Extraire les indicateurs de progression actuels (ce qui est fait, ce qui est en cours, ce qui est bloqué)
+1. Générer une requête qui demande : *"Quel est l'état actuel de toutes les tâches actives, et quelles sont les prochaines étapes ?"*
 
 **Exemple de requête** :
-```
+
+```text
 Étant donné l'historique de conversation, identifier :
 1. Toutes les tâches actuellement en cours et leur état d'achèvement
 2. Tout blocage ou erreur non résolue
@@ -262,12 +264,14 @@ Le processus de génération de requêtes prend l'ancien contexte segmenté (A�
 **Objectif** : Préserver le *pourquoi* derrière les décisions, pas seulement le *quoi*.
 
 **Logique de génération** :
+
 1. Parcourir les segments B et C (décisions + historique d'erreurs) pour les points de choix
-2. Identifier les décisions où des alternatives ont été envisagées et rejetées
-3. Générer une requête qui demande : *"Quelles décisions ont été prises, quelles alternatives ont été rejetées, et pourquoi ?"*
+1. Identifier les décisions où des alternatives ont été envisagées et rejetées
+1. Générer une requête qui demande : *"Quelles décisions ont été prises, quelles alternatives ont été rejetées, et pourquoi ?"*
 
 **Exemple de requête** :
-```
+
+```text
 À partir de cette conversation, extraire :
 1. Toutes les décisions architecturales ou d'implémentation prises
 2. Pour chaque décision : quelles alternatives ont été envisagées
@@ -280,12 +284,14 @@ Le processus de génération de requêtes prend l'ancien contexte segmenté (A�
 **Objectif** : Capturer les relations entre les éléments de code, les fichiers et les concepts.
 
 **Logique de génération** :
+
 1. Parcourir les segments D et E (références de code + connaissances implicites) pour les relations d'entités
-2. Cartographier quels fichiers dépendent desquels, quelles fonctions appellent lesquelles, quels concepts sont liés
-3. Générer une requête qui demande : *"Quelles sont les dépendances et relations clés entre les entités discutées ?"*
+1. Cartographier quels fichiers dépendent desquels, quelles fonctions appellent lesquelles, quels concepts sont liés
+1. Générer une requête qui demande : *"Quelles sont les dépendances et relations clés entre les entités discutées ?"*
 
 **Exemple de requête** :
-```
+
+```text
 Analyser la conversation et cartographier :
 1. Tous les fichiers/modules mentionnés et leurs relations
 2. Les chaînes d'appel de fonctions discutées ou modifiées
@@ -340,8 +346,8 @@ fn check_context_health(&mut self) {
 L'exécuteur de chaîne de compétences doit être conscient de la préparation de contexte. Lorsqu'une chaîne de compétences s'étend sur plusieurs fenêtres de contexte, le mécanisme de préparation garantit que :
 
 1. L'état de la chaîne de compétences est capturé dans le segment A (état de la tâche)
-2. L'entrée/sortie de la compétence actuelle est capturée dans le segment D (références de code)
-3. Les étapes restantes de la chaîne sont préservées dans le résultat d'extraction K (continuité de tâche)
+1. L'entrée/sortie de la compétence actuelle est capturée dans le segment D (références de code)
+1. Les étapes restantes de la chaîne sont préservées dans le résultat d'extraction K (continuité de tâche)
 
 ```rust
 // skill_chain.rs (intégration conceptuelle)
@@ -428,6 +434,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 **Scénario** : Un agent refactore une crate Rust, modifiant 15 fichiers à travers 3 modules. La fenêtre de contexte se remplit après avoir modifié le fichier 10.
 
 **Ancien contexte (A–E)** :
+
 - **A** (État de la Tâche) : 10/15 fichiers modifiés, modules `auth` et `storage` terminés, `api` en cours
 - **B** (Décisions) : Choix d'abstraction basée sur les traits plutôt que la distribution par enum ; maintien de la compatibilité ascendante via `#[deprecated]`
 - **C** (Erreurs) : Problème de durée de vie rencontré dans `storage/mod.rs:142`, résolu avec `Arc<Mutex<>>`
@@ -435,6 +442,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 - **E** (Implicite) : La struct `User` doit rester `Clone` pour les crates en aval ; la couverture de test est suivie
 
 **Requêtes générées** :
+
 - **H** (Continuité de Tâche) : "Quels fichiers restent à modifier, quel est le modèle appliqué, et quel est le prochain fichier à refactorer ?"
 - **I** (Justification des Décisions) : "Pourquoi l'abstraction basée sur les traits a-t-elle été choisie plutôt que la distribution par enum, et quelles contraintes de compatibilité ascendante existent ?"
 - **J** (Carte des Dépendances) : "Cartographier les dépendances entre les modules `auth`, `storage` et `api`, en notant quelles structs/traits traversent les frontières des modules."
@@ -446,6 +454,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 **Scénario** : Débogage d'un problème de connexion WebSocket qui s'étend sur plusieurs hypothèses et tentatives de test.
 
 **Ancien contexte (A–E)** :
+
 - **A** (État de la Tâche) : Le problème est circonscrit à la phase de handshake ; le heartbeat n'est pas la cause
 - **B** (Décisions) : Exclusion de la mauvaise configuration TLS ; exclusion des interférences du proxy ; l'hypothèse actuelle est l'ordre des en-têtes
 - **C** (Erreurs) : `ConnectionReset` à 3s, reproduit de manière cohérente avec curl mais pas avec le navigateur
@@ -459,6 +468,7 @@ fn spawn_new_context(&mut self, prepared: ContextPrepareResult) {
 **Scénario** : PhiLia délègue une chaîne de tâches à Skemma (conception de schéma) puis Logos (documentation). Le contexte se remplit pendant le travail de Logos.
 
 **Ancien contexte (A–E)** :
+
 - **A** (État de la Tâche) : Conception du schéma terminée, documentation à 60%
 - **B** (Décisions) : Le schéma utilise des tables de jonction pour les relations M:N selon les directives architecturales de PhiLia
 - **C** (Erreurs) : Skemma a signalé une ambiguïté dans la cardinalité `user_roles`, résolue en ajoutant une contrainte `UNIQUE`

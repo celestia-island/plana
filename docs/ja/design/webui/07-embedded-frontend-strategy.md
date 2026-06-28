@@ -41,7 +41,7 @@ flowchart TB
 ### 条件付きコンパイル
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 static ARONA_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../dist/arona");
 
 async fn serve_arona() -> impl IntoResponse {
@@ -62,7 +62,7 @@ async fn serve_arona() -> impl IntoResponse {
 
 アプリケーションはシングルページアプリケーションです。静的アセットにマッチしないすべてのルートは`index.html`を返します：
 
-```
+```text
 GET /               → index.html
 GET /chat/123       → index.html（フロントエンドルーターが処理）
 GET /backend        → index.html
@@ -86,7 +86,7 @@ GET /backend/providers → index.html（フロントエンドルーターが処�
 
 ## Dockerfileでのフロントエンドビルド
 
-```
+```text
 ステージ1（フロントエンド）:
   node:22-slim → pnpm install → pnpm build:all → /app/dist/arona/
 
@@ -102,6 +102,6 @@ GET /backend/providers → index.html（フロントエンドルーターが処�
 ## 設計判断
 
 1. **開発モードは自動再ビルドにdev.pyを使用**: `dev.py`がフロントエンドソースを監視し変更時に再ビルド、バックエンドが1つのポートですべてを配信します。
-2. **リリースモードではリバースプロキシが不要**: バイナリがSPAを埋め込み、シングルプロセスデプロイメントを可能にし、運用の複雑さを軽減します。
-3. **フロントエンドは実行時に動的ロードされない**: ファイルシステム依存とバージョンの不整合を回避します。リリースイメージには単一のバイナリファイルのみが含まれます。
-4. **単一SPA**: フロントエンドは`/`で配信され、管理パネルは`/backend`にあります。
+1. **リリースモードではリバースプロキシが不要**: バイナリがSPAを埋め込み、シングルプロセスデプロイメントを可能にし、運用の複雑さを軽減します。
+1. **フロントエンドは実行時に動的ロードされない**: ファイルシステム依存とバージョンの不整合を回避します。リリースイメージには単一のバイナリファイルのみが含まれます。
+1. **単一SPA**: フロントエンドは`/`で配信され、管理パネルは`/backend`にあります。

@@ -15,7 +15,7 @@ subcategory = "core"
 Actualmente existen tres niveles de extensión utilizables en el repositorio.
 
 | Nivel | Significado actual |
-|------|----------|
+| --- | --- |
 | Layer1 | Agent central implementado como crate Rust y compilado en el workspace |
 | Layer2 | Web Automation como agente de dominio integrado activo, más algunos materiales archivados o planificados |
 | Layer3 | Agent personalizado por el usuario (en planificación, aún no implementado) |

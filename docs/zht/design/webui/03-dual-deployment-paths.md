@@ -78,6 +78,7 @@ let config = Config::<String> {
 ```
 
 關鍵要點：
+
 - 二進位檔以唯讀方式掛載 (`:ro`)，防止在容器內意外修改
 - 二進位檔位置為 `/usr/local/bin/shittim_chest`，在容器內直接執行
 - 基礎映像 `debian:bookworm-slim` 提供所需的 glibc 執行時期
@@ -86,7 +87,7 @@ let config = Config::<String> {
 
 遷移透過一次性容器執行：
 
-```
+```bash
 docker run --rm --network shittim-chest \
   -v $PWD/target/debug/shittim_chest:/usr/local/bin/shittim_chest:ro \
   -e SHITTIM_CHEST_DATABASE_URL=... \
@@ -109,7 +110,7 @@ docker run --rm --network shittim-chest \
 ### embedded-frontend 功能
 
 ```rust
-#[cfg(feature = "embedded-frontend")]
+# [cfg(feature = "embedded-frontend")]
 {
     static FRONTEND_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../dist");
     // 掛載到 Axum Router 的 /static/* 路徑

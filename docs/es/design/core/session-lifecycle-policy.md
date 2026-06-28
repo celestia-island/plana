@@ -56,6 +56,7 @@ Todos los parámetros del ciclo de vida residen en `StorageLifecycleConfig` (ent
 ### tabla conversations (entelecheia)
 
 Columnas añadidas:
+
 - `parent_conversation_id UUID REFERENCES conversations(conversation_id)` — seguimiento de sesiones hijas
 - `is_archived BOOLEAN NOT NULL DEFAULT FALSE` — bandera de archivado
 - `archived_at TIMESTAMPTZ` — cuándo se archivó
@@ -64,6 +65,7 @@ Columnas añadidas:
 ### tabla messages (entelecheia)
 
 Columnas añadidas:
+
 - `is_compacted BOOLEAN NOT NULL DEFAULT FALSE` — marca mensajes compactados elegibles para limpieza de contenido
 - `metadata JSONB NOT NULL DEFAULT '{}'` — metadatos extensibles
 
@@ -78,7 +80,7 @@ Nueva tabla para persistencia de sesiones kirino (backend SQL).
 ## Fases de Implementación
 
 | Fase | Descripción | Estado |
-|-------|-------------|--------|
+| --- | --- | --- |
 | 0.1 | Correcciones de migración de esquema (dialogue_events, actualización de conversations/messages) | Hecho |
 | 1.2 | Espacio de nombres de config unificado (`StorageLifecycleConfig`) | Hecho |
 | 0.2 | `ConversationStore` con métodos CRUD + limpieza | Hecho |
@@ -133,13 +135,13 @@ graph TD
 
 1. **Creación**: Cuando una cadena de habilidades genera una sub-tarea, se crea una nueva conversación con `parent_conversation_id` establecido al `conversation_id` del padre.
 
-2. **Archivado independiente**: Las hijas pueden archivarse independientemente del padre. Cuando una tarea hija se completa, se archiva automáticamente después de `CHILD_SESSION_RETENTION_DAYS` (predeterminado 7 días).
+1. **Archivado independiente**: Las hijas pueden archivarse independientemente del padre. Cuando una tarea hija se completa, se archiva automáticamente después de `CHILD_SESSION_RETENTION_DAYS` (predeterminado 7 días).
 
-3. **Cascada al archivar padre**: Cuando un padre se archiva, todas las hijas se archivan. Cuando un padre se elimina, todas las hijas se eliminan.
+1. **Cascada al archivar padre**: Cuando un padre se archiva, todas las hijas se archivan. Cuando un padre se elimina, todas las hijas se eliminan.
 
-4. **Manejo de huérfanas**: Las conversaciones con `parent_conversation_id` apuntando a un padre eliminado/inexistente se tratan como huérfanas y se limpian después de `ORPHAN_CONVERSATION_TTL_DAYS` (predeterminado 30 días).
+1. **Manejo de huérfanas**: Las conversaciones con `parent_conversation_id` apuntando a un padre eliminado/inexistente se tratan como huérfanas y se limpian después de `ORPHAN_CONVERSATION_TTL_DAYS` (predeterminado 30 días).
 
-5. **Elegibilidad de compactación**: Las conversaciones hijas son elegibles para compactación de mensajes inmediatamente después del archivado (sin período de gracia), ya que el padre retiene el resumen.
+1. **Elegibilidad de compactación**: Las conversaciones hijas son elegibles para compactación de mensajes inmediatamente después del archivado (sin período de gracia), ya que el padre retiene el resumen.
 
 ### Consultas de Limpieza
 
@@ -170,6 +172,6 @@ DELETE FROM conversations WHERE is_archived = TRUE
   - `cascade_delete_orphaned_children()` — elimina hijas cuyo padre fue eliminado
   - `cleanup_expired_child_conversations()` — limpieza basada en TTL para hijas archivadas
   - `cleanup_orphan_conversations()` — limpieza de hijas con padre faltante
-  - `enforce_max_dialogue_records()` — límite estricto en conteo de dialogue_events
+  - `enforce_max_dialogue_records()` — límite estricto en conteo de `dialogue_events`
   - `enforce_max_conversations()` — límite estricto en conteo de conversaciones activas
 - Todas registradas como tareas de limpieza periódicas en scepter `setup.rs`

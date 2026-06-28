@@ -14,7 +14,7 @@ subcategory = "webui"
 ## 전제 조건
 
 | 도구 | 최소 버전 | 비고 |
-|------|----------------|-------|
+| --- | --- | --- |
 | Rust | 1.85+ | Edition 2024 필수; <https://rustup.rs>를 통해 설치 |
 | Node.js | 20+ | LTS 권장 |
 | pnpm | 9+ | `corepack enable && corepack prepare pnpm@latest --activate` |
@@ -47,14 +47,14 @@ cp .env.example .env
 ### 서버
 
 | 변수 | 기본값 | 목적 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_HOST` | `0.0.0.0` | 수신 주소 |
 | `SHITTIM_CHEST_PORT` | `80` | 수신 포트 |
 
 ### 데이터베이스
 
 | 변수 | 기본값 | 목적 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `SHITTIM_CHEST_DATABASE_URL` | `postgresql://sc:pass@localhost:5432/shittim_chest` | PostgreSQL 연결 문자열 |
 | `SHITTIM_CHEST_DATABASE_MAX_CONNECTIONS` | `10` | SeaORM 연결 풀 크기 |
 
@@ -68,7 +68,7 @@ CREATE DATABASE shittim_chest OWNER sc;
 ### JWT 및 암호화
 
 | 변수 | 기본값 | 목적 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `JWT_SECRET` | `change-me-in-production` | scepter와 공유되는 비밀키; **일치해야 함** |
 | `JWT_EXPIRATION_SECONDS` | `3600` | 액세스 토큰 수명 (1시간) |
 | `JWT_REFRESH_EXPIRATION_SECONDS` | `604800` | 리프레시 토큰 수명 (7일) |
@@ -85,7 +85,7 @@ openssl rand -base64 32
 entelecheia 없이 shittim-chest를 독립적으로 사용하려면 다음을 설정:
 
 | 변수 | 목적 |
-|----------|---------|
+| --- | --- |
 | `LLM_DEFAULT_PROVIDER_ENDPOINT` | OpenAI 호환 API 엔드포인트 (예: `https://api.deepseek.com/v1`) |
 | `LLM_DEFAULT_PROVIDER_API_KEY` | 제공자의 API 키 |
 | `LLM_DEFAULT_PROVIDER_MODELS` | 쉼표로 구분된 모델 목록 (예: `deepseek-chat,deepseek-reasoner`) |
@@ -97,7 +97,7 @@ entelecheia 없이 shittim-chest를 독립적으로 사용하려면 다음을 �
 ### 원격 장치
 
 | 변수 | 기본값 | 목적 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `REMOTE_DEVICES_ENABLED` | `false` | 원격 장치 기능 활성화 |
 | `REMOTE_DEVICES_SCEPTER_SOCK` | `/run/entelecheia/device_stream.sock` | 장치 데이터용 Unix 소켓 |
 | `REMOTE_DEVICES_FRAME_BUFFER_SIZE` | `4194304` | 프레임 버퍼 크기 (바이트) |
@@ -107,7 +107,7 @@ entelecheia 없이 shittim-chest를 독립적으로 사용하려면 다음을 �
 ### GitHub OAuth
 
 | 변수 | 목적 |
-|----------|---------|
+| --- | --- |
 | `GITHUB_CLIENT_ID` | GitHub OAuth 앱 클라이언트 ID |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth 앱 클라이언트 비밀키 |
 | `GITHUB_REDIRECT_URI` | OAuth 콜백 URL (예: `https://your-domain/api/auth/github/callback`) |
@@ -115,7 +115,7 @@ entelecheia 없이 shittim-chest를 독립적으로 사용하려면 다음을 �
 ### Scepter 연결 (프록시 기능용)
 
 | 변수 | 기본값 | 목적 |
-|----------|---------|---------|
+| --- | --- | --- |
 | `ENTELECHEIA_SCEPTER_URL` | `http://localhost:8424` | scepter용 HTTP 엔드포인트 |
 | `ENTELECHEIA_SCEPTER_WS_URL` | `ws://localhost:8424` | scepter용 WebSocket 엔드포인트 |
 | `ENTELECHEIA_TUI_SOCK` | `/run/entelecheia/entelecheia.sock` | 트리거 전달용 Unix 소켓 |
@@ -123,7 +123,7 @@ entelecheia 없이 shittim-chest를 독립적으로 사용하려면 다음을 �
 ### 웹훅
 
 | 변수 | 목적 |
-|----------|---------|
+| --- | --- |
 | `WEBHOOK_GITHUB_SECRET` | GitHub 웹훅 검증용 HMAC 비밀키 |
 | `WEBHOOK_GITLAB_SECRET` | GitLab 웹훅 검증용 토큰 |
 | `WEBHOOK_PUBLIC_URL` | 웹훅 엔드포인트용 공개 URL |
@@ -140,7 +140,7 @@ just db-migrate   # 보류 중인 마이그레이션 적용
 shittim_chest_db는 사용자 대면 데이터를 소유합니다:
 
 | 테이블 | 목적 |
-|-------|---------|
+| --- | --- |
 | `auth_users` | argon2 비밀번호 해시가 있는 사용자 계정 |
 | `sessions` | 리프레시 토큰이 있는 활성 세션 |
 | `api_keys` | API 키 기록 (해시됨) |
@@ -187,7 +187,7 @@ cargo watch -x 'run --package shittim_chest -- server'
 ### API 엔드포인트 개요
 
 | 라우트 그룹 | 목적 |
-|-------------|---------|
+| --- | --- |
 | `/api/auth/*` | 로그인, 등록, GitHub OAuth, 리프레시, 로그아웃 |
 | `/api/chat/*` | 대화, 메시지, SSE/WS 스트리밍, 검색, 내보내기 |
 | `/api/providers/*` | LLM 제공자 CRUD, API 키 관리, 테스트 |
@@ -258,7 +258,7 @@ just migrate      # 데이터베이스 마이그레이션 실행
 
 ### 데이터베이스 연결 거부
 
-```
+```text
 error: connection to server at "localhost", port 5432 failed
 ```
 
@@ -266,7 +266,7 @@ error: connection to server at "localhost", port 5432 failed
 
 ### Scepter에 연결할 수 없음
 
-```
+```text
 error: error sending request for url (http://localhost:8424/...)
 ```
 
@@ -274,7 +274,7 @@ error: error sending request for url (http://localhost:8424/...)
 
 ### 브라우저에서 CORS 오류
 
-```
+```text
 Access-Control-Allow-Origin header is present on the requested resource
 ```
 

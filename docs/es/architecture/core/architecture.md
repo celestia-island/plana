@@ -18,7 +18,7 @@ subcategory = "core"
 Entelecheia ha completado su división principal: las capas de interfaz orientadas al usuario han sido migradas a un proyecto hermano **shittim-chest** (`../shittim-chest`). Entelecheia ahora se centra exclusivamente en el núcleo de orquestación multi-agente.
 
 | Repositorio | Alcance |
-|------------|-------|
+| --- | --- |
 | **entelecheia** | Orquestación Scepter, 16 agentes (12 L1 + 4 L2), runtime Cosmos/IEPL, 32 crates compartidas |
 | **shittim-chest** | arona (frontend UI de Chat), plana (UI de Administración), backend `shittim_chest` (proxy axum + auth + webhook), plugins IDE, apps Tauri |
 
@@ -40,7 +40,7 @@ El proyecto ha experimentado una descomposición importante: la antigua crate mo
 ## Verificación de Realidad de Componentes
 
 | Componente | Implementado | Solo diseño / Stub | Veredicto |
-|-----------|------------|-------------------|---------|
+| --- | --- | --- | --- |
 | **Scepter** (orquestación) | Auth/RBAC, enrutamiento de proveedores, ciclo de vida de agentes, ejecución de cadena de habilidades, endpoints WebSocket/HTTP, cifrado de claves. 351 pruebas unitarias en 49 archivos fuente. `AppState` tiene impls `FromRef` para 5 sub-estados; los manejadores de ciclo de vida de agentes usan `State<Arc<Persistence>>` | Superficie API completa. Procesador por lotes definido pero no instanciado. | 🟢 Real |
 | **TUI** | Ciclo de vida completo: splash, inicio Docker, línea de tiempo, modales de agentes, i18n (8 idiomas), configuración de proveedores, soporte de temas. 329 pruebas unitarias en 47 archivos fuente. `ComponentStore` dividido en 5 sub-estructuras; AppState reducido a 6 campos. Se conecta mediante socket Unix (preferido) o fallback WebSocket. | Paridad de características con API Scepter. `CancelRequest`/`ExecuteSudoCommand` aún no cableados. | 🟢 Real |
 | **CLI** | Gestión de servicios, chat, línea de tiempo, comandos de ciclo de vida de agentes. 28 pruebas unitarias. | Sin paridad de características con TUI | 🟡 Parcial |
@@ -162,7 +162,7 @@ El workspace compila 12 agentes de Capa1 (111 herramientas MCP) y 4 crates de Ca
 **Estado de implementación de herramientas:** Las 147 herramientas tienen todas implementaciones reales. Cero macros `unimplemented!()` o `todo!()` existen en ninguna parte del código base. Ninguna herramienta devuelve un `Ok(())` trivial sin lógica real.
 
 | Agente | Capa | Responsabilidad actual | Herramientas | Stubs | Cobertura de pruebas | Madurez |
-|-------|-------|------------------------|:-----:|:-----:|:------------:|----------|
+| --- | --- | --- |  ---  |  ---  |  ---  | --- |
 | **HapLotes** | 1 | Puerta de enlace, enrutamiento de mensajes, pegamento de transporte | 2 | 0 | 21 pruebas | 🟢 Real |
 | **SkoPeo** | 1 | Coordinación y flujo de ejecución orientado a LLM | 12 | 0 | 41 pruebas | 🟢 Real |
 | **HubRis** | 1 | Planificación, gestión de tareas, informes, ayudantes de issues | 8 | 0 | 65 pruebas | 🟢 Real |
@@ -218,11 +218,12 @@ El subsistema de contenedores está construido alrededor de un trait unificado `
 **Arquitectura de runtime de dos capas:**
 
 | Capa | Runtime | Predeterminado | Alcance |
-|-------|---------|---------|-------|
+| --- | --- | --- | --- |
 | **Externa** (orquestación) | Docker/Podman | `CONTAINER_RUNTIME=docker` | Contenedores de infraestructura: scepter, postgres. Creados mediante motor de inicio, verificados por health check del TUI. Requiere orquestación completa (redes, volúmenes, health checks). |
 | **Interna** (sandbox cosmos) | Youki/libcontainer | `COSMOS_CONTAINER_RUNTIME=youki` | Sandboxes de agente efímeros dentro de scepter. Ligeros, inicio rápido, restringidos por seccomp. |
 
 Los ayudantes de selección de runtime residen en `shared/infra_services/src/container_factory.rs`:
+
 - `outer_runtime_type()` — lee `CONTAINER_RUNTIME`, predeterminado a `docker`
 - `cosmos_runtime_type()` — lee `COSMOS_CONTAINER_RUNTIME`, predeterminado a `youki`
 
@@ -316,7 +317,7 @@ flowchart TB
 ```
 
 | Concepto | Archivo(s) Fuente |
-|---------|---------------|
+| --- | --- |
 | Construcción de backend | `shared/infra_services/src/container_factory.rs` |
 | Trait `ContainerOps` | `shared/container/src/ops.rs` |
 | Docker create/fork | `shared/container/src/lifecycle.rs`, `image_ops.rs` |
@@ -330,7 +331,7 @@ flowchart TB
 ### Estado de Cableado de Rutas de Extremo a Extremo
 
 | # | Ruta | Estado | Puntos de Conexión Clave |
-|---|------|--------|----------------------|
+| --- | --- | --- | --- |
 | 1 | **Inicio Scepter → WS → cadena de habilidades** | 🟢 Completamente cableado | `scepter/src/app/setup.rs:876-1653`, `scepter/src/lib.rs:139-361`, `scepter/src/tui_connection/core/message_dispatch.rs:10-140` |
 | 2 | **Inicio TUI → conexión scepter** | 🟢 Completamente cableado | Socket Unix (preferido) o fallback WebSocket con handshake completo + sincronización de estado |
 | 3 | **Pipeline IEPL (SWC→Boa→MCP)** | 🟡 Parcialmente cableado | Transpilador funcional (37 pruebas). Despacho Boa+MCP cableado. SWC→Boa puenteable mediante `shared_iepl::client` pero no en contenedor. |
@@ -342,7 +343,7 @@ flowchart TB
 ### Aislamiento Dual de Sandbox
 
 | Canal de ejecución | Puede llamar funciones de herramienta (mediante importaciones de módulos ES) | Tipo de sandbox | Propósito |
-|-------------------|--------------------------|--------------|---------|
+| --- | --- | --- | --- |
 | `neikos.exec()` | Sí (mediante importaciones de módulos ES) | Contexto persistente Boa | Orquestación de habilidades (despacho agente-a-agente) |
 | `skemma.script_exec()` | No | Sandbox de proceso independiente | Backends de herramientas MCP (computación/I/O) |
 
@@ -388,7 +389,7 @@ Las características de conocimiento y memoria existen en una forma más simple 
 ## Deuda de Arquitectura
 
 | Problema | Prioridad | Esfuerzo Estimado |
-|-------|----------|-----------------|
+| --- | --- | --- |
 | ~60 patrones `.map_err(...to_string())` en 21 archivos (8 exactos `\|e\| e.to_string()`, 52 variantes más amplias). Concentrados en límites de adaptador (`shared/adapter`, `shared/llm_provider`) y clientes de API externa (`docker_client`, `plugin_loader`). Patrón de adaptador aceptable en límites; el código interno debería usar errores tipados. | P4 | preocupación a nivel de biblioteca |
 | Metadatos `maturity: Stub` en herramientas SE Clásicas es engañoso — las 7 tienen implementaciones reales (analizadores basados en subprocesos, detectores de patrones, métricas de código, refactorización extract-function). Deberían elevarse a `Experimental` o superior. | P4 | solo metadatos |
 | Analizador `SensorBatch` definido (`trigger_intercept.rs:58-70`) pero no cableado en el bucle de despacho de mensajes. Estructura `BatchProcessor` definida pero no instanciada en la configuración de scepter. La ruta de ingesta de telemetría existe pero está desconectada. | P3 | trabajo de cableado |
@@ -408,18 +409,26 @@ Las características de conocimiento y memoria existen en una forma más simple 
 ### Qué Está Cableado (Entelecheia proporciona la capa de seguridad de ejecución)
 
 - **Hooks de auto-cirugía** (`scepter/.../skill_chain/execution/surgery_hooks.rs`):
-  `PreSurgeryCheckpoint` (registra git HEAD antes de la cirugía), `PostSurgeryRollback`
-  (reversión automática en caso de fallo), lógica de redespliegue, `attempt_rollback`. Registrados en el
-  gestor de hooks.
+
+`PreSurgeryCheckpoint` (registra git HEAD antes de la cirugía), `PostSurgeryRollback`
+(reversión automática en caso de fallo), lógica de redespliegue, `attempt_rollback`. Registrados en el
+gestor de hooks.
+
 - **Bucle de tick YOLO**: cadencias con tiempo limitado (Periódico 5 min / Diario 6 h / Estratégico
-  7 d). Habilidades: `yolo_cycle_report`, `regression_monitor` (predicción de degradación de nivel Diario
-  con lógica de decisión de bifurcación). Heurística de bifurcación documentada en
-  `res/prompts/system/yolo-fork-pattern.md` — cuando un tick descubre trabajo que no puede terminar
-  dentro del presupuesto, bifurca una sesión `#demiurge.xxx` en lugar de truncar.
+
+7 d). Habilidades: `yolo_cycle_report`, `regression_monitor` (predicción de degradación de nivel Diario
+con lógica de decisión de bifurcación). Heurística de bifurcación documentada en
+`res/prompts/system/yolo-fork-pattern.md` — cuando un tick descubre trabajo que no puede terminar
+dentro del presupuesto, bifurca una sesión `#demiurge.xxx` en lugar de truncar.
+
 - **Coordinador de fusión serial**: bloqueado por archivo, feature-gated; enruta los commits post-cadena
-  de noa a través de `run_exclusive` para que las bifurcaciones YOLO concurrentes no corrompan el historial.
+
+de noa a través de `run_exclusive` para que las bifurcaciones YOLO concurrentes no corrompan el historial.
+
 - **Bifurcación/fusión de contenedores** para experimentación segura (Docker/Podman externo + sandbox
-  interno Youki).
+
+interno Youki).
+
 - El commit hito `37863366e` ("初步实现自主思考能力") aterrizó el bucle de extremo a extremo.
 
 ### Arquitectura: Actual (encendido) vs. Auto-Arranque Puro (objetivo)
@@ -454,7 +463,7 @@ Reintroducir esos dos mecanismos es lo que cerraría la brecha de auto-arranque.
 ### Brechas Restantes que Bloquean el Auto-Arranque Puro
 
 | Brecha | Estado Actual | Requerido | Prioridad |
-|-----|---------------|----------|----------|
+| --- | --- | --- | --- |
 | **Analizador interno de documentos de plan** | El bucle funciona solo porque una plataforma de agente externa lee ARCHITECTURE.md y descompone tareas por sí misma. No existe habilidad interna. | Habilidad `hubris::read_iteration_plan`: parsear la tabla de backlog → devolver `Vec<BacklogItem>` estructurado para que el coordinador propio de Entelecheia pueda impulsar el bucle. | P0 |
 | **Aplicación de separación coordinador-trabajador** | La plataforma externa proporciona su propia separación planificador/trabajador; el pipeline de Entelecheia no la aplica. Una cadena de habilidades de coordinador aún puede llamar a `file_write`/`host_command_exec` directamente. | Añadir campo `role` al frontmatter de habilidades; eliminar herramientas mutantes de las cadenas `role = "coordinator"` en el constructor de lista blanca de herramientas de `pipeline.rs`. | P0 |
 | **Verificación de criterios de aceptación** | `PostSurgeryRollback` verifica `cargo check --workspace` (nivel de build) pero no criterios de aceptación específicos de tarea. Cableado parcial en `prompt.rs`. | Namespace de hook `verify_acceptance_criteria`: cada elemento del backlog declara criterios verificables (pruebas pasan, archivo existe, función implementada). | P1 |
@@ -468,7 +477,7 @@ Reintroducir esos dos mecanismos es lo que cerraría la brecha de auto-arranque.
 > el próximo trabajo accionable. Actualizar `status` después de completar.
 
 | ID | Título | Estado | Criterios de Aceptación | Notas |
-|----|-------|--------|---------------------|-------|
+| --- | --- | --- | --- | --- |
 | IB-01 | Habilidad `hubris::read_iteration_plan` | **reemplazada** | Documento de habilidad en `res/prompts/agents/hubris/skills/read_iteration_plan.md`; parsea la tabla de backlog de ARCHITECTURE.md; devuelve lista de tareas estructurada | El bucle se encendió sin esto — la plataforma de agente externa lee el plan directamente. Reintroducirlo es necesario solo para **auto-arranque puro**. |
 | IB-02 | Aplicación de lista blanca de herramientas del coordinador | **reemplazada** | La cadena de habilidades del coordinador no puede invocar `file_write` / `host_command_exec` directamente; solo mediante sub-agente despachado | Igual que IB-01: la plataforma externa proporciona su propia separación planificador/trabajador. Necesario solo para auto-arranque puro. |
 | IB-03 | Namespace de hook `verify_acceptance_criteria` | **parcial** | Namespace de hook registrado; los criterios de cada elemento del backlog se verifican post-cadena; abortar en caso de fallo | Cableado parcial en `skill_chain/prompt.rs`. La verificación a nivel de build (`cargo check`) funciona; los criterios a nivel de tarea aún no. |
@@ -487,7 +496,7 @@ Reintroducir esos dos mecanismos es lo que cerraría la brecha de auto-arranque.
 > métricas de auto-arranque puro son N/A hasta que IB-01/IB-02 sean reintroducidos.
 
 | Métrica | Objetivo | Actual |
-|--------|--------|---------|
+| --- | --- | --- |
 | Compilación del workspace (`cargo check --workspace`) | Limpio con 0 errores | ✅ Limpio (1 advertencia dead_code) |
 | Herramientas MCP con implementaciones reales | 100% | 99.3% (147/148) |
 | Herramientas stub | 0 | 0 |
@@ -546,7 +555,7 @@ flowchart LR
 > **Última verificación**: 2026-06-14 — 3 brechas listadas anteriormente como abiertas ahora están implementadas.
 
 | Brecha | Actual | Requerido | Prioridad |
-|-----|---------|----------|----------|
+| --- | --- | --- | --- |
 | **Puente evento de sensor → plan Hubris** | Hubris recibe prompts de usuario mediante TUI/CLI | Hubris debe aceptar `TriggerEvent { topic: "modbus.19.h2_leak_conc.hh" }` como evento de inicio de plan. `TriggerDispatcher::dispatch_event()` llama a habilidades suscritas; el inicio de plan Hubris de extremo a extremo desde eventos de sensor aún no verificado en prueba de integración. | P0 |
 | **Ingesta de lotes de telemetría cableada** | `BatchProcessor` definido pero no instanciado; el analizador `try_intercept_sensor_batch()` existe pero no se llama en el bucle de despacho | Cablear el manejador `Sensor.Batch` en el despacho de mensajes → `BatchProcessor` → almacén de telemetría | P1 |
 | **Jerarquía de alarmas en OreXis** | ✅ **Completamente implementada.** `alarm_tools.rs`: establecer/eliminar/reconocer reglas de alarma (niveles HH/H/L/LL/ROC, umbral, histéresis, antirrebote, escalado: log→notify_agent→auto_correct→human_notify→emergency_shutdown). `SharedAlarmPolicyStore` funcional. Anulaciones de estación soportadas. | Falta: precargar 97 códigos de fallo de hydro-tin-monitor. | P2 |
@@ -607,7 +616,7 @@ flowchart TB
 De `/mnt/sdb1/hydro-tin-monitor/doc/通信端口说明 25.8.7.md`:
 
 | Dispositivo | Estación | Baudios | Registros | Notas |
-|--------|---------|------|-----------|-------|
+| --- | --- | --- | --- | --- |
 | Electrolizador AEM (2 Nm3/h) | 21 | 9600 | ~32 IR (0x04), float 32-bit BE | Temperaturas, presiones, caudales, voltajes |
 | Electrolizador ALK (3 Nm3/h) | 20 | 9600 | ~32 IR (0x04), float 32-bit BE | Mismo formato que AEM |
 | Electrolizador PEM | 2 | 9600 | ~17 HR (0x03), signed 16-bit | Presiones, calidad del agua, fuga, voltaje |

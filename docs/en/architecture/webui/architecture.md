@@ -17,7 +17,7 @@ subcategory = "webui"
 shittim-chest is a hybrid Cargo + pnpm monorepo. It owns the user-facing layer that wraps entelecheia's agent orchestration core. The two projects communicate via JWT-authenticated HTTP/WebSocket — shittim-chest never directly accesses entelecheia's database for agent operations.
 
 | Component | Tech | Role | Status |
-|-----------|------|------|--------|
+| --- | --- | --- | --- |
 | **core** | Rust + Axum | Unified backend: auth (JWT + OAuth), independent LLM routing, chat API, image gen, webhook ingress, scepter proxy, remote device signaling, channel integrations, billing, RBAC, workspaces | 🟢 Implemented |
 | **cli** | Rust | Docker orchestrator: dev, up, down, migrate, logs, status | 🟢 Implemented |
 | **webui** | Vue 3 + Vite (TSX) | Frontend: chat surface, admin panel (20+ views), 2D SCADA topology, 3D holographic preview | 🟡 Partial |
@@ -108,6 +108,7 @@ All modules live under `packages/core/src/`. The backend is ~34K lines across 13
 ### Auth (`packages/core/src/auth/`)
 
 Fully implemented:
+
 - Username/password registration and login with argon2 hashing
 - JWT access + refresh token system with rotation
 - GitHub OAuth 2.0 integration (redirect + callback, auto-creates users)
@@ -117,6 +118,7 @@ Fully implemented:
 ### Chat (`packages/core/src/chat/`)
 
 Fully implemented:
+
 - Conversation CRUD (create, list, get, update, delete)
 - Message send/receive with LLM routing
 - SSE (Server-Sent Events) streaming responses (`/api/chat/stream`)
@@ -127,6 +129,7 @@ Fully implemented:
 ### LLM (`packages/core/src/llm/`)
 
 Fully implemented:
+
 - OpenAI-compatible HTTP client for chat and image generation
 - Multi-provider router with priority-based selection
 - Provider CRUD with API key encryption (AES-256-GCM)
@@ -136,12 +139,14 @@ Fully implemented:
 ### Generation (`packages/core/src/generation/`)
 
 Fully implemented:
+
 - Image generation endpoints (`/api/generation/images`, `/api/generation/models`)
 - Uses configured LLM providers
 
 ### Webhook (`packages/core/src/webhook.rs`)
 
 Fully implemented (~1,000+ lines):
+
 - GitHub webhook with HMAC-SHA256 validation
 - GitLab webhook with token validation
 - Gitee webhook with HMAC + token fallback
@@ -154,6 +159,7 @@ Fully implemented (~1,000+ lines):
 ### Devices (`packages/core/src/devices/`)
 
 Signaling relay implemented (requires external scepter for WebRTC handshake):
+
 - REST endpoints for device listing, detail, session CRUD
 - WebSocket signaling relay for WebRTC — forwards SDP offers/ICE candidates to scepter via Unix socket; the SDP answer must come from scepter (`forward_sdp_to_scepter` returns empty string if scepter is unreachable)
 - Terminal relay (via WebSocket to xterm.js) — forwards keystrokes to scepter
@@ -167,6 +173,7 @@ Signaling relay implemented (requires external scepter for WebRTC handshake):
 ### Channels (`packages/core/src/channel/`)
 
 Fully implemented (22 module files + `mod.rs`):
+
 - 12 platform connectors: Telegram, Discord, Slack, Lark/Feishu, QQ Bot, WeCom, IRC, Matrix, Mattermost, Google Chat, Microsoft Teams, LINE
 - Per-platform real API client implementations
 - DM policy controls (`dm_policy.rs`)
@@ -180,7 +187,7 @@ Fully implemented (22 module files + `mod.rs`):
 ### Additional Backend Modules
 
 | Module | Description |
-|--------|-------------|
+| --- | --- |
 | `proxy/` | Scepter HTTP/WS bridge (`ws_bridge.rs` is the largest single file in the codebase) |
 | `rbac/` | Role-based access control |
 | `workspace/` | Workspace management |
@@ -211,7 +218,7 @@ Vue 3 + Vite frontend written in TSX (via `@vitejs/plugin-vue-jsx` — no `.vue`
 #### Views
 
 | View group | Description |
-|------------|-------------|
+| --- | --- |
 | `demiurge/` | Main chat surface (DemiurgeView) — streaming responses, agent status, tool calls |
 | `auth/` | LoginView, RegisterView, SetupView |
 | `admin/` | 20+ admin views: Dashboard, Providers, Agents, RBAC, Webhooks, Channels, System, Device Models, Devices Settings, Skills, MCP Tools, OAuth Providers, Token Usage, Workspaces, Voice Service, Resource Quota, etc. |
@@ -221,7 +228,7 @@ Vue 3 + Vite frontend written in TSX (via `@vitejs/plugin-vue-jsx` — no `.vue`
 #### Component system
 
 | Directory | Description |
-|-----------|-------------|
+| --- | --- |
 | `base/` | 50+ `S`-prefixed design-system components (SButton, SCard, SModal, STable, STabs, STimeline, STreeView, SMarkdownRenderer, SMorphingTabs, etc.) |
 | `chat/` | Chat-specific components (ChatBubble, AgentStatusBar, FloatingChatBar, ThinkingDots, ReportViewer, NodeMinimap, etc.) |
 | `header/` | Header components (breadcrumb bar, mode switch) |
@@ -237,7 +244,7 @@ All CSS-driven motion and per-frame sampling in the webui runs through **one sha
 The bus exposes four work-registration APIs plus two side-channel flags:
 
 | API | Purpose | Frame model |
-|-----|---------|-------------|
+| --- | --- | --- |
 | `onFrame(cb, priority?)` | Register a per-frame callback. `priority` ∈ `sync` / `normal` / `idle`. Returns `{ disconnect() }`. | Invoked every frame (sync), throttled to ~30 Hz budget (normal), or ~0.5 Hz budget (idle). |
 | `onceFrame(cb)` | Run a callback on the next frame, then auto-disconnect. Fire-and-forget (no cancellation handle). | One-shot. |
 | `scheduleFrame(cb)` | Run a callback on the next frame; returns `{ disconnect() }` to cancel before it fires. For the "coalesce many calls into one post-frame callback" throttle pattern (replaces the hand-rolled `if(rafId)cancel; rafId=rAF(cb)` idiom). | One-shot (cancellable). |
@@ -274,7 +281,7 @@ The DOM bus is intentionally separate from **`packages/webui/src/composables/thr
 The webui consumes its own `src/` through **two deliberately distinct path aliases** (both declared in `vite.config.ts` + `tsconfig.json`), and the whole codebase obeys the split:
 
 | Alias | Resolves to | Use it for |
-|-------|-------------|-----------|
+| --- | --- | --- |
 | `@/<path>` | `src/*` | **Internal deep imports** — reaching a specific module directly (`@/api/client`, `@/composables/useReportedTransition`, `@/theme/animationBus`). ~600 sites; never used as a bare barrel. |
 | `@celestia-island/shared_ui` | `src/` (→ `src/index.ts` barrel) | **The curated public API surface only** — always the bare specifier, never a code subpath. ~92 sites. |
 
@@ -295,13 +302,11 @@ The webui uses **`vue-i18n`** (not a custom implementation) with **11 declared l
 Each locale has **17 namespace JSON files** (admin, auth, chat, cmd, common, devices, errors, footer, help, logs, models, reports, skills, timeline, tokenUsage, tools, workspace). In-app locale switching is available via the header locale picker.
 
 > **Translation completeness varies significantly** (audited against 950 English reference keys):
->
 > | Tier | Locales | English passthrough | Key gap |
 > |------|---------|-------------------|---------|
 > | Well translated | `ja`, `ko`, `zhs`, `zht` | ~5% | `zhs` missing 18 keys; others missing 112 |
 > | Mostly translated | `de`, `fr`, `pt`, `es`, `ar` | ~9–14% | Missing shared 112-key block |
 > | Effectively untranslated | `ru` | **~76%** | Full key parity, but values are verbatim English |
->
 > The shared 112-key gap covers newer features: `admin.agents.*`, `admin.deviceModels.*`, `admin.projects.*`, `admin.rbac.*`, `admin.resourceQuota.*`, `auth.protocol.*`, `chat.cruise.*`, `chat.voice_*`.
 
 ## RBAC Architecture
@@ -311,7 +316,7 @@ Each locale has **17 namespace JSON files** (admin, auth, chat, cmd, common, dev
 Data ownership is split between the two projects to maintain clean boundaries:
 
 | Data | Database | Owner | Rationale |
-|------|----------|-------|-----------|
+| --- | --- | --- | --- |
 | User credentials (password hash, OAuth, API keys) | shittim_chest_db | shittim-chest | Presentation layer owns login flow |
 | Active sessions, refresh tokens | shittim_chest_db | shittim-chest | Session management is frontend concern |
 | Conversations, messages | shittim_chest_db | shittim-chest | Chat data is user-facing |
@@ -323,11 +328,11 @@ Data ownership is split between the two projects to maintain clean boundaries:
 ### Auth Flow
 
 1. User authenticates through core (password / OAuth)
-2. core validates credentials against shittim_chest_db (argon2 for passwords)
-3. core queries entelecheia for user's group permissions (or reads from TTL cache)
-4. core issues JWT with `{ sub: user_id, groups: [...] }`
-5. All subsequent requests carry JWT → core validates → forwards to scepter for proxy routes
-6. scepter validates JWT (shared secret via env var) and enforces group-level permissions
+1. core validates credentials against `shittim_chest_db` (argon2 for passwords)
+1. core queries entelecheia for user's group permissions (or reads from TTL cache)
+1. core issues JWT with `{ sub: user_id, groups: [...] }`
+1. All subsequent requests carry JWT → core validates → forwards to scepter for proxy routes
+1. scepter validates JWT (shared secret via env var) and enforces group-level permissions
 
 ## Cross-Project Dependencies
 
@@ -358,7 +363,7 @@ The webui consumes the `arona` crate's TS bindings through the `@celestia-island
 The following features have real implementations in shittim-chest but require a running [entelecheia/scepter](https://github.com/celestia-island/entelecheia) instance for full functionality:
 
 | Feature | What works | What needs scepter |
-|---------|-----------|-------------------|
+| --- | --- | --- |
 | Topology SCADA | WS transport, SVG rendering, breadcrumb navigation | Live telemetry data (`topology.*` RPCs forwarded to scepter) |
 | Holographic 3D | GLB model loading, scene config, camera control | Telemetry parameter chips |
 | Device WebRTC | Signaling relay, JWT auth, ICE forwarding | SDP answer generation |
@@ -373,7 +378,7 @@ See the [i18n section](#i18n) above for the full audit. Summary: `ru` is structu
 
 ### Test Coverage
 
-The backend has integration tests for auth, chat, webhook HMAC validation, billing (8 Stripe signature tests), and workspace APIs. The frontend has unit tests for composables (`useToast`, `useConfirm`, `useSolarTime`, `useAsyncData`) and utilities (validation, uuid, errors). 
+The backend has integration tests for auth, chat, webhook HMAC validation, billing (8 Stripe signature tests), and workspace APIs. The frontend has unit tests for composables (`useToast`, `useConfirm`, `useSolarTime`, `useAsyncData`) and utilities (validation, uuid, errors).
 
 **Untested areas:** Most CRUD admin routes, channel connector API calls (all 12 connector files have zero tests; only `crypto.rs` and `rate_limit.rs` are tested), device signaling relay, audio module (940 lines, zero tests), topology/holographic pages, IDE plugin runtimes, Tauri/HarmonyOS app flows. Coverage is thin relative to ~65K lines of code.
 
@@ -382,7 +387,7 @@ The backend has integration tests for auth, chat, webhook HMAC validation, billi
 The `skills.rs` and `tools.rs` REST endpoints remain fallback-only stubs (return `[]`), but the **primary WS path is fully wired** through the generalized notification-response bridge in `ws_bridge.rs`. The bridge translates webui request-response methods to scepter's notification-style paired actions:
 
 | WS method | Scepter pair | Status |
-|-----------|-------------|--------|
+| --- | --- | --- |
 | `skills.list` | `Skill.ListSkills` → `SkillsListResponse` | ✅ Bridged (field mapper) |
 | `tools.list` | `Mcp.ListTools` → `ToolsListResponse` | ✅ Bridged (field mapper) |
 | `layer2.agents.list` | `Tui.Layer2AgentList` → Response | ✅ Bridged (identity) |
@@ -400,7 +405,7 @@ The backend has a `SHITTIM_CHEST_MOCK_MODE` env flag (`config.rs`) that skips JW
 ## Licensing
 
 | Parameter | Value |
-|-----------|-------|
+| --- | --- |
 | Commercial license | Business Source License 1.1 (BUSL-1.1) |
 | Non-commercial use | Synthetic Source License 1.0 (SySL-1.0) |
 | Additional Use Grant | Internal production, academic, government, and non-commercial use allowed |

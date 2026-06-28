@@ -672,4 +672,3 @@ flowchart LR
 | Config rollback | Support rollback to historical versions | Medium |
 | Smart recommendations | Recommend configs based on usage patterns | Low |
 | GitHub巡回 Agent | Auto-create PRs to update configs | High |
-

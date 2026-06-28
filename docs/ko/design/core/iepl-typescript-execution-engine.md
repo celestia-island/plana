@@ -13,8 +13,8 @@ subcategory = "core"
 IEPL (In-Execution Prompt Language) 실행 엔진은 기존 Cosmos/SkeMma JS 런타임에 대한 아키텍처 업그레이드로, LLM 생성 실행 코드를 JavaScript에서 TypeScript로 업그레이드합니다. 핵심 변경사항은 다음과 같습니다:
 
 1. **내장 SWC 크레이트**: LLM 생성 TypeScript의 엄격한 구문 검사, 타입 제거, 트랜스파일
-2. **Rust derive → TypeScript 타입 생성**: `ts-rs`를 통해 Rust 구조체를 `.d.ts` 선언 파일로 자동 내보내기
-3. **타입 안전 스킬 프롬프트**: 하드코딩된 함수 목록 대신 완전한 `.d.ts` 선언을 주입하여 견고성 대폭 향상
+1. **Rust derive → TypeScript 타입 생성**: `ts-rs`를 통해 Rust 구조체를 `.d.ts` 선언 파일로 자동 내보내기
+1. **타입 안전 스킬 프롬프트**: 하드코딩된 함수 목록 대신 완전한 `.d.ts` 선언을 주입하여 견고성 대폭 향상
 
 ## 현재 상태 및 문제점
 
@@ -30,7 +30,7 @@ flowchart LR
 ### 기존 문제점
 
 | 문제 | 설명 |
-|---------|-------------|
+| --- | --- |
 | **타입 제약 없음** | LLM 생성 JS 코드에 정적 타입 정보가 전무; 매개변수 오타는 런타임에만 포착됨 |
 | **취약한 인터페이스 설명** | `build_report_tool_instruction()`이 `- file_read (imported from 'kalos')`와 같은 텍스트 목록을 하드코딩, 매개변수 타입이나 반환 값 구조를 표현할 수 없음 |
 | **사전 검증 없음** | LLM 코드가 Boa `eval()`로 바로 전달됨; 구문 오류는 실행 시점에만 발견됨 |
@@ -40,7 +40,7 @@ flowchart LR
 ### 관련 주요 파일
 
 | 파일 | 현재 책임 |
-|------|----------------------|
+| --- | --- |
 | `packages/agents/skemma/src/js_runtime/runtime.rs` | Boa JS 런타임, `exec()`가 `eval()`을 직접 호출 |
 | `packages/agents/skemma/src/mcp/tools/script_exec.rs` | `"javascript"` 언어만 허용 |
 | `packages/cosmos/src/bin/cosmos/js_repl/js_commands.rs` | `globalThis.$agent.tool = (...) => ...`을 동적 생성 |
@@ -81,7 +81,7 @@ flowchart TB
 ### 1. Rust → TypeScript 타입 생성: `ts-rs`
 
 | 속성 | 값 |
-|-----------|-------|
+| --- | --- |
 | 크레이트 | `ts-rs` (Aleph-Alpha/ts-rs) |
 | 버전 | ≥ 12.0 |
 | 스타 | 1,772 |
@@ -100,7 +100,7 @@ flowchart TB
 **제외된 대안:**
 
 | 크레이트 | 제외 이유 |
-|-------|---------------------|
+| --- | --- |
 | `specta` | Tauri/rspc 생태계 편향; 이 시나리오에서 함수 타입 내보내기 불필요 |
 | `typeshare` | CLI 주도, CI 통합 불편; `type` 대신 `interface` 생성 (LLM 프롬프트에 실용적 차이 없음) |
 | `tsify` | `wasm-bindgen`에 결합; 이 프로젝트는 WASM 워크플로우가 아님 |
@@ -108,7 +108,7 @@ flowchart TB
 ### 2. TypeScript 파싱 및 트랜스파일: SWC
 
 | 크레이트 | 목적 |
-|-------|---------|
+| --- | --- |
 | `swc_core` (기능: `ecma_parser`) | TS 소스를 AST로 파싱 |
 | `swc_core` (기능: `ecma_ast`) | AST 노드 타입 |
 | `swc_core` (기능: `ecma_visit`) | AST 순회/변환 |
@@ -148,16 +148,16 @@ ts-rs = { version = "12", features = ["serde-compat", "format"] }
 // packages/shared/src/mcp_types/kalos.rs
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileReadResult {
     pub path: String,
     pub size_bytes: u64,
     pub content: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+# [derive(Debug, Clone, Serialize, Deserialize, TS)]
+# [ts(export)]
 pub struct FileListResult {
     pub path: String,
     pub total_count: usize,
@@ -173,7 +173,7 @@ pub struct FileListResult {
 // packages/shared/src/mcp_types/enums.rs
 // 기존 str_enum! 매크로 생성 열거형에 추가 TS derive 필요
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+# [derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 pub enum FileType {
     File,
     Directory,
@@ -296,7 +296,7 @@ swc_core = { version = "65", features = [
 
 `packages/agents/skemma/src/` 하위에 새 `iepl/` 모듈:
 
-```
+```text
 packages/agents/skemma/src/iepl/
   mod.rs     → 모듈 진입점
   engine.rs  → IEPL 핵심 엔진 (파싱 → 검증 → 제거 → 코드젠)
@@ -501,7 +501,8 @@ parts.push(format!("\n사용 가능한 JS API:\n{}", items.join("\n")));
 ```
 
 이것이 생성하는 것:
-```
+
+```text
 사용 가능한 JS API:
 - file_read (imported from 'kalos')
 - file_write (imported from 'kalos')
@@ -536,65 +537,69 @@ pub(super) fn build_report_tool_instruction(
 ```typescript
 TypeScript 코드를 작성하고 있습니다. 사용 가능한 API 타입 선언:
 
-```typescript
+```
+
 // === 타입 (Rust에서 자동 생성) ===
-type FileReadResult = { path: string; size_bytes: number; content: string };
-type FileListResult = { path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> };
-type FileWriteResult = { path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" };
+type `FileReadResult` = { path: string; `size_bytes`: number; content: string };
+type `FileListResult` = { path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> };
+type `FileWriteResult` = { path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" };
 
 // === API (수기 작성) ===
 interface KalosApi {
-  file_read(params: { path: string }): Promise<FileReadResult>;
-  file_write(params: { path: string; content: string }): Promise<FileWriteResult>;
-  file_list(params: { path: string }): Promise<FileListResult>;
-  // ...
+`file_read`(params: { path: string }): Promise<`FileReadResult`>;
+`file_write`(params: { path: string; content: string }): Promise<`FileWriteResult`>;
+`file_list`(params: { path: string }): Promise<`FileListResult`>;
+// ...
 }
 
 declare const $kalos: KalosApi;
-```
+
+```text
 
 #### 3.3 .d.ts 로더
 
-```rust
+```
+
 // packages/shared/src/iepl/decl_loader.rs
 
-use include_dir::{Dir, include_dir};
+use `include_dir`::{Dir, `include_dir`};
 
-static IEPL_BINDINGS: Dir = include_dir!("$CARGO_MANIFEST_DIR/../../../bindings");
+static IEPL_BINDINGS: Dir = `include_dir`!("$CARGO_MANIFEST_DIR/../../../bindings");
 
-pub struct IeplDeclLoader;
+pub struct `IeplDeclLoader`;
 
-impl IeplDeclLoader {
-    /// related_tools로 필터링된 필수 .d.ts 선언 불러오기
-    pub fn load_for_tools(related_tools: &[RelatedTool]) -> String {
-        let mut declarations = Vec::new();
+impl `IeplDeclLoader` {
+/// related_tools로 필터링된 필수 .d.ts 선언 불러오기
+pub fn `load_for_tools`(`related_tools`: &[`RelatedTool`]) -> String {
+let mut declarations = Vec::new();
 
-        // 관련된 에이전트 집합 수집
-        let agents: std::collections::HashSet<&str> = related_tools
-            .iter()
-            .map(|t| t.agent_name.as_str())
-            .collect();
+// 관련된 에이전트 집합 수집
+let agents: std::collections::HashSet<&str> = `related_tools`
+.iter()
+.map(|t| t.agent_name.as_str())
+.collect();
 
-        for agent in &agents {
-            // 자동 생성 타입 선언 불러오기
-            if let Some(types_file) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(types_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-
-            // 수기 작성 API 선언 불러오기
-            if let Some(api_file) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
-                if let Ok(content) = std::str::from_utf8(api_file.contents()) {
-                    declarations.push(content.to_string());
-                }
-            }
-        }
-
-        declarations.join("\n\n")
-    }
+for agent in &agents {
+// 자동 생성 타입 선언 불러오기
+if let Some(`types_file`) = IEPL_BINDINGS.get_file(format!("types/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(types_file.contents()) {
+declarations.push(content.to_string());
 }
-```
+}
+
+// 수기 작성 API 선언 불러오기
+if let Some(`api_file`) = IEPL_BINDINGS.get_file(format!("api/{}.d.ts", agent)) {
+if let Ok(content) = std::str::`from_utf8`(api_file.contents()) {
+declarations.push(content.to_string());
+}
+}
+}
+
+declarations.join("\n\n")
+}
+}
+
+```text
 
 #### 3.4 JS 네임스페이스 빌더 업그레이드
 
@@ -604,24 +609,28 @@ impl IeplDeclLoader {
 
 ### 현재 (JavaScript)
 
-```mermaid
-flowchart TD
-    Meta["스킬 메타데이터\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta --> Build["build_report_tool_instruction\n→ '- file_read (imported)'\n→ '- file_write (imported)'\n(하드코딩된 텍스트)"]
-    Build -->|"시스템 프롬프트에\n주입"| LLM1["LLM이 JavaScript 생성\nfile_read({path:'x'})\n(타입 검사 없음)"]
-    LLM1 --> Boa1["Boa eval() 직접 실행\n(사전 검증 없음)"]
 ```
+
+flowchart TD
+Meta["스킬 메타데이터\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta --> Build["`build_report_tool_instruction`\n→ '- `file_read` (imported)'\n→ '- `file_write` (imported)'\n(하드코딩된 텍스트)"]
+Build -->|"시스템 프롬프트에\n주입"| LLM1["LLM이 JavaScript 생성\`nfile_read`({path:'x'})\n(타입 검사 없음)"]
+LLM1 --> Boa1["Boa eval() 직접 실행\n(사전 검증 없음)"]
+
+```text
 
 ### 목표 (TypeScript + IEPL)
 
-```mermaid
-flowchart TD
-    Meta2["스킬 메타데이터\nrelated_tools:\n- kalos.file_read\n- kalos.file_write"]
-    Meta2 --> Loader["IeplDeclLoader\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(완전한 타입 선언)"]
-    Loader -->|"시스템 프롬프트에\n주입"| LLM2["LLM이 TypeScript 생성\nconst r: FileReadResult =\n  await file_read(\n    {path: 'x'}\n  );\n(타입 제약됨)"]
-    LLM2 --> IEPL["IEPL 엔진\n1. SWC 파싱 → AST (구문 검사)\n2. AST 검증기 (안전 검사)\n3. 타입 제거 → JS (타입 제거)\n4. 코드젠 → JS 문자열"]
-    IEPL --> Boa2["Boa eval() 실행"]
 ```
+
+flowchart TD
+Meta2["스킬 메타데이터\`nrelated_tools`:\n- kalos.file_read\n- kalos.file_write"]
+Meta2 --> Loader["`IeplDeclLoader`\n→ types/kalos.d.ts\n→ api/kalos.d.ts\n(완전한 타입 선언)"]
+Loader -->|"시스템 프롬프트에\n주입"| LLM2["LLM이 TypeScript 생성\nconst r: `FileReadResult` =\n  await `file_read`(\n    {path: 'x'}\n  );\n(타입 제약됨)"]
+LLM2 --> IEPL["IEPL 엔진\n1. SWC 파싱 → AST (구문 검사)\n2. AST 검증기 (안전 검사)\n3. 타입 제거 → JS (타입 제거)\n4. 코드젠 → JS 문자열"]
+IEPL --> Boa2["Boa eval() 실행"]
+
+```text
 
 ## 견고성 개선 분석
 
@@ -642,24 +651,29 @@ flowchart TD
 LLM이 보는 현재 프롬프트 조각:
 
 ```
+
 사용 가능한 JS API:
-- file_read (imported from 'kalos')
-- file_write (imported from 'kalos')
+
+- `file_read` (imported from 'kalos')
+- `file_write` (imported from 'kalos')
 - report()
-```
+
+```text
 
 IEPL에서 LLM이 보는 프롬프트 조각:
 
-```typescript
+```
+
 declare const $kalos: {
-  file_read(params: { path: string }): Promise<{ path: string; size_bytes: number; content: string }>;
-  file_write(params: { path: string; content: string }): Promise<{ path: string; size_bytes: number; status: "created" | "deleted" | "edited" | "written" }>;
-  file_list(params: { path: string }): Promise<{ path: string; total_count: number; entries: Array<{ name: string; file_type: "file" | "directory" }> }>;
+`file_read`(params: { path: string }): Promise<{ path: string; `size_bytes`: number; content: string }>;
+`file_write`(params: { path: string; content: string }): Promise<{ path: string; `size_bytes`: number; status: "created" | "deleted" | "edited" | "written" }>;
+`file_list`(params: { path: string }): Promise<{ path: string; `total_count`: number; entries: Array<{ name: string; `file_type`: "file" | "directory" }> }>;
 };
 // ES 모듈 임포트를 통해 사용 가능한 hubris 도구: import { report } from 'hubris'
-  report(params: { summary: string }): Promise<{ summary: string }>;
+report(params: { summary: string }): Promise<{ summary: string }>;
 };
-```
+
+```text
 
 후자는 다음을 제공합니다:
 - 정밀한 매개변수명과 타입
@@ -669,43 +683,48 @@ declare const $kalos: {
 
 ## 새 워크스페이스 의존성 요약
 
-```toml
-# 신규
-ts-rs = { version = "12", features = ["serde-compat", "format"] }
-swc_core = { version = "65", features = [
-    "ecma_parser",
-    "ecma_ast",
-    "ecma_visit",
-    "ecma_transforms_base",
-    "ecma_transforms_typescript",
-    "ecma_codegen",
-    "common",
-] }
 ```
+
+# 신규
+
+ts-rs = { version = "12", features = ["serde-compat", "format"] }
+`swc_core` = { version = "65", features = [
+"`ecma_parser`",
+"`ecma_ast`",
+"`ecma_visit`",
+"`ecma_transforms_base`",
+"`ecma_transforms_typescript`",
+"`ecma_codegen`",
+"common",
+] }
+
+```text
 
 ## 새 크레이트 구조
 
 ```
+
 packages/agents/skemma/src/iepl/
-  mod.rs          → pub mod engine; pub mod ast_validator;
-  engine.rs       → IeplEngine: transpile(ts_code) -> Result<TranspileResult>
-  ast_validator.rs → AstValidator: 안전 패턴 감지
+mod.rs          → pub mod engine; pub mod `ast_validator`;
+engine.rs       → IeplEngine: transpile(`ts_code`) -> Result<`TranspileResult`>
+ast_validator.rs → `AstValidator`: 안전 패턴 감지
 
 packages/shared/src/iepl/
-  mod.rs          → pub mod decl_loader;
-  decl_loader.rs  → IeplDeclLoader: related_tools로 필터링된 .d.ts 불러오기
+mod.rs          → pub mod `decl_loader`;
+decl_loader.rs  → `IeplDeclLoader`: related_tools로 필터링된 .d.ts 불러오기
 
 bindings/
-  types/           → ts-rs 자동 내보내기
-    kalos.d.ts
-    neikos.d.ts
-    ...
-  api/             → 수기 작성 및 유지보수
-    kalos.d.ts
-    neikos.d.ts
-    ...
-  iepl-api.d.ts    → 병합된 아티팩트 (선택적)
-```
+types/           → ts-rs 자동 내보내기
+kalos.d.ts
+neikos.d.ts
+...
+api/             → 수기 작성 및 유지보수
+kalos.d.ts
+neikos.d.ts
+...
+iepl-api.d.ts    → 병합된 아티팩트 (선택적)
+
+```text
 
 ## 구현 경로
 

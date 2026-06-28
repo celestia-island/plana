@@ -26,7 +26,9 @@ category = "meta"
 * 尊重不同的意見、觀點與經驗
 * 給予並優雅地接受建設性回饋
 * 承擔責任，向受我們錯誤影響的人道歉，
-  並從經驗中學習
+
+並從經驗中學習
+
 * 專注於不僅對我們個人，也對整體社群最有利的事
 
 不可接受的行為範例包括：
@@ -103,7 +105,7 @@ category = "meta"
 ## 歸屬
 
 本行為準則改編自[貢獻者公約][homepage]第 2.1 版，
-可在 [https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1] 取得。
+可在 [https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1] 取得。
 
 社群影響指南靈感來自
 [Mozilla 的行為準則執行階梯][mozilla-coc]。
@@ -113,7 +115,7 @@ category = "meta"
 翻譯版本可在 [https://www.contributor-covenant.org/translations][translations] 取得。
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

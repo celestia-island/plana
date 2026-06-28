@@ -36,11 +36,11 @@ Veuillez rester respectueux, constructif et inclusif. Nous suivons le [Contribut
 ## Processus de Pull Request
 
 1. Forkez et créez une branche depuis `main`.
-2. Discutez d'abord les modifications importantes dans une issue.
-3. Commits atomiques, suivant les Conventional Commits.
-4. Assurez-vous que `just ci` (ou la commande CI du dépôt) passe.
-5. Signez la CLA et ajoutez `Signed-off-by`.
-6. Répondez aux commentaires de revue ; le force-push n'est utilisé que pour le rebase.
+1. Discutez d'abord les modifications importantes dans une issue.
+1. Commits atomiques, suivant les Conventional Commits.
+1. Assurez-vous que `just ci` (ou la commande CI du dépôt) passe.
+1. Signez la CLA et ajoutez `Signed-off-by`.
+1. Répondez aux commentaires de revue ; le force-push n'est utilisé que pour le rebase.
 
 ## Licence et CLA
 

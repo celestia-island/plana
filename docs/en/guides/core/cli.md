@@ -78,7 +78,7 @@ entelecheia-cli status
 ## Global options
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `-l, --log-level <LEVEL>` | Log level (trace, debug, info, warn, error) | `warn` |
 | `-d, --daemon` | Dispatch the command in the background and exit immediately | — |
 | `-c, --clean` | Clean up Cosmos containers and socket files | — |
@@ -89,6 +89,7 @@ entelecheia-cli status
 | `--format <FORMAT>` | Output format (table, json, raw) | `table` |
 
 Output format options:
+
 - `table` — human-readable table output
 - `json` — machine-readable JSON output
 
@@ -121,7 +122,7 @@ entelecheia-cli chat send [OPTIONS]
 ```
 
 | Option | Description |
-|--------|-------------|
+| --- | --- |
 | `-m, --message <MSG>` | The message text to send |
 | `--stdin` | Read the message from standard input |
 | `-f, --file <PATH>` | Read the message from a file |
@@ -150,7 +151,7 @@ entelecheia-cli chat history [OPTIONS]
 ```
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--conversation <ID>` | Filter by conversation ID | — |
 | `--agent <TYPE>` | Filter by agent type | — |
 | `--role <ROLE>` | Filter by role (user/assistant/system) | — |
@@ -172,7 +173,7 @@ entelecheia-cli chat recent [OPTIONS]
 ```
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--timeline <ID>` | Filter by timeline/conversation ID | — |
 | `--agent <TYPE>` | Filter by agent type | — |
 | `--limit <N>` | Maximum number of messages to return | `20` |
@@ -222,7 +223,7 @@ entelecheia-cli init [OPTIONS]
 Sets up the full service stack: PostgreSQL (with pgvector), the Docker registry, the scepter server, and the WebUI. It creates the required Docker networks and pulls/builds the images.
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | Container name prefix | `e-` |
 | `--source-build` | Build images from source instead of pulling | `false` |
 | `--webui-port <PORT>` | WebUI port | `3424` |
@@ -242,7 +243,7 @@ entelecheia-cli serve [OPTIONS]
 Starts all previously initialized containers. Requires `init` to have been run first.
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | Container name prefix | `e-` |
 | `--webui-port <PORT>` | WebUI port | `3424` |
 
@@ -255,7 +256,7 @@ entelecheia-cli stop [OPTIONS]
 Stops all running containers in order: webui → scepter → registry → postgres.
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | Container name prefix | `e-` |
 
 ### Start WebUI only
@@ -267,7 +268,7 @@ entelecheia-cli webui [OPTIONS]
 Starts or creates only the WebUI container.
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--prefix <STR>` | Container name prefix | `e-` |
 | `--webui-port <PORT>` | WebUI port | `3424` |
 
@@ -284,6 +285,7 @@ entelecheia-cli config show
 ```
 
 Shows the current configuration, including:
+
 - Database URL and connection settings
 - ApoRia LLM provider configuration (name, model, endpoint)
 - WebSocket bind address
@@ -298,6 +300,7 @@ entelecheia-cli config validate
 ```
 
 Performs validation checks:
+
 - Database URL is set
 - At least one ApoRia provider is configured with complete settings
 - WebSocket bind address is set
@@ -306,7 +309,7 @@ Returns a pass/fail result with details about any issues.
 
 **Example output:**
 
-```
+```text
 Validate Configuration:
 
 Validating database configuration...
@@ -366,6 +369,7 @@ entelecheia-cli context create dev --description "Development server"
 ```
 
 To obtain a Bearer token from a remote server:
+
 ```bash
 # On the server machine
 docker exec e-scepter cat /home/entelecheia/.config/entelecheia/scepter.token
@@ -421,6 +425,7 @@ entelecheia-cli status
 ```
 
 Shows:
+
 - Server version
 - Connection state (socket status)
 - LLM provider summary
@@ -437,7 +442,7 @@ entelecheia-cli status <PATH> [--raw]
 ```
 
 | Path syntax | Description |
-|---|---|
+| --- | --- |
 | `timeline.#agent[-N]` | Show the most recent N skill-invocation records of an agent |
 | `timeline.#agent[N][M]` | Show the M-th MCP/tool call within the N-th skill invocation |
 | `history[-N]` | Show the most recent N chat messages (all roles) |
@@ -478,7 +483,7 @@ entelecheia-cli logs [OPTIONS]
 ```
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `-a, --agent <NAME>` | Filter logs by agent name | All agents |
 | `-l, --lines <N>` | Number of lines to show (tail) | `100` |
 
@@ -515,7 +520,7 @@ entelecheia-cli subscribe add [OPTIONS]
 ```
 
 | Option | Description |
-|--------|-------------|
+| --- | --- |
 | `--name <NAME>` | Subscription name (required) |
 | `--source <SOURCE>` | Source type: `official`, `github`, or `url` (required) |
 | `--repository <REPO>` | GitHub repository (for github sources) |
@@ -565,7 +570,7 @@ entelecheia-cli run <AGENT> [OPTIONS]
 Runs a Layer3 agent script. It looks for `.amphoreus/<AGENT>/run.py` in the current directory. On first execution, it runs a pre-check audit.
 
 | Option | Description |
-|--------|-------------|
+| --- | --- |
 | `--ci` | Enable CI mode |
 | `--auto-pr` | Enable auto-PR mode |
 | `--dry-run` | Dry run (no actual changes) |
@@ -619,7 +624,7 @@ entelecheia-cli timeline list [OPTIONS]
 ```
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--agent <TYPE>` | Filter by agent type | — |
 | `--limit <N>` | Maximum number of results | `50` |
 | `--offset <N>` | Pagination offset | `0` |
@@ -631,7 +636,7 @@ entelecheia-cli timeline show <CONVERSATION_ID> [OPTIONS]
 ```
 
 | Option | Description | Default |
-|--------|-------------|---------|
+| --- | --- | --- |
 | `--include-messages` | Include messages in the output | `true` |
 
 ---
@@ -645,7 +650,7 @@ entelecheia-cli init-docker-images [OPTIONS]
 Builds or pulls the Docker images required by the platform.
 
 | Option | Description |
-|--------|-------------|
+| --- | --- |
 | `--source-build` | Build images from source instead of pulling |
 | `--tag <TAG>` | Image tag (default: `latest`) |
 
@@ -660,6 +665,7 @@ entelecheia-cli init-docker-images --tag v0.2.0
 ```
 
 Managed images:
+
 - `entelecheia` — the orchestration server (with the embedded cosmos runtime)
 - `pgvector/pgvector` — PostgreSQL with the vector extension
 
@@ -693,6 +699,7 @@ entelecheia-cli -l trace send "test message"
 ### Using alongside the TUI
 
 The CLI and the TUI connect to the same scepter server. Both can be used simultaneously:
+
 - Start the TUI for interactive sessions: `cargo run --bin entelecheia-tui`
 - Use the CLI for scripting, automation, and quick queries
 
@@ -728,6 +735,7 @@ Set the ApoRia provider configuration via environment variables. For provider se
 ### "Configuration validation failed"
 
 Run `entelecheia-cli config validate` to see which checks failed. Common issues:
+
 - Missing `DATABASE_URL` environment variable
-- Incomplete ApoRia provider setup (name, model, api_key)
+- Incomplete ApoRia provider setup (name, model, `api_key`)
 - Missing WebSocket bind address

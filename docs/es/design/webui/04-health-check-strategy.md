@@ -35,7 +35,7 @@ En los streams de eventos Docker, el filtro `container` no es fiable para evento
 
 ## Estrategia de Sondeo
 
-```
+```text
 while true:
     sleep 1s
     state = docker.inspect_container(PG)
@@ -86,7 +86,7 @@ pg18 cambió el directorio de datos de `/var/lib/postgresql/data` a `/var/lib/po
 
 Las migraciones de base de datos tienen una lógica independiente de 5 reintentos:
 
-```
+```text
 for retry in 0..5:
     execute docker run --rm ... shittim_chest db-migrate
     if success: break

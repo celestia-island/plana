@@ -77,14 +77,14 @@ category = "meta"
 
 ## 帰属
 
-本行動規範は、[Contributor Covenant][homepage] バージョン2.1を改変したものであり、[https://www.contributor-covenant.org/version/2/1/code_of_conduct/][v2.1] で入手可能です。
+本行動規範は、[Contributor Covenant][homepage] バージョン2.1を改変したものであり、[https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/][v2.1] で入手可能です。
 
 コミュニティ影響ガイドラインは、[Mozillaの行動規範執行ラダー][mozilla-coc]に触発されました。
 
 本行動規範に関するよくある質問への回答は、[https://www.contributor-covenant.org/faq][faq] のFAQをご覧ください。翻訳版は [https://www.contributor-covenant.org/translations][translations] で入手可能です。
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/`code_of_conduct`/
 [mozilla-coc]: https://github.com/mozilla/diversity
 [faq]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations

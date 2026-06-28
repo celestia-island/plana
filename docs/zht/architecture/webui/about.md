@@ -17,13 +17,13 @@ Shittim Chest 是 [entelecheia](https://github.com/celestia-island/entelecheia) 
 Shittim Chest 由多個元件組成，共同提供完整的使用者體驗：
 
 - **arona** — 您目前正在使用的聊天 UI，包含串流回應、圖片生成、代理狀態監控、思考視窗、遠端裝置檢視器和多語言支援。
-- **shittim_chest** — 統一的 Rust + Axum 後端，處理身分驗證（JWT + OAuth）、獨立 LLM 路由、聊天 API、圖片生成、webhook 入口、scepter 代理和遠端裝置信號。
+- **`shittim_chest`** — 統一的 Rust + Axum 後端，處理身分驗證（JWT + OAuth）、獨立 LLM 路由、聊天 API、圖片生成、webhook 入口、scepter 代理和遠端裝置信號。
 
 ## 與 Entelecheia 的關係
 
 [entelecheia](https://github.com/celestia-island/entelecheia) 是核心的多代理編排引擎。它提供代理執行環境（scepter、13 個專業代理、Cosmos/IEPL 執行環境）。Shittim Chest 處理使用者直接互動的所有內容 — 身分、呈現和通訊。
 
-這兩個專案是透過設計分離的：entelecheia 管理代理編排，而 shittim-chest 管理使用者身分和呈現。它們透過 JWT 驗證的 HTTP/WebSocket 進行通訊。登入憑證儲存在 shittim_chest_db 中；權限和身分資料儲存在 entelecheia_db 中。這種分離允許前端外殼獨立於代理核心進行演進。
+這兩個專案是透過設計分離的：entelecheia 管理代理編排，而 shittim-chest 管理使用者身分和呈現。它們透過 JWT 驗證的 HTTP/WebSocket 進行通訊。登入憑證儲存在 `shittim_chest_db` 中；權限和身分資料儲存在 `entelecheia_db` 中。這種分離允許前端外殼獨立於代理核心進行演進。
 
 ## 與 Hikari 的關係
 

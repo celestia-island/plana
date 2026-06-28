@@ -122,11 +122,13 @@ sequenceDiagram
 La decisión de enrutamiento ocurre en `mcp_skill_router.rs`:
 
 1. Verificar `agent_manager.get_tool_location(nombre_herramienta)`
-2. Si `ToolLocation::Cosmos` y modo contenedorizado activo:
+1. Si `ToolLocation::Cosmos` y modo contenedorizado activo:
+
    - Llamar `agent_manager.invoke_tool()` que enruta a través de `BridgeInvoker` → puente HapLotes → `McpRouter` de Cosmos
    - El `McpRouter` de Cosmos despacha localmente (skemma) o de vuelta a Scepter mediante puente para agentes remotos
    - Devolver `McpMessage::ToolResponse` directamente a TUI
-3. De lo contrario: enrutar a través de la puerta de enlace HapLotes al proceso del agente
+
+1. De lo contrario: enrutar a través de la puerta de enlace HapLotes al proceso del agente
 
 ## IV. Arquitectura CosmosConnector / Puente
 
@@ -237,7 +239,7 @@ Dentro de los contenedores Cosmos, solo skemma se ejecuta localmente (motor Boa 
 
 ### Formato de Visualización
 
-En la AgentDetailPage de TUI, la línea de estadísticas muestra:
+En la `AgentDetailPage` de TUI, la línea de estadísticas muestra:
 
 ```mermaid
 flowchart LR
