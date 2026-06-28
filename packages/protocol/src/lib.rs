@@ -9,6 +9,7 @@
 pub mod http;
 pub mod jsonrpc;
 pub mod mcp;
+pub mod model;
 
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;

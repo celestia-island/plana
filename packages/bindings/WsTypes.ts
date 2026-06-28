@@ -661,6 +661,67 @@ export type McpToolResultParams = {
   duration_ms?: bigint;
 };
 
+/**
+ * Where a model physically executes. Determines deployment, latency, and
+ * whether a GPU is needed.
+ */
+export type ModelBackend =
+  | "remote_api"
+  | "local_cpu"
+  | "local_gpu"
+  | "remote_gpu";
+
+/**
+ * Top-level model category. Determines which subsystem consumes the model.
+ */
+export type ModelCategory =
+  | "llm"
+  | "embedding"
+  | "speech_to_text"
+  | "text_to_speech"
+  | "vision";
+
+/**
+ * A unified description of an AI model, shared between scepter and chest.
+ *
+ * Both sides can enumerate available models, check their status, and request
+ * inference using this common vocabulary.
+ */
+export type ModelDescriptor = {
+  /**
+   * Unique id, e.g. `"bge-m3"`, `"whisper-tiny"`, `"claude-opus-4.8"`.
+   */
+  id: string;
+  /**
+   * Human-readable display name.
+   */
+  display_name: string;
+  /**
+   * What kind of model this is.
+   */
+  category: ModelCategory;
+  /**
+   * Where it runs.
+   */
+  backend: ModelBackend;
+  /**
+   * Size tier (LLM coding-plan concept; `None` for non-LLM models).
+   */
+  tier?: ModelTier;
+  /**
+   * Output dimension (embedding models only).
+   */
+  dimension?: number;
+  /**
+   * Approximate model size in bytes (local models).
+   */
+  size_bytes?: bigint;
+  /**
+   * Provider index (`#N` convention; LLM models only).
+   */
+  provider_index?: number;
+};
+
 export type ModelFsInfo = {
   id: string;
   name: string;
@@ -685,11 +746,116 @@ export type ModelFsPricing = {
   cached_per_million?: number;
 };
 
+/**
+ * A model inference request, sent from the web UI to the upstream engine
+ * over the WS JSON-RPC channel. The engine routes it to the appropriate
+ * backend (local CPU / local GPU / remote GPU / remote API).
+ */
+export type ModelInferenceRequest = {
+  /**
+   * Which model to use (by id).
+   */
+  model_id: string;
+  /**
+   * Input data (format depends on category: text for LLM/embedding,
+   * base64 audio for STT, base64 image for vision).
+   */
+  input: string;
+  /**
+   * Optional parameters (temperature, max_tokens, language hint …).
+   */
+  parameters?: JsonValue;
+};
+
+/**
+ * Inference result returned to the web UI.
+ */
+export type ModelInferenceResult = {
+  /**
+   * Model that produced the output.
+   */
+  model_id: string;
+  /**
+   * Output data (text for LLM/embedding/TTS, text for STT, JSON for vision).
+   */
+  output: string;
+  /**
+   * Time spent (milliseconds).
+   */
+  elapsed_ms?: bigint;
+  /**
+   * Token/processing usage (if applicable).
+   */
+  usage?: JsonValue;
+};
+
+/**
+ * `Tui.ModelInferenceResult` — inference result push.
+ */
+export type ModelInferenceResultParams = { result: ModelInferenceResult };
+
+/**
+ * `Tui.ModelList` — model catalogue response.
+ */
+export type ModelListParams = {
+  models: Array<ModelDescriptor>;
+  servers: Array<ModelServerInfo>;
+};
+
 export type ModelProviderConfigUpdatedParams = {
   provider_name: string;
   success: boolean;
   error?: string;
 };
+
+/**
+ * What to do with a model server.
+ */
+export type ModelServerAction = "start" | "stop" | "restart";
+
+/**
+ * `Tui.ModelServerActionResult` — action result.
+ */
+export type ModelServerActionResultParams = {
+  kind: ModelServerKind;
+  status: ModelServerStatus;
+};
+
+/**
+ * A managed local model server instance.
+ */
+export type ModelServerInfo = {
+  /**
+   * Server kind (determines the Docker image / launch command).
+   */
+  kind: ModelServerKind;
+  /**
+   * HTTP endpoint (e.g. `http://localhost:8178`).
+   */
+  endpoint: string;
+  /**
+   * Current lifecycle status.
+   */
+  status: ModelServerStatus;
+  /**
+   * Docker container id (if managed by a container runtime).
+   */
+  container_id?: string;
+  /**
+   * Which models are loaded in this server.
+   */
+  loaded_models: Array<string>;
+};
+
+/**
+ * The type of local model server.
+ */
+export type ModelServerKind = "ollama" | "whisper_cpp" | "vllm" | "media_pipe";
+
+/**
+ * Status of a local model server (ollama, whisper.cpp, …).
+ */
+export type ModelServerStatus = "running" | "starting" | "stopped" | "failed";
 
 export type ModelTier = "Deep" | "Normal" | "Basic";
 
@@ -875,6 +1041,29 @@ export type RequestFileTreeParams = {
    * Sub-path under the target root (empty/`""` = root).
    */
   path: string;
+};
+
+/**
+ * `Tui.RequestModelInference` — ask the engine to run a model.
+ */
+export type RequestModelInferenceParams = { request: ModelInferenceRequest };
+
+/**
+ * `Tui.RequestModelList` — enumerate available models.
+ */
+export type RequestModelListParams = {
+  /**
+   * Filter by category (omit for all).
+   */
+  category?: ModelCategory;
+};
+
+/**
+ * `Tui.RequestModelServerAction` — start / stop / restart a local model server.
+ */
+export type RequestModelServerActionParams = {
+  kind: ModelServerKind;
+  action: ModelServerAction;
 };
 
 export type RequestNoaHandshakeParams = {
