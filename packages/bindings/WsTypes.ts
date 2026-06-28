@@ -662,14 +662,10 @@ export type McpToolResultParams = {
 };
 
 /**
- * Where a model physically executes. Determines deployment, latency, and
- * whether a GPU is needed.
+ * Where a model physically executes. evernight chooses the backend based on
+ * GPU availability — GPU-first, CPU-fallback.
  */
-export type ModelBackend =
-  | "remote_api"
-  | "local_cpu"
-  | "local_gpu"
-  | "remote_gpu";
+export type ModelBackend = "remote_api" | "gpu" | "cpu";
 
 /**
  * Top-level model category. Determines which subsystem consumes the model.
@@ -822,7 +818,9 @@ export type ModelServerActionResultParams = {
 };
 
 /**
- * A managed local model server instance.
+ * A managed model server instance, deployed and owned by **evernight**.
+ * Neither scepter nor chest starts/stops these directly — they issue
+ * `RequestModelServerAction` and evernight performs the lifecycle.
  */
 export type ModelServerInfo = {
   /**
@@ -838,7 +836,11 @@ export type ModelServerInfo = {
    */
   status: ModelServerStatus;
   /**
-   * Docker container id (if managed by a container runtime).
+   * Which backend this server is running on (GPU or CPU).
+   */
+  backend: ModelBackend;
+  /**
+   * Docker container id (managed by evernight's container runtime).
    */
   container_id?: string;
   /**
@@ -848,7 +850,8 @@ export type ModelServerInfo = {
 };
 
 /**
- * The type of local model server.
+ * The type of model server. evernight deploys and manages these; the choice
+ * of GPU vs CPU variant is made by evernight at deploy time (GPU-first).
  */
 export type ModelServerKind = "ollama" | "whisper_cpp" | "vllm" | "media_pipe";
 
@@ -1059,11 +1062,19 @@ export type RequestModelListParams = {
 };
 
 /**
- * `Tui.RequestModelServerAction` — start / stop / restart a local model server.
+ * `Tui.RequestModelServerAction` — ask evernight (via scepter) to start /
+ * stop / restart a model server. Neither chest nor scepter performs the
+ * deployment directly; the action is forwarded to evernight's model lifecycle
+ * manager.
  */
 export type RequestModelServerActionParams = {
   kind: ModelServerKind;
   action: ModelServerAction;
+  /**
+   * Preferred backend. evernight will honour this if possible; falls back
+   * to CPU if the requested GPU is unavailable.
+   */
+  preferred_backend?: ModelBackend;
 };
 
 export type RequestNoaHandshakeParams = {

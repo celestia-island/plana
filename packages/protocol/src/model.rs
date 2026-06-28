@@ -3,20 +3,28 @@
 //!
 //! ## Architecture
 //!
-//! All AI models (LLM / embedding / speech / vision) are managed by the
-//! upstream engine (scepter) via evernight. The web UI (shittim-chest) never
-//! loads a model directly — it requests inference through the WS JSON-RPC
-//! channel and the upstream engine routes to the appropriate backend:
+//! **evernight owns all model deployment.** Neither the upstream engine
+//! (scepter) nor the web UI (shittim-chest) loads, starts, or stops models
+//! directly. They send requests; evernight handles the lifecycle:
 //!
 //! ```text
-//!  WebUI (chest)  ──WS──▶  Scepter  ──▶  evernight
-//!                                   ├─ CPU models: local Docker (ollama, whisper.cpp…)
-//!                                   └─ GPU models: forward to a GPU-equipped remote host
+//!  WebUI (chest)   ──WS──▶  Scepter  ──▶  evernight
+//!  Scepter (RAG)   ──────────────────▶  evernight
+//!                                        │
+//!                   ┌────────────────────┴────────────────────┐
+//!                   │ GPU-first: detect GPU nodes → deploy     │
+//!                   │   vLLM / faster GPU backends             │
+//!                   │ GPU unavailable? → degrade to CPU:       │
+//!                   │   ollama / whisper.cpp / onnxruntime     │
+//!                   └─────────────────────────────────────────┘
 //! ```
 //!
+//! **GPU-first, CPU-fallback.** evernight always attempts GPU first. Only
+//! when no GPU is detected (or no GPU node is reachable) does it fall back
+//! to CPU-only small models. CPU is a degraded mode, never the default.
+//!
 //! Arona provides the shared vocabulary so both sides describe models in the
-//! same terms. Each side manages its own instances ("两边各管各的"), but the
-//! **types** are unified here.
+//! same terms.
 //!
 //! ## Model categories
 //!
@@ -27,10 +35,6 @@
 //! | Speech → Text | whisper tiny/base/small | chest (voice input → text) |
 //! | Text → Speech | tts-1, elevenlabs | scepter (generation) |
 //! | Vision | mediapipe pose/gesture | chest (holographic AR mode) — **stub** |
-//!
-//! CPU-first: all model types prefer CPU-only small models that fit in a
-//! Docker container. GPU backends are optional and routed via evernight to
-//! remote hosts with PCI-passthrough GPUs.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -62,20 +66,21 @@ pub enum ModelCategory {
 // Execution backend — WHERE does the model run?
 // ═══════════════════════════════════════════════════════════════
 
-/// Where a model physically executes. Determines deployment, latency, and
-/// whether a GPU is needed.
+/// Where a model physically executes. evernight chooses the backend based on
+/// GPU availability — GPU-first, CPU-fallback.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ModelBackend {
     /// Remote API (OpenAI, Anthropic, ZhiPu …). No local resources.
     RemoteApi,
-    /// Local CPU model in a Docker container (ollama, whisper.cpp …).
-    LocalCpu,
-    /// Local GPU model — requires PCI passthrough or device mount.
-    LocalGpu,
-    /// Forwarded to a GPU-equipped remote host via evernight.
-    RemoteGpu,
+    /// GPU node — either local (PCI passthrough) or remote (forwarded by
+    /// evernight to a GPU-equipped host). This is the **preferred** backend;
+    /// evernight always tries this first.
+    Gpu,
+    /// CPU fallback — used only when no GPU is detected or reachable.
+    /// Degraded mode: slower, smaller models.
+    Cpu,
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -137,7 +142,9 @@ pub enum ModelServerStatus {
     Failed,
 }
 
-/// A managed local model server instance.
+/// A managed model server instance, deployed and owned by **evernight**.
+/// Neither scepter nor chest starts/stops these directly — they issue
+/// `RequestModelServerAction` and evernight performs the lifecycle.
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct ModelServerInfo {
@@ -147,7 +154,9 @@ pub struct ModelServerInfo {
     pub endpoint: String,
     /// Current lifecycle status.
     pub status: ModelServerStatus,
-    /// Docker container id (if managed by a container runtime).
+    /// Which backend this server is running on (GPU or CPU).
+    pub backend: ModelBackend,
+    /// Docker container id (managed by evernight's container runtime).
     #[serde(default)]
     #[ts(optional)]
     pub container_id: Option<String>,
@@ -156,16 +165,17 @@ pub struct ModelServerInfo {
     pub loaded_models: Vec<String>,
 }
 
-/// The type of local model server.
+/// The type of model server. evernight deploys and manages these; the choice
+/// of GPU vs CPU variant is made by evernight at deploy time (GPU-first).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "WsTypes.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ModelServerKind {
-    /// Ollama — LLM + embedding models (candle/GGUF, CPU-first).
+    /// Ollama — LLM + embedding models (GPU via candle/CUDA; CPU via GGUF fallback).
     Ollama,
-    /// whisper.cpp — speech-to-text.
+    /// whisper.cpp — speech-to-text (GPU build when available; CPU otherwise).
     WhisperCpp,
-    /// vLLM — high-throughput LLM serving (GPU).
+    /// vLLM — high-throughput LLM serving. GPU-only (no CPU build).
     Vllm,
     /// MediaPipe / pose estimation (vision — stub).
     MediaPipe,
@@ -246,12 +256,20 @@ pub struct ModelInferenceResultParams {
     pub result: ModelInferenceResult,
 }
 
-/// `Tui.RequestModelServerAction` — start / stop / restart a local model server.
+/// `Tui.RequestModelServerAction` — ask evernight (via scepter) to start /
+/// stop / restart a model server. Neither chest nor scepter performs the
+/// deployment directly; the action is forwarded to evernight's model lifecycle
+/// manager.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "WsTypes.ts")]
 pub struct RequestModelServerActionParams {
     pub kind: ModelServerKind,
     pub action: ModelServerAction,
+    /// Preferred backend. evernight will honour this if possible; falls back
+    /// to CPU if the requested GPU is unavailable.
+    #[serde(default)]
+    #[ts(optional)]
+    pub preferred_backend: Option<ModelBackend>,
 }
 
 /// `Tui.ModelServerActionResult` — action result.
