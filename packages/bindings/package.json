@@ -11,7 +11,6 @@
     "HttpTypes.ts",
     "model.ts",
     "enums.ts",
-    "ErrorCodes.ts",
     "mcp/",
     "serde_json/"
   ]

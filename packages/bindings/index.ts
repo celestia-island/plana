@@ -25,7 +25,5 @@ export * from "./HttpTypes";
 export * from "./model";
 // Shared domain vocabulary enums.
 export * from "./enums";
-// JSON-RPC error codes.
-export * from "./ErrorCodes";
 // Per-agent MCP tool request/result types (namespaced).
 export * as mcp from "./mcp";
