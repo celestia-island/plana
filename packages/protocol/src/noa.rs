@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct NoaEvent {
     pub event_id: String,
     pub event_type: String,
@@ -32,7 +32,7 @@ pub struct NoaEvent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct RequestNoaHandshakeParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -41,7 +41,7 @@ pub struct RequestNoaHandshakeParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct NoaHandshakeResponseParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -54,7 +54,7 @@ pub struct NoaHandshakeResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct NoaAuthRequestParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -64,7 +64,7 @@ pub struct NoaAuthRequestParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct NoaAuthResponseParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -77,7 +77,7 @@ pub struct NoaAuthResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct NoaReadyParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -86,7 +86,7 @@ pub struct NoaReadyParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct NoaEventSyncParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -97,7 +97,7 @@ pub struct NoaEventSyncParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/noa.ts")]
 pub struct NoaEventSyncAckParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,

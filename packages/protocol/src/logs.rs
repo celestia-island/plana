@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/logs.ts")]
 pub struct LogEntryData {
     pub source: String,
     #[serde(default)]
@@ -22,20 +22,20 @@ pub struct LogEntryData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/logs.ts")]
 pub struct ServerLogEntryParams {
     pub entry: LogEntryData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/logs.ts")]
 pub struct ContainerLogEntryParams {
     pub instance_uuid: String,
     pub entry: LogEntryData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/logs.ts")]
 pub struct SubscribeLogsResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -46,7 +46,7 @@ pub struct SubscribeLogsResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/logs.ts")]
 pub struct UnsubscribeLogsResponseParams {
     pub ok: bool,
     #[serde(default)]

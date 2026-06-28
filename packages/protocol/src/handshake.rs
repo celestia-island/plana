@@ -9,7 +9,7 @@ use ts_rs::TS;
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/handshake.ts")]
 pub struct HandshakeAckParams {
     pub ok: bool,
     #[serde(default)]
@@ -18,14 +18,14 @@ pub struct HandshakeAckParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/handshake.ts")]
 pub struct ScepterIdentityParams {
     #[ts(type = "string")]
     pub device_id: uuid::Uuid,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/handshake.ts")]
 pub struct PingParams {
     pub timestamp: u64,
 }
@@ -42,7 +42,7 @@ pub struct PingParams {
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/handshake.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ClientCapability {
     FileRelay,
@@ -52,7 +52,7 @@ pub enum ClientCapability {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/handshake.ts")]
 pub struct ClientNodeInfo {
     pub hostname: String,
     pub os: String,
@@ -65,7 +65,7 @@ pub struct ClientNodeInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/handshake.ts")]
 pub struct ConnectHandshakeParams {
     pub token: String,
     #[serde(default)]

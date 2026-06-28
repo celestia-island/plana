@@ -6,7 +6,7 @@ use ts_rs::TS;
 use crate::YoloTaskTier;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloStartResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -15,7 +15,7 @@ pub struct YoloStartResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloStopResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -24,7 +24,7 @@ pub struct YoloStopResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloTerminateResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -33,7 +33,7 @@ pub struct YoloTerminateResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloTaskResult {
     pub success: bool,
     pub duration_ms: u64,
@@ -44,7 +44,7 @@ pub struct YoloTaskResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloTaskStatus {
     pub agent: String,
     pub skill: String,
@@ -55,7 +55,7 @@ pub struct YoloTaskStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloTierStatus {
     pub tier: YoloTaskTier,
     pub enabled: bool,
@@ -71,7 +71,7 @@ pub struct YoloTierStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloStatusResponseParams {
     pub active: bool,
     pub loop_count: u64,
@@ -86,7 +86,7 @@ pub struct YoloStatusResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloCycleStepParams {
     pub skill: String,
     pub loop_count: u64,
@@ -100,14 +100,14 @@ pub struct YoloCycleStepParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloCycleCompleteParams {
     pub loop_count: u64,
     pub duration_ms: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloTierTaskConfig {
     pub agent: String,
     pub skill: String,
@@ -116,7 +116,7 @@ pub struct YoloTierTaskConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloTierConfig {
     pub tier: YoloTaskTier,
     #[serde(default)]
@@ -128,13 +128,13 @@ pub struct YoloTierConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloConfigResponseParams {
     pub tiers: Vec<YoloTierConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloUpdateTaskResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -143,7 +143,7 @@ pub struct YoloUpdateTaskResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloSetTierIntervalResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -152,7 +152,7 @@ pub struct YoloSetTierIntervalResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/yolo.ts")]
 pub struct YoloRunTierNowResponseParams {
     pub ok: bool,
     #[serde(default)]

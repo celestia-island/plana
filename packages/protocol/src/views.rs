@@ -5,7 +5,7 @@ use ts_rs::TS;
 
 /// View type identifier — determines which frontend renderer handles the view.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/views.ts")]
 pub enum ViewKind {
     /// Industrial SCADA / HMI panel (P&ID, gauges, alarm panel, trend charts)
     IndustrialScada,
@@ -27,7 +27,7 @@ pub enum ViewKind {
 
 /// A view instance — one panel in the dashboard.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/views.ts")]
 pub struct ViewInstance {
     /// Unique view ID within the workspace.
     pub view_id: String,
@@ -50,7 +50,7 @@ pub struct ViewInstance {
 
 /// Layout descriptor for a view within the dashboard grid.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/views.ts")]
 pub struct ViewLayout {
     /// Grid column start (1-based).
     #[serde(default)]
@@ -76,7 +76,7 @@ pub struct ViewLayout {
 
 /// Dashboard layout — a collection of views arranged in a grid.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/views.ts")]
 pub struct DashboardLayout {
     /// Workspace ID this dashboard belongs to.
     pub workspace_id: String,
@@ -91,14 +91,14 @@ pub struct DashboardLayout {
 
 /// Push a dashboard layout update to connected clients.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/views.ts")]
 pub struct DashboardLayoutPushParams {
     pub layout: DashboardLayout,
 }
 
 /// View data update — incremental data push for a specific view.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/views.ts")]
 pub struct ViewDataPushParams {
     /// Target view ID.
     pub view_id: String,

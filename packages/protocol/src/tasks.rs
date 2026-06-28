@@ -7,7 +7,7 @@ use ts_rs::TS;
 use crate::{Agent, AgentBadge, TaskStatus};
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/tasks.ts")]
 pub struct TaskCreatedParams {
     #[ts(type = "string")]
     pub task_id: uuid::Uuid,
@@ -34,7 +34,7 @@ pub struct TaskCreatedParams {
 }
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/tasks.ts")]
 pub struct TaskStatusUpdateParams {
     #[ts(type = "string")]
     pub task_id: uuid::Uuid,

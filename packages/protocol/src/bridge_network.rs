@@ -13,7 +13,7 @@ use ts_rs::TS;
 
 /// Live performance snapshot for one host machine.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/bridge_network.ts")]
 pub struct HostMetrics {
     /// Stable host id ("localhost" for self, or a polemos device id).
     pub host_id: String,
@@ -37,7 +37,7 @@ pub struct HostMetrics {
 
 /// noa-git status for a workspace checkout (branch / dirty / ahead / behind).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/bridge_network.ts")]
 pub struct WorkspaceGitStatus {
     pub branch: String,
     /// Modified/untracked file count.
@@ -56,7 +56,7 @@ pub struct WorkspaceGitStatus {
 
 /// One agent's token usage within a workspace (top-N entries).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/bridge_network.ts")]
 pub struct WorkspaceTokenUsage {
     pub agent: String,
     pub input: u64,
@@ -65,7 +65,7 @@ pub struct WorkspaceTokenUsage {
 
 /// A workspace attached to a host, with its git + token-usage summary.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/bridge_network.ts")]
 pub struct WorkspaceNode {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -84,12 +84,12 @@ pub struct WorkspaceNode {
 
 /// `Tui.RequestBridgeNetwork` — request the host/workspace roster.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/bridge_network.ts")]
 pub struct RequestBridgeNetworkParams {}
 
 /// `Tui.BridgeNetwork` — the host/workspace roster response/push.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/bridge_network.ts")]
 pub struct BridgeNetworkParams {
     pub hosts: Vec<HostMetrics>,
     pub workspaces: Vec<WorkspaceNode>,

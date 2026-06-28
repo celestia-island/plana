@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/workspace.ts")]
 pub struct WorkspaceStatusParams {
     #[ts(type = "string")]
     pub workspace_id: uuid::Uuid,
@@ -28,7 +28,7 @@ pub struct WorkspaceStatusParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/workspace.ts")]
 pub struct PolemosDeviceInfo {
     #[ts(type = "string")]
     pub node_id: uuid::Uuid,
@@ -44,13 +44,13 @@ pub struct PolemosDeviceInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/workspace.ts")]
 pub struct PolemosDeviceListParams {
     pub devices: Vec<PolemosDeviceInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/workspace.ts")]
 pub struct RegisterPolemosDeviceResponseParams {
     pub success: bool,
     #[serde(default)]
@@ -62,7 +62,7 @@ pub struct RegisterPolemosDeviceResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/workspace.ts")]
 pub struct SwitchWorkspaceResponseParams {
     pub success: bool,
     #[ts(type = "string")]

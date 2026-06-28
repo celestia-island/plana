@@ -57,7 +57,7 @@ pub(crate) fn default_true() -> bool {
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum Agent {
     HapLotes,
     SkoPeo,
@@ -79,11 +79,11 @@ pub enum Agent {
 }
 
 #[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub struct AgentBadge(pub String);
 
 #[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum AgentStatus {
     Initializing,
     Online,
@@ -93,7 +93,7 @@ pub enum AgentStatus {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum WorkStatus {
     Thinking,
     StreamingResponse,
@@ -108,7 +108,7 @@ pub enum WorkStatus {
 }
 
 #[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum RequestState {
     #[default]
     Idle,
@@ -119,7 +119,7 @@ pub enum RequestState {
 }
 
 #[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum CompletionOutcome {
     #[default]
     None,
@@ -128,7 +128,7 @@ pub enum CompletionOutcome {
 }
 
 #[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum ModelTier {
     Deep,
     Normal,
@@ -136,7 +136,7 @@ pub enum ModelTier {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum SkillStage {
     Started(String),
     Done(String),
@@ -150,7 +150,7 @@ pub enum SkillStage {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum RetryReason {
     EmptyOutput,
     ReportNotCaptured,
@@ -158,7 +158,7 @@ pub enum RetryReason {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ReportType {
     Query,
@@ -184,7 +184,7 @@ pub enum ReportType {
 /// Selection semantics for an inquiry (`report_type: "query"`) report's
 /// `preset_options`. Defaults to `Single` when omitted.
 #[derive(JsonSchema, Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ReportSelection {
     #[default]
@@ -193,7 +193,7 @@ pub enum ReportSelection {
 }
 
 #[derive(JsonSchema, Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum StreamChunkKind {
     #[default]
     Text,
@@ -202,7 +202,7 @@ pub enum StreamChunkKind {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum StreamSegment {
     Text {
         text: String,
@@ -258,14 +258,14 @@ pub enum StreamSegment {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub struct LlmStream {
     #[serde(default)]
     pub segments: Vec<StreamSegment>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub struct RouteInfo {
     pub direction: String,
     pub target: String,
@@ -275,7 +275,7 @@ pub struct RouteInfo {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS, thiserror::Error)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum AgentErrorCode {
     #[error("model has no providers")]
@@ -321,7 +321,7 @@ pub enum AgentErrorCode {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub struct StructuredAgentError {
     pub code: AgentErrorCode,
     #[serde(default)]
@@ -332,7 +332,7 @@ pub struct StructuredAgentError {
 }
 
 #[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum TaskStatus {
     NotStarted,
@@ -345,7 +345,7 @@ pub enum TaskStatus {
 }
 
 #[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum ContainerStatus {
     Created,
@@ -359,7 +359,7 @@ pub enum ContainerStatus {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum PeriodType {
     Hour5,
     Day7,
@@ -367,7 +367,7 @@ pub enum PeriodType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum KnowledgeBaseStatus {
     #[default]
     Uninitialized,
@@ -377,7 +377,7 @@ pub enum KnowledgeBaseStatus {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 pub enum EmbeddingModel {
     OpenAiSmall,
     OpenAiLarge,
@@ -386,7 +386,7 @@ pub enum EmbeddingModel {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum YoloTaskTier {
     Realtime,

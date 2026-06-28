@@ -6,7 +6,7 @@ use ts_rs::TS;
 // ── Telemetry ──────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialSensorReading {
     pub station_id: String,
     #[serde(default)]
@@ -23,7 +23,7 @@ pub struct IndustrialSensorReading {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialTelemetryBatch {
     pub readings: Vec<IndustrialSensorReading>,
     pub station_id: String,
@@ -31,7 +31,7 @@ pub struct IndustrialTelemetryBatch {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialTelemetryPushParams {
     pub batch: IndustrialTelemetryBatch,
 }
@@ -39,7 +39,7 @@ pub struct IndustrialTelemetryPushParams {
 // ── Alarms ─────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub enum IndustrialAlarmLevel {
     Log,
     LowLow,
@@ -51,7 +51,7 @@ pub enum IndustrialAlarmLevel {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialAlarmEvent {
     pub station_id: String,
     #[serde(default)]
@@ -68,13 +68,13 @@ pub struct IndustrialAlarmEvent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialAlarmPushParams {
     pub alarm: IndustrialAlarmEvent,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialAlarmAckParams {
     pub station_id: String,
     pub address: String,
@@ -84,7 +84,7 @@ pub struct IndustrialAlarmAckParams {
 // ── Discovery ──────────────────────────────────────────────
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub enum DiscoveryPhase {
     TransportScan,
     ProtocolIdentify,
@@ -96,7 +96,7 @@ pub enum DiscoveryPhase {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct DiscoveryProgressEvent {
     pub session_id: String,
     pub phase: DiscoveryPhase,
@@ -111,7 +111,7 @@ pub struct DiscoveryProgressEvent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct DiscoveryProgressPushParams {
     pub event: DiscoveryProgressEvent,
 }
@@ -119,7 +119,7 @@ pub struct DiscoveryProgressPushParams {
 // ── Write Approval (human-in-the-loop) ─────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct WriteApprovalRequest {
     /// Mirrors `_shared_state_sync::WriteApprovalRequest::request_id`. The
     /// operator UI echoes this back in `industrial.approveWrite` so the
@@ -142,13 +142,13 @@ pub struct WriteApprovalRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct WriteApprovalRequestParams {
     pub request: WriteApprovalRequest,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct WriteApprovalResponseParams {
     pub request_id: String,
     pub approved: bool,
@@ -161,7 +161,7 @@ pub struct WriteApprovalResponseParams {
 // ── Topology (station metadata for UI) ─────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct AlarmThresholdInfo {
     #[serde(default)]
     #[ts(optional)]
@@ -178,7 +178,7 @@ pub struct AlarmThresholdInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct StationFieldInfo {
     pub address: String,
     pub name: String,
@@ -196,7 +196,7 @@ pub struct StationFieldInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialStationInfo {
     pub station_id: String,
     #[serde(default)]
@@ -221,7 +221,7 @@ pub struct IndustrialStationInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialTopologyParams {
     pub stations: Vec<IndustrialStationInfo>,
 }

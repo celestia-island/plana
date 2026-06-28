@@ -2,133 +2,32 @@
 import type { ConsultationStatus } from "../enums";
 import type { JsonValue } from "../serde_json/JsonValue";
 
-export type AskResult = {
-  consultation_id: string;
-  question: string;
-  context: string;
-  options: Array<string>;
-  recommended: string;
-  status: ConsultationStatus;
-};
+export type AskResult = { consultation_id: string, question: string, context: string, options: Array<string>, recommended: string, status: ConsultationStatus, };
 
-export type AuditAlignmentResult = {
-  audit_id: string;
-  target: string;
-  total_rules: number;
-  passed: number;
-  failed: number;
-  findings: Array<AuditFinding>;
-};
+export type AuditAlignmentResult = { audit_id: string, target: string, total_rules: number, passed: number, failed: number, findings: Array<AuditFinding>, };
 
-export type AuditFinding = {
-  rule_id: string;
-  severity: string;
-  description: string;
-  evidence: string;
-  recommendation: string;
-};
+export type AuditFinding = { rule_id: string, severity: string, description: string, evidence: string, recommendation: string, };
 
-export type AuditLegalityResult = {
-  audit_id: string;
-  target: string;
-  jurisdiction: string;
-  total_requirements: number;
-  compliant: number;
-  non_compliant: number;
-  findings: Array<AuditFinding>;
-};
+export type AuditLegalityResult = { audit_id: string, target: string, jurisdiction: string, total_requirements: number, compliant: number, non_compliant: number, findings: Array<AuditFinding>, };
 
-export type CheckResultItem = {
-  standard: string;
-  status: string;
-  message: string;
-  details?: string | null;
-};
+export type CheckResultItem = { standard: string, status: string, message: string, details?: string | null, };
 
-export type ComplianceReportToolResult = {
-  report_id: string;
-  standard_id: string;
-  device_id: string | null;
-  overall_status: string;
-  summary: ComplianceSummary;
-  details: Array<ReportDetail>;
-  generated_at: string;
-};
+export type ComplianceReportToolResult = { report_id: string, standard_id: string, device_id: string | null, overall_status: string, summary: ComplianceSummary, details: Array<ReportDetail>, generated_at: string, };
 
-export type ComplianceRule = {
-  id: string;
-  standard: string;
-  clause: string;
-  description: string;
-  check_type: string;
-  parameters: JsonValue;
-  severity: string;
-};
+export type ComplianceRule = { id: string, standard: string, clause: string, description: string, check_type: string, parameters: JsonValue, severity: string, };
 
-export type ComplianceSummary = {
-  total_rules: number;
-  passed: number;
-  failed: number;
-  critical_failures: number;
-  high_failures: number;
-  medium_failures: number;
-};
+export type ComplianceSummary = { total_rules: number, passed: number, failed: number, critical_failures: number, high_failures: number, medium_failures: number, };
 
-export type ReplyResult = {
-  consultation_id: string;
-  answer: string;
-  selected_options: Array<string>;
-  status: ConsultationStatus;
-};
+export type ReplyResult = { consultation_id: string, answer: string, selected_options: Array<string>, status: ConsultationStatus, };
 
-export type ReportDetail = {
-  rule_id: string;
-  clause: string;
-  description: string;
-  status: string;
-  severity: string;
-  deviation: number | null;
-  recommendation: string;
-};
+export type ReportDetail = { rule_id: string, clause: string, description: string, status: string, severity: string, deviation: number | null, recommendation: string, };
 
-export type ReportHumanResult = {
-  report_id: string;
-  report_type: string;
-  content: JsonValue;
-  consultation_id: string | null;
-  status: ConsultationStatus;
-  created_at: string;
-};
+export type ReportHumanResult = { report_id: string, report_type: string, content: JsonValue, consultation_id: string | null, status: ConsultationStatus, created_at: string, };
 
-export type RuleCheckResult = {
-  rule_id: string;
-  clause: string;
-  description: string;
-  status: string;
-  actual_value: JsonValue | null;
-  expected: JsonValue | null;
-  deviation: number | null;
-  severity: string;
-};
+export type RuleCheckResult = { rule_id: string, clause: string, description: string, status: string, actual_value: JsonValue | null, expected: JsonValue | null, deviation: number | null, severity: string, };
 
-export type SensitivityRule = {
-  tool: string;
-  agent?: string | null;
-  sensitivity: string;
-  reason?: string | null;
-};
+export type SensitivityRule = { tool: string, agent?: string | null, sensitivity: string, reason?: string | null, };
 
-export type StandardCheckResult = {
-  standard_id: string;
-  total_rules: number;
-  passed: number;
-  failed: number;
-  not_applicable: number;
-  results: Array<RuleCheckResult>;
-  overall_status: string;
-};
+export type StandardCheckResult = { standard_id: string, total_rules: number, passed: number, failed: number, not_applicable: number, results: Array<RuleCheckResult>, overall_status: string, };
 
-export type StandardRegisterResult = {
-  standard_id: string;
-  rules_registered: number;
-};
+export type StandardRegisterResult = { standard_id: string, rules_registered: number, };

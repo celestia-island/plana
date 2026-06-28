@@ -2,91 +2,36 @@
 import type { ConsultationStatus } from "../enums";
 import type { JsonValue } from "../serde_json/JsonValue";
 
-export type ConsumeInjectedPromptsResult = {
-  consumed: Array<InjectedPromptView>;
-  count: number;
-};
+export type ConsumeInjectedPromptsResult = { consumed: Array<InjectedPromptView>, count: number, };
 
-export type DeliverMessageResult = {
-  todo_id: string;
-  title: string;
-  target_badge: string;
-  status: string;
-};
+export type DeliverMessageResult = { todo_id: string, title: string, target_badge: string, status: string, };
 
-export type FileObserverView = {
-  agent_type: string;
-  instance_badge: string | null;
-  observation_type: string;
-  registered_at: string;
-};
+export type FileObserverView = { agent_type: string, instance_badge: string | null, observation_type: string, registered_at: string, };
 
-export type ForkContainerRegistrationResult = {
-  status: string;
-  message: string;
-  container_id: string;
-  reason: string;
-};
+export type ForkContainerRegistrationResult = { status: string, message: string, container_id: string, reason: string, };
 
-export type InjectUserPromptResult = {
-  target_badge: string;
-  injected: boolean;
-  prompt_count: number;
-};
+export type InjectUserPromptResult = { target_badge: string, injected: boolean, prompt_count: number, };
 
-export type InjectedPromptView = {
-  source_badge: string;
-  message: string;
-  suggested_skill: string;
-  injected_at: string;
-};
+export type InjectedPromptView = { source_badge: string, message: string, suggested_skill: string, injected_at: string, };
 
-export type ListFileObserversToolResult = {
-  file_path: string;
-  observers: Array<FileObserverView>;
-};
+export type ListFileObserversToolResult = { file_path: string, observers: Array<FileObserverView>, };
 
-export type NotifyFileOperationToolResult = {
-  file_path: string;
-  observers_count: number;
-};
+export type NotifyFileOperationToolResult = { file_path: string, observers_count: number, };
 
-export type TaskCancelResult = { task_id: string; status: ConsultationStatus };
+export type TaskCancelResult = { task_id: string, status: ConsultationStatus, };
 
-export type TaskEntry = {
-  id: string;
-  schedule: JsonValue;
-  status: ConsultationStatus;
-  created_at: string;
-};
+export type TaskEntry = { id: string, schedule: JsonValue, status: ConsultationStatus, created_at: string, };
 
-export type TaskListResult = { count: number; tasks: Array<TaskEntry> };
+export type TaskListResult = { count: number, tasks: Array<TaskEntry>, };
 
-export type TaskScheduleResult = {
-  task_id: string;
-  schedule: JsonValue;
-  status: ConsultationStatus;
-  timer_info: string | null;
-};
+export type TaskScheduleResult = { task_id: string, schedule: JsonValue, status: ConsultationStatus, timer_info: string | null, };
 
-export type TriggerAddResult = {
-  trigger_id: string;
-  trigger_type: string;
-  event: JsonValue;
-};
+export type TriggerAddResult = { trigger_id: string, trigger_type: string, event: JsonValue, };
 
-export type TriggerEntry = {
-  id: string;
-  trigger_type: string;
-  event: JsonValue;
-  created_at: string;
-};
+export type TriggerEntry = { id: string, trigger_type: string, event: JsonValue, created_at: string, };
 
-export type TriggerListResult = {
-  count: number;
-  triggers: Array<TriggerEntry>;
-};
+export type TriggerListResult = { count: number, triggers: Array<TriggerEntry>, };
 
-export type TriggerRemoveResult = { trigger_id: string };
+export type TriggerRemoveResult = { trigger_id: string, };
 
-export type UnregisterFileOperationResult = { status: string };
+export type UnregisterFileOperationResult = { status: string, };

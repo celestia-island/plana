@@ -6,7 +6,7 @@ use ts_rs::TS;
 use crate::{AgentBadge, ContainerStatus, TaskStatus, agent_lifecycle::TuiAgentInfo};
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct ContainerInfo {
     pub id: String,
     pub name: String,
@@ -52,7 +52,7 @@ pub struct ContainerInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct TaskInfo {
     #[ts(type = "string")]
     pub id: uuid::Uuid,
@@ -67,13 +67,13 @@ pub struct TaskInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct GlobalSnapshotParams {
     pub snapshot: GlobalSnapshotData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct GlobalSnapshotData {
     pub version: u64,
     pub timestamp: i64,
@@ -83,13 +83,13 @@ pub struct GlobalSnapshotData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct ContainerSnapshotParams {
     pub snapshot: ContainerSnapshotData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct ContainerSnapshotData {
     pub version: u64,
     pub timestamp: i64,
@@ -97,13 +97,13 @@ pub struct ContainerSnapshotData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct TasksSnapshotParams {
     pub snapshot: TasksSnapshotData,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/state_sync.ts")]
 pub struct TasksSnapshotData {
     pub version: u64,
     pub timestamp: i64,

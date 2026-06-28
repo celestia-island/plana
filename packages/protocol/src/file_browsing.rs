@@ -12,7 +12,7 @@ use ts_rs::TS;
 
 /// Which filesystem a file operation targets.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/file_browsing.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum FileTargetKind {
     /// A container slot — `#demiurge` or `#NNN` (id is the slot badge).
@@ -26,7 +26,7 @@ pub enum FileTargetKind {
 /// A file-operation target — a (kind, id) pair plus optional workspace
 /// context (container slots are per-workspace).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/file_browsing.ts")]
 pub struct FileTarget {
     pub kind: FileTargetKind,
     /// Container badge (`#demiurge` / `#001`), host id, or workspace id.
@@ -39,7 +39,7 @@ pub struct FileTarget {
 
 /// One entry in a directory listing.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/file_browsing.ts")]
 pub struct FileTreeEntry {
     pub name: String,
     /// `"file"` | `"dir"` | `"symlink"`.
@@ -49,7 +49,7 @@ pub struct FileTreeEntry {
 
 /// `Tui.RequestFileTree` — list one level of a directory.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/file_browsing.ts")]
 pub struct RequestFileTreeParams {
     pub target: FileTarget,
     /// Sub-path under the target root (empty/`""` = root).
@@ -59,7 +59,7 @@ pub struct RequestFileTreeParams {
 
 /// `Tui.FileTree` — directory listing response.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/file_browsing.ts")]
 pub struct FileTreeParams {
     pub target: FileTarget,
     pub path: String,
@@ -68,7 +68,7 @@ pub struct FileTreeParams {
 
 /// `Tui.RequestFileRead` — read a single (text) file, capped server-side.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/file_browsing.ts")]
 pub struct RequestFileReadParams {
     pub target: FileTarget,
     pub path: String,
@@ -76,7 +76,7 @@ pub struct RequestFileReadParams {
 
 /// `Tui.FileRead` — file-content response.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/file_browsing.ts")]
 pub struct FileReadParams {
     pub target: FileTarget,
     pub path: String,

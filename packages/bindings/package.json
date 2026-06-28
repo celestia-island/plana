@@ -7,7 +7,7 @@
   "types": "index.ts",
   "files": [
     "index.ts",
-    "WsTypes.ts",
+    "ws/",
     "HttpTypes.ts",
     "model.ts",
     "enums.ts",

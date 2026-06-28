@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2AgentInfo {
     pub name: String,
     pub description: String,
@@ -15,13 +15,13 @@ pub struct Layer2AgentInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2AgentListResponseParams {
     pub agents: Vec<Layer2AgentInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2McpToolInfo {
     pub name: String,
     pub description: String,
@@ -33,14 +33,14 @@ pub struct Layer2McpToolInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2AgentMcpResponseParams {
     pub agent_name: String,
     pub tools: Vec<Layer2McpToolInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2SkillInfo {
     pub name: String,
     pub description: String,
@@ -52,14 +52,14 @@ pub struct Layer2SkillInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2AgentSkillsResponseParams {
     pub agent_name: String,
     pub skills: Vec<Layer2SkillInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2McpPromptResponseParams {
     pub agent_name: String,
     pub tool: String,
@@ -69,7 +69,7 @@ pub struct Layer2McpPromptResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct Layer2SkillPromptResponseParams {
     pub agent_name: String,
     pub skill: String,
@@ -79,7 +79,7 @@ pub struct Layer2SkillPromptResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct CustomAgentInfo {
     pub name: String,
     pub display_name: String,
@@ -95,13 +95,13 @@ pub struct CustomAgentInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct CustomAgentListResponseParams {
     pub agents: Vec<CustomAgentInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct SubscribeCustomAgentResponseParams {
     pub success: bool,
     #[serde(default)]
@@ -117,7 +117,7 @@ pub struct SubscribeCustomAgentResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/layer2.ts")]
 pub struct UnsubscribeCustomAgentResponseParams {
     pub success: bool,
     #[serde(default)]

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/auth.ts")]
 pub struct AuthLoginResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -31,7 +31,7 @@ pub struct AuthLoginResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/auth.ts")]
 pub struct AuthRegisterResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -46,7 +46,7 @@ pub struct AuthRegisterResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/auth.ts")]
 pub struct UserProfileSummary {
     pub id: String,
     pub username: String,
@@ -57,7 +57,7 @@ pub struct UserProfileSummary {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/auth.ts")]
 pub struct AuthListUsersResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -69,7 +69,7 @@ pub struct AuthListUsersResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/auth.ts")]
 pub struct AuthGetUserResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -81,7 +81,7 @@ pub struct AuthGetUserResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/auth.ts")]
 pub struct AuthDeleteUserResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -90,7 +90,7 @@ pub struct AuthDeleteUserResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/auth.ts")]
 pub struct AuthChangePasswordResponseParams {
     pub ok: bool,
     #[serde(default)]

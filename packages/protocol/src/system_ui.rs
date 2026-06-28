@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/system_ui.ts")]
 pub struct WebUiControlResponseParams {
     pub command: String,
     pub success: bool,
@@ -15,7 +15,7 @@ pub struct WebUiControlResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "WsTypes.ts")]
+#[ts(export, export_to = "ws/system_ui.ts")]
 pub struct WebUiStatusParams {
     pub running: bool,
     #[serde(default)]
