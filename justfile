@@ -1,11 +1,11 @@
-# arona — monorepo justfile (docs + packages).
-# packages/devtools/ hosts the shared Python build scripts; consumer repos
-# reach them via their own scripts/_arona_devtools.py wrapper.
+# arona — single-crate repo (protocol types + TS bindings + devtools).
+# devtools/ hosts the shared Python build scripts; consumer repos reach them
+# via their own scripts/_arona_devtools.py wrapper.
 
 set shell := ["bash", "-c"]
 
 python_cmd := if which("python3") != "" { "python3" } else { "python" }
-devtools := "packages/devtools"
+devtools := "devtools"
 
 default:
     @just --list
@@ -16,7 +16,7 @@ install:
     just cache-guard
     {{python_cmd}} {{devtools}}/utils/prefetch.py .
 
-# target/ cache guard (see packages/devtools/utils/cargo_cache_guard.py).
+# target/ cache guard (see devtools/utils/cargo_cache_guard.py).
 # Hard floor: free disk < 10 GiB → cargo clean.
 # Soft threshold: target/ >= 40 GiB → cargo sweep --time 7 (needs cargo-sweep).
 cache-guard *ARGS='':
@@ -36,7 +36,7 @@ build:
 test:
     cargo test
 
-# Regenerate TypeScript bindings into packages/bindings/ via ts-rs.
+# Regenerate TypeScript bindings into bindings/ via ts-rs.
 bindings:
     cargo test --package arona
 

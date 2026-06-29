@@ -18,26 +18,31 @@
 
 ## Repository Structure
 
-Arona is a monorepo that serves as the **central hub** for the celestia-island ecosystem:
+Arona is a single Rust crate that also ships generated TypeScript bindings,
+shared devtools, and the unified documentation hub for the celestia-island
+ecosystem:
 
 ```text
 arona/
+├── src/                 # Rust crate — JSON-RPC 2.0 & API types (the `arona` package)
+├── examples/            # Runnable examples (e.g. schema dump)
+├── bindings/            # TypeScript bindings (auto-generated via ts-rs)
+├── devtools/            # Shared Python build scripts
 ├── docs/                # Unified documentation for the entire ecosystem
 │   ├── meta/            # CLA, CoC, SECURITY, CONTRIBUTING (canonical)
 │   ├── architecture/    # Architecture overviews (core/, webui/)
 │   ├── design/          # Design documents (core/, webui/)
 │   ├── guides/          # User & contributor guides (core/, webui/)
 │   └── licenses/        # Translated legal documents
-├── packages/
-│   ├── protocol/        # Rust crate — JSON-RPC 2.0 & API types
-│   ├── bindings/        # TypeScript bindings (auto-generated via ts-rs)
-│   └── devtools/        # Shared Python build scripts
 └── ...
 ```
 
-## Packages
+> The Python devtools and TypeScript bindings live in the repo but are kept
+> out of the published Rust crate via the `exclude` list in `Cargo.toml`.
 
-### `packages/protocol` (Rust crate)
+## Components
+
+### `src/` — Rust crate (`arona`)
 
 JSON-RPC 2.0 message types, agent taxonomy (16 variants), ~230 WebSocket/HTTP parameter types.
 
@@ -48,7 +53,7 @@ JSON-RPC 2.0 message types, agent taxonomy (16 variants), ~230 WebSocket/HTTP pa
 arona = { git = "https://github.com/celestia-island/arona.git", branch = "master" }
 ```
 
-### `packages/bindings` (TypeScript)
+### `bindings/` (TypeScript)
 
 Auto-generated TypeScript bindings from the Rust crate via `ts-rs`.
 
@@ -56,7 +61,7 @@ Auto-generated TypeScript bindings from the Rust crate via `ts-rs`.
 pnpm add @celestia-island/arona
 ```
 
-### `packages/devtools` (Python)
+### `devtools/` (Python)
 
 Shared build/dev scripts (cargo cache guard, logger, offline prefetch) used across all celestia-island repos.
 
