@@ -215,3 +215,226 @@ pub fn build_notification_value(method: &str, params: impl serde::Serialize) -> 
         })
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    // ── Id handling ──────────────────────────────────────────
+
+    #[test]
+    fn id_numeric_round_trip() {
+        let id = Id::Number(42);
+        let s = serde_json::to_string(&id).unwrap();
+        assert_eq!(s, "42");
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_string_round_trip() {
+        let id = Id::String("abc-123".to_string());
+        let s = serde_json::to_string(&id).unwrap();
+        assert_eq!(s, r#""abc-123""#);
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_null_default_round_trip() {
+        let id = Id::Null;
+        let s = serde_json::to_string(&id).unwrap();
+        assert_eq!(s, "null");
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+        assert_eq!(Id::default(), Id::Null);
+    }
+
+    #[test]
+    fn id_new_uuid_is_v7_shaped_string() {
+        let id = Id::new_uuid();
+        let s = serde_json::to_string(&id).unwrap();
+        // new_uuid() produces Id::String(_); serialized as a JSON string.
+        assert!(s.starts_with('"') && s.ends_with('"'));
+        let inner = &s[1..s.len() - 1];
+        // UUID v7: version nibble at position 12 must be '7'.
+        let bytes = inner.as_bytes();
+        assert_eq!(bytes.len(), 36, "expected hyphenated UUID, got {inner}");
+        assert_eq!(bytes[14], b'7', "expected UUID v7, got {inner}");
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    // ── Request round-trip & exact JSON shape ────────────────
+
+    #[test]
+    fn request_round_trip_with_numeric_id() {
+        let req = JsonRpcRequest::new("agent.run", Some(json!({"agent": "haplotes"})))
+            .with_id(Id::Number(7));
+        let s = serde_json::to_string(&req).unwrap();
+        // Exact-shape assertion guards against protocol drift.
+        assert_eq!(
+            s,
+            r#"{"jsonrpc":"2.0","id":7,"method":"agent.run","params":{"agent":"haplotes"}}"#
+        );
+        let back: JsonRpcRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.jsonrpc, "2.0");
+        assert_eq!(back.id, Some(Id::Number(7)));
+        assert_eq!(back.method, "agent.run");
+        assert_eq!(back.params, Some(json!({"agent": "haplotes"})));
+    }
+
+    #[test]
+    fn request_without_params_omits_field() {
+        let req = JsonRpcRequest::new("ping", None).with_id(Id::String("s1".into()));
+        let v = serde_json::to_value(&req).unwrap();
+        // `params` must be absent (skip_serializing_if = "Option::is_none"),
+        // not serialized as null.
+        assert!(v.get("params").is_none());
+        assert_eq!(v["id"], "s1");
+        let back: JsonRpcRequest = serde_json::from_value(v).unwrap();
+        assert_eq!(back.params, None);
+        assert_eq!(back.id, Some(Id::String("s1".into())));
+    }
+
+    // ── Notification round-trip & discrimination ─────────────
+
+    #[test]
+    fn notification_has_no_id_field() {
+        let notif = JsonRpcNotification::new("agent.status", Some(json!({"status": "online"})));
+        let v = serde_json::to_value(&notif).unwrap();
+        assert!(v.get("id").is_none(), "notifications must not carry an id");
+        assert_eq!(v["jsonrpc"], "2.0");
+        assert_eq!(v["method"], "agent.status");
+        let back: JsonRpcNotification = serde_json::from_value(v).unwrap();
+        assert_eq!(back.method, "agent.status");
+    }
+
+    #[test]
+    fn message_classifies_request_vs_notification() {
+        // No `id` + `method` → notification.
+        let notif_json = r#"{"jsonrpc":"2.0","method":"ev.push","params":{"x":1}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(notif_json).unwrap();
+        assert!(matches!(msg, JsonRpcMessage::Notification(_)));
+
+        // `id` + `method` → request.
+        let req_json = r#"{"jsonrpc":"2.0","id":99,"method":"agent.run","params":{}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(req_json).unwrap();
+        match msg {
+            JsonRpcMessage::Request(r) => assert_eq!(r.id, Some(Id::Number(99))),
+            other => panic!("expected Request, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn message_classifies_response_success_and_error() {
+        let ok_json = r#"{"jsonrpc":"2.0","id":5,"result":{"ok":true}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(ok_json).unwrap();
+        match msg {
+            JsonRpcMessage::Response(r) => {
+                assert_eq!(r.id, Id::Number(5));
+                assert!(r.result.is_some());
+                assert!(r.error.is_none());
+            }
+            other => panic!("expected Response, got {other:?}"),
+        }
+
+        let err_json =
+            r#"{"jsonrpc":"2.0","id":"e1","error":{"code":-32601,"message":"not found"}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(err_json).unwrap();
+        match msg {
+            JsonRpcMessage::Response(r) => {
+                assert_eq!(r.id, Id::String("e1".into()));
+                let err = r.error.expect("error field");
+                assert_eq!(err.code, error_codes::METHOD_NOT_FOUND);
+                assert_eq!(err.message, "not found");
+                assert!(r.result.is_none());
+            }
+            other => panic!("expected Response, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn message_rejects_unclassifiable_payload() {
+        // Neither method nor result/error.
+        let bad = r#"{"jsonrpc":"2.0","id":1}"#;
+        assert!(serde_json::from_str::<JsonRpcMessage>(bad).is_err());
+    }
+
+    // ── Response round-trip & error codes ────────────────────
+
+    #[test]
+    fn response_success_round_trip_preserves_shape() {
+        let resp = JsonRpcResponse::success(Id::Number(3), json!({"value": 42}));
+        let s = serde_json::to_string(&resp).unwrap();
+        assert_eq!(
+            s,
+            r#"{"jsonrpc":"2.0","id":3,"result":{"value":42}}"#
+        );
+        // `error` is skipped when None.
+        assert!(!s.contains(r#""error""#));
+        let back: JsonRpcResponse = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.id, Id::Number(3));
+        assert_eq!(back.result, Some(json!({"value": 42})));
+        assert!(back.error.is_none());
+    }
+
+    #[test]
+    fn response_error_round_trip_with_data() {
+        let err = JsonRpcError::new(error_codes::PARSE_ERROR, "Parse error")
+            .with_data(json!({"offset": 12}));
+        let resp = JsonRpcResponse::error(Id::String("p".into()), err);
+        let v = serde_json::to_value(&resp).unwrap();
+        // `result` skipped on error path; `error.data` present.
+        assert!(v.get("result").is_none());
+        assert_eq!(v["error"]["code"], -32700);
+        assert_eq!(v["error"]["message"], "Parse error");
+        assert_eq!(v["error"]["data"]["offset"], 12);
+        let back: JsonRpcResponse = serde_json::from_value(v).unwrap();
+        let err = back.error.unwrap();
+        assert_eq!(err.code, error_codes::PARSE_ERROR);
+        assert_eq!(err.data, Some(json!({"offset": 12})));
+    }
+
+    #[test]
+    fn response_error_without_data_omits_field() {
+        let err = JsonRpcError::new(error_codes::INTERNAL_ERROR, "boom");
+        let resp = JsonRpcResponse::error(Id::Number(0), err);
+        let s = serde_json::to_string(&resp).unwrap();
+        assert!(
+            !s.contains(r#""data""#),
+            "`data` must be absent when None, got: {s}"
+        );
+        let back: JsonRpcResponse = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.error.unwrap().data, None);
+    }
+
+    #[test]
+    fn error_code_constants_unchanged() {
+        // Guard against accidental drift in well-known JSON-RPC error codes.
+        assert_eq!(error_codes::PARSE_ERROR, -32700);
+        assert_eq!(error_codes::INVALID_REQUEST, -32600);
+        assert_eq!(error_codes::METHOD_NOT_FOUND, -32601);
+        assert_eq!(error_codes::INVALID_PARAMS, -32602);
+        assert_eq!(error_codes::INTERNAL_ERROR, -32603);
+    }
+
+    // ── Notification helpers ─────────────────────────────────
+
+    #[test]
+    fn build_notification_value_shape() {
+        let v = build_notification_value("ev.tick", &json!({"n": 1}));
+        assert_eq!(v["jsonrpc"], "2.0");
+        assert_eq!(v["method"], "ev.tick");
+        assert_eq!(v["params"]["n"], 1);
+        assert!(v.get("id").is_none());
+    }
+
+    #[test]
+    fn build_notification_string_is_valid_json() {
+        let s = build_notification("ev.tick", &json!({"n": 1}));
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["method"], "ev.tick");
+    }
+}
