@@ -6,7 +6,7 @@ use ts_rs::TS;
 // ── Provider / Model / Vendor ──────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ProviderPublic {
     #[ts(type = "string")]
     pub id: uuid::Uuid,
@@ -21,7 +21,7 @@ pub struct ProviderPublic {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ModelInfo {
     pub id: String,
     pub provider_name: String,
@@ -30,7 +30,7 @@ pub struct ModelInfo {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct VendorInfo {
     pub id: String,
     pub name: String,
@@ -42,7 +42,7 @@ pub struct VendorInfo {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ValidateKeyResponse {
     pub valid: bool,
     pub models: Vec<String>,
@@ -53,32 +53,32 @@ pub struct ValidateKeyResponse {
 // ── Generic / Status ───────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct OkResponse {
     pub ok: bool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct OkIdResponse {
     pub ok: bool,
     pub id: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct IdResponse {
     pub id: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct CreatedResponse {
     pub created: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ErrorResponse {
     pub error: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -87,7 +87,7 @@ pub struct ErrorResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct StatusResponse {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -107,7 +107,7 @@ pub struct StatusResponse {
 // ── Health ─────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct HealthResponse {
     pub status: String,
     pub version: String,
@@ -115,7 +115,7 @@ pub struct HealthResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct HealthDetailed {
     #[serde(rename = "shittimChest")]
     pub shittim_chest: ConnectionStatus,
@@ -128,7 +128,7 @@ pub struct HealthDetailed {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ConnectionStatus {
     pub connected: bool,
     pub latency: u64,
@@ -139,21 +139,21 @@ pub struct ConnectionStatus {
 // ── Token usage ────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct TokenUsageResponse {
     pub usage: Vec<UsageEntry>,
     pub total_tokens: i64,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UsageEntry {
     pub model: String,
     pub token_count: u64,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UsageDataResponse {
     pub period: String,
     pub total_tokens: u64,
@@ -163,7 +163,7 @@ pub struct UsageDataResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UsageModelEntry {
     pub model: String,
     pub tokens: u64,
@@ -172,7 +172,7 @@ pub struct UsageModelEntry {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UsageDayEntry {
     pub date: String,
     pub tokens: u64,
@@ -182,7 +182,7 @@ pub struct UsageDayEntry {
 // ── Proxy / System info ────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ProxySystemInfo {
     pub version: String,
     #[serde(rename = "nodeVersion")]
@@ -197,7 +197,7 @@ pub struct ProxySystemInfo {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SystemInfoResponse {
     pub version: String,
     pub uptime_secs: u64,
@@ -208,7 +208,7 @@ pub struct SystemInfoResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SystemInfoAgents {
     pub total: u32,
     pub running: u32,
@@ -217,7 +217,7 @@ pub struct SystemInfoAgents {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SystemInfoResources {
     pub cpu_usage_pct: f64,
     pub memory_used_gb: f64,
@@ -227,14 +227,14 @@ pub struct SystemInfoResources {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SystemInfoConnections {
     pub active_ws: u32,
     pub active_http: u32,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SystemInfoDatabase {
     pub engine: String,
     pub size_mb: u32,
@@ -244,7 +244,7 @@ pub struct SystemInfoDatabase {
 // ── RBAC ───────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct RbacUser {
     pub id: String,
     pub username: String,
@@ -259,13 +259,13 @@ pub struct RbacUser {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct RbacUsersResponse {
     pub users: Vec<RbacUser>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct RbacGroup {
     pub id: String,
     pub name: String,
@@ -276,13 +276,13 @@ pub struct RbacGroup {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct RbacGroupsResponse {
     pub groups: Vec<RbacGroup>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct MyPermissions {
     pub role: String,
     pub permissions: Vec<String>,
@@ -291,7 +291,7 @@ pub struct MyPermissions {
 // ── OAuth ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct OAuthProvider {
     pub provider: String,
     pub client_id: String,
@@ -303,7 +303,7 @@ pub struct OAuthProvider {
 // ── Workspace / Project ────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WorkspaceItem {
     pub id: String,
     pub path: String,
@@ -318,7 +318,7 @@ pub struct WorkspaceItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct AliasRegistryEntry {
     pub workspace_uuid: String,
     pub alias: String,
@@ -326,7 +326,7 @@ pub struct AliasRegistryEntry {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WorkspaceResolveResponse {
     pub workspace_uuid: String,
     pub short_id: String,
@@ -336,7 +336,7 @@ pub struct WorkspaceResolveResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ProjectItem {
     pub id: String,
     pub name: String,
@@ -349,7 +349,7 @@ pub struct ProjectItem {
 // ── Scene ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneConfigItem {
     pub project_id: String,
     pub background_color: String,
@@ -362,7 +362,7 @@ pub struct SceneConfigItem {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneGround {
     pub enabled: bool,
     pub size_x: f64,
@@ -377,7 +377,7 @@ pub struct SceneGround {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneLighting {
     pub ambient_color: [f64; 3],
     pub ambient_intensity: f64,
@@ -387,7 +387,7 @@ pub struct SceneLighting {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneGrid {
     pub visible: bool,
     pub size: u32,
@@ -395,7 +395,7 @@ pub struct SceneGrid {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneCamera {
     pub position: SceneVec3,
     pub target: SceneVec3,
@@ -404,14 +404,14 @@ pub struct SceneCamera {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneCameraBookmark {
     pub position: SceneVec3,
     pub target: SceneVec3,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneVec3 {
     pub x: f64,
     pub y: f64,
@@ -419,7 +419,7 @@ pub struct SceneVec3 {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SceneBloom {
     pub strength: f64,
     pub radius: f64,
@@ -429,7 +429,7 @@ pub struct SceneBloom {
 // ── Channel ────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ChannelListItem {
     pub platform: String,
     pub enabled: bool,
@@ -438,13 +438,13 @@ pub struct ChannelListItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ChannelListResponse {
     pub channels: Vec<ChannelListItem>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ChannelConfigDetail {
     pub id: String,
     pub platform: String,
@@ -483,20 +483,20 @@ pub struct ChannelConfigDetail {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ChannelConfigResponse {
     pub config: ChannelConfigDetail,
     pub active: bool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ChannelConfigsResponse {
     pub configs: Vec<ChannelConfigResponse>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ChannelMessageItem {
     pub id: String,
     pub platform: String,
@@ -512,7 +512,7 @@ pub struct ChannelMessageItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ChannelMessageListResponse {
     pub messages: Vec<ChannelMessageItem>,
     pub count: usize,
@@ -521,7 +521,7 @@ pub struct ChannelMessageListResponse {
 // ── Agent ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct AgentItem {
     pub id: String,
     pub name: String,
@@ -546,7 +546,7 @@ pub struct AgentItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct AgentTool {
     pub id: String,
     pub name: String,
@@ -555,7 +555,7 @@ pub struct AgentTool {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct AgentConfig {
     pub max_concurrent_tasks: u32,
     pub timeout_secs: u32,
@@ -565,7 +565,7 @@ pub struct AgentConfig {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct AgentContainer {
     pub id: String,
     pub image: String,
@@ -576,7 +576,7 @@ pub struct AgentContainer {
 // ── Webhook ────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WebhookItem {
     pub id: String,
     pub name: String,
@@ -596,7 +596,7 @@ pub struct WebhookItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WebhookDeliveryItem {
     pub id: String,
     #[serde(rename = "webhookId")]
@@ -623,7 +623,7 @@ pub struct WebhookDeliveryItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WebhookDeliveryGenItem {
     pub id: String,
     pub webhook_id: String,
@@ -640,7 +640,7 @@ pub struct WebhookDeliveryGenItem {
 // ── Skill ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SkillParameterItem {
     pub name: String,
     #[serde(rename = "type")]
@@ -653,7 +653,7 @@ pub struct SkillParameterItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SkillItem {
     pub skill_id: String,
     pub name: String,
@@ -668,7 +668,7 @@ pub struct SkillItem {
 // ── Tool ───────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ToolItem {
     pub tool_id: String,
     pub name: String,
@@ -685,27 +685,27 @@ pub struct ToolItem {
 // ── Common response helpers ────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct DeletedResponse {
     pub deleted: u64,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct OkMessageResponse {
     pub ok: bool,
     pub message: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ReadinessResponse {
     pub status: String,
     pub database: bool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct AvatarPlatformResponse {
     pub id: String,
     pub slug: String,
@@ -717,7 +717,7 @@ pub struct AvatarPlatformResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SetupCheckResponse {
     pub needs_setup: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -727,7 +727,7 @@ pub struct SetupCheckResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UserPreferences {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -744,7 +744,7 @@ pub struct UserPreferences {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UserProfileResponse {
     pub id: String,
     pub username: String,
@@ -762,20 +762,20 @@ pub struct UserProfileResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct AvatarUpdateResponse {
     pub avatar_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct PermissionsResponse {
     pub role: String,
     pub permissions: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct GrantItem {
     pub id: String,
     pub scope: String,
@@ -788,13 +788,13 @@ pub struct GrantItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct GrantListResponse {
     pub grants: Vec<GrantItem>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct DeviceResponse {
     pub id: String,
     pub device_id: String,
@@ -809,7 +809,7 @@ pub struct DeviceResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct SessionCreateResponse {
     pub session_id: String,
     pub status: String,
@@ -819,14 +819,14 @@ pub struct SessionCreateResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct FileListingResponse {
     pub path: String,
     pub entries: Vec<FileEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct FileEntry {
     pub name: String,
     #[serde(rename = "type")]
@@ -835,7 +835,7 @@ pub struct FileEntry {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WebhookInfoItem {
     pub name: String,
     pub url: String,
@@ -843,13 +843,13 @@ pub struct WebhookInfoItem {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WebhookListResponse {
     pub webhooks: Vec<WebhookInfoItem>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct DeliveryListResponse {
     #[ts(type = "Array<Record<string, unknown>>")]
     pub deliveries: Vec<serde_json::Value>,
@@ -857,7 +857,7 @@ pub struct DeliveryListResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct IpWhitelistResponse {
     pub enabled: bool,
     #[ts(type = "Array<Record<string, unknown>>")]
@@ -865,14 +865,14 @@ pub struct IpWhitelistResponse {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct CursorVisibleRange {
     pub start: u32,
     pub end: u32,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct CursorState {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
@@ -894,7 +894,7 @@ pub struct CursorState {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct WorkspaceSessionResponse {
     pub workspace_id: String,
     pub workspace_path: String,
@@ -911,7 +911,7 @@ pub struct WorkspaceSessionResponse {
 // ── Resource Quotas / Allocation ────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ResourceQuota {
     pub id: String,
     pub name: String,
@@ -927,13 +927,13 @@ pub struct ResourceQuota {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ResourceQuotaListResponse {
     pub quotas: Vec<ResourceQuota>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ResourceUsageSummary {
     pub resource_type: String,
     #[ts(type = "number")]
@@ -947,7 +947,7 @@ pub struct ResourceUsageSummary {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct ResourceUsageResponse {
     pub summary: Vec<ResourceUsageSummary>,
 }
@@ -955,7 +955,7 @@ pub struct ResourceUsageResponse {
 // ── User Tier / Payment ──────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UserTierInfo {
     pub user_id: String,
     pub tier: String,
@@ -972,7 +972,7 @@ pub struct UserTierInfo {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct TierDefinition {
     pub tier: String,
     #[ts(type = "number")]
@@ -985,13 +985,13 @@ pub struct TierDefinition {
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct TierListResponse {
     pub tiers: Vec<TierDefinition>,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "HttpTypes.ts")]
+#[ts(export, export_to = "httpTypes.ts")]
 pub struct UpdateUserTierPayload {
     pub user_id: String,
     pub tier: String,

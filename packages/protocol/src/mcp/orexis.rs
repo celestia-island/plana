@@ -49,6 +49,7 @@ pub struct ReplyResult {
 pub struct ReportHumanResult {
     pub report_id: Uuid,
     pub report_type: String,
+    #[ts(type = "Record<string, unknown>")]
     pub content: Value,
     pub consultation_id: Option<Uuid>,
     pub status: ConsultationStatus,
@@ -200,6 +201,7 @@ pub struct ComplianceRule {
     pub clause: String,
     pub description: String,
     pub check_type: String,
+    #[ts(type = "Record<string, unknown>")]
     pub parameters: Value,
     pub severity: String,
 }
@@ -218,7 +220,9 @@ pub struct RuleCheckResult {
     pub clause: String,
     pub description: String,
     pub status: String,
+    #[ts(type = "Record<string, unknown> | null")]
     pub actual_value: Option<Value>,
+    #[ts(type = "Record<string, unknown> | null")]
     pub expected: Option<Value>,
     pub deviation: Option<f64>,
     pub severity: String,

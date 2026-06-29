@@ -243,12 +243,14 @@ pub struct GoalTaskUpdateParams {
     pub description: Option<String>,
     pub status: Option<String>,
     pub assignee: Option<String>,
+    #[ts(type = "Record<string, unknown> | null")]
     pub result: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 pub struct GoalTaskCompleteParams {
     pub task_id: String,
+    #[ts(type = "Record<string, unknown> | null")]
     pub result: Option<serde_json::Value>,
 }
 

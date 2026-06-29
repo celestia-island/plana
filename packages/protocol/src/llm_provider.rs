@@ -14,7 +14,7 @@ use crate::PeriodType;
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct LlmProviderConfiguredParams {
     pub provider_name: String,
     pub success: bool,
@@ -24,7 +24,7 @@ pub struct LlmProviderConfiguredParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ProviderRenamedParams {
     pub provider_name: String,
     pub new_display_name: String,
@@ -35,7 +35,7 @@ pub struct ProviderRenamedParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ProviderEditedParams {
     pub provider_name: String,
     pub success: bool,
@@ -45,7 +45,7 @@ pub struct ProviderEditedParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ProviderDeletedParams {
     pub provider_name: String,
     pub success: bool,
@@ -55,7 +55,7 @@ pub struct ProviderDeletedParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ConfiguredProviderInfo {
     pub provider_name: String,
     pub display_name: String,
@@ -67,13 +67,13 @@ pub struct ConfiguredProviderInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ConfiguredProvidersListParams {
     pub providers: Vec<ConfiguredProviderInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ModelProviderConfigUpdatedParams {
     pub provider_name: String,
     pub success: bool,
@@ -83,7 +83,7 @@ pub struct ModelProviderConfigUpdatedParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct EndpointValidatedParams {
     pub provider_name: String,
     pub is_reachable: bool,
@@ -96,7 +96,7 @@ pub struct EndpointValidatedParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct UsagePeriodData {
     pub user_id: String,
     pub period_type: PeriodType,
@@ -112,7 +112,7 @@ pub struct UsagePeriodData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct UsagePeriodResponseParams {
     pub data: Vec<UsagePeriodData>,
 }
@@ -122,7 +122,7 @@ pub struct UsagePeriodResponseParams {
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct EntrypointApiConfigInfo {
     pub protocol: String,
     pub base_url: String,
@@ -138,7 +138,7 @@ pub struct EntrypointApiConfigInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct MaxConcurrentInfo {
     #[serde(default)]
     pub deep: usize,
@@ -149,7 +149,7 @@ pub struct MaxConcurrentInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct EntrypointDefaultsInfo {
     #[serde(default)]
     pub deep: Vec<String>,
@@ -162,7 +162,7 @@ pub struct EntrypointDefaultsInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct QuotaInfo {
     pub data_limit: u64,
     #[serde(default)]
@@ -176,7 +176,7 @@ pub struct QuotaInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct EntrypointConfigInfo {
     pub id: String,
     #[serde(default)]
@@ -197,7 +197,7 @@ pub struct EntrypointConfigInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ProviderCapabilitiesInfo {
     #[serde(default)]
     pub streaming: bool,
@@ -210,7 +210,7 @@ pub struct ProviderCapabilitiesInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ProviderLimitsInfo {
     #[serde(default)]
     pub max_concurrent: u32,
@@ -222,13 +222,13 @@ pub struct ProviderLimitsInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ProviderFsInfoParams {
     pub providers: Vec<ProviderFsInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ModelFsPricing {
     #[serde(default)]
     #[ts(optional)]
@@ -242,7 +242,7 @@ pub struct ModelFsPricing {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct RateRuleInfo {
     pub timezone_offset: i32,
     pub peak_start: u32,
@@ -252,7 +252,7 @@ pub struct RateRuleInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ModelFsInfo {
     pub id: String,
     pub name: String,
@@ -280,13 +280,13 @@ pub struct ModelFsInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ModelFsInfoParams {
     pub models: Vec<ModelFsInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ProviderFsInfo {
     pub id: String,
     #[serde(default)]
@@ -311,13 +311,13 @@ pub struct ProviderFsInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct UserConfigResponseParams {
     pub config: UserInfoConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct UserInfoConfig {
     pub preferred_language: String,
     #[serde(default)]
@@ -333,13 +333,13 @@ pub struct UserInfoConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct KeysListResponseParams {
     pub keys: Vec<KeyInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct KeyInfo {
     pub provider: String,
     pub display_name: String,
@@ -350,7 +350,7 @@ pub struct KeyInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/llm_provider.ts")]
+#[ts(export, export_to = "ws/llmProvider.ts")]
 pub struct ApiKeyInfoResponseParams {
     pub info: KeyInfo,
 }

@@ -80,6 +80,7 @@ pub struct IndustrialDiscoveryProgress {
     pub found_devices: u64,
     pub progress_percent: u32,
     #[serde(default)]
+    #[ts(type = "Record<string, unknown> | null")]
     pub raw_findings: Option<serde_json::Value>,
 }
 

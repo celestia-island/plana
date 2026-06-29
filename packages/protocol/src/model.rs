@@ -198,7 +198,7 @@ pub struct ModelInferenceRequest {
     pub input: String,
     /// Optional parameters (temperature, max_tokens, language hint …).
     #[serde(default)]
-    #[ts(optional)]
+    #[ts(optional, type = "Record<string, unknown>")]
     pub parameters: Option<serde_json::Value>,
 }
 
@@ -216,7 +216,7 @@ pub struct ModelInferenceResult {
     pub elapsed_ms: Option<u64>,
     /// Token/processing usage (if applicable).
     #[serde(default)]
-    #[ts(optional)]
+    #[ts(optional, type = "Record<string, unknown>")]
     pub usage: Option<serde_json::Value>,
 }
 

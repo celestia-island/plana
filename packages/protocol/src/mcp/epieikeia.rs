@@ -8,6 +8,7 @@ use crate::enums::ConsultationStatus;
 pub struct TriggerAddResult {
     pub trigger_id: Uuid,
     pub trigger_type: String,
+    #[ts(type = "Record<string, unknown>")]
     pub event: Value,
 }
 
@@ -16,6 +17,7 @@ pub struct TriggerAddResult {
 pub struct TriggerEntry {
     pub id: String,
     pub trigger_type: String,
+    #[ts(type = "Record<string, unknown>")]
     pub event: Value,
     pub created_at: String,
 }
@@ -37,6 +39,7 @@ pub struct TriggerRemoveResult {
 #[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TaskScheduleResult {
     pub task_id: Uuid,
+    #[ts(type = "Record<string, unknown>")]
     pub schedule: Value,
     pub status: ConsultationStatus,
     pub timer_info: Option<String>,
@@ -46,6 +49,7 @@ pub struct TaskScheduleResult {
 #[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct TaskEntry {
     pub id: String,
+    #[ts(type = "Record<string, unknown>")]
     pub schedule: Value,
     pub status: ConsultationStatus,
     pub created_at: String,

@@ -6,7 +6,7 @@ use ts_rs::TS;
 use crate::{EmbeddingModel, KnowledgeBaseStatus};
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/knowledge_base.ts")]
+#[ts(export, export_to = "ws/knowledgeBase.ts")]
 pub struct KbGenericResponseParams {
     pub ok: bool,
     #[serde(default)]
@@ -18,7 +18,7 @@ pub struct KbGenericResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/knowledge_base.ts")]
+#[ts(export, export_to = "ws/knowledgeBase.ts")]
 pub struct KnowledgeBaseInfo {
     #[ts(type = "string")]
     pub id: uuid::Uuid,
@@ -45,13 +45,13 @@ pub struct KnowledgeBaseInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/knowledge_base.ts")]
+#[ts(export, export_to = "ws/knowledgeBase.ts")]
 pub struct ListKnowledgeBasesResponseParams {
     pub knowledge_bases: Vec<KnowledgeBaseInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/knowledge_base.ts")]
+#[ts(export, export_to = "ws/knowledgeBase.ts")]
 pub struct GetKnowledgeBaseResponseParams {
     pub knowledge_base: Option<KnowledgeBaseInfo>,
 }

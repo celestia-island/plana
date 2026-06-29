@@ -17,6 +17,7 @@ pub struct RagDocResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(type = "Record<string, unknown> | null")]
     pub metadata: Option<serde_json::Value>,
 }
 
@@ -65,6 +66,7 @@ pub struct MediaAssetItem {
     pub asset_id: Uuid,
     pub asset_type: String,
     pub source_url: String,
+    #[ts(type = "Record<string, unknown>")]
     pub metadata: serde_json::Value,
     pub tags: Vec<String>,
     pub created_at: String,
@@ -180,6 +182,7 @@ pub struct RagDbWriteParams {
     #[serde(default)]
     pub embedding: Option<Vec<f64>>,
     #[serde(default)]
+    #[ts(type = "Record<string, unknown> | null")]
     pub metadata: Option<serde_json::Value>,
     #[serde(default)]
     pub source: Option<String>,

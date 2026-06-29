@@ -41,6 +41,7 @@ pub struct ViewInstance {
     pub data_source: String,
     /// View-specific configuration (JSON, interpreted by the renderer).
     #[serde(default)]
+    #[ts(type = "Record<string, unknown>")]
     pub config: serde_json::Value,
     /// Layout position (grid area, tab order, etc.).
     #[serde(default)]
@@ -103,6 +104,7 @@ pub struct ViewDataPushParams {
     /// Target view ID.
     pub view_id: String,
     /// Data payload (format depends on ViewKind).
+    #[ts(type = "Record<string, unknown>")]
     pub data: serde_json::Value,
     /// Whether this is a full replacement or incremental update.
     #[serde(default)]

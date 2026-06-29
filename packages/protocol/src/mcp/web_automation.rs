@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserInstanceInfo {
     pub browser_id: String,
     pub browser_type: String,
@@ -10,7 +10,7 @@ pub struct BrowserInstanceInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserCreateResult {
     pub browser_id: String,
     pub browser_type: String,
@@ -19,20 +19,20 @@ pub struct BrowserCreateResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserCloseResult {
     pub browser_id: String,
     pub status: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserListResult {
     pub instances: Vec<BrowserInstanceInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserNavigateResult {
     pub browser_id: String,
     pub final_url: String,
@@ -41,7 +41,7 @@ pub struct BrowserNavigateResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserScreenshotResult {
     pub browser_id: String,
     pub format: String,
@@ -51,15 +51,16 @@ pub struct BrowserScreenshotResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserScriptResult {
     pub browser_id: String,
+    #[ts(type = "Record<string, unknown>")]
     pub result: serde_json::Value,
     pub return_type: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserConsoleLogEntry {
     pub level: String,
     pub text: String,
@@ -67,14 +68,14 @@ pub struct BrowserConsoleLogEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserConsoleLogsResult {
     pub browser_id: String,
     pub entries: Vec<BrowserConsoleLogEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserNetworkEntry {
     pub method: String,
     pub url: String,
@@ -83,28 +84,28 @@ pub struct BrowserNetworkEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserNetworkLogsResult {
     pub browser_id: String,
     pub entries: Vec<BrowserNetworkEntry>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserKeypressResult {
     pub browser_id: String,
     pub key: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserMouseClickResult {
     pub browser_id: String,
     pub selector: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserMouseMoveResult {
     pub browser_id: String,
     pub x: f64,
@@ -112,7 +113,7 @@ pub struct BrowserMouseMoveResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/web_automation.ts")]
+#[ts(export, export_to = "mcp/webAutomation.ts")]
 pub struct BrowserRecordResult {
     pub browser_id: String,
     pub action: String,

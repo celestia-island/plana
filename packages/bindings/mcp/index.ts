@@ -10,4 +10,4 @@ export * as philia from "./philia";
 export * as polemos from "./polemos";
 export * as skemma from "./skemma";
 export * as skopeo from "./skopeo";
-export * as web_automation from "./web_automation";
+export * as webAutomation from "./webAutomation";

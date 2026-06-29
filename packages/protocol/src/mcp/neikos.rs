@@ -225,6 +225,7 @@ pub struct SidecarSpawnParams {
 pub struct SidecarSendParams {
     pub name: String,
     pub method: String,
+    #[ts(type = "Record<string, unknown> | null")]
     pub params: Option<serde_json::Value>,
     pub timeout_secs: Option<u64>,
 }

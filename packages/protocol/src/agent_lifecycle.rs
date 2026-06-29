@@ -15,7 +15,7 @@ use crate::{
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct AgentStreamingChunkParams {
     pub agent_type: Agent,
     pub agent_id: String,
@@ -35,7 +35,7 @@ pub struct AgentStreamingChunkParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct AgentResponseParams {
     pub agent_type: Agent,
     pub agent_id: String,
@@ -51,7 +51,7 @@ pub struct AgentResponseParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct AgentReportParams {
     pub report_type: ReportType,
     pub agent_type: Agent,
@@ -112,7 +112,7 @@ pub struct AgentReportParams {
 /// the `agent_id` of the originating `AgentReportParams` so the upstream can
 /// correlate without keeping a separate consultation registry.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct AgentReportReplyParams {
     pub report_id: String,
     #[serde(default)]
@@ -124,7 +124,7 @@ pub struct AgentReportReplyParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct OrchestrationStatusParams {
     pub stage: SkillStage,
     pub agent: String,
@@ -148,7 +148,7 @@ pub struct OrchestrationStatusParams {
 }
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct McpToolResultParams {
     pub tool_name: String,
     #[ts(type = "string")]
@@ -174,7 +174,7 @@ pub struct McpToolResultParams {
 // ═══════════════════════════════════════════════════════════════
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct TuiAgentInfo {
     pub agent_type: Agent,
     #[serde(default)]
@@ -215,7 +215,7 @@ pub struct TuiAgentInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "ws/agent_lifecycle.ts")]
+#[ts(export, export_to = "ws/agentLifecycle.ts")]
 pub struct AgentListResponseParams {
     pub agents: Vec<TuiAgentInfo>,
 }

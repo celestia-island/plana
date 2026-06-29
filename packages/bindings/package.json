@@ -8,10 +8,9 @@
   "files": [
     "index.ts",
     "ws/",
-    "HttpTypes.ts",
+    "httpTypes.ts",
     "model.ts",
     "enums.ts",
-    "mcp/",
-    "serde_json/"
+    "mcp/"
   ]
 }

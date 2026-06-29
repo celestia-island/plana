@@ -19,6 +19,7 @@ pub struct AgentRegistryListResult {
 pub struct McpToolDetail {
     pub name: String,
     pub description: String,
+    #[ts(type = "Record<string, unknown>")]
     pub parameters: serde_json::Value,
 }
 
@@ -42,6 +43,7 @@ pub struct DataStoreSaveResult {
     pub namespace: String,
     pub store_key: String,
     pub saved_at: String,
+    #[ts(type = "Record<string, unknown>")]
     pub value: Value,
 }
 
@@ -51,6 +53,7 @@ pub struct DataStoreLoadResult {
     pub namespace: String,
     pub store_key: String,
     pub loaded_at: String,
+    #[ts(type = "Record<string, unknown>")]
     pub value: Value,
 }
 
@@ -96,6 +99,7 @@ pub struct MemorySubgraphEdge {
     pub target_id: String,
     pub edge_type: String,
     pub weight: f64,
+    #[ts(type = "Record<string, unknown> | null")]
     pub metadata: Option<serde_json::Map<String, Value>>,
 }
 
@@ -109,6 +113,7 @@ pub struct MemoryNodeFull {
     pub tags: Vec<String>,
     pub created_at: Option<String>,
     pub source: Option<String>,
+    #[ts(type = "Record<string, unknown> | null")]
     pub metadata: Option<serde_json::Map<String, Value>>,
 }
 
