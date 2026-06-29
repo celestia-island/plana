@@ -1,3 +1,11 @@
++++
+title = "Клиент протокола VNC (RFB)"
+description = """Запись архитектурного решения — Клиент протокола VNC (RFB)."""
+lang = "ru"
+category = "design"
+subcategory = "router"
++++
+
 # Клиент протокола VNC (RFB)
 
 - **Статус**: Принято

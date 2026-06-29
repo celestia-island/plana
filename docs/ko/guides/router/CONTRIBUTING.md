@@ -1,3 +1,11 @@
++++
+title = "Evernight 기여 가이드"
+description = """evernight 기여 지침."""
+lang = "ko"
+category = "guides"
+subcategory = "router"
++++
+
 # Evernight 기여 가이드
 
 > 이 파일은 기여 정책의 한국어 버전입니다. 빌드 명령어와 상세 설정 절차는 저장소 루트의 영문

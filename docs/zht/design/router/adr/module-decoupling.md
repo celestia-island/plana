@@ -1,3 +1,11 @@
++++
+title = "模組解耦與型別所有權"
+description = """架構決策記錄 —— 模組解耦與型別所有權。"""
+lang = "zht"
+category = "design"
+subcategory = "router"
++++
+
 # 模組解耦與型別所有權
 
 - **狀態**：已接受

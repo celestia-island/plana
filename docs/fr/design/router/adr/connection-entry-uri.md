@@ -1,3 +1,11 @@
++++
+title = "Schéma URI des entrées de connexion"
+description = """Enregistrement de décision d'architecture — Schéma URI des entrées de connexion."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Schéma URI des entrées de connexion
 
 - **Statut** : Acceptée

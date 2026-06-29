@@ -1,3 +1,11 @@
++++
+title = "SSH 연결 풀"
+description = """아키텍처 결정 기록 —— SSH 연결 풀."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # SSH 연결 풀
 
 - **상태**: Accepted

@@ -1,3 +1,11 @@
++++
+title = "VNC（RFB）協定客戶端"
+description = """架構決策記錄 —— VNC（RFB）協定客戶端。"""
+lang = "zht"
+category = "design"
+subcategory = "router"
++++
+
 # VNC（RFB）協定客戶端
 
 - **狀態**：已接受

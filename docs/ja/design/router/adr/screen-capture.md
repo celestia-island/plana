@@ -1,3 +1,11 @@
++++
+title = "画面キャプチャアーキテクチャ"
+description = """アーキテクチャ意思決定記録 —— 画面キャプチャアーキテクチャ。"""
+lang = "ja"
+category = "design"
+subcategory = "router"
++++
+
 # 画面キャプチャアーキテクチャ
 
 - **Status**: Accepted

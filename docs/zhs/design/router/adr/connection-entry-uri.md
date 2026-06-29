@@ -1,3 +1,11 @@
++++
+title = "连接条目 URI 方案"
+description = """架构决策记录 —— 连接条目 URI 方案。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # 连接条目 URI 方案
 
 - **状态**：已采纳

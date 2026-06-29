@@ -1,3 +1,11 @@
++++
+title = "工业协议接入指南 — Evernight"
+description = """evernight 工业协议集成指南（Modbus、S7comm、OPC UA）。"""
+lang = "zhs"
+category = "guides"
+subcategory = "router"
++++
+
 # 工业协议接入指南 — Evernight
 
 Evernight 是 celestia-island 生态的**强制硬件能力代理（hardware capability broker）**。任何上游 crate 都不得直接导入 `aoba` / `rust7` 等库——所有物理 I/O 必须经过 evernight 的协议模块。本指南覆盖如何连接、轮询、发现并对每个支持的工业协议进行告警。

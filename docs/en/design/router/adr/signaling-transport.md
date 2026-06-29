@@ -1,3 +1,11 @@
++++
+title = "Signaling Transport — Dual Unix Socket / TCP"
+description = """Architecture decision record — Signaling Transport — Dual Unix Socket / TCP."""
+lang = "en"
+category = "design"
+subcategory = "router"
++++
+
 # Signaling Transport — Dual Unix Socket / TCP
 
 - **Status**: Accepted

@@ -1,3 +1,11 @@
++++
+title = "Evernight"
+description = """Evernight —— クロスプラットフォーム遠隔制御ライブラリとデーモン。"""
+lang = "ja"
+category = "guides"
+subcategory = "router"
++++
+
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 

@@ -1,3 +1,11 @@
++++
+title = "快速上手 — Evernight"
+description = """evernight 快速上手 —— 构建、运行与首批命令。"""
+lang = "zhs"
+category = "guides"
+subcategory = "router"
++++
+
 # 快速上手 — Evernight
 
 Evernight（长夜月）是一个用 Rust 编写的跨平台远程控制库和守护进程。它将屏幕捕获、WebRTC 推流、SSH 远程 shell、远程终端、文件传输、硬件遥测、工业协议支持（Modbus、S7comm、OPC-UA 探测）和 NAT 穿透整合到一个可复用的 crate 和独立的 CLI 二进制中。

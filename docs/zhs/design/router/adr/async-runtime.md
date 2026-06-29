@@ -1,3 +1,11 @@
++++
+title = "使用 tokio 作为异步运行时"
+description = """架构决策记录 —— 使用 tokio 作为异步运行时。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # 使用 tokio 作为异步运行时
 
 - **状态**：已接受

@@ -1,3 +1,11 @@
++++
+title = "오류 처리 — thiserror와 크레이트 Result"
+description = """아키텍처 결정 기록 —— 오류 처리 — thiserror와 크레이트 Result."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # 오류 처리 — thiserror와 크레이트 Result
 
 - **상태**: Accepted

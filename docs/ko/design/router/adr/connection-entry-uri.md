@@ -1,3 +1,11 @@
++++
+title = "연결 항목 URI 스킴"
+description = """아키텍처 결정 기록 —— 연결 항목 URI 스킴."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # 연결 항목 URI 스킴
 
 - **상태**: Accepted

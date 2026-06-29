@@ -1,3 +1,11 @@
++++
+title = "産業プロトコル接続ガイド — Evernight"
+description = """evernight の工業プロトコル統合ガイド（Modbus、S7comm、OPC UA）。"""
+lang = "ja"
+category = "guides"
+subcategory = "router"
++++
+
 # 産業プロトコル接続ガイド — Evernight
 
 Evernight は celestia-island エコシステムの**強制ハードウェア能力ブローカー（hardware capability broker）**です。上流 crate はすべて `aoba` / `rust7` などのライブラリを直接インポートしてはならず、物理 I/O はすべて evernight のプロトコルモジュールを経由する必要があります。本ガイドでは、対応する各産業プロトコルの接続、ポーリング、発見、アラームの方法を説明します。

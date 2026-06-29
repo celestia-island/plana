@@ -1,3 +1,11 @@
++++
+title = "TerminalBackend / ViewportBackend / FileBackend 트레이트 추상화"
+description = """아키텍처 결정 기록 —— TerminalBackend / ViewportBackend / FileBackend 트레이트 추상화."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # TerminalBackend / ViewportBackend / FileBackend 트레이트 추상화
 
 - **상태**: Accepted

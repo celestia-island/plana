@@ -1,3 +1,11 @@
++++
+title = "Пул SSH-подключений"
+description = """Запись архитектурного решения — Пул SSH-подключений."""
+lang = "ru"
+category = "design"
+subcategory = "router"
++++
+
 # Пул SSH-подключений
 
 - **Статус**: Принято

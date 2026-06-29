@@ -1,3 +1,11 @@
++++
+title = "SSH 配置解析器"
+description = """架构决策记录 —— SSH 配置解析器。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # SSH 配置解析器
 
 - **状态**：已采纳

@@ -1,3 +1,11 @@
++++
+title = "화면 캡처 아키텍처"
+description = """아키텍처 결정 기록 —— 화면 캡처 아키텍처."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # 화면 캡처 아키텍처
 
 - **상태**: Accepted

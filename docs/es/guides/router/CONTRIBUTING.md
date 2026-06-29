@@ -1,3 +1,11 @@
++++
+title = "Contribuir a Evernight"
+description = """Directrices de contribución para evernight."""
+lang = "es"
+category = "guides"
+subcategory = "router"
++++
+
 # Contribuir a Evernight
 
 > Esta es la versión en español de la política de contribución. Los comandos de

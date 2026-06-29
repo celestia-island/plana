@@ -1,3 +1,11 @@
++++
+title = "Evernight"
+description = """Evernight —— 跨平台遠端控制函式庫與常駐程式。"""
+lang = "zht"
+category = "guides"
+subcategory = "router"
++++
+
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 

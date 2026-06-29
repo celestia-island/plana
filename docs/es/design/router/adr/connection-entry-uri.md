@@ -1,3 +1,11 @@
++++
+title = "Esquema URI de Entradas de Conexión"
+description = """Registro de decisión arquitectónica — Esquema URI de Entradas de Conexión."""
+lang = "es"
+category = "design"
+subcategory = "router"
++++
+
 # Esquema URI de Entradas de Conexión
 
 - **Estado**: Aceptada

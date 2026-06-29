@@ -1,3 +1,11 @@
++++
+title = "Environnement d'exécution asynchrone — tokio"
+description = """Enregistrement de décision d'architecture — Environnement d'exécution asynchrone — tokio."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Environnement d'exécution asynchrone — tokio
 
 - **Statut** : Acceptée

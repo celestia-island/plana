@@ -1,3 +1,11 @@
++++
+title = "Intégration des protocoles industriels — Evernight"
+description = """Guide d'intégration des protocoles industriels pour evernight (Modbus, S7comm, OPC UA)."""
+lang = "fr"
+category = "guides"
+subcategory = "router"
++++
+
 # Intégration des protocoles industriels — Evernight
 
 Evernight est le **courtier obligatoire de capacités matérielles** pour

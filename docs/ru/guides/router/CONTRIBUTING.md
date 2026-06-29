@@ -1,3 +1,11 @@
++++
+title = "Вклад в Evernight"
+description = """Руководство по участию для evernight."""
+lang = "ru"
+category = "guides"
+subcategory = "router"
++++
+
 # Вклад в Evernight
 
 > Это русская версия политики участия. Команды сборки и подробная установка

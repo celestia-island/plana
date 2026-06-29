@@ -1,3 +1,11 @@
++++
+title = "AI Agent Identification & Commit Co-author Strategy"
+description = """Design note: AI agent identification and commit co-author strategy."""
+lang = "en"
+category = "design"
+subcategory = "router"
++++
+
 # AI Agent Identification & Commit Co-author Strategy
 
 ## Overview

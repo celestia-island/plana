@@ -1,3 +1,11 @@
++++
+title = "Architecture des feature flags"
+description = """Enregistrement de décision d'architecture — Architecture des feature flags."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Architecture des feature flags
 
 - **Statut** : Acceptée

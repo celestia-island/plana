@@ -1,3 +1,11 @@
++++
+title = "Pool de connexions SSH"
+description = """Enregistrement de décision d'architecture — Pool de connexions SSH."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Pool de connexions SSH
 
 - **Statut** : Acceptée

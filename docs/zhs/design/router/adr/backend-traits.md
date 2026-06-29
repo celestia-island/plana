@@ -1,3 +1,11 @@
++++
+title = "TerminalBackend / ViewportBackend / FileBackend Trait 抽象"
+description = """架构决策记录 —— TerminalBackend / ViewportBackend / FileBackend Trait 抽象。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # TerminalBackend / ViewportBackend / FileBackend Trait 抽象
 
 - **状态**：已采纳

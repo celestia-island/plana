@@ -1,3 +1,11 @@
++++
+title = "模块解耦 -- 每模块 types.rs"
+description = """架构决策记录 —— 模块解耦 -- 每模块 types.rs。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # 模块解耦 -- 每模块 types.rs
 
 - **状态**：已接受

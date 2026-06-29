@@ -1,3 +1,11 @@
++++
+title = "모듈 분리와 타입 소유권"
+description = """아키텍처 결정 기록 —— 모듈 분리와 타입 소유권."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # 모듈 분리와 타입 소유권
 
 - **상태**: Accepted

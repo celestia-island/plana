@@ -1,3 +1,11 @@
++++
+title = "SSH 接続プール"
+description = """アーキテクチャ意思決定記録 —— SSH 接続プール。"""
+lang = "ja"
+category = "design"
+subcategory = "router"
++++
+
 # SSH 接続プール
 
 - **Status**: Accepted

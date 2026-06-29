@@ -1,3 +1,11 @@
++++
+title = "Feature Flag 아키텍처"
+description = """아키텍처 결정 기록 —— Feature Flag 아키텍처."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # Feature Flag 아키텍처
 
 - **상태**: Accepted

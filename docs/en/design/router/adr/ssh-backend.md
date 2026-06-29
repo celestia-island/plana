@@ -1,3 +1,11 @@
++++
+title = "SSH Backend — russh with Shared Connection"
+description = """Architecture decision record — SSH Backend — russh with Shared Connection."""
+lang = "en"
+category = "design"
+subcategory = "router"
++++
+
 # SSH Backend — russh with Shared Connection
 
 - **Status**: Accepted

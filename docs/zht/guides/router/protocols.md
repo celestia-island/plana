@@ -1,3 +1,11 @@
++++
+title = "工業協定接入指南 — Evernight"
+description = """evernight 工業協定整合指南（Modbus、S7comm、OPC UA）。"""
+lang = "zht"
+category = "guides"
+subcategory = "router"
++++
+
 # 工業協定接入指南 — Evernight
 
 Evernight 是 celestia-island 生態的**強制硬體能力代理（hardware capability broker）**。任何上游 crate 都不得直接匯入 `aoba` / `rust7` 等函式庫——所有物理 I/O 必須經過 evernight 的協定模組。本指南涵蓋如何連接、輪詢、發現並對每個支援的工業協定進行警報。

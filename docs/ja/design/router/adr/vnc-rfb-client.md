@@ -1,3 +1,11 @@
++++
+title = "VNC (RFB) プロトコルクライアント"
+description = """アーキテクチャ意思決定記録 —— VNC (RFB) プロトコルクライアント。"""
+lang = "ja"
+category = "design"
+subcategory = "router"
++++
+
 # VNC (RFB) プロトコルクライアント
 
 - **Status**: Accepted

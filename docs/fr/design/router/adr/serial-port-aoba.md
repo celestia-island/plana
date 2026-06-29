@@ -1,3 +1,11 @@
++++
+title = "Communication par port série via aoba"
+description = """Enregistrement de décision d'architecture — Communication par port série via aoba."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Communication par port série via aoba
 
 - **Statut** : Acceptée

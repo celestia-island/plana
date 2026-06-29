@@ -1,3 +1,11 @@
++++
+title = "容器執行環境客戶端（Docker/Podman）"
+description = """架構決策記錄 —— 容器執行環境客戶端（Docker/Podman）。"""
+lang = "zht"
+category = "design"
+subcategory = "router"
++++
+
 # 容器執行環境客戶端（Docker/Podman）
 
 - **狀態**：已接受

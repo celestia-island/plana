@@ -1,3 +1,11 @@
++++
+title = "Analizador de Configuración SSH"
+description = """Registro de decisión arquitectónica — Analizador de Configuración SSH."""
+lang = "es"
+category = "design"
+subcategory = "router"
++++
+
 # Analizador de Configuración SSH
 
 - **Estado**: Aceptada

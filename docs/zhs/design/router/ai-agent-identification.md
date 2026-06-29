@@ -1,3 +1,11 @@
++++
+title = "AI 智能体标识与提交共同作者策略"
+description = """设计说明：AI 代理识别与提交联署策略。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # AI 智能体标识与提交共同作者策略
 
 ## 概述

@@ -1,3 +1,11 @@
++++
+title = "빠른 시작 — Evernight"
+description = """evernight 시작하기 —— 빌드, 실행, 첫 명령."""
+lang = "ko"
+category = "guides"
+subcategory = "router"
++++
+
 # 빠른 시작 — Evernight
 
 Evernight(长夜月)는 Rust로 작성된 크로스 플랫폼 원격 제어 라이브러리 및 데몬입니다. 화면 캡처, WebRTC 스트리밍, SSH 원격 셸, 원격 터미널, 파일 전송, 하드웨어 원격 측정, 산업 프로토콜 지원(Modbus, S7comm, OPC-UA 프로빙) 및 NAT 통과 기능을 재사용 가능한 크레이트와 독립적인 CLI 바이너리로 통합합니다.

@@ -1,3 +1,11 @@
++++
+title = "SSH Config Parser"
+description = """Architecture decision record — SSH Config Parser."""
+lang = "en"
+category = "design"
+subcategory = "router"
++++
+
 # SSH Config Parser
 
 - **Status**: Accepted

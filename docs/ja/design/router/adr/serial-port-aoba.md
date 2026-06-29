@@ -1,3 +1,11 @@
++++
+title = "シリアルポート通信 — aoba による実装"
+description = """アーキテクチャ意思決定記録 —— シリアルポート通信 — aoba による実装。"""
+lang = "ja"
+category = "design"
+subcategory = "router"
++++
+
 # シリアルポート通信 — aoba による実装
 
 - **Status**: Accepted

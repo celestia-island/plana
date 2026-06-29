@@ -1,3 +1,11 @@
++++
+title = "Serial Port Communication via aoba"
+description = """Architecture decision record — Serial Port Communication via aoba."""
+lang = "en"
+category = "design"
+subcategory = "router"
++++
+
 # Serial Port Communication via aoba
 
 - **Status**: Accepted

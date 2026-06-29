@@ -1,3 +1,11 @@
++++
+title = "Découplage des modules et propriété des types"
+description = """Enregistrement de décision d'architecture — Découplage des modules et propriété des types."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Découplage des modules et propriété des types
 
 - **Statut** : Acceptée

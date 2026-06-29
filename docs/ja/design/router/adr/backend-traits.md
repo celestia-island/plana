@@ -1,3 +1,11 @@
++++
+title = "TerminalBackend / ViewportBackend / FileBackend トレイト抽象化"
+description = """アーキテクチャ意思決定記録 —— TerminalBackend / ViewportBackend / FileBackend トレイト抽象化。"""
+lang = "ja"
+category = "design"
+subcategory = "router"
++++
+
 # TerminalBackend / ViewportBackend / FileBackend トレイト抽象化
 
 - **Status**: Accepted

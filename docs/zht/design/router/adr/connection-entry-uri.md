@@ -1,3 +1,11 @@
++++
+title = "連線條目 URI 方案"
+description = """架構決策記錄 —— 連線條目 URI 方案。"""
+lang = "zht"
+category = "design"
+subcategory = "router"
++++
+
 # 連線條目 URI 方案
 
 - **狀態**：已接受

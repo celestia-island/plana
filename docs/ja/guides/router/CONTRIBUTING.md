@@ -1,3 +1,11 @@
++++
+title = "Evernight へのコントリビュート"
+description = """evernight のコントリビューションガイドライン。"""
+lang = "ja"
+category = "guides"
+subcategory = "router"
++++
+
 # Evernight へのコントリビュート
 
 > これはコントリビューションポリシーの日本語版です。ビルドコマンドと詳細なセットアップ手順は

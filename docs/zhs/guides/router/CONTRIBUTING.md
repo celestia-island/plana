@@ -1,3 +1,11 @@
++++
+title = "贡献指南（Evernight）"
+description = """evernight 贡献指南。"""
+lang = "zhs"
+category = "guides"
+subcategory = "router"
++++
+
 # 贡献指南（Evernight）
 
 > 本文件是贡献政策的简体中文版本。构建命令与详细安装步骤请见仓库根目录的英文

@@ -1,3 +1,11 @@
++++
+title = "容器运行时客户端（Docker/Podman）"
+description = """架构决策记录 —— 容器运行时客户端（Docker/Podman）。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # 容器运行时客户端（Docker/Podman）
 
 - **状态**：已采纳

@@ -1,3 +1,11 @@
++++
+title = "Manejo de Errores — thiserror con Result del crate"
+description = """Registro de decisión arquitectónica — Manejo de Errores — thiserror con Result del crate."""
+lang = "es"
+category = "design"
+subcategory = "router"
++++
+
 # Manejo de Errores — thiserror con Result del crate
 
 - **Estado**: Aceptada

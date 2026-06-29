@@ -1,3 +1,11 @@
++++
+title = "Arquitectura de Captura de Pantalla"
+description = """Registro de decisión arquitectónica — Arquitectura de Captura de Pantalla."""
+lang = "es"
+category = "design"
+subcategory = "router"
++++
+
 # Arquitectura de Captura de Pantalla
 
 - **Estado**: Aceptada

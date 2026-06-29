@@ -1,3 +1,11 @@
++++
+title = "Evernight"
+description = """Evernight — кроссплатформенная библиотека и демон удалённого управления."""
+lang = "ru"
+category = "guides"
+subcategory = "router"
++++
+
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 

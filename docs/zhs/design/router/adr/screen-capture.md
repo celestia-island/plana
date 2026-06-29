@@ -1,3 +1,11 @@
++++
+title = "屏幕捕获架构"
+description = """架构决策记录 —— 屏幕捕获架构。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # 屏幕捕获架构
 
 - **状态**：已采纳

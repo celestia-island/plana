@@ -1,3 +1,11 @@
++++
+title = "Client de protocole VNC (RFB)"
+description = """Enregistrement de décision d'architecture — Client de protocole VNC (RFB)."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Client de protocole VNC (RFB)
 
 - **Statut** : Acceptée

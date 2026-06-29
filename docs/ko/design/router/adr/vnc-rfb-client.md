@@ -1,3 +1,11 @@
++++
+title = "VNC (RFB) 프로토콜 클라이언트"
+description = """아키텍처 결정 기록 —— VNC (RFB) 프로토콜 클라이언트."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # VNC (RFB) 프로토콜 클라이언트
 
 - **상태**: Accepted

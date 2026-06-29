@@ -1,3 +1,11 @@
++++
+title = "Evernight"
+description = """Evernight — bibliothèque et démon de contrôle à distance multiplateforme."""
+lang = "fr"
+category = "guides"
+subcategory = "router"
++++
+
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 

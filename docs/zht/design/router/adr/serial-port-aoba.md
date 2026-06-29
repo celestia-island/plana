@@ -1,3 +1,11 @@
++++
+title = "透過 aoba 進行序列埠通訊"
+description = """架構決策記錄 —— 透過 aoba 進行序列埠通訊。"""
+lang = "zht"
+category = "design"
+subcategory = "router"
++++
+
 # 透過 aoba 進行序列埠通訊
 
 - **狀態**：已接受

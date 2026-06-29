@@ -1,3 +1,11 @@
++++
+title = "Abstractions de traits TerminalBackend / ViewportBackend / FileBackend"
+description = """Enregistrement de décision d'architecture — Abstractions de traits TerminalBackend / ViewportBackend / FileBackend."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Abstractions de traits TerminalBackend / ViewportBackend / FileBackend
 
 - **Statut** : Acceptée

@@ -1,3 +1,11 @@
++++
+title = "Error Handling — thiserror with crate Result"
+description = """Architecture decision record — Error Handling — thiserror with crate Result."""
+lang = "en"
+category = "design"
+subcategory = "router"
++++
+
 # Error Handling — thiserror with crate Result
 
 - **Status**: Accepted

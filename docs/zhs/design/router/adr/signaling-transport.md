@@ -1,3 +1,11 @@
++++
+title = "双 Unix Socket / TCP 信令传输"
+description = """架构决策记录 —— 双 Unix Socket / TCP 信令传输。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # 双 Unix Socket / TCP 信令传输
 
 - **Status**: 已采纳

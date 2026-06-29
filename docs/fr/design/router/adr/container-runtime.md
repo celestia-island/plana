@@ -1,3 +1,11 @@
++++
+title = "Client d'environnement d'exécution de conteneurs (Docker/Podman)"
+description = """Enregistrement de décision d'architecture — Client d'environnement d'exécution de conteneurs (Docker/Podman)."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Client d'environnement d'exécution de conteneurs (Docker/Podman)
 
 - **Statut** : Acceptée

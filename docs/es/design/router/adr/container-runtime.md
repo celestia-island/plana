@@ -1,3 +1,11 @@
++++
+title = "Cliente de Tiempo de Ejecución de Contenedores (Docker/Podman)"
+description = """Registro de decisión arquitectónica — Cliente de Tiempo de Ejecución de Contenedores (Docker/Podman)."""
+lang = "es"
+category = "design"
+subcategory = "router"
++++
+
 # Cliente de Tiempo de Ejecución de Contenedores (Docker/Podman)
 
 - **Estado**: Aceptada

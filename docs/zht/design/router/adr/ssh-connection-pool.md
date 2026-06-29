@@ -1,3 +1,11 @@
++++
+title = "SSH 連線池"
+description = """架構決策記錄 —— SSH 連線池。"""
+lang = "zht"
+category = "design"
+subcategory = "router"
++++
+
 # SSH 連線池
 
 - **狀態**：已接受

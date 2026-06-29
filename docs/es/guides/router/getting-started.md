@@ -1,3 +1,11 @@
++++
+title = "Primeros pasos — Evernight"
+description = """Introducción a evernight — compilación, ejecución y primeros comandos."""
+lang = "es"
+category = "guides"
+subcategory = "router"
++++
+
 # Primeros pasos — Evernight
 
 Evernight (长夜月) es una biblioteca y demonio de control remoto multiplataforma escrito en Rust. Integra captura de pantalla, streaming por WebRTC, shell remoto SSH, acceso a terminal remota, transferencia de archivos, telemetría de hardware, soporte de protocolos industriales (sondeo de Modbus, S7comm y OPC-UA) y cruce de NAT en un único crate reutilizable y binario CLI autónomo.

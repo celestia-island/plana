@@ -1,3 +1,11 @@
++++
+title = "Evernight"
+description = """Evernight —— 跨平台远程控制库与守护进程。"""
+lang = "zhs"
+category = "guides"
+subcategory = "router"
++++
+
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 

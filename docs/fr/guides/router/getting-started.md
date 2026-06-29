@@ -1,3 +1,11 @@
++++
+title = "Pour commencer — Evernight"
+description = """Démarrage avec evernight — compilation, exécution et premières commandes."""
+lang = "fr"
+category = "guides"
+subcategory = "router"
++++
+
 # Pour commencer — Evernight
 
 Evernight (长夜月) est une bibliothèque et un démon de contrôle à distance multiplateforme écrits en Rust. Il regroupe la capture d'écran, le streaming WebRTC, le shell distant SSH, l'accès à un terminal distant, le transfert de fichiers, la télémétrie matérielle, la prise en charge des protocoles industriels (sondage Modbus, S7comm, OPC-UA) et la traversée NAT au sein d'un unique crate réutilisable et d'un binaire CLI autonome.

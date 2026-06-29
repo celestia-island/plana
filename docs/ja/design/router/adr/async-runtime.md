@@ -1,3 +1,11 @@
++++
+title = "非同期ランタイム — tokio"
+description = """アーキテクチャ意思決定記録 —— 非同期ランタイム — tokio。"""
+lang = "ja"
+category = "design"
+subcategory = "router"
++++
+
 # 非同期ランタイム — tokio
 
 - **Status**: Accepted

@@ -1,3 +1,11 @@
++++
+title = "クイックスタート — Evernight"
+description = """evernight のはじめ方 —— ビルド、実行、最初のコマンド。"""
+lang = "ja"
+category = "guides"
+subcategory = "router"
++++
+
 # クイックスタート — Evernight
 
 Evernight（長夜月）は Rust で書かれたクロスプラットフォーム対応のリモート制御ライブラリ兼デーモンです。スクリーンキャプチャ、WebRTC ストリーミング、SSH リモートシェル、リモートターミナル、ファイル転送、ハードウェアテレメトリ、産業用プロトコルサポート（Modbus、S7comm、OPC-UA プローブ）、NAT トラバーサルを、再利用可能なクレートとスタンドアロン CLI バイナリに統合しています。

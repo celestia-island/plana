@@ -1,3 +1,11 @@
++++
+title = "Pool de Conexiones SSH"
+description = """Registro de decisión arquitectónica — Pool de Conexiones SSH."""
+lang = "es"
+category = "design"
+subcategory = "router"
++++
+
 # Pool de Conexiones SSH
 
 - **Estado**: Aceptada

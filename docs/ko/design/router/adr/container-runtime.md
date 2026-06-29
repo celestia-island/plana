@@ -1,3 +1,11 @@
++++
+title = "컨테이너 런타임 클라이언트 (Docker/Podman)"
+description = """아키텍처 결정 기록 —— 컨테이너 런타임 클라이언트 (Docker/Podman)."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # 컨테이너 런타임 클라이언트 (Docker/Podman)
 
 - **상태**: Accepted

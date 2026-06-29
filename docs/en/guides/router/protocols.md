@@ -1,3 +1,11 @@
++++
+title = "Industrial Protocol Integration — Evernight"
+description = """Industrial protocol integration guide for evernight (Modbus, S7comm, OPC UA)."""
+lang = "en"
+category = "guides"
+subcategory = "router"
++++
+
 # Industrial Protocol Integration — Evernight
 
 Evernight is the **mandatory hardware capability broker** for the celestia-island

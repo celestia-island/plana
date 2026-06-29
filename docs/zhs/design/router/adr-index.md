@@ -1,3 +1,11 @@
++++
+title = "Architecture Decision Records (ADR)"
+description = """evernight 架构决策记录索引。"""
+lang = "zhs"
+category = "design"
+subcategory = "router"
++++
+
 # Architecture Decision Records (ADR)
 
 This directory records the key architectural decisions made during the development of Evernight. Each ADR explains **what** was decided, **why** it was decided, and what **trade-offs** were considered.

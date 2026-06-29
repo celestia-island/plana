@@ -1,3 +1,11 @@
++++
+title = "貢獻指南（Evernight）"
+description = """evernight 貢獻指南。"""
+lang = "zht"
+category = "guides"
+subcategory = "router"
++++
+
 # 貢獻指南（Evernight）
 
 > 本檔案是貢獻政策的繁體中文版本。建構命令與詳細安裝步驟請見倉庫根目錄的英文

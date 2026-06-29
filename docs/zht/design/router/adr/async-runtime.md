@@ -1,3 +1,11 @@
++++
+title = "非同步執行環境 — tokio"
+description = """架構決策記錄 —— 非同步執行環境 — tokio。"""
+lang = "zht"
+category = "design"
+subcategory = "router"
++++
+
 # 非同步執行環境 — tokio
 
 - **狀態**：已接受

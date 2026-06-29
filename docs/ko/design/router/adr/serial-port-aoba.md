@@ -1,3 +1,11 @@
++++
+title = "aoba를 통한 시리얼 포트 통신"
+description = """아키텍처 결정 기록 —— aoba를 통한 시리얼 포트 통신."""
+lang = "ko"
+category = "design"
+subcategory = "router"
++++
+
 # aoba를 통한 시리얼 포트 통신
 
 - **상태**: Accepted

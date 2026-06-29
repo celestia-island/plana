@@ -1,3 +1,11 @@
++++
+title = "Integration Guide — Evernight"
+description = """How to connect evernight to each supported protocol end-to-end."""
+lang = "en"
+category = "guides"
+subcategory = "router"
++++
+
 # Integration Guide — Evernight
 
 How to connect evernight to each supported protocol, what server software to

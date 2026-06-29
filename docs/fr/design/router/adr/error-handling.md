@@ -1,3 +1,11 @@
++++
+title = "Gestion des erreurs — thiserror avec Result de crate"
+description = """Enregistrement de décision d'architecture — Gestion des erreurs — thiserror avec Result de crate."""
+lang = "fr"
+category = "design"
+subcategory = "router"
++++
+
 # Gestion des erreurs — thiserror avec Result de crate
 
 - **Statut** : Acceptée

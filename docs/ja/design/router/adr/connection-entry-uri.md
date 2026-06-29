@@ -1,3 +1,11 @@
++++
+title = "接続エントリ URI スキーム"
+description = """アーキテクチャ意思決定記録 —— 接続エントリ URI スキーム。"""
+lang = "ja"
+category = "design"
+subcategory = "router"
++++
+
 # 接続エントリ URI スキーム
 
 - **Status**: Accepted
