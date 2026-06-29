@@ -1,1 +1,1 @@
-../../../SECURITY.md
+../../en/meta/SECURITY.md

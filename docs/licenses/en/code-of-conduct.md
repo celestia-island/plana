@@ -1,1 +1,1 @@
-../../../CODE_OF_CONDUCT.md
+../../en/meta/CODE_OF_CONDUCT.md
