@@ -6,10 +6,14 @@ arona is the shared protocol crate (v0.1.0) that glues entelecheia and shittim-c
 
 ## Critical
 
-### 1. Git dependency not pinned — entelecheia pulls `branch = "dev"`
-- entelecheia's **Cargo.toml:119**: `arona = { git = "...", branch = "dev" }`
-- Any push to arona's dev branch can break entelecheia's build
-- **Fix**: Pin to a specific commit SHA in entelecheia's Cargo.toml, or tag releases and reference the tag.
+### 1. `branch = "dev"` git binding is intentional — do NOT pin to a SHA (won't-do)
+- entelecheia's **Cargo.toml**: `arona = { git = "...", branch = "dev" }`
+- **Decision (won't-do)**: cross-repo deps resolve **local-first**. A cargo
+  `[patch]` (`~/.cargo/config.toml` or the consuming repo's `Cargo.toml`) or an
+  env var (`ARONA_ROOT`) overrides the git source to a local checkout; only when
+  none of those exist does cargo fall back to the `branch = "dev"` git source.
+  Pinning to a commit SHA would contradict this design, so `branch = "dev"` is
+  kept on purpose.
 
 ## High
 
