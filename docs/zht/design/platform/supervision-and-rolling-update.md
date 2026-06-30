@@ -151,7 +151,7 @@ entelecheia 定義、被 shittim-chest 消費",併為釋出 crates.io 而
 - **`arona::lifecycle`(協議契約,放進 arona)。** 只放 JSON-RPC 方法與型別:
   `DrainState`、`ReadyStatus`、`Lifecycle.Drain`、`Lifecycle.Status`、
   `Worker.Status` 等。符合 arona"雙方配對"的規則。
-- **`arona-supervisor`(新 crate,執行時)。** 依賴 `arona` 協議型別 +
+- **`plana`(新 crate,執行時)。** 依賴 `arona` 協議型別 +
   `tokio` + `libsystemd` 繫結(socket activation)+ 後端 trait。按 feature
   開啟:
   - `replica` —— 子系統 A 的協調與編排。
@@ -159,7 +159,7 @@ entelecheia 定義、被 shittim-chest 消費",併為釋出 crates.io 而
   - `socket-activation` —— systemd fd 獲取。
   - `file-lock` / `pg-lock` / `lease` —— `CoordinationLock` 後端。
 
-三個專案依賴 `arona-supervisor`,按需開啟 feature(見 §8 矩陣)。把一切塞進
+三個專案依賴 `plana`,按需開啟 feature(見 §8 矩陣)。把一切塞進
 arona 會迫使它變成"協議 + 可選執行時",毀掉其純淨性——不推薦。
 
 ## 5. 核心抽象
@@ -233,7 +233,7 @@ app).with_graceful_shutdown(...)` 已支援排空;**關鍵是把 `SIGTERM` 接�
 
 ### 5.5 `acquire_listener` —— Layer 3 零停機交接
 
-`arona-supervisor` 暴露 `acquire_listener(addr) -> TcpListener`:
+`plana` 暴露 `acquire_listener(addr) -> TcpListener`:
 
 1. 優先 `sd_listen_fds()`(校驗 `LISTEN_PID`)—— systemd 持有 fd。
 2. 回退到普通 `TcpListener::bind(addr)`(dev、無 systemd)。
@@ -243,7 +243,7 @@ axum `serve(listener, ...)` 本就接受預繫結 listener,管道齊備;今天�
 
 | 部署 | 方案 | 適用 |
 |---|---|---|
-| **裸 systemd** | `xxx.socket` + `xxx@.service` 模板例項化 | scepter、evernight-gateway、arona-supervisor 自身 |
+| **裸 systemd** | `xxx.socket` + `xxx@.service` 模板例項化 | scepter、evernight-gateway、plana 自身 |
 | **docker**(shittim-chest 生產) | 宿主機 systemd socket activation,把已繫結的套接字/fd 透傳進容器(`LISTEN_FDS` + `SocketUser`);或容器內跑一個輕量 master 持 fd | shittim-chest 生產 |
 | **dev** | 回退普通 `bind` + 短暫重疊(接受幾百 ms 丟連線),無 systemd | 三專案 dev |
 
@@ -360,7 +360,7 @@ worker 是 supervisor 的**子程序**(`kill_on_drop`)。主掛 → worker 成�
 | evernight 裝置(`sensor-poll`) | **主 / 備** | 每協議一個 worker(Modbus/S7/CAN/串列埠) | **B 主備** |
 | evernight-server(中心) | 副本之一 | model_server 容器 | **A 副本** |
 
-各專案的 feature 選擇(`arona-supervisor`):
+各專案的 feature 選擇(`plana`):
 
 - entelecheia / shittim-chest / evernight-server:`replica` +
   `socket-activation` + `pg-lock`;其 sidecar 走 worker 抽象。
@@ -371,7 +371,7 @@ worker 是 supervisor 的**子程序**(`kill_on_drop`)。主掛 → worker 成�
 
 1. **階段 A —— Layer 1 跨三專案落地。** 訊號語義 + `/healthz` / `/readyz`
    + 排空。風險最低,立竿見影(先把 SIGTERM 硬殺修掉)。
-2. **階段 B —— `arona::lifecycle` 協議 + `arona-supervisor` 骨架。** trait
+2. **階段 B —— `arona::lifecycle` 協議 + `plana` 骨架。** trait
    定義、`acquire_listener`、`CoordinationLock` trait + `FileLock` /
    `PgLock` 後端、`Worker` + `Supervisor` 原語。
 3. **階段 C —— Layer 3。** 三專案的 socket activation 單元 + docker 適配 +

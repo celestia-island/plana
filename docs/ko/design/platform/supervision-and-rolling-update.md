@@ -170,7 +170,7 @@ shittim-chest에서 소비된다"고 규정하며, crates.io 게시를 위해 �
 - **`arona::lifecycle`(프로토콜 계약, arona에 배치).** JSON-RPC 메서드와
   타입만: `DrainState`, `ReadyStatus`, `Lifecycle.Drain`, `Lifecycle.Status`,
   `Worker.Status` 등. arona의 "양쪽에 쌍으로 존재" 규칙을 만족합니다.
-- **`arona-supervisor`(신규 crate, 런타임).** `arona` 프로토콜 타입 + `tokio`
+- **`plana`(신규 crate, 런타임).** `arona` 프로토콜 타입 + `tokio`
   + `libsystemd` 바인딩(socket activation) + 백엔드 trait에 의존. feature
   게이트:
   - `replica` — 서브시스템 A 조정 + 오케스트레이션.
@@ -178,7 +178,7 @@ shittim-chest에서 소비된다"고 규정하며, crates.io 게시를 위해 �
   - `socket-activation` — systemd fd 획득.
   - `file-lock` / `pg-lock` / `lease` — `CoordinationLock` 백엔드.
 
-세 프로젝트는 `arona-supervisor`에 의존하고 필요한 feature를 활성화합니다
+세 프로젝트는 `plana`에 의존하고 필요한 feature를 활성화합니다
 (§8 매트릭스 참조). 모든 것을 arona에 넣으면 그것을 "프로토콜 + 선택적
 런타임"이 되도록 강제하고 순수성을 파괴합니다 — 권장하지 않습니다.
 
@@ -262,7 +262,7 @@ shittim-chest의 기존 `GET /api/health`(`routes.rs:27`)는 drain 비트가 있
 
 ### 5.5 `acquire_listener` — Layer 3 무정지 인계
 
-`arona-supervisor`는 `acquire_listener(addr) -> TcpListener`를 노출합니다:
+`plana`는 `acquire_listener(addr) -> TcpListener`를 노출합니다:
 
 1. 우선 `sd_listen_fds()` 시도(`LISTEN_PID` 검증) — systemd가 fd를 보유 중.
 2. 일반 `TcpListener::bind(addr)`로 폴백(dev, systemd 없음).
@@ -273,7 +273,7 @@ axum `serve(listener, ...)`은 이미 사전 바인딩된 리스너를 수용하
 
 | 배포 | 방식 | 적용 |
 |---|---|---|
-| **bare systemd** | `xxx.socket` + `xxx@.service` 템플릿 인스턴스 | scepter, evernight-gateway, arona-supervisor 자신 |
+| **bare systemd** | `xxx.socket` + `xxx@.service` 템플릿 인스턴스 | scepter, evernight-gateway, plana 자신 |
 | **docker**(shittim-chest 운영) | 호스트 systemd socket activation, 바인딩된 소켓/fd를 컨테이너로 전달(`LISTEN_FDS` + `SocketUser`); 또는 컨테이너 내에서 fd를 보유하는 경량 master | shittim-chest 운영 |
 | **dev** | 일반 `bind` 폴백 + 짧은 중첩(수백 ms의 연결 유실 수용), systemd 없음 | 세 프로젝트 dev |
 
@@ -406,7 +406,7 @@ Sentinel — 기기 내, 프로세스 수준의 단순화 버전으로. 이론(�
 | evernight 기기(`sensor-poll`) | **leader / follower** | 프로토콜당 하나의 worker(Modbus/S7/CAN/직렬) | **B Leader/Follower** |
 | evernight-server(중앙) | 복제본 중 하나 | model_server 컨테이너 | **A Replica** |
 
-프로젝트별 feature 선택(`arona-supervisor`):
+프로젝트별 feature 선택(`plana`):
 
 - entelecheia / shittim-chest / evernight-server: `replica` +
   `socket-activation` + `pg-lock`; sidecar를 위한 worker 추상화.
@@ -418,7 +418,7 @@ Sentinel — 기기 내, 프로세스 수준의 단순화 버전으로. 이론(�
 1. **단계 A — 세 프로젝트에 걸친 Layer 1.** 시그널 시맨틱 + `/healthz` /
    `/readyz` + 드레인. 가장 낮은 위험, 가장 즉각적인 보상(SIGTERM 하드 킬을
    먼저 수정).
-2. **단계 B — `arona::lifecycle` 프로토콜 + `arona-supervisor` 골격.** trait
+2. **단계 B — `arona::lifecycle` 프로토콜 + `plana` 골격.** trait
    정의, `acquire_listener`, `CoordinationLock` trait + `FileLock` / `PgLock`
    백엔드, `Worker` + `Supervisor` 원시 타입.
 3. **단계 C — Layer 3.** 세 프로젝트를 위한 socket activation 유닛 + docker

@@ -179,7 +179,7 @@ Split:
   JSON-RPC methods and types: `DrainState`, `ReadyStatus`,
   `Lifecycle.Drain`, `Lifecycle.Status`, `Worker.Status`, etc. Satisfies
   arona's "paired on both sides" rule.
-- **`arona-supervisor` (new crate, runtime).** Depends on `arona`
+- **`plana` (new crate, runtime).** Depends on `arona`
   protocol types + `tokio` + a `libsystemd`-binding (socket activation)
   + backend traits. Feature-gated:
   - `replica` — Subsystem A coordination + orchestration.
@@ -187,7 +187,7 @@ Split:
   - `socket-activation` — systemd fd acquisition.
   - `file-lock` / `pg-lock` / `lease` — `CoordinationLock` backends.
 
-The three projects depend on `arona-supervisor` and enable the features
+The three projects depend on `plana` and enable the features
 they need (see §8 matrix). Putting everything in arona would force it to
 become "protocol + optional runtime" and destroy its purity — not
 recommended.
@@ -274,7 +274,7 @@ upgraded to `/readyz` with a drain bit.
 
 ### 5.5 `acquire_listener` — Layer 3 zero-downtime handoff
 
-`arona-supervisor` exposes `acquire_listener(addr) -> TcpListener`:
+`plana` exposes `acquire_listener(addr) -> TcpListener`:
 
 1. Try `sd_listen_fds()` (validate `LISTEN_PID`) — systemd is holding
    the fd.
@@ -286,7 +286,7 @@ adapters:
 
 | Deploy | Approach | Applies to |
 |---|---|---|
-| **bare systemd** | `xxx.socket` + `xxx@.service` template instances | scepter, evernight-gateway, arona-supervisor itself |
+| **bare systemd** | `xxx.socket` + `xxx@.service` template instances | scepter, evernight-gateway, plana itself |
 | **docker** (shittim-chest prod) | host systemd socket activation, pass the bound socket/fd into the container (`LISTEN_FDS` + `SocketUser`); or a lightweight in-container master holding the fd | shittim-chest prod |
 | **dev** | fallback plain `bind` + brief overlap (accept a few hundred ms of dropped connections), no systemd | all three dev |
 
@@ -426,7 +426,7 @@ simplification. The theory (lease election + fencing) is well-founded.
 | evernight device (`sensor-poll`) | **leader / follower** | one worker per protocol (Modbus/S7/CAN/serial) | **B Leader/Follower** |
 | evernight-server (central) | one of the replicas | model_server containers | **A Replica** |
 
-Feature selection per project (`arona-supervisor`):
+Feature selection per project (`plana`):
 
 - entelecheia / shittim-chest / evernight-server: `replica` +
   `socket-activation` + `pg-lock`; worker abstraction for their sidecars.
@@ -439,7 +439,7 @@ Feature selection per project (`arona-supervisor`):
 1. **Phase A — Layer 1 across all three projects.** Signal semantics +
    `/healthz` / `/readyz` + drain. Lowest risk, highest immediate payoff
    (fixes SIGTERM hard-kill first).
-2. **Phase B — `arona::lifecycle` protocol + `arona-supervisor`
+2. **Phase B — `arona::lifecycle` protocol + `plana`
    skeleton.** Trait definitions, `acquire_listener`,
    `CoordinationLock` trait + `FileLock` / `PgLock` backends, `Worker` +
    `Supervisor` primitives.

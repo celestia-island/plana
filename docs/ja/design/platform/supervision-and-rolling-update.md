@@ -174,7 +174,7 @@ Kubernetes のものである:
 - **`arona::lifecycle` (プロトコル契約、arona に置く)。** JSON-RPC のメソッドと
   型のみ: `DrainState`、`ReadyStatus`、`Lifecycle.Drain`、`Lifecycle.Status`、
   `Worker.Status` など。arona の「両サイドでペアになる」というルールを満たす。
-- **`arona-supervisor` (新規 crate、ランタイム)。** `arona` プロトコル型 +
+- **`plana` (新規 crate、ランタイム)。** `arona` プロトコル型 +
   `tokio` + `libsystemd` バインディング (socket activation) + バックエンド trait
   に依存する。feature ゲート:
   - `replica` —— サブシステム A の協調とオーケストレーション。
@@ -182,7 +182,7 @@ Kubernetes のものである:
   - `socket-activation` —— systemd からの fd 取得。
   - `file-lock` / `pg-lock` / `lease` —— `CoordinationLock` バックエンド。
 
-三つのプロジェクトは `arona-supervisor` に依存し、必要な feature を有効化する
+三つのプロジェクトは `plana` に依存し、必要な feature を有効化する
 (§8 のマトリクスを参照)。すべてを arona に押し込めば、arona を「プロトコル +
 オプションのランタイム」に変えることになり、その純粋性を破壊する——推奨しない。
 
@@ -266,7 +266,7 @@ app).with_graceful_shutdown(...)` はすでにドレインをサポートして�
 
 ### 5.5 `acquire_listener` —— Layer 3 ゼロダウンタイム引き継ぎ
 
-`arona-supervisor` は `acquire_listener(addr) -> TcpListener` を公開する:
+`plana` は `acquire_listener(addr) -> TcpListener` を公開する:
 
 1. まず `sd_listen_fds()` を試す (`LISTEN_PID` を検証) —— systemd が fd を保持
    している。
@@ -278,7 +278,7 @@ axum の `serve(listener, ...)` はすでに事前バインド済みのリスナ
 
 | デプロイ | 方式 | 対象 |
 |---|---|---|
-| **bare systemd** | `xxx.socket` + `xxx@.service` テンプレートインスタンス | scepter、evernight-gateway、arona-supervisor 自身 |
+| **bare systemd** | `xxx.socket` + `xxx@.service` テンプレートインスタンス | scepter、evernight-gateway、plana 自身 |
 | **docker** (shittim-chest 本番) | ホスト側 systemd で socket activation し、バインド済みのソケット/fd をコンテナへ受け渡し (`LISTEN_FDS` + `SocketUser`); もしくはコンテナ内に fd を保持する軽量 master を立てる | shittim-chest 本番 |
 | **dev** | フォールバックとして普通の `bind` と短いオーバーラップ (数百 ms のドロップ接続を受け入れる)、systemd なし | 三プロジェクトの dev |
 
@@ -413,7 +413,7 @@ Redis Sentinel —— これらのマシン内、プロセスレベルの簡略�
 | evernight デバイス (`sensor-poll`) | **リーダ / フォロワ** | プロトコルごとに一つの worker (Modbus/S7/CAN/serial) | **B Leader/Follower** |
 | evernight-server (中央) | レプリカの一つ | model_server コンテナ | **A Replica** |
 
-プロジェクトごとの feature 選択 (`arona-supervisor`):
+プロジェクトごとの feature 選択 (`plana`):
 
 - entelecheia / shittim-chest / evernight-server: `replica` +
   `socket-activation` + `pg-lock`; 各サイドカーは worker 抽象を使用。
@@ -425,7 +425,7 @@ Redis Sentinel —— これらのマシン内、プロセスレベルの簡略�
 1. **フェーズ A —— 三プロジェクト全体への Layer 1。** シグナルセマンティクス +
    `/healthz` / `/readyz` + ドレイン。リスクが最も低く、即効性が最も高い
    (まず SIGTERM のハードキルを修正する)。
-2. **フェーズ B —— `arona::lifecycle` プロトコル + `arona-supervisor`
+2. **フェーズ B —— `arona::lifecycle` プロトコル + `plana`
    スケルトン。** trait 定義、`acquire_listener`、
    `CoordinationLock` trait + `FileLock` / `PgLock` バックエンド、`Worker` +
    `Supervisor` プリミティブ。

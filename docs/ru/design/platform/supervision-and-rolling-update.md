@@ -186,7 +186,7 @@ runtime-логики (tokio, `sd_listen_fds`, обработка сигнало�
   JSON-RPC-методы и типы: `DrainState`, `ReadyStatus`, `Lifecycle.Drain`,
   `Lifecycle.Status`, `Worker.Status` и т.д. Удовлетворяет правилу arona
   «спарено с обеих сторон».
-- **`arona-supervisor` (новый крейт, runtime).** Зависит от протокольных
+- **`plana` (новый крейт, runtime).** Зависит от протокольных
   типов `arona` + `tokio` + привязки `libsystemd` (socket activation) +
   trait-ы бэкендов. С feature-флагами:
   - `replica` — координация и оркестрация подсистемы A.
@@ -194,7 +194,7 @@ runtime-логики (tokio, `sd_listen_fds`, обработка сигнало�
   - `socket-activation` — получение fd от systemd.
   - `file-lock` / `pg-lock` / `lease` — бэкенды `CoordinationLock`.
 
-Все три проекта зависят от `arona-supervisor` и включают нужные им features
+Все три проекта зависят от `plana` и включают нужные им features
 (см. матрицу в §8). Помещение всего в arona заставило бы его стать
 «протокол + опциональный runtime» и разрушило бы его чистоту — не
 рекомендуется.
@@ -283,7 +283,7 @@ app).with_graceful_shutdown(...)` уже поддерживает дрейн; **
 
 ### 5.5 `acquire_listener` — бесшовная передача в Layer 3
 
-`arona-supervisor` предоставляет `acquire_listener(addr) -> TcpListener`:
+`plana` предоставляет `acquire_listener(addr) -> TcpListener`:
 
 1. Попытаться `sd_listen_fds()` (проверить `LISTEN_PID`) — systemd держит
    fd.
@@ -295,7 +295,7 @@ fd. Три адаптера развёртывания:
 
 | Развёртывание | Подход | Применимо к |
 |---|---|---|
-| **голый systemd** | `xxx.socket` + темплат-инстансы `xxx@.service` | scepter, evernight-gateway, сам arona-supervisor |
+| **голый systemd** | `xxx.socket` + темплат-инстансы `xxx@.service` | scepter, evernight-gateway, сам plana |
 | **docker** (shittim-chest prod) | socket activation на хосте от systemd, передача привязанного сокета/fd в контейнер (`LISTEN_FDS` + `SocketUser`); либо лёгкий in-container master, держащий fd | shittim-chest prod |
 | **dev** | откат к обычному `bind` + короткое перекрытие (допустить несколько сотен мс потерянных соединений), без systemd | dev всех трёх проектов |
 
@@ -440,7 +440,7 @@ primary/replica, Redis Sentinel — как внутри-машинная, про
 | устройство evernight (`sensor-poll`) | **leader / follower** | по одному воркеру на протокол (Modbus/S7/CAN/serial) | **B Leader/Follower** |
 | evernight-server (центральный) | одна из реплик | контейнеры model_server | **A Replica** |
 
-Выбор features по проектам (`arona-supervisor`):
+Выбор features по проектам (`plana`):
 
 - entelecheia / shittim-chest / evernight-server: `replica` +
   `socket-activation` + `pg-lock`; абстракция Worker для их sidecar-ов.
@@ -453,7 +453,7 @@ primary/replica, Redis Sentinel — как внутри-машинная, про
 1. **Этап A — Layer 1 во всех трёх проектах.** Семантика сигналов +
    `/healthz` / `/readyz` + дрейн. Наименьший риск, наивысший немедленный
    эффект (сначала чиним жёсткое убийство по SIGTERM).
-2. **Этап B — протокол `arona::lifecycle` + каркас `arona-supervisor`.**
+2. **Этап B — протокол `arona::lifecycle` + каркас `plana`.**
    Определения trait-ов, `acquire_listener`, trait `CoordinationLock` +
    бэкенды `FileLock` / `PgLock`, примитивы `Worker` + `Supervisor`.
 3. **Этап C — Layer 3.** Юниты socket activation для трёх проектов +

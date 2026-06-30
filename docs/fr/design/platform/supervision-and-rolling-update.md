@@ -189,7 +189,7 @@ Découpage :
   des méthodes et types JSON-RPC : `DrainState`, `ReadyStatus`,
   `Lifecycle.Drain`, `Lifecycle.Status`, `Worker.Status`, etc. Satisfait la
   règle d'arona « apparié des deux côtés ».
-- **`arona-supervisor` (nouvelle crate, exécution).** Dépend des types de
+- **`plana` (nouvelle crate, exécution).** Dépend des types de
   protocole `arona` + `tokio` + une liaison `libsystemd` (socket activation)
   + des traits de backend. Activé par fonctionnalités (feature-gated) :
   - `replica` — coordination + orchestration du sous-système A.
@@ -197,7 +197,7 @@ Découpage :
   - `socket-activation` — acquisition de fd systemd.
   - `file-lock` / `pg-lock` / `lease` — backends `CoordinationLock`.
 
-Les trois projets dépendent de `arona-supervisor` et activent les
+Les trois projets dépendent de `plana` et activent les
 fonctionnalités dont ils ont besoin (voir la matrice §8). Tout mettre dans
 arona le forcerait à devenir « protocole + exécution optionnelle » et
 détruirait sa pureté — non recommandé.
@@ -288,7 +288,7 @@ de vidange.
 
 ### 5.5 `acquire_listener` — passation sans interruption de Layer 3
 
-`arona-supervisor` expose `acquire_listener(addr) -> TcpListener` :
+`plana` expose `acquire_listener(addr) -> TcpListener` :
 
 1. Essayer `sd_listen_fds()` (valider `LISTEN_PID`) — systemd détient le fd.
 2. Repli sur un simple `TcpListener::bind(addr)` (dev, sans systemd).
@@ -299,7 +299,7 @@ adaptateurs de déploiement :
 
 | Déploiement | Approche | S'applique à |
 |---|---|---|
-| **systemd nu** | `xxx.socket` + instances modèles `xxx@.service` | scepter, evernight-gateway, arona-supervisor lui-même |
+| **systemd nu** | `xxx.socket` + instances modèles `xxx@.service` | scepter, evernight-gateway, plana lui-même |
 | **docker** (prod shittim-chest) | socket activation systemd de l'hôte, passer la socket/fd liée dans le conteneur (`LISTEN_FDS` + `SocketUser`) ; ou un master léger dans le conteneur détenant le fd | shittim-chest prod |
 | **dev** | repli sur un simple `bind` + bref chevauchement (accepter quelques centaines de ms de connexions perdues), sans systemd | dev des trois projets |
 
@@ -448,7 +448,7 @@ fondée.
 | appareil evernight (`sensor-poll`) | **leader / follower** | un worker par protocole (Modbus/S7/CAN/série) | **B Leader/Follower** |
 | evernight-server (central) | un des réplicas | conteneurs model_server | **A Réplica** |
 
-Sélection des fonctionnalités par projet (`arona-supervisor`) :
+Sélection des fonctionnalités par projet (`plana`) :
 
 - entelecheia / shittim-chest / evernight-server : `replica` +
   `socket-activation` + `pg-lock` ; abstraction worker pour leurs sidecars.
@@ -462,7 +462,7 @@ Sélection des fonctionnalités par projet (`arona-supervisor`) :
    `/healthz` / `/readyz` + vidange. Risque le plus bas, gain immédiat le
    plus élevé (corrige d'abord le kill brutal de SIGTERM).
 2. **Phase B — protocole `arona::lifecycle` + squelette
-   `arona-supervisor`.** Définitions de traits, `acquire_listener`,
+   `plana`.** Définitions de traits, `acquire_listener`,
    trait `CoordinationLock` + backends `FileLock` / `PgLock`, primitives
    `Worker` + `Supervisor`.
 3. **Phase C — Layer 3.** Unités de socket activation pour les trois
