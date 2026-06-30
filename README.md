@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
 <div align="center">
 
-<img src="res/logo.webp" alt="Arona" width="200"/>
+<img src="res/logo/arona.webp" alt="Arona" width="200"/>
 
 # Arona
 
