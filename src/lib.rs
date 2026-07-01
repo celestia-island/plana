@@ -7,33 +7,21 @@
 //! If a type is not paired on both sides, it does not belong here.
 
 // ── Module tree ─────────────────────────────────────────────
-// Foundational shared enums are defined directly in this file (below). Every
-// other type group lives in its own domain module; the glob re-exports at the
-// bottom keep all of them reachable at the crate root (`arona::TypeName`).
-pub mod agent_lifecycle;
-pub mod auth;
-pub mod base_messages;
-pub mod bridge_network;
+// Foundational shared enums are defined directly in this file (below). The
+// other type groups live under a small set of domain folders:
+//   protocol/ — JSON-RPC envelope, base messages, handshake (WS transport)
+//   ws/       — TuiMessage variant params (agent / ui / services sub-groups)
+//   mcp/      — per-agent MCP tool I/O structs
+// and a few single-file modules at the root (enums, http, model,
+// external_mcp). The glob re-exports at the bottom keep every type reachable
+// at the crate root (`arona::TypeName`).
 pub mod enums;
 pub mod external_mcp;
-pub mod file_browsing;
-pub mod handshake;
 pub mod http;
-pub mod industrial;
-pub mod jsonrpc;
-pub mod knowledge_base;
-pub mod layer2;
-pub mod llm_provider;
-pub mod logs;
 pub mod mcp;
 pub mod model;
-pub mod noa;
-pub mod state_sync;
-pub mod system_ui;
-pub mod tasks;
-pub mod views;
-pub mod workspace;
-pub mod yolo;
+pub mod protocol;
+pub mod ws;
 
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;
@@ -398,27 +386,23 @@ pub enum YoloTaskTier {
 // ═══════════════════════════════════════════════════════════════
 // Root re-exports
 //
-// The foundational enums above stay defined here. The WS-protocol domain
-// structs live in dedicated modules (`handshake`, `agent_lifecycle`, …) but
-// are re-exported at the crate root so the public surface is unchanged —
+// The foundational enums above stay defined here. The domain structs live in
+// the folder modules (`protocol/`, `ws/{agent,ui,services}/`) but are
+// re-exported at the crate root so the public surface is unchanged —
 // `arona::TuiAgentInfo`, `arona::HandshakeAckParams`, etc. all still resolve.
+//
+// `jsonrpc` is re-exported *as a module* (not globbed) so its deep path
+// `arona::jsonrpc::*` keeps working for the many consumers that use it.
 // ═══════════════════════════════════════════════════════════════
 
-pub use agent_lifecycle::*;
-pub use auth::*;
-pub use base_messages::*;
-pub use bridge_network::*;
-pub use file_browsing::*;
-pub use handshake::*;
-pub use industrial::*;
-pub use knowledge_base::*;
-pub use layer2::*;
-pub use llm_provider::*;
-pub use logs::*;
-pub use noa::*;
-pub use state_sync::*;
-pub use system_ui::*;
-pub use tasks::*;
-pub use views::*;
-pub use workspace::*;
-pub use yolo::*;
+// protocol/ — transport core
+pub use protocol::base_messages::*;
+pub use protocol::handshake::*;
+pub use protocol::jsonrpc;
+
+// ws/ — TuiMessage variant params (types at crate root)
+pub use ws::agent::{agent_lifecycle::*, layer2::*, state_sync::*, tasks::*, yolo::*};
+pub use ws::services::{auth::*, industrial::*, knowledge_base::*, llm_provider::*};
+pub use ws::ui::{
+    bridge_network::*, file_browsing::*, logs::*, noa::*, system_ui::*, views::*, workspace::*,
+};

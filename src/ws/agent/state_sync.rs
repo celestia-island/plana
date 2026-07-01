@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{AgentBadge, ContainerStatus, TaskStatus, agent_lifecycle::TuiAgentInfo};
+use crate::{AgentBadge, ContainerStatus, TaskStatus, TuiAgentInfo};
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/stateSync.ts")]
