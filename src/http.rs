@@ -312,7 +312,8 @@ pub struct WorkspaceItem {
     pub status: String,
     pub connected: bool,
     pub short_id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub alias: Option<String>,
     pub connection_kind: String,
 }
@@ -330,7 +331,8 @@ pub struct AliasRegistryEntry {
 pub struct WorkspaceResolveResponse {
     pub workspace_uuid: String,
     pub short_id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub alias: Option<String>,
     pub path: String,
 }

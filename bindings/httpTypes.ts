@@ -172,8 +172,8 @@ export type WebhookItem = { id: string, name: string, url: string, platform: str
 
 export type WebhookListResponse = { webhooks: Array<WebhookInfoItem>, };
 
-export type WorkspaceItem = { id: string, path: string, editor: string, git_branch: string, status: string, connected: boolean, short_id: string, alias: string | null, connection_kind: string, };
+export type WorkspaceItem = { id: string, path: string, editor: string, git_branch: string, status: string, connected: boolean, short_id: string, alias?: string, connection_kind: string, };
 
-export type WorkspaceResolveResponse = { workspace_uuid: string, short_id: string, alias: string | null, path: string, };
+export type WorkspaceResolveResponse = { workspace_uuid: string, short_id: string, alias?: string, path: string, };
 
 export type WorkspaceSessionResponse = { workspace_id: string, workspace_path: string, editor_name: string, editor_version: string, git_branch: string, cursor?: CursorState, connected_at: string, last_heartbeat: string, };
