@@ -8,8 +8,8 @@ license = "BUSL-1.1"
 description = "Shared protocol and API types for the entelecheia multi-agent platform"
 repository = "https://github.com/celestia-island/arona"
 publish = true
-# Keep generated TS bindings, Python devtools, and docs out of the published crate.
-exclude = ["bindings", "devtools", "docs", ".cargo", "justfile", "package.json", "pnpm-workspace.yaml"]
+# Keep generated TS bindings, Python build scripts, and docs out of the published crate.
+exclude = ["bindings", "scripts", "docs", ".cargo", "justfile", "package.json", "pnpm-workspace.yaml"]
 
 [features]
 default = []

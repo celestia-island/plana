@@ -2,7 +2,7 @@
 """Short per-repo bootstrap wrapper around arona's shared devtool scripts.
 
 The heavy shared modules (logger, cargo_cache_guard, ...) live ONLY in
-arona/devtools/utils/ (kept out of arona's published crate via the `exclude`
+arona/scripts/ (kept out of arona's published crate via the `exclude`
 list in arona's Cargo.toml). Each consumer repo ships ONE copy of this short
 wrapper and delegates to those modules — no repo duplicates the shared code.
 
@@ -137,7 +137,7 @@ def find_patched_crate(
 def find_arona() -> Path | None:
     return find_patched_crate(
         "arona", "ARONA_ROOT", ARONA_GIT,
-        Path("devtools") / "utils" / "cargo_cache_guard.py",
+        Path("scripts") / "cargo_cache_guard.py",
     )
 
 
@@ -150,11 +150,11 @@ def _run_module(module: str, extra_argv: list[str]) -> int:
         _stderr("error", "could not locate arona shared scripts; set ARONA_ROOT")
         return 127
     # Repo's own scripts/utils first (so its configured logger wins for the
-    # shared module's `import logger`), then arona's utils for the shared mods.
+    # shared module's `import logger`), then arona's scripts for the shared mods.
     own_utils = REPO_ROOT / "scripts" / "utils"
     if own_utils.is_dir():
         sys.path.insert(0, str(own_utils))
-    sys.path.insert(0, str(arona / "devtools" / "utils"))
+    sys.path.insert(0, str(arona / "scripts"))
     try:
         mod = __import__(module)
     except ModuleNotFoundError as exc:
