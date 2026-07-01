@@ -7,7 +7,7 @@
 
 **Shared protocol types for the celestia-island platform**
 
-[![License](https://img.shields.io/badge/license-BSL--1.1-blue.svg)](https://github.com/celestia-island/arona/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-SySL--1.0-blue.svg)](./LICENSE)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
 
 </div>
