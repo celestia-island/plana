@@ -136,6 +136,7 @@ pub struct NewContainerVolumeMount {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct NewContainerToolParams {
     pub image: String,
     pub name: Option<String>,
@@ -145,21 +146,25 @@ pub struct NewContainerToolParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerStartParams {
     pub container_id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerStopParams {
     pub container_id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerRemoveParams {
     pub container_id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerForkParams {
     pub container_id: String,
     pub name: Option<String>,
@@ -167,6 +172,7 @@ pub struct ContainerForkParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerSnapshotParams {
     pub container_id: String,
 }
@@ -183,17 +189,20 @@ pub struct ContainerFilterCriteria {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerListParams {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filter: Option<ContainerFilterCriteria>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ContainerInfoParams {
     pub container_id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ExecOnContainerParams {
     pub command: String,
     pub container_id: Option<String>,
@@ -201,6 +210,7 @@ pub struct ExecOnContainerParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct GitPushBranchParams {
     pub container_id: String,
     pub commit_message: Option<String>,
@@ -208,6 +218,7 @@ pub struct GitPushBranchParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct SidecarSpawnParams {
     pub name: String,
     pub cmd: Option<Vec<String>>,
@@ -222,6 +233,7 @@ pub struct SidecarSpawnParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct SidecarSendParams {
     pub name: String,
     pub method: String,
@@ -231,27 +243,32 @@ pub struct SidecarSendParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct SidecarKillParams {
     pub name: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ToolchainListParams {
     pub amphoreus_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct ToolchainEnsureParams {
     pub profile_id: String,
     pub amphoreus_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct WaitParams {
     pub seconds: Option<u64>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/neikos.ts")]
 pub struct CheckWaitParams {
     pub handle: String,
 }

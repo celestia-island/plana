@@ -22,6 +22,7 @@ pub struct TodoTreeNode {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct CreateTodoParams {
     pub title: String,
     pub workspace_id: Option<String>,
@@ -33,6 +34,7 @@ pub struct CreateTodoParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct ListTodoParams {
     pub workspace_id: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -56,6 +58,7 @@ impl ListTodoParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct UpdateTodoParams {
     pub todo_id: Uuid,
     pub title: Option<String>,
@@ -67,12 +70,14 @@ pub struct UpdateTodoParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct DeleteTodoParams {
     pub todo_id: Uuid,
     pub workspace_id: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct ClearTodoParams {
     pub workspace_id: Option<String>,
     pub dry_run: Option<bool>,
@@ -80,6 +85,7 @@ pub struct ClearTodoParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct MoveTodoParams {
     pub todo_id: Uuid,
     pub new_parent_id: Option<Uuid>,
@@ -87,6 +93,7 @@ pub struct MoveTodoParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct ReportParams {
     pub text: Option<String>,
     pub summary: Option<String>,
@@ -95,6 +102,7 @@ pub struct ReportParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/hubris.ts")]
 pub struct ReportHumanParams {
     pub summary: String,
     pub body: Option<String>,

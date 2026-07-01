@@ -142,6 +142,7 @@ pub struct MemorySubgraphResult {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct MemoryStoreParams {
     pub text: String,
     pub node_type: String,
@@ -152,6 +153,7 @@ pub struct MemoryStoreParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct MemoryQueryParams {
     pub query: String,
     pub limit: Option<u64>,
@@ -161,18 +163,21 @@ pub struct MemoryQueryParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct MemoryConsolidateParams {
     pub episode_focus: String,
     pub node_ids: Vec<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct ContextPrepareParams {
     pub query: String,
     pub max_nodes: Option<u64>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct TimeseriesQueryParams {
     pub metric: String,
     pub start_time: Option<i64>,
@@ -183,6 +188,7 @@ pub struct TimeseriesQueryParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct DataQualityCheckParams {
     pub metric: String,
     pub expected_interval_ms: Option<u64>,
@@ -191,6 +197,7 @@ pub struct DataQualityCheckParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct ToolSchemaGetParams {
     pub agent_type: String,
     pub tool_name: String,

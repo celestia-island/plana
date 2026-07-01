@@ -4,23 +4,39 @@ import type { AgentReference, ConflictInfo } from "./haplotes";
 
 export type Annotation = { id: string, file_path: string, line_start: number | null, line_end: number | null, content: string, annotation_type: AnnotationType, author: AgentReference | null, created_at: string, resolved: boolean, resolved_at: string | null, };
 
+export type FileCreateDirParams = { path: string, };
+
+export type FileDeleteParams = { path: string, };
+
 export type FileDeleteResult = { path: string, status: FileOpStatus, conflicts: Array<ConflictInfo>, };
+
+export type FileEditParams = { path: string, old_content: string, new_content: string, };
 
 export type FileEditResult = { path: string, status: FileOpStatus, occurrences: number, conflicts: Array<ConflictInfo>, };
 
 export type FileEntry = { name: string, type: FileType, };
 
+export type FileExistsParams = { path: string, };
+
 export type FileExistsResult = { path: string, exists: boolean, };
+
+export type FileGetInfoParams = { path: string, };
 
 export type FileInfoResult = { path: string, type: FileType, size_bytes: bigint, modified_unix: bigint, };
 
+export type FileListParams = { path: string, recursive: boolean | null, };
+
 export type FileListResult = { path: string, total_count: number, items: Array<FileEntry>, };
+
+export type FileReadParams = { path: string, };
 
 export type FileReadResult = { path: string, size_bytes: number, content: string, conflicts: Array<ConflictInfo>, };
 
 export type FileTreeEntry = { name: string, path: string, is_dir: boolean, children: Array<FileTreeEntry>, size: bigint | null, };
 
 export type FileTreeListResult = { path: string, total_count: number, tree: Array<FileTreeEntry>, };
+
+export type FileWriteParams = { path: string, content: string, };
 
 export type FileWriteResult = { path: string, size_bytes: number, status: FileOpStatus, conflicts: Array<ConflictInfo>, };
 

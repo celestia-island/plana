@@ -123,6 +123,7 @@ pub struct ModbusWriteConfig {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ScriptExecParams {
     pub code: String,
     pub language: Option<String>,
@@ -130,6 +131,7 @@ pub struct ScriptExecParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ModbusReadParams {
     pub endpoint: String,
     pub station: Option<u16>,
@@ -140,6 +142,7 @@ pub struct ModbusReadParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ModbusWriteParams {
     pub endpoint: String,
     pub station: Option<u16>,
@@ -150,6 +153,7 @@ pub struct ModbusWriteParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct SignalNormalizeParams {
     pub values: Vec<f64>,
     pub method: Option<String>,
@@ -157,6 +161,7 @@ pub struct SignalNormalizeParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ConnectRemoteViaSshParams {
     pub host: String,
     pub port: Option<u64>,
@@ -164,12 +169,14 @@ pub struct ConnectRemoteViaSshParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ExecOnRemoteParams {
     pub remote_id: String,
     pub command: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ScreenshotParams {
     pub remote_id: String,
     pub width: Option<u64>,
@@ -177,6 +184,7 @@ pub struct ScreenshotParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct MouseOperateParams {
     pub remote_id: String,
     pub action: Option<String>,
@@ -186,6 +194,7 @@ pub struct MouseOperateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct KeyboardOperateParams {
     pub remote_id: String,
     pub action: Option<String>,
@@ -193,6 +202,7 @@ pub struct KeyboardOperateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skemma.ts")]
 pub struct DisconnectRemoteParams {
     pub remote_id: String,
 }

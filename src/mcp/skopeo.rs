@@ -163,6 +163,7 @@ pub struct AlignmentCheckResult {
 // ── Param types ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalCreateParams {
     pub title: String,
     pub description: Option<String>,
@@ -173,6 +174,7 @@ pub struct GoalCreateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalUpdateParams {
     pub goal_id: String,
     pub title: Option<String>,
@@ -182,12 +184,14 @@ pub struct GoalUpdateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalCloseParams {
     pub goal_id: String,
     pub outcome: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalListParams {
     pub workspace_id: Option<String>,
     pub status: Option<String>,
@@ -196,6 +200,7 @@ pub struct GoalListParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct TrackCreateParams {
     pub goal_id: String,
     pub title: String,
@@ -209,6 +214,7 @@ pub struct TrackCreateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct TrackUpdateParams {
     pub track_id: String,
     pub title: Option<String>,
@@ -219,12 +225,14 @@ pub struct TrackUpdateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct TrackCloseParams {
     pub track_id: String,
     pub outcome: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskCreateParams {
     pub track_id: String,
     pub title: String,
@@ -237,6 +245,7 @@ pub struct GoalTaskCreateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskUpdateParams {
     pub task_id: String,
     pub title: Option<String>,
@@ -248,6 +257,7 @@ pub struct GoalTaskUpdateParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskCompleteParams {
     pub task_id: String,
     #[ts(type = "Record<string, unknown> | null")]
@@ -255,6 +265,7 @@ pub struct GoalTaskCompleteParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct GoalTaskListParams {
     pub track_id: Option<String>,
     pub goal_id: Option<String>,
@@ -265,6 +276,7 @@ pub struct GoalTaskListParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/skopeo.ts")]
 pub struct AlignmentCheckParams {
     pub goal_id: String,
 }

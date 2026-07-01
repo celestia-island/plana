@@ -129,17 +129,20 @@ pub struct ResolveAnnotationResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileReadParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileWriteParams {
     pub path: String,
     pub content: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileEditParams {
     pub path: String,
     pub old_content: String,
@@ -147,16 +150,19 @@ pub struct FileEditParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileDeleteParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileExistsParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileListParams {
     pub path: String,
     #[serde(default)]
@@ -164,11 +170,13 @@ pub struct FileListParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileGetInfoParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/kalos.ts")]
 pub struct FileCreateDirParams {
     pub path: String,
 }

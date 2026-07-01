@@ -72,6 +72,7 @@ pub struct TaskCancelResult {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct DeliverMessageParams {
     pub target_badge: String,
     pub message_type: String,
@@ -82,6 +83,7 @@ pub struct DeliverMessageParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct InjectUserPromptParams {
     pub target_badge: String,
     pub message: String,
@@ -90,11 +92,13 @@ pub struct InjectUserPromptParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct ConsumeInjectedPromptsParams {
     pub target_badge: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct ForkContainerOnNextActionParams {
     pub container_id: String,
     pub branch_prefix: Option<String>,
@@ -102,6 +106,7 @@ pub struct ForkContainerOnNextActionParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct NotifyFileOperationParams {
     pub file_path: String,
     pub agent_type: String,
@@ -110,6 +115,7 @@ pub struct NotifyFileOperationParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/epieikeia.ts")]
 pub struct ListFileObserversParams {
     pub file_path: String,
 }

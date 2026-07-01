@@ -3,9 +3,17 @@ import type { ScriptLanguage } from "../enums";
 
 export type ConnectRemoteResult = { id: string, host: string, port: number, protocol: string, connected: boolean, message: string, };
 
+export type ConnectRemoteViaSshParams = { host: string, port: bigint | null, username: string | null, };
+
+export type DisconnectRemoteParams = { remote_id: string, };
+
 export type DisconnectRemoteResult = { disconnected: boolean, remote_id: string, };
 
+export type ExecOnRemoteParams = { remote_id: string, command: string, };
+
 export type ExecOnRemoteResult = { remote_id: string, command: string, exit_code: number, stdout: string, stderr: string, duration_ms: bigint, };
+
+export type KeyboardOperateParams = { remote_id: string, action: string | null, keys: Array<string>, };
 
 export type KeyboardOperateResult = { remote_id: string, action: string, keys: Array<string>, success: boolean, };
 
@@ -13,13 +21,19 @@ export type Layer2ScriptExecResult = { language: ScriptLanguage, agent: string, 
 
 export type ListRemotesResult = { remotes: Array<RemoteConnectionInfo>, total: number, };
 
+export type ModbusReadParams = { endpoint: string, station: number | null, scan: Array<ModbusScanConfig> | null, register_type: string | null, start_address: bigint | null, count: bigint | null, };
+
 export type ModbusReadResult = { station: number, transport: string, endpoint: string, results: Array<RegisterRangeResult>, total_registers: number, };
 
 export type ModbusScanConfig = { address: number, count: number, function_code?: number | null, };
 
 export type ModbusWriteConfig = { address: number, value: number, function_code?: number | null, };
 
+export type ModbusWriteParams = { endpoint: string, station: number | null, writes: Array<ModbusWriteConfig> | null, register_type: string | null, start_address: bigint | null, values: Array<bigint>, };
+
 export type ModbusWriteResult = { station: number, transport: string, endpoint: string, writes: Array<WriteRangeResult>, total_written: number, all_confirmed: boolean, };
+
+export type MouseOperateParams = { remote_id: string, action: string | null, x: bigint | null, y: bigint | null, button: string | null, };
 
 export type MouseOperateResult = { remote_id: string, action: string, x: number, y: number, button: string, success: boolean, };
 
@@ -27,9 +41,15 @@ export type RegisterRangeResult = { register_type: string, start_address: number
 
 export type RemoteConnectionInfo = { id: string, host: string, port: number, protocol: string, connected: boolean, connected_at: string | null, };
 
+export type ScreenshotParams = { remote_id: string, width: bigint | null, height: bigint | null, };
+
 export type ScreenshotResult = { remote_id: string, width: number, height: number, format: string, data_base64: string, };
 
+export type ScriptExecParams = { code: string, language: string | null, timeout: bigint | null, };
+
 export type ScriptExecResult = { language: ScriptLanguage, execution_id: string, exit_code: number, duration_ms: bigint, stdout: string, stderr: string, };
+
+export type SignalNormalizeParams = { values: Array<number>, method: string | null, signed: boolean | null, };
 
 export type SignalNormalizeResult = { method: string, input_count: number, output: Array<number>, stats: SignalStats, };
 

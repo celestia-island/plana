@@ -56,11 +56,13 @@ pub struct RegisterRemoteRefsResult {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/eleos.ts")]
 pub struct WebFetchParams {
     pub url: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/eleos.ts")]
 pub struct WebSearchParams {
     pub query: String,
     pub engine: Option<String>,

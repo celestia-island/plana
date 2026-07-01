@@ -80,7 +80,7 @@ pub struct IndustrialDiscoveryProgress {
     pub found_devices: u64,
     pub progress_percent: u32,
     #[serde(default)]
-    #[ts(type = "Record<string, unknown> | null")]
+    #[ts(optional, type = "Record<string, unknown> | null")]
     pub raw_findings: Option<serde_json::Value>,
 }
 
@@ -122,10 +122,13 @@ pub struct IndustrialStationField {
     pub name: String,
     pub data_type: String,
     #[serde(default)]
+    #[ts(optional)]
     pub unit: Option<String>,
     #[serde(default)]
+    #[ts(optional)]
     pub alarm: Option<IndustrialAlarmThresholds>,
     #[serde(default)]
+    #[ts(optional)]
     pub current_value: Option<f64>,
 }
 
@@ -133,12 +136,16 @@ pub struct IndustrialStationField {
 #[ts(export, export_to = "ws/industrial.ts")]
 pub struct IndustrialAlarmThresholds {
     #[serde(default)]
+    #[ts(optional)]
     pub ll: Option<f64>,
     #[serde(default)]
+    #[ts(optional)]
     pub l: Option<f64>,
     #[serde(default)]
+    #[ts(optional)]
     pub h: Option<f64>,
     #[serde(default)]
+    #[ts(optional)]
     pub hh: Option<f64>,
 }
 
@@ -150,10 +157,13 @@ pub struct IndustrialStationInfo {
     pub connection: String,
     pub device_class: String,
     #[serde(default)]
+    #[ts(optional)]
     pub vendor: Option<String>,
     #[serde(default)]
+    #[ts(optional)]
     pub model: Option<String>,
     #[serde(default)]
+    #[ts(optional)]
     pub firmware: Option<String>,
     pub status: String,
     #[serde(default)]
@@ -178,8 +188,10 @@ pub struct IndustrialAlarmHistoryEntry {
     #[serde(default)]
     pub acknowledged: bool,
     #[serde(default)]
+    #[ts(optional)]
     pub acknowledged_at: Option<String>,
     #[serde(default)]
+    #[ts(optional)]
     pub acknowledged_by: Option<String>,
 }
 
@@ -244,6 +256,7 @@ pub struct WriteApprovalResponseParams {
     pub approved: bool,
     pub approved_by: String,
     #[serde(default)]
+    #[ts(optional)]
     pub modified_value: Option<f64>,
 }
 

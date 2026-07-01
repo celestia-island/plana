@@ -7,8 +7,12 @@ export type RegisterRemoteRefsResult = { ref_id: string, url: string, registered
 
 export type RemoteRefEntry = { ref_id: string, url: string, title: string, ref_type: string, registered_at: string, };
 
+export type WebFetchParams = { url: string, };
+
 export type WebFetchResult = { url: string, title: string, status_code: number, headers: string, content: string, content_preview: string, content_length: number, };
 
 export type WebSearchItem = { url: string, title: string, };
+
+export type WebSearchParams = { query: string, engine: string | null, limit: bigint | null, };
 
 export type WebSearchResult = { query: string, engine: WebSearchEngine, count: number, results: Array<WebSearchItem>, };

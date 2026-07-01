@@ -80,6 +80,7 @@ pub struct ConversationContext {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct FileAnchor {
     pub file_path: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]

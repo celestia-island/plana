@@ -16,7 +16,7 @@ export type IndustrialAlarmHistoryEntry = { station_id: string, protocol: string
 /**
  * Whether an operator acknowledged the alarm, and when.
  */
-acknowledged: boolean, acknowledged_at: string | null, acknowledged_by: string | null, };
+acknowledged: boolean, acknowledged_at?: string, acknowledged_by?: string, };
 
 /**
  * Severity ordering matches ISA-18.2 alarm severity.
@@ -25,14 +25,14 @@ export type IndustrialAlarmLevel = "Log" | "LowLow" | "Low" | "High" | "HighHigh
 
 export type IndustrialAlarmPushParams = { alarm: IndustrialAlarmEvent, };
 
-export type IndustrialAlarmThresholds = { ll: number | null, l: number | null, h: number | null, hh: number | null, };
+export type IndustrialAlarmThresholds = { ll?: number, l?: number, h?: number, hh?: number, };
 
 /**
  * Phases of an evernight discovery scan. Ordered by typical progress.
  */
 export type IndustrialDiscoveryPhase = "TransportScan" | "ProtocolIdentify" | "DataModelScan" | "SemanticInference" | "ManifestGeneration" | "ManifestValidation" | "Complete";
 
-export type IndustrialDiscoveryProgress = { session_id: string, phase: IndustrialDiscoveryPhase, message: string, found_devices: bigint, progress_percent: number, raw_findings: Record<string, unknown> | null, };
+export type IndustrialDiscoveryProgress = { session_id: string, phase: IndustrialDiscoveryPhase, message: string, found_devices: bigint, progress_percent: number, raw_findings?: Record<string, unknown> | null, };
 
 export type IndustrialDiscoveryProgressPushParams = { event: IndustrialDiscoveryProgress, };
 
@@ -43,9 +43,9 @@ export type IndustrialDiscoveryProgressPushParams = { event: IndustrialDiscovery
  */
 export type IndustrialSensorReading = { station_id: string, protocol: string, address: string, name: string, raw_value: number, scaled_value: number, unit: string, quality: string, timestamp: string, };
 
-export type IndustrialStationField = { address: string, name: string, data_type: string, unit: string | null, alarm: IndustrialAlarmThresholds | null, current_value: number | null, };
+export type IndustrialStationField = { address: string, name: string, data_type: string, unit?: string, alarm?: IndustrialAlarmThresholds, current_value?: number, };
 
-export type IndustrialStationInfo = { station_id: string, protocol: string, connection: string, device_class: string, vendor: string | null, model: string | null, firmware: string | null, status: string, fields: Array<IndustrialStationField>, };
+export type IndustrialStationInfo = { station_id: string, protocol: string, connection: string, device_class: string, vendor?: string, model?: string, firmware?: string, status: string, fields: Array<IndustrialStationField>, };
 
 export type IndustrialTelemetryBatch = { readings: Array<IndustrialSensorReading>, station_id: string, timestamp: string, };
 
@@ -64,7 +64,7 @@ request_id: string, station_id: string, protocol: string, address: string, field
 
 export type WriteApprovalRequestParams = { request: WriteApprovalRequest, };
 
-export type WriteApprovalResponseParams = { request_id: string, approved: boolean, approved_by: string, modified_value: number | null, };
+export type WriteApprovalResponseParams = { request_id: string, approved: boolean, approved_by: string, modified_value?: number, };
 
 /**
  * Operator confirmation gate for safety-critical PLC writes.

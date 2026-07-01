@@ -360,6 +360,28 @@ mod tests {
         assert!(serde_json::from_str::<JsonRpcMessage>(bad).is_err());
     }
 
+    #[test]
+    fn message_ambiguous_payload_classified_as_response() {
+        // A malformed payload carrying BOTH `method` and `result` must be
+        // classified as a Response (result/error takes priority per JSON-RPC
+        // spec), NOT a Request — otherwise `result` is silently discarded.
+        let ambig = r#"{"jsonrpc":"2.0","id":7,"method":"x","result":{"ok":true}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(ambig).unwrap();
+        match msg {
+            JsonRpcMessage::Response(r) => {
+                assert_eq!(r.id, Id::Number(7));
+                assert!(r.result.is_some());
+            }
+            other => panic!("expected Response for ambiguous payload, got {other:?}"),
+        }
+
+        // Same with `error` instead of `result`.
+        let ambig_err =
+            r#"{"jsonrpc":"2.0","id":9,"method":"x","error":{"code":-1,"message":"e"}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(ambig_err).unwrap();
+        assert!(matches!(msg, JsonRpcMessage::Response(_)));
+    }
+
     // ── Response round-trip & error codes ────────────────────
 
     #[test]

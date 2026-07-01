@@ -6,21 +6,49 @@ export type DeviceCapability = { protocols: Array<string>, register_maps: Array<
 
 export type DeviceRegisterRangeResult = { start: number, end: number, function_code: number, bytes_readable: number, success: boolean, };
 
+export type DeviceSelfTestParams = { host: string, device_id: string | null, modbus_port: bigint | null, mqtt_port: bigint | null, http_port: bigint | null, skip_adaptive: boolean | null, register_ranges: Array<string> | null, };
+
 export type DeviceSelfTestResponse = { device_id: string, host: string, overall_status: string, phase1_self_sensing: Phase1Result, phase2_adaptive: Phase2Result, capability_profile: DeviceCapability, registered_to_node_graph: boolean, timestamp: string, };
+
+export type EmptyParams = Record<symbol, never>;
 
 export type KneeJerkTest = { test_name: string, protocol: string, passed: boolean, latency_ms: bigint, detail: string, };
 
+export type NodeConnectParams = { node_id: string, };
+
 export type NodeConnectResult = { node_id: string, node_name: string, address: string, status: string, last_seen: string, };
+
+export type NodeDiscoverParams = { auto_register: boolean | null, host: string | null, port: number | null, };
 
 export type NodeDiscoverResult = { host: string, port: number, node_id: string | null, total_nodes: number, status: string, nodes: Array<NodeInfo>, };
 
+export type NodeExecuteParams = { node_id: string, command: string, };
+
 export type NodeExecuteResult = { node_id: string, node_name: string, host: string, command: string, exit_code: bigint | null, stdout: string, stderr: string, status: string, };
 
+export type NodeFileDownloadParams = { node_id: string, remote_path: string, };
+
+export type NodeFileListParams = { node_id: string, path: string | null, };
+
+export type NodeFileUploadParams = { node_id: string, remote_path: string, data_base64: string, mode: string | null, };
+
 export type NodeInfo = { id: string, name: string, address: string, status: string, };
+
+export type NodeScreenOfferParams = { node_id: string, };
+
+export type NodeTerminalCloseParams = { session_id: string, };
+
+export type NodeTerminalOpenParams = { node_id: string, cols: bigint | null, rows: bigint | null, shell: string | null, session_id: string | null, };
+
+export type NodeTerminalResizeParams = { session_id: string, cols: bigint, rows: bigint, };
+
+export type NodeTerminalWriteParams = { session_id: string, data: string, };
 
 export type Phase1Result = { tests_run: number, tests_passed: number, tests_failed: number, results: Array<KneeJerkTest>, };
 
 export type Phase2Result = { register_ranges_scanned: number, function_codes_probed: Array<number>, readable_registers: number, probe_results: Array<AdaptiveProbeResult>, };
+
+export type ProtocolProbeParams = { host: string, ports: Array<bigint> | null, protocols: Array<string> | null, };
 
 export type ProtocolProbeResponse = { host: string, probes: Array<ProtocolProbeResult>, total_found: number, };
 

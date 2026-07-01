@@ -6,7 +6,11 @@ export type AgentRegistryGetResult = { agent_type: string, mcp_tools: Array<McpT
 
 export type AgentRegistryListResult = { agents: Array<AgentRegistryEntry>, };
 
+export type ContextPrepareParams = { query: string, max_nodes: bigint | null, };
+
 export type ContextPrepareResult = { episode_count: number, entity_count: number, relevant_nodes: number, summary: string, };
+
+export type DataQualityCheckParams = { metric: string, expected_interval_ms: bigint | null, stale_threshold_ms: bigint | null, z_score_threshold: number | null, };
 
 export type DataStoreLoadResult = { key: string, namespace: string, store_key: string, loaded_at: string, value: Record<string, unknown>, };
 
@@ -16,13 +20,19 @@ export type GapInfo = { start_time: bigint, end_time: bigint, estimated_missing:
 
 export type McpToolDetail = { name: string, description: string, parameters: Record<string, unknown>, };
 
+export type MemoryConsolidateParams = { episode_focus: string, node_ids: Array<string>, };
+
 export type MemoryConsolidateResult = { episode_id: string, linked_count: number, };
 
 export type MemoryNodeFull = { id: string, node_type: string, text: string, score: number, tags: Array<string>, created_at: string | null, source: string | null, metadata: Record<string, unknown> | null, };
 
 export type MemoryQueryItem = { node_type: string, text: string, score: number, };
 
+export type MemoryQueryParams = { query: string, limit: bigint | null, graph_depth: bigint | null, node_type_filter: string | null, subgraph: boolean | null, };
+
 export type MemoryQueryResult = { query: string, total: number, results: Array<MemoryQueryItem>, };
+
+export type MemoryStoreParams = { text: string, node_type: string, entity_type: string | null, source_episode_id: string | null, related_node_ids: Array<string> | null, properties: { [key in string]: string } | null, };
 
 export type MemoryStoreResult = { node_id: string, node_type: string, text_preview: string, };
 
@@ -38,6 +48,10 @@ export type SkillDetail = { name: string, description: string, related_tools: Ar
 
 export type TimeseriesPointResult = { timestamp: bigint, value: number, tags: { [key in string]: string }, };
 
+export type TimeseriesQueryParams = { metric: string, start_time: bigint | null, end_time: bigint | null, include_stats: boolean | null, limit: bigint | null, tags: { [key in string]: string } | null, };
+
 export type TimeseriesQueryResult = { metric: string, points: Array<TimeseriesPointResult>, stats: QueryStats | null, count: number, };
+
+export type ToolSchemaGetParams = { agent_type: string, tool_name: string, };
 
 export type ToolSchemaGetResult = { agent_type: string, tool_name: string, declaration: string, };
