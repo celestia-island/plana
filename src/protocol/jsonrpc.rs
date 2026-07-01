@@ -441,7 +441,7 @@ mod tests {
 
     #[test]
     fn build_notification_value_shape() {
-        let v = build_notification_value("ev.tick", &json!({"n": 1}));
+        let v = build_notification_value("ev.tick", json!({"n": 1}));
         assert_eq!(v["jsonrpc"], "2.0");
         assert_eq!(v["method"], "ev.tick");
         assert_eq!(v["params"]["n"], 1);
@@ -450,7 +450,7 @@ mod tests {
 
     #[test]
     fn build_notification_string_is_valid_json() {
-        let s = build_notification("ev.tick", &json!({"n": 1}));
+        let s = build_notification("ev.tick", json!({"n": 1}));
         let v: serde_json::Value = serde_json::from_str(&s).unwrap();
         assert_eq!(v["method"], "ev.tick");
     }

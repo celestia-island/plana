@@ -6,7 +6,7 @@ use ts_rs::TS;
 
 /// Handshake wire-protocol version. Bumped on incompatible changes to the
 /// handshake payload itself. OLD clients that omit `protocol_version` still
-/// deserialize via [`default_protocol_version`] and are treated as v1.
+/// deserialize via the serde default and are treated as v1.
 pub const HANDSHAKE_VERSION: u32 = 1;
 
 fn default_protocol_version() -> u32 {
