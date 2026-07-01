@@ -1,6 +1,7 @@
 use serde_json::Value;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct AgentRegistryEntry {
     pub agent_type: String,
     pub status: String,
@@ -11,11 +12,13 @@ pub struct AgentRegistryEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct AgentRegistryListResult {
     pub agents: Vec<AgentRegistryEntry>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct McpToolDetail {
     pub name: String,
     pub description: String,
@@ -24,6 +27,7 @@ pub struct McpToolDetail {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct SkillDetail {
     pub name: String,
     pub description: String,
@@ -31,6 +35,7 @@ pub struct SkillDetail {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct AgentRegistryGetResult {
     pub agent_type: String,
     pub mcp_tools: Vec<McpToolDetail>,
@@ -38,6 +43,7 @@ pub struct AgentRegistryGetResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct DataStoreSaveResult {
     pub key: String,
     pub namespace: String,
@@ -48,6 +54,7 @@ pub struct DataStoreSaveResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct DataStoreLoadResult {
     pub key: String,
     pub namespace: String,
@@ -58,6 +65,7 @@ pub struct DataStoreLoadResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct ContextPrepareResult {
     pub episode_count: usize,
     pub entity_count: usize,
@@ -66,6 +74,7 @@ pub struct ContextPrepareResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct MemoryStoreResult {
     pub node_id: String,
     pub node_type: String,
@@ -73,6 +82,7 @@ pub struct MemoryStoreResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct MemoryQueryItem {
     pub node_type: String,
     pub text: String,
@@ -80,6 +90,7 @@ pub struct MemoryQueryItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct MemoryQueryResult {
     pub query: String,
     pub total: usize,
@@ -87,6 +98,7 @@ pub struct MemoryQueryResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/philia.ts")]
 pub struct MemoryConsolidateResult {
     pub episode_id: String,
     pub linked_count: usize,

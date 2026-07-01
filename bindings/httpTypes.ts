@@ -100,7 +100,7 @@ export type ResourceUsageSummary = { resource_type: string, current_usage: numbe
 
 export type SceneBloom = { strength: number, radius: number, threshold: number, };
 
-export type SceneCamera = { position: SceneVec3, target: SceneVec3, bookmarks: { [key in string]: SceneCameraBookmark } | null, };
+export type SceneCamera = { position: SceneVec3, target: SceneVec3, bookmarks?: { [key in string]: SceneCameraBookmark } | null, };
 
 export type SceneCameraBookmark = { position: SceneVec3, target: SceneVec3, };
 

@@ -7,7 +7,7 @@ export type ClientNodeInfo = { hostname: string, os: string, workspace_root?: st
 export type ConnectHandshakeParams = { 
 /**
  * Handshake wire-protocol version advertised by the client. Defaults to
- * [`PROTOCOL_VERSION`] when absent (backward-compatible with old clients).
+ * [`HANDSHAKE_VERSION`] when absent (backward-compatible with old clients).
  */
 protocol_version: number, token: string, session_id?: string, capabilities: Array<ClientCapability>, node_info?: ClientNodeInfo, 
 /**

@@ -182,6 +182,7 @@ pub struct EntrypointConfigInfo {
     #[serde(default)]
     pub name: std::collections::HashMap<String, String>,
     #[serde(default, rename = "type")]
+    #[ts(rename = "type")]
     pub entry_type: String,
     #[serde(default)]
     pub billing_type: String,

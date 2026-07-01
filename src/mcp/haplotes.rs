@@ -1,10 +1,3 @@
-// New types: AgentReference, ConflictInfo, FileLineRange, FileOperationType (depends on enums),
-// ObserverInfo, NotifyFileOperationResult, ListFileObserversResult, AgentReasoning,
-// ConversationContext, FileAnchor, ConversationMessage, AgentConversation,
-// AskAgentResult, ReplyAgentResult, EscalateConversationResult, ListConversationsResult,
-// GetConversationResult
-// Resolve conflicts if any.
-
 use crate::enums::{
     ConversationMessageType, ConversationStatus, FileOperationType, ObservationType,
 };
@@ -75,6 +68,9 @@ pub struct AgentReasoning {
     pub how: String,
 }
 
+/// Structured reason-evaluation triples for agent self-reflection.
+/// Semantically distinct from [`AgentReasoning`] — this is the context of
+/// the ongoing conversation, not the agent's own reasoning chain.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct ConversationContext {
@@ -84,7 +80,6 @@ pub struct ConversationContext {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct FileAnchor {
     pub file_path: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -170,6 +165,7 @@ pub struct ChatMessage {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct LlmProviderCallParams {
     pub tier: Option<String>,
     pub messages: Vec<ChatMessage>,
@@ -178,6 +174,7 @@ pub struct LlmProviderCallParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/haplotes.ts")]
 pub struct SubscribeTriggerParams {
     pub topic_pattern: String,
     pub agent_id: Option<String>,

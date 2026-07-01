@@ -4,7 +4,7 @@ export type NoaAuthRequestParams = { workspace_id: string, branches: Array<strin
 
 export type NoaAuthResponseParams = { workspace_id: string, selected_branch: string, branch_base?: string, approved: boolean, };
 
-export type NoaEvent = { event_id: string, event_type: string, timestamp: string, file_path?: string, content_hash?: string, metadata?: unknown, };
+export type NoaEvent = { event_id: string, event_type: string, timestamp: string, file_path?: string, content_hash?: string, metadata?: Record<string, unknown>, };
 
 export type NoaEventSyncAckParams = { workspace_id: string, last_event_id: string, };
 

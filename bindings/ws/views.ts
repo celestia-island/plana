@@ -77,7 +77,7 @@ layout?: ViewLayout, };
 /**
  * View type identifier — determines which frontend renderer handles the view.
  */
-export type ViewKind = "IndustrialScada" | "Chat" | "Kanban" | "Gantt" | "DataTable" | "MediaFlow" | "FileExplorer" | "Custom";
+export type ViewKind = "industrial_scada" | "chat" | "kanban" | "gantt" | "data_table" | "media_flow" | "file_explorer" | "custom";
 
 /**
  * Layout descriptor for a view within the dashboard grid.

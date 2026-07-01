@@ -399,7 +399,7 @@ pub struct SceneGrid {
 pub struct SceneCamera {
     pub position: SceneVec3,
     pub target: SceneVec3,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bookmarks: Option<std::collections::HashMap<String, SceneCameraBookmark>>,
 }
 
@@ -729,16 +729,16 @@ pub struct SetupCheckResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
 pub struct UserPreferences {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub theme: Option<String>,
-    #[serde(rename = "themeMode", skip_serializing_if = "Option::is_none")]
+    #[serde(default, rename = "themeMode", skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub theme_mode: Option<String>,
-    #[serde(rename = "chatMode", skip_serializing_if = "Option::is_none")]
+    #[serde(default, rename = "chatMode", skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub chat_mode: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub locale: Option<String>,
 }

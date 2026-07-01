@@ -83,7 +83,7 @@ pub struct ClearTodoParams {
 pub struct MoveTodoParams {
     pub todo_id: Uuid,
     pub new_parent_id: Option<Uuid>,
-    pub sort_order: Option<i64>,
+    pub sort_order: Option<i32>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]

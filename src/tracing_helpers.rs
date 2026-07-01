@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, Copy, Default)]
 pub struct ShortTimer;
 
 impl tracing_subscriber::fmt::time::FormatTime for ShortTimer {

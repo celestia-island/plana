@@ -21,13 +21,13 @@ export type ContainerStartResult = { container_id: string, status: ContainerOpSt
 
 export type ContainerStopResult = { container_id: string, status: ContainerOpStatus, };
 
-export type DeliverMessageResult = { todo_id: string, title: string, target_badge: string, status: ConsultationStatus, metadata: { [key in string]: string }, };
-
 export type ExecResult = { container_id: string, command: string, exit_code: bigint | null, output: string, error: string, };
 
 export type GitPushResult = { container_id: string, branch: string, remote: string, commit_hash: string | null, pushed: boolean, output: string, };
 
 export type NewContainerVolumeMount = { source: string, target: string, read_only?: boolean | null, };
+
+export type SidecarDeliverResult = { todo_id: string, title: string, target_badge: string, status: ConsultationStatus, metadata: { [key in string]: string }, };
 
 export type SidecarSendResult = { name: string, sent: boolean, };
 

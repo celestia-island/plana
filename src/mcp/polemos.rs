@@ -47,7 +47,7 @@ pub struct NodeExecuteResult {
 pub struct NodeDiscoverParams {
     pub auto_register: Option<bool>,
     pub host: Option<String>,
-    pub port: Option<u64>,
+    pub port: Option<u16>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]

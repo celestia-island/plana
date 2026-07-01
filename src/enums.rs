@@ -10,7 +10,7 @@ use std::fmt;
 
 macro_rules! str_enum {
     ($name:ident { $($variant:ident = $val:literal),* $(,)? }) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ts_rs::TS)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ts_rs::TS, schemars::JsonSchema)]
         #[ts(export, export_to = "enums.ts")]
         pub enum $name {
             $($variant,)*

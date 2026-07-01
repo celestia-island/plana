@@ -15,7 +15,7 @@ pub mod error_codes {
     pub const AUTH_ERROR: i64 = -32005;
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct JsonRpcError {
     pub code: i64,
     pub message: String,
@@ -79,7 +79,7 @@ impl Id {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct JsonRpcRequest {
     pub jsonrpc: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -89,7 +89,7 @@ pub struct JsonRpcRequest {
     pub params: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct JsonRpcNotification {
     pub jsonrpc: String,
     pub method: String,
@@ -97,7 +97,7 @@ pub struct JsonRpcNotification {
     pub params: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct JsonRpcResponse {
     pub jsonrpc: String,
     pub id: Id,
@@ -127,18 +127,18 @@ impl<'de> serde::Deserialize<'de> for JsonRpcMessage {
         let has_result = value.get("result").is_some();
         let has_error = value.get("error").is_some();
 
-        if has_method && !has_id {
-            let notif: JsonRpcNotification = serde_json::from_value(value)
-                .map_err(|e| serde::de::Error::custom(format!("invalid notification: {}", e)))?;
-            Ok(JsonRpcMessage::Notification(notif))
+        if (has_result || has_error) && has_id {
+            let resp: JsonRpcResponse = serde_json::from_value(value)
+                .map_err(|e| serde::de::Error::custom(format!("invalid response: {}", e)))?;
+            Ok(JsonRpcMessage::Response(resp))
         } else if has_method && has_id {
             let req: JsonRpcRequest = serde_json::from_value(value)
                 .map_err(|e| serde::de::Error::custom(format!("invalid request: {}", e)))?;
             Ok(JsonRpcMessage::Request(req))
-        } else if (has_result || has_error) && has_id {
-            let resp: JsonRpcResponse = serde_json::from_value(value)
-                .map_err(|e| serde::de::Error::custom(format!("invalid response: {}", e)))?;
-            Ok(JsonRpcMessage::Response(resp))
+        } else if has_method && !has_id {
+            let notif: JsonRpcNotification = serde_json::from_value(value)
+                .map_err(|e| serde::de::Error::custom(format!("invalid notification: {}", e)))?;
+            Ok(JsonRpcMessage::Notification(notif))
         } else {
             Err(serde::de::Error::custom(
                 "cannot classify JSON-RPC message: must have (method + id) for request, (method) for notification, or (id + result/error) for response",
@@ -194,19 +194,17 @@ impl JsonRpcResponse {
 }
 
 pub fn build_notification(method: &str, params: impl serde::Serialize) -> String {
-    let notif = JsonRpcNotification::new(
-        method,
-        Some(serde_json::to_value(&params).unwrap_or_default()),
-    );
+    let params = serde_json::to_value(&params)
+        .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
+    let notif = JsonRpcNotification::new(method, Some(params));
     serde_json::to_string(&notif)
         .unwrap_or_else(|_| format!(r#"{{"jsonrpc":"2.0","method":"{method}","params":{{}}}}"#))
 }
 
 pub fn build_notification_value(method: &str, params: impl serde::Serialize) -> serde_json::Value {
-    let notif = JsonRpcNotification::new(
-        method,
-        Some(serde_json::to_value(&params).unwrap_or_default()),
-    );
+    let params = serde_json::to_value(&params)
+        .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
+    let notif = JsonRpcNotification::new(method, Some(params));
     serde_json::to_value(notif).unwrap_or_else(|_| {
         serde_json::json!({
             "jsonrpc": "2.0",
@@ -258,7 +256,7 @@ mod tests {
         // new_uuid() produces Id::String(_); serialized as a JSON string.
         assert!(s.starts_with('"') && s.ends_with('"'));
         let inner = &s[1..s.len() - 1];
-        // UUID v7: version nibble at position 12 must be '7'.
+        // UUID v7: version nibble at position 14 must be '7'.
         let bytes = inner.as_bytes();
         assert_eq!(bytes.len(), 36, "expected hyphenated UUID, got {inner}");
         assert_eq!(bytes[14], b'7', "expected UUID v7, got {inner}");

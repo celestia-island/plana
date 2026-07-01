@@ -105,7 +105,7 @@ pub struct ExecResult {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/neikos.ts")]
-pub struct DeliverMessageResult {
+pub struct SidecarDeliverResult {
     pub todo_id: String,
     pub title: String,
     pub target_badge: String,

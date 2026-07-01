@@ -27,7 +27,7 @@ pub struct NoaEvent {
     #[ts(optional)]
     pub content_hash: Option<String>,
     #[serde(default)]
-    #[ts(optional, type = "unknown")]
+    #[ts(optional, type = "Record<string, unknown>")]
     pub metadata: Option<serde_json::Value>,
 }
 

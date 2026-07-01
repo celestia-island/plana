@@ -167,6 +167,7 @@ pub struct AnomalyInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "mcp/aporia.ts")]
 pub struct AnomalyResult {
     pub anomalies: Vec<AnomalyInfo>,
     pub total_points: usize,

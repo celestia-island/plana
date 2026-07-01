@@ -132,7 +132,7 @@ pub struct ScriptExecParams {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 pub struct ModbusReadParams {
     pub endpoint: String,
-    pub station: Option<u64>,
+    pub station: Option<u16>,
     pub scan: Option<Vec<ModbusScanConfig>>,
     pub register_type: Option<String>,
     pub start_address: Option<u64>,
@@ -142,7 +142,7 @@ pub struct ModbusReadParams {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 pub struct ModbusWriteParams {
     pub endpoint: String,
-    pub station: Option<u64>,
+    pub station: Option<u16>,
     pub writes: Option<Vec<ModbusWriteConfig>>,
     pub register_type: Option<String>,
     pub start_address: Option<u64>,
@@ -230,7 +230,7 @@ pub struct RegisterRangeResult {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ModbusReadResult {
-    pub station: u8,
+    pub station: u16,
     pub transport: String,
     pub endpoint: String,
     pub results: Vec<RegisterRangeResult>,
@@ -249,7 +249,7 @@ pub struct WriteRangeResult {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "mcp/skemma.ts")]
 pub struct ModbusWriteResult {
-    pub station: u8,
+    pub station: u16,
     pub transport: String,
     pub endpoint: String,
     pub writes: Vec<WriteRangeResult>,

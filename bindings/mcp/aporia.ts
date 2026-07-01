@@ -2,6 +2,8 @@
 
 export type AnomalyInfo = { index: number, value: number, expected: number, deviation: number, timestamp: bigint | null, severity: string, };
 
+export type AnomalyResult = { anomalies: Array<AnomalyInfo>, total_points: number, anomaly_count: number, anomaly_ratio: number, method: string, threshold: number, };
+
 export type CausalReasonResult = { correlations: Array<CorrelationInfo>, hypotheses: Array<Hypothesis>, recommended_actions: Array<string>, confidence: number, };
 
 export type CorrelationInfo = { variable: string, correlation: number, lag: number, direction: string, };

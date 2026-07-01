@@ -53,5 +53,7 @@ pub struct ListKnowledgeBasesResponseParams {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/knowledgeBase.ts")]
 pub struct GetKnowledgeBaseResponseParams {
+    #[serde(default)]
+    #[ts(optional)]
     pub knowledge_base: Option<KnowledgeBaseInfo>,
 }

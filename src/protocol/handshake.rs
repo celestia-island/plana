@@ -7,10 +7,10 @@ use ts_rs::TS;
 /// Handshake wire-protocol version. Bumped on incompatible changes to the
 /// handshake payload itself. OLD clients that omit `protocol_version` still
 /// deserialize via [`default_protocol_version`] and are treated as v1.
-pub const PROTOCOL_VERSION: u32 = 1;
+pub const HANDSHAKE_VERSION: u32 = 1;
 
 fn default_protocol_version() -> u32 {
-    PROTOCOL_VERSION
+    HANDSHAKE_VERSION
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -77,7 +77,7 @@ pub struct ClientNodeInfo {
 #[ts(export, export_to = "ws/handshake.ts")]
 pub struct ConnectHandshakeParams {
     /// Handshake wire-protocol version advertised by the client. Defaults to
-    /// [`PROTOCOL_VERSION`] when absent (backward-compatible with old clients).
+    /// [`HANDSHAKE_VERSION`] when absent (backward-compatible with old clients).
     #[serde(default = "default_protocol_version")]
     pub protocol_version: u32,
     pub token: String,

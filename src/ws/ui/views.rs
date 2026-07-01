@@ -5,6 +5,7 @@ use ts_rs::TS;
 
 /// View type identifier — determines which frontend renderer handles the view.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
 #[ts(export, export_to = "ws/views.ts")]
 pub enum ViewKind {
     /// Industrial SCADA / HMI panel (P&ID, gauges, alarm panel, trend charts)
