@@ -368,10 +368,7 @@ mod tests {
     fn response_success_round_trip_preserves_shape() {
         let resp = JsonRpcResponse::success(Id::Number(3), json!({"value": 42}));
         let s = serde_json::to_string(&resp).unwrap();
-        assert_eq!(
-            s,
-            r#"{"jsonrpc":"2.0","id":3,"result":{"value":42}}"#
-        );
+        assert_eq!(s, r#"{"jsonrpc":"2.0","id":3,"result":{"value":42}}"#);
         // `error` is skipped when None.
         assert!(!s.contains(r#""error""#));
         let back: JsonRpcResponse = serde_json::from_str(&s).unwrap();
