@@ -19,6 +19,31 @@
 
 JSON-RPC 2.0 protocol types, TypeScript bindings, and the documentation hub. Consumed by entelecheia and shittim-chest.
 
+## Quick Start
+
+```bash
+# Build
+cargo build
+
+# Run all tests (includes TS binding generation)
+cargo test --all-features
+
+# Check lint + formatting
+cargo clippy --all-targets --all-features -- -D warnings
+cargo fmt --all -- --check
+
+# Generate TypeScript bindings only
+cargo test --package arona
+```
+
+Or use the [just](https://github.com/casey/just) task runner:
+
+```bash
+just build
+just test
+just fmt-check
+```
+
 ## Documentation
 
 Architecture, design, and guides live at [docs.celestia.world/en/arona](https://github.com/celestia-island/docs.celestia.world/tree/master/docs/en).

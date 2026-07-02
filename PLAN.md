@@ -1,6 +1,6 @@
 # arona — Issues & Action Plan
 
-Generated 2026-06-30 from deep code audit.
+Generated 2026-06-30 from deep code audit. Updated 2026-07-02 (R3).
 
 arona is the shared protocol crate (v0.1.0) that glues entelecheia and shittim-chest via JSON-RPC types and TypeScript bindings. It also serves as the ecosystem documentation hub.
 
@@ -17,16 +17,12 @@ arona is the shared protocol crate (v0.1.0) that glues entelecheia and shittim-c
 
 ## High
 
-### 2. Minimal test coverage
-- Only 5 unit tests (in `external_mcp.rs` — TOML parsing)
-- No tests for JSON-RPC serialization/deserialization round-trips
-- No tests for WebSocket message round-tripping
-- No integration tests with entelecheia or shittim-chest consumers
-- **Impact**: Protocol drift between Rust and TypeScript consumers could cause silent bugs.
-- **Fix**: Add:
-  - JSON-RPC message ser/de round-trip tests
-  - TypeScript binding generation verification tests
-  - Snapshot tests for key type definitions
+### 2. Minimal test coverage — RESOLVED (R1/R2)
+- 642 auto-generated TS binding ser/de tests (export_bindings_*) pass.
+- 5 unit tests in `external_mcp.rs` (TOML parsing).
+- 12 unit tests in `protocol::jsonrpc` (JSON-RPC envelope ser/de).
+- Round-trip tests in `mcp::haplotes`, `mcp::kalos`.
+- No integration tests with entelecheia or shittim-chest consumers.
 
 ### 3. No version negotiation in handshake
 - `handshake.rs` defines `ConnectHandshake` but has no protocol version field
