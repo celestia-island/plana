@@ -2,7 +2,7 @@
 /// Run: cargo run --example schema_dump > arona_schema.json
 use schemars::schema_for;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let schemas = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "definitions": {
@@ -22,5 +22,7 @@ fn main() {
             "TuiAgentInfo": schema_for!(arona::TuiAgentInfo),
         },
     });
-    println!("{}", serde_json::to_string_pretty(&schemas).unwrap());
+    let json = serde_json::to_string_pretty(&schemas)?;
+    println!("{json}");
+    Ok(())
 }

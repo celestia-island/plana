@@ -197,8 +197,16 @@ pub fn build_notification(method: &str, params: impl serde::Serialize) -> String
     let params = serde_json::to_value(&params)
         .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
     let notif = JsonRpcNotification::new(method, Some(params));
-    serde_json::to_string(&notif)
-        .unwrap_or_else(|_| format!(r#"{{"jsonrpc":"2.0","method":"{method}","params":{{}}}}"#))
+    serde_json::to_string(&notif).unwrap_or_else(|_| {
+        // Safe JSON construction via serde_json::json! instead of raw format!.
+        let fallback = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": {}
+        });
+        serde_json::to_string(&fallback)
+            .unwrap_or_else(|_| String::from(r#"{"jsonrpc":"2.0","method":"","params":{}}"#))
+    })
 }
 
 pub fn build_notification_value(method: &str, params: impl serde::Serialize) -> serde_json::Value {
