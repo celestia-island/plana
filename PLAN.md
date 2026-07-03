@@ -1,3 +1,51 @@
+# arona — 项目状态与计划 (PLAN)
+
+> 本文件由自动化扫描于 **2026-07-04** 生成，记录项目当前状态、近期进展与后续计划。
+> 原有详细计划已保留于文末「既有详细计划（存档）」。
+
+## 1. 项目概述
+
+- **名称**：`arona`
+- **简介**：celestia-island 共享协议类型库，含 TypeScript 绑定与构建脚本。
+- **远程仓库**：https://github.com/celestia-island/arona.git
+- **技术栈**：Rust / Node/TypeScript / just
+- **类别**：rust-lib
+
+## 2. 当前状态
+
+- **当前分支**：`dev`
+- **工作区**：有未提交改动
+  - 修改 1（1 项）
+- **最近提交时间**：2026-07-04
+- **最近提交**：feat(model): add ModelCapability enum, extend ModelCategory, add GenerationTier
+- **分支对比**：`dev` 领先 `master` 125 个提交
+
+## 3. 未提交改动明细
+
+```
+M src/protocol/jsonrpc.rs
+```
+
+## 4. 近期进展（最近提交）
+
+- feat(model): add ModelCapability enum, extend ModelCategory, add GenerationTier
+- docs: simplify description
+- chore: normalize dependency versions to caret (^) prefix
+- chore: add CI workflow, rust-toolchain pin, relax schemars dep, update README/PLAN
+- fix: remove .unwrap() in schema_dump example, use safe JSON in build_notification fallback
+- fix: use license-file for SySL (was license=SySL-1.0, non-SPDX)
+
+## 5. 后续计划
+
+1. 整理并提交当前未提交改动（共 1 项：修改 1）。
+2. 完善文档示例与 `crates.io` 发布元数据（rust-version / metadata / docs.rs badge）。
+3. 补充单元/集成测试，保持 `just test` 与 clippy `-D warnings` 通过。
+4. 定期刷新本 PLAN.md 以反映最新状态。
+
+---
+
+## 既有详细计划（存档）
+
 # arona — Issues & Action Plan
 
 Generated 2026-06-30 from deep code audit. Updated 2026-07-02 (R3). Updated 2026-07-03 (R4). Updated 2026-07-03 (R5). Updated 2026-07-03 (R6). Updated 2026-07-03 (R7). Updated 2026-07-03 (R8). Updated 2026-07-03 (R9). Updated 2026-07-03 (R10).
@@ -81,3 +129,4 @@ arona is the shared protocol crate (v0.1.0) that glues entelecheia and shittim-c
 - Consistent serde rename conventions with backward-compatible `Option` fields
 - 642 auto-generated TS binding ser/de tests + hand-written unit tests for JSON-RPC and TOML parsing
 - `JsonSchema` derive on all core enum/struct types for schema-aware consumers
+
