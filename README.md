@@ -1,22 +1,32 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
+<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/arona/master/docs/logo.webp" alt="Arona" width="200" /></p>
+
+<h1 align="center">Arona</h1>
+
+<p align="center"><strong>JSON-RPC 2.0 protocol types &amp; TypeScript bindings</strong></p>
+
 <div align="center">
 
-<img src="res/logo/arona.webp" alt="Arona" width="200"/>
-
-# Arona
-
-**Shared protocol types for celestia-island**
-
-[![License](https://img.shields.io/badge/license-SySL--1.0-blue.svg)](./LICENSE)
+[![License: SySL-1.0](https://img.shields.io/badge/License-SySL--1.0-blue.svg)](./LICENSE)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
 [![docs.rs](https://docs.rs/arona/badge.svg)](https://docs.rs/arona)
+[![CI](https://img.shields.io/github/actions/workflow/status/celestia-island/arona/ci.yml)](https://github.com/celestia-island/arona/actions/workflows/ci.yml)
+
+</div>
+
+<div align="center">
+
+**English** ·
+[简体中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zhs/guides/platforms/README-arona.md) ·
+[繁體中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zht/guides/platforms/README-arona.md) ·
+[日本語](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ja/guides/platforms/README-arona.md) ·
+[한국어](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ko/guides/platforms/README-arona.md) ·
+[Français](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/fr/guides/platforms/README-arona.md) ·
+[Español](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/es/guides/platforms/README-arona.md) ·
+[Русский](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ru/guides/platforms/README-arona.md)
 
 </div>
 <!-- markdownlint-enable MD033 MD041 MD036 -->
-
-**[English](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/en/guides/platforms/README-arona.md)** &bull; **[简体中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zhs/guides/platforms/README-arona.md)** &bull; **[繁體中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zht/guides/platforms/README-arona.md)** &bull; **[日本語](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ja/guides/platforms/README-arona.md)** &bull; **[한국어](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ko/guides/platforms/README-arona.md)** &bull; **[Français](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/fr/guides/platforms/README-arona.md)** &bull; **[Español](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/es/guides/platforms/README-arona.md)** &bull; **[Русский](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ru/guides/platforms/README-arona.md)**
-
-> Part of the [celestia-island](https://github.com/celestia-island) ecosystem.
 
 JSON-RPC 2.0 protocol types, TypeScript bindings, and the documentation hub. Consumed by entelecheia and shittim-chest.
 
