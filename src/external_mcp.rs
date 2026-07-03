@@ -36,7 +36,7 @@ pub struct McpServersFile {
     pub mcp_servers: Vec<McpServerConfig>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ExternalToolInfo {
     pub server_name: String,
     pub tool_name: String,

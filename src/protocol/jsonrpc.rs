@@ -74,8 +74,23 @@ pub enum Id {
 }
 
 impl Id {
+    /// Creates a new unique request `Id` using UUID v7 (time-ordered, sortable).
+    ///
+    /// UUID v7 is the canonical wire format for the celestia-island platform.
+    /// Both entelecheia (Rust) and shittim-chest (TypeScript) MUST agree on
+    /// this format — TypeScript consumers should parse the string value with a
+    /// UUID v7 library or treat it as an opaque string that sorts
+    /// lexicographically.
     pub fn new_uuid() -> Self {
         Self::String(uuid::Uuid::now_v7().to_string())
+    }
+
+    /// Creates a new unique request `Id` using UUID v4 (random).
+    ///
+    /// Provided for consumers that prefer random UUIDs over time-ordered v7.
+    /// Default preference in this platform is [`Id::new_uuid`] (v7).
+    pub fn new_uuid_v4() -> Self {
+        Self::String(uuid::Uuid::new_v4().to_string())
     }
 }
 
@@ -122,12 +137,17 @@ impl<'de> serde::Deserialize<'de> for JsonRpcMessage {
     {
         let value = serde_json::Value::deserialize(deserializer)?;
 
-        let has_id = value.get("id").is_some();
+        let has_id = value.get("id").map(|v| !v.is_null()).unwrap_or(false);
         let has_method = value.get("method").is_some();
         let has_result = value.get("result").is_some();
         let has_error = value.get("error").is_some();
 
-        if (has_result || has_error) && has_id {
+        // A Response is identified by `result`/`error`. Its `id` may be null:
+        // JSON-RPC 2.0 mandates `"id": null` on error responses to requests
+        // whose id could not be detected (Parse error / Invalid Request).
+        // R9 redefined null id as "no id" only for *request/notification*
+        // discrimination below; responses must still accept it.
+        if has_result || has_error {
             let resp: JsonRpcResponse = serde_json::from_value(value)
                 .map_err(|e| serde::de::Error::custom(format!("invalid response: {}", e)))?;
             Ok(JsonRpcMessage::Response(resp))
@@ -194,29 +214,38 @@ impl JsonRpcResponse {
 }
 
 pub fn build_notification(method: &str, params: impl serde::Serialize) -> String {
+    let method = if method.trim().is_empty() {
+        "internal.fallback"
+    } else {
+        method
+    };
     let params = serde_json::to_value(&params)
         .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
     let notif = JsonRpcNotification::new(method, Some(params));
     serde_json::to_string(&notif).unwrap_or_else(|_| {
-        // Safe JSON construction via serde_json::json! instead of raw format!.
         let fallback = serde_json::json!({
             "jsonrpc": "2.0",
-            "method": method,
+            "method": "internal.fallback",
             "params": {}
         });
         serde_json::to_string(&fallback)
-            .unwrap_or_else(|_| String::from(r#"{"jsonrpc":"2.0","method":"","params":{}}"#))
+            .unwrap_or_else(|_| String::from(r#"{"jsonrpc":"2.0","method":"internal.fallback","params":{}}"#))
     })
 }
 
 pub fn build_notification_value(method: &str, params: impl serde::Serialize) -> serde_json::Value {
+    let method = if method.trim().is_empty() {
+        "internal.fallback"
+    } else {
+        method
+    };
     let params = serde_json::to_value(&params)
         .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
     let notif = JsonRpcNotification::new(method, Some(params));
     serde_json::to_value(notif).unwrap_or_else(|_| {
         serde_json::json!({
             "jsonrpc": "2.0",
-            "method": method,
+            "method": "internal.fallback",
             "params": {}
         })
     })
@@ -362,6 +391,37 @@ mod tests {
     }
 
     #[test]
+    fn message_classifies_explicit_null_id_as_notification() {
+        // JSON-RPC 2.0 allows id to be null. A payload with `"id": null`
+        // semantically means "no response expected", i.e. notification.
+        let json = r#"{"jsonrpc":"2.0","method":"ev.push","id":null,"params":{"x":1}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(json).unwrap();
+        assert!(
+            matches!(msg, JsonRpcMessage::Notification(_)),
+            "explicit null id must be classified as Notification"
+        );
+    }
+
+    #[test]
+    fn message_classifies_null_id_error_response() {
+        // JSON-RPC 2.0: a response to a request whose id could not be
+        // detected (Parse error / Invalid Request) MUST carry `"id": null`.
+        // R9 made `"id": null` mean "no id" for *request/notification*
+        // discrimination, but a *response* (identified by result/error) must
+        // still deserialize with a null id.
+        let raw =
+            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}"#;
+        let msg: JsonRpcMessage = serde_json::from_str(raw).unwrap();
+        match msg {
+            JsonRpcMessage::Response(r) => {
+                assert_eq!(r.id, Id::Null);
+                assert_eq!(r.error.unwrap().code, error_codes::PARSE_ERROR);
+            }
+            other => panic!("expected Response, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn message_rejects_unclassifiable_payload() {
         // Neither method nor result/error.
         let bad = r#"{"jsonrpc":"2.0","id":1}"#;
@@ -461,5 +521,31 @@ mod tests {
         let s = build_notification("ev.tick", json!({"n": 1}));
         let v: serde_json::Value = serde_json::from_str(&s).unwrap();
         assert_eq!(v["method"], "ev.tick");
+    }
+
+    #[test]
+    fn build_notification_empty_method_produces_fallback() {
+        let s = build_notification("", json!({"n": 1}));
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["method"], "internal.fallback");
+    }
+
+    #[test]
+    fn build_notification_whitespace_method_produces_fallback() {
+        let s = build_notification("  \t", json!({"n": 1}));
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["method"], "internal.fallback");
+    }
+
+    #[test]
+    fn build_notification_value_empty_method_produces_fallback() {
+        let v = build_notification_value("", json!({"n": 1}));
+        assert_eq!(v["method"], "internal.fallback");
+    }
+
+    #[test]
+    fn build_notification_value_whitespace_method_produces_fallback() {
+        let v = build_notification_value(" \n ", json!({"n": 1}));
+        assert_eq!(v["method"], "internal.fallback");
     }
 }

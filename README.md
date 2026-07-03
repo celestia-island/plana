@@ -5,7 +5,7 @@
 
 # Arona
 
-**Shared protocol types for the celestia-island platform**
+**Shared protocol types for celestia-island**
 
 [![License](https://img.shields.io/badge/license-SySL--1.0-blue.svg)](./LICENSE)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)

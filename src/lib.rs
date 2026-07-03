@@ -60,10 +60,26 @@ pub enum Agent {
     PhiLia,
     PoleMos,
     WebAutomation,
-    ClassicSoftwareEngineering,
-    WebUiPanel,
-    IndustrialIoT,
-    RemoteOperations,
+}
+
+impl Agent {
+    pub fn all() -> &'static [Agent] {
+        &[
+            Agent::HapLotes,
+            Agent::SkoPeo,
+            Agent::HubRis,
+            Agent::KaLos,
+            Agent::NeiKos,
+            Agent::SkeMma,
+            Agent::ApoRia,
+            Agent::EleOs,
+            Agent::EpieiKeia,
+            Agent::OreXis,
+            Agent::PhiLia,
+            Agent::PoleMos,
+            Agent::WebAutomation,
+        ]
+    }
 }
 
 #[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
@@ -169,6 +185,39 @@ pub enum ReportType {
     Pending,
 }
 
+impl ReportType {
+    pub fn is_query(&self) -> bool {
+        matches!(self, Self::Query)
+    }
+
+    pub fn is_error(&self) -> bool {
+        matches!(
+            self,
+            Self::Error
+                | Self::ChainMaxDepth
+                | Self::ChainCycle
+                | Self::SkillFailed
+                | Self::SkillEmptyOutput
+                | Self::SkillMissingReport
+        )
+    }
+
+    pub fn is_pending(&self) -> bool {
+        matches!(self, Self::Pending)
+    }
+
+    pub fn is_terminal(&self) -> bool {
+        matches!(
+            self,
+            Self::Reply
+                | Self::SkillTerminal
+                | Self::Error
+                | Self::System
+                | Self::NextActionFallback
+        )
+    }
+}
+
 /// Selection semantics for an inquiry (`report_type: "query"`) report's
 /// `preset_options`. Defaults to `Single` when omitted.
 #[derive(JsonSchema, Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -189,7 +238,7 @@ pub enum StreamChunkKind {
     DeepThinking,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub enum StreamSegment {
     Text {
@@ -245,14 +294,14 @@ pub enum StreamSegment {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub struct LlmStream {
     #[serde(default)]
     pub segments: Vec<StreamSegment>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub struct RouteInfo {
     pub direction: String,
@@ -262,7 +311,9 @@ pub struct RouteInfo {
     pub target_token: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS, thiserror::Error)]
+#[derive(
+    JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS, thiserror::Error,
+)]
 #[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum AgentErrorCode {
@@ -308,7 +359,53 @@ pub enum AgentErrorCode {
     SkillMissingReport,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+impl AgentErrorCode {
+    pub fn is_llm_error(&self) -> bool {
+        matches!(
+            self,
+            Self::LlmCallFailed
+                | Self::LlmEmptyResponse
+                | Self::LlmRateLimited
+                | Self::LlmAuthFailed
+                | Self::LlmTimeout
+        )
+    }
+
+    pub fn is_cosmos_error(&self) -> bool {
+        matches!(
+            self,
+            Self::CosmosNoConnection | Self::CosmosToolFailed | Self::CosmosLocalUnavailable
+        )
+    }
+
+    pub fn is_chain_error(&self) -> bool {
+        matches!(
+            self,
+            Self::ChainMaxDepth | Self::ChainCycle | Self::ChainFailed
+        )
+    }
+
+    pub fn is_skill_error(&self) -> bool {
+        matches!(
+            self,
+            Self::SkillFailed | Self::SkillEmptyOutput | Self::SkillMissingReport
+        )
+    }
+
+    pub fn is_model_selection_error(&self) -> bool {
+        matches!(
+            self,
+            Self::ModelNoProviders
+                | Self::ModelNoModels
+                | Self::ModelTierMismatch
+                | Self::ModelAllExcluded
+                | Self::ModelEnvIncomplete
+                | Self::ModelSelectionRetryExhausted
+        )
+    }
+}
+
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub struct StructuredAgentError {
     pub code: AgentErrorCode,
@@ -346,7 +443,7 @@ pub enum ContainerStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub enum PeriodType {
     Hour5,
@@ -354,7 +451,7 @@ pub enum PeriodType {
     Month1,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub enum KnowledgeBaseStatus {
     #[default]
@@ -364,7 +461,7 @@ pub enum KnowledgeBaseStatus {
     Error,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub enum EmbeddingModel {
     OpenAiSmall,
@@ -373,7 +470,7 @@ pub enum EmbeddingModel {
     Custom,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum YoloTaskTier {

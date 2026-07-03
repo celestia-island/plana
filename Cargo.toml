@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.85"
 authors = ["langyo <langyo.china@gmail.com>"]
 license-file = "LICENSE"
-description = "Shared protocol and API types for the entelecheia multi-agent platform"
+description = "Shared protocol types for celestia-island"
 repository = "https://github.com/celestia-island/arona"
 publish = true
 # Keep generated TS bindings, Python build scripts, and docs out of the published crate.
