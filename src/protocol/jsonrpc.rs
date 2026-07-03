@@ -228,8 +228,9 @@ pub fn build_notification(method: &str, params: impl serde::Serialize) -> String
             "method": "internal.fallback",
             "params": {}
         });
-        serde_json::to_string(&fallback)
-            .unwrap_or_else(|_| String::from(r#"{"jsonrpc":"2.0","method":"internal.fallback","params":{}}"#))
+        serde_json::to_string(&fallback).unwrap_or_else(|_| {
+            String::from(r#"{"jsonrpc":"2.0","method":"internal.fallback","params":{}}"#)
+        })
     })
 }
 
@@ -409,8 +410,7 @@ mod tests {
         // R9 made `"id": null` mean "no id" for *request/notification*
         // discrimination, but a *response* (identified by result/error) must
         // still deserialize with a null id.
-        let raw =
-            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}"#;
+        let raw = r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}"#;
         let msg: JsonRpcMessage = serde_json::from_str(raw).unwrap();
         match msg {
             JsonRpcMessage::Response(r) => {
