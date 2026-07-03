@@ -60,6 +60,129 @@ pub enum ModelCategory {
     /// Vision / pose / gesture recognition (MediaPipe etc.).
     /// Stub — implementation deferred until AR/holographic hardware is available.
     Vision,
+    /// Image generation — DALL-E, Stable Diffusion, ComfyUI pipelines.
+    /// Consumed by the MediaFlow node graph (image_to_image, text_to_image nodes).
+    ImageGeneration,
+    /// 3D model generation — TRELLIS, Meshy, Rodin. Produces GLB / mesh output.
+    /// Consumed by the MediaFlow node graph (image_to_3d, text_to_3d nodes).
+    ThreeDGeneration,
+    /// Multimodal — models that accept text + image input in the same message
+    /// (glm-4.6v, glm-5v-turbo, GPT-4V). Used for vision critique nodes.
+    MultiModal,
+}
+
+/// Fine-grained model capability flags.
+///
+/// Whereas [`ModelCategory`] answers "what kind of model is this?",
+/// `ModelCapability` answers "what specific things can this model do?".
+/// Skills declare their `required_capabilities`; the scepter router filters
+/// available models by capability intersection.
+///
+/// This replaces the scattered boolean flags (`supports_vision`,
+/// `supports_function_calling` …) with a single extensible enum. The booleans
+/// remain for backward compatibility but are superseded by this enum when
+/// present.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "model.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum ModelCapability {
+    // ── Text / LLM ──
+    /// Standard chat / completion.
+    TextChat,
+    /// SSE streaming output.
+    TextStreaming,
+    /// Tool / function calling.
+    FunctionCalling,
+    /// Chain-of-thought / deep reasoning.
+    Reasoning,
+    /// Code generation (JavaScript, Python, OpenSCAD, CSG …).
+    CodeGeneration,
+
+    // ── Embedding ──
+    /// Text → vector embedding.
+    TextEmbedding,
+
+    // ── Audio ──
+    /// Audio → text (speech-to-text).
+    SpeechToText,
+    /// Text → audio (text-to-speech).
+    TextToSpeech,
+
+    // ── Vision / multimodal input ──
+    /// Accept image in chat messages (multimodal input).
+    ImageInput,
+    /// Accept video in chat messages.
+    VideoInput,
+    /// Analyse an image and produce a structured critique + improvement plan.
+    /// This is the key capability for the MediaFlow vision_critique node.
+    VisualCritique,
+
+    // ── Image generation ──
+    /// Text prompt → image.
+    TextToImage,
+    /// Image + text → modified image.
+    ImageToImage,
+    /// Inpainting / outpainting / selective editing.
+    ImageEdit,
+    /// Increase resolution with detail preservation.
+    ImageUpscale,
+
+    // ── 3D generation ──
+    /// Text prompt → 3D mesh (GLB).
+    #[serde(rename = "text_to_3d")]
+    TextTo3D,
+    /// Single / multi image → 3D mesh.
+    #[serde(rename = "image_to_3d")]
+    ImageTo3D,
+    /// Modify an existing 3D model programmatically (CSG, parametric).
+    #[serde(rename = "three_d_edit")]
+    ThreeDEdit,
+    /// Export to GLB / FBX / OBJ.
+    #[serde(rename = "three_d_export")]
+    ThreeDExport,
+    /// Generate PBR texture sets (albedo / normal / roughness / metalness).
+    #[serde(rename = "pbr_texturing")]
+    PBRTexturing,
+    /// Decimation, vertex merging, remeshing.
+    #[serde(rename = "mesh_optimization")]
+    MeshOptimization,
+}
+
+/// Generation quality tier — applies to image / 3D generation models.
+///
+/// Distinct from [`super::ModelTier`] (which ranks LLM reasoning depth),
+/// `GenerationTier` ranks output fidelity vs. speed for generative models.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "model.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum GenerationTier {
+    /// Low resolution, fast (≤30s). For iteration previews inside MediaFlow loops.
+    FastPreview,
+    /// Medium resolution (1–2 min). Default for most generation nodes.
+    Standard,
+    /// High resolution (5 min+). Final export quality.
+    Production,
+}
+
+/// Minimum hardware requirements for a local generative model.
+///
+/// Populated for GPU-deployed models (TRELLIS, SDXL …). Remote-API models
+/// leave this as `None`.
+#[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "model.ts")]
+pub struct HardwareRequirements {
+    /// Minimum VRAM in GB.
+    #[serde(default)]
+    #[ts(optional)]
+    pub min_vram_gb: Option<u32>,
+    /// Minimum system RAM in GB.
+    #[serde(default)]
+    #[ts(optional)]
+    pub min_ram_gb: Option<u32>,
+    /// Recommended GPU (e.g. `"NVIDIA RTX 4090"`).
+    #[serde(default)]
+    #[ts(optional)]
+    pub recommended_gpu: Option<String>,
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -118,6 +241,19 @@ pub struct ModelDescriptor {
     #[serde(default)]
     #[ts(optional)]
     pub provider_index: Option<u8>,
+    /// Fine-grained capability flags. When non-empty, the scepter router uses
+    /// these to match skills that declare `required_capabilities`. When empty,
+    /// falls back to the legacy boolean flags on `ModelFsInfo`.
+    #[serde(default)]
+    pub capabilities: Vec<ModelCapability>,
+    /// Generation quality tier (image / 3D generation models only).
+    #[serde(default)]
+    #[ts(optional)]
+    pub generation_tier: Option<GenerationTier>,
+    /// Hardware requirements (local generative models only).
+    #[serde(default)]
+    #[ts(optional)]
+    pub hardware_requirements: Option<HardwareRequirements>,
 }
 
 /// Re-export so consumers don't need a separate import.

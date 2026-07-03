@@ -497,6 +497,10 @@ pub use protocol::base_messages::*;
 pub use protocol::handshake::*;
 pub use protocol::jsonrpc;
 
+// model/ — unified model management (re-export key types to crate root
+// for ergonomic access: `arona::ModelCapability` not `arona::model::…`)
+pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
+
 // ws/ — TuiMessage variant params (types at crate root)
 pub use ws::agent::{agent_lifecycle::*, layer2::*, state_sync::*, tasks::*, yolo::*};
 pub use ws::services::{auth::*, industrial::*, knowledge_base::*, llm_provider::*};

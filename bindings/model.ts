@@ -2,15 +2,58 @@
 import type { ModelTier } from "./ws/core";
 
 /**
+ * Generation quality tier — applies to image / 3D generation models.
+ *
+ * Distinct from [`super::ModelTier`] (which ranks LLM reasoning depth),
+ * `GenerationTier` ranks output fidelity vs. speed for generative models.
+ */
+export type GenerationTier = "fast_preview" | "standard" | "production";
+
+/**
+ * Minimum hardware requirements for a local generative model.
+ *
+ * Populated for GPU-deployed models (TRELLIS, SDXL …). Remote-API models
+ * leave this as `None`.
+ */
+export type HardwareRequirements = { 
+/**
+ * Minimum VRAM in GB.
+ */
+min_vram_gb?: number, 
+/**
+ * Minimum system RAM in GB.
+ */
+min_ram_gb?: number, 
+/**
+ * Recommended GPU (e.g. `"NVIDIA RTX 4090"`).
+ */
+recommended_gpu?: string, };
+
+/**
  * Where a model physically executes. evernight chooses the backend based on
  * GPU availability — GPU-first, CPU-fallback.
  */
 export type ModelBackend = "remote_api" | "gpu" | "cpu";
 
 /**
+ * Fine-grained model capability flags.
+ *
+ * Whereas [`ModelCategory`] answers "what kind of model is this?",
+ * `ModelCapability` answers "what specific things can this model do?".
+ * Skills declare their `required_capabilities`; the scepter router filters
+ * available models by capability intersection.
+ *
+ * This replaces the scattered boolean flags (`supports_vision`,
+ * `supports_function_calling` …) with a single extensible enum. The booleans
+ * remain for backward compatibility but are superseded by this enum when
+ * present.
+ */
+export type ModelCapability = "text_chat" | "text_streaming" | "function_calling" | "reasoning" | "code_generation" | "text_embedding" | "speech_to_text" | "text_to_speech" | "image_input" | "video_input" | "visual_critique" | "text_to_image" | "image_to_image" | "image_edit" | "image_upscale" | "text_to_3d" | "image_to_3d" | "three_d_edit" | "three_d_export" | "pbr_texturing" | "mesh_optimization";
+
+/**
  * Top-level model category. Determines which subsystem consumes the model.
  */
-export type ModelCategory = "llm" | "embedding" | "speech_to_text" | "text_to_speech" | "vision";
+export type ModelCategory = "llm" | "embedding" | "speech_to_text" | "text_to_speech" | "vision" | "image_generation" | "three_d_generation" | "multi_modal";
 
 /**
  * A unified description of an AI model, shared between scepter and chest.
@@ -50,7 +93,21 @@ size_bytes?: bigint,
 /**
  * Provider index (`#N` convention; LLM models only).
  */
-provider_index?: number, };
+provider_index?: number, 
+/**
+ * Fine-grained capability flags. When non-empty, the scepter router uses
+ * these to match skills that declare `required_capabilities`. When empty,
+ * falls back to the legacy boolean flags on `ModelFsInfo`.
+ */
+capabilities: Array<ModelCapability>, 
+/**
+ * Generation quality tier (image / 3D generation models only).
+ */
+generation_tier?: GenerationTier, 
+/**
+ * Hardware requirements (local generative models only).
+ */
+hardware_requirements?: HardwareRequirements, };
 
 /**
  * A model inference request, sent from the web UI to the upstream engine

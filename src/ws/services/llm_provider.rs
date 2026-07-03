@@ -270,6 +270,20 @@ pub struct ModelFsInfo {
     pub supports_reasoning: bool,
     #[serde(default)]
     pub tags: Vec<String>,
+    /// Fine-grained capability flags. When non-empty, supersedes the boolean
+    /// flags above for skill→model routing. See [`crate::ModelCapability`].
+    #[serde(default)]
+    pub capabilities: Vec<crate::ModelCapability>,
+    /// Generation quality tier (image / 3D generation models only).
+    /// See [`crate::GenerationTier`].
+    #[serde(default)]
+    #[ts(optional)]
+    pub generation_tier: Option<crate::GenerationTier>,
+    /// Hardware requirements (local generative models only).
+    /// See [`crate::HardwareRequirements`].
+    #[serde(default)]
+    #[ts(optional)]
+    pub hardware_requirements: Option<crate::HardwareRequirements>,
     #[serde(default)]
     #[ts(optional)]
     pub pricing: Option<ModelFsPricing>,
