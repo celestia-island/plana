@@ -9,6 +9,7 @@
 
 [![License](https://img.shields.io/badge/license-SySL--1.0-blue.svg)](./LICENSE)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
+[![docs.rs](https://docs.rs/arona/badge.svg)](https://docs.rs/arona)
 
 </div>
 <!-- markdownlint-enable MD033 MD041 MD036 -->

@@ -8,6 +8,8 @@ license-file = "LICENSE"
 description = "Shared protocol types for celestia-island"
 repository = "https://github.com/celestia-island/arona"
 publish = true
+keywords = ["json-rpc", "protocol", "mcp", "typescript", "schema"]
+categories = ["api-bindings", "data-structures", "web-programming::websocket", "network-programming"]
 # Keep generated TS bindings, Python build scripts, and docs out of the published crate.
 exclude = ["bindings", "scripts", ".cargo", "justfile", "package.json", "pnpm-workspace.yaml", "PLAN.md", "res", "examples"]
 
@@ -37,3 +39,6 @@ incremental = true
 [profile.release]
 opt-level = 3
 lto = "thin"
+
+[package.metadata.docs.rs]
+all-features = true

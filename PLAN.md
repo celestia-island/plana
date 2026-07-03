@@ -1,6 +1,7 @@
 # arona — 项目状态与计划 (PLAN)
 
 > 本文件由自动化扫描于 **2026-07-04** 生成，记录项目当前状态、近期进展与后续计划。
+> 最近一次手动刷新：**2026-07-04**（补全 crates.io 发布元数据 + docs.rs badge）。
 > 原有详细计划已保留于文末「既有详细计划（存档）」。
 
 ## 1. 项目概述
@@ -14,31 +15,33 @@
 ## 2. 当前状态
 
 - **当前分支**：`dev`
-- **工作区**：有未提交改动
-  - 修改 1（1 项）
+- **工作区**：干净（此前未提交的 `src/protocol/jsonrpc.rs` 改动已随 `8dcfdbf` 入库）
 - **最近提交时间**：2026-07-04
-- **最近提交**：feat(model): add ModelCapability enum, extend ModelCategory, add GenerationTier
-- **分支对比**：`dev` 领先 `master` 125 个提交
+- **最近提交**：8dcfdbf style: rustfmt jsonrpc notification fallback
+- **分支对比**：`dev` 领先 `master` 127 个提交
 
-## 3. 未提交改动明细
+## 3. 发布元数据补全（本次刷新完成）
 
-```
-M src/protocol/jsonrpc.rs
-```
+本次刷新补全了面向 crates.io 的发布元数据，已通过 `cargo check` / `cargo clippy --all-features -- -D warnings` / `cargo test --lib`（651 项通过）/ `cargo fmt --check`：
+
+- `README.md`：新增官方 docs.rs 徽章（`https://docs.rs/arona/badge.svg`）。
+- `Cargo.toml`：补充 `keywords`、`categories`，新增 `[package.metadata.docs.rs]`（`all-features = true`）。
+- 关键词：`json-rpc`、`protocol`、`mcp`、`typescript`、`schema`。
+- 分类：`api-bindings`、`data-structures`、`web-programming::websocket`、`network-programming`。
 
 ## 4. 近期进展（最近提交）
 
+- style: rustfmt jsonrpc notification fallback
+- docs: add PLAN.md current-status snapshot
 - feat(model): add ModelCapability enum, extend ModelCategory, add GenerationTier
 - docs: simplify description
 - chore: normalize dependency versions to caret (^) prefix
 - chore: add CI workflow, rust-toolchain pin, relax schemars dep, update README/PLAN
-- fix: remove .unwrap() in schema_dump example, use safe JSON in build_notification fallback
-- fix: use license-file for SySL (was license=SySL-1.0, non-SPDX)
 
 ## 5. 后续计划
 
-1. 整理并提交当前未提交改动（共 1 项：修改 1）。
-2. 完善文档示例与 `crates.io` 发布元数据（rust-version / metadata / docs.rs badge）。
+1. ~~整理并提交当前未提交改动~~ — 已完成（`src/protocol/jsonrpc.rs` 随 `8dcfdbf` 入库）。
+2. ~~完善 `crates.io` 发布元数据（rust-version / metadata / docs.rs badge）~~ — 已完成（`rust-version` 既有 `1.85`，本次补齐 keywords/categories 与 `[package.metadata.docs.rs]`，README 已加 docs.rs badge）。
 3. 补充单元/集成测试，保持 `just test` 与 clippy `-D warnings` 通过。
 4. 定期刷新本 PLAN.md 以反映最新状态。
 
