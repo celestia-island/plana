@@ -1,10 +1,14 @@
 # arona — single-crate repo (protocol types + TS bindings + build scripts).
-# scripts/ hosts the shared Python build scripts; consumer repos reach them
-# via their own scripts/_arona_devtools.py wrapper.
+# scripts/ hosts the shared Python build scripts; consumer repos now reach them
+# via the shared celestia-devtools justfile import.
 
 set shell := ["bash", "-c"]
+set unstable
+set lists
 
 python_cmd := if which("python3") != "" { "python3" } else { "python" }
+
+import "./celestia-devtools.just"
 
 default:
     @just --list
@@ -13,17 +17,7 @@ default:
 # builds can run fully offline. Run once after cloning (needs network).
 install:
     just cache-guard
-    {{python_cmd}} scripts/prefetch.py .
-
-# target/ cache guard (see scripts/cargo_cache_guard.py).
-# Hard floor: free disk < 10 GiB → cargo clean.
-# Soft threshold: target/ >= 40 GiB → cargo sweep --time 7 (needs cargo-sweep).
-cache-guard *ARGS='':
-    {{python_cmd}} scripts/cargo_cache_guard.py . {{ARGS}}
-
-# Manually remove target/**/incremental/ (keeps compiled dep artifacts).
-clean-incremental:
-    {{python_cmd}} scripts/cargo_cache_guard.py . --clean-incremental
+    just prefetch
 
 clean:
     cargo clean
@@ -43,10 +37,10 @@ bindings:
 # Warnings (tab characters, untranslated duplicate paragraphs) are printed
 # to stderr but do not cause a non-zero exit.
 fmt:
-    {{python_cmd}} scripts/format_markdown.py .
+    just fmt-markdown .
     cargo fmt --all
 
 # Check formatting without writing changes.
 fmt-check:
-    {{python_cmd}} scripts/format_markdown.py . --check
+    just fmt-markdown . --check
     cargo fmt --all -- --check
