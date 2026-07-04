@@ -34,7 +34,6 @@
 //! | Embedding | bge-m3, nomic-embed-text | scepter (RAG / vector store) |
 //! | Speech → Text | whisper tiny/base/small | chest (voice input → text) |
 //! | Text → Speech | tts-1, elevenlabs | scepter (generation) |
-//! | Vision | mediapipe pose/gesture | chest (holographic AR mode) — **stub** |
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -57,9 +56,6 @@ pub enum ModelCategory {
     SpeechToText,
     /// Text-to-speech — synthesise audio from text.
     TextToSpeech,
-    /// Vision / pose / gesture recognition (MediaPipe etc.).
-    /// Stub — implementation deferred until AR/holographic hardware is available.
-    Vision,
     /// Image generation — DALL-E, Stable Diffusion, ComfyUI pipelines.
     /// Consumed by the MediaFlow node graph (image_to_image, text_to_image nodes).
     ImageGeneration,
@@ -313,8 +309,6 @@ pub enum ModelServerKind {
     WhisperCpp,
     /// vLLM — high-throughput LLM serving. GPU-only (no CPU build).
     Vllm,
-    /// MediaPipe / pose estimation (vision — stub).
-    MediaPipe,
 }
 
 // ═══════════════════════════════════════════════════════════════

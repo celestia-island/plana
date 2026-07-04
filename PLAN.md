@@ -1,7 +1,7 @@
 # arona — 项目状态与计划 (PLAN)
 
 > 本文件由自动化扫描于 **2026-07-04** 生成，记录项目当前状态、近期进展与后续计划。
-> 最近一次手动刷新：**2026-07-04**（补全 crates.io 发布元数据 + docs.rs badge）。
+> 最近一次手动刷新：**2026-07-04**（审计并清理 Vision/MediaPipe 等 aspirational stub 类型，见 R11）。
 > 原有详细计划已保留于文末「既有详细计划（存档）」。
 
 ## 1. 项目概述
@@ -31,6 +31,7 @@
 
 ## 4. 近期进展（最近提交）
 
+- refactor: audit and clean up aspirational stub types（移除 `ModelCategory::Vision` / `ModelServerKind::MediaPipe`，见 R11）
 - style: rustfmt jsonrpc notification fallback
 - docs: add PLAN.md current-status snapshot
 - feat(model): add ModelCapability enum, extend ModelCategory, add GenerationTier
@@ -124,6 +125,16 @@ arona is the shared protocol crate (v0.1.0) that glues entelecheia and shittim-c
 - JSON-RPC 2.0 §5.1 mandates `"id": null` on error responses to requests whose id could not be detected (Parse error / Invalid Request). Rejecting them is a protocol bug — relevant for external MCP-server interop, where a malformed inbound request yields exactly such a response.
 - Orthogonal to R9: R9 governs method-message routing; responses are identified by `result`/`error`. Dropped `&& has_id` from the response condition (the request branch still requires a non-null id, so R9's notification routing is unchanged).
 - Added test `message_classifies_null_id_error_response`; all prior JSON-RPC tests (R9 notification, ambiguous-payload priority, unclassifiable rejection) still pass.
+
+## Resolved (R11)
+
+### 13. Vision / MediaPipe aspirational stub types removed — RESOLVED (R11)
+- evernight 审计报告 Medium #4 指出 `model.rs` 中 `ModelCategory::Vision` 与 `ModelServerKind::MediaPipe` 被标注为 stub，属于 aspirational 占位类型。
+- 审计结论：两者均为「全息 AR / MediaPipe 姿态识别」这一未实现特性预留，无任何实际实现——evernight（唯一部署方）自身的 `ModelServerKind` 仅含 `Ollama`/`WhisperCpp`/`Vllm`，并无 `MediaPipe`；entelecheia / shittim-chest / evernight 均未导入 `arona::model` 的类型（消费方各自持有镜像类型，或仅在 shittim-chest 的 `mock-mode` 开发桩里以裸 JSON 字符串形式出现）。
+- 已实现的「视觉」能力（MediaFlow 视觉评审，glm-5v-turbo）由 `ModelCategory::MultiModal` + `ModelCapability::{ImageInput, VideoInput, VisualCritique}` 表达，不在本次清理范围内。
+- 处理：从公开 API 中移除 `ModelCategory::Vision` 与 `ModelServerKind::MediaPipe` 两个枚举变体，并同步更新模块级文档表格与 `bindings/model.ts`（`cargo test` 自动再生成）。沿用 R4「移除 Agent 枚举 aspirational 变体」的既定惯例。
+- 验证：`cargo check --all-features`、`cargo clippy --all-features -- -D warnings`、`cargo test --all-features`（651 项通过）均通过。
+- 关联：evernight 仓库 PLAN.md Medium #4（本仓库内完成，evernight 侧无需改动）。
 
 ## Strengths (for reference)
 - Excellent documentation: 8 language translations, architecture/design/guides/meta docs

@@ -53,7 +53,7 @@ export type ModelCapability = "text_chat" | "text_streaming" | "function_calling
 /**
  * Top-level model category. Determines which subsystem consumes the model.
  */
-export type ModelCategory = "llm" | "embedding" | "speech_to_text" | "text_to_speech" | "vision" | "image_generation" | "three_d_generation" | "multi_modal";
+export type ModelCategory = "llm" | "embedding" | "speech_to_text" | "text_to_speech" | "image_generation" | "three_d_generation" | "multi_modal";
 
 /**
  * A unified description of an AI model, shared between scepter and chest.
@@ -205,7 +205,7 @@ loaded_models: Array<string>, };
  * The type of model server. evernight deploys and manages these; the choice
  * of GPU vs CPU variant is made by evernight at deploy time (GPU-first).
  */
-export type ModelServerKind = "ollama" | "whisper_cpp" | "vllm" | "media_pipe";
+export type ModelServerKind = "ollama" | "whisper_cpp" | "vllm";
 
 /**
  * Status of a local model server (ollama, whisper.cpp, …).
