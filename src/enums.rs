@@ -141,3 +141,22 @@ str_enum!(GoalTaskStatus {
     Failed = "failed",
     Cancelled = "cancelled",
 });
+
+// How a peer reached this instance — the topology of the link, not the
+// physical medium (which is `evernight::link::LinkType`).
+//
+// `Local` covers both a Windows-native peer and a same-host WSL2 peer; the
+// two are distinguished by a shared-secret handshake (a key file under
+// `%LOCALAPPDATA%\celestia\local-secret`, readable from WSL2 via `/mnt/c/`),
+// not by IP alone. `RemoteLan` is an RFC1918 / link-local peer without that
+// secret; `RemoteInternet` is anything else.
+//
+// This enum is the canonical source of truth (defined here, consumed by
+// entelecheia and shittim-chest). evernight attaches it to its sessions as
+// a routing tag — any authorized session is stamped with how it connected —
+// but evernight itself does not branch on it for its own behaviour.
+str_enum!(ConnectionType {
+    Local = "local",
+    RemoteLan = "remote_lan",
+    RemoteInternet = "remote_internet",
+});
