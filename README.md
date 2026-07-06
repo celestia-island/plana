@@ -7,7 +7,7 @@
 
 <div align="center">
 
-[![License: SySL-1.0](https://img.shields.io/badge/License-SySL--1.0-blue.svg)](./LICENSE)
+[![License: SySL-1.0](https://img.shields.io/badge/License-SySL--1.0-blue.svg)](https://sysl.celestia.world)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
 [![docs.rs](https://docs.rs/arona/badge.svg)](https://docs.rs/arona)
 [![CI](https://img.shields.io/github/actions/workflow/status/celestia-island/arona/ci.yml)](https://github.com/celestia-island/arona/actions/workflows/ci.yml)
