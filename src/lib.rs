@@ -18,6 +18,7 @@
 pub mod enums;
 pub mod external_mcp;
 pub mod http;
+pub mod identity;
 pub mod mcp;
 pub mod model;
 pub mod protocol;
