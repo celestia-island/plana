@@ -1,80 +1,62 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
+<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/arona/master/docs/logo.webp" alt="Arona" width="200" /></p>
+
+<h1 align="center">Arona</h1>
+
+<p align="center"><strong>JSON-RPC 2.0 protocol types &amp; TypeScript bindings</strong></p>
+
 <div align="center">
 
-# Arona
-
-**Shared JSON-RPC 2.0 Protocol Types for the Entelecheia Multi-Agent Platform**
-
-[![License](https://img.shields.io/badge/license-BSL--1.1-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org/)
+[![License: SySL-1.0](https://img.shields.io/badge/License-SySL--1.0-blue.svg)](https://sysl.celestia.world)
 [![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
-[![Version](https://img.shields.io/badge/version-0.1.0-lightgrey.svg)]()
+[![docs.rs](https://docs.rs/arona/badge.svg)](https://docs.rs/arona)
+[![CI](https://img.shields.io/github/actions/workflow/status/celestia-island/arona/ci.yml)](https://github.com/celestia-island/arona/actions/workflows/ci.yml)
 
-**[English](README.md)** &bull; **[简体中文](docs/guides/zhs/README.md)** &bull;
-**[繁體中文](docs/guides/zht/README.md)** &bull; **[日本語](docs/guides/ja/README.md)** &bull;
-**[한국어](docs/guides/ko/README.md)** &bull; **[Français](docs/guides/fr/README.md)** &bull;
-**[Español](docs/guides/es/README.md)** &bull; **[Русский](docs/guides/ru/README.md)**
+</div>
+
+<div align="center">
+
+**English** ·
+[简体中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zhs/guides/platforms/README-arona.md) ·
+[繁體中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zht/guides/platforms/README-arona.md) ·
+[日本語](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ja/guides/platforms/README-arona.md) ·
+[한국어](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ko/guides/platforms/README-arona.md) ·
+[Français](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/fr/guides/platforms/README-arona.md) ·
+[Español](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/es/guides/platforms/README-arona.md) ·
+[Русский](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ru/guides/platforms/README-arona.md)
 
 </div>
 <!-- markdownlint-enable MD033 MD041 MD036 -->
 
-> **Version 0.1.0** — Extracted from [shittim-chest](https://github.com/celestia-island/shittim-chest) as an independent protocol crate. Consumed by both [entelecheia](https://github.com/celestia-island/entelecheia) (agent orchestration core) and shittim-chest (user-facing shell).
+JSON-RPC 2.0 protocol types, TypeScript bindings, and the documentation hub. Consumed by entelecheia and shittim-chest.
 
-## What is Arona
-
-Arona defines the **wire protocol** between the entelecheia agent orchestration core and its user-facing shells (TUI, CLI, web UI, IDE plugins, Tauri apps). It contains:
-
-- **JSON-RPC 2.0** message types (`JsonRpcRequest`, `JsonRpcNotification`, `JsonRpcResponse`, `JsonRpcMessage`)
-- **Agent taxonomy** — the `Agent` enum (14 variants: HapLotes, SkoPeo, HubRis, KaLos, NeiKos, SkeMma, ApoRia, EleOs, EpieiKeia, OreXis, PhiLia, PoleMos, WebAutomation, ClassicSoftwareEngineering)
-- **WebSocket parameter types** — ~100 structs covering streaming, snapshots, patches, tasks, provider configuration, knowledge base, YOLO cruise control, WebRTC signaling, arbiter, and VM snapshots
-- **TypeScript type generation** — all types derive `ts-rs::TS` and export to `bindings/WsTypes.ts`
-
-### Named after
-
-Arona (アロナ) — the AI assistant that coordinates missions and routes commands inside the Shittim Chest.
-
-## Usage
-
-**Rust (Cargo.toml):**
-
-```toml
-[dependencies]
-arona = { git = "https://github.com/celestia-island/arona.git", branch = "master" }
-```
-
-**TypeScript (pnpm / npm):**
+## Quick Start
 
 ```bash
-pnpm add @celestia-island/arona
+# Build
+cargo build
+
+# Run all tests (includes TS binding generation)
+cargo test --all-features
+
+# Check lint + formatting
+cargo clippy --all-targets --all-features -- -D warnings
+cargo fmt --all -- --check
+
+# Generate TypeScript bindings only
+cargo test --package arona
 ```
 
-```ts
-import type { Agent, TuiAgentInfo, SkillStage } from "@celestia-island/arona";
+Or use the [just](https://github.com/casey/just) task runner:
+
+```bash
+just build
+just test
+just fmt-check
 ```
 
-## Architecture
+## Documentation
 
-```
-arona (this crate)
-  ├── src/lib.rs        ~18 enums + ~100 structs, all #[derive(TS)]
-  ├── src/jsonrpc.rs    JSON-RPC 2.0 frame types + error codes
-  └── bindings/
-      └── WsTypes.ts    Auto-generated TypeScript types
-```
+Architecture, design, and guides live at [docs.celestia.world/en/arona](https://github.com/celestia-island/docs.celestia.world/tree/master/docs/en).
 
-Consumed by:
-
-| Consumer | How |
-|----------|-----|
-| [entelecheia](https://github.com/celestia-island/entelecheia) | Re-exports via `state_types` crate; used in scepter orchestration |
-| [shittim-chest](https://github.com/celestia-island/shittim-chest) | WebSocket bridge + mock scepter; TypeScript types for webui |
-
-## Contributing
-
-Issues and pull requests are welcome.
-
-## License
-
-Business Source License 1.1 with Apache-2.0 / MIT dual-path: personal, academic, and non-commercial use is under Apache 2.0 or MIT. Commercial use (hosting, resale, paid services) requires a BUSL license.
-
-Translations: [简体中文](LICENSE.zhs) · [繁體中文](LICENSE.zht) · [Español](LICENSE.es) · [Français](LICENSE.fr) · [Русский](LICENSE.ru) · [العربية](LICENSE.ar)
+Source: [arona](https://github.com/celestia-island/arona).
