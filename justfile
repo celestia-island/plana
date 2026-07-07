@@ -41,7 +41,7 @@ test:
 
 # Regenerate artifacts. Default: bindings.
 gen target='bindings':
-    #!/usr/bin/env bash
+    #!/usr/bin/env sh
     set -euo pipefail
     case "{{target}}" in
       bindings) cargo test --package arona ;;
