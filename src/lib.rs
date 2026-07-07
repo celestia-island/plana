@@ -508,3 +508,438 @@ pub use ws::services::{auth::*, industrial::*, knowledge_base::*, llm_provider::
 pub use ws::ui::{
     bridge_network::*, file_browsing::*, logs::*, noa::*, system_ui::*, views::*, workspace::*,
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    // ── Agent enum ─────────────────────────────────────────────────
+
+    #[test]
+    fn agent_all_returns_thirteen_unique_variants() {
+        let all = Agent::all();
+        assert_eq!(
+            all.len(),
+            13,
+            "Agent::all() must return exactly 13 variants"
+        );
+        // Verify uniqueness.
+        let mut seen = std::collections::HashSet::new();
+        for a in all {
+            let s = format!("{a:?}");
+            assert!(seen.insert(s.clone()), "duplicate agent variant: {s}");
+        }
+    }
+
+    #[test]
+    fn agent_serde_round_trip_each_variant() {
+        for agent in Agent::all() {
+            let s = serde_json::to_string(agent).unwrap();
+            let back: Agent = serde_json::from_str(&s).unwrap();
+            assert_eq!(back, *agent);
+        }
+    }
+
+    #[test]
+    fn agent_serializes_as_pascal_case() {
+        // No #[serde(rename_all)] on Agent → PascalCase variant names.
+        assert_eq!(
+            serde_json::to_string(&Agent::HapLotes).unwrap(),
+            r#""HapLotes""#
+        );
+        assert_eq!(
+            serde_json::to_string(&Agent::WebAutomation).unwrap(),
+            r#""WebAutomation""#
+        );
+    }
+
+    // ── AgentBadge newtype ─────────────────────────────────────────
+
+    #[test]
+    fn agent_badge_round_trip() {
+        let badge = AgentBadge("haplotes-01".into());
+        let v = serde_json::to_value(&badge).unwrap();
+        assert_eq!(v, "haplotes-01");
+        let back: AgentBadge = serde_json::from_value(v).unwrap();
+        assert_eq!(back.0, "haplotes-01");
+    }
+
+    // ── AgentStatus ────────────────────────────────────────────────
+
+    #[test]
+    fn agent_status_round_trip_all_variants() {
+        for s in [
+            AgentStatus::Initializing,
+            AgentStatus::Online,
+            AgentStatus::Busy,
+            AgentStatus::Offline,
+            AgentStatus::Error,
+        ] {
+            let json = serde_json::to_string(&s).unwrap();
+            let back: AgentStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(back, s);
+        }
+    }
+
+    // ── RequestState default ───────────────────────────────────────
+
+    #[test]
+    fn request_state_default_is_idle() {
+        assert_eq!(RequestState::default(), RequestState::Idle);
+    }
+
+    #[test]
+    fn completion_outcome_default_is_none() {
+        assert_eq!(CompletionOutcome::default(), CompletionOutcome::None);
+    }
+
+    // ── ReportType classification ──────────────────────────────────
+
+    #[test]
+    fn report_type_is_query() {
+        assert!(ReportType::Query.is_query());
+        assert!(!ReportType::Reply.is_query());
+        assert!(!ReportType::Error.is_query());
+    }
+
+    #[test]
+    fn report_type_is_error_covers_all_error_variants() {
+        let error_variants = [
+            ReportType::Error,
+            ReportType::ChainMaxDepth,
+            ReportType::ChainCycle,
+            ReportType::SkillFailed,
+            ReportType::SkillEmptyOutput,
+            ReportType::SkillMissingReport,
+        ];
+        for v in &error_variants {
+            assert!(v.is_error(), "{v:?} should be classified as error");
+        }
+        // Non-error variants.
+        assert!(!ReportType::Query.is_error());
+        assert!(!ReportType::Reply.is_error());
+        assert!(!ReportType::Human.is_error());
+        assert!(!ReportType::System.is_error());
+        assert!(!ReportType::Pending.is_error());
+    }
+
+    #[test]
+    fn report_type_is_pending() {
+        assert!(ReportType::Pending.is_pending());
+        assert!(!ReportType::Reply.is_pending());
+    }
+
+    #[test]
+    fn report_type_is_terminal() {
+        let terminal = [
+            ReportType::Reply,
+            ReportType::SkillTerminal,
+            ReportType::Error,
+            ReportType::System,
+            ReportType::NextActionFallback,
+        ];
+        for v in &terminal {
+            assert!(v.is_terminal(), "{v:?} should be terminal");
+        }
+        // Non-terminal.
+        assert!(!ReportType::Query.is_terminal());
+        assert!(!ReportType::Pending.is_terminal());
+        assert!(!ReportType::SkillStep.is_terminal());
+    }
+
+    #[test]
+    fn report_type_serde_uses_snake_case() {
+        // ReportType has #[serde(rename_all = "snake_case")].
+        assert_eq!(
+            serde_json::to_string(&ReportType::SkillTerminal).unwrap(),
+            r#""skill_terminal""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReportType::NextActionFallback).unwrap(),
+            r#""next_action_fallback""#
+        );
+    }
+
+    // ── AgentErrorCode classification ──────────────────────────────
+
+    #[test]
+    fn agent_error_code_is_llm_error() {
+        let llm_errors = [
+            AgentErrorCode::LlmCallFailed,
+            AgentErrorCode::LlmEmptyResponse,
+            AgentErrorCode::LlmRateLimited,
+            AgentErrorCode::LlmAuthFailed,
+            AgentErrorCode::LlmTimeout,
+        ];
+        for e in &llm_errors {
+            assert!(e.is_llm_error(), "{e:?} should be LLM error");
+        }
+        assert!(!AgentErrorCode::CosmosNoConnection.is_llm_error());
+    }
+
+    #[test]
+    fn agent_error_code_is_cosmos_error() {
+        let cosmos = [
+            AgentErrorCode::CosmosNoConnection,
+            AgentErrorCode::CosmosToolFailed,
+            AgentErrorCode::CosmosLocalUnavailable,
+        ];
+        for e in &cosmos {
+            assert!(e.is_cosmos_error(), "{e:?} should be cosmos error");
+        }
+        assert!(!AgentErrorCode::LlmTimeout.is_cosmos_error());
+    }
+
+    #[test]
+    fn agent_error_code_is_chain_error() {
+        assert!(AgentErrorCode::ChainMaxDepth.is_chain_error());
+        assert!(AgentErrorCode::ChainCycle.is_chain_error());
+        assert!(AgentErrorCode::ChainFailed.is_chain_error());
+        assert!(!AgentErrorCode::SkillFailed.is_chain_error());
+    }
+
+    #[test]
+    fn agent_error_code_is_skill_error() {
+        assert!(AgentErrorCode::SkillFailed.is_skill_error());
+        assert!(AgentErrorCode::SkillEmptyOutput.is_skill_error());
+        assert!(AgentErrorCode::SkillMissingReport.is_skill_error());
+        assert!(!AgentErrorCode::ChainFailed.is_skill_error());
+    }
+
+    #[test]
+    fn agent_error_code_is_model_selection_error() {
+        let model_errors = [
+            AgentErrorCode::ModelNoProviders,
+            AgentErrorCode::ModelNoModels,
+            AgentErrorCode::ModelTierMismatch,
+            AgentErrorCode::ModelAllExcluded,
+            AgentErrorCode::ModelEnvIncomplete,
+            AgentErrorCode::ModelSelectionRetryExhausted,
+        ];
+        for e in &model_errors {
+            assert!(
+                e.is_model_selection_error(),
+                "{e:?} should be model selection error"
+            );
+        }
+        assert!(!AgentErrorCode::LlmTimeout.is_model_selection_error());
+    }
+
+    #[test]
+    fn agent_error_code_categories_are_mutually_exclusive() {
+        // Every variant belongs to at most one category.
+        for code in [
+            AgentErrorCode::ModelNoProviders,
+            AgentErrorCode::ModelNoModels,
+            AgentErrorCode::ModelTierMismatch,
+            AgentErrorCode::ModelAllExcluded,
+            AgentErrorCode::ModelEnvIncomplete,
+            AgentErrorCode::ModelSelectionRetryExhausted,
+            AgentErrorCode::LlmCallFailed,
+            AgentErrorCode::LlmEmptyResponse,
+            AgentErrorCode::LlmRateLimited,
+            AgentErrorCode::LlmAuthFailed,
+            AgentErrorCode::LlmTimeout,
+            AgentErrorCode::CosmosNoConnection,
+            AgentErrorCode::CosmosToolFailed,
+            AgentErrorCode::CosmosLocalUnavailable,
+            AgentErrorCode::ChainMaxDepth,
+            AgentErrorCode::ChainCycle,
+            AgentErrorCode::ChainFailed,
+            AgentErrorCode::SkillFailed,
+            AgentErrorCode::SkillEmptyOutput,
+            AgentErrorCode::SkillMissingReport,
+        ] {
+            let count = [
+                code.is_llm_error(),
+                code.is_cosmos_error(),
+                code.is_chain_error(),
+                code.is_skill_error(),
+                code.is_model_selection_error(),
+            ]
+            .iter()
+            .filter(|&&b| b)
+            .count();
+            assert_eq!(
+                count, 1,
+                "{code:?} belongs to {count} categories, expected 1"
+            );
+        }
+    }
+
+    #[test]
+    fn agent_error_code_thiserror_display() {
+        // Each variant has a non-empty error message via thiserror.
+        assert_eq!(AgentErrorCode::LlmCallFailed.to_string(), "LLM call failed");
+        assert_eq!(
+            AgentErrorCode::ModelNoProviders.to_string(),
+            "model has no providers"
+        );
+    }
+
+    // ── StreamSegment variants ─────────────────────────────────────
+
+    #[test]
+    fn stream_segment_text_round_trip() {
+        let seg = StreamSegment::Text {
+            text: "hello".into(),
+            message_id: None,
+        };
+        let v = serde_json::to_value(&seg).unwrap();
+        // Externally tagged enum: {"Text": {"text": "hello", "message_id": null}}
+        assert_eq!(v["Text"]["text"], "hello");
+        let back: StreamSegment = serde_json::from_value(v).unwrap();
+        match back {
+            StreamSegment::Text { text, .. } => assert_eq!(text, "hello"),
+            other => panic!("expected Text, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn stream_segment_mcp_call_round_trip() {
+        let seg = StreamSegment::McpCall {
+            tool_name: "kalos.file_read".into(),
+            call_id: "call-1".into(),
+            params: json!({"path": "/etc/hosts"}),
+            agent_type: None,
+            message_id: None,
+        };
+        let v = serde_json::to_value(&seg).unwrap();
+        let back: StreamSegment = serde_json::from_value(v).unwrap();
+        match back {
+            StreamSegment::McpCall {
+                tool_name, call_id, ..
+            } => {
+                assert_eq!(tool_name, "kalos.file_read");
+                assert_eq!(call_id, "call-1");
+            }
+            other => panic!("expected McpCall, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn stream_segment_mcp_result_round_trip() {
+        let seg = StreamSegment::McpResult {
+            tool_name: "kalos.file_read".into(),
+            call_id: "call-1".into(),
+            success: true,
+            data: json!({"content": "file data"}),
+            duration_ms: Some(42),
+            agent_type: Some("KaLos".into()),
+            message_id: None,
+        };
+        let v = serde_json::to_value(&seg).unwrap();
+        let back: StreamSegment = serde_json::from_value(v).unwrap();
+        match back {
+            StreamSegment::McpResult {
+                success,
+                duration_ms,
+                ..
+            } => {
+                assert!(success);
+                assert_eq!(duration_ms, Some(42));
+            }
+            other => panic!("expected McpResult, got {other:?}"),
+        }
+    }
+
+    // ── StructuredAgentError ───────────────────────────────────────
+
+    #[test]
+    fn structured_agent_error_round_trip() {
+        let mut ctx = std::collections::HashMap::new();
+        ctx.insert("agent".into(), "haplotes".into());
+        let e = StructuredAgentError {
+            code: AgentErrorCode::LlmTimeout,
+            detail: Some("provider timed out after 30s".into()),
+            context: ctx,
+        };
+        let v = serde_json::to_value(&e).unwrap();
+        assert_eq!(v["code"], "llm_timeout");
+        assert_eq!(v["detail"], "provider timed out after 30s");
+        assert_eq!(v["context"]["agent"], "haplotes");
+        let back: StructuredAgentError = serde_json::from_value(v).unwrap();
+        assert_eq!(back.code, AgentErrorCode::LlmTimeout);
+    }
+
+    #[test]
+    fn structured_agent_error_minimal() {
+        let e = StructuredAgentError {
+            code: AgentErrorCode::ChainCycle,
+            detail: None,
+            context: std::collections::HashMap::new(),
+        };
+        let v = serde_json::to_value(&e).unwrap();
+        // detail is #[ts(optional)] without skip → null.
+        assert_eq!(v["detail"], serde_json::Value::Null);
+    }
+
+    // ── ContainerStatus ────────────────────────────────────────────
+
+    #[test]
+    fn container_status_round_trip_all_variants() {
+        for s in [
+            ContainerStatus::Created,
+            ContainerStatus::Running,
+            ContainerStatus::Paused,
+            ContainerStatus::Restarting,
+            ContainerStatus::Removing,
+            ContainerStatus::Exited,
+            ContainerStatus::Dead,
+            ContainerStatus::Unknown,
+        ] {
+            let json = serde_json::to_string(&s).unwrap();
+            let back: ContainerStatus = serde_json::from_str(&json).unwrap();
+            assert_eq!(back, s);
+        }
+    }
+
+    // ── KnowledgeBaseStatus default ────────────────────────────────
+
+    #[test]
+    fn knowledge_base_status_default_is_uninitialized() {
+        assert_eq!(
+            KnowledgeBaseStatus::default(),
+            KnowledgeBaseStatus::Uninitialized
+        );
+    }
+
+    // ── YoloTaskTier serde ─────────────────────────────────────────
+
+    #[test]
+    fn yolo_task_tier_serde_snake_case() {
+        assert_eq!(
+            serde_json::to_string(&YoloTaskTier::Realtime).unwrap(),
+            r#""realtime""#
+        );
+        assert_eq!(
+            serde_json::to_string(&YoloTaskTier::Strategic).unwrap(),
+            r#""strategic""#
+        );
+    }
+
+    // ── ReportSelection / StreamChunkKind defaults ────────────────
+
+    #[test]
+    fn report_selection_default_is_single() {
+        assert_eq!(ReportSelection::default(), ReportSelection::Single);
+    }
+
+    #[test]
+    fn stream_chunk_kind_default_is_text() {
+        assert_eq!(StreamChunkKind::default(), StreamChunkKind::Text);
+    }
+
+    // ── Constants ──────────────────────────────────────────────────
+
+    #[test]
+    fn protocol_version_is_one_point_zero() {
+        assert_eq!(PROTOCOL_VERSION, "1.0.0");
+    }
+
+    #[test]
+    fn default_report_type_is_general() {
+        assert_eq!(DEFAULT_REPORT_TYPE, "general");
+    }
+}

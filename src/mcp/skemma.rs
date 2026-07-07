@@ -266,3 +266,178 @@ pub struct ModbusWriteResult {
     pub total_written: usize,
     pub all_confirmed: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::enums::ScriptLanguage;
+    use serde_json::json;
+
+    #[test]
+    fn script_exec_result_round_trip() {
+        let r = ScriptExecResult {
+            language: ScriptLanguage::Bash,
+            execution_id: Uuid::new_v4(),
+            exit_code: 0,
+            duration_ms: 1500,
+            stdout: "hello\n".into(),
+            stderr: String::new(),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        // ScriptLanguage serializes as PascalCase variant name (serde default).
+        assert_eq!(v["language"], "Bash");
+        assert_eq!(v["exit_code"], 0);
+        assert_eq!(v["duration_ms"], 1500);
+        let back: ScriptExecResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.language, ScriptLanguage::Bash);
+    }
+
+    #[test]
+    fn remote_connection_info_round_trip() {
+        let r = RemoteConnectionInfo {
+            id: "ssh-1".into(),
+            host: "192.168.1.10".into(),
+            port: 22,
+            protocol: "ssh".into(),
+            connected: true,
+            connected_at: Some("2026-01-01T00:00:00Z".into()),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["port"], 22);
+        assert_eq!(v["connected_at"], "2026-01-01T00:00:00Z");
+        let back: RemoteConnectionInfo = serde_json::from_value(v).unwrap();
+        assert!(back.connected);
+    }
+
+    #[test]
+    fn remote_connection_info_no_connected_at() {
+        let r = RemoteConnectionInfo {
+            id: "x".into(),
+            host: "h".into(),
+            port: 22,
+            protocol: "ssh".into(),
+            connected: false,
+            connected_at: None,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["connected_at"], serde_json::Value::Null);
+    }
+
+    #[test]
+    fn screenshot_result_round_trip() {
+        let r = ScreenshotResult {
+            remote_id: "ssh-1".into(),
+            width: 1920,
+            height: 1080,
+            format: "png".into(),
+            data_base64: "iVBORw0KGgo=".into(),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["width"], 1920);
+        assert_eq!(v["format"], "png");
+        let back: ScreenshotResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.data_base64, "iVBORw0KGgo=");
+    }
+
+    #[test]
+    fn modbus_read_result_round_trip() {
+        let r = ModbusReadResult {
+            station: 1,
+            transport: "tcp".into(),
+            endpoint: "192.168.1.5:502".into(),
+            results: vec![RegisterRangeResult {
+                register_type: "holding".into(),
+                start_address: 0,
+                count: 4,
+                values: vec![100, 200, 300, 400],
+                raw_bytes: vec!["0x0064".into(), "0x00C8".into()],
+            }],
+            total_registers: 4,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["station"], 1);
+        assert_eq!(v["results"][0]["values"][1], 200);
+        assert_eq!(v["total_registers"], 4);
+        let back: ModbusReadResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.results[0].values.len(), 4);
+    }
+
+    #[test]
+    fn modbus_write_result_round_trip() {
+        let r = ModbusWriteResult {
+            station: 1,
+            transport: "tcp".into(),
+            endpoint: "192.168.1.5:502".into(),
+            writes: vec![WriteRangeResult {
+                register_type: "holding".into(),
+                start_address: 0,
+                count: 2,
+                confirmed: true,
+            }],
+            total_written: 2,
+            all_confirmed: true,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["all_confirmed"], true);
+        let back: ModbusWriteResult = serde_json::from_value(v).unwrap();
+        assert!(back.all_confirmed);
+    }
+
+    #[test]
+    fn signal_normalize_result_with_stats() {
+        let r = SignalNormalizeResult {
+            method: "min-max".into(),
+            input_count: 5,
+            output: vec![0.0, 0.25, 0.5, 0.75, 1.0],
+            stats: SignalStats {
+                min: 0.0,
+                max: 100.0,
+                mean: 50.0,
+                std_dev: 31.62,
+            },
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["stats"]["mean"], 50.0);
+        assert_eq!(v["output"].as_array().unwrap().len(), 5);
+        let back: SignalNormalizeResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.stats.min, 0.0);
+    }
+
+    #[test]
+    fn mouse_operate_result_round_trip() {
+        let r = MouseOperateResult {
+            remote_id: "ssh-1".into(),
+            action: "click".into(),
+            x: 100,
+            y: 200,
+            button: "left".into(),
+            success: true,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["x"], 100);
+        assert_eq!(v["button"], "left");
+    }
+
+    #[test]
+    fn modbus_scan_config_optional_function_code() {
+        let c = ModbusScanConfig {
+            address: 0,
+            count: 10,
+            function_code: None,
+        };
+        let v = serde_json::to_value(&c).unwrap();
+        // function_code uses skip_serializing_if.
+        assert!(v.get("function_code").is_none());
+    }
+
+    #[test]
+    fn modbus_scan_config_with_function_code() {
+        let c = ModbusScanConfig {
+            address: 0,
+            count: 10,
+            function_code: Some(3),
+        };
+        let v = serde_json::to_value(&c).unwrap();
+        assert_eq!(v["function_code"], 3);
+    }
+}

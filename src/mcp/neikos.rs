@@ -315,3 +315,219 @@ pub struct SidecarSendResult {
     pub name: String,
     pub sent: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::enums::ContainerOpStatus;
+    use serde_json::json;
+
+    #[test]
+    fn container_list_result_round_trip() {
+        let r = ContainerListResult {
+            total_count: 2,
+            containers: vec![
+                ContainerListItem {
+                    name: "web".into(),
+                    image: "nginx:latest".into(),
+                    status: "running".into(),
+                    id: "abc123".into(),
+                },
+                ContainerListItem {
+                    name: "db".into(),
+                    image: "postgres:16".into(),
+                    status: "exited".into(),
+                    id: "def456".into(),
+                },
+            ],
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["total_count"], 2);
+        assert_eq!(v["containers"][0]["name"], "web");
+        let back: ContainerListResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.total_count, 2);
+        assert_eq!(back.containers[1].name, "db");
+    }
+
+    #[test]
+    fn container_list_result_empty() {
+        let r = ContainerListResult {
+            total_count: 0,
+            containers: vec![],
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["containers"], json!([]));
+    }
+
+    #[test]
+    fn container_info_result_with_exit_code() {
+        let r = ContainerInfoResult {
+            container_id: "cid".into(),
+            name: "test".into(),
+            image: "img".into(),
+            status: "exited".into(),
+            running: false,
+            exit_code: Some(0),
+            ip_address: "172.17.0.2".into(),
+            started_at: "2026-01-01T00:00:00Z".into(),
+            ports: vec!["8080:80".into()],
+            env: vec!["FOO=bar".into()],
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["exit_code"], 0);
+        assert_eq!(v["running"], false);
+        let back: ContainerInfoResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.exit_code, Some(0));
+    }
+
+    #[test]
+    fn container_info_result_no_exit_code() {
+        let r = ContainerInfoResult {
+            container_id: "cid".into(),
+            name: "test".into(),
+            image: "img".into(),
+            status: "running".into(),
+            running: true,
+            exit_code: None,
+            ip_address: "".into(),
+            started_at: "".into(),
+            ports: vec![],
+            env: vec![],
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["exit_code"], serde_json::Value::Null);
+    }
+
+    #[test]
+    fn container_op_status_enum_round_trip() {
+        for s in [
+            ContainerOpStatus::Created,
+            ContainerOpStatus::Running,
+            ContainerOpStatus::Stopped,
+            ContainerOpStatus::Removed,
+            ContainerOpStatus::Forked,
+        ] {
+            let ser = serde_json::to_string(&s).unwrap();
+            let de: ContainerOpStatus = serde_json::from_str(&ser).unwrap();
+            assert_eq!(de, s);
+        }
+    }
+
+    #[test]
+    fn container_start_result_round_trip() {
+        let r = ContainerStartResult {
+            container_id: "cid".into(),
+            status: ContainerOpStatus::Running,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        // ContainerOpStatus serializes as PascalCase variant name.
+        assert_eq!(v["status"], "Running");
+        let back: ContainerStartResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.status, ContainerOpStatus::Running);
+    }
+
+    #[test]
+    fn volume_info_round_trip() {
+        let v = VolumeInfo {
+            host_path: "/host/data".into(),
+            container_path: "/data".into(),
+            read_only: true,
+        };
+        let val = serde_json::to_value(&v).unwrap();
+        assert_eq!(val["read_only"], true);
+        let back: VolumeInfo = serde_json::from_value(val).unwrap();
+        assert!(back.read_only);
+    }
+
+    #[test]
+    fn exec_result_round_trip() {
+        let r = ExecResult {
+            container_id: "cid".into(),
+            command: "ls -la".into(),
+            exit_code: Some(0),
+            output: "total 0\n".into(),
+            error: String::new(),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["exit_code"], 0);
+        let back: ExecResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.exit_code, Some(0));
+    }
+
+    #[test]
+    fn git_push_result_round_trip() {
+        let r = GitPushResult {
+            container_id: "cid".into(),
+            branch: "feature".into(),
+            remote: "origin".into(),
+            commit_hash: Some("abc123".into()),
+            pushed: true,
+            output: "Everything up-to-date".into(),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["pushed"], true);
+        assert_eq!(v["commit_hash"], "abc123");
+        let back: GitPushResult = serde_json::from_value(v).unwrap();
+        assert!(back.pushed);
+    }
+
+    #[test]
+    fn container_create_result_seccomp_default() {
+        let r = ContainerCreateResult {
+            image: "img".into(),
+            container_id: "cid".into(),
+            name: "test".into(),
+            network: "bridge".into(),
+            status: ContainerOpStatus::Created,
+            volumes: vec![],
+            seccomp_enabled: false,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        // seccomp_enabled has #[serde(default)] on deserialize but always
+        // serializes (no skip_serializing_if).
+        assert_eq!(v["seccomp_enabled"], false);
+    }
+
+    #[test]
+    fn container_filter_criteria_all_optional_skip() {
+        let c = ContainerFilterCriteria {
+            label: None,
+            name: None,
+            status: None,
+        };
+        let v = serde_json::to_value(&c).unwrap();
+        // All fields use skip_serializing_if = "Option::is_none".
+        assert!(v.as_object().unwrap().is_empty());
+    }
+
+    #[test]
+    fn container_filter_criteria_with_values() {
+        let mut labels = std::collections::HashMap::new();
+        labels.insert("app".into(), "web".into());
+        let c = ContainerFilterCriteria {
+            label: Some(labels),
+            name: Some("web-*".into()),
+            status: Some(vec!["running".into()]),
+        };
+        let v = serde_json::to_value(&c).unwrap();
+        assert_eq!(v["name"], "web-*");
+        assert_eq!(v["label"]["app"], "web");
+    }
+
+    #[test]
+    fn toolchain_profile_info_round_trip() {
+        let r = ToolchainProfileInfo {
+            id: "rust-full".into(),
+            display_name: "Rust Toolchain".into(),
+            source_image: "rust:1.85".into(),
+            image_pulled: true,
+            volume_ready: true,
+            available_tools: vec!["cargo".into(), "rustc".into()],
+            supported_languages: vec!["rust".into()],
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["available_tools"][0], "cargo");
+        let back: ToolchainProfileInfo = serde_json::from_value(v).unwrap();
+        assert_eq!(back.available_tools.len(), 2);
+    }
+}

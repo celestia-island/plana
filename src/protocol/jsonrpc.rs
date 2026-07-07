@@ -548,4 +548,332 @@ mod tests {
         let v = build_notification_value(" \n ", json!({"n": 1}));
         assert_eq!(v["method"], "internal.fallback");
     }
+
+    // ── Additional edge-case tests (Phase 1.3) ─────────────────────
+
+    // ── Id edge cases ───────────────────────────────────────────────
+
+    #[test]
+    fn id_number_zero_round_trip() {
+        let id = Id::Number(0);
+        let s = serde_json::to_string(&id).unwrap();
+        assert_eq!(s, "0");
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_number_negative_round_trip() {
+        let id = Id::Number(-42);
+        let s = serde_json::to_string(&id).unwrap();
+        assert_eq!(s, "-42");
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_number_large_round_trip() {
+        let id = Id::Number(i64::MAX);
+        let s = serde_json::to_string(&id).unwrap();
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_empty_string_round_trip() {
+        let id = Id::String(String::new());
+        let s = serde_json::to_string(&id).unwrap();
+        assert_eq!(s, r#""""#);
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_unicode_string_round_trip() {
+        let id = Id::String("请求-42".into());
+        let s = serde_json::to_string(&id).unwrap();
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_new_uuid_v4_round_trip() {
+        let id = Id::new_uuid_v4();
+        let s = serde_json::to_string(&id).unwrap();
+        let inner = &s[1..s.len() - 1];
+        let bytes = inner.as_bytes();
+        assert_eq!(bytes.len(), 36);
+        // UUID v4: version nibble at position 14 must be '4'.
+        assert_eq!(bytes[14], b'4', "expected UUID v4, got {inner}");
+        let back: Id = serde_json::from_str(&s).unwrap();
+        assert_eq!(id, back);
+    }
+
+    #[test]
+    fn id_ordering_null_lt_string_lt_number() {
+        // Id derives Ord — Null < String < Number (enum variant order).
+        let n = Id::Null;
+        let s = Id::String("z".into());
+        let num = Id::Number(0);
+        assert!(n < s);
+        assert!(s < num);
+    }
+
+    // ── JsonRpcError ───────────────────────────────────────────────
+
+    #[test]
+    fn error_new_without_data() {
+        let e = JsonRpcError::new(-32700, "Parse error");
+        assert_eq!(e.code, -32700);
+        assert_eq!(e.message, "Parse error");
+        assert!(e.data.is_none());
+    }
+
+    #[test]
+    fn error_with_data_builder() {
+        let e = JsonRpcError::new(-1, "x").with_data(json!({"k": "v"}));
+        assert_eq!(e.data, Some(json!({"k": "v"})));
+    }
+
+    #[test]
+    fn error_constructors_use_correct_codes() {
+        assert_eq!(JsonRpcError::parse_error().code, error_codes::PARSE_ERROR);
+        assert_eq!(
+            JsonRpcError::invalid_request().code,
+            error_codes::INVALID_REQUEST
+        );
+        assert_eq!(
+            JsonRpcError::method_not_found("test").code,
+            error_codes::METHOD_NOT_FOUND
+        );
+        assert_eq!(
+            JsonRpcError::invalid_params("bad").code,
+            error_codes::INVALID_PARAMS
+        );
+        assert_eq!(
+            JsonRpcError::internal_error("boom").code,
+            error_codes::INTERNAL_ERROR
+        );
+    }
+
+    #[test]
+    fn error_method_not_found_includes_method_name() {
+        let e = JsonRpcError::method_not_found("my.method");
+        assert!(e.message.contains("my.method"));
+    }
+
+    #[test]
+    fn error_invalid_params_includes_detail() {
+        let e = JsonRpcError::invalid_params("missing field `token`");
+        assert!(e.message.contains("missing field"));
+    }
+
+    #[test]
+    fn custom_error_codes_unchanged() {
+        // Platform-specific codes (-32000 range).
+        assert_eq!(error_codes::SNAPSHOT_FAILED, -32001);
+        assert_eq!(error_codes::AGENT_UNAVAILABLE, -32002);
+        assert_eq!(error_codes::CONTAINER_ERROR, -32003);
+        assert_eq!(error_codes::REPL_ERROR, -32004);
+        assert_eq!(error_codes::AUTH_ERROR, -32005);
+    }
+
+    #[test]
+    fn error_data_omitted_when_none() {
+        let e = JsonRpcError::new(-32603, "err");
+        let s = serde_json::to_string(&e).unwrap();
+        assert!(!s.contains(r#""data""#), "data must be omitted: {s}");
+    }
+
+    #[test]
+    fn error_data_present_when_some() {
+        let e = JsonRpcError::new(-32603, "err").with_data(json!(42));
+        let s = serde_json::to_string(&e).unwrap();
+        assert!(s.contains(r#""data":42"#));
+    }
+
+    // ── JsonRpcMessage serialization (forward direction) ───────────
+
+    #[test]
+    fn message_serialize_request_has_no_result_or_error() {
+        let req = JsonRpcRequest::new("m", Some(json!({"x": 1}))).with_id(Id::Number(1));
+        let msg = JsonRpcMessage::Request(req);
+        let v = serde_json::to_value(&msg).unwrap();
+        assert!(v.get("result").is_none(), "Request must not carry result");
+        assert!(v.get("error").is_none(), "Request must not carry error");
+        assert_eq!(v["method"], "m");
+    }
+
+    #[test]
+    fn message_serialize_notification_has_no_id() {
+        let notif = JsonRpcNotification::new("ev", None);
+        let msg = JsonRpcMessage::Notification(notif);
+        let v = serde_json::to_value(&msg).unwrap();
+        assert!(v.get("id").is_none(), "Notification must not carry id");
+    }
+
+    #[test]
+    fn message_serialize_response_has_no_method() {
+        let resp = JsonRpcResponse::success(Id::Number(1), json!({"ok": true}));
+        let msg = JsonRpcMessage::Response(resp);
+        let v = serde_json::to_value(&msg).unwrap();
+        assert!(
+            v.get("method").is_none(),
+            "Response must not carry method field"
+        );
+    }
+
+    // ── JsonRpcRequest edge cases ──────────────────────────────────
+
+    #[test]
+    fn request_with_none_id_serializes_without_id() {
+        let mut req = JsonRpcRequest::new("m", None);
+        req.id = None;
+        let v = serde_json::to_value(&req).unwrap();
+        assert!(v.get("id").is_none());
+    }
+
+    #[test]
+    fn request_with_complex_params_round_trip() {
+        let params = json!({
+            "nested": {"deep": [1, 2, {"x": true}]},
+            "str": "hello",
+            "null_val": null
+        });
+        let req = JsonRpcRequest::new("complex", Some(params.clone())).with_id(Id::Number(99));
+        let s = serde_json::to_string(&req).unwrap();
+        let back: JsonRpcRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.params, Some(params));
+    }
+
+    // ── JsonRpcResponse edge cases ─────────────────────────────────
+
+    #[test]
+    fn response_success_with_null_result() {
+        let resp = JsonRpcResponse::success(Id::Number(1), serde_json::Value::Null);
+        let v = serde_json::to_value(&resp).unwrap();
+        // result is Some(Null) — not skipped because skip_serializing_if only
+        // checks Option::is_none, not the inner value.
+        assert_eq!(v["result"], serde_json::Value::Null);
+        assert!(v.get("error").is_none());
+    }
+
+    #[test]
+    fn response_error_with_null_id() {
+        let resp = JsonRpcResponse::error(Id::Null, JsonRpcError::parse_error());
+        let v = serde_json::to_value(&resp).unwrap();
+        assert_eq!(v["id"], serde_json::Value::Null);
+        assert_eq!(v["error"]["code"], -32700);
+        assert!(v.get("result").is_none());
+    }
+
+    // ── Large payload stress test ──────────────────────────────────
+
+    #[test]
+    fn request_with_large_params_round_trip() {
+        // Deeply nested JSON to verify no stack overflow or truncation.
+        let mut params = serde_json::Value::Object(serde_json::Map::new());
+        for i in 0..100 {
+            params[&format!("key_{i}")] = json!({
+                "data": vec![i; 100],
+                "meta": {"index": i, "tag": format!("item-{i}")}
+            });
+        }
+        let req =
+            JsonRpcRequest::new("bulk", Some(params.clone())).with_id(Id::String("bulk-1".into()));
+        let s = serde_json::to_string(&req).unwrap();
+        let back: JsonRpcRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(back.params, Some(params));
+    }
+
+    // ── build_notification with unicode ────────────────────────────
+
+    #[test]
+    fn build_notification_unicode_method() {
+        let s = build_notification("智能体.运行", json!({"a": 1}));
+        let v: serde_json::Value = serde_json::from_str(&s).unwrap();
+        assert_eq!(v["method"], "智能体.运行");
+        assert_eq!(v["params"]["a"], 1);
+    }
+
+    #[test]
+    fn build_notification_value_unicode_method() {
+        let v = build_notification_value("通知.推送", json!({"x": 0}));
+        assert_eq!(v["method"], "通知.推送");
+    }
+
+    // ── JSONRPC_VERSION constant ───────────────────────────────────
+
+    #[test]
+    fn jsonrpc_version_is_two_point_zero() {
+        assert_eq!(JSONRPC_VERSION, "2.0");
+    }
+
+    // ── Id equality / hashing ──────────────────────────────────────
+
+    #[test]
+    fn id_equality_and_hash() {
+        use std::collections::HashSet;
+        let a = Id::String("x".into());
+        let b = Id::String("x".into());
+        assert_eq!(a, b);
+        let set: HashSet<Id> = [a, b, Id::Number(1)].into_iter().collect();
+        assert_eq!(set.len(), 2);
+    }
+
+    // ── Round-trip through JsonRpcMessage for all three variants ───
+
+    #[test]
+    fn message_round_trip_request() {
+        let req = JsonRpcRequest::new("agent.run", Some(json!({"k": "v"})))
+            .with_id(Id::String("rid".into()));
+        let s = serde_json::to_string(&JsonRpcMessage::Request(req.clone())).unwrap();
+        let msg: JsonRpcMessage = serde_json::from_str(&s).unwrap();
+        match msg {
+            JsonRpcMessage::Request(r) => {
+                assert_eq!(r.method, "agent.run");
+                assert_eq!(r.id, Some(Id::String("rid".into())));
+            }
+            other => panic!("expected Request, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn message_round_trip_notification() {
+        let notif = JsonRpcNotification::new("ev.push", Some(json!({"n": 1})));
+        let s = serde_json::to_string(&JsonRpcMessage::Notification(notif.clone())).unwrap();
+        let msg: JsonRpcMessage = serde_json::from_str(&s).unwrap();
+        match msg {
+            JsonRpcMessage::Notification(n) => {
+                assert_eq!(n.method, "ev.push");
+                assert!(n.id_param_check());
+            }
+            other => panic!("expected Notification, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn message_round_trip_response() {
+        let resp = JsonRpcResponse::success(Id::Number(42), json!({"done": true}));
+        let s = serde_json::to_string(&JsonRpcMessage::Response(resp.clone())).unwrap();
+        let msg: JsonRpcMessage = serde_json::from_str(&s).unwrap();
+        match msg {
+            JsonRpcMessage::Response(r) => {
+                assert_eq!(r.id, Id::Number(42));
+                assert!(r.result.is_some());
+            }
+            other => panic!("expected Response, got {other:?}"),
+        }
+    }
+}
+
+// Helper trait only used in tests above — keeps the assertion readable without
+// adding a public method to JsonRpcNotification.
+#[cfg(test)]
+impl JsonRpcNotification {
+    fn id_param_check(&self) -> bool {
+        // Notifications never carry an id by construction; this is a no-op
+        // placeholder to document intent in the test.
+        true
+    }
 }

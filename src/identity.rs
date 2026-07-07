@@ -144,11 +144,17 @@ mod hostname {
                     }
                 }
             }
-            Err(std::io::Error::new(std::io::ErrorKind::NotFound, "hostname files"))
+            Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "hostname files",
+            ))
         }
         #[cfg(not(any(windows, unix)))]
         {
-            Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "unsupported platform"))
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "unsupported platform",
+            ))
         }
     }
 }
