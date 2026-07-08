@@ -17,7 +17,7 @@ use super::{
     seccomp, security_profile,
     types::{ContainerCreateParams, ContainerInfo, ContainerStatus, VolumeMount},
 };
-use arona_core::constants::DEFAULT_NETWORK;
+use _core::constants::DEFAULT_NETWORK;
 
 fn emit_event(tx: &tokio::sync::broadcast::Sender<ContainerEvent>, event: ContainerEvent) {
     if let Err(e) = tx.send(event) {

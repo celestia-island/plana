@@ -1,1 +1,1 @@
-pub use arona_core::AgentBadge;
+pub use _core::AgentBadge;

@@ -2,8 +2,8 @@ use serde_json::Value;
 use std::{future::Future, pin::Pin};
 
 use super::mcp_tools::McpToolResult;
-use arona_domain_agent::AgentMarker;
-use arona_domain_skills_permissions::ToolCapability;
+use _domain_agent::AgentMarker;
+use _domain_skills_permissions::ToolCapability;
 
 pub trait McpTool: Send + Sync + 'static {
     type Agent: AgentMarker;
@@ -11,9 +11,9 @@ pub trait McpTool: Send + Sync + 'static {
     const NAME: &'static str;
 
     const CAPABILITY: ToolCapability = ToolCapability {
-        access_mode: arona_domain_skills_permissions::AccessMode::Read,
-        risk_level: arona_domain_skills_permissions::RiskLevel::Info,
-        scope: arona_domain_skills_permissions::ToolScope::Any,
+        access_mode: _domain_skills_permissions::AccessMode::Read,
+        risk_level: _domain_skills_permissions::RiskLevel::Info,
+        scope: _domain_skills_permissions::ToolScope::Any,
     };
 
     fn invoke(&self, params: Value) -> Pin<Box<dyn Future<Output = McpToolResult> + Send + '_>>;
@@ -108,7 +108,7 @@ impl ToolDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arona_domain_agent::HubRisMarker;
+    use _domain_agent::HubRisMarker;
 
     struct DummyTool;
 

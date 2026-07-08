@@ -79,7 +79,7 @@ impl fmt::Display for TriggerPattern {
     }
 }
 
-pub use arona_prompt::prompt_loader::TriggerConfig;
+pub use _prompt::prompt_loader::TriggerConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TriggerEvent {

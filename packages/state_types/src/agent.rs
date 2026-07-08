@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 use super::mcp::{McpToolInfo, SkillInfo};
-use arona_core::{AgentBadge, AgentId};
-use arona_domain_agent::AgentKind;
+use _core::{AgentBadge, AgentId};
+use _domain_agent::AgentKind;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct CustomAgentId(pub String);

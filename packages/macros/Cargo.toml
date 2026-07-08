@@ -1,5 +1,5 @@
 [package]
-name = "arona-macros"
+name = "_macros"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

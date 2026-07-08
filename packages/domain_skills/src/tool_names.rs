@@ -288,7 +288,7 @@ pub mod remote_operations {
 ///
 /// If the architecture ever needs to grant specific agents additional
 /// direct tool access, add a `match` on `agent` here.
-pub fn agent_allowed_tools(_agent: arona_state_sync::Agent) -> &'static [&'static str] {
+pub fn agent_allowed_tools(_agent: _state_sync::Agent) -> &'static [&'static str] {
     &[
         cosmos::EXEC,
         cosmos::WRITE_TO_VAR,
@@ -296,7 +296,7 @@ pub fn agent_allowed_tools(_agent: arona_state_sync::Agent) -> &'static [&'stati
     ]
 }
 
-pub fn agent_tools(agent: arona_state_sync::Agent) -> Vec<String> {
+pub fn agent_tools(agent: _state_sync::Agent) -> Vec<String> {
     agent_allowed_tools(agent)
         .iter()
         .map(|s| s.to_string())

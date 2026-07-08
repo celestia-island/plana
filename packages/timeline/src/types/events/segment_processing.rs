@@ -8,7 +8,7 @@ use super::{
         TimelineSegmentBlock,
     },
 };
-use arona_text::StreamSegment;
+use _text::StreamSegment;
 
 #[derive(Debug, Clone)]
 pub struct TimelineGroupData {
@@ -32,7 +32,7 @@ pub struct TimelineGroupData {
     pub is_error: bool,
     pub state: GroupState,
     pub gray_tail_len: usize,
-    pub retry_reason: Option<arona_state_sync::gateway::RetryReason>,
+    pub retry_reason: Option<_state_sync::gateway::RetryReason>,
 }
 
 impl TimelineGroupData {

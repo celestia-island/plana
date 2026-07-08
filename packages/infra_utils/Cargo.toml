@@ -1,5 +1,5 @@
 [package]
-name = "arona-infra-utils"
+name = "_infra_utils"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

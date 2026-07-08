@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::agent::{Agent, AgentStatus, WorkStatus};
-use arona_core::{AgentBadge, AgentId};
+use _core::{AgentBadge, AgentId};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum RequestState {

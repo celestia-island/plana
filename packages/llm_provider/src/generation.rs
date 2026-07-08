@@ -9,7 +9,7 @@ use std::{
 use async_trait::async_trait;
 
 pub use crate::errors::GenerationError;
-use arona_config::model_category::GenerationModality;
+use _config::model_category::GenerationModality;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationRequest {

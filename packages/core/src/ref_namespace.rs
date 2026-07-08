@@ -10,7 +10,7 @@
 /// ## Usage
 ///
 /// ```ignore
-/// use arona_core::ref_namespace::RN;
+/// use _core::ref_namespace::RN;
 ///
 /// RN.assign_json_js("code:src/main.rs", &escaped)
 ///                            // "__refs['code:src/main.rs'] = JSON.parse('...');"

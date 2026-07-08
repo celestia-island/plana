@@ -10,7 +10,7 @@ use std::{
 
 use tracing::warn;
 
-use arona_core::execution_mode::ExecutionMode;
+use _core::execution_mode::ExecutionMode;
 
 fn deserialize_description<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
 where
@@ -134,7 +134,7 @@ pub struct PromptMetadata {
 #[derive(Debug, Clone, Default, serde::Deserialize)]
 pub struct PromptFeatures {
     #[serde(default)]
-    pub location: Option<arona_state_sync::mcp::SkillLocation>,
+    pub location: Option<_state_sync::mcp::SkillLocation>,
     #[serde(default)]
     pub config: Vec<String>,
     #[serde(default)]

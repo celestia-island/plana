@@ -8,7 +8,7 @@ use reqwest::Client;
 use super::{
     GenerationError, GenerationOutput, GenerationOutputData, GenerationProvider, GenerationRequest,
 };
-use arona_config::model_category::GenerationModality;
+use _config::model_category::GenerationModality;
 
 #[derive(Serialize)]
 struct ImageGenBody<'a> {

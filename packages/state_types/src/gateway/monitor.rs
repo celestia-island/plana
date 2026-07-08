@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::agent::Agent;
-use arona_core::AgentBadge;
+use _core::AgentBadge;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "action")]

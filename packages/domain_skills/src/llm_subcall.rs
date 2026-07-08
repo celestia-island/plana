@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use arona_state_sync::ModelTier;
+use _state_sync::ModelTier;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmSubcallResult {
@@ -24,7 +24,7 @@ pub trait LlmSubcallService: Send + Sync {
     fn record_token_usage(
         &self,
         agent_id: &str,
-        agent_type: arona_state_sync::Agent,
+        agent_type: _state_sync::Agent,
         model_name: Option<&str>,
         input_tokens: u32,
         output_tokens: u32,

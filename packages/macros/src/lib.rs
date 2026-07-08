@@ -608,7 +608,7 @@ pub fn define_typed_tools(input: TokenStream) -> TokenStream {
 
                 let capability_impl = if let Some(cap_expr) = &tool.capability {
                     quote! {
-                        const CAPABILITY: arona_domain_skills_permissions::ToolCapability = #cap_expr;
+                        const CAPABILITY: _domain_skills_permissions::ToolCapability = #cap_expr;
                     }
                 } else {
                     quote! {}
@@ -619,7 +619,7 @@ pub fn define_typed_tools(input: TokenStream) -> TokenStream {
                         #(#struct_fields),*
                     }
 
-                    impl arona_domain_skills::tool_trait::McpTool for #struct_name {
+                    impl _domain_skills::tool_trait::McpTool for #struct_name {
                         type Agent = #marker;
                         const NAME: &'static str = stringify!(#tool_name_lit);
                         #capability_impl
@@ -627,7 +627,7 @@ pub fn define_typed_tools(input: TokenStream) -> TokenStream {
                         fn invoke(
                             &self,
                             params: serde_json::Value,
-                        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = arona_domain_skills::mcp_tools::McpToolResult> + Send + '_>> {
+                        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = _domain_skills::mcp_tools::McpToolResult> + Send + '_>> {
                             #(#clone_stmts)*
                             Box::pin(async move {
                                 #func_path(#(#field_refs,)* params).await
@@ -1055,9 +1055,9 @@ impl syn::parse::Parse for AmmModule {
 fn amm_call_mode_expr(cm: &syn::Ident) -> proc_macro2::TokenStream {
     let s = cm.to_string();
     match s.as_str() {
-        "FireAndForget" => quote! { arona_state_sync::McpToolCallMode::FireAndForget },
-        "Blocking" => quote! { arona_state_sync::McpToolCallMode::Blocking },
-        "AsyncCallback" => quote! { arona_state_sync::McpToolCallMode::AsyncCallback },
+        "FireAndForget" => quote! { _state_sync::McpToolCallMode::FireAndForget },
+        "Blocking" => quote! { _state_sync::McpToolCallMode::Blocking },
+        "AsyncCallback" => quote! { _state_sync::McpToolCallMode::AsyncCallback },
         _ => quote! { #cm },
     }
 }
@@ -1065,8 +1065,8 @@ fn amm_call_mode_expr(cm: &syn::Ident) -> proc_macro2::TokenStream {
 fn amm_location_expr(loc: &syn::Ident) -> proc_macro2::TokenStream {
     let s = loc.to_string();
     match s.as_str() {
-        "Cosmos" => quote! { arona_state_sync::ToolLocation::Cosmos },
-        "Scepter" => quote! { arona_state_sync::ToolLocation::Scepter },
+        "Cosmos" => quote! { _state_sync::ToolLocation::Cosmos },
+        "Scepter" => quote! { _state_sync::ToolLocation::Scepter },
         _ => quote! { #loc },
     }
 }
@@ -1074,10 +1074,10 @@ fn amm_location_expr(loc: &syn::Ident) -> proc_macro2::TokenStream {
 fn amm_maturity_expr(mat: &syn::Ident) -> proc_macro2::TokenStream {
     let s = mat.to_string();
     match s.as_str() {
-        "Experimental" => quote! { arona_state_sync::ToolMaturity::Experimental },
-        "Stable" => quote! { arona_state_sync::ToolMaturity::Stable },
-        "Stub" => quote! { arona_state_sync::ToolMaturity::Stub },
-        "Deprecated" => quote! { arona_state_sync::ToolMaturity::Deprecated },
+        "Experimental" => quote! { _state_sync::ToolMaturity::Experimental },
+        "Stable" => quote! { _state_sync::ToolMaturity::Stable },
+        "Stub" => quote! { _state_sync::ToolMaturity::Stub },
+        "Deprecated" => quote! { _state_sync::ToolMaturity::Deprecated },
         _ => quote! { #mat },
     }
 }
@@ -1086,23 +1086,23 @@ fn amm_cap_expr(cap: &AmmToolCap) -> proc_macro2::TokenStream {
     let access = &cap.access;
     let risk = &cap.risk;
     let access_expr = match access.to_string().as_str() {
-        "Read" => quote! { arona_domain_skills_permissions::AccessMode::Read },
-        "Write" => quote! { arona_domain_skills_permissions::AccessMode::Write },
-        "Execute" => quote! { arona_domain_skills_permissions::AccessMode::Execute },
-        _ => quote! { arona_domain_skills_permissions::AccessMode::#access },
+        "Read" => quote! { _domain_skills_permissions::AccessMode::Read },
+        "Write" => quote! { _domain_skills_permissions::AccessMode::Write },
+        "Execute" => quote! { _domain_skills_permissions::AccessMode::Execute },
+        _ => quote! { _domain_skills_permissions::AccessMode::#access },
     };
     let risk_expr = match risk.to_string().as_str() {
-        "Info" => quote! { arona_domain_skills_permissions::RiskLevel::Info },
-        "Safe" => quote! { arona_domain_skills_permissions::RiskLevel::Safe },
-        "Unsafe" => quote! { arona_domain_skills_permissions::RiskLevel::Unsafe },
-        "Critical" => quote! { arona_domain_skills_permissions::RiskLevel::Critical },
-        _ => quote! { arona_domain_skills_permissions::RiskLevel::#risk },
+        "Info" => quote! { _domain_skills_permissions::RiskLevel::Info },
+        "Safe" => quote! { _domain_skills_permissions::RiskLevel::Safe },
+        "Unsafe" => quote! { _domain_skills_permissions::RiskLevel::Unsafe },
+        "Critical" => quote! { _domain_skills_permissions::RiskLevel::Critical },
+        _ => quote! { _domain_skills_permissions::RiskLevel::#risk },
     };
     quote! {
-        arona_domain_skills_permissions::ToolCapability {
+        _domain_skills_permissions::ToolCapability {
             access_mode: #access_expr,
             risk_level: #risk_expr,
-            scope: arona_domain_skills_permissions::ToolScope::Any,
+            scope: _domain_skills_permissions::ToolScope::Any,
         }
     }
 }
@@ -1243,7 +1243,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                     let capability_impl = if let Some(cap) = &tool.cap {
                         let cap_expr = amm_cap_expr(cap);
                         quote! {
-                            const CAPABILITY: arona_domain_skills_permissions::ToolCapability = #cap_expr;
+                            const CAPABILITY: _domain_skills_permissions::ToolCapability = #cap_expr;
                         }
                     } else {
                         quote! {}
@@ -1254,7 +1254,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                             #(#struct_field_defs),*
                         }
 
-                        impl arona_domain_skills::tool_trait::McpTool for #struct_name {
+                        impl _domain_skills::tool_trait::McpTool for #struct_name {
                             type Agent = #marker;
                             const NAME: &'static str = stringify!(#tool_name_lit);
                             #capability_impl
@@ -1262,7 +1262,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                             fn invoke(
                                 &self,
                                 params: serde_json::Value,
-                            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = arona_domain_skills::mcp_tools::McpToolResult> + Send + '_>> {
+                            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = _domain_skills::mcp_tools::McpToolResult> + Send + '_>> {
                                 #(#clone_stmts)*
                                 Box::pin(async move {
                                     #func_path(#(#field_refs,)* params).await
@@ -1383,15 +1383,15 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
             let desc = &tool.desc;
             let schema_expr = match &tool.schema {
                 Some(e) => quote! { #e },
-                None => quote! { arona_state_sync::McpToolParameters::default() },
+                None => quote! { _state_sync::McpToolParameters::default() },
             };
             let call_mode_expr = match &tool.call_mode {
                 Some(cm) => amm_call_mode_expr(cm),
-                None => quote! { arona_state_sync::McpToolCallMode::default() },
+                None => quote! { _state_sync::McpToolCallMode::default() },
             };
 
             let mut builder = quote! {
-                arona_state_sync::McpToolInfo::simple(
+                _state_sync::McpToolInfo::simple(
                     #tool_names_path::#name_const,
                     #desc,
                     #agent,
@@ -1419,7 +1419,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
     let enrich_map = if enrich_docs {
         quote! {
             .map(|mut info| {
-                arona_state_sync::McpToolDocLoader::enrich_tool_info(
+                _state_sync::McpToolDocLoader::enrich_tool_info(
                     &mut info,
                     &#agent,
                     &normalized,
@@ -1433,8 +1433,8 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
 
     let enrich_prefix = if enrich_docs {
         quote! {
-            let lang = arona_prompt::soul_loader::SoulLoader::get_default_lang();
-            let normalized = arona_prompt::soul_loader::SoulLoader::normalize_lang(&lang);
+            let lang = _prompt::soul_loader::SoulLoader::get_default_lang();
+            let normalized = _prompt::soul_loader::SoulLoader::normalize_lang(&lang);
         }
     } else {
         quote! {}
@@ -1465,29 +1465,29 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
             match sp_str.as_str() {
                 "Always" => {
                     quote! {
-                        fn snapshot_policy(&self) -> arona_domain_skills::mcp_tools::SnapshotPolicy {
-                            arona_domain_skills::mcp_tools::SnapshotPolicy::Always
+                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
+                            _domain_skills::mcp_tools::SnapshotPolicy::Always
                         }
                     }
                 },
                 "Never" => {
                     quote! {
-                        fn snapshot_policy(&self) -> arona_domain_skills::mcp_tools::SnapshotPolicy {
-                            arona_domain_skills::mcp_tools::SnapshotPolicy::Never
+                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
+                            _domain_skills::mcp_tools::SnapshotPolicy::Never
                         }
                     }
                 },
                 "OnFailure" => {
                     quote! {
-                        fn snapshot_policy(&self) -> arona_domain_skills::mcp_tools::SnapshotPolicy {
-                            arona_domain_skills::mcp_tools::SnapshotPolicy::OnFailure
+                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
+                            _domain_skills::mcp_tools::SnapshotPolicy::OnFailure
                         }
                     }
                 },
                 _ => {
                     quote! {
-                        fn snapshot_policy(&self) -> arona_domain_skills::mcp_tools::SnapshotPolicy {
-                            arona_domain_skills::mcp_tools::SnapshotPolicy::#sp
+                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
+                            _domain_skills::mcp_tools::SnapshotPolicy::#sp
                         }
                     }
                 },
@@ -1516,17 +1516,17 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                 if let Some(ref executor) = self.#field {
                     match tool_name {
                         #(#tool_match_patterns)|* => {
-                            let result = arona_domain_skills::SkillInvoker::invoke(
+                            let result = _domain_skills::SkillInvoker::invoke(
                                 executor.as_ref(),
                                 tool_name,
                                 parameters,
                             ).await;
                             return if result.success {
-                                arona_domain_skills::mcp_tools::McpToolResult::success_text(
+                                _domain_skills::mcp_tools::McpToolResult::success_text(
                                     serde_json::to_string(&result.data).unwrap_or_default(),
                                 )
                             } else {
-                                arona_domain_skills::mcp_tools::McpToolResult::failure_text(
+                                _domain_skills::mcp_tools::McpToolResult::failure_text(
                                     result.error.unwrap_or_default(),
                                 )
                             };
@@ -1571,8 +1571,8 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
 
         pub fn build_registry(
             #(#build_registry_params,)*
-        ) -> arona_domain_skills::tool_registry::ToolRegistry<#marker> {
-            let mut registry = arona_domain_skills::tool_registry::ToolRegistry::new();
+        ) -> _domain_skills::tool_registry::ToolRegistry<#marker> {
+            let mut registry = _domain_skills::tool_registry::ToolRegistry::new();
             #(#build_registry_body)*
             registry
         }
@@ -1581,22 +1581,22 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
             #(#handle_mcp_call_params,)*
             tool_name: &str,
             parameters: serde_json::Value,
-        ) -> arona_domain_skills::mcp_tools::McpToolResult {
+        ) -> _domain_skills::mcp_tools::McpToolResult {
             match tool_name {
                 #(#handle_mcp_call_arms)*
-                _ => arona_domain_skills::mcp_tools::McpToolResult::failure(
+                _ => _domain_skills::mcp_tools::McpToolResult::failure(
                     format!("{} does not provide tool: {}", #agent, tool_name)
                 ),
             }
         }
 
         #[async_trait::async_trait]
-        impl arona_domain_skills::mcp_tools::McpToolInvoker for #name {
+        impl _domain_skills::mcp_tools::McpToolInvoker for #name {
             async fn invoke(
                 &self,
                 tool_name: &str,
                 parameters: serde_json::Value,
-            ) -> arona_domain_skills::mcp_tools::McpToolResult {
+            ) -> _domain_skills::mcp_tools::McpToolResult {
                 #skill_routing_pre_dispatch
                 handle_mcp_call(
                     #(#invoke_field_refs,)*
@@ -1605,9 +1605,9 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                 ).await
             }
 
-            async fn get_tools(&self) -> Vec<arona_state_sync::McpToolInfo> {
+            async fn get_tools(&self) -> Vec<_state_sync::McpToolInfo> {
                 #enrich_prefix
-                let tool_infos: Vec<arona_state_sync::McpToolInfo> = vec![
+                let tool_infos: Vec<_state_sync::McpToolInfo> = vec![
                     #(#tool_info_build,)*
                 ];
                 tool_infos
@@ -1616,7 +1616,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                     .collect()
             }
 
-            fn get_tool_capabilities(&self) -> std::collections::HashMap<String, arona_domain_skills_permissions::ToolCapability> {
+            fn get_tool_capabilities(&self) -> std::collections::HashMap<String, _domain_skills_permissions::ToolCapability> {
                 let mut caps = std::collections::HashMap::new();
                 #(#cap_entries)*
                 caps

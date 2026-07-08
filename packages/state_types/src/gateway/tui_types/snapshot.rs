@@ -3,8 +3,8 @@ use uuid::Uuid;
 
 use super::agent::{CompletionOutcome, RequestState, TuiAgentInfo};
 use crate::agent::{Agent, WorkStatus};
-use arona_container::ContainerStatus;
-use arona_core::{AgentBadge, AgentId};
+use _container::ContainerStatus;
+use _core::{AgentBadge, AgentId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentPatch {

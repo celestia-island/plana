@@ -2,8 +2,8 @@ use anyhow::{Context, Result, bail};
 use uuid::Uuid;
 
 use super::*;
-use arona_core::var_namespace;
-use arona_text::StreamSegment;
+use _core::var_namespace;
+use _text::StreamSegment;
 
 fn txt(text: &str) -> StreamSegment {
     StreamSegment::Text {

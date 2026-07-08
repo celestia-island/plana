@@ -12,7 +12,7 @@
 //!   [`ToolRegistry`] and other generic contexts.
 //! - [`AgentDescriptor`] / [`AgentMetadataRegistry`] — runtime metadata store
 //!   (friendly name, layer, containerized flag) with lazy initialization.
-//! - [`AgentBadge`] — re-exported from `arona_core` for agent identification.
+//! - [`AgentBadge`] — re-exported from `_core` for agent identification.
 //!
 //! Design philosophy: agents are known at compile time; the marker pattern
 //! provides zero-cost type safety (no allocations, no virtual dispatch) while

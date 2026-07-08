@@ -7,7 +7,7 @@
 
 use std::collections::HashSet;
 
-use arona_core::ExecutionMode;
+use _core::ExecutionMode;
 
 /// Context provided to feature checkers after skill execution.
 #[derive(Debug, Clone)]

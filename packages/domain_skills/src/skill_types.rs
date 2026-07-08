@@ -11,11 +11,11 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
 
-use arona_prompt::{
+use _prompt::{
     prompt_loader::{PromptLoader, PromptMetadata},
     soul_loader::{SoulContent, SoulLoader},
 };
-use arona_state_sync::Agent;
+use _state_sync::Agent;
 
 /// Skill result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,7 +51,7 @@ impl SkillResult {
 pub trait SkillInvoker: Send + Sync {
     async fn invoke(&self, skill_name: &str, parameters: serde_json::Value) -> SkillResult;
 
-    fn get_skills(&self) -> Vec<arona_state_sync::SkillInfo>;
+    fn get_skills(&self) -> Vec<_state_sync::SkillInfo>;
 }
 
 /// Skill definition (contains compile-time included prompt)
@@ -71,7 +71,7 @@ pub struct Skill {
     pub prompt_template: String,
     /// Prompt metadata
     pub metadata: PromptMetadata,
-    pub next_action: Vec<arona_prompt::prompt_loader::StepAction>,
+    pub next_action: Vec<_prompt::prompt_loader::StepAction>,
     pub must_touch_next_action: bool,
 }
 
@@ -83,10 +83,10 @@ impl Skill {
     /// const PROMPT: &str = include_str!("../../../res/prompts/agents/skopeo/prompts/human_requirement_parse.md");
     /// let skill = Skill::from_include_str(PROMPT, &available_tools)?;
     /// ```
-    pub fn parse_steps(content: &str) -> Vec<arona_prompt::prompt_loader::StepAction> {
+    pub fn parse_steps(content: &str) -> Vec<_prompt::prompt_loader::StepAction> {
         let mut next_action = Vec::new();
 
-        if let Some(parts) = arona_prompt::front_matter::extract_front_matter(content)
+        if let Some(parts) = _prompt::front_matter::extract_front_matter(content)
             && let Ok(parsed) = parts.parse_toml_value()
             && let Some(ns) = parsed.get("next_action").and_then(|v| v.as_array())
         {
@@ -95,7 +95,7 @@ impl Skill {
                     let agent = table.get("agent").and_then(|v| v.as_str()).unwrap_or("");
                     let name = table.get("name").and_then(|v| v.as_str()).unwrap_or("");
                     if !agent.is_empty() && !name.is_empty() {
-                        next_action.push(arona_prompt::prompt_loader::StepAction {
+                        next_action.push(_prompt::prompt_loader::StepAction {
                             agent: agent.to_string(),
                             name: name.to_string(),
                         });
@@ -108,7 +108,7 @@ impl Skill {
     }
 
     pub fn parse_must_touch_next_action(content: &str) -> bool {
-        arona_prompt::front_matter::extract_front_matter(content)
+        _prompt::front_matter::extract_front_matter(content)
             .and_then(|parts| parts.parse_toml_value().ok())
             .and_then(|parsed| {
                 parsed
@@ -215,13 +215,13 @@ impl Skill {
     }
 
     /// Convert to SkillInfo (for compatibility with core library)
-    pub fn to_info(&self) -> arona_state_sync::SkillInfo {
+    pub fn to_info(&self) -> _state_sync::SkillInfo {
         let location = self
             .metadata
             .features
             .location
-            .unwrap_or(arona_state_sync::mcp::SkillLocation::Scepter);
-        arona_state_sync::SkillInfo {
+            .unwrap_or(_state_sync::mcp::SkillLocation::Scepter);
+        _state_sync::SkillInfo {
             name: self.name.clone(),
             description: self.description.clone(),
             agent_type: self.agent_type.clone(),
@@ -300,13 +300,13 @@ impl SkillRegistry {
     }
 
     /// Get all Skills
-    pub async fn list_all(&self) -> Vec<arona_state_sync::SkillInfo> {
+    pub async fn list_all(&self) -> Vec<_state_sync::SkillInfo> {
         let skills = self.skills.read().await;
         skills.values().map(|skill| skill.to_info()).collect()
     }
 
     /// Get Skills for specified Agent
-    pub async fn list_by_agent(&self, agent_type: Agent) -> Vec<arona_state_sync::SkillInfo> {
+    pub async fn list_by_agent(&self, agent_type: Agent) -> Vec<_state_sync::SkillInfo> {
         let skills = self.skills.read().await;
         skills
             .values()

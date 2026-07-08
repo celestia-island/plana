@@ -1,4 +1,4 @@
-//! arona_res
+//! _res
 //!
 //! Resource management crate — centralized management of all compile-time embedded resources
 //!

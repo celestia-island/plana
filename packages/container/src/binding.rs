@@ -87,7 +87,7 @@ impl std::str::FromStr for BindingId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct ContainerBinding {
     pub container_uuid: Uuid,
     pub binding_id: BindingId,
@@ -96,7 +96,7 @@ pub struct ContainerBinding {
     pub metadata: serde_json::Value,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct ContainerBindResult {
     pub container_uuid: Uuid,
     pub binding_id: String,

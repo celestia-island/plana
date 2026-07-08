@@ -1,2 +1,2 @@
-pub use arona_domain_skills_permissions::ToolIdentity;
+pub use _domain_skills_permissions::ToolIdentity;
 

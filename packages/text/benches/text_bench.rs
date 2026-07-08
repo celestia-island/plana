@@ -1,6 +1,6 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
-use arona_text::LlmTextBuilder;
+use _text::LlmTextBuilder;
 
 const CHUNK: &str = "The quick brown fox jumps over the lazy dog. ";
 

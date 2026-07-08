@@ -5,7 +5,7 @@ use uuid::Uuid;
 use tracing::{debug, info, trace, warn};
 
 use super::model_category::{GenerationParams, ModelCategory};
-use arona_core::{ModelTier, is_invalid_api_key};
+use _core::{ModelTier, is_invalid_api_key};
 
 const TIER_NORMAL: &str = "normal";
 
@@ -87,7 +87,7 @@ pub struct ResolvedEntrypoint {
 
 pub fn load_all_entrypoints_from_toml() -> Vec<ResolvedEntrypoint> {
     let mut results = Vec::new();
-    for provider_dir in arona_res::entrypoint::ENTRYPOINT_DIR.dirs() {
+    for provider_dir in _res::entrypoint::ENTRYPOINT_DIR.dirs() {
         for file in provider_dir.files() {
             if file.path().extension().and_then(|e| e.to_str()) != Some("toml") {
                 continue;
@@ -708,7 +708,7 @@ fn push_tier_models_from_toml(
 /// the embedded registry model card. Returns `None` when the provider dir,
 /// model file, or score section is absent.
 fn read_model_card_score(registry_provider_id: &str, model_name: &str) -> Option<f64> {
-    let dir = arona_res::entrypoint::get_provider_models_dir(registry_provider_id)?;
+    let dir = _res::entrypoint::get_provider_models_dir(registry_provider_id)?;
     let target = format!("{}.toml", model_name.replace('/', "_").replace(':', "-"));
     // Iterate rather than get_file(): include_dir's get_file is unreliable for
     // filenames containing dots, but files() reliably yields every entry.

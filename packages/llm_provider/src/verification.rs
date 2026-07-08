@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use arona_config::GenProtocol;
+use _config::GenProtocol;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ContentIntegrity {

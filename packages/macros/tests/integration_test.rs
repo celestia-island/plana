@@ -6,7 +6,7 @@ struct Counter {
     items: Vec<String>,
 }
 
-#[arona_macros::auto_bump]
+#[_macros::auto_bump]
 impl Counter {
     fn new() -> Self {
         Self {

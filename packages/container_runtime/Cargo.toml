@@ -1,5 +1,5 @@
 [package]
-name = "arona-container-runtime"
+name = "_container_runtime"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,7 +7,7 @@ publish = false
 license.workspace = true
 
 [dependencies]
-arona-container = { workspace = true }
+_container = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
@@ -28,4 +28,4 @@ nix = { version = "^0.29", features = ["process", "signal", "fs"] }
 anyhow.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tempfile = "^3"
-arona-config = { workspace = true }
+_config = { workspace = true }

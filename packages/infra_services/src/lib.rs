@@ -49,4 +49,4 @@ pub use ws_transport::{
     Message as WsTransportMessage, WsReceiver, WsSender, WsTransport, WsTransportConfig,
 };
 
-pub use arona_container_runtime::{RootfsCapability, detect_rootfs_capability};
+pub use _container_runtime::{RootfsCapability, detect_rootfs_capability};

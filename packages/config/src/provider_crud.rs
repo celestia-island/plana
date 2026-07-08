@@ -10,7 +10,7 @@ use tokio::{sync::broadcast, time::interval};
 use tracing::{info, warn};
 
 use super::{agent_config::LlmProviderConfig, gen_protocol::GenProtocol};
-use arona_core::is_invalid_api_key;
+use _core::is_invalid_api_key;
 
 const URL_PATH_OPENAI_RESPONSES: &str = "/openai/responses";
 const URL_PATH_V1_RESPONSES: &str = "/v1/responses";

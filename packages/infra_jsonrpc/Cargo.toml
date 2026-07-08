@@ -1,5 +1,5 @@
 [package]
-name = "arona-infra-jsonrpc"
+name = "_infra_jsonrpc"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -17,7 +17,7 @@ anyhow.workspace = true
 uuid.workspace = true
 strum.workspace = true
 
-arona-state-sync = { workspace = true }
+_state_sync = { workspace = true }
 arona.workspace = true
 
 [dev-dependencies]

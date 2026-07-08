@@ -36,24 +36,24 @@ repository = "https://github.com/celestia-island/arona"
 
 # ── Internal crate aliases ──────────────────────────────────
 arona = { path = "packages/arona" }
-arona-core = { path = "packages/core" }
-arona-config = { path = "packages/config" }
-arona-text = { path = "packages/text" }
-arona-macros = { path = "packages/macros" }
-arona-container = { path = "packages/container" }
-arona-container-runtime = { path = "packages/container_runtime" }
-arona-domain-agent = { path = "packages/domain_agent" }
-arona-domain-skills = { path = "packages/domain_skills" }
-arona-domain-skills-permissions = { path = "packages/domain_skills_permissions" }
-arona-custom-agent = { path = "packages/custom_agent" }
-arona-state-sync = { path = "packages/state_types" }
-arona-infra-jsonrpc = { path = "packages/infra_jsonrpc" }
-arona-infra-services = { path = "packages/infra_services" }
-arona-infra-utils = { path = "packages/infra_utils" }
-arona-llm-provider = { path = "packages/llm_provider" }
-arona-timeline = { path = "packages/timeline" }
-arona-prompt = { path = "packages/prompt" }
-arona-res = { path = "packages/res" }
+_core = { path = "packages/core" }
+_config = { path = "packages/config" }
+_text = { path = "packages/text" }
+_macros = { path = "packages/macros" }
+_container = { path = "packages/container" }
+_container_runtime = { path = "packages/container_runtime" }
+_domain_agent = { path = "packages/domain_agent" }
+_domain_skills = { path = "packages/domain_skills" }
+_domain_skills_permissions = { path = "packages/domain_skills_permissions" }
+_custom_agent = { path = "packages/custom_agent" }
+_state_sync = { path = "packages/state_types" }
+_infra_jsonrpc = { path = "packages/infra_jsonrpc" }
+_infra_services = { path = "packages/infra_services" }
+_infra_utils = { path = "packages/infra_utils" }
+_llm_provider = { path = "packages/llm_provider" }
+_timeline = { path = "packages/timeline" }
+_prompt = { path = "packages/prompt" }
+_res = { path = "packages/res" }
 
 # External dependency versions (carried from entelecheia workspace)
 anyhow = "^1"

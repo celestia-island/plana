@@ -44,7 +44,7 @@ pub struct GenerationParams {
     #[serde(default)]
     pub default_format: Option<String>,
     #[serde(default)]
-    pub maxarona_resolution: Option<String>,
+    pub max_resolution: Option<String>,
     #[serde(default)]
     pub supported_formats: Vec<String>,
     #[serde(default)]

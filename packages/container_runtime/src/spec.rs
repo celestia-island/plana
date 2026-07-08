@@ -9,7 +9,7 @@ use oci_spec::runtime::{
 };
 use tracing::info;
 
-use arona_container::{
+use _container::{
     errors::{ContainerError, ContainerResult},
     seccomp::{SeccompProfile, SeccompProfileData},
     types::ContainerCreateParams,
@@ -374,7 +374,7 @@ fn build_resources(
 }
 
 fn build_mounts(
-    volumes: &[arona_container::types::VolumeMount],
+    volumes: &[_container::types::VolumeMount],
     run_dir: &Path,
     container_id: &str,
 ) -> ContainerResult<Vec<Mount>> {
@@ -585,7 +585,7 @@ fn build_seccomp(
     params: &ContainerCreateParams,
     container_id: &str,
 ) -> ContainerResult<Option<LinuxSeccomp>> {
-    if arona_container::seccomp::is_seccomp_disabled() {
+    if _container::seccomp::is_seccomp_disabled() {
         return Ok(None);
     }
 
@@ -602,7 +602,7 @@ fn build_seccomp(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arona_container::types::ContainerCreateParams;
+    use _container::types::ContainerCreateParams;
     use anyhow::{Context, Result};
 
     fn default_params() -> ContainerCreateParams {

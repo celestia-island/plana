@@ -1,5 +1,5 @@
 [package]
-name = "arona-infra-services"
+name = "_infra_services"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,13 +7,13 @@ publish = false
 license.workspace = true
 
 [dependencies]
-arona-core = { workspace = true }
-arona-config = { workspace = true }
-arona-container = { workspace = true }
-arona-container-runtime = { workspace = true }
-arona-infra-utils = { workspace = true }
-arona-infra-jsonrpc = { workspace = true }
-arona-state-sync = { workspace = true }
+_core = { workspace = true }
+_config = { workspace = true }
+_container = { workspace = true }
+_container_runtime = { workspace = true }
+_infra_utils = { workspace = true }
+_infra_jsonrpc = { workspace = true }
+_state_sync = { workspace = true }
 
 anyhow.workspace = true
 async-trait.workspace = true

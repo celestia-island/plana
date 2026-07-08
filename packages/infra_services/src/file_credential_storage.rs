@@ -11,7 +11,7 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
 };
 
-use arona_core::{CredentialError, CredentialStorage};
+use _core::{CredentialError, CredentialStorage};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CredentialRecord {
@@ -80,7 +80,7 @@ impl FileCredentialStorage {
     }
 
     fn get_credentials_dir() -> Result<PathBuf> {
-        Ok(arona_config::UserConfig::config_dir().join("credentials"))
+        Ok(_config::UserConfig::config_dir().join("credentials"))
     }
 
     pub fn credentials_dir(&self) -> &Path {

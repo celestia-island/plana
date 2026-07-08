@@ -19,13 +19,13 @@ use super::{
     SubscriptionEntry, SubscriptionSource,
     events::{clone_repository, copy_dir_recursive, find_agent_root},
 };
-use arona_state_sync::gateway::tui_types::layer2::CustomAgentInfo;
+use _state_sync::gateway::tui_types::layer2::CustomAgentInfo;
 
 pub struct CustomAgentManager;
 
 impl CustomAgentManager {
     pub fn custom_agents_root() -> PathBuf {
-        arona_config::UserConfig::custom_agents_dir()
+        _config::UserConfig::custom_agents_dir()
     }
 
     pub fn git_dir() -> PathBuf {

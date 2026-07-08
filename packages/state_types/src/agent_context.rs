@@ -1,5 +1,5 @@
 use crate::agent::Agent;
-use arona_core::AgentBadge;
+use _core::AgentBadge;
 
 #[derive(Debug, Clone)]
 pub struct AgentContext {

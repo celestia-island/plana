@@ -2,8 +2,8 @@ use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
 use tracing::{info, warn};
 
-use arona_config::UserConfig;
-use arona_infra_jsonrpc::unix_socket::log_socket_dir;
+use _config::UserConfig;
+use _infra_jsonrpc::unix_socket::log_socket_dir;
 
 const TOKEN_FILE_NAME: &str = "scepter.token";
 

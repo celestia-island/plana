@@ -1,5 +1,5 @@
 [package]
-name = "arona-prompt"
+name = "_prompt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -17,6 +17,6 @@ toml.workspace = true
 tracing.workspace = true
 tera.workspace = true
 chrono.workspace = true
-arona-core = { workspace = true }
-arona-state-sync = { workspace = true }
-arona-domain-agent = { workspace = true }
+_core = { workspace = true }
+_state_sync = { workspace = true }
+_domain_agent = { workspace = true }

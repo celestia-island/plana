@@ -5,8 +5,8 @@ use std::collections::HashMap;
 
 use tracing::{debug, error, info};
 
-use arona_domain_skills_permissions::ToolCapability;
-use arona_state_sync::{Agent, McpToolInfo};
+use _domain_skills_permissions::ToolCapability;
+use _state_sync::{Agent, McpToolInfo};
 
 /// Validate that all required parameters are present and non-empty.
 /// Returns `None` if valid, or a failure `McpToolResult` if any required param is missing/empty.

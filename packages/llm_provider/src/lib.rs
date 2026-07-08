@@ -44,7 +44,7 @@ pub use registry::ProviderRegistry;
 use tracing::warn;
 pub use verification::{ContentIntegrity, ContentVerification, VerificationStatus};
 
-pub(crate) use arona_config::GenProtocol;
+pub(crate) use _config::GenProtocol;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -147,7 +147,7 @@ impl From<&str> for MessageRole {
     }
 }
 
-pub use arona_core::LlmImageContent;
+pub use _core::LlmImageContent;
 
 pub const HEADER_CONTENT_TYPE: &str = "Content-Type";
 pub const HEADER_AUTHORIZATION: &str = "Authorization";
@@ -320,7 +320,7 @@ pub struct LlmChatRequest {
     pub tool_choice: Option<ToolChoice>,
 }
 
-pub use arona_core::ToolDefinition;
+pub use _core::ToolDefinition;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmChatResponse {
@@ -380,7 +380,7 @@ pub struct ProviderConfig {
     #[serde(default)]
     pub auth_header: Option<String>,
     #[serde(default)]
-    pub protocol: Option<arona_config::GenProtocol>,
+    pub protocol: Option<_config::GenProtocol>,
     #[serde(default)]
     pub request_timeout_secs: Option<u64>,
 }
@@ -438,7 +438,7 @@ impl ProviderConfig {
         self
     }
 
-    pub fn with_protocol(mut self, protocol: arona_config::GenProtocol) -> Self {
+    pub fn with_protocol(mut self, protocol: _config::GenProtocol) -> Self {
         self.protocol = Some(protocol);
         self
     }

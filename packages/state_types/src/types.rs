@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-pub use arona_core::ModelTier;
+pub use _core::ModelTier;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

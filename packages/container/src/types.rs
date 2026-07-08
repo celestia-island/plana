@@ -88,7 +88,7 @@ impl std::fmt::Display for ContainerStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct VolumeMount {
     pub host_path: String,
     pub container_path: String,
@@ -114,7 +114,7 @@ impl VolumeMount {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct PortMapping {
     pub host_port: u16,
     pub container_port: u16,
@@ -126,7 +126,7 @@ fn default_protocol() -> String {
     "tcp".to_string()
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct ContainerInfo {
     pub id: String,
     pub name: String,
@@ -237,7 +237,7 @@ pub struct ContainerForkParams {
     pub read_only_rootfs: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct ContainerDetail {
     #[serde(flatten)]
     pub info: ContainerInfo,
@@ -247,14 +247,14 @@ pub struct ContainerDetail {
     pub error: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct ExecOutput {
     pub exit_code: Option<i64>,
     pub stdout: String,
     pub stderr: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct ImageInfo {
     pub id: String,
     pub repository: String,
@@ -263,7 +263,7 @@ pub struct ImageInfo {
     pub created: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, arona_macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
 pub struct DockerVolumeInfo {
     pub name: String,
     pub driver: String,

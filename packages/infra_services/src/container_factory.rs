@@ -2,13 +2,13 @@ use std::path::{Path, PathBuf};
 
 use tracing::{info, warn};
 
-use arona_container::{
+use _container::{
     cli_backend::CliContainerBackend, errors::ContainerResult, ops::ContainerOps,
     types::ContainerRuntimeType,
 };
 
 pub fn default_container_data_dir() -> PathBuf {
-    arona_config::UserConfig::config_dir().join("containers")
+    _config::UserConfig::config_dir().join("containers")
 }
 
 /// Returns the container runtime type for **outer orchestration**.
@@ -100,7 +100,7 @@ pub fn cosmos_runtime_type() -> ContainerRuntimeType {
         return ContainerRuntimeType::from_str_lossy(&val);
     }
 
-    let inside = arona_container_runtime::detect_inside_container();
+    let inside = _container_runtime::detect_inside_container();
     let docker_socket = std::path::Path::new("/var/run/docker.sock").exists();
     let dev_fuse = std::path::Path::new("/dev/fuse").exists();
 
@@ -193,7 +193,7 @@ pub async fn create_container_backend(
 ) -> ContainerResult<Box<dyn ContainerOps>> {
     match runtime {
         ContainerRuntimeType::Youki => {
-            let mgr = arona_container_runtime::YoukiManager::new(data_dir)?;
+            let mgr = _container_runtime::YoukiManager::new(data_dir)?;
             mgr.initialize().await?;
             if let Err(e) = mgr.reconcile().await {
                 warn!(
@@ -204,7 +204,7 @@ pub async fn create_container_backend(
             Ok(Box::new(mgr))
         },
         ContainerRuntimeType::Docker => {
-            let mgr = arona_container::ContainerManager::new()?;
+            let mgr = _container::ContainerManager::new()?;
             Ok(Box::new(mgr))
         },
         ContainerRuntimeType::Wslc | ContainerRuntimeType::AppleContainer => {
@@ -219,7 +219,7 @@ pub async fn create_container_backend(
 }
 
 pub async fn create_container_backend_from_config(
-    config: &arona_config::UserConfig,
+    config: &_config::UserConfig,
     data_dir: &Path,
 ) -> ContainerResult<Box<dyn ContainerOps>> {
     let runtime = ContainerRuntimeType::from_str_lossy(&config.container_backend.runtime);

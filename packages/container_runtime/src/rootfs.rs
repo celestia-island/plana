@@ -6,7 +6,7 @@ use std::{
 use nix::unistd::{self, Gid, Uid};
 use tracing::{debug, error, info, warn};
 
-use arona_container::errors::{ContainerError, ContainerResult};
+use _container::errors::{ContainerError, ContainerResult};
 
 const ROOTFS_CACHE_DIR: &str = "rootfs";
 

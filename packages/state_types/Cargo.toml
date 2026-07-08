@@ -1,5 +1,5 @@
 [package]
-name = "arona-state-sync"
+name = "_state_sync"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -17,11 +17,11 @@ toml.workspace = true
 regex.workspace = true
 tracing.workspace = true
 
-arona-core = { workspace = true }
-arona-config = { workspace = true }
-arona-text = { workspace = true }
-arona-domain-agent = { workspace = true }
-arona-container = { workspace = true }
+_core = { workspace = true }
+_config = { workspace = true }
+_text = { workspace = true }
+_domain_agent = { workspace = true }
+_container = { workspace = true }
 arona.workspace = true
 
 [dev-dependencies]

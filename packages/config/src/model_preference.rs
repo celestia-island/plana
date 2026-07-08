@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use arona_core::ModelTier;
+use _core::ModelTier;
 
 use crate::gen_protocol::Capability;
 
@@ -422,7 +422,7 @@ pub fn load_agent_model_preferences() -> AgentModelPreferences {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arona_core::ModelTier;
+    use _core::ModelTier;
 
     #[test]
     fn qualified_model_id_parse() {

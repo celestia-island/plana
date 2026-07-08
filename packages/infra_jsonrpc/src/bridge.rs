@@ -2,7 +2,7 @@ use serde_json::Value;
 use std::fmt;
 
 use super::{json_keys::BridgeKey, types::*};
-use arona_state_sync::gateway::Message as CoreMessage;
+use _state_sync::gateway::Message as CoreMessage;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GatewayMethod {
@@ -281,7 +281,7 @@ pub fn deserialize_from_jsonrpc(json: &str) -> Result<Option<CoreMessage>, JsonR
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arona_state_sync::gateway::{BaseMessage, TuiMessage};
+    use _state_sync::gateway::{BaseMessage, TuiMessage};
     use anyhow::Context;
 
     #[test]
@@ -400,7 +400,7 @@ mod tests {
     #[test]
     fn roundtrip_system_message() -> anyhow::Result<()> {
         let msg = CoreMessage::Tui(TuiMessage::SystemMessage {
-            notification: arona_state_sync::SystemNotification::WebUiStarted,
+            notification: _state_sync::SystemNotification::WebUiStarted,
             timestamp: "2026-05-11T12:00:00Z".to_string(),
         });
         let (method, params) = core_message_to_method_and_params(&msg);
@@ -414,7 +414,7 @@ mod tests {
             }) => {
                 assert_eq!(
                     notification,
-                    arona_state_sync::SystemNotification::WebUiStarted
+                    _state_sync::SystemNotification::WebUiStarted
                 );
                 assert_eq!(timestamp, "2026-05-11T12:00:00Z");
             },

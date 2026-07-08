@@ -33,7 +33,7 @@ pub use message::{
 // Industrial wire types (telemetry / alarm / discovery / write-approval /
 // station topology / alarm history) live in `message::types` but are
 // re-exported here so downstream crates can import them via the shorter
-// `arona_state_sync::gateway::IndustrialAlarmEvent` path.
+// `_state_sync::gateway::IndustrialAlarmEvent` path.
 pub use message::{
     IndustrialAlarmEvent, IndustrialAlarmHistory, IndustrialAlarmHistoryEntry,
     IndustrialAlarmLevel, IndustrialAlarmThresholds, IndustrialDiscoveryPhase,

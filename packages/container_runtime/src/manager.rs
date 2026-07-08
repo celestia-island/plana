@@ -14,7 +14,7 @@ use crate::{
     spec,
     state::{YoukiContainerRecord, YoukiState},
 };
-use arona_container::{
+use _container::{
     errors::{ContainerError, ContainerResult},
     events::ContainerEvent,
     ops::ContainerOps,
@@ -389,7 +389,7 @@ impl YoukiManager {
         &self,
         container_dir: &std::path::Path,
         host_dir: &std::path::Path,
-        changes: &mut Vec<arona_container::PathChange>,
+        changes: &mut Vec<_container::PathChange>,
     ) -> ContainerResult<()> {
         let mut entries = tokio::fs::read_dir(container_dir).await.map_err(|e| {
             ContainerError::OperationFailed {
@@ -420,9 +420,9 @@ impl YoukiManager {
 
             match (host_meta, container_meta) {
                 (None, Ok(cm)) => {
-                    changes.push(arona_container::PathChange {
+                    changes.push(_container::PathChange {
                         path: relative,
-                        kind: arona_container::ChangeKind::Added,
+                        kind: _container::ChangeKind::Added,
                     });
                     if cm.is_dir() {
                         self.collect_all_paths(&container_path, self.rootfs.cache_dir(), changes);
@@ -433,9 +433,9 @@ impl YoukiManager {
                 },
                 (Some(hm), Ok(cm)) => {
                     if hm.len() != cm.len() {
-                        changes.push(arona_container::PathChange {
+                        changes.push(_container::PathChange {
                             path: relative,
-                            kind: arona_container::ChangeKind::Modified,
+                            kind: _container::ChangeKind::Modified,
                         });
                     } else if hm.modified().ok() != cm.modified().ok() {
                         let host_bytes = match std::fs::read(&host_path) {
@@ -453,17 +453,17 @@ impl YoukiManager {
                             },
                         };
                         if host_bytes != container_bytes {
-                            changes.push(arona_container::PathChange {
+                            changes.push(_container::PathChange {
                                 path: relative,
-                                kind: arona_container::ChangeKind::Modified,
+                                kind: _container::ChangeKind::Modified,
                             });
                         }
                     }
                 },
                 (Some(_), Err(_)) => {
-                    changes.push(arona_container::PathChange {
+                    changes.push(_container::PathChange {
                         path: relative,
-                        kind: arona_container::ChangeKind::Deleted,
+                        kind: _container::ChangeKind::Deleted,
                     });
                 },
                 _ => {},
@@ -476,15 +476,15 @@ impl YoukiManager {
         &self,
         dir: &std::path::Path,
         prefix: &std::path::Path,
-        changes: &mut Vec<arona_container::PathChange>,
+        changes: &mut Vec<_container::PathChange>,
     ) {
         if let Ok(entries) = std::fs::read_dir(dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
                 let relative = path.strip_prefix(prefix).unwrap_or(&path).to_path_buf();
-                changes.push(arona_container::PathChange {
+                changes.push(_container::PathChange {
                     path: relative,
-                    kind: arona_container::ChangeKind::Added,
+                    kind: _container::ChangeKind::Added,
                 });
                 if path.is_dir() {
                     self.collect_all_paths(&path, prefix, changes);
@@ -510,7 +510,7 @@ impl YoukiManager {
         &self,
         dir: &std::path::Path,
         base_path: &str,
-        changes: &mut Vec<arona_container::PathChange>,
+        changes: &mut Vec<_container::PathChange>,
     ) -> ContainerResult<()> {
         let mut entries =
             tokio::fs::read_dir(dir)
@@ -536,16 +536,16 @@ impl YoukiManager {
             let meta = tokio::fs::metadata(&path).await;
             match meta {
                 Ok(m) if m.is_dir() => {
-                    changes.push(arona_container::PathChange {
+                    changes.push(_container::PathChange {
                         path: std::path::PathBuf::from(&relative),
-                        kind: arona_container::ChangeKind::Added,
+                        kind: _container::ChangeKind::Added,
                     });
                     Box::pin(self.scan_upper_recursive(&path, &prefix, changes)).await?;
                 },
                 Ok(_) => {
-                    changes.push(arona_container::PathChange {
+                    changes.push(_container::PathChange {
                         path: std::path::PathBuf::from(&relative),
-                        kind: arona_container::ChangeKind::Modified,
+                        kind: _container::ChangeKind::Modified,
                     });
                 },
                 Err(_) => {},
@@ -558,7 +558,7 @@ impl YoukiManager {
         &self,
         dir: &std::path::Path,
         parent_prefix: &str,
-        changes: &mut Vec<arona_container::PathChange>,
+        changes: &mut Vec<_container::PathChange>,
     ) -> ContainerResult<()> {
         let mut entries =
             tokio::fs::read_dir(dir)
@@ -587,16 +587,16 @@ impl YoukiManager {
             let meta = tokio::fs::metadata(&path).await;
             match meta {
                 Ok(m) if m.is_dir() => {
-                    changes.push(arona_container::PathChange {
+                    changes.push(_container::PathChange {
                         path: std::path::PathBuf::from(&relative),
-                        kind: arona_container::ChangeKind::Added,
+                        kind: _container::ChangeKind::Added,
                     });
                     Box::pin(self.scan_upper_recursive(&path, &relative, changes)).await?;
                 },
                 Ok(_) => {
-                    changes.push(arona_container::PathChange {
+                    changes.push(_container::PathChange {
                         path: std::path::PathBuf::from(&relative),
-                        kind: arona_container::ChangeKind::Modified,
+                        kind: _container::ChangeKind::Modified,
                     });
                 },
                 Err(_) => {},
@@ -1313,7 +1313,7 @@ impl ContainerOps for YoukiManager {
     async fn writable_rootfs(
         &self,
         container_id: &str,
-    ) -> ContainerResult<arona_container::WritableRootfs> {
+    ) -> ContainerResult<_container::WritableRootfs> {
         let resolved_id = self.resolve_id(container_id).await?;
         let record = self
             .state
@@ -1322,13 +1322,13 @@ impl ContainerOps for YoukiManager {
             .ok_or_else(|| ContainerError::NotFound(resolved_id.clone()))?;
         let merged = record.rootfs_path.join("merged");
         if merged.is_dir() {
-            return Ok(arona_container::WritableRootfs {
+            return Ok(_container::WritableRootfs {
                 path: merged,
                 is_direct: true,
             });
         }
         if record.rootfs_path.is_dir() {
-            return Ok(arona_container::WritableRootfs {
+            return Ok(_container::WritableRootfs {
                 path: record.rootfs_path,
                 is_direct: true,
             });
@@ -1344,7 +1344,7 @@ impl ContainerOps for YoukiManager {
         container_id: &str,
         _workspace_path: &std::path::Path,
         base_path: &str,
-    ) -> ContainerResult<Vec<arona_container::PathChange>> {
+    ) -> ContainerResult<Vec<_container::PathChange>> {
         let record = self.resolve_record(container_id).await?;
         let upper = record.rootfs_path.join("upper");
         let target = if upper.is_dir() {
@@ -1494,7 +1494,7 @@ impl ContainerOps for YoukiManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use arona_container::types::ChangeKind;
+    use _container::types::ChangeKind;
     use anyhow::{Context, Result};
     use tempfile::TempDir;
 
@@ -1838,7 +1838,7 @@ mod tests {
         let mgr = make_mgr(&tmp);
         let mut rx = mgr.subscribe();
 
-        use arona_container::ContainerEvent;
+        use _container::ContainerEvent;
         let _ = mgr.event_tx.send(ContainerEvent::Created {
             id: "test-id".to_string(),
             name: "test-name".to_string(),
@@ -1864,7 +1864,7 @@ mod tests {
         let mut rx1 = mgr.subscribe();
         let mut rx2 = mgr.subscribe();
 
-        use arona_container::ContainerEvent;
+        use _container::ContainerEvent;
         let _ = mgr.event_tx.send(ContainerEvent::Destroyed {
             id: "gone".to_string(),
         });
@@ -1908,7 +1908,7 @@ mod tests {
 
         let added: Vec<String> = changes
             .iter()
-            .filter(|c| c.kind == arona_container::ChangeKind::Added)
+            .filter(|c| c.kind == _container::ChangeKind::Added)
             .map(|c| c.path.to_string_lossy().to_string())
             .collect();
 

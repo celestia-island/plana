@@ -9,9 +9,9 @@ use super::super::super::{
     monitor::{CosmosContainerInfo, CosmosOperationLogEntry},
 };
 use crate::{agent::Agent, agent_error::StructuredAgentError};
-use arona_config::GenProtocol;
-use arona_core::AgentBadge;
-use arona_text::{LlmStream, StreamChunkKind};
+use _config::GenProtocol;
+use _core::AgentBadge;
+use _text::{LlmStream, StreamChunkKind};
 
 fn default_search_limit() -> u64 {
     10
@@ -465,7 +465,7 @@ pub enum TuiMessage {
         #[serde(default)]
         language: Option<String>,
         #[serde(default)]
-        images: Option<Vec<arona_core::LlmImageContent>>,
+        images: Option<Vec<_core::LlmImageContent>>,
         #[serde(default)]
         workspace_id: Option<Uuid>,
     },
