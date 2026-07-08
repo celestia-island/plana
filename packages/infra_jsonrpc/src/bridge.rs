@@ -13,6 +13,17 @@ pub enum GatewayMethod {
     Skill(&'static str),
     Node(&'static str),
     Monitor(&'static str),
+    Conversation(&'static str),
+    Device(&'static str),
+    Screen(&'static str),
+    Cli(&'static str),
+    Trigger(&'static str),
+    Sensor(&'static str),
+    Discovery(&'static str),
+    Command(&'static str),
+    /// DLC extension method — arbitrary string for consumer-specific RPCs
+    /// (e.g. shittim-chest's auth.*/channels.*/topology.* etc.)
+    Extension(String),
 }
 
 impl GatewayMethod {
@@ -80,6 +91,15 @@ impl GatewayMethod {
             Self::Skill(action) => format!("Skill.{}", action),
             Self::Node(action) => format!("Node.{}", action),
             Self::Monitor(action) => format!("Monitor.{}", action),
+            Self::Conversation(action) => format!("Conversation.{}", action),
+            Self::Device(action) => format!("Device.{}", action),
+            Self::Screen(action) => format!("Screen.{}", action),
+            Self::Cli(action) => format!("Cli.{}", action),
+            Self::Trigger(action) => format!("Trigger.{}", action),
+            Self::Sensor(action) => format!("Sensor.{}", action),
+            Self::Discovery(action) => format!("Discovery.{}", action),
+            Self::Command(action) => format!("Command.{}", action),
+            Self::Extension(s) => s.clone(),
         }
     }
 
@@ -92,10 +112,19 @@ impl GatewayMethod {
             Self::Skill(_) => "Skill",
             Self::Node(_) => "Node",
             Self::Monitor(_) => "Monitor",
+            Self::Conversation(_) => "Conversation",
+            Self::Device(_) => "Device",
+            Self::Screen(_) => "Screen",
+            Self::Cli(_) => "Cli",
+            Self::Trigger(_) => "Trigger",
+            Self::Sensor(_) => "Sensor",
+            Self::Discovery(_) => "Discovery",
+            Self::Command(_) => "Command",
+            Self::Extension(_) => "Extension",
         }
     }
 
-    pub fn action(&self) -> &'static str {
+    pub fn action(&self) -> &str {
         match self {
             Self::Tui(a)
             | Self::Base(a)
@@ -103,7 +132,16 @@ impl GatewayMethod {
             | Self::Mcp(a)
             | Self::Skill(a)
             | Self::Node(a)
-            | Self::Monitor(a) => a,
+            | Self::Monitor(a)
+            | Self::Conversation(a)
+            | Self::Device(a)
+            | Self::Screen(a)
+            | Self::Cli(a)
+            | Self::Trigger(a)
+            | Self::Sensor(a)
+            | Self::Discovery(a)
+            | Self::Command(a) => a,
+            Self::Extension(s) => s.as_str(),
         }
     }
 }
@@ -172,7 +210,55 @@ impl std::str::FromStr for GatewayMethod {
             "Skill.CallSkill" => Ok(Self::SKILL_CALL),
             "Skill.ListSkills" => Ok(Self::SKILL_LIST_SKILLS),
             "Skill.SkillsListResponse" => Ok(Self::SKILL_LIST_SKILLS_RESPONSE),
-            other => Err(UnknownGatewayMethodError(other.to_string())),
+            // ── Device / Screen (hardware terminal + WebRTC) ──
+            "Device.PolemosRegister" => Ok(Self::Device("PolemosRegister")),
+            "Device.Heartbeat" => Ok(Self::Device("Heartbeat")),
+            "Device.TerminalOpen" => Ok(Self::Device("TerminalOpen")),
+            "Device.TerminalInput" => Ok(Self::Device("TerminalInput")),
+            "Device.TerminalResize" => Ok(Self::Device("TerminalResize")),
+            "Device.TerminalPoll" => Ok(Self::Device("TerminalPoll")),
+            "Device.TerminalClose" => Ok(Self::Device("TerminalClose")),
+            "Device.TerminalList" => Ok(Self::Device("TerminalList")),
+            "Device.SubscribeOutput" => Ok(Self::Device("SubscribeOutput")),
+            "Device.FileList" => Ok(Self::Device("FileList")),
+            "Device.FileDownload" => Ok(Self::Device("FileDownload")),
+            "Device.FileUpload" => Ok(Self::Device("FileUpload")),
+            "Device.Ping" => Ok(Self::Device("Ping")),
+            "Device.WebrtcOffer" => Ok(Self::Device("WebrtcOffer")),
+            "Device.WebrtcIce" => Ok(Self::Device("WebrtcIce")),
+            "Screen.Offer" => Ok(Self::Screen("Offer")),
+            "Screen.Answer" => Ok(Self::Screen("Answer")),
+            "Screen.Ice" => Ok(Self::Screen("Ice")),
+            "Screen.IceCandidate" => Ok(Self::Screen("IceCandidate")),
+            // ── Cli query methods ──
+            "Cli.Status" => Ok(Self::Cli("Status")),
+            "Cli.ChatHistory" => Ok(Self::Cli("ChatHistory")),
+            "Cli.TimelineList" => Ok(Self::Cli("TimelineList")),
+            "Cli.TimelineShow" => Ok(Self::Cli("TimelineShow")),
+            "Cli.RecentChats" => Ok(Self::Cli("RecentChats")),
+            "Cli.SessionStats" => Ok(Self::Cli("SessionStats")),
+            "Cli.SessionPurge" => Ok(Self::Cli("SessionPurge")),
+            "Cli.SessionVacuum" => Ok(Self::Cli("SessionVacuum")),
+            "Cli.Search" => Ok(Self::Cli("Search")),
+            "Cli.TraceChain" => Ok(Self::Cli("TraceChain")),
+            "Cli.ListPolemosDevices" => Ok(Self::Cli("ListPolemosDevices")),
+            "Cli.ListTools" => Ok(Self::Cli("ListTools")),
+            "Cli.ListSkills" => Ok(Self::Cli("ListSkills")),
+            "Cli.ListWorkspaces" => Ok(Self::Cli("ListWorkspaces")),
+            "Cli.OpenWorkspace" => Ok(Self::Cli("OpenWorkspace")),
+            "Cli.SwitchWorkspace" => Ok(Self::Cli("SwitchWorkspace")),
+            // ── Hardware trigger/sensor/discovery/command ──
+            "Trigger.Event" => Ok(Self::Trigger("Event")),
+            "Sensor.Batch" => Ok(Self::Sensor("Batch")),
+            "Discovery.Progress" => Ok(Self::Discovery("Progress")),
+            "Command.Exec" => Ok(Self::Command("Exec")),
+            // ── Conversation internal messages ──
+            "Conversation.AskAgent" => Ok(Self::Conversation("AskAgent")),
+            "Conversation.ReplyAgent" => Ok(Self::Conversation("ReplyAgent")),
+            "Conversation.Escalated" => Ok(Self::Conversation("Escalated")),
+            "Conversation.Resolved" => Ok(Self::Conversation("Resolved")),
+            // ── Extension fallback: unknown methods become Extension ──
+            other => Ok(Self::Extension(other.to_string())),
         }
     }
 }
