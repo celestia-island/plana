@@ -610,6 +610,57 @@ pub mod methods {
     pub const TUI_AGENT_RESPONSE: UnixMethod = UnixMethod::TuiAgentResponse;
 }
 
+/// Build a JSON-RPC notification string from a method name and serializable params.
+/// Falls back to `internal.fallback` on empty method or serialization failure.
+pub fn build_notification(method: &str, params: impl serde::Serialize) -> String {
+    let method = if method.trim().is_empty() {
+        "internal.fallback"
+    } else {
+        method
+    };
+    let params = serde_json::to_value(&params)
+        .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
+    let notif = JsonRpcNotification {
+        jsonrpc: JSONRPC_VERSION.to_string(),
+        method: method.to_string(),
+        params: Some(params),
+    };
+    serde_json::to_string(&notif).unwrap_or_else(|_| {
+        let fallback = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "internal.fallback",
+            "params": {}
+        });
+        serde_json::to_string(&fallback).unwrap_or_else(|_| {
+            String::from(r#"{"jsonrpc":"2.0","method":"internal.fallback","params":{}}"#)
+        })
+    })
+}
+
+/// Build a JSON-RPC notification `Value` from a method name and serializable params.
+/// Falls back to `internal.fallback` on empty method or serialization failure.
+pub fn build_notification_value(method: &str, params: impl serde::Serialize) -> Value {
+    let method = if method.trim().is_empty() {
+        "internal.fallback"
+    } else {
+        method
+    };
+    let params = serde_json::to_value(&params)
+        .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
+    let notif = JsonRpcNotification {
+        jsonrpc: JSONRPC_VERSION.to_string(),
+        method: method.to_string(),
+        params: Some(params),
+    };
+    serde_json::to_value(notif).unwrap_or_else(|_| {
+        serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "internal.fallback",
+            "params": {}
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
