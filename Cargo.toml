@@ -21,6 +21,7 @@ members = [
     "packages/timeline",
     "packages/prompt",
     "packages/res",
+    "packages/sync",
 ]
 
 [workspace.package]
@@ -54,6 +55,7 @@ _llm_provider = { path = "packages/llm_provider" }
 _timeline = { path = "packages/timeline" }
 _prompt = { path = "packages/prompt" }
 _res = { path = "packages/res" }
+_sync = { path = "packages/sync" }
 
 # External dependency versions (carried from entelecheia workspace)
 anyhow = "^1"
