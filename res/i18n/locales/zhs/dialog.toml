@@ -1,0 +1,10 @@
+[dialog]
+confirm = "确认"
+cancel = "取消"
+switch_focus = "切换焦点"
+select = "选择"
+enter_confirm = "确认"
+esc_cancel = "取消"
+tab_switch = "切换"
+up_down_select = "向上/向下选择"
+up_down_navigate = "向上/向下导航"

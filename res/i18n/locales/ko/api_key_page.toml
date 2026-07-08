@@ -1,0 +1,12 @@
+[api_key_page]
+configure_endpoint = "엔드포인트 설정"
+endpoint_address = "엔드포인트 주소"
+api_endpoint = "API 엔드포인트"
+openai_compatible = "OpenAI 호환"
+anthropic_compatible = "Anthropic 호환"
+gemini_compatible = "Gemini 호환"
+hint_paste = "붙여넣기"
+hint_select_all = "전체 선택"
+hint_save = "저장"
+hint_cancel = "취소"
+hint_switch = "전환"

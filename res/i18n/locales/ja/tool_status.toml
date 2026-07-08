@@ -1,0 +1,4 @@
+[tool_status]
+enabled = "有効"
+disabled = "無効"
+auto = "自動"

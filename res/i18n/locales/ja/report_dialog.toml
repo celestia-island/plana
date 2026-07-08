@@ -1,0 +1,13 @@
+[report_dialog]
+title = "報告"
+type_label = "タイプ"
+type_report = "報告"
+type_query = "クエリ"
+source_label = "ソース"
+time_label = "時間"
+title_label = "タイトル"
+content_label = "コンテンツ"
+reply_label = "返事"
+seconds_ago = "{} 秒前"
+minutes_ago = "{} 分前"
+hours_ago = "{} 時間前"

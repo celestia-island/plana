@@ -1,0 +1,12 @@
+[command_registry]
+models_usage = "モデルとAPIキーを管理する"
+mcp_usage = "MCP ツールを管理する"
+agents_usage = "エージェントの管理"
+projects_usage = "プロジェクトを管理する"
+help_usage = "ヘルプ情報を表示する"
+settings_usage = "設定を開く"
+clear_usage = "画面をクリアする"
+logs_usage = "ログを表示する"
+theme_usage = "テーマの変更"
+language_usage = "言語を変更する"
+status_usage = "システムステータスの表示"

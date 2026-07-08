@@ -1,0 +1,9 @@
+# Anthropic 兼容
+
+## 简介
+
+Anthropic 兼容端点允许您连接到任何实现 Anthropic API 规范的服务。用于自托管的 Claude 兼容服务或替代提供商。
+
+## 组织介绍
+
+这是一个兼容层端点，让您能够使用 Anthropic API 格式连接到各种第三方或自托管服务。适用于需要使用非官方 Anthropic 端点的场景。

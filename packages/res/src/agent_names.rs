@@ -1,0 +1,16 @@
+pub const KNOWN_AGENTS: &[&str] = &[
+    "haplotes",
+    "skopeo",
+    "hubris",
+    "kalos",
+    "neikos",
+    "skemma",
+    "aporia",
+    "eleos",
+    "epieikeia",
+    "orexis",
+    "philia",
+    "polemos",
+    "webautomation",
+    "classicsoftwareengineering",
+];

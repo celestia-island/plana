@@ -1,0 +1,12 @@
+[api_key_page]
+configure_endpoint = "エンドポイント設定"
+endpoint_address = "エンドポイントアドレス"
+api_endpoint = "API エンドポイント"
+openai_compatible = "OpenAI 互換"
+anthropic_compatible = "Anthropic 互換"
+gemini_compatible = "Gemini 互換"
+hint_paste = "貼り付け"
+hint_select_all = "すべて選択"
+hint_save = "保存"
+hint_cancel = "キャンセル"
+hint_switch = "切り替え"

@@ -1,0 +1,28 @@
+[package]
+name = "arona-state-sync"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+description = "Wire protocol and state types for the entelecheia platform"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+regex.workspace = true
+tracing.workspace = true
+
+arona-core = { workspace = true }
+arona-config = { workspace = true }
+arona-text = { workspace = true }
+arona-domain-agent = { workspace = true }
+arona-container = { workspace = true }
+arona.workspace = true
+
+[dev-dependencies]
+anyhow.workspace = true

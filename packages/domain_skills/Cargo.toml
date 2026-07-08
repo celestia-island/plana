@@ -1,0 +1,29 @@
+[package]
+name = "arona-domain-skills"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+regex.workspace = true
+arona-state-sync = { workspace = true }
+arona-domain-agent = { workspace = true }
+arona-prompt = { workspace = true }
+arona-infra-utils = { workspace = true }
+arona-domain-skills-permissions = { workspace = true }
+
+[dev-dependencies]
+criterion = "^0.5"
+tokio-test.workspace = true
+
+[[bench]]
+name = "skills_bench"
+harness = false

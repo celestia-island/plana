@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "离线"
+gateway_error = "网关错误"
+retrying = "正在重试"
+retry_attempt = "重试"
+error_prefix = "错误"
+select_action = "选择操作"
+option_retry = "重试"
+option_restart = "重启"
+option_exit = "退出"

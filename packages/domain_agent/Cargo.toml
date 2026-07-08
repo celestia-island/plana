@@ -1,0 +1,17 @@
+[package]
+name = "arona-domain-agent"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+arona-core = { workspace = true }
+anyhow.workspace = true
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
+dashmap.workspace = true
+arona-macros = { workspace = true }
+
+[dev-dependencies]

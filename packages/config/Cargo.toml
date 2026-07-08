@@ -1,0 +1,38 @@
+[package]
+name = "arona-config"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+arona-core = { workspace = true }
+arona-res = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+async-trait.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+parking_lot.workspace = true
+notify.workspace = true
+toml.workspace = true
+dirs.workspace = true
+dotenvy.workspace = true
+ts-rs.workspace = true
+url.workspace = true
+anyhow.workspace = true
+
+[features]
+# When enabled (via scepter's embedded-db), trusted env vars like
+# ENTELECHEIA_CONFIG_DIR and ENTELECHEIA_DB_PATH are read at startup.
+# In production this feature is OFF, so those env vars are ignored —
+# preventing remote attackers from redirecting config/DB paths.
+allow-env-overrides = []
+
+[dev-dependencies]
+anyhow.workspace = true
+tempfile.workspace = true

@@ -1,46 +1,152 @@
-[package]
-name = "arona"
+[workspace]
+resolver = "2"
+
+members = [
+    "packages/arona",
+    "packages/core",
+    "packages/config",
+    "packages/text",
+    "packages/macros",
+    "packages/container",
+    "packages/container_runtime",
+    "packages/domain_agent",
+    "packages/domain_skills",
+    "packages/domain_skills_permissions",
+    "packages/custom_agent",
+    "packages/state_types",
+    "packages/infra_jsonrpc",
+    "packages/infra_services",
+    "packages/infra_utils",
+    "packages/llm_provider",
+    "packages/timeline",
+    "packages/prompt",
+    "packages/res",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
-license-file = "LICENSE"
-description = "Shared protocol types for celestia-island"
+license = "BUSL-1.1"
+description = "Shared infrastructure and protocol types for celestia-island"
 repository = "https://github.com/celestia-island/arona"
-publish = true
-keywords = ["json-rpc", "protocol", "mcp", "typescript", "schema"]
-categories = ["api-bindings", "data-structures", "web-programming::websocket", "network-programming"]
-# Keep generated TS bindings, Python build scripts, and docs out of the published crate.
-exclude = ["bindings", "scripts", ".cargo", "justfile", "package.json", "pnpm-workspace.yaml", "PLAN.md", "res", "examples"]
 
-[features]
-default = []
-tracing-helpers = ["chrono", "tracing-subscriber"]
+[workspace.dependencies]
 
-[dependencies]
+# ── Internal crate aliases ──────────────────────────────────
+arona = { path = "packages/arona" }
+arona-core = { path = "packages/core" }
+arona-config = { path = "packages/config" }
+arona-text = { path = "packages/text" }
+arona-macros = { path = "packages/macros" }
+arona-container = { path = "packages/container" }
+arona-container-runtime = { path = "packages/container_runtime" }
+arona-domain-agent = { path = "packages/domain_agent" }
+arona-domain-skills = { path = "packages/domain_skills" }
+arona-domain-skills-permissions = { path = "packages/domain_skills_permissions" }
+arona-custom-agent = { path = "packages/custom_agent" }
+arona-state-sync = { path = "packages/state_types" }
+arona-infra-jsonrpc = { path = "packages/infra_jsonrpc" }
+arona-infra-services = { path = "packages/infra_services" }
+arona-infra-utils = { path = "packages/infra_utils" }
+arona-llm-provider = { path = "packages/llm_provider" }
+arona-timeline = { path = "packages/timeline" }
+arona-prompt = { path = "packages/prompt" }
+arona-res = { path = "packages/res" }
+
+# External dependency versions (carried from entelecheia workspace)
+anyhow = "^1"
+append-only-bytes = "^0.1"
+async-trait = "^0.1"
+base64 = "^0.22"
+boa_engine = "^0.21"
+boa_gc = "^0.21"
+boa_runtime = "^0.21"
+bytes = "^1"
+chrono = { version = "^0.4", features = ["serde", "clock"] }
+dashmap = "^6"
+deadpool-postgres = "^0.14"
+dirs = "^5"
+dotenvy = "^0.15"
+flume = "^0.11"
+futures = "^0.3"
+hex = "^0.4"
+include_dir = { version = "^0.7", features = ["glob"] }
+interprocess = "^2"
+libnoa = "^0.3"
+lru = "^0.12"
+mockall = "^0.12"
+notify = "^6"
+os_info = "^3"
+parking_lot = "^0.12"
+pci-ids = "^0.2"
+rand = "^0.8"
+regex = "^1"
+reqwest = { version = "^0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+    "stream",
+    "charset",
+    "http2",
+    "macos-system-configuration",
+] }
+russh = "^0.45"
+schemars = { version = "^1", features = ["derive", "uuid1"] }
+sea-orm = { version = "^2.0.0-rc", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+] }
+sea-orm-migration = "^2.0.0-rc"
+secrecy = { version = "^0.8", features = ["serde"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
-thiserror = "^2"
-uuid = { version = "^1", features = ["v3", "v4", "v5", "v7", "serde"] }
-ts-rs = { version = "^12", features = ["serde-compat", "uuid-impl"] }
+serde_yaml = "^0.9"
 sha2 = "^0.10"
-hex = "^0.4"
-
-chrono = { version = "^0.4", features = ["serde", "clock"], optional = true }
-tracing-subscriber = { version = "^0.3", features = ["env-filter"], optional = true }
-schemars = { version = "^1", features = ["derive", "uuid1"] }
-
-[dev-dependencies]
-anyhow = "^1"
+strum = { version = "^0.27", features = ["derive"] }
+swc_core = "^40"
+sys-info = "^0.9"
+sys-locale = "^0.3"
+sysinfo = "^0.30"
+tar = "^0.4"
+tempfile = "^3"
+tera = "^1"
+thiserror = "^2"
+tokio = { version = "^1", features = ["rt", "rt-multi-thread", "macros", "time", "net", "io-util", "fs", "sync", "signal", "process"] }
+tokio-test = "^0.4"
+tokio-tungstenite = "^0.29"
+tokio-util = "^0.7"
 toml = "^0.8"
+tower = "^0.5"
+tracing = { version = "^0.1", features = ["log"] }
+tracing-appender = "^0.2"
+tracing-subscriber = { version = "^0.3", features = ["env-filter", "json"] }
+ts-rs = { version = "^12", features = ["serde-compat", "serde-json-impl", "format", "uuid-impl"] }
+url = "^2"
+uuid = { version = "^1", features = ["v3", "v4", "v5", "v7", "serde"] }
+walkdir = "^2"
 
+# Container / infrastructure
+axum = { version = "^0.8", features = ["ws"] }
+bollard = "^0.20"
+http = "^1"
+tower-http = { version = "^0.6", features = ["cors", "trace", "fs"] }
+
+# Build profiles
 [profile.dev]
 debug = 1
+opt-level = 0
 incremental = true
+
+[profile.dev.package."*"]
+debug = 0
 
 [profile.release]
 opt-level = 3
 lto = "thin"
+codegen-units = 16
+debug = 0
 
-[package.metadata.docs.rs]
-all-features = true
+[profile.bench]
+debug = 0

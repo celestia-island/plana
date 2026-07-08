@@ -1,0 +1,19 @@
+[package]
+name = "arona-timeline"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+
+arona-core = { workspace = true }
+arona-text = { workspace = true }
+arona-state-sync = { workspace = true }

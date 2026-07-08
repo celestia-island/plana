@@ -1,0 +1,9 @@
+[search]
+title = "搜尋"
+placeholder = "輸入搜尋內容後 Enter…"
+searching = "搜尋中…"
+no_results = "無結果"
+results = "結果"
+hint_empty = "輸入關鍵字進行語意搜尋"
+hint_open = "開啟"
+detail = "詳情"

@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "オフライン"
+gateway_error = "ゲートウェイエラー"
+retrying = "再試行中"
+retry_attempt = "再試行"
+error_prefix = "エラー"
+select_action = "アクション選択"
+option_retry = "再試行"
+option_restart = "再起動"
+option_exit = "終了"

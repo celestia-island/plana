@@ -1,0 +1,12 @@
+[command_registry]
+models_usage = "모델 및 API 키 관리"
+mcp_usage = "MCP 도구 관리"
+agents_usage = "에이전트 관리"
+projects_usage = "프로젝트 관리"
+help_usage = "도움말 정보 표시"
+settings_usage = "설정 열기"
+clear_usage = "화면 지우기"
+logs_usage = "로그 보기"
+theme_usage = "테마 변경"
+language_usage = "언어 변경"
+status_usage = "시스템 상태 보기"

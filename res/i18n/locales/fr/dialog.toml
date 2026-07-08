@@ -1,0 +1,10 @@
+[dialog]
+confirm = "Confirmer"
+cancel = "Annuler"
+switch_focus = "Changer de focus"
+select = "Sélectionner"
+enter_confirm = "Confirmer"
+esc_cancel = "Annuler"
+tab_switch = "Changer"
+up_down_select = "Haut/Bas pour sélectionner"
+up_down_navigate = "Haut/Bas pour naviguer"
