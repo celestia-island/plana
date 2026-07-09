@@ -32,6 +32,8 @@ authors = ["langyo <langyo.china@gmail.com>"]
 license-file = "LICENSE"
 description = "Shared infrastructure and protocol types for celestia-island"
 repository = "https://github.com/celestia-island/arona"
+keywords = ["json-rpc", "protocol", "ai-agent", "infrastructure", "shared-types"]
+categories = ["data-structures", "development-tools"]
 
 [workspace.dependencies]
 
