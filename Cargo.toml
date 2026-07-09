@@ -30,6 +30,7 @@ edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
 license-file = "LICENSE"
+license = "SySL-1.0"
 description = "Shared infrastructure and protocol types for celestia-island"
 repository = "https://github.com/celestia-island/arona"
 keywords = ["json-rpc", "protocol", "ai-agent", "infrastructure", "shared-types"]
