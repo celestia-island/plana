@@ -8,8 +8,6 @@ set shell := ["bash", "-c"]
 set unstable
 set lists
 
-python_cmd := if which("python3") != "" { "python3" } else { "python" }
-
 import "./celestia-devtools.just"
 
 default:
