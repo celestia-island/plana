@@ -667,3 +667,24 @@ arona is the shared protocol crate (v0.1.0) that glues entelecheia and shittim-c
 - 验证：`cargo check --all-features`、`cargo clippy --all-features -- -D warnings`、`cargo test --all-features`（651 项通过）均通过。
 - 关联：evernight 仓库 PLAN.md Medium #4（本仓库内完成，evernight 侧无需改动）。
 
+
+---
+
+## 维护记录（2026-07-10）
+
+### 待办：许可证元数据不一致（需维护者决策）
+
+仓库根目录的 `LICENSE` 文件是 **SySL 1.0（Synthetic Source License）**，但工作区 `Cargo.toml` 声明的 SPDX 许可证是 **BUSL-1.1**，并通过 `license.workspace = true` 传播到所有子包。这意味着 crates.io 元数据宣传 BUSL-1.1，而实际许可证文本是 SySL —— 对依赖 SPDX 表达的下游用户构成真实冲突。
+
+#### 为什么没有自动修复
+
+SySL 1.0 不是标准 SPDX 标识符，crates.io 不接受 `license = "SySL-1.0"`。生态内的兄弟 crate（如 `hikari`）使用 `license-file = "LICENSE"` 来发布 SySL 许可的 crate。将 arona 改为该形式会改变已发布的许可证元数据，可能需要对发布的 crate 做新的 semver 版本提升，因此留给维护者决定。
+
+#### 建议的解决方案（二选一）
+
+1. **crate 确实是 BUSL-1.1**：用 BUSL-1.1 文本替换根 `LICENSE`，并在需要处单独保留 SySL 文本，同时在 README 添加许可证徽章。
+2. **crate 是 SySL**：将 `Cargo.toml` 改为 `license-file = "LICENSE"`（移除 `license = "BUSL-1.1"` 行）并提升 crate 版本，与 `hikari` 保持一致。
+
+### 本次维护已完成
+
+- 修正 README 中文档链接文本（原指向 docs.celestia.world/en/arona，实际位于 guides/platforms）。
