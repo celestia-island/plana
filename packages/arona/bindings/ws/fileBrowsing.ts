@@ -3,7 +3,7 @@
 /**
  * `Tui.FileRead` — file-content response.
  */
-export type FileReadParams = { target: FileTarget, path: string, content: string, size: bigint, 
+export type FileReadParams = { target: FileTarget, path: string, content: string, size: bigint,
 /**
  * `true` when content was truncated to the server read cap.
  */
@@ -13,11 +13,11 @@ truncated: boolean, };
  * A file-operation target — a (kind, id) pair plus optional workspace
  * context (container slots are per-workspace).
  */
-export type FileTarget = { kind: FileTargetKind, 
+export type FileTarget = { kind: FileTargetKind,
 /**
  * Container badge (`#demiurge` / `#001`), host id, or workspace id.
  */
-id: string, 
+id: string,
 /**
  * Owning workspace id (container slots are workspace-scoped).
  */
@@ -31,7 +31,7 @@ export type FileTargetKind = "container" | "host" | "workspace";
 /**
  * One entry in a directory listing.
  */
-export type FileTreeEntry = { name: string, 
+export type FileTreeEntry = { name: string,
 /**
  * `"file"` | `"dir"` | `"symlink"`.
  */
@@ -50,7 +50,7 @@ export type RequestFileReadParams = { target: FileTarget, path: string, };
 /**
  * `Tui.RequestFileTree` — list one level of a directory.
  */
-export type RequestFileTreeParams = { target: FileTarget, 
+export type RequestFileTreeParams = { target: FileTarget,
 /**
  * Sub-path under the target root (empty/`""` = root).
  */

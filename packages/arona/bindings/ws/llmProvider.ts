@@ -24,17 +24,17 @@ export type LlmProviderConfiguredParams = { provider_name: string, success: bool
 
 export type MaxConcurrentInfo = { deep: number, normal: number, basic: number, };
 
-export type ModelFsInfo = { id: string, name: string, provider_id: string, context_window: bigint, max_output_tokens: bigint, supports_vision: boolean, supports_function_calling: boolean, supports_streaming: boolean, supports_reasoning: boolean, tags: Array<string>, 
+export type ModelFsInfo = { id: string, name: string, provider_id: string, context_window: bigint, max_output_tokens: bigint, supports_vision: boolean, supports_function_calling: boolean, supports_streaming: boolean, supports_reasoning: boolean, tags: Array<string>,
 /**
  * Fine-grained capability flags. When non-empty, supersedes the boolean
  * flags above for skill→model routing. See [`crate::ModelCapability`].
  */
-capabilities: Array<ModelCapability>, 
+capabilities: Array<ModelCapability>,
 /**
  * Generation quality tier (image / 3D generation models only).
  * See [`crate::GenerationTier`].
  */
-generation_tier?: GenerationTier, 
+generation_tier?: GenerationTier,
 /**
  * Hardware requirements (local generative models only).
  * See [`crate::HardwareRequirements`].

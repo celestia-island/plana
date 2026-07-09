@@ -3,19 +3,19 @@
 /**
  * Dashboard layout — a collection of views arranged in a grid.
  */
-export type DashboardLayout = { 
+export type DashboardLayout = {
 /**
  * Workspace ID this dashboard belongs to.
  */
-workspace_id: string, 
+workspace_id: string,
 /**
  * Dashboard name.
  */
-name: string, 
+name: string,
 /**
  * All view instances in this dashboard.
  */
-views: Array<ViewInstance>, 
+views: Array<ViewInstance>,
 /**
  * Grid columns count (0 = auto).
  */
@@ -29,15 +29,15 @@ export type DashboardLayoutPushParams = { layout: DashboardLayout, };
 /**
  * View data update — incremental data push for a specific view.
  */
-export type ViewDataPushParams = { 
+export type ViewDataPushParams = {
 /**
  * Target view ID.
  */
-view_id: string, 
+view_id: string,
 /**
  * Data payload (format depends on ViewKind).
  */
-data: Record<string, unknown>, 
+data: Record<string, unknown>,
 /**
  * Whether this is a full replacement or incremental update.
  */
@@ -46,29 +46,29 @@ full_replace: boolean, };
 /**
  * A view instance — one panel in the dashboard.
  */
-export type ViewInstance = { 
+export type ViewInstance = {
 /**
  * Unique view ID within the workspace.
  */
-view_id: string, 
+view_id: string,
 /**
  * What kind of renderer to use.
  */
-kind: ViewKind, 
+kind: ViewKind,
 /**
  * Display title.
  */
-title: string, 
+title: string,
 /**
  * Data source identifier — what the view is bound to.
  * Examples: "industrial:station:19", "chat:conversation:abc",
  * "kanban:project:xyz", "media:flow:comfyui"
  */
-data_source: string, 
+data_source: string,
 /**
  * View-specific configuration (JSON, interpreted by the renderer).
  */
-config: Record<string, unknown>, 
+config: Record<string, unknown>,
 /**
  * Layout position (grid area, tab order, etc.).
  */
@@ -82,27 +82,27 @@ export type ViewKind = "industrial_scada" | "chat" | "kanban" | "gantt" | "data_
 /**
  * Layout descriptor for a view within the dashboard grid.
  */
-export type ViewLayout = { 
+export type ViewLayout = {
 /**
  * Grid column start (1-based).
  */
-col: number, 
+col: number,
 /**
  * Grid row start (1-based).
  */
-row: number, 
+row: number,
 /**
  * Column span.
  */
-col_span: number, 
+col_span: number,
 /**
  * Row span.
  */
-row_span: number, 
+row_span: number,
 /**
  * Minimum width in pixels.
  */
-min_width?: number, 
+min_width?: number,
 /**
  * Minimum height in pixels.
  */

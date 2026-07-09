@@ -15,15 +15,15 @@ export type GenerationTier = "fast_preview" | "standard" | "production";
  * Populated for GPU-deployed models (TRELLIS, SDXL …). Remote-API models
  * leave this as `None`.
  */
-export type HardwareRequirements = { 
+export type HardwareRequirements = {
 /**
  * Minimum VRAM in GB.
  */
-min_vram_gb?: number, 
+min_vram_gb?: number,
 /**
  * Minimum system RAM in GB.
  */
-min_ram_gb?: number, 
+min_ram_gb?: number,
 /**
  * Recommended GPU (e.g. `"NVIDIA RTX 4090"`).
  */
@@ -61,49 +61,49 @@ export type ModelCategory = "llm" | "embedding" | "speech_to_text" | "text_to_sp
  * Both sides can enumerate available models, check their status, and request
  * inference using this common vocabulary.
  */
-export type ModelDescriptor = { 
+export type ModelDescriptor = {
 /**
  * Unique id, e.g. `"bge-m3"`, `"whisper-tiny"`, `"claude-opus-4.8"`.
  */
-id: string, 
+id: string,
 /**
  * Human-readable display name.
  */
-display_name: string, 
+display_name: string,
 /**
  * What kind of model this is.
  */
-category: ModelCategory, 
+category: ModelCategory,
 /**
  * Where it runs.
  */
-backend: ModelBackend, 
+backend: ModelBackend,
 /**
  * Size tier (LLM coding-plan concept; `None` for non-LLM models).
  */
-tier?: ModelTier, 
+tier?: ModelTier,
 /**
  * Output dimension (embedding models only).
  */
-dimension?: number, 
+dimension?: number,
 /**
  * Approximate model size in bytes (local models).
  */
-size_bytes?: bigint, 
+size_bytes?: bigint,
 /**
  * Provider index (`#N` convention; LLM models only).
  */
-provider_index?: number, 
+provider_index?: number,
 /**
  * Fine-grained capability flags. When non-empty, the scepter router uses
  * these to match skills that declare `required_capabilities`. When empty,
  * falls back to the legacy boolean flags on `ModelFsInfo`.
  */
-capabilities: Array<ModelCapability>, 
+capabilities: Array<ModelCapability>,
 /**
  * Generation quality tier (image / 3D generation models only).
  */
-generation_tier?: GenerationTier, 
+generation_tier?: GenerationTier,
 /**
  * Hardware requirements (local generative models only).
  */
@@ -114,16 +114,16 @@ hardware_requirements?: HardwareRequirements, };
  * over the WS JSON-RPC channel. The engine routes it to the appropriate
  * backend (local CPU / local GPU / remote GPU / remote API).
  */
-export type ModelInferenceRequest = { 
+export type ModelInferenceRequest = {
 /**
  * Which model to use (by id).
  */
-model_id: string, 
+model_id: string,
 /**
  * Input data (format depends on category: text for LLM/embedding,
  * base64 audio for STT, base64 image for vision).
  */
-input: string, 
+input: string,
 /**
  * Optional parameters (temperature, max_tokens, language hint …).
  */
@@ -132,19 +132,19 @@ parameters?: Record<string, unknown>, };
 /**
  * Inference result returned to the web UI.
  */
-export type ModelInferenceResult = { 
+export type ModelInferenceResult = {
 /**
  * Model that produced the output.
  */
-model_id: string, 
+model_id: string,
 /**
  * Output data (text for LLM/embedding/TTS, text for STT, JSON for vision).
  */
-output: string, 
+output: string,
 /**
  * Time spent (milliseconds).
  */
-elapsed_ms?: bigint, 
+elapsed_ms?: bigint,
 /**
  * Token/processing usage (if applicable).
  */
@@ -175,27 +175,27 @@ export type ModelServerActionResultParams = { kind: ModelServerKind, status: Mod
  * Neither scepter nor chest starts/stops these directly — they issue
  * `RequestModelServerAction` and evernight performs the lifecycle.
  */
-export type ModelServerInfo = { 
+export type ModelServerInfo = {
 /**
  * Server kind (determines the Docker image / launch command).
  */
-kind: ModelServerKind, 
+kind: ModelServerKind,
 /**
  * HTTP endpoint (e.g. `http://localhost:8178`).
  */
-endpoint: string, 
+endpoint: string,
 /**
  * Current lifecycle status.
  */
-status: ModelServerStatus, 
+status: ModelServerStatus,
 /**
  * Which backend this server is running on (GPU or CPU).
  */
-backend: ModelBackend, 
+backend: ModelBackend,
 /**
  * Docker container id (managed by evernight's container runtime).
  */
-container_id?: string, 
+container_id?: string,
 /**
  * Which models are loaded in this server.
  */
@@ -220,7 +220,7 @@ export type RequestModelInferenceParams = { request: ModelInferenceRequest, };
 /**
  * `Tui.RequestModelList` — enumerate available models.
  */
-export type RequestModelListParams = { 
+export type RequestModelListParams = {
 /**
  * Filter by category (omit for all).
  */
@@ -232,7 +232,7 @@ category?: ModelCategory, };
  * deployment directly; the action is forwarded to evernight's model lifecycle
  * manager.
  */
-export type RequestModelServerActionParams = { kind: ModelServerKind, action: ModelServerAction, 
+export type RequestModelServerActionParams = { kind: ModelServerKind, action: ModelServerAction,
 /**
  * Preferred backend. evernight will honour this if possible; falls back
  * to CPU if the requested GPU is unavailable.

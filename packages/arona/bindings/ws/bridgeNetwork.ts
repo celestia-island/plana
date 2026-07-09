@@ -8,23 +8,23 @@ export type BridgeNetworkParams = { hosts: Array<HostMetrics>, workspaces: Array
 /**
  * Live performance snapshot for one host machine.
  */
-export type HostMetrics = { 
+export type HostMetrics = {
 /**
  * Stable host id ("localhost" for self, or a polemos device id).
  */
-host_id: string, hostname: string, os: string, 
+host_id: string, hostname: string, os: string,
 /**
  * CPU utilisation, 0..100.
  */
-cpu_usage_percent: number, 
+cpu_usage_percent: number,
 /**
  * Logical CPU core count (shown with an i18n "cores" unit).
  */
-cpu_cores: number, mem_used_bytes: bigint, mem_total_bytes: bigint, 
+cpu_cores: number, mem_used_bytes: bigint, mem_total_bytes: bigint,
 /**
  * Outbound network rate (bytes/sec). Omitted when unknown.
  */
-net_up_bps?: bigint, 
+net_up_bps?: bigint,
 /**
  * Inbound network rate (bytes/sec). Omitted when unknown.
  */
@@ -38,19 +38,19 @@ export type RequestBridgeNetworkParams = Record<symbol, never>;
 /**
  * noa-git status for a workspace checkout (branch / dirty / ahead / behind).
  */
-export type WorkspaceGitStatus = { branch: string, 
+export type WorkspaceGitStatus = { branch: string,
 /**
  * Modified/untracked file count.
  */
-modified: number, 
+modified: number,
 /**
  * Commits ahead of upstream.
  */
-ahead: number, 
+ahead: number,
 /**
  * Commits behind upstream.
  */
-behind: number, 
+behind: number,
 /**
  * `true` when there are uncommitted changes.
  */
@@ -59,7 +59,7 @@ dirty: boolean, };
 /**
  * A workspace attached to a host, with its git + token-usage summary.
  */
-export type WorkspaceNode = { workspace_id: string, host_id: string, path: string, alias?: string, git?: WorkspaceGitStatus, 
+export type WorkspaceNode = { workspace_id: string, host_id: string, path: string, alias?: string, git?: WorkspaceGitStatus,
 /**
  * Top token consumers in this workspace (max 3).
  */

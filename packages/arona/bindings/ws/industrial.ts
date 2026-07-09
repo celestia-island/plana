@@ -12,7 +12,7 @@ export type IndustrialAlarmHistory = { entries: Array<IndustrialAlarmHistoryEntr
 /**
  * One entry in the historical alarm log (last N days).
  */
-export type IndustrialAlarmHistoryEntry = { station_id: string, protocol: string, address: string, field_name: string, level: IndustrialAlarmLevel, value: number, threshold: number, unit: string, breached: boolean, timestamp: string, 
+export type IndustrialAlarmHistoryEntry = { station_id: string, protocol: string, address: string, field_name: string, level: IndustrialAlarmLevel, value: number, threshold: number, unit: string, breached: boolean, timestamp: string,
 /**
  * Whether an operator acknowledged the alarm, and when.
  */
@@ -53,7 +53,7 @@ export type IndustrialTelemetryPushParams = { batch: IndustrialTelemetryBatch, }
 
 export type IndustrialTopologyParams = { stations: Array<IndustrialStationInfo>, };
 
-export type WriteApprovalRequest = { 
+export type WriteApprovalRequest = {
 /**
  * Unique id assigned by the producer (orexis). The operator UI echoes it
  * back in `industrial.approveWrite` so scepter's resolver can match the

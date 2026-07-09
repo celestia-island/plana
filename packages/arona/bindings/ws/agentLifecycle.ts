@@ -3,18 +3,18 @@ import type { Agent, AgentStatus, CompletionOutcome, LlmStream, ModelTier, Repor
 
 export type AgentListResponseParams = { agents: Array<TuiAgentInfo>, };
 
-export type AgentReportParams = { report_type: ReportType, agent_type: Agent, agent_id: string, agent_number?: string, title: string, content: string, summary?: string, timestamp: string, preset_options: Array<string>, 
+export type AgentReportParams = { report_type: ReportType, agent_type: Agent, agent_id: string, agent_number?: string, title: string, content: string, summary?: string, timestamp: string, preset_options: Array<string>,
 /**
  * For `report_type: "query"`: whether `preset_options` are mutually
  * exclusive (single) or pick-any (multiple). Omit ⇒ single.
  */
-selection_mode?: ReportSelection, 
+selection_mode?: ReportSelection,
 /**
  * For `report_type: "query"`: whether the recipient may type a free-form
  * answer in addition to (or instead of) picking presets. Omit ⇒ true
  * when `report_type == Query`, false otherwise.
  */
-allow_custom_reply?: boolean, 
+allow_custom_reply?: boolean,
 /**
  * Subset of `preset_options` the agent suggests. Empty when no
  * recommendation is offered.
