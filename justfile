@@ -5,6 +5,7 @@
 # Verb-first dispatch: actions are first-level commands (build, test, gen, …).
 
 set shell := ["bash", "-c"]
+set windows-shell := ["bash.exe", "-c"]
 set unstable
 set lists
 
