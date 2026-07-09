@@ -29,7 +29,7 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
-license = "BUSL-1.1"
+license-file = "LICENSE"
 description = "Shared infrastructure and protocol types for celestia-island"
 repository = "https://github.com/celestia-island/arona"
 
