@@ -89,7 +89,7 @@ pub fn validate_subscription_entry(entry: &SubscriptionEntry) -> Result<()> {
                 return Err(anyhow!("github source requires repository=\"owner/repo\""));
             }
             Ok(())
-        },
+        }
         SubscriptionSource::Url => {
             if entry.url.as_deref().unwrap_or_default().trim().is_empty() {
                 return Err(anyhow!(
@@ -97,7 +97,7 @@ pub fn validate_subscription_entry(entry: &SubscriptionEntry) -> Result<()> {
                 ));
             }
             Ok(())
-        },
+        }
     }
 }
 
@@ -112,7 +112,7 @@ pub fn subscription_repo_url(entry: &SubscriptionEntry) -> Result<String> {
                 .as_deref()
                 .ok_or_else(|| anyhow!("github source missing repository"))?;
             Ok(format!("https://github.com/{}.git", repo))
-        },
+        }
         SubscriptionSource::Url => entry
             .url
             .clone()

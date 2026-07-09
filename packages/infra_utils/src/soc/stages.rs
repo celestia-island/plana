@@ -65,25 +65,25 @@ impl SOCStage {
         match self {
             SOCStage::InformationCollection => {
                 "Collect all task-related information, analyze the current context, assess system state and resources, and consolidate into a complete information view"
-            },
+            }
             SOCStage::ThreatAnalysis => {
                 "Identify potential threat patterns, evaluate risk levels and impact, prioritize threats, and generate a complete threat profile"
-            },
+            }
             SOCStage::DecisionMaking => {
                 "Select appropriate response strategies, design detailed execution plans, allocate necessary resources, and formulate an execution plan"
-            },
+            }
             SOCStage::OperationExecution => {
                 "Invoke appropriate tools, execute specific operational tasks, monitor execution status in real-time, and handle potential anomalies"
-            },
+            }
             SOCStage::ResultVerification => {
                 "Check operation results, evaluate execution effectiveness, determine if objectives are met, and adjust strategy and re-execute if necessary"
-            },
+            }
             SOCStage::ReportGeneration => {
                 "Organize all relevant data, perform analysis and summarization, generate structured reports, and deliver reports to stakeholders"
-            },
+            }
             SOCStage::KnowledgeArchiving => {
                 "Extract valuable lessons learned, encode experience as reusable knowledge, store in the knowledge base, and share with other Agents"
-            },
+            }
         }
     }
 
@@ -120,7 +120,7 @@ impl SOCStage {
                     "Exception handling",
                     "Progress tracking",
                 ]
-            },
+            }
             SOCStage::ResultVerification => vec![
                 "Result check",
                 "Effectiveness evaluation",
@@ -136,7 +136,7 @@ impl SOCStage {
                     "Report output",
                     "Report verification",
                 ]
-            },
+            }
             SOCStage::KnowledgeArchiving => {
                 vec![
                     "Experience extraction",
@@ -145,7 +145,7 @@ impl SOCStage {
                     "Knowledge sharing",
                     "Index update",
                 ]
-            },
+            }
         }
     }
 }

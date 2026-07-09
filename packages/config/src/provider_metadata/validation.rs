@@ -203,15 +203,15 @@ impl ProviderMetadataValidator {
                     message: "One-time pricing is typically not paired with metered usage"
                         .to_string(),
                 });
-            },
+            }
             (PricingModel::PayAsYouGo, UsageType::Unlimited) => {
                 result = result.with_warning(ValidationWarning {
                     field: "pricing_model".to_string(),
                     message: "Pay-as-you-go is typically not paired with unlimited usage"
                         .to_string(),
                 });
-            },
-            _ => {},
+            }
+            _ => {}
         }
 
         for model in &metadata.available_models {

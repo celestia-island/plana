@@ -153,20 +153,20 @@ impl LlmProvider for AnthropicProvider {
             match block {
                 response::AnthropicContent::Text { text: Some(t) } => {
                     content.push_str(&t);
-                },
+                }
                 response::AnthropicContent::Text { text: None } => {
                     warn!(
                         "Anthropic returned Text block with None content: {:?}",
                         block
                     );
-                },
+                }
                 response::AnthropicContent::Thinking { thinking, .. } => {
                     if let Some(t) = thinking {
                         content.push_str(&t);
                     } else {
                         warn!("Anthropic returned Thinking block with None content");
                     }
-                },
+                }
                 response::AnthropicContent::ToolUse { id, name, input } => {
                     if let (Some(id), Some(name), Some(input)) = (id, name, input) {
                         tool_calls.push(ToolCall {
@@ -179,7 +179,7 @@ impl LlmProvider for AnthropicProvider {
                             integrity: None,
                         });
                     }
-                },
+                }
             }
         }
 
@@ -307,7 +307,7 @@ impl LlmProvider for AnthropicProvider {
                                             finish_reason: None,
                                             usage: None,
                                         })
-                                    },
+                                    }
                                     _ => None,
                                 },
                                 AnthropicStreamEvent::ContentBlockStart { content_block } => {
@@ -325,10 +325,10 @@ impl LlmProvider for AnthropicProvider {
                                                 finish_reason: None,
                                                 usage: None,
                                             })
-                                        },
+                                        }
                                         _ => None,
                                     }
-                                },
+                                }
                                 AnthropicStreamEvent::MessageStart { message } => {
                                     Some(LlmStreamChunk {
                                         content: None,
@@ -341,7 +341,7 @@ impl LlmProvider for AnthropicProvider {
                                             cached_tokens: message.usage.cache_read_input_tokens,
                                         }),
                                     })
-                                },
+                                }
                                 AnthropicStreamEvent::MessageDelta { delta, usage } => {
                                     Some(LlmStreamChunk {
                                         content: None,
@@ -356,10 +356,10 @@ impl LlmProvider for AnthropicProvider {
                                             cached_tokens: None,
                                         }),
                                     })
-                                },
+                                }
                                 AnthropicStreamEvent::MessageStop => {
                                     return None;
-                                },
+                                }
                             };
                             if let Some(c) = chunk {
                                 return Some((
@@ -373,13 +373,13 @@ impl LlmProvider for AnthropicProvider {
                     match byte_stream.next().await {
                         Some(Ok(bytes)) => {
                             buffer.push_str(&String::from_utf8_lossy(&bytes));
-                        },
+                        }
                         Some(Err(e)) => {
                             return Some((
                                 Err(ProviderError::NetworkError(format!("Stream error: {}", e))),
                                 (byte_stream, buffer),
                             ));
-                        },
+                        }
                         None => return None,
                     }
                 }

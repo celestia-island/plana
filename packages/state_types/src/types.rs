@@ -78,12 +78,12 @@ impl std::fmt::Display for TaskStatus {
         match &self {
             Self::Waiting { deadline, handle } => {
                 write!(f, "waiting:{}:{}", handle, deadline.to_rfc3339())
-            },
+            }
             _ => {
                 let s =
                     serde_json::to_string(self).unwrap_or_else(|_| "\"not_started\"".to_string());
                 write!(f, "{}", s.trim_matches('"'))
-            },
+            }
         }
     }
 }
@@ -116,7 +116,7 @@ impl FromStr for TaskStatus {
                 } else {
                     Err(UnknownTaskStatusError(s.to_string()))
                 }
-            },
+            }
             _ => Err(UnknownTaskStatusError(s.to_string())),
         }
     }

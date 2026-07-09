@@ -145,7 +145,7 @@ pub fn detect_platform_metadata() -> (Option<String>, Option<String>) {
             } else {
                 (Some("linux".to_string()), Some(distro))
             }
-        },
+        }
     }
 }
 

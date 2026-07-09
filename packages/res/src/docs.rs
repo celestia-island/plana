@@ -143,13 +143,13 @@ pub fn validate_agent_doc_completeness() -> Vec<String> {
                                                         ));
                                         }
                                     }
-                                },
+                                }
                                 Err(_) => {
                                     errors.push(format!(
                                         "Agent {}/{}/{}: invalid front matter TOML",
                                         agent_name, section_name, skill_name
                                     ));
-                                },
+                                }
                             }
                         }
                     }

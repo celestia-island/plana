@@ -13,7 +13,7 @@ pub fn sanitize_for_shell_arg(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for ch in s.chars() {
         match ch {
-            '\0' | '\n' | '\r' => {},
+            '\0' | '\n' | '\r' => {}
             _ => out.push(ch),
         }
     }
@@ -68,15 +68,15 @@ impl ContainerManager {
                 match msg {
                     Ok(LogOutput::StdOut { message }) => {
                         stdout.push_str(&String::from_utf8_lossy(&message));
-                    },
+                    }
                     Ok(LogOutput::StdErr { message }) => {
                         stderr.push_str(&String::from_utf8_lossy(&message));
-                    },
-                    Ok(_) => {},
+                    }
+                    Ok(_) => {}
                     Err(e) => {
                         stderr.push_str(&format!("exec stream error: {}", e));
                         break;
-                    },
+                    }
                 }
             }
         }
@@ -90,7 +90,7 @@ impl ContainerManager {
                     "exec inspect failed — exit code will be unavailable"
                 );
                 None
-            },
+            }
         };
 
         Ok(ExecOutput {

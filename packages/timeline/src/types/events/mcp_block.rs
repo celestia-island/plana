@@ -103,7 +103,7 @@ impl McpBlockData {
                 } else {
                     McpCloseLabel::Executed
                 }
-            },
+            }
             McpBlockState::Failed => McpCloseLabel::Error,
             McpBlockState::HistoryLost => McpCloseLabel::Error,
         }

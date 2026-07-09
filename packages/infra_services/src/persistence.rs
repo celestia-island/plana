@@ -143,28 +143,28 @@ impl Persistence {
                 Err(e) => {
                     warn!(error = %e, "skipping row: missing agent_type");
                     continue;
-                },
+                }
             };
             let agent_id: String = match row.try_get("", "agent_id") {
                 Ok(v) => v,
                 Err(e) => {
                     warn!(error = %e, "skipping row: missing agent_id");
                     continue;
-                },
+                }
             };
             let started_at: String = match row.try_get("", "started_at") {
                 Ok(v) => v,
                 Err(e) => {
                     warn!(error = %e, "skipping row: missing started_at");
                     continue;
-                },
+                }
             };
             let last_heartbeat: String = match row.try_get("", "last_heartbeat") {
                 Ok(v) => v,
                 Err(e) => {
                     warn!(error = %e, "skipping row: missing last_heartbeat");
                     continue;
-                },
+                }
             };
 
             agents.push(OnlineAgentInfo {

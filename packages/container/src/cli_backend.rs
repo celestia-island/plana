@@ -135,7 +135,7 @@ impl CliContainerBackend {
                 let mut p = CliProfile::wslc();
                 p.binary = CliProfile::wslc_binary();
                 Ok(p)
-            },
+            }
             _ => Err(ContainerError::NotSupported(format!(
                 "CliContainerBackend does not support runtime `{}`",
                 runtime
@@ -151,7 +151,7 @@ impl CliContainerBackend {
                 // extensions (.EXE, .CMD, etc.). On other platforms the bare
                 // names are used directly.
                 vec!["wslc", "container"]
-            },
+            }
             ContainerRuntimeType::AppleContainer => vec![profile.binary],
             _ => vec![],
         }
@@ -381,7 +381,7 @@ impl ContainerOps for CliContainerBackend {
                     ip_address: None,
                     labels: params.labels.clone(),
                 })
-            },
+            }
         }
     }
 
@@ -584,13 +584,13 @@ impl ContainerOps for CliContainerBackend {
             }
             match self.is_running(container_id).await {
                 Ok(true) => return Ok(()),
-                Ok(false) => {},
+                Ok(false) => {}
                 Err(ContainerError::NotFound(_)) => {
                     return Err(ContainerError::NotFound(container_id.to_string()));
-                },
+                }
                 Err(e) => {
                     warn!(error = %e, "health-check inspect failed, retrying");
-                },
+                }
             }
             tokio::time::sleep(Duration::from_secs(1)).await;
         }

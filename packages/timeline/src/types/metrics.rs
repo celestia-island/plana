@@ -55,14 +55,14 @@ impl TokenSource {
                 } else {
                     format!("{}{}", label_approx, num)
                 }
-            },
+            }
             TokenSource::LocalStreamQuickAmount(_) => {
                 if label_estimated.is_empty() {
                     format!("~{}", num)
                 } else {
                     format!("{}{}", label_estimated, num)
                 }
-            },
+            }
         }
     }
 

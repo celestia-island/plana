@@ -326,7 +326,7 @@ impl RootfsManager {
         if container_path.exists() {
             let _ = self.normalize_ownership(&container_path).await;
             match tokio::fs::remove_dir_all(&container_path).await {
-                Ok(()) => {},
+                Ok(()) => {}
                 Err(e) => {
                     warn!(
                         path = %container_path.display(),
@@ -336,7 +336,7 @@ impl RootfsManager {
                     let merged_str = container_path.join("merged").to_string_lossy().to_string();
                     Self::force_unmount(&merged_str).await;
                     let _ = tokio::fs::remove_dir_all(&container_path).await;
-                },
+                }
             }
         }
         Ok(())
@@ -404,7 +404,7 @@ impl RootfsManager {
                 Ok(s) if s.success() => {
                     debug!(path, unmounter = cmd, "unmount succeeded");
                     return;
-                },
+                }
                 Ok(_) => continue,
                 Err(_) => continue,
             }

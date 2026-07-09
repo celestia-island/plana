@@ -16,12 +16,12 @@ impl ContainerManager {
                 let mut state = self.state.write().await;
                 state.insert(info.id.clone(), info);
                 Ok(())
-            },
+            }
             Err(ContainerError::NotFound(_)) => {
                 let mut state = self.state.write().await;
                 state.remove(container_id);
                 Ok(())
-            },
+            }
             Err(e) => Err(e),
         }
     }

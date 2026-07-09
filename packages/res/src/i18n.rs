@@ -39,7 +39,7 @@ pub fn check_locale_completeness(language: Language) -> Vec<String> {
                 "Locale directory '{}' not found",
                 language.locale_code()
             )];
-        },
+        }
     };
 
     // Compare the file lists

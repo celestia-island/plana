@@ -267,10 +267,10 @@ impl WsTransport {
                     Self::set_state(shared, ConnectionState::Connected);
                     info!(attempt = attempt + 1, "reconnected");
                     return Ok(result);
-                },
+                }
                 Err(e) => {
                     warn!(attempt = attempt + 1, error = %e, "reconnect failed");
-                },
+                }
             }
         }
 
@@ -349,11 +349,11 @@ impl WsTransport {
                         config,
                     ))
                     .await;
-                },
+                }
                 Err(e) => {
                     error!(error = %e, "reconnection failed permanently");
                     let _ = msg_tx.send(Err(e)).await;
-                },
+                }
             }
         } else {
             Self::set_state(&shared, ConnectionState::Disconnected);

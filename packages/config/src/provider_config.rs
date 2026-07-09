@@ -901,16 +901,16 @@ pub fn load_provider_config() -> ProviderConfigData {
                     path
                 );
                 data
-            },
+            }
             Err(e) => {
                 warn!("failed to parse provider_config.toml: {}", e);
                 ProviderConfigData::default()
-            },
+            }
         },
         Err(e) => {
             warn!("failed to read provider_config.toml: {}", e);
             ProviderConfigData::default()
-        },
+        }
     }
 }
 

@@ -36,7 +36,7 @@ pub fn write_token_to_file(token: &str) -> std::io::Result<()> {
                 socket_path = %socket_path.display(),
                 "Connection token written to config dir and socket dir"
             );
-        },
+        }
         Err(e) => {
             warn!(
                 event = "connection_token_socket_write_failed",
@@ -44,7 +44,7 @@ pub fn write_token_to_file(token: &str) -> std::io::Result<()> {
                 error = %e,
                 "Failed to write connection token to socket dir (non-fatal)"
             );
-        },
+        }
     }
 
     Ok(())
@@ -69,7 +69,7 @@ fn write_token_with_perms(token: &str, path: &PathBuf, mode: u32) -> std::io::Re
                         "Cannot write or remove old token file"
                     );
                     return Err(e);
-                },
+                }
             }
         } else {
             return Err(e);
@@ -96,7 +96,7 @@ pub fn read_token() -> Option<String> {
                     );
                     return Some(trimmed);
                 }
-            },
+            }
             Err(e) => {
                 warn!(
                     event = "connection_token_read_failed",
@@ -104,7 +104,7 @@ pub fn read_token() -> Option<String> {
                     error = %e,
                     "Failed to read connection token from socket dir"
                 );
-            },
+            }
         }
     }
 
@@ -121,7 +121,7 @@ pub fn read_token() -> Option<String> {
                     );
                     return Some(trimmed);
                 }
-            },
+            }
             Err(e) => {
                 warn!(
                     event = "connection_token_read_failed",
@@ -129,7 +129,7 @@ pub fn read_token() -> Option<String> {
                     error = %e,
                     "Failed to read connection token from config dir"
                 );
-            },
+            }
         }
     }
 

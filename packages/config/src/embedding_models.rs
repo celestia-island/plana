@@ -113,7 +113,7 @@ impl MirrorTable {
                 let mut all = vec![e.source.clone()];
                 all.extend(e.mirrors.iter().cloned());
                 all
-            },
+            }
             None => vec![namespace.to_string()],
         }
     }

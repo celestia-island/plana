@@ -15,7 +15,7 @@ where
             let msg = extract_panic_message(&panic_payload);
             error!(task = %name, panic = %msg, "task panicked — caught by panic_guard");
             None
-        },
+        }
     }
 }
 
@@ -29,7 +29,7 @@ where
             let msg = extract_panic_message(&panic_payload);
             warn!(context = %name, panic = %msg, "caught panic in async context");
             Err(anyhow!("Panic in '{}': {}", name, msg))
-        },
+        }
     }
 }
 

@@ -19,7 +19,10 @@ pub async fn upsert_conversations(tree: &StateTree, convs: &[Value]) {
         .iter()
         .filter_map(|c| {
             let id = c.get("id").and_then(|v| v.as_str())?.to_string();
-            Some(PatchOp::set(format!("state.user.conversations.{id}"), c.clone()))
+            Some(PatchOp::set(
+                format!("state.user.conversations.{id}"),
+                c.clone(),
+            ))
         })
         .collect();
     if !ops.is_empty() {
@@ -77,10 +80,12 @@ mod tests {
         upsert_conversation(&tree, "c1", json!({"id":"c1","title":"x"})).await;
         assert!(tree.read_all().await["state"]["user"]["conversations"]["c1"].is_object());
         remove_conversation(&tree, "c1").await;
-        assert!(tree.read_all().await["state"]["user"]["conversations"]
-            .as_object()
-            .unwrap()
-            .is_empty());
+        assert!(
+            tree.read_all().await["state"]["user"]["conversations"]
+                .as_object()
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[tokio::test]

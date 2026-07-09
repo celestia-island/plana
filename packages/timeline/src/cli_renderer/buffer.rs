@@ -92,7 +92,7 @@ impl CliTimelineBuffer {
                             }
                         }
                         true
-                    },
+                    }
                     _ => false,
                 }
             })
@@ -114,7 +114,7 @@ impl CliTimelineBuffer {
                     d.stats = Some(stats);
                     d.summary = Some(summary);
                     TimelineGroup::Skill(d)
-                },
+                }
                 other => other.clone(),
             };
             self.flush_group(index);
@@ -129,7 +129,7 @@ impl CliTimelineBuffer {
                     d.state = GroupState::Finalized;
                     d.status = SkillBlockStatus::Done;
                     TimelineGroup::Skill(d)
-                },
+                }
                 other => other.clone(),
             };
             self.flush_group(index);

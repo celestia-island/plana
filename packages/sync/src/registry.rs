@@ -154,7 +154,11 @@ impl StateTreeRegistry {
             reaped += 1;
         }
         if reaped > 0 {
-            info!(reaped, remaining = self.trees.len(), "state tree reaper evicted idle trees");
+            info!(
+                reaped,
+                remaining = self.trees.len(),
+                "state tree reaper evicted idle trees"
+            );
         }
     }
 
@@ -228,7 +232,11 @@ mod tests {
         // 持有一个 receiver —— 模拟 ws_bridge writer 在订阅。
         let _rx = tree.subscribe_events();
         reg.reap_once(Duration::from_secs(0)).await;
-        assert_eq!(reg.len(), 1, "tree with active subscriber must not be reaped");
+        assert_eq!(
+            reg.len(),
+            1,
+            "tree with active subscriber must not be reaped"
+        );
     }
 
     #[tokio::test]

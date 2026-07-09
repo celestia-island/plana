@@ -427,12 +427,12 @@ impl McpPromptInjector {
                     new_section,
                     &system_prompt[end + section_marker_end.len()..]
                 )
-            },
+            }
             _ => {
                 let mut result = system_prompt.to_string();
                 self.inject_to_system_prompt(&mut result, mandatory_prompt);
                 result
-            },
+            }
         }
     }
 }

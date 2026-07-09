@@ -23,7 +23,7 @@ pub fn unescape_message(s: &str) -> String {
                 Some(c) => {
                     result.push('\\');
                     result.push(c);
-                },
+                }
                 None => result.push('\\'),
             }
         } else {

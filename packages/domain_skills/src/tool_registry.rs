@@ -33,7 +33,7 @@ impl<M: AgentMarker> ToolRegistry<M> {
             None => {
                 let agent = M::FRIENDLY_NAME;
                 McpToolResult::failure(format!("{agent} does not provide tool: {tool_name}"))
-            },
+            }
         }
     }
 

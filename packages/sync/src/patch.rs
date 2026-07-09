@@ -100,7 +100,7 @@ pub fn apply(root: &mut Value, op: &PatchOp) {
             }
             let target = descend_mut(root, &segments);
             *target = merge_patch(std::mem::take(target), new_val);
-        },
+        }
         PatchKind::Replace => {
             let Some(new_val) = op.value.clone() else {
                 return;
@@ -111,7 +111,7 @@ pub fn apply(root: &mut Value, op: &PatchOp) {
             }
             let target = descend_mut(root, &segments);
             *target = new_val;
-        },
+        }
         PatchKind::Del => {
             if segments.is_empty() {
                 // 删根 = 清空（保持一个空对象，而不是 Value::Null，
@@ -124,7 +124,7 @@ pub fn apply(root: &mut Value, op: &PatchOp) {
             if let Value::Object(map) = parent {
                 map.remove(leaf[0]);
             }
-        },
+        }
     }
 }
 
@@ -147,18 +147,18 @@ pub fn merge_patch(target: Value, patch: Value) -> Value {
                     // null = 删除该键（RFC 7396 语义）。
                     Value::Null => {
                         t.remove(&k);
-                    },
+                    }
                     pv => {
                         let merged = match t.remove(&k) {
                             Some(tv) => merge_patch(tv, pv.clone()),
                             None => pv,
                         };
                         t.insert(k, merged);
-                    },
+                    }
                 }
             }
             Value::Object(t)
-        },
+        }
         // 任一非对象 → patch 直接覆盖（包括 patch=Null 的情况，表示删除）。
         (_, p) => p,
     }
@@ -198,14 +198,14 @@ fn diff_into(prefix: &str, before: &Value, after: &Value, ops: &mut Vec<PatchOp>
                     Some(bv) => diff_into(&path, bv, av, ops),
                 }
             }
-        },
+        }
         (b, a) if b == a => {
             // 值完全相同 —— 不产生 op。
-        },
+        }
         (_, a) => {
             // 值不同（至少一边非对象）→ set。
             ops.push(PatchOp::set(prefix.to_string(), a.clone()));
-        },
+        }
     }
 }
 
@@ -246,7 +246,10 @@ mod tests {
             &mut root,
             &PatchOp::set("state.agents.hubris", json!({"status":"idle"})),
         );
-        assert_eq!(root, json!({"state":{"agents":{"hubris":{"status":"idle"}}}}));
+        assert_eq!(
+            root,
+            json!({"state":{"agents":{"hubris":{"status":"idle"}}}})
+        );
     }
 
     #[test]
@@ -276,10 +279,7 @@ mod tests {
         let mut root = json!({"state":{"agents":{"hubris":{"work_status":{"Running":{}}}}}});
         apply(
             &mut root,
-            &PatchOp::replace(
-                "state.agents.hubris.work_status",
-                json!({"Completed": {}}),
-            ),
+            &PatchOp::replace("state.agents.hubris.work_status", json!({"Completed": {}})),
         );
         // 整体替换 —— 不应残留 Running。
         assert_eq!(
@@ -321,19 +321,22 @@ mod tests {
         let after = json!({"hubris":{"status":"busy","model":"glm"},"seia":{"status":"idle"}});
         let ops = diff("state.agents", &before, &after);
         // kalos 被删、hubris.status 变 + hubris.model 增、seia 新增。
-        let has_del_kalos = ops.iter().any(|o| {
-            o.op == PatchKind::Del && o.path == "state.agents.kalos"
-        });
+        let has_del_kalos = ops
+            .iter()
+            .any(|o| o.op == PatchKind::Del && o.path == "state.agents.kalos");
         let has_set_hubris_status = ops.iter().any(|o| {
-            o.op == PatchKind::Set && o.path == "state.agents.hubris.status"
+            o.op == PatchKind::Set
+                && o.path == "state.agents.hubris.status"
                 && o.value == Some(json!("busy"))
         });
         let has_set_hubris_model = ops.iter().any(|o| {
-            o.op == PatchKind::Set && o.path == "state.agents.hubris.model"
+            o.op == PatchKind::Set
+                && o.path == "state.agents.hubris.model"
                 && o.value == Some(json!("glm"))
         });
         let has_set_seia = ops.iter().any(|o| {
-            o.op == PatchKind::Set && o.path == "state.agents.seia"
+            o.op == PatchKind::Set
+                && o.path == "state.agents.seia"
                 && o.value == Some(json!({"status":"idle"}))
         });
         assert!(has_del_kalos, "missing del kalos: {ops:?}");

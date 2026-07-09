@@ -58,11 +58,11 @@ fn container_ops() -> Option<&'static dyn ContainerOps> {
                         runtime
                     );
                     Some(mgr)
-                },
+                }
                 None => {
                     error!("[ServerManager] Failed to create container backend");
                     None
-                },
+                }
             }
         });
     CM.as_ref().map(|v| v.as_ref())
@@ -136,7 +136,7 @@ impl ServerManager {
             None => {
                 error!("[ServerManager] Container backend not available");
                 return ServerStatus::Unknown;
-            },
+            }
         };
 
         let result = mgr.detect_server_status(&name).await;
@@ -159,7 +159,7 @@ impl ServerManager {
             ServerStatus::Running => {
                 self.status = ServerStatus::Running;
                 Ok(true)
-            },
+            }
             ServerStatus::Stopped => {
                 mgr.start(&server_container_name())
                     .await
@@ -167,7 +167,7 @@ impl ServerManager {
                 Self::wait_for_server_ready().await;
                 self.status = ServerStatus::Running;
                 Ok(true)
-            },
+            }
             ServerStatus::NotExists | ServerStatus::NotBuilt => Err(anyhow!(
                 "Server container does not exist. Run initial setup first."
             )),

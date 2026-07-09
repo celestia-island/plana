@@ -57,7 +57,7 @@ impl ContentVerification for GenProtocol {
                     } else {
                         VerificationStatus::NotSupported
                     }
-                },
+                }
             },
             GenProtocol::AnthropicMessagesV1 | GenProtocol::AnthropicMessagesV2 => {
                 match integrity {
@@ -76,12 +76,12 @@ impl ContentVerification for GenProtocol {
                         } else {
                             VerificationStatus::NotSupported
                         }
-                    },
+                    }
                 }
-            },
+            }
             GenProtocol::OpenAIChatV1 | GenProtocol::GeminiGenerateV1 => {
                 VerificationStatus::NotSupported
-            },
+            }
             // Non-LLM protocols don't use content verification
             _ => VerificationStatus::NotSupported,
         }

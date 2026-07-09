@@ -80,7 +80,7 @@ impl From<ProviderError> for LlmError {
             },
             ProviderError::InvalidResponse { expected, got } => {
                 LlmError::InvalidResponse { expected, got }
-            },
+            }
         }
     }
 }

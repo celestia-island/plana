@@ -717,7 +717,7 @@ mod tests {
         match parsed {
             JsonRpcMessage::Request(req) => {
                 assert_eq!(req.method, "test.method");
-            },
+            }
             _ => bail!("Expected Request"),
         }
         Ok(())

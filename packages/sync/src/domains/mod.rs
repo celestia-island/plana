@@ -11,10 +11,9 @@ pub mod agents;
 pub mod conversations;
 pub mod devices;
 
-pub use agents::{
-    load_initial as load_agents, remove_agent, upsert_agent_patches, upsert_agents,
-};
+pub use agents::{load_initial as load_agents, remove_agent, upsert_agent_patches, upsert_agents};
 pub use conversations::{
-    remove_conversation, upsert_conversation, upsert_conversations, user_scope as user_conversation_scope,
+    remove_conversation, upsert_conversation, upsert_conversations,
+    user_scope as user_conversation_scope,
 };
 pub use devices::{load_initial as load_devices, remove_device, upsert_devices};

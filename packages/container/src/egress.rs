@@ -122,13 +122,13 @@ impl EgressPolicy {
         match self.mode {
             EgressMode::DenyAll => {
                 host_config.dns = Some(vec!["0.0.0.0".to_string()]);
-            },
+            }
             EgressMode::Whitelist => {
                 if !self.dns_servers.is_empty() {
                     host_config.dns = Some(self.dns_servers.clone());
                 }
-            },
-            EgressMode::AllowAll => {},
+            }
+            EgressMode::AllowAll => {}
         }
     }
 

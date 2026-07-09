@@ -59,7 +59,7 @@ impl<'de> Deserialize<'de> for ContainerId {
                 ContainerId::new(&format!("{:03}", num)).ok_or_else(|| {
                     serde::de::Error::custom(format!("invalid ContainerId num: {}", num))
                 })
-            },
+            }
             _ => Err(serde::de::Error::custom(
                 "missing or invalid container_type (expected 'demiurge' or 'normal')",
             )),
@@ -190,12 +190,12 @@ impl<'de> Deserialize<'de> for LlmSessionId {
                 ContainerId::new(&format!("{:03}", num)).ok_or_else(|| {
                     serde::de::Error::custom(format!("invalid container_id num: {}", num))
                 })?
-            },
+            }
             _ => {
                 return Err(serde::de::Error::custom(
                     "missing container_type (expected 'demiurge' or 'normal')",
                 ));
-            },
+            }
         };
         let session_number = flex
             .session_number

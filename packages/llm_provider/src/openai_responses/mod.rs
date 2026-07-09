@@ -276,7 +276,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                 Err(e) => {
                                     warn!(error = %e, data_len = data.len(), "Failed to parse SSE JSON");
                                     continue;
-                                },
+                                }
                             };
 
                             let event_type =
@@ -305,7 +305,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                             usage: None,
                                         });
                                     }
-                                },
+                                }
                                 OUTPUT_ITEM_DONE => {
                                     if let Some(item) = event_val.get("item") {
                                         let item_type =
@@ -343,7 +343,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                             });
                                         }
                                     }
-                                },
+                                }
                                 RESPONSE_COMPLETED => {
                                     let usage = event_val.get("response").and_then(|r| {
                                         r.get("usage").map(|u| LlmUsage {
@@ -379,7 +379,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                         finish_reason: Some(finish),
                                         usage,
                                     });
-                                },
+                                }
                                 RESPONSE_INCOMPLETE => {
                                     let reason = event_val
                                         .get("response")
@@ -399,10 +399,10 @@ impl LlmProvider for OpenAiResponsesProvider {
                                         finish_reason: Some(FinishReason::Length),
                                         usage: None,
                                     });
-                                },
+                                }
                                 other => {
                                     trace!(event_type = other, "SSE event ignored");
-                                },
+                                }
                             }
                         }
 
@@ -414,18 +414,18 @@ impl LlmProvider for OpenAiResponsesProvider {
                     match state.byte_stream.next().await {
                         Some(Ok(bytes)) => {
                             state.buffer.push_str(&String::from_utf8_lossy(&bytes));
-                        },
+                        }
                         Some(Err(e)) => {
                             warn!(error = %e, "SSE stream error");
                             return Some((
                                 Err(ProviderError::NetworkError(format!("Stream error: {}", e))),
                                 state,
                             ));
-                        },
+                        }
                         None => {
                             debug!(state.delta_count, "SSE byte stream exhausted");
                             return None;
-                        },
+                        }
                     }
                 }
             },

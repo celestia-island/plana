@@ -13,7 +13,7 @@ pub fn contains_shell_metacharacters(command: &str) -> bool {
                 if !found_close {
                     return true;
                 }
-            },
+            }
             '"' => {
                 let mut found_close = false;
                 while let Some(nc) = chars.next() {
@@ -47,7 +47,7 @@ pub fn contains_shell_metacharacters(command: &str) -> bool {
                 if !found_close {
                     return true;
                 }
-            },
+            }
             ';' | '|' | '&' | '(' | ')' | '\n' | '\r' => return true,
             '$' => {
                 if let Some(&next) = chars.peek()
@@ -66,10 +66,10 @@ pub fn contains_shell_metacharacters(command: &str) -> bool {
                 {
                     return true;
                 }
-            },
+            }
             '`' => return true,
             '>' | '<' => return true,
-            _ => {},
+            _ => {}
         }
     }
     false

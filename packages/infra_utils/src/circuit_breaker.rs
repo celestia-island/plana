@@ -89,7 +89,7 @@ impl CircuitBreaker {
             CircuitState::HalfOpen => {
                 let current = self.inner.half_open_calls.fetch_add(1, Ordering::Relaxed);
                 current < self.inner.config.half_open_max_calls
-            },
+            }
             CircuitState::Open => false,
         }
     }
@@ -130,7 +130,7 @@ impl CircuitBreaker {
                         );
                     }
                 }
-            },
+            }
             CircuitState::HalfOpen => {
                 let mut guard = self.inner.state.write();
                 *guard = CircuitState::Open;
@@ -139,8 +139,8 @@ impl CircuitBreaker {
                     circuit = %self.inner.name,
                     "circuit breaker tripped HalfOpen → Open (probe failed)"
                 );
-            },
-            CircuitState::Open => {},
+            }
+            CircuitState::Open => {}
         }
     }
 

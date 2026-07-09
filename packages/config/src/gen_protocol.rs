@@ -440,13 +440,13 @@ impl GenProtocol {
             Self::AnthropicMessagesV1 | Self::AnthropicMessagesV2 => {
                 let base = base.trim_end_matches("/v1");
                 format!("{}/v1/models", base)
-            },
+            }
             Self::GeminiGenerateV1 => {
                 let base = base
                     .trim_end_matches("/v1beta/models")
                     .trim_end_matches("/v1/models");
                 format!("{}/v1beta/models", base)
-            },
+            }
             _ => format!("{}/models", base),
         }
     }

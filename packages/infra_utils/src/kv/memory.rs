@@ -57,7 +57,7 @@ impl KvStore for InMemoryKvStore {
             Some(_) => {
                 self.data.remove(key);
                 Ok(None)
-            },
+            }
             None => Ok(None),
         }
     }

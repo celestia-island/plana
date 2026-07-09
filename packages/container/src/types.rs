@@ -311,7 +311,7 @@ impl ContainerRuntimeType {
             "wslc" | "wsl" => Self::Wslc,
             "apple-container" | "apple_container" | "applecontainer" | "apple" | "container" => {
                 Self::AppleContainer
-            },
+            }
             _ => Self::Youki,
         }
     }

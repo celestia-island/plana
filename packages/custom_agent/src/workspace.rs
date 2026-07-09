@@ -339,7 +339,7 @@ impl Layer3Workspace {
             SubscriptionSource::Official => self.sync_official_subscription(entry),
             SubscriptionSource::Github | SubscriptionSource::Url => {
                 self.sync_git_subscription(entry).await
-            },
+            }
         }
     }
 

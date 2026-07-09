@@ -55,7 +55,7 @@ fn main() {
             for error in &errors {
                 log_err!("{}", error);
             }
-        },
+        }
     }
 
     log_info!("Checking entrypoint language completeness...");
@@ -67,7 +67,7 @@ fn main() {
             for error in &errors {
                 log_err!("{}", error);
             }
-        },
+        }
     }
 
     log_info!("Checking Markdown documentation...");
@@ -79,7 +79,7 @@ fn main() {
             for error in &errors {
                 log_err!("{}", error);
             }
-        },
+        }
     }
 
     log_info!("Checking soul front matter invariants...");
@@ -91,7 +91,7 @@ fn main() {
             for error in &errors {
                 log_err!("{}", error);
             }
-        },
+        }
     }
 
     log_blank!();
@@ -129,7 +129,7 @@ fn check_i18n_toml_keys() -> Result<(), Vec<String>> {
             Err(e) => {
                 errors.push(format!("Failed to collect fields for '{}': {}", lang, e));
                 continue;
-            },
+            }
         };
 
         let missing: Vec<_> = zhs_fields
@@ -274,7 +274,7 @@ fn check_entrypoint_languages() -> Result<(), Vec<String>> {
                             toml_path.file_name().unwrap_or_default().to_string_lossy()
                         ));
                     }
-                },
+                }
                 Err(e) => {
                     errors.push(format!(
                         "{}/{}: invalid TOML: {}",
@@ -282,7 +282,7 @@ fn check_entrypoint_languages() -> Result<(), Vec<String>> {
                         toml_path.file_name().unwrap_or_default().to_string_lossy(),
                         e
                     ));
-                },
+                }
             }
         }
     }
@@ -315,7 +315,7 @@ fn check_markdown_docs() -> Result<(), Vec<String>> {
                     docs_dir, e
                 ));
                 continue;
-            },
+            }
         };
 
         for agent_entry in agent_entries {
@@ -324,7 +324,7 @@ fn check_markdown_docs() -> Result<(), Vec<String>> {
                 Err(e) => {
                     errors.push(format!("Failed to read agent entry: {}", e));
                     continue;
-                },
+                }
             };
             let agent_path = agent_entry.path();
 
@@ -351,7 +351,7 @@ fn check_markdown_docs() -> Result<(), Vec<String>> {
                             section_path, e
                         ));
                         continue;
-                    },
+                    }
                 };
 
                 for item_entry in section_entries {
@@ -360,7 +360,7 @@ fn check_markdown_docs() -> Result<(), Vec<String>> {
                         Err(e) => {
                             errors.push(format!("Failed to read item entry: {}", e));
                             continue;
-                        },
+                        }
                     };
                     let item_path = item_entry.path();
 
@@ -415,13 +415,13 @@ fn check_markdown_docs() -> Result<(), Vec<String>> {
                                                 ));
                                     }
                                 }
-                            },
+                            }
                             Err(_) => {
                                 errors.push(format!(
                                     "Agent {}/{}/{}: invalid front matter TOML",
                                     agent_name, section_name, skill_name
                                 ));
-                            },
+                            }
                         }
                     }
                 }
@@ -473,7 +473,7 @@ fn check_soul_docs() -> Result<(), Vec<String>> {
                             agent
                         ));
                     }
-                },
+                }
                 Err(err) => errors.push(format!(
                     "Soul {}: invalid front matter TOML: {}",
                     agent, err

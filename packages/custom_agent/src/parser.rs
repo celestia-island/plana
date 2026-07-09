@@ -38,7 +38,7 @@ pub(super) fn merge_toml(base: toml::Value, overlay: toml::Value) -> toml::Value
                 }
             }
             toml::Value::Table(left)
-        },
+        }
         (_, right) => right,
     }
 }

@@ -746,37 +746,37 @@ impl syn::parse::Parse for AmmTool {
                 "name" => {
                     let _: syn::Token![:] = content.parse()?;
                     name_const = Some(content.parse()?);
-                },
+                }
                 "desc" => {
                     let _: syn::Token![:] = content.parse()?;
                     desc = Some(content.parse()?);
-                },
+                }
                 "schema" => {
                     let _: syn::Token![:] = content.parse()?;
                     schema = Some(content.parse()?);
-                },
+                }
                 "call_mode" => {
                     let _: syn::Token![:] = content.parse()?;
                     call_mode = Some(content.parse()?);
-                },
+                }
                 "location" => {
                     let _: syn::Token![:] = content.parse()?;
                     location = Some(content.parse()?);
-                },
+                }
                 "maturity" => {
                     let _: syn::Token![:] = content.parse()?;
                     maturity = Some(content.parse()?);
-                },
+                }
                 "cap" => {
                     let _: syn::Token![:] = content.parse()?;
                     cap = Some(content.parse()?);
-                },
+                }
                 "hidden" => {
                     hidden = true;
-                },
+                }
                 other => {
                     return Err(content.error(format!("unknown tool metadata key: {}", other)));
-                },
+                }
             }
         }
 
@@ -856,7 +856,7 @@ impl syn::parse::Parse for AmmSkillRouting {
                 "field" => {
                     let _: syn::Token![:] = content.parse()?;
                     field = Some(content.parse()?);
-                },
+                }
                 "tools" => {
                     let _: syn::Token![:] = content.parse()?;
                     let tools_content;
@@ -867,10 +867,10 @@ impl syn::parse::Parse for AmmSkillRouting {
                             let _: syn::Token![,] = tools_content.parse()?;
                         }
                     }
-                },
+                }
                 other => {
                     return Err(content.error(format!("unknown skill_routing key: {}", other)));
-                },
+                }
             }
         }
 
@@ -902,24 +902,24 @@ impl syn::parse::Parse for AmmInvoker {
                     let _: syn::Token![:] = input.parse()?;
                     let val: syn::LitBool = input.parse()?;
                     enrich_docs = val.value;
-                },
+                }
                 "snapshot_policy" => {
                     let _: syn::Token![:] = input.parse()?;
                     snapshot_policy = Some(input.parse()?);
-                },
+                }
                 "verify" => {
                     let _: syn::Token![:] = input.parse()?;
                     let content;
                     syn::braced!(content in input);
                     verify = Some(content.parse::<proc_macro2::TokenStream>()?);
-                },
+                }
                 "skill_routing" => {
                     let _: syn::Token![:] = input.parse()?;
                     skill_routing = Some(input.parse()?);
-                },
+                }
                 other => {
                     return Err(input.error(format!("unknown invoker key: {}", other)));
-                },
+                }
             }
         }
 
@@ -954,19 +954,19 @@ impl syn::parse::Parse for AmmModule {
             match key_str.as_str() {
                 "name" => {
                     name = Some(input.parse()?);
-                },
+                }
                 "marker" => {
                     marker = Some(input.parse()?);
-                },
+                }
                 "agent" => {
                     agent = Some(input.parse()?);
-                },
+                }
                 "state_type" => {
                     state_type = Some(input.parse()?);
-                },
+                }
                 "tool_names" => {
                     tool_names_path = Some(input.parse()?);
-                },
+                }
                 "fields" => {
                     let content;
                     syn::braced!(content in input);
@@ -985,12 +985,12 @@ impl syn::parse::Parse for AmmModule {
                             let _: syn::Token![,] = content.parse()?;
                         }
                     }
-                },
+                }
                 "constructors" => {
                     let content;
                     syn::braced!(content in input);
                     constructors = Some(content.parse::<proc_macro2::TokenStream>()?);
-                },
+                }
                 "accessors" => {
                     let content;
                     syn::bracketed!(content in input);
@@ -1000,7 +1000,7 @@ impl syn::parse::Parse for AmmModule {
                             let _: syn::Token![,] = content.parse()?;
                         }
                     }
-                },
+                }
                 "groups" => {
                     let content;
                     syn::braced!(content in input);
@@ -1010,20 +1010,20 @@ impl syn::parse::Parse for AmmModule {
                             let _: syn::Token![,] = content.parse()?;
                         }
                     }
-                },
+                }
                 "invoker" => {
                     let content;
                     syn::braced!(content in input);
                     invoker = Some(content.parse()?);
-                },
+                }
                 "extra" => {
                     let content;
                     syn::braced!(content in input);
                     extra = Some(content.parse::<proc_macro2::TokenStream>()?);
-                },
+                }
                 other => {
                     return Err(input.error(format!("unknown top-level key: {}", other)));
-                },
+                }
             }
 
             if input.peek(syn::Token![,]) {
@@ -1469,30 +1469,30 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                             _domain_skills::mcp_tools::SnapshotPolicy::Always
                         }
                     }
-                },
+                }
                 "Never" => {
                     quote! {
                         fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
                             _domain_skills::mcp_tools::SnapshotPolicy::Never
                         }
                     }
-                },
+                }
                 "OnFailure" => {
                     quote! {
                         fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
                             _domain_skills::mcp_tools::SnapshotPolicy::OnFailure
                         }
                     }
-                },
+                }
                 _ => {
                     quote! {
                         fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
                             _domain_skills::mcp_tools::SnapshotPolicy::#sp
                         }
                     }
-                },
+                }
             }
-        },
+        }
         None => quote! {},
     };
 
@@ -1535,7 +1535,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                     }
                 }
             }
-        },
+        }
         None => quote! {},
     };
 

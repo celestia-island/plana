@@ -383,7 +383,7 @@ fn integration_unclosed_call_before_complete_pair() {
     let orphan_history_lost = interleaved.iter().any(|b| match b {
         TimelineSegmentBlock::Mcp(m) => {
             m.state == McpBlockState::HistoryLost && m.call_text == *partial_code
-        },
+        }
         _ => false,
     });
     assert!(
@@ -580,7 +580,7 @@ fn integration_realistic_truncated_skill_stream() -> Result<()> {
                     "orexis.report_human({})",
                     var_namespace::ref_bracket("reply_payload")
                 ))
-        },
+        }
         _ => false,
     });
     assert!(
@@ -1020,7 +1020,7 @@ fn integration_non_adjacent_synthetic_result_orphan_handling() -> Result<()> {
             m.call_text.contains("orexis.report_human")
                 && m.result_text
                     .contains("[stream sealed before result arrived]")
-        },
+        }
         _ => false,
     });
     assert!(
@@ -1158,7 +1158,7 @@ fn integration_mcp_blocks_pairs_non_adjacent_synthetic_but_interleaved_does_not(
     let synthetic_paired = interleaved.iter().any(|b| match b {
         TimelineSegmentBlock::Mcp(m) => {
             m.call_text == call_code && m.result_text.contains(sealed_msg)
-        },
+        }
         _ => false,
     });
     assert!(
@@ -1211,7 +1211,7 @@ fn integration_trailing_orphan_degraded_by_synthetic_successor() -> Result<()> {
     let synthetic_paired = interleaved.iter().any(|b| match b {
         TimelineSegmentBlock::Mcp(m) => {
             m.call_text == call_code && m.result_text.contains(sealed_msg)
-        },
+        }
         _ => false,
     });
     assert!(

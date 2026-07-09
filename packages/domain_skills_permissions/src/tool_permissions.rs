@@ -207,7 +207,7 @@ pub fn check_dual_authorization(
                 } else {
                     PermissionDecision::allow()
                 }
-            },
+            }
             RiskLevel::Safe | RiskLevel::Info => PermissionDecision::allow(),
         },
     }
@@ -442,7 +442,7 @@ pub fn check_command_safety(safety: CommandSafety, trust: TrustLevel) -> Permiss
             CommandSafety::ReadOnly | CommandSafety::Idempotent => PermissionDecision::allow(),
             CommandSafety::Destructive | CommandSafety::Arbitrary => {
                 PermissionDecision::deny("arbitrary/destructive commands denied on untrusted nodes")
-            },
+            }
         },
         TrustLevel::Restricted => match safety {
             CommandSafety::ReadOnly => PermissionDecision::allow(),

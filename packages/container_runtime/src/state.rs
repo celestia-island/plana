@@ -80,7 +80,7 @@ impl YoukiState {
                 if let Some(labels) = label_filter {
                     for (k, v) in labels {
                         match r.info.labels.get(k) {
-                            Some(lv) if v.is_empty() || lv == v => {},
+                            Some(lv) if v.is_empty() || lv == v => {}
                             _ => return false,
                         }
                     }

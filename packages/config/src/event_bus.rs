@@ -86,7 +86,7 @@ impl ConfigChangeAudit {
                     ),
                 };
                 (event_type, "provider".to_string(), details)
-            },
+            }
             ConfigEvent::Agent {
                 agent_name,
                 config_path,

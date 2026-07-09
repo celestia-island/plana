@@ -159,7 +159,7 @@ impl AgentKind {
             "web_automation" | "webautomation" => Some(AgentKind::WebAutomation),
             "classic_software_engineering" | "classicsoftwareengineering" => {
                 Some(AgentKind::ClassicSoftwareEngineering)
-            },
+            }
             "web_ui_panel" | "webuipanel" => Some(AgentKind::WebUiPanel),
             "industrial_iot" | "industrialiot" => Some(AgentKind::IndustrialIoT),
             "remote_operations" | "remoteoperations" => Some(AgentKind::RemoteOperations),
@@ -230,16 +230,16 @@ impl AgentKind {
             AgentKind::WebAutomation => "Web automation and browser testing",
             AgentKind::ClassicSoftwareEngineering => {
                 "Code review, LSP integration, and refactoring"
-            },
+            }
             AgentKind::WebUiPanel => {
                 "Pluggable dashboard views — SCADA, kanban, media flow, data tables"
-            },
+            }
             AgentKind::IndustrialIoT => {
                 "Industrial IoT — PLC communication, sensor polling, alarm management"
-            },
+            }
             AgentKind::RemoteOperations => {
                 "Remote operations — SSH, remote terminal, GUI automation, file transfer"
-            },
+            }
         }
     }
 

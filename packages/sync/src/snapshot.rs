@@ -233,7 +233,10 @@ mod tests {
         let root = json!({"state": {"agents": {"a": 1}, "devices": {"d": 2}}});
         // state.agents 被 state 包含 → 只保留 state。
         let snap = snapshot(&root, &["state".into(), "state.agents".into()]);
-        assert_eq!(snap, json!({"state": {"agents": {"a": 1}, "devices": {"d": 2}}}));
+        assert_eq!(
+            snap,
+            json!({"state": {"agents": {"a": 1}, "devices": {"d": 2}}})
+        );
     }
 
     #[test]

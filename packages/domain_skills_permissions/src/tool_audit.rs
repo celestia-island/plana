@@ -40,7 +40,7 @@ impl AuditSink for JsonlAuditSink {
             Err(e) => {
                 warn!(error = %e, path = %self.path.display(), "audit sink: failed to open file");
                 return;
-            },
+            }
         };
         use std::io::Write;
         for entry in entries {
@@ -49,7 +49,7 @@ impl AuditSink for JsonlAuditSink {
                     if let Err(e) = writeln!(file, "{line}") {
                         warn!(error = %e, "audit sink: write failed");
                     }
-                },
+                }
                 Err(e) => warn!(error = %e, "audit sink: serialization failed"),
             }
         }

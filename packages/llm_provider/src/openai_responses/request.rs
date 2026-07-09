@@ -126,7 +126,7 @@ pub fn convert_input_items(messages: Vec<LlmMessage>) -> Vec<Value> {
                     };
                     items.push(serde_json::to_value(item).unwrap_or(Value::Null));
                 }
-            },
+            }
             MessageRole::Assistant => {
                 if let Some(tool_calls) = &msg.tool_calls {
                     for tc in tool_calls {
@@ -145,7 +145,7 @@ pub fn convert_input_items(messages: Vec<LlmMessage>) -> Vec<Value> {
                     };
                     items.push(serde_json::to_value(item).unwrap_or(Value::Null));
                 }
-            },
+            }
             MessageRole::Tool => {
                 if let Some(tool_call_id) = &msg.tool_call_id {
                     let item = FunctionCallOutputItem {
@@ -155,7 +155,7 @@ pub fn convert_input_items(messages: Vec<LlmMessage>) -> Vec<Value> {
                     };
                     items.push(serde_json::to_value(item).unwrap_or(Value::Null));
                 }
-            },
+            }
         }
     }
     items

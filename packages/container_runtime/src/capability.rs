@@ -57,12 +57,12 @@ pub async fn detect_rootfs_capability() -> RootfsCapability {
                     fuse_bin
                 );
                 return RootfsCapability::FuseOverlay;
-            },
+            }
             false => {
                 warn!(
                     "fuse-overlayfs binary and /dev/fuse present but mount test failed — check apparmor/seccomp/capabilities"
                 );
-            },
+            }
         }
     }
 

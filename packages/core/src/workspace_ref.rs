@@ -282,12 +282,12 @@ impl<'de> Deserialize<'de> for WorkspaceScopedBadge {
                 ContainerId::new(&format!("{:03}", num)).ok_or_else(|| {
                     serde::de::Error::custom(format!("invalid container_id num: {}", num))
                 })?
-            },
+            }
             _ => {
                 return Err(serde::de::Error::custom(
                     "missing or invalid container_type",
                 ));
-            },
+            }
         };
         let workspace_ref = flex.workspace_ref.map(|r| match r.ref_type.as_str() {
             "short_id" => WorkspaceRef::ShortId(r.value),

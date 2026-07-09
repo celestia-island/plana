@@ -33,7 +33,7 @@ fn bench_deserialize_notification(c: &mut Criterion) {
         Err(e) => {
             eprintln!("bench setup failed: {e}");
             std::process::exit(1);
-        },
+        }
     };
     c.bench_function("deserialize_notification", |b| {
         b.iter(|| deserialize_from_jsonrpc(black_box(&json)))

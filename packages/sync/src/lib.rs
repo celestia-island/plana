@@ -83,7 +83,10 @@ pub const ALL_TOPICS: &[(&str, &str)] = &[
     ("Tui.AgentReport", "reports"),
     ("Tui.IndustrialTelemetryPush", "industrial_telemetry"),
     ("Tui.IndustrialAlarmPush", "industrial_alarm"),
-    ("Tui.IndustrialWriteApprovalPush", "industrial_write_approval"),
+    (
+        "Tui.IndustrialWriteApprovalPush",
+        "industrial_write_approval",
+    ),
     ("Tui.HumanReviewRequest", "human_review"),
     ("Tui.AudioPullProgress", "audio_pull_progress"),
 ];

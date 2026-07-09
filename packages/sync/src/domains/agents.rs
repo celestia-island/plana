@@ -34,7 +34,8 @@ pub async fn upsert_agents(tree: &StateTree, agents: &[Value]) {
 
 /// 删除一个 agent（收到 AgentUpdate 且 status 暗示下线时用，预留）。
 pub async fn remove_agent(tree: &StateTree, agent_id: &str) {
-    tree.write(PatchOp::del(format!("state.agents.{agent_id}"))).await;
+    tree.write(PatchOp::del(format!("state.agents.{agent_id}")))
+        .await;
 }
 
 /// 把 entelecheia 的字段级增量 `AgentPatch` 数组 upsert 进树。
@@ -152,11 +153,7 @@ mod tests {
         )
         .await;
         // 部分更新 —— model 应保留，status 覆盖。
-        upsert_agents(
-            &tree,
-            &[json!({"agent_id":"hubris-1","status":"Busy"})],
-        )
-        .await;
+        upsert_agents(&tree, &[json!({"agent_id":"hubris-1","status":"Busy"})]).await;
         let all = tree.read_all().await;
         assert_eq!(
             all["state"]["agents"]["hubris-1"],
@@ -167,7 +164,11 @@ mod tests {
     #[tokio::test]
     async fn upsert_skips_entries_without_id() {
         let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
-        upsert_agents(&tree, &[json!({"no_id":true}), json!({"agent_type":"Fallback"})]).await;
+        upsert_agents(
+            &tree,
+            &[json!({"no_id":true}), json!({"agent_type":"Fallback"})],
+        )
+        .await;
         let all = tree.read_all().await;
         // 第二个用 agent_type 作键。
         assert_eq!(all["state"]["agents"]["Fallback"]["agent_type"], "Fallback");

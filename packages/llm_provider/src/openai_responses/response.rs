@@ -39,7 +39,7 @@ impl ResponsesApiResponse {
                             }
                         }
                     }
-                },
+                }
                 ITEM_TYPE_FUNCTION_CALL => {
                     let call_id = item
                         .get("call_id")
@@ -62,8 +62,8 @@ impl ResponsesApiResponse {
                         arguments,
                         integrity: None,
                     });
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         (text, tool_calls)

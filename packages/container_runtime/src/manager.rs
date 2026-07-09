@@ -34,7 +34,7 @@ fn resolve_run_dir() -> PathBuf {
         Ok(_) => {
             let _ = std::fs::remove_file(&probe);
             primary
-        },
+        }
         Err(_) => {
             if let Ok(run_dir) = std::env::var("ENTELECHEIA_RUN_DIR") {
                 warn!(
@@ -51,7 +51,7 @@ fn resolve_run_dir() -> PathBuf {
                 );
                 PathBuf::from(FALLBACK_RUN_DIR)
             }
-        },
+        }
     }
 }
 
@@ -108,7 +108,7 @@ impl YoukiManager {
                 Err(e) => {
                     warn!("Youki reconcile: failed to read bundles dir: {}", e);
                     return Ok(Vec::new());
-                },
+                }
             };
 
             while let Ok(Some(entry)) = entries.next_entry().await {
@@ -149,7 +149,7 @@ impl YoukiManager {
                                 container_id
                             );
                             ContainerStatus::Exited
-                        },
+                        }
                     }
                 } else {
                     ContainerStatus::Exited
@@ -427,10 +427,10 @@ impl YoukiManager {
                     if cm.is_dir() {
                         self.collect_all_paths(&container_path, self.rootfs.cache_dir(), changes);
                     }
-                },
+                }
                 (Some(_), Ok(cm)) if cm.is_dir() => {
                     Box::pin(self.walk_diff(&container_path, &host_path, changes)).await?;
-                },
+                }
                 (Some(hm), Ok(cm)) => {
                     if hm.len() != cm.len() {
                         changes.push(_container::PathChange {
@@ -443,14 +443,14 @@ impl YoukiManager {
                             Err(e) => {
                                 debug!(path = %host_path.display(), error = %e, "skipping unreadable host file in diff");
                                 continue;
-                            },
+                            }
                         };
                         let container_bytes = match std::fs::read(&container_path) {
                             Ok(b) => b,
                             Err(e) => {
                                 debug!(path = %container_path.display(), error = %e, "skipping unreadable container file in diff");
                                 continue;
-                            },
+                            }
                         };
                         if host_bytes != container_bytes {
                             changes.push(_container::PathChange {
@@ -459,14 +459,14 @@ impl YoukiManager {
                             });
                         }
                     }
-                },
+                }
                 (Some(_), Err(_)) => {
                     changes.push(_container::PathChange {
                         path: relative,
                         kind: _container::ChangeKind::Deleted,
                     });
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         Ok(())
@@ -541,14 +541,14 @@ impl YoukiManager {
                         kind: _container::ChangeKind::Added,
                     });
                     Box::pin(self.scan_upper_recursive(&path, &prefix, changes)).await?;
-                },
+                }
                 Ok(_) => {
                     changes.push(_container::PathChange {
                         path: std::path::PathBuf::from(&relative),
                         kind: _container::ChangeKind::Modified,
                     });
-                },
-                Err(_) => {},
+                }
+                Err(_) => {}
             }
         }
         Ok(())
@@ -592,14 +592,14 @@ impl YoukiManager {
                         kind: _container::ChangeKind::Added,
                     });
                     Box::pin(self.scan_upper_recursive(&path, &relative, changes)).await?;
-                },
+                }
                 Ok(_) => {
                     changes.push(_container::PathChange {
                         path: std::path::PathBuf::from(&relative),
                         kind: _container::ChangeKind::Modified,
                     });
-                },
-                Err(_) => {},
+                }
+                Err(_) => {}
             }
         }
         Ok(())
@@ -759,7 +759,7 @@ impl ContainerOps for YoukiManager {
                 );
                 self.rootfs.cleanup_container_rootfs(container_id).await?;
                 return Ok(());
-            },
+            }
         };
         let container_dir = self.run_dir.join(&resolved_id);
         tokio::task::spawn_blocking(move || {
@@ -853,7 +853,7 @@ impl ContainerOps for YoukiManager {
                     Ok(c) if !c.is_empty() => ServerStatus::Stopped,
                     _ => ServerStatus::NotExists,
                 }
-            },
+            }
             Err(_) => ServerStatus::Unknown,
         }
     }
@@ -1851,7 +1851,7 @@ mod tests {
                 assert_eq!(id, "test-id");
                 assert_eq!(name, "test-name");
                 assert_eq!(image, "test-image");
-            },
+            }
             _ => return Err(anyhow::anyhow!("expected Created event, got {:?}", event)),
         }
         Ok(())
@@ -2030,7 +2030,7 @@ mod tests {
                     "exec of a nonexistent binary must not exit 0; got output: {:?}",
                     output
                 );
-            },
+            }
             Err(err) => {
                 let msg = format!("{err:#}");
                 assert!(
@@ -2040,7 +2040,7 @@ mod tests {
                 // Any other Err is acceptable — spawn failure, I/O error,
                 // etc. We log it but do not fail.
                 eprintln!("note: exec returned Err (acceptable): {msg}");
-            },
+            }
         }
         Ok(())
     }
@@ -2065,17 +2065,17 @@ mod tests {
                     output.stdout.trim(),
                     output.exit_code
                 );
-            },
+            }
             Err(ContainerError::ExecFailed { ref message, .. }) => {
                 assert!(
                     message.contains("nsenter"),
                     "Should attempt nsenter when PID is set, got: {}",
                     message
                 );
-            },
+            }
             Err(other) => {
                 return Err(anyhow::anyhow!("Unexpected error type: {:?}", other));
-            },
+            }
         }
         Ok(())
     }
@@ -2094,7 +2094,7 @@ mod tests {
                     "Expected empty command error, got: {}",
                     message
                 );
-            },
+            }
             other => return Err(anyhow::anyhow!("Expected ExecFailed, got: {:?}", other)),
         }
         Ok(())

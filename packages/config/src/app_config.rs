@@ -225,7 +225,7 @@ impl UserConfig {
                     );
                     Self::attempt_config_repair(&config_file);
                     return Self::default();
-                },
+                }
             };
             if let Ok(mut config) = toml::from_str::<Self>(&content) {
                 if config.user_id == uuid::Uuid::nil() {

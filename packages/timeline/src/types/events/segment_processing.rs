@@ -157,7 +157,7 @@ impl TimelineGroupData {
                             separate_call_content: wtv,
                         });
                     }
-                },
+                }
                 StreamSegment::McpResult { call_id, .. } => {
                     if consumed.contains(&i) {
                         i += 1;
@@ -190,8 +190,8 @@ impl TimelineGroupData {
                         state,
                         separate_call_content: Vec::new(),
                     });
-                },
-                _ => {},
+                }
+                _ => {}
             }
             i += 1;
         }
@@ -285,10 +285,10 @@ impl TimelineGroupData {
                     if seen_call_id.insert(mcp.call_id) {
                         result.push(block);
                     }
-                },
+                }
                 _ => {
                     result.push(block);
-                },
+                }
             }
         }
 
@@ -377,7 +377,7 @@ impl TimelineGroupData {
                         }));
                     }
                     i += 1;
-                },
+                }
                 StreamSegment::McpResult { call_id, .. } => {
                     if consumed.contains(&i) {
                         i += 1;
@@ -411,7 +411,7 @@ impl TimelineGroupData {
                         separate_call_content: Vec::new(),
                     }));
                     i += 1;
-                },
+                }
                 _ => {
                     let kind = match &segments[i] {
                         StreamSegment::Thinking { .. } => TimelineContentKind::Thinking,
@@ -426,7 +426,7 @@ impl TimelineGroupData {
                         }));
                     }
                     i += 1;
-                },
+                }
             }
         }
         Self::dedup_interleaved_by_content(&mut blocks);
@@ -498,7 +498,7 @@ impl TimelineGroupData {
                 TimelineSegmentBlock::Mcp(mcp) => {
                     !matches!(mcp.state, McpBlockState::Pending | McpBlockState::Running)
                         || !mcp.result_text.is_empty()
-                },
+                }
             };
             if is_substantive {
                 has_subsequent = true;

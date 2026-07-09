@@ -73,7 +73,7 @@ impl CustomAgentManager {
                 } else {
                     Vec::new()
                 }
-            },
+            }
             None => Vec::new(),
         }
     }
@@ -254,7 +254,7 @@ impl CustomAgentManager {
             SubscriptionSource::Url => repo.clone(),
             SubscriptionSource::Official => {
                 return Err(anyhow!("official source not supported for subscription"));
-            },
+            }
         };
 
         let tmp_dir =

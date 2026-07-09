@@ -31,13 +31,16 @@ pub async fn upsert_devices(tree: &StateTree, devices: &[Value]) {
 
 /// 删除一个 device（节点下线时用）。
 pub async fn remove_device(tree: &StateTree, node_id: &str) {
-    tree.write(PatchOp::del(format!("state.devices.{node_id}"))).await;
+    tree.write(PatchOp::del(format!("state.devices.{node_id}")))
+        .await;
 }
 
 /// 取一个 device 条目的键（node_id）。PolemosDeviceInfo.node_id 是 Uuid，
 /// serde 序列化成字符串。缺失/非字符串返回 None（跳过）。
 fn device_key(d: &Value) -> Option<String> {
-    d.get("node_id").and_then(|v| v.as_str()).map(|s| s.to_string())
+    d.get("node_id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
 }
 
 /// 首次访问该 scope 的树时的懒载入（预留）。device 在 mock-mode 下为空
@@ -109,8 +112,11 @@ mod tests {
         let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
         upsert_devices(&tree, &[json!({"node_id":"node-1","status":"online"})]).await;
         // 另写一个非 devices 的键。
-        tree.write(PatchOp::set("state.agents.hubris", json!({"status":"idle"})))
-            .await;
+        tree.write(PatchOp::set(
+            "state.agents.hubris",
+            json!({"status":"idle"}),
+        ))
+        .await;
         let snap = tree.read_viewport(&["state.devices".into()]).await;
         assert_eq!(
             snap,

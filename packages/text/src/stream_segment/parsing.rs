@@ -46,10 +46,10 @@ impl LlmStreamBuilder {
                         if incoming_mid.is_some() {
                             *message_id = incoming_mid;
                         }
-                    },
+                    }
                     StreamSegment::McpCall { .. } | StreamSegment::McpResult { .. } => {
                         warn!("unexpected McpCall/McpResult segment in chunk push");
-                    },
+                    }
                 }
                 return;
             }
@@ -200,8 +200,8 @@ impl LlmStreamBuilder {
                     | StreamSegment::Thinking { text, .. }
                     | StreamSegment::DeepThinking { text, .. } => {
                         text.push_str(&text_to_append);
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 }
             } else {
                 self.segments[write_idx] = self.segments[read_idx].clone();
@@ -227,13 +227,13 @@ impl LlmStreamBuilder {
                 | StreamSegment::Thinking { text, .. }
                 | StreamSegment::DeepThinking { text, .. } => {
                     total += text.len();
-                },
+                }
                 StreamSegment::McpCall { params, .. } => {
                     total += params.to_string().len();
-                },
+                }
                 StreamSegment::McpResult { data, .. } => {
                     total += data.to_string().len();
-                },
+                }
             }
         }
         total
@@ -368,11 +368,11 @@ impl LlmStreamBuilder {
             match seg {
                 StreamSegment::McpCall { call_id, .. } => {
                     call_ids.insert(*call_id);
-                },
+                }
                 StreamSegment::McpResult { call_id, .. } => {
                     call_ids.remove(call_id);
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         !call_ids.is_empty()

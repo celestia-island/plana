@@ -289,10 +289,10 @@ impl PromptLoader {
                 match self.load(stem).await {
                     Ok(prompt) => {
                         prompts.insert(stem.to_string(), prompt);
-                    },
+                    }
                     Err(e) => {
                         warn!("failed to load prompt: {} - {}", stem, e);
-                    },
+                    }
                 }
             }
         }

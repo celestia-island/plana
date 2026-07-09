@@ -69,7 +69,10 @@ impl StateStore for MemoryStore {
             .insert((scope, path.to_string()), value);
     }
     async fn delete(&self, scope: ScopeKey, path: &str) {
-        self.inner.lock().unwrap().remove(&(scope, path.to_string()));
+        self.inner
+            .lock()
+            .unwrap()
+            .remove(&(scope, path.to_string()));
     }
     async fn clear(&self, scope: ScopeKey) {
         self.inner.lock().unwrap().retain(|(s, _), _| *s != scope);

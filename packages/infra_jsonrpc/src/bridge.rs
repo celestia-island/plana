@@ -301,7 +301,7 @@ pub fn core_message_to_method_and_params(msg: &CoreMessage) -> (String, Option<V
             }
 
             ("Unknown.Unknown".to_string(), Some(json))
-        },
+        }
         _ => ("Unknown.Unknown".to_string(), Some(json)),
     }
 }
@@ -316,7 +316,7 @@ pub fn from_jsonrpc_method(method: &str, params: Option<Value>) -> Option<CoreMe
                 Value::String(action.to_string()),
             );
             Value::Object(map)
-        },
+        }
         _ => Value::Object({
             let mut map = serde_json::Map::new();
             map.insert(
@@ -383,7 +383,7 @@ mod tests {
         match reconstructed {
             CoreMessage::Tui(TuiMessage::Ping { timestamp }) => {
                 assert_eq!(timestamp, 12345u64);
-            },
+            }
             other => anyhow::bail!("Expected {}, got {:?}", GatewayMethod::TUI_PING, other),
         }
         Ok(())
@@ -400,7 +400,7 @@ mod tests {
         match reconstructed {
             CoreMessage::Base(BaseMessage::Heartbeat { timestamp }) => {
                 assert_eq!(timestamp, 999);
-            },
+            }
             other => anyhow::bail!(
                 "Expected {}, got {:?}",
                 GatewayMethod::BASE_HEARTBEAT,
@@ -423,7 +423,7 @@ mod tests {
         match reconstructed {
             CoreMessage::Tui(TuiMessage::OpenWorkspace { uri }) => {
                 assert_eq!(uri, "git://https://github.com/org/repo.git");
-            },
+            }
             other => anyhow::bail!("Expected OpenWorkspace, got {:?}", other),
         }
         Ok(())
@@ -460,7 +460,7 @@ mod tests {
                     remote_url,
                     Some("https://github.com/org/repo.git".to_string())
                 );
-            },
+            }
             other => anyhow::bail!("Expected WorkspaceStatus, got {:?}", other),
         }
         Ok(())
@@ -498,12 +498,9 @@ mod tests {
                 notification,
                 timestamp,
             }) => {
-                assert_eq!(
-                    notification,
-                    _state_sync::SystemNotification::WebUiStarted
-                );
+                assert_eq!(notification, _state_sync::SystemNotification::WebUiStarted);
                 assert_eq!(timestamp, "2026-05-11T12:00:00Z");
-            },
+            }
             other => anyhow::bail!("Expected SystemMessage, got {:?}", other),
         }
         Ok(())

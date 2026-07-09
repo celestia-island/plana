@@ -57,7 +57,7 @@ impl Display for AgentCategory {
                         None => write!(f, "complex_tool#pending"),
                     }
                 }
-            },
+            }
         }
     }
 }
@@ -217,7 +217,7 @@ impl std::fmt::Display for WorkStatus {
                 max_retries,
             } => {
                 write!(f, "Retrying ({}/{})", retry_count, max_retries)
-            },
+            }
             WorkStatus::Nudging => write!(f, "Nudging for report"),
             WorkStatus::Completed => write!(f, "Completed"),
             WorkStatus::RequestFailed => write!(f, "Request Failed"),

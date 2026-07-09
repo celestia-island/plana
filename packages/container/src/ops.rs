@@ -110,7 +110,7 @@ pub trait ContainerOps: Send + Sync {
                     Ok(_) => super::types::ServerStatus::NotExists,
                     Err(_) => super::types::ServerStatus::Unknown,
                 }
-            },
+            }
             Err(_) => super::types::ServerStatus::Unknown,
         }
     }

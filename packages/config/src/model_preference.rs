@@ -383,7 +383,7 @@ pub fn load_agent_model_preferences() -> AgentModelPreferences {
             tracing::warn!("failed to read agent_model_prefs.toml: {}", e);
             // Don't cache the error — retry on next call
             return AgentModelPreferences::default();
-        },
+        }
     };
 
     let prefs = match toml::from_str::<AgentModelPreferences>(&content) {
@@ -392,7 +392,7 @@ pub fn load_agent_model_preferences() -> AgentModelPreferences {
             tracing::warn!("failed to parse agent_model_prefs.toml: {}", e);
             // Don't cache the parse error — retry on next call
             return AgentModelPreferences::default();
-        },
+        }
     };
 
     tracing::info!(

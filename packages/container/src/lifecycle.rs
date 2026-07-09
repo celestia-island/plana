@@ -217,7 +217,7 @@ impl ContainerManager {
                                 );
                             }
                         }
-                    },
+                    }
                     Err(e) => {
                         warn!(
                             container = %params.name,
@@ -225,7 +225,7 @@ impl ContainerManager {
                             error = %e,
                             "docker network connect command failed"
                         );
-                    },
+                    }
                 }
             }
         }
@@ -247,7 +247,7 @@ impl ContainerManager {
                     )
                     .await;
                 return Err(e);
-            },
+            }
         };
 
         let mut state = self.state.write().await;

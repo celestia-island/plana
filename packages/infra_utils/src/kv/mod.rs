@@ -60,7 +60,7 @@ pub async fn kv_get_json<T: serde::de::DeserializeOwned>(
             let val = serde_json::from_slice(&bytes)
                 .map_err(|e| KvError::Serialization(e.to_string()))?;
             Ok(Some(val))
-        },
+        }
         None => Ok(None),
     }
 }

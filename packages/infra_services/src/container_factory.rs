@@ -202,11 +202,11 @@ pub async fn create_container_backend(
                 );
             }
             Ok(Box::new(mgr))
-        },
+        }
         ContainerRuntimeType::Docker => {
             let mgr = _container::ContainerManager::new()?;
             Ok(Box::new(mgr))
-        },
+        }
         ContainerRuntimeType::Wslc | ContainerRuntimeType::AppleContainer => {
             let backend = CliContainerBackend::new(runtime)?;
             info!(
@@ -214,7 +214,7 @@ pub async fn create_container_backend(
                 "CLI container backend initialised for outer orchestration"
             );
             Ok(Box::new(backend))
-        },
+        }
     }
 }
 

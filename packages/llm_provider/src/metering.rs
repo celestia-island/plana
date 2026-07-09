@@ -261,12 +261,12 @@ fn period_cutoff(period: BudgetPeriod) -> DateTime<Utc> {
             let date =
                 NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap_or_default();
             DateTime::from_naive_utc_and_offset(date.and_hms_opt(0, 0, 0).unwrap_or_default(), Utc)
-        },
+        }
         BudgetPeriod::Weekly => now - Duration::days(7),
         BudgetPeriod::Monthly => {
             let date = NaiveDate::from_ymd_opt(now.year(), now.month(), 1).unwrap_or_default();
             DateTime::from_naive_utc_and_offset(date.and_hms_opt(0, 0, 0).unwrap_or_default(), Utc)
-        },
+        }
         BudgetPeriod::Total => DateTime::UNIX_EPOCH,
     }
 }

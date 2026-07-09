@@ -148,16 +148,16 @@ impl ProviderConfigManager {
                         config.llm_providers.len()
                     );
                     config
-                },
+                }
                 Err(e) => {
                     warn!("Failed to parse provider config: {}, using default", e);
                     ProviderCrudConfig::default()
-                },
+                }
             },
             Err(e) => {
                 warn!("Failed to read provider config: {}, using default", e);
                 ProviderCrudConfig::default()
-            },
+            }
         }
     }
 
@@ -368,7 +368,7 @@ impl ProviderConfigManager {
                                     let _ = tx.send(ConfigChangeEvent {
                                         source: ConfigChangeSource::AgentConfig,
                                     });
-                                },
+                                }
                                 Err(e) => warn!("Hot reload: config parse failed: {}", e),
                             },
                             Err(e) => warn!("Hot reload: config read failed: {}", e),

@@ -285,13 +285,13 @@ impl LlmProvider for OpenAiCompatibleProvider {
                     match state.byte_stream.next().await {
                         Some(Ok(bytes)) => {
                             state.buffer.push_str(&String::from_utf8_lossy(&bytes));
-                        },
+                        }
                         Some(Err(e)) => {
                             return Some((
                                 Err(ProviderError::NetworkError(format!("Stream error: {}", e))),
                                 state,
                             ));
-                        },
+                        }
                         None => return None,
                     }
                 }

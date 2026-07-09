@@ -131,11 +131,11 @@ impl WorkspaceIdentity {
             WorkspaceConnectionKind::LocalFilesystem => {
                 let path = ensure_leading_slash(&self.path);
                 format!("local://{path}")
-            },
+            }
             WorkspaceConnectionKind::DockerVolume => {
                 let path = ensure_leading_slash(&self.path);
                 format!("volume://{path}")
-            },
+            }
             WorkspaceConnectionKind::PolemosRemote => {
                 let authority = self.host_id.as_deref().unwrap_or("unknown");
                 let path = self.path.trim_start_matches('/');
@@ -144,16 +144,16 @@ impl WorkspaceIdentity {
                     Some(addr) => format!("{base}?addr={addr}"),
                     None => base,
                 }
-            },
+            }
             WorkspaceConnectionKind::GitRemote => {
                 format!("git://{}", self.path)
-            },
+            }
             WorkspaceConnectionKind::NoaRemote => {
                 format!("noa://{}", self.path)
-            },
+            }
             WorkspaceConnectionKind::Ephemeral => {
                 format!("ephemeral://{}", self.path)
-            },
+            }
         }
     }
 
@@ -169,14 +169,14 @@ impl WorkspaceIdentity {
                     bail!("empty path in URI: {}", uri);
                 }
                 Ok(Self::local(path))
-            },
+            }
             "volume" => {
                 let name = rest.trim_start_matches('/');
                 if name.is_empty() {
                     bail!("empty path in URI: {}", uri);
                 }
                 Ok(Self::volume(name))
-            },
+            }
             "ssh" => {
                 let (authority, path_and_query) = rest
                     .split_once('/')
@@ -191,13 +191,13 @@ impl WorkspaceIdentity {
                     (path, None)
                 };
                 Ok(Self::polemos(path, authority, remote_address))
-            },
+            }
             "git" => {
                 if rest.is_empty() {
                     bail!("empty path in URI: {}", uri);
                 }
                 Ok(Self::git_remote(rest))
-            },
+            }
             "noa" => {
                 if rest.is_empty() {
                     bail!("empty path in URI: {}", uri);
@@ -209,7 +209,7 @@ impl WorkspaceIdentity {
                     bail!("empty path in URI: {}", uri);
                 }
                 Ok(Self::noa_remote(remote_name, path))
-            },
+            }
             "ephemeral" => {
                 if rest.is_empty() || rest == "auto" {
                     return Ok(Self::ephemeral(Uuid::now_v7()));
@@ -218,7 +218,7 @@ impl WorkspaceIdentity {
                     Ok(uuid) => Ok(Self::ephemeral(uuid)),
                     Err(_) => Ok(Self::ephemeral(Uuid::now_v7())),
                 }
-            },
+            }
             _ => bail!(
                 "unknown workspace scheme '{}'; expected local|volume|ssh|git|noa|ephemeral",
                 scheme
@@ -303,7 +303,7 @@ impl WorkspaceDescriptor {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .map(|s| s.to_string())
-            },
+            }
             WorkspaceConnectionKind::DockerVolume => Some(format!("vol:{}", path)),
             WorkspaceConnectionKind::GitRemote => path
                 .rsplit('/')
@@ -312,7 +312,7 @@ impl WorkspaceDescriptor {
             WorkspaceConnectionKind::NoaRemote => path.rsplit('/').next().map(|s| s.to_string()),
             WorkspaceConnectionKind::Ephemeral => {
                 Some(format!("ephemeral-{}", &path[..8.min(path.len())]))
-            },
+            }
         }
     }
 

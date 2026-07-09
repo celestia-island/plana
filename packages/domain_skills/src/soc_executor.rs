@@ -188,7 +188,7 @@ impl SOCSkillExecutor {
 
                 info!("skill execution completed: {}", skill_name);
                 Ok(value)
-            },
+            }
             Err(e) => {
                 // Record execution failure
                 error!("skill execution failed: {} - {}", skill_name, e);
@@ -201,7 +201,7 @@ impl SOCSkillExecutor {
                 );
 
                 Err(anyhow!("{}", e))
-            },
+            }
         }
     }
 

@@ -384,13 +384,13 @@ impl LlmProvider for GeminiProvider {
                     match state.byte_stream.next().await {
                         Some(Ok(bytes)) => {
                             state.buffer.push_str(&String::from_utf8_lossy(&bytes));
-                        },
+                        }
                         Some(Err(e)) => {
                             return Err(ProviderError::NetworkError(format!(
                                 "Stream error: {}",
                                 e
                             )));
-                        },
+                        }
                         None => return Ok(None),
                     }
                 }

@@ -190,16 +190,16 @@ impl PromptTemplateService {
         match lang {
             "zhs" | "zh-CN" | "zh" => {
                 "LLM returned an empty response. Please try again later.".to_string()
-            },
+            }
             "zht" | "zh-TW" => {
                 "LLM returned an empty response. Please try again later.".to_string()
-            },
+            }
             "ja" => "LLM returned an empty response. Please try again later.".to_string(),
             "ko" => "LLM이 빈 응답을 반환했습니다. 잠시 후 다시 시도해 주세요.".to_string(),
             "fr" => "Le LLM a retourné une réponse vide. Veuillez réessayer plus tard.".to_string(),
             "es" => {
                 "El LLM devolvió una respuesta vacía. Inténtelo de nuevo más tarde.".to_string()
-            },
+            }
             "ru" => "LLM вернул пустой ответ. Пожалуйста, попробуйте позже.".to_string(),
             _ => "LLM returned an empty response. Please try again later.".to_string(),
         }

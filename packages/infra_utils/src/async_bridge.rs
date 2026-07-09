@@ -9,7 +9,7 @@ where
     match tokio::runtime::Handle::try_current() {
         Ok(handle) if handle.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
             Ok(tokio::task::block_in_place(|| handle.block_on(future)))
-        },
+        }
         _ => std::thread::scope(|s| {
             let builder = std::thread::Builder::new().stack_size(8 * 1024 * 1024);
             let rt = tokio::runtime::Builder::new_current_thread()

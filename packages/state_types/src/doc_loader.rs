@@ -244,14 +244,14 @@ impl McpToolDocLoader {
                 if !doc.parameters.properties.is_empty() {
                     info.parameters = doc.parameters;
                 }
-            },
+            }
             None => {
                 debug!(
                     agent = agent_name,
                     tool = %info.name,
                     "McpToolDocLoader: no doc file found, using default parameters"
                 );
-            },
+            }
         }
     }
 }

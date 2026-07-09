@@ -301,14 +301,14 @@ impl SystemNotification {
                     p.push(t.to_string());
                 }
                 p
-            },
+            }
             Self::WorkspaceOpened { repo_url, branch } => {
                 let mut p = vec![repo_url.clone()];
                 if let Some(b) = branch {
                     p.push(b.clone());
                 }
                 p
-            },
+            }
             Self::Generic { params, .. } => params.clone(),
             Self::SecurityPolicyChanged {
                 action,
@@ -316,14 +316,14 @@ impl SystemNotification {
                 changed_by,
             } => {
                 vec![action.clone(), details.clone(), changed_by.clone()]
-            },
+            }
             Self::SecurityToolBlocked {
                 agent,
                 tool,
                 reason,
             } => {
                 vec![agent.clone(), tool.clone(), reason.clone()]
-            },
+            }
             Self::AlarmTriggered {
                 station,
                 register,
@@ -338,7 +338,7 @@ impl SystemNotification {
                     value.clone(),
                     topic.clone(),
                 ]
-            },
+            }
         }
     }
 }

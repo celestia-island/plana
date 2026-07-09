@@ -167,7 +167,7 @@ pub(super) fn render_cli_mcp_block(mcp: &McpBlockData) -> Vec<String> {
             } else {
                 format!("{} {}ms", parts.join(" "), d)
             }
-        },
+        }
         None => format!("{}", label),
     };
     lines.push(format!("  {}", char_info));

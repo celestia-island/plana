@@ -222,8 +222,11 @@ mod tests {
     #[tokio::test]
     async fn write_and_read_roundtrip() {
         let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
-        tree.write(PatchOp::set("state.agents.hubris", json!({"status":"idle"})))
-            .await;
+        tree.write(PatchOp::set(
+            "state.agents.hubris",
+            json!({"status":"idle"}),
+        ))
+        .await;
         let all = tree.read_all().await;
         assert_eq!(
             all,
@@ -261,8 +264,7 @@ mod tests {
         let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
         tree.write(PatchOp::set("state.agents.hubris", json!(1)))
             .await;
-        tree.write(PatchOp::set("state.devices.n1", json!(2)))
-            .await;
+        tree.write(PatchOp::set("state.devices.n1", json!(2))).await;
         let snap = tree.read_viewport(&["state.agents".into()]).await;
         assert_eq!(snap, json!({"state":{"agents":{"hubris":1}}}));
     }

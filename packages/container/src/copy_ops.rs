@@ -150,7 +150,7 @@ pub fn filter_tar_to_changed_paths(
         Err(e) => {
             warn!(error = %e, "failed to read tar entries, returning original bytes");
             return tar_bytes.to_vec();
-        },
+        }
     };
 
     let mut buf = Vec::new();
@@ -163,7 +163,7 @@ pub fn filter_tar_to_changed_paths(
                 Err(e) => {
                     warn!(error = %e, "skipping unreadable tar entry");
                     continue;
-                },
+                }
             };
             let entry_path = entry
                 .path()
@@ -469,7 +469,7 @@ mod tests {
                 Err(e) => {
                     eprintln!("Warning: skipping entry: {}", e);
                     continue;
-                },
+                }
             };
             let path = entry
                 .path()

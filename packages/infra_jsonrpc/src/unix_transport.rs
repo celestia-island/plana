@@ -64,14 +64,14 @@ impl JsonRpcTransport {
                 let started_at = Instant::now();
                 debug!(started_at = ?started_at, policy = "Indefinite", "JSON-RPC send initiated");
                 self.write_and_read_indefinite(request, started_at).await
-            },
+            }
             TimeoutPolicy::Default => {
                 let started_at = Instant::now();
                 let deadline = started_at + Duration::from_secs(60);
                 debug!(started_at = ?started_at, deadline = ?deadline, policy = "Default", "JSON-RPC send initiated");
                 self.write_and_read_with_deadline(request, started_at, deadline)
                     .await
-            },
+            }
             TimeoutPolicy::Persistent => {
                 let started_at = Instant::now();
                 let secs = std::env::var("JSONRPC_PERSISTENT_TIMEOUT_SECS")
@@ -82,13 +82,13 @@ impl JsonRpcTransport {
                 debug!(started_at = ?started_at, deadline = ?deadline, policy = "Persistent", "JSON-RPC send initiated");
                 self.write_and_read_with_deadline(request, started_at, deadline)
                     .await
-            },
+            }
             TimeoutPolicy::Deadline(deadline) => {
                 let started_at = Instant::now();
                 debug!(started_at = ?started_at, deadline = ?deadline, policy = "Deadline", "JSON-RPC send initiated");
                 self.write_and_read_with_deadline(request, started_at, deadline)
                     .await
-            },
+            }
         }
     }
 
@@ -130,16 +130,16 @@ impl JsonRpcTransport {
                         return Ok(response);
                     }
                     debug!(method = %method, "Response ID mismatch, waiting");
-                },
+                }
                 Ok(None) => {
                     bail!(
                         "Unix socket closed while waiting for response to {}",
                         method
                     );
-                },
+                }
                 Err(e) => {
                     bail!("Unix socket read error waiting for {}: {}", method, e);
-                },
+                }
             }
         }
     }
@@ -183,16 +183,16 @@ impl JsonRpcTransport {
                         return Ok(response);
                     }
                     debug!(method = %method, "Response ID mismatch, waiting");
-                },
+                }
                 Ok(Ok(None)) => {
                     bail!(
                         "Unix socket closed while waiting for response to {}",
                         method
                     );
-                },
+                }
                 Ok(Err(e)) => {
                     bail!("Unix socket read error waiting for {}: {}", method, e);
-                },
+                }
                 Err(_) => {
                     let elapsed = started_at.elapsed();
                     bail!(
@@ -202,7 +202,7 @@ impl JsonRpcTransport {
                         deadline,
                         elapsed
                     );
-                },
+                }
             }
         }
     }
@@ -230,7 +230,7 @@ impl JsonRpcTransport {
                     JsonRpcMessage::Notification(notif) => IncomingMessage::Notification(notif),
                     JsonRpcMessage::Response(resp) => IncomingMessage::Response(resp),
                 }))
-            },
+            }
             None => Ok(None),
         }
     }
@@ -256,7 +256,7 @@ impl JsonRpcTransport {
                     return Ok(None);
                 }
                 Ok(Some(line))
-            },
+            }
             Ok(None) => Ok(None),
             Err(e) => Err(e.into()),
         }
@@ -324,7 +324,7 @@ impl JsonRpcReceiver {
                     JsonRpcMessage::Notification(notif) => IncomingMessage::Notification(notif),
                     JsonRpcMessage::Response(resp) => IncomingMessage::Response(resp),
                 }))
-            },
+            }
             None => Ok(None),
         }
     }
@@ -407,10 +407,10 @@ mod tests {
             match msg {
                 IncomingMessage::Notification(notif) => {
                     assert_eq!(notif.method, "event.test");
-                },
+                }
                 IncomingMessage::Request(req) => {
                     assert_eq!(req.method, "event.test");
-                },
+                }
                 other => bail!("Expected request or notification, got {:?}", other),
             }
             Ok::<_, Error>(())

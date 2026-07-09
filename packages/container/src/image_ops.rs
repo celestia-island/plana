@@ -130,7 +130,7 @@ impl ContainerManager {
                         image_id, e
                     ),
                 })
-            },
+            }
         }
     }
 
@@ -165,13 +165,13 @@ impl ContainerManager {
                     if let Some(id) = info.id {
                         digest = id;
                     }
-                },
+                }
                 Err(e) => {
                     return Err(ContainerError::ImageFailed(format!(
                         "pull {} failed: {}",
                         image, e
                     )));
-                },
+                }
             }
         }
 
@@ -255,18 +255,18 @@ impl ContainerManager {
             match msg {
                 Ok(LogOutput::StdOut { message }) => {
                     lines.push(String::from_utf8_lossy(&message).to_string());
-                },
+                }
                 Ok(LogOutput::StdErr { message }) => {
                     lines.push(String::from_utf8_lossy(&message).to_string());
-                },
+                }
                 Ok(LogOutput::Console { message }) => {
                     lines.push(String::from_utf8_lossy(&message).to_string());
-                },
-                Ok(_) => {},
+                }
+                Ok(_) => {}
                 Err(e) => {
                     warn!("log stream error: {}", e);
                     break;
-                },
+                }
             }
         }
 
@@ -293,11 +293,11 @@ impl ContainerManager {
             match msg {
                 Ok(LogOutput::StdOut { message }) => {
                     stdout.push_str(&String::from_utf8_lossy(&message));
-                },
+                }
                 Ok(LogOutput::StdErr { message }) => {
                     stderr.push_str(&String::from_utf8_lossy(&message));
-                },
-                Ok(_) => {},
+                }
+                Ok(_) => {}
                 Err(_) => break,
             }
         }
@@ -319,7 +319,7 @@ impl ContainerManager {
                     Ok(_) => super::types::ServerStatus::NotExists,
                     Err(_) => super::types::ServerStatus::Unknown,
                 }
-            },
+            }
             Err(_) => super::types::ServerStatus::Unknown,
         }
     }
