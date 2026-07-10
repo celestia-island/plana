@@ -39,8 +39,8 @@ test:
 # ── Generate (codegen) ───────────────────────────────────────────────
 
 # Regenerate artifacts. Default: bindings.
+[script('sh')]
 gen target='bindings':
-    #!/usr/bin/env sh
     set -euo pipefail
     case "{{target}}" in
       bindings) cargo test --package arona ;;
