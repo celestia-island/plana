@@ -1,4 +1,6 @@
-use std::{os::unix::fs::PermissionsExt, path::PathBuf};
+use std::path::PathBuf;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 use tracing::{info, warn};
 
@@ -75,10 +77,20 @@ fn write_token_with_perms(token: &str, path: &PathBuf, mode: u32) -> std::io::Re
             return Err(e);
         }
     }
-    let file_perms = std::fs::metadata(path)?.permissions();
-    let mut perms = file_perms;
-    perms.set_mode(mode);
-    std::fs::set_permissions(path, perms)?;
+    // Unix: chmod the token file to the requested mode (typically 0o600).
+    // Windows: file permissions are ACL-based, not mode bits — skip the chmod;
+    // the token file is in a user-owned config dir and isn't world-readable.
+    #[cfg(unix)]
+    {
+        let file_perms = std::fs::metadata(path)?.permissions();
+        let mut perms = file_perms;
+        perms.set_mode(mode);
+        std::fs::set_permissions(path, perms)?;
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = mode; // suppress unused-variable warning on Windows
+    }
     Ok(())
 }
 

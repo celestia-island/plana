@@ -49,4 +49,35 @@ pub use ws_transport::{
     Message as WsTransportMessage, WsReceiver, WsSender, WsTransport, WsTransportConfig,
 };
 
+// Re-export the real Linux implementation. `_container_runtime` is a
+// platform-gated optional dependency (see Cargo.toml) — it is only present in
+// the dependency graph on Linux.
+#[cfg(target_os = "linux")]
 pub use _container_runtime::{RootfsCapability, detect_rootfs_capability};
+
+// Windows / non-Linux fallback. The `_container_runtime` crate is not compiled
+// here, so we expose API-compatible stubs. `RootfsCapability::None` is the
+// correct value on platforms that have no Linux rootfs-isolation primitives,
+// and `detect_rootfs_capability` is async to match the Linux signature.
+#[cfg(not(target_os = "linux"))]
+pub use self::rootfs_stub::{RootfsCapability, detect_rootfs_capability};
+
+#[cfg(not(target_os = "linux"))]
+mod rootfs_stub {
+    /// Mirror of the Linux-only `RootfsCapability` enum for non-Linux targets.
+    /// Rootfs isolation is a Linux concept; only the `None` variant is ever
+    /// produced here. Variant names are kept identical so downstream match arms
+    /// (e.g. the TUI init engine) compile unchanged.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum RootfsCapability {
+        FuseOverlay,
+        KernelOverlay,
+        Docker,
+        None,
+    }
+
+    /// On non-Linux targets rootfs isolation is never available.
+    pub async fn detect_rootfs_capability() -> RootfsCapability {
+        RootfsCapability::None
+    }
+}

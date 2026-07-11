@@ -10,7 +10,6 @@ license.workspace = true
 _core = { workspace = true }
 _config = { workspace = true }
 _container = { workspace = true }
-_container_runtime = { workspace = true }
 _infra_utils = { workspace = true }
 _infra_jsonrpc = { workspace = true }
 _state_sync = { workspace = true }
@@ -31,6 +30,13 @@ tokio-tungstenite.workspace = true
 tracing.workspace = true
 tracing-subscriber = { workspace = true, features = ["registry"] }
 uuid.workspace = true
+
+# Linux-only: pulls in libcontainer / libcgroups / procfs / nix which do not
+# compile on Windows. The crate (and its types) are excluded from the build
+# graph entirely on non-Linux targets; code that references it is gated by
+# `#[cfg(target_os = "linux")]` with stub fallbacks elsewhere in this crate.
+[target.'cfg(target_os = "linux")'.dependencies]
+_container_runtime = { workspace = true }
 
 [dev-dependencies]
 tempfile.workspace = true

@@ -8,7 +8,7 @@ use tokio::{
 
 use tracing::{debug, info};
 
-use super::types::*;
+use crate::types::*;
 use crate::unix_socket::platform;
 
 #[derive(Debug, Clone, Copy)]

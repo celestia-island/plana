@@ -100,7 +100,15 @@ pub fn cosmos_runtime_type() -> ContainerRuntimeType {
         return ContainerRuntimeType::from_str_lossy(&val);
     }
 
+    // `_container_runtime` is a Linux-only dependency (see Cargo.toml). On
+    // non-Linux targets the whole detection block below is meaningless
+    // (`/var/run/docker.sock` and `/dev/fuse` are Linux-only concepts), so we
+    // treat ourselves as "not inside a container" and fall through.
+    #[cfg(target_os = "linux")]
     let inside = _container_runtime::detect_inside_container();
+    #[cfg(not(target_os = "linux"))]
+    let inside = false;
+
     let docker_socket = std::path::Path::new("/var/run/docker.sock").exists();
     let dev_fuse = std::path::Path::new("/dev/fuse").exists();
 
@@ -193,15 +201,26 @@ pub async fn create_container_backend(
 ) -> ContainerResult<Box<dyn ContainerOps>> {
     match runtime {
         ContainerRuntimeType::Youki => {
-            let mgr = _container_runtime::YoukiManager::new(data_dir)?;
-            mgr.initialize().await?;
-            if let Err(e) = mgr.reconcile().await {
-                warn!(
-                    "Youki reconcile failed (continuing with empty state): {}",
-                    e
-                );
+            // Youki (libcontainer) is Linux-only; `_container_runtime` is not
+            // part of the dependency graph on other platforms.
+            #[cfg(target_os = "linux")]
+            {
+                let mgr = _container_runtime::YoukiManager::new(data_dir)?;
+                mgr.initialize().await?;
+                if let Err(e) = mgr.reconcile().await {
+                    warn!(
+                        "Youki reconcile failed (continuing with empty state): {}",
+                        e
+                    );
+                }
+                Ok(Box::new(mgr))
             }
-            Ok(Box::new(mgr))
+            #[cfg(not(target_os = "linux"))]
+            {
+                Err(_container::errors::ContainerError::UnsupportedBackend(
+                    "youki container runtime is only supported on Linux".to_string(),
+                ))
+            }
         }
         ContainerRuntimeType::Docker => {
             let mgr = _container::ContainerManager::new()?;
@@ -358,6 +377,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(target_os = "linux")]
     async fn test_create_youki_backend() -> Result<()> {
         let tmp = tempfile::tempdir()?;
         let backend = create_container_backend(ContainerRuntimeType::Youki, tmp.path()).await?;
@@ -368,6 +388,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(target_os = "linux")]
     async fn test_youki_backend_images() -> Result<()> {
         let tmp = tempfile::tempdir()?;
         let backend = create_container_backend(ContainerRuntimeType::Youki, tmp.path()).await?;
@@ -378,6 +399,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(target_os = "linux")]
     async fn test_youki_backend_list_volumes() -> Result<()> {
         let tmp = tempfile::tempdir()?;
         let backend = create_container_backend(ContainerRuntimeType::Youki, tmp.path()).await?;
@@ -403,6 +425,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg(target_os = "linux")]
     async fn test_youki_backend_inspect_not_found() -> Result<()> {
         let tmp = tempfile::tempdir()?;
         let backend = create_container_backend(ContainerRuntimeType::Youki, tmp.path()).await?;

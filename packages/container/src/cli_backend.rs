@@ -1298,6 +1298,7 @@ fn find_in_path(binary: &str) -> Option<PathBuf> {
 /// Check whether a file has the executable bit set on Unix.
 /// On Windows all regular files are considered executable for PATH lookup
 /// purposes (PATHEXT provides the filtering).
+#[cfg_attr(not(unix), allow(unused_variables))]
 fn is_executable(path: &Path) -> bool {
     if cfg!(windows) {
         return true;
