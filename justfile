@@ -5,7 +5,7 @@
 # Verb-first dispatch: actions are first-level commands (build, test, gen, …).
 
 set shell := ["bash", "-c"]
-set windows-shell := ["bash.exe", "-c"]
+set windows-shell := ["pwsh.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $PSDefaultParameterValues['*:Encoding'] = 'utf8';"]
 set unstable
 set lists
 
