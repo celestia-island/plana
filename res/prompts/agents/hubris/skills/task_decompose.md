@@ -65,6 +65,28 @@ location = "cosmos"
 
 Parse natural language requirements into structured task definitions, then decompose into an atomic sub-task DAG.
 
+## CRITICAL: Resilience Rules
+
+You MUST follow these resilience rules to avoid stalling the skill chain:
+
+1. **memory_query is OPTIONAL.** If `memory_query` fails (timeout, embedding error, or returns null), do NOT retry, do NOT wait, do NOT report an error. Simply proceed WITHOUT memory context. Memory is a cache for convenience — it is never a prerequisite for task decomposition.
+
+2. **list_todo / create_todo may not be exported.** Always wrap calls to `list_todo` in a try-catch:
+   ```js
+   exec({ code: "try { const { list_todo } = await import('hubris'); const t = await list_todo({ view: 'tree' }); console.log(JSON.stringify(t)); } catch(e) { console.log('list_todo unavailable, proceeding without TODO survey'); }" })
+   ```
+   If it throws `could not find export`, skip the survey step entirely and proceed to classification.
+
+3. **NEVER call report_human for operational tasks.** If the user message contains ANY of these signals, it is operational (category 3), NOT conversational:
+   - Mentions a file path (e.g., `packages/scepter/src/...`, `*.rs`, `*.md`)
+   - Contains code snippets (fenced code blocks, `fn `, `pub `, `use `, `import `)
+   - Uses operational verbs: write, modify, edit, fix, add, remove, update, create, delete, refactor
+   - References cargo, git, build, compile, test, clippy, fmt
+   - Contains `kalos::file_write`, `file_write`, `code_generate`, `plan_execute`
+   - The message is from YOLO cruise control (auto_fix, regression_monitor, etc.)
+
+4. **When in doubt, route to plan_execute.** A false positive (sending a conversational message to plan_execute) is recoverable. A false negative (sending an operational task to report_human) loses the work entirely.
+
 ## Quick Classify
 
 Before decomposition, assess what kind of message this is:
@@ -120,9 +142,18 @@ exec({ code: "import { report_human } from 'orexis'; report_human({ summary: '�
 → Route to `workplan_generate` → `plan_execute` (which has kalos.smart_read_file,
 skemma.script_exec, neikos tools, etc.). Your job is to ROUTE, not execute.
 
-**CRITICAL**: If you're unsure whether a request needs code access, err on the side of
-category 2 (respond conversationally). It's better to give a thoughtful answer and
-note any limitations than to fire up a full skill chain for a simple question.
+**CRITICAL**: If you're unsure whether a request needs code access, **err on the side of
+category 3 (operational)**. Sending an operational task to report_human (category 2)
+LOSES THE WORK ENTIRELY — the file never gets written, the chain never reaches code_generate.
+A false positive (sending a simple question to plan_execute) is harmless — plan_execute
+will just read and respond. When in doubt: ROUTE TO plan_execute.
+
+**NEVER classify a message as conversational (category 1 or 2) if it contains:**
+- File paths, code snippets, or programming keywords
+- Action verbs: write, modify, edit, fix, add, remove, update, create, delete
+- Tool names: kalos, file_write, code_generate, plan_execute, host_command_exec
+- Build/cargo/git references
+- YOLO skill names: auto_fix, code_generate, code_verify, regression_monitor
 
 ## Dependency Impact Assessment
 
@@ -154,7 +185,10 @@ Do NOT call `list_todo()`. Do NOT call `llm_chat()`. Do NOT decompose. Just repo
 
 ## SoP
 
-1. **Survey** — Read current TODOs: `exec({ code: "import { list_todo } from 'hubris'; const todos = await list_todo({ view: 'tree' }); console.log(JSON.stringify(todos, null, 2));" })`
+1. **Survey** (OPTIONAL — skip if tools unavailable) — Try to read current TODOs. If `list_todo` is not exported or throws, skip immediately:
+   ```js
+   exec({ code: "try { const { list_todo } = await import('hubris'); const todos = await list_todo({ view: 'tree' }); console.log(JSON.stringify(todos, null, 2)); } catch(e) { console.log('list_todo unavailable, skipping survey'); }" })
+   ```
 1. **Scope Probe** — For tasks involving specific patterns, identifiers, or file types, run a quick search to estimate actual scope before classifying:
 
    ```js
