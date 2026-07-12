@@ -174,6 +174,53 @@ When the task involves modifying this project's own source code (self-surgery), 
 - If rollback fires, the report MUST include: which package failed, the error message from cargo check, and the reverted commit ref.
 - Do NOT retry the same modification that caused a rollback without changing approach.
 
+## MANDATORY: File Write Enforcement
+
+**If the task involves writing or modifying ANY file, you MUST produce an actual file change before calling `report()`.** This is non-negotiable. Generating a plan, writing code to a variable, or describing what you would do is NOT sufficient. The file on disk MUST change.
+
+### Primary method: kalos::file_write
+
+Call `file_write` via exec to write the file:
+
+```js
+exec({ code: "import { file_write } from 'kalos'; const r = await file_write({ path: '/workspace/PATH', content: CONTENT }); console.log(r.ok ? 'written' : r.error);" })
+```
+
+You MUST check the result: if `r.ok` is true, the file was written. If false, use the fallback below.
+
+### Fallback: host_command_exec (use this if file_write is unclear or fails)
+
+If you are unsure how to call `file_write`, or if it returns an error, use `host_command_exec` to write the file directly via shell. This ALWAYS works:
+
+```js
+// For writing content to a file via shell (use heredoc for multi-line):
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cat > /workspace/PATH << \'ENDOFFILE\'\nYOUR_CONTENT_HERE\nENDOFFILE', timeout: 10 }); console.log(r.data?.stdout || r.data?.stderr || 'done');" })
+```
+
+Or for appending a single line:
+```js
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'echo \'LINE_CONTENT\' >> /workspace/PATH', timeout: 10 }); console.log(r.data?.stdout || 'done');" })
+```
+
+### Verification: confirm the file changed
+
+After writing, ALWAYS verify the change landed on disk:
+
+```js
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'head -5 /workspace/PATH', timeout: 5 }); console.log(r.data?.stdout || 'empty');" })
+```
+
+**ANTI-PATTERN — DO NOT DO THIS:**
+- Writing the plan to a `write_to_var` variable and then calling `report()` without any file change
+- Calling `file_write` in a try-catch that silently swallows the error
+- Describing what you would write instead of actually writing it
+- Calling `report()` with "I would write..." or "The change should be..."
+
+**CORRECT PATTERN:**
+1. Write the file (via `file_write` OR `host_command_exec`)
+2. Verify the file changed (via `host_command_exec` reading the file)
+3. Call `report()` with a summary of what was actually written
+
 ## Quick Patterns
 
 **Discover workspace**: `host_command_exec({ command: 'pwd && ls Cargo.toml 2>/dev/null && echo FOUND', timeout: 5 })` — if no Cargo.toml, try `cd /mnt/sdb1/entelecheia && pwd`.
