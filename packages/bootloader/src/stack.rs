@@ -79,7 +79,9 @@ pub struct StackConfig {
 
 impl Default for StackConfig {
     fn default() -> Self {
-        let config_dir = _config::UserConfig::config_dir();
+        let config_dir = dirs::config_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("/tmp"))
+            .join("entelecheia");
         Self {
             prefix: "e-".to_string(),
             postgres_port: 5432,

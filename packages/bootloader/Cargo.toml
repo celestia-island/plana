@@ -7,7 +7,6 @@ publish = false
 license.workspace = true
 
 [dependencies]
-_config = { workspace = true }
 _container = { workspace = true }
 _infra_services = { workspace = true }
 _infra_utils = { workspace = true }
