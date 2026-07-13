@@ -17,6 +17,7 @@ members = [
     "packages/infra_jsonrpc",
     "packages/infra_services",
     "packages/infra_utils",
+    "packages/bootloader",
     "packages/llm_provider",
     "packages/timeline",
     "packages/prompt",
@@ -59,6 +60,7 @@ _timeline = { path = "packages/timeline" }
 _prompt = { path = "packages/prompt" }
 _res = { path = "packages/res" }
 _sync = { path = "packages/sync" }
+_bootloader = { path = "packages/bootloader" }
 
 # External dependency versions (carried from entelecheia workspace)
 anyhow = "^1"
