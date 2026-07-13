@@ -32,9 +32,11 @@ tool_name = "smart_command_execute"
 
 Self-iteration loop: scan → filter → fix → verify → commit. Runs up to 3 fix cycles per invocation.
 
-## IMPORTANT: Host Path Convention
+## IMPORTANT: Workspace Path
 
-This skill runs on the **host** via `host_command_exec`. Use **host paths** (e.g. `$WORKSPACE_ROOT`, which resolves to the repo checkout root), NOT container paths (`/workspace`).
+This skill runs in a cosmos container with the workspace mounted at `/workspace`.
+When calling `host_command_exec`, use `cd /workspace` as the working directory.
+Do NOT use `/workspace` — that variable does not exist. Always use `/workspace`.
 
 ## CRITICAL: Safety Boundaries
 
@@ -70,7 +72,7 @@ Fix in this order (highest impact first):
 Run `cargo clippy` to identify all actionable warnings:
 
 ```text
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd $WORKSPACE_ROOT && cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -500', timeout: 300 }); const out = r.data.stdout || r.data.stderr || ''; const findings = []; for (const line of out.split('\\n')) { try { const m = JSON.parse(line); if (m.reason === 'compiler-message' && m.message && m.message.level !== 'note') { const rendered = m.message.rendered || ''; if (rendered.includes('missing documentation')) continue; const code = m.message.code?.code || ''; findings.push({ level: m.message.level, code, msg: rendered.split('\\n')[0], file: m.message.spans?.[0]?.file_name, line: m.message.spans?.[0]?.line_start }); } } catch {} } write_to_var({ var_name: 'scan', content: JSON.stringify(findings) }); console.log('Scan found', findings.length, 'actionable findings:', JSON.stringify(findings.slice(0, 10), null, 1));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /workspace && cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -500', timeout: 300 }); const out = r.data.stdout || r.data.stderr || ''; const findings = []; for (const line of out.split('\\n')) { try { const m = JSON.parse(line); if (m.reason === 'compiler-message' && m.message && m.message.level !== 'note') { const rendered = m.message.rendered || ''; if (rendered.includes('missing documentation')) continue; const code = m.message.code?.code || ''; findings.push({ level: m.message.level, code, msg: rendered.split('\\n')[0], file: m.message.spans?.[0]?.file_name, line: m.message.spans?.[0]?.line_start }); } } catch {} } write_to_var({ var_name: 'scan', content: JSON.stringify(findings) }); console.log('Scan found', findings.length, 'actionable findings:', JSON.stringify(findings.slice(0, 10), null, 1));" })
 ```
 
 **Gate**: If 0 actionable findings → skip to Step 5, report "No issues found."
@@ -80,7 +82,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Run `cargo fmt --all` to fix all formatting issues:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd $WORKSPACE_ROOT && cargo fmt --all 2>&1', timeout: 60 }); console.log(r.data.stdout || r.data.stderr || 'Formatted');" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /workspace && cargo fmt --all 2>&1', timeout: 60 }); console.log(r.data.stdout || r.data.stderr || 'Formatted');" })
 ```
 
 ### Step 3: AUTO-FIX (mandatory)
@@ -88,7 +90,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Try `cargo clippy --fix --allow-dirty` first. This handles most mechanical fixes:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd $WORKSPACE_ROOT && cargo clippy --fix --allow-dirty --allow-staged -- -W clippy::all 2>&1 | tail -20', timeout: 300 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /workspace && cargo clippy --fix --allow-dirty --allow-staged -- -W clippy::all 2>&1 | tail -20', timeout: 300 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
 ```
 
 ### Step 4: VERIFY (mandatory after each fix)
@@ -96,13 +98,13 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Run `cargo check` to ensure nothing broke:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd $WORKSPACE_ROOT && cargo check 2>&1 | tail -20', timeout: 300 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /workspace && cargo check 2>&1 | tail -20', timeout: 300 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
 ```
 
 **Gate**: If `cargo check` fails with errors → the auto-fix broke something. Run:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd $WORKSPACE_ROOT && git checkout -- . 2>&1', timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'Reverted');" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /workspace && git checkout -- . 2>&1', timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'Reverted');" })
 ```
 
 Then stop and report "Auto-fix caused compilation errors. Reverted."
@@ -112,13 +114,13 @@ Then stop and report "Auto-fix caused compilation errors. Reverted."
 If `cargo check` passes, commit the changes:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd $WORKSPACE_ROOT && git add -A && git diff --cached --stat', timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'No changes');" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /workspace && git add -A && git diff --cached --stat', timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'No changes');" })
 ```
 
 If there are staged changes:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: \"cd $WORKSPACE_ROOT && git commit -m 'chore: auto-fix clippy warnings (self-iteration)'\", timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'Committed');" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: \"cd /workspace && git commit -m 'chore: auto-fix clippy warnings (self-iteration)'\", timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'Committed');" })
 ```
 
 ### Step 6: RE-SCAN (optional — for remaining issues)
