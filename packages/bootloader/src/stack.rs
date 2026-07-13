@@ -37,12 +37,23 @@ pub const HEALTH_TIMEOUT: Duration = Duration::from_secs(120);
 /// connectable from Docker containers (ECONNREFUSED despite the file being
 /// visible), so this MUST live on ext4 — never `/run/entelecheia` (tmpfs).
 ///
+/// Overridable via `EVERNIGHT_SOCKET_DIR` env for environments where `/tmp` is
+/// not visible to rootless containers (e.g. podman-machine).
+///
 /// (Original evidence: entelecheia service.rs:299-301, evernight_daemon.rs.)
-pub const SOCKET_DIR_EXT4: &str = "/tmp/entelecheia-unix-socket";
+pub fn socket_dir_ext4() -> String {
+    std::env::var("EVERNIGHT_SOCKET_DIR")
+        .unwrap_or_else(|_| "/tmp/entelecheia-unix-socket".to_string())
+}
 
 /// tmpfs socket dir — used by the TUI unix socket and bind-mounted into the
-/// scepter container, but NOT for evernight's IPC socket (see SOCKET_DIR_EXT4).
-pub const SOCKET_DIR_TMPFS: &str = "/run/entelecheia";
+/// scepter container, but NOT for evernight's IPC socket (see socket_dir_ext4).
+///
+/// Overridable via `ENTELECHEIA_SOCKET_DIR` env.
+pub fn socket_dir_tmpfs() -> String {
+    std::env::var("ENTELECHEIA_SOCKET_DIR")
+        .unwrap_or_else(|_| "/run/entelecheia".to_string())
+}
 
 /// Configuration for a stack bring-up. Every field has a sensible default so a
 /// caller can override only what it cares about.
@@ -141,7 +152,7 @@ async fn create_container_ops(backend: &str) -> Result<Box<dyn ContainerOps>> {
 pub async fn ensure_socket_dirs() -> Result<()> {
     #[cfg(unix)]
     {
-        for dir in [SOCKET_DIR_TMPFS, SOCKET_DIR_EXT4] {
+        for dir in [socket_dir_tmpfs(), socket_dir_ext4()] {
             let p = Path::new(dir);
             if !p.exists() {
                 std::fs::create_dir_all(p)
@@ -285,13 +296,15 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         env.insert("HTTPS_PROXY".into(), proxy);
     }
 
+    let tmpfs_dir = socket_dir_tmpfs();
+    let ext4_dir = socket_dir_ext4();
     let mut volumes = vec![
         // Docker socket — scepter spawns cosmos sub-containers through it.
         VolumeMount::rw("/var/run/docker.sock", "/var/run/docker.sock"),
         // tmpfs socket dir (TUI unix socket lives here).
-        VolumeMount::rw(SOCKET_DIR_TMPFS, SOCKET_DIR_TMPFS),
-        // ext4 socket dir (evernight IPC — must be ext4, see SOCKET_DIR_EXT4).
-        VolumeMount::rw(SOCKET_DIR_EXT4, SOCKET_DIR_EXT4),
+        VolumeMount::rw(&tmpfs_dir, &tmpfs_dir),
+        // ext4 socket dir (evernight IPC — must be ext4).
+        VolumeMount::rw(&ext4_dir, &ext4_dir),
     ];
 
     if let Some(ref dir) = cfg.config_dir {
@@ -370,7 +383,7 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         healthcheck: Some(HealthcheckParams {
             test: vec![
                 "CMD-SHELL".into(),
-                format!("test -S {SOCKET_DIR_TMPFS}/entelecheia-tui.sock"),
+                format!("test -S {}/entelecheia-tui.sock", socket_dir_tmpfs()),
             ],
             interval_ns: secs_to_ns(5),
             timeout_ns: secs_to_ns(3),
