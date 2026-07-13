@@ -133,18 +133,29 @@ async fn create_container_ops(backend: &str) -> Result<Box<dyn ContainerOps>> {
 
 /// Create `/run/entelecheia` (tmpfs) and `/tmp/entelecheia-unix-socket` (ext4),
 /// world-writable so uid 1000 inside the scepter container can bind to them.
+///
+/// On non-Unix (Windows) this is a no-op: the containers run inside the
+/// podman-machine / WSL2 VM, so these Linux paths exist inside the VM, not on
+/// the Windows host. Podman creates the mountpoints automatically when the
+/// container is created with a bind mount.
 pub async fn ensure_socket_dirs() -> Result<()> {
-    for dir in [SOCKET_DIR_TMPFS, SOCKET_DIR_EXT4] {
-        let p = Path::new(dir);
-        if !p.exists() {
-            std::fs::create_dir_all(p)
-                .with_context(|| format!("failed to create socket dir {dir}"))?;
-        }
-        #[cfg(unix)]
-        {
+    #[cfg(unix)]
+    {
+        for dir in [SOCKET_DIR_TMPFS, SOCKET_DIR_EXT4] {
+            let p = Path::new(dir);
+            if !p.exists() {
+                std::fs::create_dir_all(p)
+                    .with_context(|| format!("failed to create socket dir {dir}"))?;
+            }
             use std::os::unix::fs::PermissionsExt;
             let _ = std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o777));
         }
+    }
+    #[cfg(not(unix))]
+    {
+        // Windows: socket dirs live inside the podman-machine VM. Podman creates
+        // bind-mount mountpoints on container creation. Nothing to do on the host.
+        tracing::debug!("ensure_socket_dirs: skipped on non-Unix (containers run in VM)");
     }
     Ok(())
 }
