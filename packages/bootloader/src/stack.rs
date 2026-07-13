@@ -153,7 +153,7 @@ pub async fn ensure_socket_dirs() -> Result<()> {
     #[cfg(unix)]
     {
         for dir in [socket_dir_tmpfs(), socket_dir_ext4()] {
-            let p = Path::new(dir);
+            let p = Path::new(dir.as_str());
             if !p.exists() {
                 std::fs::create_dir_all(p)
                     .with_context(|| format!("failed to create socket dir {dir}"))?;
