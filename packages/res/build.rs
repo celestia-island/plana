@@ -35,11 +35,37 @@ macro_rules! log_blank {
     };
 }
 
+/// Ensure the directories referenced by `include_dir!` in src/entrypoint.rs
+/// exist. Inside the arona workspace they are populated by provider-registry;
+/// outside (e.g. evernight via git dep) they are absent, so we create empty
+/// placeholders to keep the compile-time macro happy. The embedded content is
+/// empty in that case — harmless because the data is arona-internal.
+fn ensure_include_dir_targets() {
+    for rel in [
+        "../../target/provider-registry/entrypoint",
+        "../../target/provider-registry/models",
+    ] {
+        let p = Path::new(rel);
+        if !p.exists() {
+            let _ = std::fs::create_dir_all(p);
+        }
+    }
+}
+
 fn main() {
     println!("cargo:rerun-if-changed=../../res/prompts");
     println!("cargo:rerun-if-changed=../../res/i18n");
     println!("cargo:rerun-if-changed=../../target/provider-registry/entrypoint");
     println!("cargo:rerun-if-env-changed=ARONA_ROOT");
+
+    // When `_res` is consumed from outside the arona workspace (e.g. evernight
+    // via a git dependency), the provider-registry output directories do not
+    // exist — they are generated inside arona only. The `include_dir!` macro
+    // in src/entrypoint.rs is a compile-time requirement and panics if the
+    // directory is missing. Create empty placeholder directories so the macro
+    // succeeds (the embedded content is simply empty); downstream callers
+    // that touch ENTRYPOINT_DIR / MODELS_DIR must already tolerate emptiness.
+    ensure_include_dir_targets();
 
     bundle_about_docs();
 
