@@ -49,11 +49,11 @@ install:
 
 # ── Data ─────────────────────────────────────────────────────────────
 
-# Fetch provider-registry data into target/provider-registry/ (consumed by build.rs).
-#   just fetch-provider-registry            # clone from upstream
-#   just fetch-provider-registry /local/path  # sync from a local checkout
-fetch-provider-registry LOCAL="":
-    {{python_cmd}} scripts/fetch_provider_registry.py {{LOCAL}}
+# Sync data on demand.
+#   just sync provider-registry            # clone from upstream
+#   just sync provider-registry /path      # sync from a local checkout
+sync target='provider-registry' *ARGS='':
+    {{python_cmd}} scripts/fetch_provider_registry.py {{ARGS}}
 
 # ── Build ────────────────────────────────────────────────────────────
 
