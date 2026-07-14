@@ -47,6 +47,14 @@ install:
     just cache-guard
     just prefetch
 
+# ── Data ─────────────────────────────────────────────────────────────
+
+# Fetch provider-registry data into target/provider-registry/ (consumed by build.rs).
+#   just fetch-provider-registry            # clone from upstream
+#   just fetch-provider-registry /local/path  # sync from a local checkout
+fetch-provider-registry LOCAL="":
+    {{python_cmd}} scripts/fetch_provider_registry.py {{LOCAL}}
+
 # ── Build ────────────────────────────────────────────────────────────
 
 build:
