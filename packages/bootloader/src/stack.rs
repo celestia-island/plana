@@ -277,7 +277,12 @@ fn registry_params(cfg: &StackConfig) -> ContainerCreateParams {
 
 fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     let name = format!("{}scepter", cfg.prefix);
-    let db_host = format!("{}postgres", cfg.prefix);
+    let is_host = cfg.network_mode.as_deref() == Some("host");
+    let db_host = if is_host {
+        "127.0.0.1".to_string()
+    } else {
+        format!("{}postgres", cfg.prefix)
+    };
     let db_url = format!(
         "postgresql://{}:{}@{}/{}",
         cfg.postgres_user, cfg.postgres_password, db_host, cfg.postgres_db
