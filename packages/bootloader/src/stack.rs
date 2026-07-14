@@ -86,6 +86,10 @@ pub struct StackConfig {
     /// Optional host directory holding the entelecheia config; bind-mounted
     /// read-write into `/home/entelecheia/.config/entelecheia`.
     pub config_dir: Option<PathBuf>,
+    /// Network mode: None (default) uses the `entelecheia-network` bridge;
+    /// `Some("host")` uses host networking (no port mapping, useful when the
+    /// container runtime's bridge network is unavailable, e.g. podman+nftables).
+    pub network_mode: Option<String>,
 }
 
 impl Default for StackConfig {
@@ -108,6 +112,7 @@ impl Default for StackConfig {
             model_cache_dir: None,
             workspace_dir: None,
             config_dir: Some(config_dir),
+            network_mode: None,
         }
     }
 }
@@ -208,16 +213,18 @@ fn postgres_params(cfg: &StackConfig) -> ContainerCreateParams {
 
     let sec = security_profile::postgres();
 
+    let network = cfg.network_mode.clone().unwrap_or_else(|| NETWORK_NAME.into());
+    let is_host = network == "host";
     ContainerCreateParams {
         name,
         image: cfg.postgres_image.clone(),
-        network: Some(NETWORK_NAME.into()),
+        network: Some(network),
         env,
-        ports: vec![PortMapping {
+        ports: if is_host { vec![] } else { vec![PortMapping {
             host_port: cfg.postgres_port,
             container_port: 5432,
             protocol: "tcp".into(),
-        }],
+        }] },
         volumes: vec![VolumeMount::rw(
             format!("{}postgres-data", cfg.prefix),
             "/var/lib/postgresql",
@@ -245,7 +252,7 @@ fn registry_params(cfg: &StackConfig) -> ContainerCreateParams {
     ContainerCreateParams {
         name: format!("{}registry", cfg.prefix),
         image: cfg.registry_image.clone(),
-        network: Some(NETWORK_NAME.into()),
+        network: Some(cfg.network_mode.clone().unwrap_or_else(|| NETWORK_NAME.into())),
         env: HashMap::new(),
         ports: vec![],
         volumes: vec![],
@@ -364,16 +371,19 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
 
     let sec = security_profile::scepter();
 
+    let net = cfg.network_mode.clone().unwrap_or_else(|| NETWORK_NAME.into());
+    let is_host = net == "host";
+
     ContainerCreateParams {
         name,
         image: cfg.scepter_image.clone(),
-        network: Some(NETWORK_NAME.into()),
+        network: Some(net),
         env,
-        ports: vec![PortMapping {
+        ports: if is_host { vec![] } else { vec![PortMapping {
             host_port: cfg.scepter_port,
             container_port: cfg.scepter_port,
             protocol: "tcp".into(),
-        }],
+        }] },
         volumes,
         devices: vec![DeviceMapping {
             host_path: "/dev/fuse".into(),
@@ -415,7 +425,9 @@ pub async fn bring_up_stack(cfg: &StackConfig) -> Result<StackHandle> {
     let backend = create_container_ops(&cfg.container_backend).await?;
 
     ensure_socket_dirs().await?;
-    ensure_network().await?;
+    if cfg.network_mode.as_deref() != Some("host") {
+        ensure_network().await?;
+    }
 
     // Pull images first (source-build callers handle this themselves).
     if !cfg.source_build {
