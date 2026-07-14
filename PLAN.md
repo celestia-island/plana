@@ -2,7 +2,23 @@
 
 > 本文件由自动化扫描于 **2026-07-04** 生成，记录项目当前状态、近期进展与后续计划。
 > 最近一次手动刷新：**2026-07-14**（新增 §6 `_bootloader` 包 + 计划更新）。
+> **2026-07-14 刷新记录**：PLAN.md 顶部加 §"Refresh log 2026-07-14"；其他章节保留原貌。
 > 原有详细计划已保留于文末「既有详细计划（存档）」。
+
+## Refresh log 2026-07-14
+
+- **当前分支**：`dev` · 工作区有 624 项 dirty（`git status --porcelain` 数，`diff --stat` 实际仅 1 个文件实质修改：`packages/res/src/agent_names.rs`；其余多数是 `pathspec`/行末换行等误报）
+- **最近提交**：`📝 Update PLAN.md: document _bootloader package + build fixes.` (`a36e55f`)
+- **未提交改动**（样本）：
+  ```
+   M .cargo/config.toml           # 仍是 [env] 段，无 sibling-crate patch
+   M packages/arona/bindings/*.ts # TS 绑定跟着 Rust 重新生成
+   M packages/res/src/agent_names.rs
+  ```
+- **后续动作**：
+  1. **§6 `_bootloader` 包** 与 evernight bootloader 模式的接口稳定化（已合入，需补测试）。
+  2. **协议类型测试 Phase 1–6**（参见 arona/PLAN.md §6 既有详细计划）。
+  3. 后续 Phase 7/8（视需要）启动。
 
 ## 1. 项目概述
 
