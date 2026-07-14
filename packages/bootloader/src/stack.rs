@@ -383,10 +383,10 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         healthcheck: Some(HealthcheckParams {
             test: vec![
                 "CMD-SHELL".into(),
-                format!("test -S {}/entelecheia-tui.sock", socket_dir_tmpfs()),
+                format!("curl -sf http://localhost:{}/health 2>/dev/null || curl -sf http://localhost:{}/", cfg.scepter_port, cfg.scepter_port),
             ],
             interval_ns: secs_to_ns(5),
-            timeout_ns: secs_to_ns(3),
+            timeout_ns: secs_to_ns(5),
             retries: Some(30),
             start_period_ns: secs_to_ns(10),
         }),
