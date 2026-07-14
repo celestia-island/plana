@@ -1,33 +1,41 @@
 # arona — 项目状态与计划 (PLAN)
 
 > 本文件由自动化扫描于 **2026-07-04** 生成，记录项目当前状态、近期进展与后续计划。
-> 最近一次手动刷新：**2026-07-07**（新增 §6 通信协议结构测试计划）。
+> 最近一次手动刷新：**2026-07-14**（新增 §6 `_bootloader` 包 + 计划更新）。
 > 原有详细计划已保留于文末「既有详细计划（存档）」。
 
 ## 1. 项目概述
 
 - **名称**：`arona`
-- **简介**：celestia-island 共享协议类型库，含 TypeScript 绑定与构建脚本。
+- **简介**：celestia-island 共享协议类型库 + 宿主 bootloader 抽象，含 TypeScript 绑定与构建脚本。
 - **远程仓库**：https://github.com/celestia-island/arona.git
 - **技术栈**：Rust / Node/TypeScript / just
-- **类别**：rust-lib
+- **类别**：rust-lib + supervisor-shared
 
 ## 2. 当前状态
 
 - **当前分支**：`dev`
-- **工作区**：干净（此前未提交的 `src/protocol/jsonrpc.rs` 改动已随 `8dcfdbf` 入库）
-- **最近提交时间**：2026-07-04
-- **最近提交**：8dcfdbf style: rustfmt jsonrpc notification fallback
-- **分支对比**：`dev` 领先 `master` 127 个提交
+- **工作区**：干净
+- **最近提交时间**：2026-07-14
+- **最近提交**：🐛 Fix DB host for host network mode (127.0.0.1)
+- **分支对比**：`dev` 领先 `master`
 
-## 3. 发布元数据补全（本次刷新完成）
+## 3. 新增 `packages/_bootloader` 包（2026-07-14）
 
-本次刷新补全了面向 crates.io 的发布元数据，已通过 `cargo check` / `cargo clippy --all-features -- -D warnings` / `cargo test --lib`（651 项通过）/ `cargo fmt --check`：
+为支持 evernight 作为宿主机 bootloader 引导 entelecheia 容器栈，新增共享包：
 
-- `README.md`：新增官方 docs.rs 徽章（`https://docs.rs/arona/badge.svg`）。
-- `Cargo.toml`：补充 `keywords`、`categories`，新增 `[package.metadata.docs.rs]`（`all-features = true`）。
-- 关键词：`json-rpc`、`protocol`、`mcp`、`typescript`、`schema`。
-- 分类：`api-bindings`、`data-structures`、`web-programming::websocket`、`network-programming`。
+- **`identity`**：celestia-XXX 实例 ID 生成（0-999随机）+ 持久化到 TOML config，驱动 node_id/容器名前缀/端口偏移
+- **`stack`**：幂等容器栈拉起（`bring_up_stack`）— 创建/启动 postgres + scepter + registry 三容器 + 健康检查 + 共享 docker 网络。参数化 StackConfig，支持 host/bridge 网络模式、自定义端口/镜像
+- **`platform`**：三平台 ServiceInstaller trait（systemd user unit / SCM sc.exe / launchd LaunchDaemon）+ 各平台 `#[cfg]` 实现
+
+该包仅依赖 arona 共享层（`_container`/`_infra_services`/`_infra_utils`），不依赖 entelecheia 或 evernight，避免循环依赖。8 个单元测试通过。
+
+### 编译兼容性修复
+
+- `_res` build.rs：entrypoint 目录缺失时不再硬错误（外部消费 arona 时 provider-registry/entrypoint 不存在）
+- `_res` build.rs：为 `include_dir!` 宏创建占位目录（外部 workspace 编译时）
+- socket dirs 从硬编码常量改为 `EVERNIGHT_SOCKET_DIR`/`ENTELECHEIA_SOCKET_DIR` 环境变量控制（适配 podman rootless）
+- Windows 上跳过 host 侧 socket 目录创建（容器在 podman-machine VM 内运行）
 
 ## 4. 近期进展（最近提交）
 
