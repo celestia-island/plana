@@ -269,7 +269,11 @@ pub enum Method {
     #[strum(serialize = "Tui.ListPolemosDevices")]
     TuiListPolemosDevices,
 
-    // ── Auth ────────────────────────────────────────────────
+    // ── Polemos ─────────────────────────────────────────────
+    #[strum(serialize = "Tui.RegisterPolemosDevice")]
+    TuiRegisterPolemosDevice,
+    #[strum(serialize = "Tui.RegisterPolemosDeviceResponse")]
+    TuiRegisterPolemosDeviceResponse,
     #[strum(serialize = "Tui.AuthLogin")]
     TuiAuthLogin,
     #[strum(serialize = "Tui.AuthLoginResponse")]
@@ -402,6 +406,38 @@ pub enum Method {
     // ── Server Info ─────────────────────────────────────────
     #[strum(serialize = "Tui.ServerInfo")]
     TuiServerInfo,
+
+    // ── Chest-local push notifications ───────────────────────
+    #[strum(serialize = "Tui.CrossWorkspaceDenied")]
+    TuiCrossWorkspaceDenied,
+
+    // ── Ad-hoc request methods (scepter tui_connection) ──────
+    #[strum(serialize = "Tui.RequestBridgeNetwork")]
+    TuiRequestBridgeNetwork,
+    #[strum(serialize = "Tui.RequestFileTree")]
+    TuiRequestFileTree,
+    #[strum(serialize = "Tui.RequestFileRead")]
+    TuiRequestFileRead,
+    #[strum(serialize = "Tui.RequestModelList")]
+    TuiRequestModelList,
+    #[strum(serialize = "Tui.RequestModelServerAction")]
+    TuiRequestModelServerAction,
+
+    // ── Chest-local chunk history ────────────────────────────
+    #[strum(serialize = "Tui.AgentChunkRange")]
+    TuiAgentChunkRange,
+    #[strum(serialize = "Tui.AgentChunkCount")]
+    TuiAgentChunkCount,
+    #[strum(serialize = "Tui.IndustrialTelemetryPush")]
+    TuiIndustrialTelemetryPush,
+    #[strum(serialize = "Tui.IndustrialAlarmPush")]
+    TuiIndustrialAlarmPush,
+    #[strum(serialize = "Tui.IndustrialWriteApprovalPush")]
+    TuiIndustrialWriteApprovalPush,
+    #[strum(serialize = "Tui.ServerLogEntry")]
+    TuiServerLogEntry,
+    #[strum(serialize = "Tui.ContainerLogEntry")]
+    TuiContainerLogEntry,
 }
 
 impl Method {
@@ -447,12 +483,18 @@ impl Method {
             | TuiPolemosDeviceList
             | TuiAudioPullProgress | TuiAudioStatusChanged
             | TuiServerInfo
+            | TuiCrossWorkspaceDenied
+            | TuiAgentChunkRange | TuiAgentChunkCount
+            | TuiIndustrialTelemetryPush | TuiIndustrialAlarmPush
+            | TuiIndustrialWriteApprovalPush
+            | TuiServerLogEntry | TuiContainerLogEntry
             | DevicePolemosRegisterAck | DeviceHeartbeatAck
             | DeviceTerminalReady | DeviceTerminalInput | DeviceTerminalResize
             | DeviceTerminalPollResult | DeviceTerminalCloseAck
             | DeviceFileListResult | DeviceFileDownloadResult | DeviceFileUploadResult
             | DevicePong | DeviceWebrtcAnswer | DeviceWebrtcIce
             | DeviceSubscribeOutput | DeviceTerminalOutput | DeviceError
+            | TuiRegisterPolemosDeviceResponse
             | ScreenOffer | ScreenAnswer | ScreenIce | ScreenIceCandidate => MessageKind::OneWay,
 
             // ── Sync request-response pairs ──
@@ -473,6 +515,9 @@ impl Method {
             | TuiPing
             | TuiUsagePeriodQuery
             | TuiGetUserPreferences | TuiSyncPreferences
+            | TuiRequestBridgeNetwork | TuiRequestFileTree | TuiRequestFileRead
+            | TuiRequestModelList | TuiRequestModelServerAction
+            | TuiRegisterPolemosDevice
             | DevicePolemosRegister | DeviceHeartbeat
             | DeviceTerminalOpen | DeviceTerminalPoll | DeviceTerminalClose
             | DeviceFileList | DeviceFileDownload | DeviceFileUpload
@@ -550,6 +595,7 @@ impl Method {
             TuiLayer2AgentList => Some(TuiLayer2AgentListResponse),
             TuiLayer2AgentMcpTools => Some(TuiLayer2AgentMcpResponse),
             TuiLayer2AgentSkills => Some(TuiLayer2AgentSkillsResponse),
+            TuiRegisterPolemosDevice => Some(TuiRegisterPolemosDeviceResponse),
             DevicePolemosRegister => Some(DevicePolemosRegisterAck),
             DeviceHeartbeat => Some(DeviceHeartbeatAck),
             DeviceTerminalOpen => Some(DeviceTerminalReady),
@@ -561,6 +607,9 @@ impl Method {
             DevicePing => Some(DevicePong),
             DeviceWebrtcOffer => Some(DeviceWebrtcAnswer),
             DeviceTerminalList => Some(DeviceFileListResult),
+            // Ad-hoc methods — response is inline JSON-RPC result
+            TuiRequestBridgeNetwork | TuiRequestFileTree | TuiRequestFileRead
+            | TuiRequestModelList | TuiRequestModelServerAction => None,
             _ => None,
         }
     }
