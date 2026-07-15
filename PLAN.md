@@ -604,6 +604,117 @@ macro_rules! roundtrip_test {
 
 ---
 
+## 8. Next Milestone — 安装脚本收敛 + instance.toml 端点发现（2026-07-15 启动）
+
+> **目标**：完成 session 6 PAUSE 遗留的安装脚本收敛；新增 `instance.toml` 端点发现机制；推进协议测试 Phase 1 以支撑跨项目联调。
+
+### 8.1 instance.toml — 跨项目端点发现枢纽
+
+**动机**：shittim-chest（WebUI + Tauri）需要自动发现 celestia-XXX WSL2 实例中的 scepter 端点。arona `_bootloader/identity` 作为实例 ID 的权威来源，应当负责写入端点发现文件。
+
+**实现**（`packages/_bootloader/identity/src/lib.rs` 新增）：
+
+```rust
+pub fn write_instance_toml(config: &InstanceConfig) -> Result<PathBuf> {
+    let toml_path = dirs::config_dir()
+        .unwrap()
+        .join("celestia")
+        .join("instance.toml");
+    std::fs::create_dir_all(toml_path.parent().unwrap())?;
+    let content = format!(
+        r#"[instance]
+id = {id}
+name = "{name}"
+
+[scepter]
+host = "localhost"
+port = {port}
+health_url = "http://localhost:{port}/health"
+
+[projects]
+root = "{repo_root}"
+mounted = [{mounted}]
+"#,
+        id = config.id,
+        name = format!("celestia-{:03}", config.id),
+        port = 8424 + config.id * 100,
+        repo_root = config.repo_root.display(),
+        mounted = config.mounted_projects.iter().map(|p| format!("\"{}\"", p)).collect::<Vec<_>>().join(", "),
+    );
+    std::fs::write(&toml_path, content)?;
+    Ok(toml_path)
+}
+```
+
+**调用时机**：
+- `evernight supervise` 启动时在 WSL2 实例内调用
+- `celestia-init.sh` 首次初始化时调用
+- `celestia-install.ps1` 装完后调用
+
+**消费方**：
+- shittim-chest `useInstanceDiscovery`（Windows 读 `\\wsl$\{instance}\home\{user}\.config\celestia\instance.toml`）
+- shittim-chest Tauri 桌面版（读 evernight config 计算端口，与 instance.toml 交叉验证）
+- scriptum CLI（直接读本地 `~/.config/celestia/instance.toml`）
+
+### 8.2 安装脚本收敛（session 6 PAUSE 遗留）
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 8.2.1 | 4 仓 README 顶部推荐横幅 | ✅ 完成 (session 7) |
+| 8.2.2 | `arona/scripts/install/README.md` 英文版 | ✅ 完成 (session 7) |
+| 8.2.3 | README i18n（10 语言版本） | ⚠️ 待做 |
+| 8.2.4 | Linux `.desktop` 文件 e2e 验证 | ⚠️ 待做（需 GNOME/KDE 环境） |
+| 8.2.5 | macOS `.app` bundle e2e 验证 | ⚠️ 待做（需 macOS 环境） |
+| 8.2.6 | celestia-XXX rootfs 轻量化（当前 `wsl --export` 23 GB 超时） | ⚠️ 待做（需预构建 minimal rootfs 或 `wsl --import` 预构建镜像） |
+| 8.2.7 | `celestia-init.sh` instance.toml 写入 | ⚠️ 待做（依赖 §8.1 `write_instance_toml`） |
+
+### 8.3 协议测试推进
+
+当前 `cargo test --all-features` = 651 项。跨项目联调需要 Phase 1（安全关键路径）优先完成：
+
+| 阶段 | 覆盖范围 | 预计新增 | 优先级 |
+|------|---------|---------|--------|
+| **Phase 1a** — 握手协议 | `handshake.rs` 全量 L1-L4 | +10 | P0 — shittim-chest WS 连接的正确性前提 |
+| **Phase 1b** — 基础消息 | `base_messages.rs` 全量 L1-L2 | +3 | P0 — 心跳/错误/确认是连接保活前提 |
+| **Phase 1c** — JSON-RPC 补充 | batch 请求 + 标准错误码 + Unicode method | +9 | P0 — 生产环境 JSON-RPC 合规性 |
+| **Phase 2a** — 核心 MCP 智能体 | kalos + haplotes + neikos 扩展测试 | +50 | P1 — 文件操作/协作/容器管理是日常迭代刚需 |
+
+**目标**：Phase 1 全部通过后 `cargo test` 从 651 → ~670+，为跨项目端到端点火测试（M1-M6）提供协议层信心。
+
+### 8.4 `_bootloader` 接口稳定化
+
+当前 arona `_bootloader` 有 8 个单元测试通过，但接口签名尚未冻结：
+
+| 步骤 | 内容 |
+|------|------|
+| 8.4.1 | `StackConfig` 新增 `host_repo_root` + `mounted_projects` 字段（支持 §6.3.1 bind-mount） |
+| 8.4.2 | `IdentityConfig` 新增 `write_instance_toml()` 方法（§8.1） |
+| 8.4.3 | 补充 `identity` + `stack` + `platform` 的集成测试（当前仅 8 个单元测试） |
+| 8.4.4 | 接口版本号冻结为 `0.2.0`（标注 semver 兼容承诺） |
+
+### 8.5 验收条件
+
+| # | 条件 | 验证方式 |
+|---|------|---------|
+| AR-1 | `write_instance_toml(config)` 生成合法 TOML 文件，shittim-chest `useInstanceDiscovery` 可解析 | 单元测试 + 集成测试 |
+| AR-2 | Phase 1 协议测试全部通过，`cargo test --all-features` ≥ 670 | CI 绿 |
+| AR-3 | `celestia-init.sh` 执行后 `~/.config/celestia/instance.toml` 存在且内容正确 | 手动验证 |
+| AR-4 | `StackConfig` 支持 `host_repo_root` + bind-mount，evernight supervise 可挂载 celestia repo | e2e 验证 |
+
+### 8.6 跨仓联合点火测试 checklist
+
+以下为依赖 arona 产出（instance.toml + 协议稳定性）后的跨仓联合测试：
+
+| # | 测试 | 涉及仓 |
+|---|------|--------|
+| JT-1 | `celestia-install.ps1` 创建 celestia-XXX 实例 → `instance.toml` 自动生成 | arona + evernight |
+| JT-2 | shittim-chest WebUI 读 instance.toml → 连接 scepter → agents 列表可见 | arona + shittim-chest + entelecheia |
+| JT-3 | shittim-chest WS 握手（含 `ConnectHandshakeParams` protocol_version=1）通过 | arona + shittim-chest |
+| JT-4 | evernight supervise 挂载 celestia repo → scepter 容器内 `cargo check -p scepter` 通过 | arona + evernight + entelecheia |
+| JT-5 | hubris agent 读 entelecheia/PLAN.md → 执行 `read_iteration_plan` skill → 返回 IB backlog | arona + entelecheia + evernight |
+
+---
+
 ## 既有详细计划（存档）
 
 # arona — Issues & Action Plan
