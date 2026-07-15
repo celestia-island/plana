@@ -1,0 +1,9 @@
+[search]
+title = "Search"
+placeholder = "Type to search, then Enter…"
+searching = "Searching…"
+no_results = "No results"
+results = "Results"
+hint_empty = "Type a query for semantic search"
+hint_open = "Open"
+detail = "Detail"

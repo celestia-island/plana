@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "離線"
+gateway_error = "閘道錯誤"
+retrying = "正在重試"
+retry_attempt = "重試"
+error_prefix = "錯誤"
+select_action = "選擇操作"
+option_retry = "重試"
+option_restart = "重新啟動"
+option_exit = "結束"

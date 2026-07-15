@@ -1,0 +1,10 @@
+tree 69e450ecddb48c298387e860796d1b2d4e615ac9
+parent 2e64ba83e733531871b321a3e0eecb55c4298230
+author 伊欧 <langyo.china@gmail.com> 1784036903 +0800
+committer 伊欧 <langyo.china@gmail.com> 1784036903 +0800
+
+📝 Update PLAN.md: document _bootloader package + build fixes.
+
+Records the new packages/bootloader crate (identity/stack/platform),
+Windows socket dir adaptation, configurable socket paths via env vars,
+_res build.rs external-consumer tolerance fixes.

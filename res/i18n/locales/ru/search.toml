@@ -1,0 +1,9 @@
+[search]
+title = "Поиск"
+placeholder = "Введите запрос и Enter…"
+searching = "Поиск…"
+no_results = "Нет результатов"
+results = "Результаты"
+hint_empty = "Введите запрос для семантического поиска"
+hint_open = "Открыть"
+detail = "Подробности"

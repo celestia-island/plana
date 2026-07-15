@@ -1,0 +1,11 @@
+[query_dialog]
+title = "クエリ"
+source_label = "ソース"
+select_reply = "返信を選択"
+custom_reply = "カスタム返信"
+custom_input = "カスタム入力"
+input_placeholder = "入力プレースホルダー"
+enter_confirm_selection = "選択を確定"
+enter_send_reply = "返信を送信"
+tab_switch_input = "入力を切り替え"
+tab_switch_option = "オプションを切り替え"

@@ -1,0 +1,17 @@
+[package]
+name = "_sync"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+description = "State tree sync engine — online-game-style client/server state synchronization"
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio = { workspace = true }
+uuid = { workspace = true }
+dashmap.workspace = true
+tracing.workspace = true
+async-trait.workspace = true

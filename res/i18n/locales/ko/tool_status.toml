@@ -1,0 +1,4 @@
+[tool_status]
+enabled = "사용"
+disabled = "사용 안 함"
+auto = "자동"

@@ -1,0 +1,11 @@
+[query_dialog]
+title = "询问"
+source_label = "来源"
+select_reply = "选择回复"
+custom_reply = "自定义回复"
+custom_input = "自定义输入"
+input_placeholder = "输入占位符"
+enter_confirm_selection = "确认选择"
+enter_send_reply = "发送回复"
+tab_switch_input = "切换输入"
+tab_switch_option = "切换选项"

@@ -1,0 +1,6 @@
+[connection]
+status_disconnected = "已断开连接"
+status_connecting = "正在连接"
+status_connected = "已连接"
+status_reconnecting = "重新连接中"
+status_offline = "离线"

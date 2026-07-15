@@ -1,0 +1,6 @@
+[connection]
+status_disconnected = "Desconectado"
+status_connecting = "Conectando"
+status_connected = "Conectado"
+status_reconnecting = "Reconectando"
+status_offline = "Sin conexión"

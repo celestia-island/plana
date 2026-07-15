@@ -1,0 +1,12 @@
+[command_registry]
+models_usage = "管理模型和 API 密钥"
+mcp_usage = "管理 MCP 工具"
+agents_usage = "管理智能体"
+projects_usage = "管理项目"
+help_usage = "显示帮助信息"
+settings_usage = "打开设置"
+clear_usage = "清屏"
+logs_usage = "查看日志"
+theme_usage = "更改主题"
+language_usage = "更改语言"
+status_usage = "查看系统状态"
