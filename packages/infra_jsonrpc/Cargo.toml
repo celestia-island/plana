@@ -16,6 +16,7 @@ interprocess.workspace = true
 anyhow.workspace = true
 uuid.workspace = true
 strum.workspace = true
+paste = "1"
 
 _state_sync = { workspace = true }
 arona.workspace = true
