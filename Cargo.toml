@@ -82,7 +82,7 @@ hex = "^0.4"
 include_dir = { version = "^0.7", features = ["glob"] }
 interprocess = "^2"
 libnoa = "^0.3"
-lru = "^0.12"
+lru = "^0.18"
 mockall = "^0.12"
 notify = "^6"
 os_info = "^3"
