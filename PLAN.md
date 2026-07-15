@@ -69,6 +69,7 @@
 2. ~~完善 `crates.io` 发布元数据（rust-version / metadata / docs.rs badge）~~ — 已完成（`rust-version` 既有 `1.85`，本次补齐 keywords/categories 与 `[package.metadata.docs.rs]`，README 已加 docs.rs badge）。
 3. 补充单元/集成测试，保持 `just test` 与 clippy `-D warnings` 通过。详见 §6「通信协议结构测试计划」。
 4. 定期刷新本 PLAN.md 以反映最新状态。
+5. **新承担：统一 celestia 安装脚本 ownership**（2026-07-15 session 5-6 启动，session 6 PAUSE）。详见 §7「Unified Installation Scripts」。
 
 ---
 
@@ -712,3 +713,102 @@ SySL 1.0 不是标准 SPDX 标识符，crates.io 不接受 `license = "SySL-1.0"
 ### 本次维护已完成
 
 - 修正 README 中文档链接文本（原指向 docs.celestia.world/en/arona，实际位于 guides/platforms）。
+
+---
+
+## 7. Unified Installation Scripts（**2026-07-15 session 5-6 启动，session 6 PAUSE**）
+
+> **🚨 关键约束（langyo 2026-07-15 明确）**：celestia 安装/初始化环境**绝对禁止使用**用户本机的 `Ubuntu-24.04` WSL2 实例。
+> celestia 必须**自建独立 WSL2 实例 `celestia-XXX`**（XXX = 3 位随机数字，仿 Docker Desktop 模式：自建引擎、不动宿主机），与用户原本工作环境完全隔离。
+> **新原则**：所有 celestia 相关的 `apt-get` / `dpkg` / `systemd` / `daemon` 操作**只能**在 `celestia-XXX` WSL2 实例内执行。
+
+### 7.0 WSL2 实例命名约定（2026-07-15 user 明确）
+
+- **格式**：`celestia-XXX`，`XXX` ∈ `[000, 999]` 3 位十进制随机数。
+- 示例：`celestia-007` / `celestia-128` / `celestia-482`。
+- **多实例并存**：允许同时存在多个 `celestia-XXX`（如 `celestia-007` 给 entelecheia-1.0，`celestia-128` 给 entelecheia-1.1）。
+- 旧约定 `celestia-dev`（2026-07-15 session 5 已删）— **已废弃**。
+- install 脚本自动生成（`Get-Random -Minimum 0 -Maximum 1000` 或 `printf "%03d" $((RANDOM % 1000))`）+ 检查 `wsl -l -q` 中不重名 → 写到本机 `CELESTIA_WSL_INSTANCE` env。
+- 文档中提到具体实例时**用真实名**（如 `celestia-482`），**不要**统一写成 `celestia`（语义不明确）。
+
+### 7.1 决策：脚本归属 arona
+
+**原状（2026-07-15 之前）**：
+- entelecheia 自己有 `scripts/deploy/install.{ps1,sh}`（745 / 707 行，WSL2+Docker+TUI）
+- evernight / scriptum / shittim-chest **没有** install 脚本
+- 用户要装 celestia 得跑 4 仓各自的脚本，缺一不可
+
+**决策（2026-07-15 session 5）**：
+- 统一脚本 **寄存在 arona**（生态枢纽仓、有 i18n 设施）
+- entelecheia/evernight/scriptum/shittim-chest 的 README 顶部加 `> 📦 推荐使用 arona celestia-install` 横幅
+- 旧 entelecheia 脚本**保留**（向后兼容），但 deprecate 警告
+- **语言选择**：bash + PowerShell（**不**用 Python — "免得没有 python 可以用"，langyo 2026-07-15 明确）
+
+### 7.2 已完成产出（**2026-07-15 session 7 提交**）
+
+| 文件 | 行数 | 状态 |
+|------|------|------|
+| `arona/scripts/install/celestia-install.ps1` | ~680 | ✅ **已重构**：隔离原则 — 自动生成 `celestia-XXX` 实例名（`Resolve-CelestiaWslInstance` + `New-CelestiaWslInstance`），`wsl --export` 模板（read-only）→ `wsl --import celestia-XXX`；所有操作 wrap 在 `wsl -d celestia-XXX`；`$env:CELESTIA_WSL_INSTANCE` 持久化到 User scope |
+| `arona/scripts/install/celestia-install.sh` | ~760 | ✅ **已更新**：顶部加 ISOLATION WARNING 横幅，强调在干净 VM/sandbox 中运行 |
+| `arona/scripts/install/celestia-init.sh` | ~280 | ✅ **新增**：WSL2 实例内首次启动 init — apt mirror（Aliyun 自动检测）→ Docker Engine + fuse-overlayfs → Docker registry mirror → pull pgvector image → prepare workspace |
+| `arona/scripts/install/README.md` | ~120 | ✅ **新增**：英文版 README — 脚本说明、快速开始、隔离原则、flags、安装内容、post-install、legacy 脚本弃用提示 |
+| `scriptum/packages/tui/src/args.rs` | 3 处 | ✅ **已 commit + push**：`CliCommand` / `YoloAction` / `ContextAction` 加 `Clone` derive（commit `80f3c8a`） |
+| `entelecheia/scripts/deploy/install.{ps1,sh}` | 2 处 | ✅ **已加 deprecation 横幅**：推荐改用 arona 统一脚本 |
+
+### 7.3 Session 6 PAUSE 原因（langyo STOP）
+
+用户发现本轮脚本默认走 `Ubuntu-24.04` — **违反隔离原则**。
+正确做法：
+
+1. **删掉**所有 `wsl -d Ubuntu-24.04 -e bash ...` 的硬编码
+2. **改为**自动生成 `celestia-XXX`（XXX = 3 位随机数）→ `wsl --install -d Ubuntu-24.04 --name celestia-XXX`（**全新独立实例**）
+3. **所有** docker/apt/systemd 操作 wrap 在 `wsl -d celestia-XXX -e bash -lc "..."`
+4. 仿 Docker Desktop / podman-machine-default 的"自建 WSL 引擎"模式
+5. 实例名写到 `$env:CELESTIA_WSL_INSTANCE` 供后续脚本引用
+
+### 7.4 session 7 TODO 完成情况
+
+| # | 任务 | 状态 |
+|---|------|------|
+| 1 | 重构 `celestia-install.ps1` Phase 2 — 自动生成 `celestia-XXX` + 隔离原则 | ✅ **完成 (2026-07-15)** |
+| 2 | 新增 `celestia-init.sh` — WSL2 实例首次启动 init | ✅ **完成 (2026-07-15)** |
+| 3 | 回写 arona 脚本 commit | ✅ **完成 (2026-07-15)** |
+| 4 | 回写 scriptum 修复 commit（`80f3c8a`） | ✅ **完成 (2026-07-15)** |
+| 5 | deprecate 旧 entelecheia 脚本 | ✅ **完成 (2026-07-15)** |
+| 6 | README 横幅（4 仓） | ⚠️ **未完成**（后续 session） |
+| 7 | README + i18n（10 语言版本） | ⚠️ **部分完成**：英文 README 已写；10 语言 i18n 未做 |
+| 8 | 点火测试 e2e | ⚠️ **未完成**（需实际 WSL2 环境验证） |
+
+### 7.5 PAUSE 时确认无副作用
+
+- `wsl --unregister celestia-dev` 已删 1 个旧 celestia 实例（旧命名约定已废弃，无数据，2026-07-14 前的脏工作目录）。
+- `wsl -d Ubuntu-24.04` 内 3 次 `apt-get update` **全部失败回滚**（中国网络无外网，apt update 拉不到 archive），未写入 apt source list（命令是 in-memory，未持久化）。**用户原 Ubuntu 24.04 完全无变化**。
+- `gpg --dearmor` 因 apt update 失败**未执行**（脚本在 update 之后）。
+- WSL2 内 `~/.local/` 没有任何文件。
+- Windows 本机 0 写入（除 `d:\源代码\工程项目\celestia\scriptum\packages\tui\src\args.rs` 加了 3 个 `Clone` derive，未 commit）。
+
+---
+
+## Refresh log 2026-07-15 (session 5-6 — entelecheia-alpha + plan-only)
+
+- **session 5 — IB-02 扩展**：arona@`86c2cd8`（`issue_driven_workflow.md` + role=coordinator）+ entelecheia@`d76d2b28d`（tools.rs +1 test, architecture.md 5 处 re-sync）。Coordinator skills 覆盖：`industrial_discover` + `issue_driven_workflow`。
+- **session 5 — installation 启动**：
+  - 删旧 WSL2 实例 `celestia-dev`（旧命名约定已废弃）
+  - arona 承担统一 install 脚本 ownership
+  - `celestia-install.{ps1,sh}` 编写完成（659 / 696 行）
+  - scriptum `args.rs` 修复 Clone derive（**未 commit**）
+- **session 6 — PAUSE（langyo STOP）**：用户指出 install 脚本默认走 `Ubuntu-24.04` 违反隔离原则。正确做法：自建独立 WSL2 实例 `celestia-XXX`（3 位随机数字，仿 Docker Desktop 模式；允许多实例并存）。本轮所有安装操作 rollback 确认无副作用。
+- **session 6（user 进一步澄清）**：实例名**不再是** `celestia-dev`（已删），也**不再是**单一 `celestia`，而是 **`celestia-XXX`**（XXX = 3 位十进制随机数）。PROTOCOL.md §6.0 / entelecheia/PLAN.md §6.5 / arona/PLAN.md §7.0 全部已同步。
+- **TODO（session 7+）**：见 §7.4。
+
+## Refresh log 2026-07-15 (session 7 — installation track)
+
+- **celestia-install.ps1 重构**：移除 `$script:WSLDistro = "Ubuntu-24.04"` 硬编码；新增 `New-CelestiaInstanceName` + `Resolve-CelestiaWslInstance` + `New-CelestiaWslInstance` 函数；`wsl --export` 模板 distro（read-only, no side effect）→ `wsl --import celestia-XXX`；`$env:CELESTIA_WSL_INSTANCE` 持久化到 User scope；所有 `Invoke-WSL` 调用自动 target 隔离实例。
+- **celestia-install.sh 更新**：顶部加 ISOLATION WARNING 横幅（推荐干净 VM/sandbox）。
+- **celestia-init.sh 新建**：WSL2 实例内 init — apt Aliyun mirror 自动检测 → Docker Engine + fuse-overlayfs → Docker registry mirror → pull pgvector image → prepare workspace → manifest 输出。
+- **README.md 新建**：英文版 install 文档 — 快速开始、隔离原则说明、flags 表、安装内容、legacy 脚本弃用提示。
+- **scriptum Clone fix 回写**：commit `80f3c8a` pushed to origin/dev。
+- **entelecheia 旧脚本 deprecate**：`install.ps1` / `install.sh` 加 `*** DEPRECATED ***` 横幅 + 指向 arona 统一脚本。
+- **arona PLAN.md 更新**：§7.2 → 已提交；§7.4 → 完成状态表；追加 session 7 refresh log。
+- **剩余**：4 仓 README 横幅、10 语言 i18n README、点火测试 e2e（需实际环境验证）。
+
