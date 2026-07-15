@@ -112,14 +112,32 @@ pub fn cosmos_runtime_type() -> ContainerRuntimeType {
     let docker_socket = std::path::Path::new("/var/run/docker.sock").exists();
     let dev_fuse = std::path::Path::new("/dev/fuse").exists();
 
+    // IB-05: youki rootless mode requires kernel.unprivileged_userns_clone=1
+    // on Linux. Without it, fuse-overlayfs mounts need CAP_SYS_ADMIN and
+    // non-root processes will fail with "must be superuser to use mount".
+    let can_use_rootless_youki = unprivileged_userns_clone_enabled();
+    let is_root = running_as_root();
+
     if inside && docker_socket {
         tracing::info!("cosmos runtime: docker (top-level container, Docker socket available)");
         ContainerRuntimeType::Docker
     } else if inside {
-        tracing::info!(
-            "cosmos runtime: youki (cosmos sub-container, no Docker socket — using in-process sandbox)"
-        );
-        ContainerRuntimeType::Youki
+        if can_use_rootless_youki || is_root {
+            tracing::info!(
+                "cosmos runtime: youki (cosmos sub-container, no Docker socket — using in-process sandbox)"
+            );
+            ContainerRuntimeType::Youki
+        } else {
+            tracing::warn!(
+                "cosmos runtime: youki requires root or unprivileged_userns_clone=1. \
+                 Running without CAP_SYS_ADMIN and kernel.unprivileged_userns_clone=0 — \
+                 youki will fail to mount fuse-overlayfs. \
+                 Set kernel.unprivileged_userns_clone=1 (sysctl) or \
+                 COSMOS_CONTAINER_RUNTIME=docker. \
+                 Falling back to Docker (will fail if socket unavailable)."
+            );
+            ContainerRuntimeType::Docker
+        }
     } else if docker_socket {
         tracing::info!(
             "cosmos runtime: docker (host, Docker socket available — kernel overlay, far lighter \
@@ -127,14 +145,23 @@ pub fn cosmos_runtime_type() -> ContainerRuntimeType {
         );
         ContainerRuntimeType::Docker
     } else if dev_fuse && fuse_overlayfs_available() {
-        tracing::warn!(
-            "cosmos runtime: youki+fuse-overlayfs (host, no Docker socket). \
-             fuse-overlayfs mounts each cosmos container over the entire host rootfs \
-             (lowerdir=/), which is very heavy under concurrent load and large data \
-             mounts. Start the Docker daemon (or set COSMOS_CONTAINER_RUNTIME=docker) \
-             to use the fast kernel-overlay path."
-        );
-        ContainerRuntimeType::Youki
+        if can_use_rootless_youki || is_root {
+            tracing::warn!(
+                "cosmos runtime: youki+fuse-overlayfs (host, no Docker socket). \
+                 fuse-overlayfs mounts each cosmos container over the entire host rootfs \
+                 (lowerdir=/), which is very heavy under concurrent load and large data \
+                 mounts. Start the Docker daemon (or set COSMOS_CONTAINER_RUNTIME=docker) \
+                 to use the fast kernel-overlay path."
+            );
+            ContainerRuntimeType::Youki
+        } else {
+            tracing::warn!(
+                "cosmos runtime: youki+fuse-overlayfs needs root or unprivileged_userns_clone=1. \
+                 fuse-overlayfs binary found but kernel.unprivileged_userns_clone=0 and not root. \
+                 Set kernel.unprivileged_userns_clone=1 or COSMOS_CONTAINER_RUNTIME=docker."
+            );
+            ContainerRuntimeType::Docker
+        }
     } else {
         if dev_fuse {
             tracing::warn!(
@@ -165,6 +192,51 @@ fn fuse_overlayfs_available() -> bool {
         .status()
         .map(|s| s.success())
         .unwrap_or(false)
+}
+
+/// IB-05: check whether the kernel allows unprivileged user namespaces.
+///
+/// Reads `/proc/sys/kernel/unprivileged_userns_clone`. When this returns
+/// `true`, youki can operate rootlessly (no `CAP_SYS_ADMIN` needed for
+/// fuse-overlayfs). When `false`, youki requires root or `CAP_SYS_ADMIN`.
+///
+/// Returns `true` on non-Linux (WSL/macOS) since the Linux-specific
+/// `/proc/sys/...` path does not apply there.
+fn unprivileged_userns_clone_enabled() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::fs::read_to_string("/proc/sys/kernel/unprivileged_userns_clone")
+            .map(|s| s.trim() == "1")
+            .unwrap_or(false)
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        true
+    }
+}
+
+/// Check whether the current process is running as root (UID 0).
+///
+/// Reads `/proc/self/status` on Linux; returns `false` on non-Linux
+/// platforms where root detection for youki is not relevant.
+fn running_as_root() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::fs::read_to_string("/proc/self/status")
+            .ok()
+            .and_then(|status| {
+                status
+                    .lines()
+                    .find(|l| l.starts_with("Uid:"))
+                    .and_then(|line| line.split_whitespace().nth(1)?.parse::<u32>().ok())
+            })
+            .map(|uid| uid == 0)
+            .unwrap_or(false)
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
 }
 
 /// Search PATH for `binary` and return the resolved path if found.
