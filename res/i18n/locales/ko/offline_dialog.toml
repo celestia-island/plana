@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "오프라인"
+gateway_error = "게이트웨이 오류"
+retrying = "재시도 중"
+retry_attempt = "재시도"
+error_prefix = "오류"
+select_action = "작업 선택"
+option_retry = "재시도"
+option_restart = "재시작"
+option_exit = "종료"

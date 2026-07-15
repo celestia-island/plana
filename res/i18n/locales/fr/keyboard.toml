@@ -1,0 +1,9 @@
+[keyboard]
+exit_confirm_title = "Confirmer la sortie"
+exit_confirm_message = "Êtes-vous sûr de vouloir quitter ?"
+execute_skill = "Exécuter la compétence"
+user_prompt = "Invite utilisateur"
+description = "Description"
+unknown_command_title = "Commande Inconnue"
+unknown_command_message = "Commande non reconnue. Tapez /help pour les commandes disponibles."
+exit_progress_message = "Fermeture en cours..."

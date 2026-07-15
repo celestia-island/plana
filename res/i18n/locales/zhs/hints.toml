@@ -1,0 +1,4 @@
+[hints]
+select_platform = "选择平台"
+select_skill = "选择技能"
+select_tool = "选择工具"

@@ -1,0 +1,5 @@
+[common]
+close = "닫기"
+navigate = "탐색"
+select = "선택"
+frontmatter = "프론트매터"

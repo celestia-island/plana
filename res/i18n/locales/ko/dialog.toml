@@ -1,0 +1,11 @@
+[dialog]
+confirm = "확인"
+cancel = "취소"
+switch_focus = "초점 전환"
+select = "선택"
+enter_confirm = "확인"
+esc_cancel = "취소"
+tab_switch = "전환"
+up_down_select = "위/아래 선택"
+up_down_navigate = "위/아래로 탐색"
+notification_ending = " [ending]"

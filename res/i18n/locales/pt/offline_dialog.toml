@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "Offline"
+gateway_error = "Gateway Error"
+retrying = "Retrying"
+retry_attempt = "Retry Attempt"
+error_prefix = "Error"
+select_action = "Select Action"
+option_retry = "Retry"
+option_restart = "Restart"
+option_exit = "Exit"

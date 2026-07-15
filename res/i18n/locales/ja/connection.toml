@@ -1,0 +1,6 @@
+[connection]
+status_disconnected = "切断されました"
+status_connecting = "接続中"
+status_connected = "接続済み"
+status_reconnecting = "再接続中"
+status_offline = "オフライン"

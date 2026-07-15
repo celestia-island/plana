@@ -1,0 +1,13 @@
+[projects]
+panel_title = "Projects"
+search_placeholder = "Search projects..."
+search_title = "Search"
+no_projects = "No Projects"
+create_new = "Create New"
+last_accessed = "Last Accessed"
+item_count = "Items"
+just_now = "Just Now"
+hint_navigate = "Navigate"
+hint_select = "Select"
+hint_paste = "Paste"
+hint_close = "Close"

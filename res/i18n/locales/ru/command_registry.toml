@@ -1,0 +1,12 @@
+[command_registry]
+models_usage = "Управление моделями и ключами API"
+mcp_usage = "Управление инструментами MCP"
+agents_usage = "Управление агентами"
+projects_usage = "Управление проектами"
+help_usage = "Показать справочную информацию"
+settings_usage = "Открыть настройки"
+clear_usage = "Очистить экран"
+logs_usage = "Просмотр журналов"
+theme_usage = "Изменить тему"
+language_usage = "Изменить язык"
+status_usage = "Просмотр состояния системы"

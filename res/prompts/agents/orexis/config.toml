@@ -1,0 +1,9 @@
+[agent]
+namespace = "layer1::orexis"
+name = "OreXis"
+layer = 1
+
+# [extensions] - planned, not yet implemented
+# [extensions.compliance_check]
+# [extensions.risk_assessment]
+# [extensions.audit_reporting]

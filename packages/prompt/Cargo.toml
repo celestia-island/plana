@@ -1,0 +1,22 @@
+[package]
+name = "_prompt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+serde_yaml.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+toml.workspace = true
+tracing.workspace = true
+tera.workspace = true
+chrono.workspace = true
+_core = { workspace = true }
+_state_sync = { workspace = true }
+_domain_agent = { workspace = true }

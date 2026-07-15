@@ -1,0 +1,6 @@
+[waiting]
+waiting_for_connection = "Esperando conexión"
+connecting_websocket = "Conectando un WebSocket"
+waiting_for_query = "Esperando consulta"
+create_agent_hint = "Crea un agente para empezar"
+no_data = "Sin datos"

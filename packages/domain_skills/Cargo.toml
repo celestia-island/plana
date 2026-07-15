@@ -1,0 +1,29 @@
+[package]
+name = "_domain_skills"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+regex.workspace = true
+_state_sync = { workspace = true }
+_domain_agent = { workspace = true }
+_prompt = { workspace = true }
+_infra_utils = { workspace = true }
+_domain_skills_permissions = { workspace = true }
+
+[dev-dependencies]
+criterion = "^0.5"
+tokio-test.workspace = true
+
+[[bench]]
+name = "skills_bench"
+harness = false
