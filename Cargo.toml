@@ -76,7 +76,7 @@ dashmap = "^6"
 deadpool-postgres = "^0.14"
 dirs = "^5"
 dotenvy = "^0.15"
-flume = "^0.11"
+flume = "^0.12"
 futures = "^0.3"
 hex = "^0.4"
 include_dir = { version = "^0.7", features = ["glob"] }
