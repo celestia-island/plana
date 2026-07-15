@@ -1,0 +1,20 @@
+id: rust-lsp
+display_name: "Rust LSP (rust-analyzer)"
+source_image: "rust:1.85-alpine"
+source_image_is_alpine: true
+binary_paths:
+  - /usr/local/cargo
+  - /usr/local/rustup
+available_tools:
+  rust-analyzer: "rust-analyzer --version"
+env:
+  CARGO_HOME: /tools/rust
+  RUSTUP_HOME: /tools/rust
+supported_languages:
+  - rust
+verify:
+  - "rust-analyzer --version"
+lsp_servers:
+  - language: rust
+    cmd:
+      - rust-analyzer

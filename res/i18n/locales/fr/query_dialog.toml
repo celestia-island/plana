@@ -1,0 +1,11 @@
+[query_dialog]
+title = "Requête"
+source_label = "Source"
+select_reply = "Sélectionnez Répondre"
+custom_reply = "Réponse personnalisée"
+custom_input = "Entrée personnalisée"
+input_placeholder = "Espace réservé de saisie"
+enter_confirm_selection = "Confirmer la sélection"
+enter_send_reply = "Envoyer la réponse"
+tab_switch_input = "Changer la saisie"
+tab_switch_option = "Changer l'option"

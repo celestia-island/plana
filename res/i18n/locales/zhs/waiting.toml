@@ -1,0 +1,6 @@
+[waiting]
+waiting_for_connection = "等待连接中"
+connecting_websocket = "正在连接 WebSocket"
+waiting_for_query = "等待查询中"
+create_agent_hint = "创建智能体即可开始"
+no_data = "无数据"

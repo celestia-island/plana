@@ -1,0 +1,6 @@
+[waiting]
+waiting_for_connection = "接続待ち"
+connecting_websocket = "WebSocket に接続中"
+waiting_for_query = "クエリ待ち"
+create_agent_hint = "開始するにはエージェントを作成してください"
+no_data = "データなし"

@@ -1,0 +1,5 @@
+[common]
+close = "閉じる"
+navigate = "ナビゲート"
+select = "選択"
+frontmatter = "フロントマター"

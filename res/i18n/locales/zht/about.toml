@@ -1,0 +1,11 @@
+[about]
+title = "關於"
+version = "版本"
+license_type = "授權類型"
+section_license = "授權條款"
+section_cla = "貢獻者授權協議"
+section_code_of_conduct = "行為準則"
+section_security = "安全政策"
+not_available = "詳細的協議文件不可用。請在建置時設定 ARONA_ROOT 環境變數以啟用。"
+hint_navigate = "導覽"
+hint_close = "關閉"

@@ -1,0 +1,8 @@
+[container]
+status_connected = "연결됨"
+status_running = "실행 중"
+status_starting = "시작 중"
+status_stopped = "중지됨"
+status_unhealthy = "비정상"
+status_not_exists = "존재하지 않음"
+status_error = "오류"

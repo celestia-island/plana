@@ -1,0 +1,4 @@
+[report]
+no_reports = "보고서 없음"
+pending_suffix = "대기 중"
+pending_reply = "응답 대기 중"

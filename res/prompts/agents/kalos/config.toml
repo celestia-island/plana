@@ -1,0 +1,8 @@
+# KaLos Agent Configuration
+# 代码持久化 Agent 的配置
+
+[agent]
+namespace = "layer1::kalos"
+name = "KaLos"
+layer = 1
+
