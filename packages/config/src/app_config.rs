@@ -125,7 +125,13 @@ fn default_language() -> String {
 }
 
 fn default_cluster_prefix() -> String {
-    "e-".to_string()
+    // Multi-instance: when the bootloader/evernight sets CONTAINER_PREFIX
+    // (e.g. "e-042-"), use it as the default so this instance's containers
+    // don't collide with other celestia instances on the same machine.
+    std::env::var("CONTAINER_PREFIX")
+        .ok()
+        .filter(|s| !s.trim().is_empty())
+        .unwrap_or_else(|| "e-".to_string())
 }
 
 fn default_fallback_badge_delay_ms() -> u64 {
