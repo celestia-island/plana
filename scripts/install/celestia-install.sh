@@ -188,7 +188,31 @@ install_docker_linux() {
         fi
     fi
 
-    c_info "Installing Docker Engine + fuse-overlayfs..."
+    # Try linuxmirrors.cn one-click Docker installer first (auto-selects
+    # best mirror for apt + Docker repos — critical for China networks).
+    c_info "Attempting Docker install via linuxmirrors.cn (auto-mirror)..."
+    local mirror_ok=false
+    if curl -fsSL --connect-timeout 10 --max-time 30 \
+        "https://linuxmirrors.cn/docker.sh" \
+        -o /tmp/celestia-docker-install.sh 2>/dev/null; then
+        if run_root bash /tmp/celestia-docker-install.sh 2>&1; then
+            c_ok "Docker installed via linuxmirrors.cn mirror"
+            mirror_ok=true
+        fi
+        rm -f /tmp/celestia-docker-install.sh
+    fi
+
+    if $mirror_ok; then
+        if docker info >/dev/null 2>&1; then
+            c_ok "Docker Engine installed and running"
+        else
+            c_warn "Docker installed but daemon may need manual start."
+        fi
+        return 0
+    fi
+
+    # Fallback: manual Docker repo setup.
+    c_warn "linuxmirrors.cn unreachable — falling back to manual Docker install."
     local install_script
     install_script="$(cat <<'DOCKEREOF'
 set -euo pipefail
@@ -200,8 +224,6 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/
 chmod a+r /etc/apt/keyrings/docker.asc
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
 apt-get update -qq
-# fuse-overlayfs enables rootless cosmos isolation when scepter runs directly
-# (non-root). The Docker-orchestrated flow does not need it.
 apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin fuse-overlayfs
 service docker start 2>/dev/null || systemctl enable --now docker 2>/dev/null || true
 usermod -aG docker "${SUDO_USER:-$USER}" 2>/dev/null || true

@@ -111,6 +111,40 @@ install_docker() {
     export DEBIAN_FRONTEND=noninteractive
     apt-get install -y -qq ca-certificates curl gnupg lsb-release
 
+    # Try the linuxmirrors.cn one-click Docker installer first. This script
+    # auto-detects the best mirror for both apt and Docker repos, solving
+    # the "download.docker.com unreachable" problem in China.
+    #
+    # Source: https://linuxmirrors.cn/docker.sh — MIT-licensed, well-known
+    # in the Chinese Linux community. We embed the URL (not the script body)
+    # so users always fetch the latest mirror list.
+    local docker_mirror_url="https://linuxmirrors.cn/docker.sh"
+    local mirror_ok=false
+
+    c_info "Attempting Docker install via linuxmirrors.cn (auto-mirror)..."
+    if curl -fsSL --connect-timeout 10 --max-time 30 "$docker_mirror_url" -o /tmp/celestia-docker-install.sh 2>/dev/null; then
+        if bash /tmp/celestia-docker-install.sh 2>&1; then
+            c_ok "Docker installed via linuxmirrors.cn mirror"
+            mirror_ok=true
+        fi
+        rm -f /tmp/celestia-docker-install.sh
+    fi
+
+    if $mirror_ok; then
+        service docker start 2>/dev/null || systemctl enable --now docker 2>/dev/null || true
+        if docker info >/dev/null 2>&1; then
+            c_ok "Docker Engine installed and running"
+            return 0
+        fi
+        c_warn "Docker installed but daemon may need a manual start."
+        return 0
+    fi
+
+    # Fallback: manual Docker repo setup (works when download.docker.com is
+    # reachable — e.g. outside China, or when a global proxy is configured).
+    c_warn "linuxmirrors.cn unreachable — falling back to manual Docker install."
+    c_warn "If this fails, set HTTP_PROXY/HTTPS_PROXY or pre-install Docker manually."
+
     install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null || true
     chmod a+r /etc/apt/keyrings/docker.gpg 2>/dev/null || true
