@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
-<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/arona/master/docs/logo.webp" alt="Arona" width="200" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/docs.celestia.world/dev/res/logo/arona.webp" alt="Arona" width="200" /></p>
 
 <h1 align="center">Arona</h1>
 
