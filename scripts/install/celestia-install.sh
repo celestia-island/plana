@@ -288,7 +288,7 @@ MIRRORS=()
 if [[ -n "\$MIRROR_URL" ]]; then
     MIRRORS+=("\$MIRROR_URL")
 elif \$IN_CHINA; then
-    MIRRORS+=("https://docker.1ms.run" "https://docker.xuanyuan.me" "https://docker.m.daocloud.io" "https://dockerpull.org" "https://hub.rat.dev")
+    MIRRORS+=("https://docker.1ms.run" "https://docker.xuanyuan.me" "https://docker.m.daocloud.io")
 else
     echo "NO_MIRROR_NEEDED"; exit 0
 fi

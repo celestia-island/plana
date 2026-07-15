@@ -183,8 +183,6 @@ configure_docker_mirrors() {
             "https://docker.1ms.run"
             "https://docker.xuanyuan.me"
             "https://docker.m.daocloud.io"
-            "https://dockerpull.org"
-            "https://hub.rat.dev"
         )
     else
         c_ok "Not in China — no mirror needed."
