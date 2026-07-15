@@ -9,6 +9,9 @@ const LANG_KO: &str = "ko";
 const LANG_FR: &str = "fr";
 const LANG_ES: &str = "es";
 const LANG_RU: &str = "ru";
+const LANG_AR: &str = "ar";
+const LANG_DE: &str = "de";
+const LANG_PT: &str = "pt";
 
 /// All supported languages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
@@ -38,6 +41,15 @@ pub enum Language {
     /// Russian
     #[serde(rename = "ru")]
     Ru,
+    /// Arabic
+    #[serde(rename = "ar")]
+    Ar,
+    /// German
+    #[serde(rename = "de")]
+    De,
+    /// Portuguese
+    #[serde(rename = "pt")]
+    Pt,
 }
 
 impl Language {
@@ -52,6 +64,9 @@ impl Language {
             Language::Fr => "fr",
             Language::Es => "es",
             Language::Ru => "ru",
+            Language::Ar => "ar",
+            Language::De => "de",
+            Language::Pt => "pt",
         }
     }
 
@@ -71,6 +86,9 @@ impl Language {
             Language::Fr => "fr",
             Language::Es => "es",
             Language::Ru => "ru",
+            Language::Ar => "ar",
+            Language::De => "de",
+            Language::Pt => "pt",
         }
     }
 
@@ -85,6 +103,9 @@ impl Language {
             Language::Fr => "Français",
             Language::Es => "Español",
             Language::Ru => "Русский",
+            Language::Ar => "العربية",
+            Language::De => "Deutsch",
+            Language::Pt => "Português",
         }
     }
 
@@ -99,6 +120,9 @@ impl Language {
             "fr" => Some(Language::Fr),
             "es" => Some(Language::Es),
             "ru" => Some(Language::Ru),
+            "ar" => Some(Language::Ar),
+            "de" => Some(Language::De),
+            "pt" => Some(Language::Pt),
             _ => None,
         }
     }
@@ -147,6 +171,12 @@ impl Language {
             Some(Language::Es)
         } else if lang_tag.starts_with(LANG_RU) {
             Some(Language::Ru)
+        } else if lang_tag.starts_with(LANG_AR) {
+            Some(Language::Ar)
+        } else if lang_tag.starts_with(LANG_DE) {
+            Some(Language::De)
+        } else if lang_tag.starts_with(LANG_PT) {
+            Some(Language::Pt)
         } else {
             None
         }
@@ -163,6 +193,9 @@ impl Language {
             Language::Fr => "fr",
             Language::Es => "es",
             Language::Ru => "ru",
+            Language::Ar => "ar",
+            Language::De => "de",
+            Language::Pt => "pt",
         }
     }
 
@@ -182,10 +215,13 @@ pub const SUPPORTED_LANGUAGES: &[Language] = &[
     Language::Fr,
     Language::Es,
     Language::Ru,
+    Language::Ar,
+    Language::De,
+    Language::Pt,
 ];
 
 /// List of supported language codes (as strings)
-pub const SUPPORTED_LANG_CODES: &[&str] = &["zhs", "zht", "en", "ja", "ko", "fr", "es", "ru"];
+pub const SUPPORTED_LANG_CODES: &[&str] = &["zhs", "zht", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt"];
 
 #[cfg(test)]
 mod tests {
@@ -226,9 +262,12 @@ mod tests {
     #[test]
     fn test_all_languages() -> Result<()> {
         let all = Language::all();
-        assert_eq!(all.len(), 8);
+        assert_eq!(all.len(), 11);
         assert!(all.contains(&Language::ZHS));
         assert!(all.contains(&Language::En));
+        assert!(all.contains(&Language::Ar));
+        assert!(all.contains(&Language::De));
+        assert!(all.contains(&Language::Pt));
         Ok(())
     }
 
@@ -251,10 +290,15 @@ mod tests {
         assert_eq!(Language::parse_bcp47("es-ES"), Some(Language::Es));
         assert_eq!(Language::parse_bcp47("ru"), Some(Language::Ru));
         assert_eq!(Language::parse_bcp47("ru-RU"), Some(Language::Ru));
+        assert_eq!(Language::parse_bcp47("ar"), Some(Language::Ar));
+        assert_eq!(Language::parse_bcp47("ar-SA"), Some(Language::Ar));
+        assert_eq!(Language::parse_bcp47("de"), Some(Language::De));
+        assert_eq!(Language::parse_bcp47("de-DE"), Some(Language::De));
+        assert_eq!(Language::parse_bcp47("pt"), Some(Language::Pt));
+        assert_eq!(Language::parse_bcp47("pt-BR"), Some(Language::Pt));
         assert_eq!(Language::parse_bcp47("en"), None);
         assert_eq!(Language::parse_bcp47("en-US"), None);
-        assert_eq!(Language::parse_bcp47("de"), None);
-        assert_eq!(Language::parse_bcp47("pt-BR"), None);
+        assert_eq!(Language::parse_bcp47("xx"), None);
         Ok(())
     }
 }
