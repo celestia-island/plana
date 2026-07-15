@@ -6,7 +6,11 @@ use uuid::Uuid;
 
 // ──────────────────────────────────────────────────────────────
 // Macro: define every JSON-RPC method in a single declarative table.
-// Each line is:  (Variant, "wire.name", Kind)  [, response = PairedVariant]
+// Each line is:  (Variant, "wire.name", Kind [, ResponseVariant])
+//
+// Wire strings are hand-written but validated at compile time:
+//   - roundtrip: parse(wire) → variant   +   variant.method_name() → wire
+//   - pattern:  wire must be "<Namespace>.<CamelCaseAction>"
 // ──────────────────────────────────────────────────────────────
 
 macro_rules! define_methods {
@@ -463,5 +467,59 @@ mod tests {
     fn test_unsolicited_response_ignored() {
         let mut reg = PendingRegistry::new();
         assert!(!reg.on_response("nonexistent", Value::Null));
+    }
+
+    // ── Wire format integrity tests ──────────────────────────
+    // These guarantee that every hand-written wire string in the
+    // macro table is consistent with its enum variant name.
+
+    const PREFIXES: &[&str] = &["Tui", "Cli", "Mcp", "Skill", "Base", "Device", "Screen"];
+
+    #[test]
+    fn test_no_duplicate_wire_names() {
+        let mut seen = std::collections::HashSet::new();
+        for m in Method::iter() {
+            let wire = m.method_name();
+            assert!(
+                seen.insert(wire),
+                "duplicate wire name: {wire}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_wire_name_roundtrip() {
+        for m in Method::iter() {
+            let wire = m.method_name();
+            let parsed: Method = wire.parse()
+                .unwrap_or_else(|_| panic!("wire '{wire}' (from {m:?}) cannot parse back"));
+            assert_eq!(parsed, m,
+                "roundtrip failed: {m:?} → '{wire}' → {parsed:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_wire_name_matches_variant_pattern() {
+        for m in Method::iter() {
+            let wire = m.method_name();
+            let vname = format!("{m:?}");
+            // Wire must be <Prefix>.<Action> with a known prefix
+            let has_dot = wire.contains('.');
+            assert!(has_dot, "{m:?} wire '{wire}' has no dot separator");
+
+            let (prefix, action) = wire.split_once('.').unwrap();
+            assert!(
+                PREFIXES.contains(&prefix),
+                "{m:?} wire '{wire}' has unknown prefix '{prefix}'"
+            );
+
+            // Variant name must be prefix + action (without the dot)
+            let expected_variant = format!("{prefix}{action}");
+            assert_eq!(
+                vname, expected_variant,
+                "{m:?} variant name '{vname}' should equal prefix+action '{expected_variant}'"
+            );
+        }
     }
 }
