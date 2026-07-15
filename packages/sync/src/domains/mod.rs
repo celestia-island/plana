@@ -5,11 +5,12 @@
 //! - （可选）`load_initial` —— 首次访问该 scope 时的懒载入钩子。
 //!
 //! 已迁移：agents（workspace，含字段级增量）、devices（workspace）、
-//! preferences（user）、conversations（user）。其余域按相同模式增量迁移。
+//! todo（workspace，整体 replace）、preferences（user）、conversations（user）。
 
 pub mod agents;
 pub mod conversations;
 pub mod devices;
+pub mod todo;
 
 pub use agents::{load_initial as load_agents, remove_agent, upsert_agent_patches, upsert_agents};
 pub use conversations::{
@@ -17,3 +18,4 @@ pub use conversations::{
     user_scope as user_conversation_scope,
 };
 pub use devices::{load_initial as load_devices, remove_device, upsert_devices};
+pub use todo::{load_initial as load_todo, remove_todo, upsert_todo};

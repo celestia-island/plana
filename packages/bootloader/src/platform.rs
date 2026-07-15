@@ -99,7 +99,9 @@ struct SystemdInstaller;
 impl SystemdInstaller {
     fn unit_path(&self, name: &str) -> Result<PathBuf> {
         let home = dirs::home_dir().context("cannot determine HOME")?;
-        Ok(home.join(".config/systemd/user").join(format!("{name}.service")))
+        Ok(home
+            .join(".config/systemd/user")
+            .join(format!("{name}.service")))
     }
 
     fn render_unit(&self, spec: &ServiceSpec) -> Result<String> {
@@ -234,7 +236,11 @@ impl ServiceInstaller for WindowsScmInstaller {
         let bin_arg = format!("\"{}\" {}", spec.bin_path.display(), spec.args.join(" "));
 
         // create the service. start=auto ↔ run_at_startup.
-        let start = if spec.run_at_startup { "auto" } else { "demand" };
+        let start = if spec.run_at_startup {
+            "auto"
+        } else {
+            "demand"
+        };
         let out = tokio::process::Command::new("sc")
             .args([
                 "create",
@@ -448,10 +454,14 @@ struct UnsupportedInstaller;
 #[async_trait]
 impl ServiceInstaller for UnsupportedInstaller {
     async fn install(&self, _spec: &ServiceSpec) -> Result<()> {
-        Err(anyhow!("native service install is not supported on this platform"))
+        Err(anyhow!(
+            "native service install is not supported on this platform"
+        ))
     }
     async fn uninstall(&self) -> Result<()> {
-        Err(anyhow!("native service uninstall is not supported on this platform"))
+        Err(anyhow!(
+            "native service uninstall is not supported on this platform"
+        ))
     }
     async fn status(&self) -> Result<ServiceStatus> {
         Ok(ServiceStatus::NotInstalled)

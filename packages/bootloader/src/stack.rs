@@ -51,8 +51,7 @@ pub fn socket_dir_ext4() -> String {
 ///
 /// Overridable via `ENTELECHEIA_SOCKET_DIR` env.
 pub fn socket_dir_tmpfs() -> String {
-    std::env::var("ENTELECHEIA_SOCKET_DIR")
-        .unwrap_or_else(|_| "/run/entelecheia".to_string())
+    std::env::var("ENTELECHEIA_SOCKET_DIR").unwrap_or_else(|_| "/run/entelecheia".to_string())
 }
 
 /// Configuration for a stack bring-up. Every field has a sensible default so a
@@ -213,18 +212,25 @@ fn postgres_params(cfg: &StackConfig) -> ContainerCreateParams {
 
     let sec = security_profile::postgres();
 
-    let network = cfg.network_mode.clone().unwrap_or_else(|| NETWORK_NAME.into());
+    let network = cfg
+        .network_mode
+        .clone()
+        .unwrap_or_else(|| NETWORK_NAME.into());
     let is_host = network == "host";
     ContainerCreateParams {
         name,
         image: cfg.postgres_image.clone(),
         network: Some(network),
         env,
-        ports: if is_host { vec![] } else { vec![PortMapping {
-            host_port: cfg.postgres_port,
-            container_port: 5432,
-            protocol: "tcp".into(),
-        }] },
+        ports: if is_host {
+            vec![]
+        } else {
+            vec![PortMapping {
+                host_port: cfg.postgres_port,
+                container_port: 5432,
+                protocol: "tcp".into(),
+            }]
+        },
         volumes: vec![VolumeMount::rw(
             format!("{}postgres-data", cfg.prefix),
             "/var/lib/postgresql",
@@ -252,7 +258,11 @@ fn registry_params(cfg: &StackConfig) -> ContainerCreateParams {
     ContainerCreateParams {
         name: format!("{}registry", cfg.prefix),
         image: cfg.registry_image.clone(),
-        network: Some(cfg.network_mode.clone().unwrap_or_else(|| NETWORK_NAME.into())),
+        network: Some(
+            cfg.network_mode
+                .clone()
+                .unwrap_or_else(|| NETWORK_NAME.into()),
+        ),
         env: HashMap::new(),
         ports: vec![],
         volumes: vec![],
@@ -348,25 +358,26 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     }
 
     // Inject the docker socket GID so the scepter container can talk to dockerd.
-    let group_add: Option<Vec<String>> = std::fs::metadata("/var/run/docker.sock")
-        .ok()
-        .and_then(|m| {
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::MetadataExt;
-                let gid = m.gid();
-                if gid != 0 {
-                    Some(vec![gid.to_string()])
-                } else {
+    let group_add: Option<Vec<String>> =
+        std::fs::metadata("/var/run/docker.sock")
+            .ok()
+            .and_then(|m| {
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::MetadataExt;
+                    let gid = m.gid();
+                    if gid != 0 {
+                        Some(vec![gid.to_string()])
+                    } else {
+                        None
+                    }
+                }
+                #[cfg(not(unix))]
+                {
+                    let _ = m;
                     None
                 }
-            }
-            #[cfg(not(unix))]
-            {
-                let _ = m;
-                None
-            }
-        });
+            });
     if let Some(ref groups) = group_add {
         info!(
             gid = %groups.first().unwrap_or(&"0".to_string()),
@@ -376,7 +387,10 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
 
     let sec = security_profile::scepter();
 
-    let net = cfg.network_mode.clone().unwrap_or_else(|| NETWORK_NAME.into());
+    let net = cfg
+        .network_mode
+        .clone()
+        .unwrap_or_else(|| NETWORK_NAME.into());
     let is_host = net == "host";
 
     ContainerCreateParams {
@@ -384,11 +398,15 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         image: cfg.scepter_image.clone(),
         network: Some(net),
         env,
-        ports: if is_host { vec![] } else { vec![PortMapping {
-            host_port: cfg.scepter_port,
-            container_port: cfg.scepter_port,
-            protocol: "tcp".into(),
-        }] },
+        ports: if is_host {
+            vec![]
+        } else {
+            vec![PortMapping {
+                host_port: cfg.scepter_port,
+                container_port: cfg.scepter_port,
+                protocol: "tcp".into(),
+            }]
+        },
         volumes,
         devices: vec![DeviceMapping {
             host_path: "/dev/fuse".into(),
@@ -398,7 +416,10 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         healthcheck: Some(HealthcheckParams {
             test: vec![
                 "CMD-SHELL".into(),
-                format!("curl -sf http://localhost:{}/health 2>/dev/null || curl -sf http://localhost:{}/", cfg.scepter_port, cfg.scepter_port),
+                format!(
+                    "curl -sf http://localhost:{}/health 2>/dev/null || curl -sf http://localhost:{}/",
+                    cfg.scepter_port, cfg.scepter_port
+                ),
             ],
             interval_ns: secs_to_ns(5),
             timeout_ns: secs_to_ns(5),

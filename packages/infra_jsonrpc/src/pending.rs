@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde_json::Value;
+use std::collections::HashMap;
 use strum::{Display, EnumIter, EnumString};
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -46,18 +46,44 @@ macro_rules! namespace {
     };
 }
 
-macro_rules! namespace_kind { ($k:ident) => { MessageKind::$k }; () => { MessageKind::SyncReq }; }
-macro_rules! namespace_resp { ($r:ident) => { Some(Self::$r) }; () => { None }; }
+macro_rules! namespace_kind {
+    ($k:ident) => {
+        MessageKind::$k
+    };
+    () => {
+        MessageKind::SyncReq
+    };
+}
+macro_rules! namespace_resp {
+    ($r:ident) => {
+        Some(Self::$r)
+    };
+    () => {
+        None
+    };
+}
 
 // ══════════════════════════════════════════════════════════════
 // Method enum — namespace wrapper
 // ══════════════════════════════════════════════════════════════
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Method { Tui(TuiMethod), Cli(CliMethod), Mcp(McpMethod), Skill(SkillMethod), Base(BaseMethod), Device(DeviceMethod), Screen(ScreenMethod) }
+pub enum Method {
+    Tui(TuiMethod),
+    Cli(CliMethod),
+    Mcp(McpMethod),
+    Skill(SkillMethod),
+    Base(BaseMethod),
+    Device(DeviceMethod),
+    Screen(ScreenMethod),
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MessageKind { OneWay, SyncReq, AsyncReq }
+pub enum MessageKind {
+    OneWay,
+    SyncReq,
+    AsyncReq,
+}
 
 // ── Per-namespace definitions ─────────────────────────────────
 
@@ -187,11 +213,26 @@ namespace!("Tui", Tui, TuiMethod,
     ContainerLogEntry          as OneWay,
 );
 
-namespace!("Cli", Cli, CliMethod,
-    Status, ChatHistory, TimelineList, TimelineShow, RecentChats,
-    ListPolemosDevices, SessionStats, SessionPurge, SessionVacuum,
-    Search, TraceChain, ListTools, ListSkills, ListWorkspaces,
-    OpenWorkspace, SwitchWorkspace,
+namespace!(
+    "Cli",
+    Cli,
+    CliMethod,
+    Status,
+    ChatHistory,
+    TimelineList,
+    TimelineShow,
+    RecentChats,
+    ListPolemosDevices,
+    SessionStats,
+    SessionPurge,
+    SessionVacuum,
+    Search,
+    TraceChain,
+    ListTools,
+    ListSkills,
+    ListWorkspaces,
+    OpenWorkspace,
+    SwitchWorkspace,
 );
 
 namespace!("Mcp", Mcp, McpMethod,
@@ -245,11 +286,14 @@ namespace!("Device", Device, DeviceMethod,
     Error             as OneWay,
 );
 
-namespace!("Screen", Screen, ScreenMethod,
-    Offer          as OneWay,
-    Answer         as OneWay,
-    Ice            as OneWay,
-    IceCandidate   as OneWay,
+namespace!(
+    "Screen",
+    Screen,
+    ScreenMethod,
+    Offer as OneWay,
+    Answer as OneWay,
+    Ice as OneWay,
+    IceCandidate as OneWay,
 );
 
 // ══════════════════════════════════════════════════════════════
@@ -264,55 +308,200 @@ macro_rules! flat_aliases {
     };
 }
 
-flat_aliases!(Tui, TuiMethod,
-    ServerVersion, ConnectHandshake, HandshakeAck, VersionMismatch, ScepterIdentity,
-    StatePatch, StateSnapshot, ChannelEvent, RequestGlobalSnapshot, GlobalSnapshot,
-    RequestContainerSnapshot, ContainerSnapshot, RequestTasksSnapshot, TasksSnapshot,
-    RequestVmSnapshot, VmSnapshot, RequestFullSnapshot, FullSnapshot,
-    GetProvidersFromFs, ProvidersFromFsResponse, GetModelsFromFs, ModelsFromFsResponse,
-    GetUserConfig, UserConfigResponse, ModelsSnapshot, ProvidersSnapshot,
-    UserMessage, AgentResponse, AgentStreamingChunk, AgentThinkingStep,
-    AgentReport, AgentReportReply, AgentToolCall, AgentTransfer,
-    AgentPatch, AgentUpdate, AgentListResponse, AgentSnapshot,
-    OrchestrationStatus, McpToolResult, TaskCreated, TaskStatusUpdate,
-    TaskPatch, ContainerPatch, SystemMessage,
-    AskHumanRequest, AskHumanReply, AskHumanReplyResponse,
-    HumanReviewRequest, HumanReviewResponse,
-    SkillChainStart, SkillChainStep, SkillChainComplete,
-    YoloStart, YoloStartResponse, YoloStop, YoloStopResponse,
-    YoloTerminate, YoloTerminateResponse, YoloStatus, YoloStatusResponse,
-    YoloGetConfig, YoloConfigResponse, YoloUpdateTask, YoloUpdateTaskResponse,
-    YoloSetTierInterval, YoloSetTierIntervalResponse, YoloRunTierNow, YoloRunTierNowResponse,
-    YoloCycleStep, YoloCycleComplete, YoloTaskStart, YoloTaskDone, YoloTaskError,
-    OpenWorkspace, OpenWorkspaceResponse, RequestWorkspaceStatus, WorkspaceStatus,
-    ListAgents, PolemosDeviceList, ListPolemosDevices,
-    RegisterPolemosDevice, RegisterPolemosDeviceResponse,
-    AuthLogin, AuthLoginResponse, AuthRegister, AuthRegisterResponse,
-    AuthListUsers, AuthListUsersResponse, AuthGetUser, AuthGetUserResponse,
-    AuthDeleteUser, AuthDeleteUserResponse, AuthChangePassword, AuthChangePasswordResponse,
-    Ping, Pong, UsagePeriodQuery, UsagePeriodResponse,
-    Layer2AgentList, Layer2AgentListResponse, Layer2AgentMcpTools, Layer2AgentMcpResponse,
-    Layer2AgentSkills, Layer2AgentSkillsResponse,
-    GetUserPreferences, SyncPreferences, AudioPullProgress, AudioStatusChanged,
-    ServerInfo, CrossWorkspaceDenied,
-    RequestBridgeNetwork, RequestFileTree, RequestFileRead,
-    RequestModelList, RequestModelServerAction,
-    AgentChunkRange, AgentChunkCount,
-    IndustrialTelemetryPush, IndustrialAlarmPush, IndustrialWriteApprovalPush,
-    ServerLogEntry, ContainerLogEntry,
+flat_aliases!(
+    Tui,
+    TuiMethod,
+    ServerVersion,
+    ConnectHandshake,
+    HandshakeAck,
+    VersionMismatch,
+    ScepterIdentity,
+    StatePatch,
+    StateSnapshot,
+    ChannelEvent,
+    RequestGlobalSnapshot,
+    GlobalSnapshot,
+    RequestContainerSnapshot,
+    ContainerSnapshot,
+    RequestTasksSnapshot,
+    TasksSnapshot,
+    RequestVmSnapshot,
+    VmSnapshot,
+    RequestFullSnapshot,
+    FullSnapshot,
+    GetProvidersFromFs,
+    ProvidersFromFsResponse,
+    GetModelsFromFs,
+    ModelsFromFsResponse,
+    GetUserConfig,
+    UserConfigResponse,
+    ModelsSnapshot,
+    ProvidersSnapshot,
+    UserMessage,
+    AgentResponse,
+    AgentStreamingChunk,
+    AgentThinkingStep,
+    AgentReport,
+    AgentReportReply,
+    AgentToolCall,
+    AgentTransfer,
+    AgentPatch,
+    AgentUpdate,
+    AgentListResponse,
+    AgentSnapshot,
+    OrchestrationStatus,
+    McpToolResult,
+    TaskCreated,
+    TaskStatusUpdate,
+    TaskPatch,
+    ContainerPatch,
+    SystemMessage,
+    AskHumanRequest,
+    AskHumanReply,
+    AskHumanReplyResponse,
+    HumanReviewRequest,
+    HumanReviewResponse,
+    SkillChainStart,
+    SkillChainStep,
+    SkillChainComplete,
+    YoloStart,
+    YoloStartResponse,
+    YoloStop,
+    YoloStopResponse,
+    YoloTerminate,
+    YoloTerminateResponse,
+    YoloStatus,
+    YoloStatusResponse,
+    YoloGetConfig,
+    YoloConfigResponse,
+    YoloUpdateTask,
+    YoloUpdateTaskResponse,
+    YoloSetTierInterval,
+    YoloSetTierIntervalResponse,
+    YoloRunTierNow,
+    YoloRunTierNowResponse,
+    YoloCycleStep,
+    YoloCycleComplete,
+    YoloTaskStart,
+    YoloTaskDone,
+    YoloTaskError,
+    OpenWorkspace,
+    OpenWorkspaceResponse,
+    RequestWorkspaceStatus,
+    WorkspaceStatus,
+    ListAgents,
+    PolemosDeviceList,
+    ListPolemosDevices,
+    RegisterPolemosDevice,
+    RegisterPolemosDeviceResponse,
+    AuthLogin,
+    AuthLoginResponse,
+    AuthRegister,
+    AuthRegisterResponse,
+    AuthListUsers,
+    AuthListUsersResponse,
+    AuthGetUser,
+    AuthGetUserResponse,
+    AuthDeleteUser,
+    AuthDeleteUserResponse,
+    AuthChangePassword,
+    AuthChangePasswordResponse,
+    Ping,
+    Pong,
+    UsagePeriodQuery,
+    UsagePeriodResponse,
+    Layer2AgentList,
+    Layer2AgentListResponse,
+    Layer2AgentMcpTools,
+    Layer2AgentMcpResponse,
+    Layer2AgentSkills,
+    Layer2AgentSkillsResponse,
+    GetUserPreferences,
+    SyncPreferences,
+    AudioPullProgress,
+    AudioStatusChanged,
+    ServerInfo,
+    CrossWorkspaceDenied,
+    RequestBridgeNetwork,
+    RequestFileTree,
+    RequestFileRead,
+    RequestModelList,
+    RequestModelServerAction,
+    AgentChunkRange,
+    AgentChunkCount,
+    IndustrialTelemetryPush,
+    IndustrialAlarmPush,
+    IndustrialWriteApprovalPush,
+    ServerLogEntry,
+    ContainerLogEntry,
 );
-flat_aliases!(Cli, CliMethod, Status, ChatHistory, TimelineList, TimelineShow, RecentChats, ListPolemosDevices, SessionStats, SessionPurge, SessionVacuum, Search, TraceChain, ListTools, ListSkills, ListWorkspaces, OpenWorkspace, SwitchWorkspace);
-flat_aliases!(Mcp, McpMethod, CallTool, ToolCallResult, ListTools, ToolsListResponse);
-flat_aliases!(Skill, SkillMethod, CallSkill, SkillCallResult, ListSkills, SkillsListResponse);
+flat_aliases!(
+    Cli,
+    CliMethod,
+    Status,
+    ChatHistory,
+    TimelineList,
+    TimelineShow,
+    RecentChats,
+    ListPolemosDevices,
+    SessionStats,
+    SessionPurge,
+    SessionVacuum,
+    Search,
+    TraceChain,
+    ListTools,
+    ListSkills,
+    ListWorkspaces,
+    OpenWorkspace,
+    SwitchWorkspace
+);
+flat_aliases!(
+    Mcp,
+    McpMethod,
+    CallTool,
+    ToolCallResult,
+    ListTools,
+    ToolsListResponse
+);
+flat_aliases!(
+    Skill,
+    SkillMethod,
+    CallSkill,
+    SkillCallResult,
+    ListSkills,
+    SkillsListResponse
+);
 flat_aliases!(Base, BaseMethod, Heartbeat, HeartbeatAck, Error, Ack);
-flat_aliases!(Device, DeviceMethod,
-    PolemosRegister, PolemosRegisterAck, Heartbeat, HeartbeatAck,
-    TerminalOpen, TerminalReady, TerminalInput, TerminalResize,
-    TerminalPoll, TerminalPollResult, TerminalClose, TerminalCloseAck,
-    FileList, FileListResult, FileDownload, FileDownloadResult,
-    FileUpload, FileUploadResult, Ping, Pong,
-    WebrtcOffer, WebrtcAnswer, WebrtcIce, SubscribeOutput, TerminalList,
-    TerminalOutput, Error,
+flat_aliases!(
+    Device,
+    DeviceMethod,
+    PolemosRegister,
+    PolemosRegisterAck,
+    Heartbeat,
+    HeartbeatAck,
+    TerminalOpen,
+    TerminalReady,
+    TerminalInput,
+    TerminalResize,
+    TerminalPoll,
+    TerminalPollResult,
+    TerminalClose,
+    TerminalCloseAck,
+    FileList,
+    FileListResult,
+    FileDownload,
+    FileDownloadResult,
+    FileUpload,
+    FileUploadResult,
+    Ping,
+    Pong,
+    WebrtcOffer,
+    WebrtcAnswer,
+    WebrtcIce,
+    SubscribeOutput,
+    TerminalList,
+    TerminalOutput,
+    Error,
 );
 flat_aliases!(Screen, ScreenMethod, Offer, Answer, Ice, IceCandidate);
 
@@ -343,7 +532,9 @@ impl Method {
             Method::Screen(m) => m.kind(),
         }
     }
-    pub fn is_one_way(self) -> bool { matches!(self.kind(), MessageKind::OneWay) }
+    pub fn is_one_way(self) -> bool {
+        matches!(self.kind(), MessageKind::OneWay)
+    }
     pub fn response(self) -> Option<Method> {
         match self {
             Method::Tui(m) => m.response().map(Method::Tui),
@@ -360,7 +551,9 @@ impl Method {
 impl std::str::FromStr for Method {
     type Err = strum::ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (ns, action) = s.split_once('.').ok_or(strum::ParseError::VariantNotFound)?;
+        let (ns, action) = s
+            .split_once('.')
+            .ok_or(strum::ParseError::VariantNotFound)?;
         Ok(match ns {
             "Tui" => Method::Tui(action.parse()?),
             "Cli" => Method::Cli(action.parse()?),
@@ -384,69 +577,130 @@ impl std::fmt::Display for Method {
 // PendingRegistry
 // ══════════════════════════════════════════════════════════════
 
-pub struct PendingHandle { pub id: Uuid, rx: oneshot::Receiver<Value> }
-impl PendingHandle { pub async fn wait(self) -> Result<Value, oneshot::error::RecvError> { self.rx.await } }
+pub struct PendingHandle {
+    pub id: Uuid,
+    rx: oneshot::Receiver<Value>,
+}
+impl PendingHandle {
+    pub async fn wait(self) -> Result<Value, oneshot::error::RecvError> {
+        self.rx.await
+    }
+}
 
-pub struct PendingRegistry { pending: HashMap<Uuid, oneshot::Sender<Value>> }
+pub struct PendingRegistry {
+    pending: HashMap<Uuid, oneshot::Sender<Value>>,
+}
 
 impl PendingRegistry {
-    pub fn new() -> Self { Self { pending: HashMap::new() } }
+    pub fn new() -> Self {
+        Self {
+            pending: HashMap::new(),
+        }
+    }
     pub fn prepare_notify(method: Method, params: Value) -> Value {
         serde_json::json!({"jsonrpc":"2.0","method":method.method_name(),"params":params})
     }
     pub fn request(&mut self, method: Method, params: Value) -> (Value, PendingHandle) {
         let (h, id) = self.register_pending();
-        (serde_json::json!({"jsonrpc":"2.0","id":id.to_string(),"method":method.method_name(),"params":params}), h)
+        (
+            serde_json::json!({"jsonrpc":"2.0","id":id.to_string(),"method":method.method_name(),"params":params}),
+            h,
+        )
     }
-    pub fn request_async(&mut self, method: Method, params: Value) -> (Value, PendingHandle) { self.request(method, params) }
+    pub fn request_async(&mut self, method: Method, params: Value) -> (Value, PendingHandle) {
+        self.request(method, params)
+    }
     pub fn on_response(&mut self, id: &str, result: Value) -> bool {
-        Uuid::parse_str(id).ok().and_then(|u| self.pending.remove(&u)).map(|tx| { let _ = tx.send(result); }).is_some()
+        Uuid::parse_str(id)
+            .ok()
+            .and_then(|u| self.pending.remove(&u))
+            .map(|tx| {
+                let _ = tx.send(result);
+            })
+            .is_some()
     }
-    pub fn on_error(&mut self, id: &str, error: Value) -> bool { self.on_response(id, serde_json::json!({"__error":error})) }
-    pub fn pending_count(&self) -> usize { self.pending.len() }
+    pub fn on_error(&mut self, id: &str, error: Value) -> bool {
+        self.on_response(id, serde_json::json!({"__error":error}))
+    }
+    pub fn pending_count(&self) -> usize {
+        self.pending.len()
+    }
     fn register_pending(&mut self) -> (PendingHandle, Uuid) {
-        let id = Uuid::new_v4(); let (tx, rx) = oneshot::channel();
-        self.pending.insert(id, tx); (PendingHandle { id, rx }, id)
+        let id = Uuid::new_v4();
+        let (tx, rx) = oneshot::channel();
+        self.pending.insert(id, tx);
+        (PendingHandle { id, rx }, id)
     }
 }
-impl Default for PendingRegistry { fn default() -> Self { Self::new() } }
+impl Default for PendingRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use strum::IntoEnumIterator;
 
-    #[test] fn test_wire_from_enum_path() {
-        assert_eq!(Method::Tui(TuiMethod::ServerVersion).method_name(), "Tui.ServerVersion");
+    #[test]
+    fn test_wire_from_enum_path() {
+        assert_eq!(
+            Method::Tui(TuiMethod::ServerVersion).method_name(),
+            "Tui.ServerVersion"
+        );
         assert_eq!(Method::TuiServerVersion.method_name(), "Tui.ServerVersion"); // flat alias
         assert_eq!(Method::Cli(CliMethod::Status).method_name(), "Cli.Status");
         assert_eq!(Method::CliStatus.method_name(), "Cli.Status");
-        assert_eq!(Method::Mcp(McpMethod::CallTool).method_name(), "Mcp.CallTool");
+        assert_eq!(
+            Method::Mcp(McpMethod::CallTool).method_name(),
+            "Mcp.CallTool"
+        );
     }
-    #[test] fn test_parse_roundtrip() {
-        assert_eq!("Tui.ServerVersion".parse::<Method>().unwrap().method_name(), "Tui.ServerVersion");
-        assert_eq!("Cli.Status".parse::<Method>().unwrap().method_name(), "Cli.Status");
-        assert_eq!("Device.TerminalOpen".parse::<Method>().unwrap().method_name(), "Device.TerminalOpen");
+    #[test]
+    fn test_parse_roundtrip() {
+        assert_eq!(
+            "Tui.ServerVersion".parse::<Method>().unwrap().method_name(),
+            "Tui.ServerVersion"
+        );
+        assert_eq!(
+            "Cli.Status".parse::<Method>().unwrap().method_name(),
+            "Cli.Status"
+        );
+        assert_eq!(
+            "Device.TerminalOpen"
+                .parse::<Method>()
+                .unwrap()
+                .method_name(),
+            "Device.TerminalOpen"
+        );
     }
-    #[test] fn test_kind() {
+    #[test]
+    fn test_kind() {
         assert_eq!(TuiMethod::ServerVersion.kind(), MessageKind::OneWay);
         assert_eq!(TuiMethod::ConnectHandshake.kind(), MessageKind::SyncReq);
         assert_eq!(TuiMethod::YoloStart.kind(), MessageKind::AsyncReq);
         assert_eq!(Method::TuiServerVersion.kind(), MessageKind::OneWay);
     }
-    #[test] fn test_response() {
-        assert_eq!(TuiMethod::ConnectHandshake.response(), Some(TuiMethod::HandshakeAck));
+    #[test]
+    fn test_response() {
+        assert_eq!(
+            TuiMethod::ConnectHandshake.response(),
+            Some(TuiMethod::HandshakeAck)
+        );
         assert_eq!(TuiMethod::Ping.response(), Some(TuiMethod::Pong));
         assert_eq!(TuiMethod::ServerVersion.response(), None);
         assert_eq!(Method::TuiServerVersion.response(), None);
     }
-    #[tokio::test] async fn test_pending() {
+    #[tokio::test]
+    async fn test_pending() {
         let mut r = PendingRegistry::new();
         let (f, h) = r.request(Method::CliStatus, Value::Null);
         r.on_response(f["id"].as_str().unwrap(), serde_json::json!({"ok":true}));
         assert_eq!(h.wait().await.unwrap(), serde_json::json!({"ok":true}));
     }
-    #[test] fn test_prepare_notify() {
+    #[test]
+    fn test_prepare_notify() {
         let f = PendingRegistry::prepare_notify(Method::TuiAgentReport, serde_json::json!({"x":1}));
         assert!(f.get("id").is_none());
         assert_eq!(f["method"], "Tui.AgentReport");

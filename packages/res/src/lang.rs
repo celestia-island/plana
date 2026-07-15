@@ -221,7 +221,9 @@ pub const SUPPORTED_LANGUAGES: &[Language] = &[
 ];
 
 /// List of supported language codes (as strings)
-pub const SUPPORTED_LANG_CODES: &[&str] = &["zhs", "zht", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt"];
+pub const SUPPORTED_LANG_CODES: &[&str] = &[
+    "zhs", "zht", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
+];
 
 #[cfg(test)]
 mod tests {

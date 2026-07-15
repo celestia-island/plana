@@ -11,14 +11,12 @@
 pub mod unix_impl;
 #[cfg(unix)]
 pub use unix_impl::{
-    IncomingMessage, JsonRpcReceiver, JsonRpcSender, JsonRpcServer, JsonRpcTransport,
-    TimeoutPolicy,
+    IncomingMessage, JsonRpcReceiver, JsonRpcSender, JsonRpcServer, JsonRpcTransport, TimeoutPolicy,
 };
 
 #[cfg(not(unix))]
 pub mod stub_impl;
 #[cfg(not(unix))]
 pub use stub_impl::{
-    IncomingMessage, JsonRpcReceiver, JsonRpcSender, JsonRpcServer, JsonRpcTransport,
-    TimeoutPolicy,
+    IncomingMessage, JsonRpcReceiver, JsonRpcSender, JsonRpcServer, JsonRpcTransport, TimeoutPolicy,
 };

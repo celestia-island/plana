@@ -26,13 +26,8 @@ pub mod identity;
 pub mod platform;
 pub mod stack;
 
-pub use identity::{
-    InstanceIdentity, container_prefix_for, generate_instance_id, node_id_for,
-};
-pub use platform::{
-    ServiceInstaller, ServiceSpec, ServiceStatus, default_service_installer,
-};
+pub use identity::{InstanceIdentity, container_prefix_for, generate_instance_id, node_id_for};
+pub use platform::{ServiceInstaller, ServiceSpec, ServiceStatus, default_service_installer};
 pub use stack::{
-    StackConfig, StackHandle, bring_up_stack, ensure_network, ensure_socket_dirs,
-    teardown_stack,
+    StackConfig, StackHandle, bring_up_stack, ensure_network, ensure_socket_dirs, teardown_stack,
 };

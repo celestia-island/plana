@@ -81,10 +81,15 @@ impl InstanceIdentity {
         let Ok(text) = std::fs::read_to_string(path) else {
             return Ok(None);
         };
-        let parsed: IdentityFile = toml::from_str(&text).context("failed to parse identity file")?;
+        let parsed: IdentityFile =
+            toml::from_str(&text).context("failed to parse identity file")?;
         match parsed.instance {
             Some(row) if row.id <= MAX_INSTANCE_ID => Ok(Some(Self { id: row.id })),
-            Some(row) => bail!("instance id {} out of range (0..={})", row.id, MAX_INSTANCE_ID),
+            Some(row) => bail!(
+                "instance id {} out of range (0..={})",
+                row.id,
+                MAX_INSTANCE_ID
+            ),
             None => Ok(None),
         }
     }
