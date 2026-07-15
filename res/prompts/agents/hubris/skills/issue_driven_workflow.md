@@ -36,6 +36,7 @@ tool_name = "llm_chat"
 [features]
 execution_mode = "write"
 location = "cosmos"
+role = "coordinator"
 +++
 
 # issue_driven_workflow
