@@ -1,0 +1,4 @@
+[hints]
+select_platform = "Sélectionnez la plateforme"
+select_skill = "Sélectionnez la compétence"
+select_tool = "Sélectionner un outil"

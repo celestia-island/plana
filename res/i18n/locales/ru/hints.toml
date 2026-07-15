@@ -1,0 +1,4 @@
+[hints]
+select_platform = "Выберите платформу"
+select_skill = "Выберите навык"
+select_tool = "Выбрать инструмент"

@@ -1,0 +1,4 @@
+[renderer]
+hint = "提示"
+waiting_for_input = "等待輸入中"
+all_tasks_completed = "所有任務已完成"

@@ -1,0 +1,6 @@
+[waiting]
+waiting_for_connection = "等待連線中"
+connecting_websocket = "正在連線 WebSocket"
+waiting_for_query = "等待查詢中"
+create_agent_hint = "建立代理即可開始"
+no_data = "無資料"

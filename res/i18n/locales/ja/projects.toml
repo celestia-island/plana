@@ -1,0 +1,13 @@
+[projects]
+panel_title = "プロジェクト"
+search_placeholder = "プロジェクトを検索..."
+search_title = "検索"
+no_projects = "プロジェクトなし"
+create_new = "新規作成"
+last_accessed = "最終アクセス"
+item_count = "項目数"
+just_now = "たった今"
+hint_navigate = "移動"
+hint_select = "選択"
+hint_paste = "貼り付け"
+hint_close = "閉じる"

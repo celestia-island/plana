@@ -1,0 +1,13 @@
+[projects]
+panel_title = "项目"
+search_placeholder = "搜索项目..."
+search_title = "搜索"
+no_projects = "无项目"
+create_new = "创建新项目"
+last_accessed = "最后访问"
+item_count = "项目数"
+just_now = "刚刚"
+hint_navigate = "导航"
+hint_select = "选择"
+hint_paste = "粘贴"
+hint_close = "关闭"

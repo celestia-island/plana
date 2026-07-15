@@ -1,0 +1,13 @@
+[report_dialog]
+title = "報告"
+type_label = "類型"
+type_report = "報告"
+type_query = "詢問"
+source_label = "來源"
+time_label = "時間"
+title_label = "標題"
+content_label = "內容"
+reply_label = "回覆"
+seconds_ago = "{} 秒前"
+minutes_ago = "{} 分鐘前"
+hours_ago = "{} 小時前"

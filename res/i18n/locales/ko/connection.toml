@@ -1,0 +1,6 @@
+[connection]
+status_disconnected = "연결이 끊김"
+status_connecting = "연결 중"
+status_connected = "연결됨"
+status_reconnecting = "다시 연결하는 중"
+status_offline = "오프라인"

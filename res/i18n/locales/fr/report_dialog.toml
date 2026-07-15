@@ -1,0 +1,13 @@
+[report_dialog]
+title = "Rapport"
+type_label = "Type"
+type_report = "Rapport"
+type_query = "Requête"
+source_label = "Source"
+time_label = "Temps"
+title_label = "Titre"
+content_label = "Contenu"
+reply_label = "Répondre"
+seconds_ago = "il y a {} secondes"
+minutes_ago = "il y a {} minutes"
+hours_ago = "il y a {} heures"
