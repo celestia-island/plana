@@ -41,7 +41,7 @@ pub use json_keys::{
     AuthParamKey, BridgeKey, ContainerCreateParamKey, ContainerForkParamKey, ContainerVolumeKey,
     McpCallParamKey, McpListToolsResultKey, ReplParamKey, ResponseKey,
 };
-pub use pending::{MessageKind, PendingHandle, PendingRegistry, methods};
+pub use pending::{MessageKind, Method, PendingHandle, PendingRegistry};
 pub use types::{UnixMethod, *};
 pub use unix_socket::{
     COSMOS_BRIDGE_SOCKET, COSMOS_SOCKET_DIR, COSMOS_SOCKET_SUFFIX, DEFAULT_SOCKET_DIR,

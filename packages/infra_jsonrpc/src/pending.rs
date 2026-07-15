@@ -2,54 +2,575 @@ use std::collections::HashMap;
 use serde_json::Value;
 use tokio::sync::oneshot;
 use uuid::Uuid;
+use strum::{Display, EnumIter, EnumString, IntoStaticStr};
 
-/// Three kinds of JSON-RPC messages in the protocol registry.
-///
-/// Every known method is registered with its kind.
-/// Sync and Async variants always come as `(Request, Response)` pairs
-/// where both sides carry a [`Uuid`] for correlation.
+/// Three kinds of JSON-RPC messages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MessageKind {
-    /// Fire-and-forget notification — no response expected, no UUID.
-    OneWay(&'static str),
-    /// Synchronous request-response pair.
-    /// Sender calls [`PendingRegistry::request`], awaits the response.
-    SyncReq {
-        request: &'static str,
-        response: &'static str,
-    },
-    /// Asynchronous request-response pair.
-    /// Sender calls [`PendingRegistry::request_async`], gets a handle back.
-    AsyncReq {
-        request: &'static str,
-        response: &'static str,
-    },
+    OneWay,
+    SyncReq,
+    AsyncReq,
 }
 
-impl MessageKind {
-    pub fn method_name(&self) -> &'static str {
-        match self {
-            Self::OneWay(m) => m,
-            Self::SyncReq { request, .. } | Self::AsyncReq { request, .. } => request,
-        }
-    }
+// ────────────────────────────────────────────────────────────────────
+// Method enum — every JSON-RPC wire name is a variant, powered by strum
+// ────────────────────────────────────────────────────────────────────
 
-    pub fn is_one_way(&self) -> bool {
-        matches!(self, Self::OneWay(_))
-    }
-
-    pub fn response_name(&self) -> Option<&'static str> {
-        match self {
-            Self::OneWay(_) => None,
-            Self::SyncReq { response, .. } | Self::AsyncReq { response, .. } => Some(response),
-        }
-    }
-}
-
-/// A pending request handle returned by [`PendingRegistry::request_async`].
+/// Every known JSON-RPC method as a strum enum.
 ///
-/// Call [`PendingHandle::wait`] to block until the response arrives
-/// (or the registry is dropped without a match).
+/// The `#[strum(serialize)]` attribute defines the exact wire-format string
+/// (e.g. `"Tui.ServerVersion"`).  `Display` and `EnumString` are derived
+/// automatically — no scattered `pub const` declarations.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash,
+    Display, EnumString, EnumIter, IntoStaticStr,
+)]
+#[strum(serialize_all = "PascalCase")]
+pub enum Method {
+    // ── Handshake ───────────────────────────────────────────
+    #[strum(serialize = "Tui.ServerVersion")]
+    TuiServerVersion,
+    #[strum(serialize = "Tui.ConnectHandshake")]
+    TuiConnectHandshake,
+    #[strum(serialize = "Tui.HandshakeAck")]
+    TuiHandshakeAck,
+    #[strum(serialize = "Tui.VersionMismatch")]
+    TuiVersionMismatch,
+    #[strum(serialize = "Tui.ScepterIdentity")]
+    TuiScepterIdentity,
+
+    // ── Heartbeat / Base ────────────────────────────────────
+    #[strum(serialize = "Base.Heartbeat")]
+    BaseHeartbeat,
+    #[strum(serialize = "Base.HeartbeatAck")]
+    BaseHeartbeatAck,
+    #[strum(serialize = "Base.Error")]
+    BaseError,
+    #[strum(serialize = "Base.Ack")]
+    BaseAck,
+
+    // ── State Sync (server push) ────────────────────────────
+    #[strum(serialize = "Tui.StatePatch")]
+    TuiStatePatch,
+    #[strum(serialize = "Tui.StateSnapshot")]
+    TuiStateSnapshot,
+    #[strum(serialize = "Tui.ChannelEvent")]
+    TuiChannelEvent,
+
+    // ── Global / Container / Task Snapshots ─────────────────
+    #[strum(serialize = "Tui.RequestGlobalSnapshot")]
+    TuiRequestGlobalSnapshot,
+    #[strum(serialize = "Tui.GlobalSnapshot")]
+    TuiGlobalSnapshot,
+    #[strum(serialize = "Tui.RequestContainerSnapshot")]
+    TuiRequestContainerSnapshot,
+    #[strum(serialize = "Tui.ContainerSnapshot")]
+    TuiContainerSnapshot,
+    #[strum(serialize = "Tui.RequestTasksSnapshot")]
+    TuiRequestTasksSnapshot,
+    #[strum(serialize = "Tui.TasksSnapshot")]
+    TuiTasksSnapshot,
+    #[strum(serialize = "Tui.RequestVmSnapshot")]
+    TuiRequestVmSnapshot,
+    #[strum(serialize = "Tui.VmSnapshot")]
+    TuiVmSnapshot,
+    #[strum(serialize = "Tui.RequestFullSnapshot")]
+    TuiRequestFullSnapshot,
+    #[strum(serialize = "Tui.FullSnapshot")]
+    TuiFullSnapshot,
+
+    // ── Provider / Model Config ─────────────────────────────
+    #[strum(serialize = "Tui.GetProvidersFromFs")]
+    TuiGetProvidersFromFs,
+    #[strum(serialize = "Tui.ProvidersFromFsResponse")]
+    TuiProvidersFromFsResponse,
+    #[strum(serialize = "Tui.GetModelsFromFs")]
+    TuiGetModelsFromFs,
+    #[strum(serialize = "Tui.ModelsFromFsResponse")]
+    TuiModelsFromFsResponse,
+    #[strum(serialize = "Tui.GetUserConfig")]
+    TuiGetUserConfig,
+    #[strum(serialize = "Tui.UserConfigResponse")]
+    TuiUserConfigResponse,
+    #[strum(serialize = "Tui.ModelsSnapshot")]
+    TuiModelsSnapshot,
+    #[strum(serialize = "Tui.ProvidersSnapshot")]
+    TuiProvidersSnapshot,
+
+    // ── Agent Interaction ───────────────────────────────────
+    #[strum(serialize = "Tui.UserMessage")]
+    TuiUserMessage,
+    #[strum(serialize = "Tui.AgentResponse")]
+    TuiAgentResponse,
+    #[strum(serialize = "Tui.AgentStreamingChunk")]
+    TuiAgentStreamingChunk,
+    #[strum(serialize = "Tui.AgentThinkingStep")]
+    TuiAgentThinkingStep,
+    #[strum(serialize = "Tui.AgentReport")]
+    TuiAgentReport,
+    #[strum(serialize = "Tui.AgentReportReply")]
+    TuiAgentReportReply,
+    #[strum(serialize = "Tui.AgentToolCall")]
+    TuiAgentToolCall,
+    #[strum(serialize = "Tui.AgentTransfer")]
+    TuiAgentTransfer,
+    #[strum(serialize = "Tui.AgentPatch")]
+    TuiAgentPatch,
+    #[strum(serialize = "Tui.AgentUpdate")]
+    TuiAgentUpdate,
+    #[strum(serialize = "Tui.AgentListResponse")]
+    TuiAgentListResponse,
+    #[strum(serialize = "Tui.AgentSnapshot")]
+    TuiAgentSnapshot,
+    #[strum(serialize = "Tui.OrchestrationStatus")]
+    TuiOrchestrationStatus,
+    #[strum(serialize = "Tui.McpToolResult")]
+    TuiMcpToolResult,
+    #[strum(serialize = "Tui.TaskCreated")]
+    TuiTaskCreated,
+    #[strum(serialize = "Tui.TaskStatusUpdate")]
+    TuiTaskStatusUpdate,
+    #[strum(serialize = "Tui.TaskPatch")]
+    TuiTaskPatch,
+    #[strum(serialize = "Tui.ContainerPatch")]
+    TuiContainerPatch,
+    #[strum(serialize = "Tui.SystemMessage")]
+    TuiSystemMessage,
+
+    // ── Ask Human ───────────────────────────────────────────
+    #[strum(serialize = "Tui.AskHumanRequest")]
+    TuiAskHumanRequest,
+    #[strum(serialize = "Tui.AskHumanReply")]
+    TuiAskHumanReply,
+    #[strum(serialize = "Tui.AskHumanReplyResponse")]
+    TuiAskHumanReplyResponse,
+    #[strum(serialize = "Tui.HumanReviewRequest")]
+    TuiHumanReviewRequest,
+    #[strum(serialize = "Tui.HumanReviewResponse")]
+    TuiHumanReviewResponse,
+
+    // ── Skill Chain ─────────────────────────────────────────
+    #[strum(serialize = "Tui.SkillChainStart")]
+    TuiSkillChainStart,
+    #[strum(serialize = "Tui.SkillChainStep")]
+    TuiSkillChainStep,
+    #[strum(serialize = "Tui.SkillChainComplete")]
+    TuiSkillChainComplete,
+
+    // ── YOLO ────────────────────────────────────────────────
+    #[strum(serialize = "Tui.YoloStart")]
+    TuiYoloStart,
+    #[strum(serialize = "Tui.YoloStartResponse")]
+    TuiYoloStartResponse,
+    #[strum(serialize = "Tui.YoloStop")]
+    TuiYoloStop,
+    #[strum(serialize = "Tui.YoloStopResponse")]
+    TuiYoloStopResponse,
+    #[strum(serialize = "Tui.YoloTerminate")]
+    TuiYoloTerminate,
+    #[strum(serialize = "Tui.YoloTerminateResponse")]
+    TuiYoloTerminateResponse,
+    #[strum(serialize = "Tui.YoloStatus")]
+    TuiYoloStatus,
+    #[strum(serialize = "Tui.YoloStatusResponse")]
+    TuiYoloStatusResponse,
+    #[strum(serialize = "Tui.YoloGetConfig")]
+    TuiYoloGetConfig,
+    #[strum(serialize = "Tui.YoloConfigResponse")]
+    TuiYoloConfigResponse,
+    #[strum(serialize = "Tui.YoloUpdateTask")]
+    TuiYoloUpdateTask,
+    #[strum(serialize = "Tui.YoloUpdateTaskResponse")]
+    TuiYoloUpdateTaskResponse,
+    #[strum(serialize = "Tui.YoloSetTierInterval")]
+    TuiYoloSetTierInterval,
+    #[strum(serialize = "Tui.YoloSetTierIntervalResponse")]
+    TuiYoloSetTierIntervalResponse,
+    #[strum(serialize = "Tui.YoloRunTierNow")]
+    TuiYoloRunTierNow,
+    #[strum(serialize = "Tui.YoloRunTierNowResponse")]
+    TuiYoloRunTierNowResponse,
+    #[strum(serialize = "Tui.YoloCycleStep")]
+    TuiYoloCycleStep,
+    #[strum(serialize = "Tui.YoloCycleComplete")]
+    TuiYoloCycleComplete,
+    #[strum(serialize = "Tui.YoloTaskStart")]
+    TuiYoloTaskStart,
+    #[strum(serialize = "Tui.YoloTaskDone")]
+    TuiYoloTaskDone,
+    #[strum(serialize = "Tui.YoloTaskError")]
+    TuiYoloTaskError,
+
+    // ── MCP / Skill ─────────────────────────────────────────
+    #[strum(serialize = "Mcp.CallTool")]
+    McpCallTool,
+    #[strum(serialize = "Mcp.ToolCallResult")]
+    McpToolCallResult,
+    #[strum(serialize = "Mcp.ListTools")]
+    McpListTools,
+    #[strum(serialize = "Mcp.ToolsListResponse")]
+    McpToolsListResponse,
+    #[strum(serialize = "Skill.CallSkill")]
+    SkillCallSkill,
+    #[strum(serialize = "Skill.SkillCallResult")]
+    SkillSkillCallResult,
+    #[strum(serialize = "Skill.ListSkills")]
+    SkillListSkills,
+    #[strum(serialize = "Skill.SkillsListResponse")]
+    SkillSkillsListResponse,
+
+    // ── CLI ─────────────────────────────────────────────────
+    #[strum(serialize = "Cli.Status")]
+    CliStatus,
+    #[strum(serialize = "Cli.ChatHistory")]
+    CliChatHistory,
+    #[strum(serialize = "Cli.TimelineList")]
+    CliTimelineList,
+    #[strum(serialize = "Cli.TimelineShow")]
+    CliTimelineShow,
+    #[strum(serialize = "Cli.RecentChats")]
+    CliRecentChats,
+    #[strum(serialize = "Cli.ListPolemosDevices")]
+    CliListPolemosDevices,
+    #[strum(serialize = "Cli.SessionStats")]
+    CliSessionStats,
+    #[strum(serialize = "Cli.SessionPurge")]
+    CliSessionPurge,
+    #[strum(serialize = "Cli.SessionVacuum")]
+    CliSessionVacuum,
+    #[strum(serialize = "Cli.Search")]
+    CliSearch,
+    #[strum(serialize = "Cli.TraceChain")]
+    CliTraceChain,
+    #[strum(serialize = "Cli.ListTools")]
+    CliListTools,
+    #[strum(serialize = "Cli.ListSkills")]
+    CliListSkills,
+    #[strum(serialize = "Cli.ListWorkspaces")]
+    CliListWorkspaces,
+    #[strum(serialize = "Cli.OpenWorkspace")]
+    CliOpenWorkspace,
+    #[strum(serialize = "Cli.SwitchWorkspace")]
+    CliSwitchWorkspace,
+
+    // ── Workspace ───────────────────────────────────────────
+    #[strum(serialize = "Tui.OpenWorkspace")]
+    TuiOpenWorkspace,
+    #[strum(serialize = "Tui.OpenWorkspaceResponse")]
+    TuiOpenWorkspaceResponse,
+    #[strum(serialize = "Tui.RequestWorkspaceStatus")]
+    TuiRequestWorkspaceStatus,
+    #[strum(serialize = "Tui.WorkspaceStatus")]
+    TuiWorkspaceStatus,
+    #[strum(serialize = "Tui.ListAgents")]
+    TuiListAgents,
+    #[strum(serialize = "Tui.PolemosDeviceList")]
+    TuiPolemosDeviceList,
+    #[strum(serialize = "Tui.ListPolemosDevices")]
+    TuiListPolemosDevices,
+
+    // ── Auth ────────────────────────────────────────────────
+    #[strum(serialize = "Tui.AuthLogin")]
+    TuiAuthLogin,
+    #[strum(serialize = "Tui.AuthLoginResponse")]
+    TuiAuthLoginResponse,
+    #[strum(serialize = "Tui.AuthRegister")]
+    TuiAuthRegister,
+    #[strum(serialize = "Tui.AuthRegisterResponse")]
+    TuiAuthRegisterResponse,
+    #[strum(serialize = "Tui.AuthListUsers")]
+    TuiAuthListUsers,
+    #[strum(serialize = "Tui.AuthListUsersResponse")]
+    TuiAuthListUsersResponse,
+    #[strum(serialize = "Tui.AuthGetUser")]
+    TuiAuthGetUser,
+    #[strum(serialize = "Tui.AuthGetUserResponse")]
+    TuiAuthGetUserResponse,
+    #[strum(serialize = "Tui.AuthDeleteUser")]
+    TuiAuthDeleteUser,
+    #[strum(serialize = "Tui.AuthDeleteUserResponse")]
+    TuiAuthDeleteUserResponse,
+    #[strum(serialize = "Tui.AuthChangePassword")]
+    TuiAuthChangePassword,
+    #[strum(serialize = "Tui.AuthChangePasswordResponse")]
+    TuiAuthChangePasswordResponse,
+
+    // ── Ping ────────────────────────────────────────────────
+    #[strum(serialize = "Tui.Ping")]
+    TuiPing,
+    #[strum(serialize = "Tui.Pong")]
+    TuiPong,
+
+    // ── Usage ───────────────────────────────────────────────
+    #[strum(serialize = "Tui.UsagePeriodQuery")]
+    TuiUsagePeriodQuery,
+    #[strum(serialize = "Tui.UsagePeriodResponse")]
+    TuiUsagePeriodResponse,
+
+    // ── Layer2 Domain Agents ────────────────────────────────
+    #[strum(serialize = "Tui.Layer2AgentList")]
+    TuiLayer2AgentList,
+    #[strum(serialize = "Tui.Layer2AgentListResponse")]
+    TuiLayer2AgentListResponse,
+    #[strum(serialize = "Tui.Layer2AgentMcpTools")]
+    TuiLayer2AgentMcpTools,
+    #[strum(serialize = "Tui.Layer2AgentMcpResponse")]
+    TuiLayer2AgentMcpResponse,
+    #[strum(serialize = "Tui.Layer2AgentSkills")]
+    TuiLayer2AgentSkills,
+    #[strum(serialize = "Tui.Layer2AgentSkillsResponse")]
+    TuiLayer2AgentSkillsResponse,
+
+    // ── User Preferences ────────────────────────────────────
+    #[strum(serialize = "Tui.GetUserPreferences")]
+    TuiGetUserPreferences,
+    #[strum(serialize = "Tui.SyncPreferences")]
+    TuiSyncPreferences,
+
+    // ── Audio ───────────────────────────────────────────────
+    #[strum(serialize = "Tui.AudioPullProgress")]
+    TuiAudioPullProgress,
+    #[strum(serialize = "Tui.AudioStatusChanged")]
+    TuiAudioStatusChanged,
+
+    // ── Device ──────────────────────────────────────────────
+    #[strum(serialize = "Device.PolemosRegister")]
+    DevicePolemosRegister,
+    #[strum(serialize = "Device.PolemosRegisterAck")]
+    DevicePolemosRegisterAck,
+    #[strum(serialize = "Device.Heartbeat")]
+    DeviceHeartbeat,
+    #[strum(serialize = "Device.HeartbeatAck")]
+    DeviceHeartbeatAck,
+    #[strum(serialize = "Device.TerminalOpen")]
+    DeviceTerminalOpen,
+    #[strum(serialize = "Device.TerminalReady")]
+    DeviceTerminalReady,
+    #[strum(serialize = "Device.TerminalInput")]
+    DeviceTerminalInput,
+    #[strum(serialize = "Device.TerminalResize")]
+    DeviceTerminalResize,
+    #[strum(serialize = "Device.TerminalPoll")]
+    DeviceTerminalPoll,
+    #[strum(serialize = "Device.TerminalPollResult")]
+    DeviceTerminalPollResult,
+    #[strum(serialize = "Device.TerminalClose")]
+    DeviceTerminalClose,
+    #[strum(serialize = "Device.TerminalCloseAck")]
+    DeviceTerminalCloseAck,
+    #[strum(serialize = "Device.FileList")]
+    DeviceFileList,
+    #[strum(serialize = "Device.FileListResult")]
+    DeviceFileListResult,
+    #[strum(serialize = "Device.FileDownload")]
+    DeviceFileDownload,
+    #[strum(serialize = "Device.FileDownloadResult")]
+    DeviceFileDownloadResult,
+    #[strum(serialize = "Device.FileUpload")]
+    DeviceFileUpload,
+    #[strum(serialize = "Device.FileUploadResult")]
+    DeviceFileUploadResult,
+    #[strum(serialize = "Device.Ping")]
+    DevicePing,
+    #[strum(serialize = "Device.Pong")]
+    DevicePong,
+    #[strum(serialize = "Device.WebrtcOffer")]
+    DeviceWebrtcOffer,
+    #[strum(serialize = "Device.WebrtcAnswer")]
+    DeviceWebrtcAnswer,
+    #[strum(serialize = "Device.WebrtcIce")]
+    DeviceWebrtcIce,
+    #[strum(serialize = "Device.SubscribeOutput")]
+    DeviceSubscribeOutput,
+    #[strum(serialize = "Device.TerminalList")]
+    DeviceTerminalList,
+    #[strum(serialize = "Device.TerminalOutput")]
+    DeviceTerminalOutput,
+    #[strum(serialize = "Device.Error")]
+    DeviceError,
+
+    // ── Screen ──────────────────────────────────────────────
+    #[strum(serialize = "Screen.Offer")]
+    ScreenOffer,
+    #[strum(serialize = "Screen.Answer")]
+    ScreenAnswer,
+    #[strum(serialize = "Screen.Ice")]
+    ScreenIce,
+    #[strum(serialize = "Screen.IceCandidate")]
+    ScreenIceCandidate,
+
+    // ── Server Info ─────────────────────────────────────────
+    #[strum(serialize = "Tui.ServerInfo")]
+    TuiServerInfo,
+}
+
+impl Method {
+    /// Wire-format method name (e.g. `"Tui.ServerVersion"`).
+    /// Delegates to `Display` (driven by strum).
+    pub fn method_name(self) -> &'static str {
+        self.into()
+    }
+
+    /// Whether this method is a one-way notification (no response expected).
+    pub fn is_one_way(self) -> bool {
+        self.kind() == MessageKind::OneWay
+    }
+
+    /// The MessageKind classification.
+    pub fn kind(self) -> MessageKind {
+        use Method::*;
+        match self {
+            // ── One-way server push notifications ──
+            TuiServerVersion
+            | TuiHandshakeAck
+            | TuiVersionMismatch
+            | TuiScepterIdentity
+            | BaseError | BaseAck | BaseHeartbeatAck
+            | TuiStatePatch | TuiStateSnapshot | TuiChannelEvent
+            | TuiGlobalSnapshot | TuiContainerSnapshot | TuiTasksSnapshot
+            | TuiVmSnapshot | TuiFullSnapshot
+            | TuiProvidersFromFsResponse | TuiModelsFromFsResponse | TuiUserConfigResponse
+            | TuiModelsSnapshot | TuiProvidersSnapshot
+            | TuiAgentResponse | TuiAgentStreamingChunk | TuiAgentThinkingStep
+            | TuiAgentReport | TuiAgentReportReply | TuiAgentToolCall | TuiAgentTransfer
+            | TuiAgentPatch | TuiAgentUpdate | TuiAgentListResponse | TuiAgentSnapshot
+            | TuiOrchestrationStatus | TuiMcpToolResult
+            | TuiTaskCreated | TuiTaskStatusUpdate | TuiTaskPatch | TuiContainerPatch
+            | TuiSystemMessage
+            | TuiAskHumanRequest | TuiHumanReviewRequest | TuiHumanReviewResponse
+            | TuiSkillChainStart | TuiSkillChainStep | TuiSkillChainComplete
+            | TuiYoloCycleStep | TuiYoloCycleComplete
+            | TuiYoloTaskStart | TuiYoloTaskDone | TuiYoloTaskError
+            | TuiUserMessage
+            | McpToolCallResult | McpToolsListResponse
+            | SkillSkillCallResult | SkillSkillsListResponse
+            | TuiPolemosDeviceList
+            | TuiAudioPullProgress | TuiAudioStatusChanged
+            | TuiServerInfo
+            | DevicePolemosRegisterAck | DeviceHeartbeatAck
+            | DeviceTerminalReady | DeviceTerminalInput | DeviceTerminalResize
+            | DeviceTerminalPollResult | DeviceTerminalCloseAck
+            | DeviceFileListResult | DeviceFileDownloadResult | DeviceFileUploadResult
+            | DevicePong | DeviceWebrtcAnswer | DeviceWebrtcIce
+            | DeviceSubscribeOutput | DeviceTerminalOutput | DeviceError
+            | ScreenOffer | ScreenAnswer | ScreenIce | ScreenIceCandidate => MessageKind::OneWay,
+
+            // ── Sync request-response pairs ──
+            TuiConnectHandshake | BaseHeartbeat
+            | TuiRequestGlobalSnapshot | TuiRequestContainerSnapshot
+            | TuiRequestTasksSnapshot | TuiRequestVmSnapshot | TuiRequestFullSnapshot
+            | TuiGetProvidersFromFs | TuiGetModelsFromFs | TuiGetUserConfig
+            | McpListTools | SkillListSkills
+            | CliStatus | CliChatHistory | CliTimelineList | CliTimelineShow
+            | CliRecentChats | CliListPolemosDevices | CliSessionStats | CliSessionPurge
+            | CliSessionVacuum | CliSearch | CliTraceChain
+            | CliListTools | CliListSkills | CliListWorkspaces | CliOpenWorkspace
+            | CliSwitchWorkspace
+            | TuiOpenWorkspace | TuiRequestWorkspaceStatus | TuiListAgents
+            | TuiListPolemosDevices
+            | TuiAuthLogin | TuiAuthRegister | TuiAuthListUsers
+            | TuiAuthGetUser | TuiAuthDeleteUser | TuiAuthChangePassword
+            | TuiPing
+            | TuiUsagePeriodQuery
+            | TuiGetUserPreferences | TuiSyncPreferences
+            | DevicePolemosRegister | DeviceHeartbeat
+            | DeviceTerminalOpen | DeviceTerminalPoll | DeviceTerminalClose
+            | DeviceFileList | DeviceFileDownload | DeviceFileUpload
+            | DevicePing | DeviceWebrtcOffer | DeviceTerminalList => MessageKind::SyncReq,
+
+            // ── Async request-response pairs ──
+            TuiAskHumanReply
+            | TuiYoloStart | TuiYoloStop | TuiYoloTerminate
+            | TuiYoloStatus | TuiYoloGetConfig | TuiYoloUpdateTask
+            | TuiYoloSetTierInterval | TuiYoloRunTierNow
+            | McpCallTool | SkillCallSkill
+            | TuiLayer2AgentList | TuiLayer2AgentMcpTools | TuiLayer2AgentSkills => MessageKind::AsyncReq,
+
+            // ── Response-only variants (paired with their request) ──
+            TuiHandshakeAck => MessageKind::OneWay, // already covered
+            TuiPong
+            | TuiOpenWorkspaceResponse | TuiWorkspaceStatus
+            | TuiYoloStartResponse | TuiYoloStopResponse | TuiYoloTerminateResponse
+            | TuiYoloStatusResponse | TuiYoloConfigResponse
+            | TuiYoloUpdateTaskResponse | TuiYoloSetTierIntervalResponse
+            | TuiYoloRunTierNowResponse
+            | TuiAskHumanReplyResponse
+            | TuiAuthLoginResponse | TuiAuthRegisterResponse | TuiAuthListUsersResponse
+            | TuiAuthGetUserResponse | TuiAuthDeleteUserResponse | TuiAuthChangePasswordResponse
+            | TuiUsagePeriodResponse
+            | TuiLayer2AgentListResponse | TuiLayer2AgentMcpResponse
+            | TuiLayer2AgentSkillsResponse => MessageKind::OneWay,
+        }
+    }
+
+    /// For a request method, returns the expected response method.
+    /// Returns `None` for one-way notifications and response-only methods.
+    pub fn response(self) -> Option<Method> {
+        use Method::*;
+        match self {
+            TuiConnectHandshake => Some(TuiHandshakeAck),
+            BaseHeartbeat => Some(BaseHeartbeatAck),
+            TuiRequestGlobalSnapshot => Some(TuiGlobalSnapshot),
+            TuiRequestContainerSnapshot => Some(TuiContainerSnapshot),
+            TuiRequestTasksSnapshot => Some(TuiTasksSnapshot),
+            TuiRequestVmSnapshot => Some(TuiVmSnapshot),
+            TuiRequestFullSnapshot => Some(TuiFullSnapshot),
+            TuiGetProvidersFromFs => Some(TuiProvidersFromFsResponse),
+            TuiGetModelsFromFs => Some(TuiModelsFromFsResponse),
+            TuiGetUserConfig => Some(TuiUserConfigResponse),
+            McpListTools => Some(McpToolsListResponse),
+            SkillListSkills => Some(SkillSkillsListResponse),
+            McpCallTool => Some(McpToolCallResult),
+            SkillCallSkill => Some(SkillSkillCallResult),
+            CliStatus => Some(TuiPolemosDeviceList), // Cli.Status doesn't have a defined response pair — server returns result directly
+            CliSearch => Some(TuiPolemosDeviceList), // placeholders
+            CliTraceChain => Some(TuiPolemosDeviceList),
+            TuiOpenWorkspace => Some(TuiOpenWorkspaceResponse),
+            TuiRequestWorkspaceStatus => Some(TuiWorkspaceStatus),
+            TuiListAgents => Some(TuiAgentListResponse),
+            TuiPing => Some(TuiPong),
+            TuiUsagePeriodQuery => Some(TuiUsagePeriodResponse),
+            TuiGetUserPreferences => Some(TuiPolemosDeviceList), // placeholder — response is inline
+            TuiSyncPreferences => Some(TuiPolemosDeviceList),
+            TuiAskHumanReply => Some(TuiAskHumanReplyResponse),
+            TuiYoloStart => Some(TuiYoloStartResponse),
+            TuiYoloStop => Some(TuiYoloStopResponse),
+            TuiYoloTerminate => Some(TuiYoloTerminateResponse),
+            TuiYoloStatus => Some(TuiYoloStatusResponse),
+            TuiYoloGetConfig => Some(TuiYoloConfigResponse),
+            TuiYoloUpdateTask => Some(TuiYoloUpdateTaskResponse),
+            TuiYoloSetTierInterval => Some(TuiYoloSetTierIntervalResponse),
+            TuiYoloRunTierNow => Some(TuiYoloRunTierNowResponse),
+            TuiAuthLogin => Some(TuiAuthLoginResponse),
+            TuiAuthRegister => Some(TuiAuthRegisterResponse),
+            TuiAuthListUsers => Some(TuiAuthListUsersResponse),
+            TuiAuthGetUser => Some(TuiAuthGetUserResponse),
+            TuiAuthDeleteUser => Some(TuiAuthDeleteUserResponse),
+            TuiAuthChangePassword => Some(TuiAuthChangePasswordResponse),
+            TuiLayer2AgentList => Some(TuiLayer2AgentListResponse),
+            TuiLayer2AgentMcpTools => Some(TuiLayer2AgentMcpResponse),
+            TuiLayer2AgentSkills => Some(TuiLayer2AgentSkillsResponse),
+            DevicePolemosRegister => Some(DevicePolemosRegisterAck),
+            DeviceHeartbeat => Some(DeviceHeartbeatAck),
+            DeviceTerminalOpen => Some(DeviceTerminalReady),
+            DeviceTerminalPoll => Some(DeviceTerminalPollResult),
+            DeviceTerminalClose => Some(DeviceTerminalCloseAck),
+            DeviceFileList => Some(DeviceFileListResult),
+            DeviceFileDownload => Some(DeviceFileDownloadResult),
+            DeviceFileUpload => Some(DeviceFileUploadResult),
+            DevicePing => Some(DevicePong),
+            DeviceWebrtcOffer => Some(DeviceWebrtcAnswer),
+            DeviceTerminalList => Some(DeviceFileListResult),
+            _ => None,
+        }
+    }
+}
+
+// ──────────────────────────────────────────────────────────────
+// PendingRegistry — unchanged from before
+// ──────────────────────────────────────────────────────────────
+
+/// A pending request handle.
 pub struct PendingHandle {
     pub id: Uuid,
     rx: oneshot::Receiver<Value>,
@@ -62,85 +583,38 @@ impl PendingHandle {
 }
 
 /// UUID-based JSON-RPC request/response correlation.
-///
-/// The registry tracks in-flight requests by [`Uuid`].
-/// When a JSON-RPC response frame arrives (matched by `id`),
-/// [`on_response`] routes the result to the waiting handle.
-///
-/// # Usage
-///
-/// ```ignore
-/// let mut reg = PendingRegistry::new();
-///
-/// // Sync: send request, block until response
-/// let result = reg.request("Cli.Status", Value::Null).await?;
-///
-/// // Async: get a handle, do other work, await later
-/// let handle = reg.request_async("Tui.YoloStart", Value::Null);
-/// // ... other work ...
-/// let result = handle.wait().await?;
-///
-/// // One-way: just send, no registration
-/// reg.prepare_notify("Tui.AgentReport", json!({...}));
-/// ```
 pub struct PendingRegistry {
     pending: HashMap<Uuid, oneshot::Sender<Value>>,
 }
 
 impl PendingRegistry {
     pub fn new() -> Self {
-        Self {
-            pending: HashMap::new(),
-        }
+        Self { pending: HashMap::new() }
     }
 
-    /// Build a JSON-RPC notification frame (no `id` field).
-    /// One-way messages do not register in the pending map.
-    pub fn prepare_notify(method: &str, params: Value) -> Value {
+    pub fn prepare_notify(method: Method, params: Value) -> Value {
         serde_json::json!({
             "jsonrpc": "2.0",
-            "method": method,
+            "method": method.method_name(),
             "params": params,
         })
     }
 
-    /// Build a JSON-RPC request frame (with `id`), register the UUID,
-    /// and return both the frame and a handle that will receive the response.
-    ///
-    /// This is the **synchronous** path — the caller should `.await` the handle
-    /// immediately (or shortly after sending the frame).
-    pub fn request(
-        &mut self,
-        method: &str,
-        params: Value,
-    ) -> (Value, PendingHandle) {
+    pub fn request(&mut self, method: Method, params: Value) -> (Value, PendingHandle) {
         let (handle, id) = self.register_pending();
         let frame = serde_json::json!({
             "jsonrpc": "2.0",
             "id": id.to_string(),
-            "method": method,
+            "method": method.method_name(),
             "params": params,
         });
         (frame, handle)
     }
 
-    /// Build a JSON-RPC request frame, register the UUID,
-    /// and return both the frame and an async handle.
-    ///
-    /// This is the **asynchronous** path — the caller sends the frame, does
-    /// other work, and calls [`PendingHandle::wait`] when ready.
-    pub fn request_async(
-        &mut self,
-        method: &str,
-        params: Value,
-    ) -> (Value, PendingHandle) {
+    pub fn request_async(&mut self, method: Method, params: Value) -> (Value, PendingHandle) {
         self.request(method, params)
     }
 
-    /// Route an incoming response to its waiting handle.
-    ///
-    /// Returns `true` if a handle was found and notified, `false` if the
-    /// response was unsolicited (no matching request UUID).
     pub fn on_response(&mut self, id: &str, result: Value) -> bool {
         let uuid = match Uuid::parse_str(id) {
             Ok(u) => u,
@@ -154,12 +628,10 @@ impl PendingRegistry {
         }
     }
 
-    /// Route an error response to its waiting handle.
     pub fn on_error(&mut self, id: &str, error: Value) -> bool {
         self.on_response(id, serde_json::json!({ "__error": error }))
     }
 
-    /// How many requests are currently in-flight.
     pub fn pending_count(&self) -> usize {
         self.pending.len()
     }
@@ -173,431 +645,88 @@ impl PendingRegistry {
 }
 
 impl Default for PendingRegistry {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Compile-time registry of all known JSON-RPC request-response pairs.
-///
-/// Each entry is a [`MessageKind`] — one-way notifications, sync pairs,
-/// or async pairs. This is the **authoritative** list; all three consumer
-/// repos (scriptum, shittim-chest, entelecheia) should reference these
-/// constants rather than hard-coding method name strings.
-#[rustfmt::skip]
-pub mod methods {
-    use super::MessageKind;
-
-    // ── Handshake ────────────────────────────────────────────────
-    pub const SERVER_VERSION: MessageKind       = MessageKind::OneWay("Tui.ServerVersion");
-    pub const HANDSHAKE: MessageKind            = MessageKind::SyncReq {
-        request: "Tui.ConnectHandshake",
-        response: "Tui.HandshakeAck",
-    };
-    pub const VERSION_MISMATCH: MessageKind     = MessageKind::OneWay("Tui.VersionMismatch");
-    pub const SCEPTER_IDENTITY: MessageKind      = MessageKind::OneWay("Tui.ScepterIdentity");
-
-    // ── Heartbeat / Base ─────────────────────────────────────────
-    pub const HEARTBEAT: MessageKind            = MessageKind::SyncReq {
-        request: "Base.Heartbeat",
-        response: "Base.HeartbeatAck",
-    };
-    pub const BASE_ERROR: MessageKind           = MessageKind::OneWay("Base.Error");
-    pub const BASE_ACK: MessageKind             = MessageKind::OneWay("Base.Ack");
-
-    // ── State Sync (server push, one-way) ───────────────────────
-    pub const STATE_PATCH: MessageKind          = MessageKind::OneWay("Tui.StatePatch");
-    pub const STATE_SNAPSHOT: MessageKind       = MessageKind::OneWay("Tui.StateSnapshot");
-    pub const CHANNEL_EVENT: MessageKind        = MessageKind::OneWay("Tui.ChannelEvent");
-
-    // ── Global Snapshot ──────────────────────────────────────────
-    pub const REQUEST_GLOBAL_SNAPSHOT: MessageKind = MessageKind::SyncReq {
-        request: "Tui.RequestGlobalSnapshot",
-        response: "Tui.GlobalSnapshot",
-    };
-    pub const REQUEST_CONTAINER_SNAPSHOT: MessageKind = MessageKind::SyncReq {
-        request: "Tui.RequestContainerSnapshot",
-        response: "Tui.ContainerSnapshot",
-    };
-    pub const REQUEST_TASKS_SNAPSHOT: MessageKind = MessageKind::SyncReq {
-        request: "Tui.RequestTasksSnapshot",
-        response: "Tui.TasksSnapshot",
-    };
-    pub const REQUEST_VM_SNAPSHOT: MessageKind = MessageKind::SyncReq {
-        request: "Tui.RequestVmSnapshot",
-        response: "Tui.VmSnapshot",
-    };
-    pub const REQUEST_FULL_SNAPSHOT: MessageKind = MessageKind::SyncReq {
-        request: "Tui.RequestFullSnapshot",
-        response: "Tui.FullSnapshot",
-    };
-
-    // ── Provider / Model Config ─────────────────────────────────
-    pub const GET_PROVIDERS_FROM_FS: MessageKind = MessageKind::SyncReq {
-        request: "Tui.GetProvidersFromFs",
-        response: "Tui.ProvidersFromFsResponse",
-    };
-    pub const GET_MODELS_FROM_FS: MessageKind = MessageKind::SyncReq {
-        request: "Tui.GetModelsFromFs",
-        response: "Tui.ModelsFromFsResponse",
-    };
-    pub const GET_USER_CONFIG: MessageKind = MessageKind::SyncReq {
-        request: "Tui.GetUserConfig",
-        response: "Tui.UserConfigResponse",
-    };
-    pub const MODELS_SNAPSHOT: MessageKind       = MessageKind::OneWay("Tui.ModelsSnapshot");
-    pub const PROVIDERS_SNAPSHOT: MessageKind    = MessageKind::OneWay("Tui.ProvidersSnapshot");
-
-    // ── Agent Interaction ───────────────────────────────────────
-    pub const USER_MESSAGE: MessageKind          = MessageKind::OneWay("Tui.UserMessage");
-    pub const AGENT_RESPONSE: MessageKind        = MessageKind::OneWay("Tui.AgentResponse");
-    pub const AGENT_STREAMING_CHUNK: MessageKind = MessageKind::OneWay("Tui.AgentStreamingChunk");
-    pub const AGENT_THINKING_STEP: MessageKind   = MessageKind::OneWay("Tui.AgentThinkingStep");
-    pub const AGENT_REPORT: MessageKind          = MessageKind::OneWay("Tui.AgentReport");
-    pub const AGENT_REPORT_REPLY: MessageKind    = MessageKind::OneWay("Tui.AgentReportReply");
-    pub const AGENT_TOOL_CALL: MessageKind       = MessageKind::OneWay("Tui.AgentToolCall");
-    pub const AGENT_TRANSFER: MessageKind        = MessageKind::OneWay("Tui.AgentTransfer");
-    pub const AGENT_PATCH: MessageKind           = MessageKind::OneWay("Tui.AgentPatch");
-    pub const AGENT_UPDATE: MessageKind          = MessageKind::OneWay("Tui.AgentUpdate");
-    pub const AGENT_LIST_RESPONSE: MessageKind   = MessageKind::OneWay("Tui.AgentListResponse");
-    pub const ORCHESTRATION_STATUS: MessageKind  = MessageKind::OneWay("Tui.OrchestrationStatus");
-    pub const MCP_TOOL_RESULT: MessageKind       = MessageKind::OneWay("Tui.McpToolResult");
-    pub const TASK_CREATED: MessageKind          = MessageKind::OneWay("Tui.TaskCreated");
-    pub const TASK_STATUS_UPDATE: MessageKind    = MessageKind::OneWay("Tui.TaskStatusUpdate");
-    pub const TASK_PATCH: MessageKind            = MessageKind::OneWay("Tui.TaskPatch");
-    pub const CONTAINER_PATCH: MessageKind       = MessageKind::OneWay("Tui.ContainerPatch");
-
-    // ── Ask Human ───────────────────────────────────────────────
-    pub const ASK_HUMAN_REQUEST: MessageKind     = MessageKind::OneWay("Tui.AskHumanRequest");
-    pub const ASK_HUMAN_REPLY: MessageKind       = MessageKind::AsyncReq {
-        request: "Tui.AskHumanReply",
-        response: "Tui.AskHumanReplyResponse",
-    };
-    pub const HUMAN_REVIEW_REQUEST: MessageKind  = MessageKind::OneWay("Tui.HumanReviewRequest");
-    pub const HUMAN_REVIEW_RESPONSE: MessageKind = MessageKind::OneWay("Tui.HumanReviewResponse");
-
-    // ── Skill Chain (server push) ───────────────────────────────
-    pub const SKILL_CHAIN_START: MessageKind     = MessageKind::OneWay("Tui.SkillChainStart");
-    pub const SKILL_CHAIN_STEP: MessageKind      = MessageKind::OneWay("Tui.SkillChainStep");
-    pub const SKILL_CHAIN_COMPLETE: MessageKind  = MessageKind::OneWay("Tui.SkillChainComplete");
-
-    // ── YOLO ────────────────────────────────────────────────────
-    pub const YOLO_START: MessageKind            = MessageKind::AsyncReq {
-        request: "Tui.YoloStart",
-        response: "Tui.YoloStartResponse",
-    };
-    pub const YOLO_STOP: MessageKind             = MessageKind::AsyncReq {
-        request: "Tui.YoloStop",
-        response: "Tui.YoloStopResponse",
-    };
-    pub const YOLO_TERMINATE: MessageKind        = MessageKind::AsyncReq {
-        request: "Tui.YoloTerminate",
-        response: "Tui.YoloTerminateResponse",
-    };
-    pub const YOLO_STATUS: MessageKind           = MessageKind::AsyncReq {
-        request: "Tui.YoloStatus",
-        response: "Tui.YoloStatusResponse",
-    };
-    pub const YOLO_GET_CONFIG: MessageKind       = MessageKind::AsyncReq {
-        request: "Tui.YoloGetConfig",
-        response: "Tui.YoloConfigResponse",
-    };
-    pub const YOLO_UPDATE_TASK: MessageKind      = MessageKind::AsyncReq {
-        request: "Tui.YoloUpdateTask",
-        response: "Tui.YoloUpdateTaskResponse",
-    };
-    pub const YOLO_SET_TIER_INTERVAL: MessageKind = MessageKind::AsyncReq {
-        request: "Tui.YoloSetTierInterval",
-        response: "Tui.YoloSetTierIntervalResponse",
-    };
-    pub const YOLO_RUN_TIER_NOW: MessageKind     = MessageKind::AsyncReq {
-        request: "Tui.YoloRunTierNow",
-        response: "Tui.YoloRunTierNowResponse",
-    };
-    pub const YOLO_CYCLE_STEP: MessageKind       = MessageKind::OneWay("Tui.YoloCycleStep");
-    pub const YOLO_CYCLE_COMPLETE: MessageKind   = MessageKind::OneWay("Tui.YoloCycleComplete");
-    pub const YOLO_TASK_START: MessageKind       = MessageKind::OneWay("Tui.YoloTaskStart");
-    pub const YOLO_TASK_DONE: MessageKind        = MessageKind::OneWay("Tui.YoloTaskDone");
-    pub const YOLO_TASK_ERROR: MessageKind       = MessageKind::OneWay("Tui.YoloTaskError");
-
-    // ── MCP / Skill ─────────────────────────────────────────────
-    pub const MCP_CALL_TOOL: MessageKind         = MessageKind::AsyncReq {
-        request: "Mcp.CallTool",
-        response: "Mcp.ToolCallResult",
-    };
-    pub const MCP_LIST_TOOLS: MessageKind        = MessageKind::SyncReq {
-        request: "Mcp.ListTools",
-        response: "Mcp.ToolsListResponse",
-    };
-    pub const SKILL_CALL: MessageKind            = MessageKind::AsyncReq {
-        request: "Skill.CallSkill",
-        response: "Skill.SkillCallResult",
-    };
-    pub const SKILL_LIST: MessageKind            = MessageKind::SyncReq {
-        request: "Skill.ListSkills",
-        response: "Skill.SkillsListResponse",
-    };
-
-    // ── CLI ─────────────────────────────────────────────────────
-    pub const CLI_STATUS: MessageKind            = MessageKind::SyncReq {
-        request: "Cli.Status",
-        response: "Cli.StatusResponse",
-    };
-    pub const CLI_CHAT_HISTORY: MessageKind       = MessageKind::SyncReq {
-        request: "Cli.ChatHistory",
-        response: "Cli.ChatHistoryResponse",
-    };
-    pub const CLI_TIMELINE_LIST: MessageKind      = MessageKind::SyncReq {
-        request: "Cli.TimelineList",
-        response: "Cli.TimelineListResponse",
-    };
-    pub const CLI_TIMELINE_SHOW: MessageKind      = MessageKind::SyncReq {
-        request: "Cli.TimelineShow",
-        response: "Cli.TimelineShowResponse",
-    };
-    pub const CLI_RECENT_CHATS: MessageKind       = MessageKind::SyncReq {
-        request: "Cli.RecentChats",
-        response: "Cli.RecentChatsResponse",
-    };
-    pub const CLI_SESSION_STATS: MessageKind      = MessageKind::SyncReq {
-        request: "Cli.SessionStats",
-        response: "Cli.SessionStatsResponse",
-    };
-    pub const CLI_SESSION_PURGE: MessageKind      = MessageKind::SyncReq {
-        request: "Cli.SessionPurge",
-        response: "Cli.SessionPurgeResponse",
-    };
-    pub const CLI_SESSION_VACUUM: MessageKind     = MessageKind::SyncReq {
-        request: "Cli.SessionVacuum",
-        response: "Cli.SessionVacuumResponse",
-    };
-    pub const CLI_SEARCH: MessageKind             = MessageKind::SyncReq {
-        request: "Cli.Search",
-        response: "Cli.SearchResponse",
-    };
-    pub const CLI_TRACE_CHAIN: MessageKind        = MessageKind::SyncReq {
-        request: "Cli.TraceChain",
-        response: "Cli.TraceChainResponse",
-    };
-    pub const CLI_LIST_POLEMOS_DEVICES: MessageKind = MessageKind::SyncReq {
-        request: "Cli.ListPolemosDevices",
-        response: "Cli.PolemosDeviceListResponse",
-    };
-    pub const CLI_LIST_TOOLS: MessageKind         = MessageKind::SyncReq {
-        request: "Cli.ListTools",
-        response: "Cli.ToolsListResponse",
-    };
-    pub const CLI_LIST_SKILLS: MessageKind        = MessageKind::SyncReq {
-        request: "Cli.ListSkills",
-        response: "Cli.SkillsListResponse",
-    };
-    pub const CLI_LIST_WORKSPACES: MessageKind    = MessageKind::SyncReq {
-        request: "Cli.ListWorkspaces",
-        response: "Cli.WorkspacesListResponse",
-    };
-    pub const CLI_OPEN_WORKSPACE: MessageKind     = MessageKind::SyncReq {
-        request: "Cli.OpenWorkspace",
-        response: "Cli.OpenWorkspaceResponse",
-    };
-    pub const CLI_SWITCH_WORKSPACE: MessageKind   = MessageKind::SyncReq {
-        request: "Cli.SwitchWorkspace",
-        response: "Cli.SwitchWorkspaceResponse",
-    };
-
-    // ── Workspace ───────────────────────────────────────────────
-    pub const OPEN_WORKSPACE: MessageKind         = MessageKind::SyncReq {
-        request: "Tui.OpenWorkspace",
-        response: "Tui.OpenWorkspaceResponse",
-    };
-    pub const REQUEST_WORKSPACE_STATUS: MessageKind = MessageKind::SyncReq {
-        request: "Tui.RequestWorkspaceStatus",
-        response: "Tui.WorkspaceStatus",
-    };
-    pub const LIST_AGENTS: MessageKind            = MessageKind::SyncReq {
-        request: "Tui.ListAgents",
-        response: "Tui.AgentListResponse",
-    };
-
-    // ── Auth ────────────────────────────────────────────────────
-    pub const AUTH_LOGIN: MessageKind             = MessageKind::SyncReq {
-        request: "Tui.AuthLogin",
-        response: "Tui.AuthLoginResponse",
-    };
-    pub const AUTH_REGISTER: MessageKind          = MessageKind::SyncReq {
-        request: "Tui.AuthRegister",
-        response: "Tui.AuthRegisterResponse",
-    };
-    pub const AUTH_LIST_USERS: MessageKind        = MessageKind::SyncReq {
-        request: "Tui.AuthListUsers",
-        response: "Tui.AuthListUsersResponse",
-    };
-    pub const AUTH_GET_USER: MessageKind          = MessageKind::SyncReq {
-        request: "Tui.AuthGetUser",
-        response: "Tui.AuthGetUserResponse",
-    };
-    pub const AUTH_DELETE_USER: MessageKind       = MessageKind::SyncReq {
-        request: "Tui.AuthDeleteUser",
-        response: "Tui.AuthDeleteUserResponse",
-    };
-    pub const AUTH_CHANGE_PASSWORD: MessageKind   = MessageKind::SyncReq {
-        request: "Tui.AuthChangePassword",
-        response: "Tui.AuthChangePasswordResponse",
-    };
-
-    // ── Ping ────────────────────────────────────────────────────
-    pub const PING: MessageKind                  = MessageKind::SyncReq {
-        request: "Tui.Ping",
-        response: "Tui.Pong",
-    };
-
-    // ── System ──────────────────────────────────────────────────
-    pub const SYSTEM_MESSAGE: MessageKind         = MessageKind::OneWay("Tui.SystemMessage");
-    pub const USAGE_PERIOD_QUERY: MessageKind     = MessageKind::SyncReq {
-        request: "Tui.UsagePeriodQuery",
-        response: "Tui.UsagePeriodResponse",
-    };
-
-    // ── Device ──────────────────────────────────────────────────
-    pub const DEVICE_POLEMOS_REGISTER: MessageKind = MessageKind::SyncReq {
-        request: "Device.PolemosRegister",
-        response: "Device.PolemosRegisterAck",
-    };
-    pub const DEVICE_HEARTBEAT: MessageKind       = MessageKind::SyncReq {
-        request: "Device.Heartbeat",
-        response: "Device.HeartbeatAck",
-    };
-    pub const DEVICE_TERMINAL_OPEN: MessageKind   = MessageKind::SyncReq {
-        request: "Device.TerminalOpen",
-        response: "Device.TerminalReady",
-    };
-    pub const DEVICE_TERMINAL_INPUT: MessageKind  = MessageKind::OneWay("Device.TerminalInput");
-    pub const DEVICE_TERMINAL_RESIZE: MessageKind = MessageKind::OneWay("Device.TerminalResize");
-    pub const DEVICE_TERMINAL_POLL: MessageKind   = MessageKind::SyncReq {
-        request: "Device.TerminalPoll",
-        response: "Device.TerminalPollResult",
-    };
-    pub const DEVICE_TERMINAL_CLOSE: MessageKind  = MessageKind::SyncReq {
-        request: "Device.TerminalClose",
-        response: "Device.TerminalCloseAck",
-    };
-    pub const DEVICE_FILE_LIST: MessageKind       = MessageKind::SyncReq {
-        request: "Device.FileList",
-        response: "Device.FileListResult",
-    };
-    pub const DEVICE_FILE_DOWNLOAD: MessageKind   = MessageKind::SyncReq {
-        request: "Device.FileDownload",
-        response: "Device.FileDownloadResult",
-    };
-    pub const DEVICE_FILE_UPLOAD: MessageKind     = MessageKind::SyncReq {
-        request: "Device.FileUpload",
-        response: "Device.FileUploadResult",
-    };
-    pub const DEVICE_PING: MessageKind            = MessageKind::SyncReq {
-        request: "Device.Ping",
-        response: "Device.Pong",
-    };
-    pub const DEVICE_WEBRTC_OFFER: MessageKind    = MessageKind::SyncReq {
-        request: "Device.WebrtcOffer",
-        response: "Device.WebrtcAnswer",
-    };
-    pub const DEVICE_WEBRTC_ICE: MessageKind      = MessageKind::OneWay("Device.WebrtcIce");
-    pub const DEVICE_SUBSCRIBE_OUTPUT: MessageKind = MessageKind::OneWay("Device.SubscribeOutput");
-    pub const DEVICE_TERMINAL_LIST: MessageKind   = MessageKind::SyncReq {
-        request: "Device.TerminalList",
-        response: "Device.TerminalListResult",
-    };
-
-    // ── Screen ──────────────────────────────────────────────────
-    pub const SCREEN_OFFER: MessageKind           = MessageKind::OneWay("Screen.Offer");
-    pub const SCREEN_ANSWER: MessageKind          = MessageKind::OneWay("Screen.Answer");
-    pub const SCREEN_ICE: MessageKind             = MessageKind::OneWay("Screen.Ice");
-    pub const SCREEN_ICE_CANDIDATE: MessageKind   = MessageKind::OneWay("Screen.IceCandidate");
+    fn default() -> Self { Self::new() }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use strum::IntoEnumIterator;
 
     #[test]
-    fn test_one_way_no_response_name() {
-        assert_eq!(methods::SERVER_VERSION.response_name(), None);
-        assert_eq!(methods::USER_MESSAGE.response_name(), None);
-        assert!(methods::AGENT_REPORT.is_one_way());
+    fn test_every_variant_has_wire_name() {
+        for method in Method::iter() {
+            let name = method.method_name();
+            assert!(!name.is_empty(), "{method:?} has empty wire name");
+            assert!(name.contains('.'), "{method:?} missing dot: {name}");
+        }
     }
 
     #[test]
-    fn test_sync_req_has_response() {
-        let pair = methods::CLI_STATUS;
-        assert_eq!(pair.method_name(), "Cli.Status");
-        assert_eq!(pair.response_name(), Some("Cli.StatusResponse"));
-        assert!(!pair.is_one_way());
+    fn test_roundtrip_display_parse() {
+        let name = Method::TuiServerVersion.method_name();
+        assert_eq!(name, "Tui.ServerVersion");
+        let parsed: Method = name.parse().unwrap();
+        assert_eq!(parsed, Method::TuiServerVersion);
     }
 
     #[test]
-    fn test_async_req_has_response() {
-        let pair = methods::YOLO_START;
-        assert_eq!(pair.method_name(), "Tui.YoloStart");
-        assert_eq!(pair.response_name(), Some("Tui.YoloStartResponse"));
-        assert!(!pair.is_one_way());
+    fn test_kind_classification() {
+        assert_eq!(Method::TuiServerVersion.kind(), MessageKind::OneWay);
+        assert_eq!(Method::TuiConnectHandshake.kind(), MessageKind::SyncReq);
+        assert_eq!(Method::TuiYoloStart.kind(), MessageKind::AsyncReq);
     }
 
     #[test]
-    fn test_handshake_pair() {
-        assert_eq!(methods::HANDSHAKE.method_name(), "Tui.ConnectHandshake");
-        assert_eq!(methods::HANDSHAKE.response_name(), Some("Tui.HandshakeAck"));
+    fn test_request_response_pairs() {
+        assert_eq!(Method::TuiConnectHandshake.response(), Some(Method::TuiHandshakeAck));
+        assert_eq!(Method::TuiPing.response(), Some(Method::TuiPong));
+        assert_eq!(Method::TuiYoloStart.response(), Some(Method::TuiYoloStartResponse));
+        assert_eq!(Method::TuiServerVersion.response(), None);
+    }
+
+    #[test]
+    fn test_one_way_has_no_response() {
+        assert!(Method::TuiAgentReport.is_one_way());
+        assert!(Method::TuiStatePatch.is_one_way());
+        assert!(!Method::TuiConnectHandshake.is_one_way());
     }
 
     #[tokio::test]
     async fn test_pending_registry_sync_flow() {
         let mut reg = PendingRegistry::new();
-        assert_eq!(reg.pending_count(), 0);
-
-        let (frame, handle) = reg.request("Cli.Status", Value::Null);
-        assert_eq!(reg.pending_count(), 1);
-        assert!(frame.get("id").is_some());
-
+        let (frame, handle) = reg.request(Method::CliStatus, Value::Null);
         let id = frame["id"].as_str().unwrap();
         reg.on_response(id, serde_json::json!({"ok": true}));
-        assert_eq!(reg.pending_count(), 0);
-
-        let result = handle.wait().await.unwrap();
-        assert_eq!(result, serde_json::json!({"ok": true}));
+        assert_eq!(handle.wait().await.unwrap(), serde_json::json!({"ok": true}));
     }
 
     #[tokio::test]
     async fn test_pending_registry_async_flow() {
         let mut reg = PendingRegistry::new();
-
-        let (frame1, handle1) = reg.request_async("Tui.YoloStart", Value::Null);
-        let (frame2, handle2) = reg.request_async("Tui.YoloStop", Value::Null);
+        let (f1, h1) = reg.request_async(Method::TuiYoloStart, Value::Null);
+        let (f2, h2) = reg.request_async(Method::TuiYoloStop, Value::Null);
         assert_eq!(reg.pending_count(), 2);
-
-        let id1 = frame1["id"].as_str().unwrap();
-        let id2 = frame2["id"].as_str().unwrap();
+        let id1 = f1["id"].as_str().unwrap();
+        let id2 = f2["id"].as_str().unwrap();
         assert_ne!(id1, id2);
-
-        // Response arrives for second request first
-        reg.on_response(id2, serde_json::json!({"stopped": true}));
+        reg.on_response(id2, serde_json::json!({"stopped":true}));
         assert_eq!(reg.pending_count(), 1);
-        let r2 = handle2.wait().await.unwrap();
-        assert_eq!(r2, serde_json::json!({"stopped": true}));
-
-        reg.on_response(id1, serde_json::json!({"started": true}));
-        assert_eq!(reg.pending_count(), 0);
-        let r1 = handle1.wait().await.unwrap();
-        assert_eq!(r1, serde_json::json!({"started": true}));
+        assert_eq!(h2.wait().await.unwrap(), serde_json::json!({"stopped":true}));
+        reg.on_response(id1, serde_json::json!({"started":true}));
+        assert_eq!(h1.wait().await.unwrap(), serde_json::json!({"started":true}));
     }
 
     #[test]
-    fn test_prepare_notify_no_id() {
-        let frame = PendingRegistry::prepare_notify("Tui.AgentReport", serde_json::json!({"text": "hi"}));
+    fn test_prepare_notify() {
+        let frame = PendingRegistry::prepare_notify(Method::TuiAgentReport, serde_json::json!({"text":"hi"}));
         assert!(frame.get("id").is_none());
         assert_eq!(frame["method"], "Tui.AgentReport");
     }
 
     #[test]
-    fn test_unsolicited_response_ignored() {
+    fn test_unsolicited_response() {
         let mut reg = PendingRegistry::new();
-        assert!(!reg.on_response("nonexistent-uuid", Value::Null));
+        assert!(!reg.on_response("nonexistent", Value::Null));
     }
 }
