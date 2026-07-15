@@ -85,6 +85,11 @@ pub struct StackConfig {
     /// Optional host directory holding the entelecheia config; bind-mounted
     /// read-write into `/home/entelecheia/.config/entelecheia`.
     pub config_dir: Option<PathBuf>,
+    /// Optional host directory containing the celestia monorepo (all project
+    /// repositories). When set, bind-mounts as `/celestia` (read-only) into
+    /// the scepter container so agents can read PLAN.md / source files and
+    /// iterate on project code.
+    pub host_repo_root: Option<PathBuf>,
     /// Network mode: None (default) uses the `entelecheia-network` bridge;
     /// `Some("host")` uses host networking (no port mapping, useful when the
     /// container runtime's bridge network is unavailable, e.g. podman+nftables).
@@ -111,6 +116,7 @@ impl Default for StackConfig {
             model_cache_dir: None,
             workspace_dir: None,
             config_dir: Some(config_dir),
+            host_repo_root: None,
             network_mode: None,
         }
     }
@@ -333,6 +339,16 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         volumes.push(VolumeMount::rw(
             dir.to_string_lossy(),
             "/home/entelecheia/.config/entelecheia",
+        ));
+    }
+    if let Some(ref repo_root) = cfg.host_repo_root {
+        info!(
+            path = %repo_root.display(),
+            "bind-mounting celestia monorepo into scepter container"
+        );
+        volumes.push(VolumeMount::ro(
+            repo_root.to_string_lossy(),
+            "/celestia",
         ));
     }
     if let Some(ref dir) = cfg.model_cache_dir {
