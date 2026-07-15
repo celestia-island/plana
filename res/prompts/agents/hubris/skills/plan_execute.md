@@ -7,6 +7,7 @@ execution_mode = "write"
 must_touch_next_action = false
 location = "cosmos"
 must_use_at_least_once = ["hubris::report"]
+role = "coordinator"
 
 [description]
 en = "Implement and Execute: draft code, apply changes via file I/O and host commands, track progress, handle failures."
