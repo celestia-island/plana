@@ -1,0 +1,11 @@
+[query_dialog]
+title = "Запрос"
+source_label = "Источник"
+select_reply = "Выберите Ответить"
+custom_reply = "Пользовательский ответ"
+custom_input = "Пользовательский ввод"
+input_placeholder = "Подсказка ввода"
+enter_confirm_selection = "Подтвердить выбор"
+enter_send_reply = "Отправить ответ"
+tab_switch_input = "Переключить ввод"
+tab_switch_option = "Переключить вариант"

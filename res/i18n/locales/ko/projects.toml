@@ -1,0 +1,13 @@
+[projects]
+panel_title = "프로젝트"
+search_placeholder = "프로젝트 검색..."
+search_title = "검색"
+no_projects = "프로젝트 없음"
+create_new = "새로 만들기"
+last_accessed = "마지막 접속"
+item_count = "항목"
+just_now = "방금"
+hint_navigate = "탐색"
+hint_select = "선택"
+hint_paste = "붙여넣기"
+hint_close = "닫기"

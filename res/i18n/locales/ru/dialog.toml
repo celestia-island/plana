@@ -1,0 +1,11 @@
+[dialog]
+confirm = "Подтвердить"
+cancel = "Отмена"
+switch_focus = "Переключить фокус"
+select = "Выбрать"
+enter_confirm = "Подтвердить"
+esc_cancel = "Отмена"
+tab_switch = "Переключить"
+up_down_select = "Вверх/Вниз для выбора"
+up_down_navigate = "Вверх/Вниз для навигации"
+notification_ending = " [ending]"

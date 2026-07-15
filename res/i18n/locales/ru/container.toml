@@ -1,0 +1,8 @@
+[container]
+status_connected = "Подключено"
+status_running = "Выполняется"
+status_starting = "Запуск"
+status_stopped = "Остановлено"
+status_unhealthy = "Неработоспособен"
+status_not_exists = "Не существует"
+status_error = "Ошибка"

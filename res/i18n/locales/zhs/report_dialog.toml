@@ -1,0 +1,13 @@
+[report_dialog]
+title = "报告"
+type_label = "类型"
+type_report = "报告"
+type_query = "询问"
+source_label = "来源"
+time_label = "时间"
+title_label = "标题"
+content_label = "内容"
+reply_label = "回复"
+seconds_ago = "{} 秒前"
+minutes_ago = "{} 分钟前"
+hours_ago = "{} 小时前"

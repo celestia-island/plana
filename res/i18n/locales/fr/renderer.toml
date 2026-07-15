@@ -1,0 +1,4 @@
+[renderer]
+hint = "Indice"
+waiting_for_input = "En attente de saisie"
+all_tasks_completed = "Toutes les tâches sont terminées"

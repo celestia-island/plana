@@ -1,0 +1,4 @@
+[report]
+no_reports = "Нет отчётов"
+pending_suffix = "В ожидании"
+pending_reply = "Ожидается ответ"

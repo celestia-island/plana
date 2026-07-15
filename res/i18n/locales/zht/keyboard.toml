@@ -1,0 +1,9 @@
+[keyboard]
+exit_confirm_title = "退出 確認"
+exit_confirm_message = "您確定要退出嗎？"
+execute_skill = "執行技能"
+user_prompt = "使用者提示"
+description = "描述"
+unknown_command_title = "未知指令"
+unknown_command_message = "無法識別該指令，輸入 /help 查看可用指令"
+exit_progress_message = "正在退出..."
