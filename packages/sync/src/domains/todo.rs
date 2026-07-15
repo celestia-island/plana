@@ -17,20 +17,19 @@ use crate::{PatchOp, ScopeKey, StateTree};
 /// 若数组为空则删除 `state.todo` 键。
 pub async fn upsert_todo(tree: &StateTree, tree_nodes: &[Value]) {
     if tree_nodes.is_empty() {
-        tree.write(PatchOp::del("state.todo".into())).await;
+        tree.write(PatchOp::del("state.todo")).await;
     } else {
-        let value = Value::Array(tree_nodes.to_vec());
-        tree.write(PatchOp::Replace {
-            path: "state.todo".into(),
-            value,
-        })
+        tree.write(PatchOp::replace(
+            "state.todo",
+            Value::Array(tree_nodes.to_vec()),
+        ))
         .await;
     }
 }
 
 /// 删除整个 todo 树（dev 工具用，或 workspace 清空时）。
 pub async fn remove_todo(tree: &StateTree) {
-    tree.write(PatchOp::del("state.todo".into())).await;
+    tree.write(PatchOp::del("state.todo")).await;
 }
 
 /// 首次访问该 scope 的树时的懒载入。todo 数据由 scepter 推送填充，
