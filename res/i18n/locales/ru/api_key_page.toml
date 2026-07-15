@@ -1,0 +1,12 @@
+[api_key_page]
+configure_endpoint = "Настроить Endpoint"
+endpoint_address = "Адрес Endpoint"
+api_endpoint = "API Endpoint"
+openai_compatible = "Совместимый с OpenAI"
+anthropic_compatible = "Совместимый с Anthropic"
+gemini_compatible = "Совместимый с Gemini"
+hint_paste = "Вставить"
+hint_select_all = "Выбрать все"
+hint_save = "Сохранить"
+hint_cancel = "Отмена"
+hint_switch = "Переключить"

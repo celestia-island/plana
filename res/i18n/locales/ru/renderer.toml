@@ -1,0 +1,4 @@
+[renderer]
+hint = "Подсказка"
+waiting_for_input = "Ожидание ввода"
+all_tasks_completed = "Все задачи завершены"

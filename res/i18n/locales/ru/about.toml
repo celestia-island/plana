@@ -1,0 +1,11 @@
+[about]
+title = "О программе"
+version = "Версия"
+license_type = "Тип лицензии"
+section_license = "Лицензия"
+section_cla = "Соглашение о лицензии участника"
+section_code_of_conduct = "Кодекс поведения"
+section_security = "Политика безопасности"
+not_available = "Подробные документы протокола недоступны. Установите ARONA_ROOT при сборке для включения."
+hint_navigate = "Навигация"
+hint_close = "Закрыть"

@@ -1,0 +1,28 @@
+id: nodejs-lsp
+display_name: "Node.js/TypeScript LSP (typescript-language-server)"
+source_image: "node:22-alpine"
+source_image_is_alpine: true
+binary_paths:
+  - /usr/local/bin
+  - /usr/local/lib/node_modules
+available_tools:
+  tsc: "tsc --version"
+  typescript-language-server: "typescript-language-server --version"
+env:
+  PATH_PREFIX: /usr/local/bin
+  NODE_PATH: /usr/local/lib/node_modules
+supported_languages:
+  - javascript
+  - typescript
+verify:
+  - "typescript-language-server --version"
+requires_network: true
+lsp_servers:
+  - language: javascript
+    cmd:
+      - typescript-language-server
+      - --stdio
+  - language: typescript
+    cmd:
+      - typescript-language-server
+      - --stdio

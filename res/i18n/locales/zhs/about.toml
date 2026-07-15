@@ -1,0 +1,11 @@
+[about]
+title = "关于"
+version = "版本"
+license_type = "许可证类型"
+section_license = "开源协议"
+section_cla = "贡献者许可协议"
+section_code_of_conduct = "行为准则"
+section_security = "安全策略"
+not_available = "详细的协议文档不可用。请在构建时设置 ARONA_ROOT 环境变量以启用。"
+hint_navigate = "导航"
+hint_close = "关闭"

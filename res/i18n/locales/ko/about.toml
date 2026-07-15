@@ -1,0 +1,11 @@
+[about]
+title = "정보"
+version = "버전"
+license_type = "라이선스 유형"
+section_license = "라이선스"
+section_cla = "기여자 라이선스 계약"
+section_code_of_conduct = "행동 강령"
+section_security = "보안 정책"
+not_available = "상세 프로토콜 문서를 사용할 수 없습니다. 빌드 시 ARONA_ROOT를 설정하여 활성화하세요."
+hint_navigate = "탐색"
+hint_close = "닫기"
