@@ -269,6 +269,50 @@ prepare_workspace() {
     c_ok "  Logs:     $LOG_DIR"
 }
 
+# ── Step 7: Write instance discovery endpoint ───────────────────────────────
+write_instance_toml() {
+    c_step "Step 7: Writing instance discovery endpoint"
+
+    local instance_id="${CELESTIA_INSTANCE_ID:-}"
+    if [[ -z "$instance_id" ]]; then
+        # Fallback: try to read from evernight config
+        local ever_config="${HOME}/.config/evernight/config.toml"
+        if [[ -f "$ever_config" ]]; then
+            instance_id=$(grep -oP '^\s*id\s*=\s*\K\d+' "$ever_config" 2>/dev/null || true)
+        fi
+    fi
+    if [[ -z "$instance_id" ]]; then
+        # Last resort: generate a random ID
+        instance_id=$((RANDOM % 1000))
+        c_warn "No CELESTIA_INSTANCE_ID set — generated random id=${instance_id}"
+    fi
+
+    local instance_name
+    instance_name=$(printf "celestia-%03d" "$instance_id")
+    local scepter_port=$((8424 + instance_id * 100))
+
+    local config_dir="${HOME}/.config/celestia"
+    mkdir -p "$config_dir"
+
+    cat > "${config_dir}/instance.toml" <<TOML
+[instance]
+id = ${instance_id}
+name = "${instance_name}"
+
+[scepter]
+host = "localhost"
+port = ${scepter_port}
+health_url = "http://localhost:${scepter_port}/health"
+
+[projects]
+root = "${ENTELECHEIA_WORKDIR}"
+mounted = ["entelecheia", "evernight", "shittim-chest", "arona", "noa", "scriptum"]
+TOML
+
+    c_ok "Wrote ${config_dir}/instance.toml"
+    c_ok "  Instance: ${instance_name}  (id=${instance_id}, port=${scepter_port})"
+}
+
 # ── Summary ─────────────────────────────────────────────────────────────────
 show_manifest() {
     local sep
@@ -310,4 +354,5 @@ configure_docker_mirrors
 verify_fuse_overlayfs
 pull_images
 prepare_workspace
+write_instance_toml
 show_manifest
