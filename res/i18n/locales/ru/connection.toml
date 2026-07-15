@@ -1,0 +1,6 @@
+[connection]
+status_disconnected = "Отключено"
+status_connecting = "Подключение"
+status_connected = "Подключено"
+status_reconnecting = "Повторное подключение"
+status_offline = "Офлайн"

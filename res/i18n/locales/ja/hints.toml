@@ -1,0 +1,4 @@
+[hints]
+select_platform = "プラットフォームの選択"
+select_skill = "スキル選択"
+select_tool = "ツールを選択"

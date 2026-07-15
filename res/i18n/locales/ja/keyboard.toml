@@ -1,0 +1,9 @@
+[keyboard]
+exit_confirm_title = "終了確認"
+exit_confirm_message = "終了してもよろしいですか?"
+execute_skill = "スキルを実行する"
+user_prompt = "ユーザープロンプト"
+description = "説明"
+unknown_command_title = "不明なコマンド"
+unknown_command_message = "コマンドが認識されません。/help で利用可能なコマンドを確認できます。"
+exit_progress_message = "終了しています..."

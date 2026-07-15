@@ -1,0 +1,11 @@
+[query_dialog]
+title = "詢問"
+source_label = "來源"
+select_reply = "選擇回覆"
+custom_reply = "自訂回覆"
+custom_input = "自訂輸入"
+input_placeholder = "輸入佔位符"
+enter_confirm_selection = "確認選擇"
+enter_send_reply = "傳送回覆"
+tab_switch_input = "切換輸入"
+tab_switch_option = "切換選項"

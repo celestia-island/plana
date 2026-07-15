@@ -57,6 +57,6 @@ just fmt-check
 
 ## Documentation
 
-Architecture, design, and guides live at [docs.celestia.world/en/arona](https://github.com/celestia-island/docs.celestia.world/tree/master/docs/en).
+Architecture, design, and guides live at [docs.celestia.world](https://github.com/celestia-island/docs.celestia.world/tree/master/docs/en/guides/platforms).
 
 Source: [arona](https://github.com/celestia-island/arona).

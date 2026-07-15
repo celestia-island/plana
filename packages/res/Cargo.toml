@@ -1,0 +1,25 @@
+[package]
+name = "_res"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+# Core language and utilities
+anyhow = { workspace = true }
+
+# Data and serialization
+serde = { workspace = true }
+toml = { workspace = true }
+
+# Caching and concurrency
+parking_lot = { workspace = true }
+
+# System and utilities
+include_dir = { workspace = true }
+sys-locale = { workspace = true }
+
+[build-dependencies]
+toml = { workspace = true }

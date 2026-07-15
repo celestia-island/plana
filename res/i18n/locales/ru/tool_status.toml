@@ -1,0 +1,4 @@
+[tool_status]
+enabled = "Включено"
+disabled = "Отключено"
+auto = "Авто"

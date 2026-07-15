@@ -1,0 +1,11 @@
+[dialog]
+confirm = "確認"
+cancel = "キャンセル"
+switch_focus = "フォーカスの切り替え"
+select = "選択"
+enter_confirm = "確定"
+esc_cancel = "キャンセル"
+tab_switch = "切り替え"
+up_down_select = "上/下で選択"
+up_down_navigate = "上/下で移動"
+notification_ending = " [ending]"

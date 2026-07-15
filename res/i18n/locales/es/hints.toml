@@ -1,0 +1,4 @@
+[hints]
+select_platform = "Seleccionar plataforma"
+select_skill = "Seleccionar habilidad"
+select_tool = "Seleccionar herramienta"

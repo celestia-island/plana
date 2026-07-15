@@ -1,0 +1,5 @@
+[common]
+close = "关闭"
+navigate = "导航"
+select = "选择"
+frontmatter = "前置元数据"

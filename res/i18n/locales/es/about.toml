@@ -1,0 +1,11 @@
+[about]
+title = "Acerca de"
+version = "Versión"
+license_type = "Tipo de licencia"
+section_license = "Licencia"
+section_cla = "Acuerdo de licencia de colaborador"
+section_code_of_conduct = "Código de conducta"
+section_security = "Política de seguridad"
+not_available = "Los documentos de protocolo detallados no están disponibles. Establezca ARONA_ROOT en la compilación para habilitarlos."
+hint_navigate = "Navegar"
+hint_close = "Cerrar"

@@ -1,0 +1,12 @@
+[api_key_page]
+configure_endpoint = "設定端點"
+endpoint_address = "端點地址"
+api_endpoint = "API 端點"
+openai_compatible = "OpenAI 相容"
+anthropic_compatible = "Anthropic 相容"
+gemini_compatible = "Gemini 相容"
+hint_paste = "貼上"
+hint_select_all = "全選"
+hint_save = "儲存"
+hint_cancel = "取消"
+hint_switch = "切換"
