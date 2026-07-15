@@ -56,6 +56,34 @@ would re-discover the same "pending" item because nobody had marked it done.
 This skill closes that gap by giving the coordinator an internal mechanism
 to write back status updates.
 
+## State machine
+
+The Status column is a strict 5-state machine. Transitions allowed by this skill:
+
+| From      | To          | Notes |
+| --------- | ----------- | ----- |
+| `pending` | `in_progress` | First pickup |
+| `pending` | `blocked`    | Discovered unworkable as-is |
+| `pending` | `superseded` | Replaced by another row (rare; usually a human edit) |
+| `in_progress` | `done`    | Acceptance criteria fully met |
+| `in_progress` | `blocked` | Hit a blocker mid-flight |
+| `in_progress` | `pending` | Decomposed / handed back to queue |
+| `partial` | `done`    | **Allowed.** Partial row went end-to-end, residual items de-scoped or moved into a follow-up row |
+| `partial` | `in_progress` | **Allowed.** Residual items reopened as new in-flight work |
+| `partial` | `blocked` | Residual items cannot be resolved in this session |
+| `*`       | `blocked`    | Wildcard: any state may go to `blocked` when an external blocker surfaces |
+| `done`    | **rejected** | `done` is terminal for the agent. Only a human operator (or a follow-up row with a new ID) may reopen it. The skill must abort with `report({ error: "done is terminal" })`. |
+
+**Why `partial → done` is allowed but `done → ...` is rejected**: a `partial` row is
+still in-flight by definition (it has outstanding items). A `done` row is the
+agent's attestation that the acceptance criteria are fully met, so any
+reopening must be an explicit human decision (visible in the git log).
+
+**Why no `pending → done` jump**: every commit has a "picked up" step, even
+if the chain finished in one shot. The intermediate `in_progress` (or `partial`)
+state is part of the audit trail. The skill MUST refuse a `pending → done`
+direct transition.
+
 ## SoP
 
 **You are in WRITE mode.** This skill modifies `architecture.md`. Use
@@ -176,3 +204,50 @@ Output: No file modification. Error surfaced.
 ```
 
 > Return type and IEPL enforcement: @system/return-type-convention
+
+### Mark IB-03 as partial → done (de-scoped residual)
+
+```text
+Input:  backlog_id = "IB-03", new_status = "done", notes_append = "Task-level acceptance criteria de-scoped to IB-15 (follow-up row). Build-level cargo check + skill-level verification sufficient for v0.2.0."
+Pre-state: row currently shows **partial**.
+Steps:
+  1. file_read('docs/en/designs/architecture.md') → full doc.
+  2. Find row: | IB-03 | `verify_acceptance_criteria` hook namespace | **partial** | ...
+  3. Validate transition: partial → done is allowed (per State machine).
+  4. Replace **partial** → **done**.
+  5. Append notes referencing the de-scoped follow-up row.
+  6. file_write('docs/en/designs/architecture.md', <updated>).
+  7. report({ text: JSON.stringify({ backlog_id: 'IB-03', previous_status: 'partial', new_status: 'done', transition: 'partial→done', residual_de_scoped_to: 'IB-15' }) }).
+Output: architecture.md IB-03 row now shows **done**; IB-15 row created by a human operator (or follow-up automation) holds the residual.
+```
+
+### Reopen IB-03 partial → in_progress (residual items reprocessed)
+
+```text
+Input:  backlog_id = "IB-03", new_status = "in_progress", notes_append = "Residual task-level criteria reopened 2026-07-16: integration test stub needs real LLM provider."
+Pre-state: row currently shows **partial**.
+Steps:
+  1. file_read → full doc.
+  2. Find row: | IB-03 | ... | **partial** | ...
+  3. Validate transition: partial → in_progress is allowed.
+  4. Replace **partial** → **in_progress**.
+  5. Append notes explaining what is being reprocessed.
+  6. file_write → persist.
+  7. report({ text: JSON.stringify({ backlog_id: 'IB-03', previous_status: 'partial', new_status: 'in_progress', transition: 'partial→in_progress' }) }).
+Output: architecture.md IB-03 row now shows **in_progress**; the residual work enters the active queue again.
+```
+
+### Refuse pending → done (illegal direct transition)
+
+```text
+Input:  backlog_id = "IB-07", new_status = "done"
+Pre-state: row currently shows **pending**.
+Steps:
+  1. file_read → full doc.
+  2. Find row: | IB-07 | L2 domain agent test coverage | pending | ...
+  3. Validate transition: pending → done is REJECTED (per State machine).
+  4. DO NOT modify the file.
+  5. report({ text: JSON.stringify({ error: "illegal transition", backlog_id: 'IB-07', from: 'pending', to: 'done', reason: "every commit must pass through in_progress or partial for audit" }) }).
+  6. Stop.
+Output: No file modification. The coordinator is expected to retry with new_status = "in_progress" (or "partial" if the work was done in one shot) before requesting "done".
+```
