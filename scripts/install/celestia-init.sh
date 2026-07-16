@@ -105,6 +105,13 @@ apk add podman podman-docker curl bash python3 py3-pip shadow fuse-overlayfs
 c_ok "podman $(podman --version)"
 mount -t cgroup2 cgroup2 /sys/fs/cgroup 2>/dev/null || true
 
+# Start podman daemon so subsequent steps (mirror test, instance.toml) work.
+# In WSL2 there's no systemd/OpenRC, so we start it as a background service.
+mkdir -p /var/run/podman
+podman system service --time=0 unix:///var/run/podman/podman.sock &
+sleep 2
+c_ok "podman daemon started"
+
 # ── Step 3: Configure Docker registry mirrors ─────────────────────────────────
 
 c_step "Step 3: Configuring Docker registry mirrors"

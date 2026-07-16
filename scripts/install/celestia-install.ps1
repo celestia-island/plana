@@ -296,37 +296,29 @@ if [[ ! -e "`$LINK" ]]; then ln -s "`$SRC" "`$LINK"; echo "LINKED"; else echo "E
 function Build-EntelecheiaInWSL {
     param([string]$WslSourcePath)
     if ($SkipBuild) { Write-Info "Skipping entelecheia build (-SkipBuild)"; return $false }
-    Write-Step "Building entelecheia scepter (release) in WSL"
-    $dir = "$WslSourcePath/entelecheia"
-    if (-not (Test-WSLCommand "rustc")) {
-        Write-Info "Installing Rust in WSL via rustup..."
-        Invoke-WSL -Command "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y" -NoProfile | Out-Null
-    }
+    Write-Step "Building entelecheia scepter container via podman"
+    Write-Info "This will take 10-30 minutes on first run (downloading Rust + deps)."
+    Write-Info "Subsequent builds use Docker layer cache — much faster."
     $r = Invoke-WSL -Command @"
-set -euo pipefail
-source "`$HOME/.cargo/env" 2>/dev/null || true
-cd "$dir"
-cargo build --release -p scepter 2>&1 && echo BUILD_OK || echo BUILD_FAILED
+set -eu
+cd "$WslSourcePath"
+podman build -t entelecheia:latest \
+  --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" \
+  --build-arg http_proxy="" --build-arg https_proxy="" \
+  --build-arg FEATURES="scepter/embedded-db" \
+  -f entelecheia/Dockerfile . 2>&1 && echo BUILD_OK || echo BUILD_FAILED
 "@ -NoProfile
-    if ($r -match "BUILD_OK") { Write-Ok "scepter built (release)"; return $true }
-    Write-Err "scepter build failed. Run: wsl bash -lc 'cd $dir && cargo build --release -p scepter'"
+    if ($r -match "BUILD_OK") { Write-Ok "scepter container image built: entelecheia:latest"; return $true }
+    Write-Err "scepter container build failed."
+    Write-Err "Check logs or run manually: wsl -d $($script:WSLDistro) podman build -t entelecheia:latest -f entelecheia/Dockerfile <source-root>"
     return $false
 }
 
 function Build-EvernightInWSL {
     param([string]$WslSourcePath)
-    if ($SkipBuild) { Write-Info "Skipping evernight build (-SkipBuild)"; return $false }
-    Write-Step "Building evernight (release) in WSL"
-    $dir = "$WslSourcePath/evernight"
-    $r = Invoke-WSL -Command @"
-set -euo pipefail
-source "`$HOME/.cargo/env" 2>/dev/null || true
-cd "$dir"
-cargo build --release -p evernight 2>&1 && echo BUILD_OK || echo BUILD_FAILED
-"@ -NoProfile
-    if ($r -match "BUILD_OK") { Write-Ok "evernight built (release)"; return $true }
-    Write-Err "evernight build failed. Run: wsl bash -lc 'cd $dir && cargo build --release -p evernight'"
-    return $false
+    Write-Info "evernight build is handled by its own Dockerfile or cargo build."
+    Write-Info "The evernight binary is not required for basic scepter operation."
+    return $true
 }
 
 function Set-EntelecheiaEnv {
@@ -362,29 +354,36 @@ function Start-PostgresInWSL {
     Write-Step "Starting PostgreSQL via docker compose"
     $dir = "$WslSourcePath/entelecheia"
     $r = Invoke-WSL -Command @"
-set -euo pipefail
-cd "$dir"
-if [[ -f tests/docker/docker-compose.e2e.yml ]]; then COMPOSE_FILE="tests/docker/docker-compose.e2e.yml"
-elif [[ -f docker-compose.yml ]]; then COMPOSE_FILE="docker-compose.yml"
-else echo "NO_COMPOSE"; exit 0; fi
-docker compose -f "`$COMPOSE_FILE" up -d postgres 2>&1 || \
-    docker-compose -f "`$COMPOSE_FILE" up -d postgres 2>&1 || { echo "COMPOSE_FAILED"; exit 1; }
-echo "Waiting for PostgreSQL..."
-for i in `$(seq 1 30); do
-    if docker ps --format '{{.Names}} {{.Status}}' | grep -i postgres | grep -qi healthy; then echo "PG_READY"; exit 0; fi
-    if docker exec "`$(docker ps --filter name=postgres --format '{{.Names}}' | head -1)" pg_isready -U amphoreus 2>/dev/null || \
-       docker exec "`$(docker ps --filter name=postgres --format '{{.Names}}' | head -1)" pg_isready -U entelecheia 2>/dev/null; then
-        echo "PG_READY"; exit 0
-    fi
-    sleep 2
+set -eu
+# Start postgres via podman (no docker compose needed)
+PG_NAME="celestia-pg-\$(hostname | tr -d '\n')"
+if podman ps --format '{{.Names}}' | grep -qF "\$PG_NAME"; then
+  echo "PG_RUNNING"
+  exit 0
+fi
+podman rm -f "\$PG_NAME" 2>/dev/null || true
+podman run -d --name "\$PG_NAME" \
+  -p 5432:5432 \
+  -e POSTGRES_USER=entelecheia \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=entelecheia \
+  docker.io/library/postgres:16-alpine 2>&1 || { echo "PG_FAILED"; exit 1; }
+echo "PG_STARTED"
+for i in \$(seq 1 30); do
+  if podman exec "\$PG_NAME" pg_isready -U entelecheia 2>/dev/null; then
+    echo "PG_READY"
+    exit 0
+  fi
+  sleep 2
 done
 echo "PG_NOT_READY"
 "@ -NoProfile
-    if     ($r -match "NO_COMPOSE")    { Write-Warn "No docker-compose file found — skip postgres start" }
-    elseif ($r -match "PG_READY")      { Write-Ok "PostgreSQL is ready" }
-    elseif ($r -match "PG_NOT_READY")  { Write-Warn "PostgreSQL did not become ready in 60s" }
-    elseif ($r -match "COMPOSE_FAILED"){ Write-Err "docker compose up failed" }
-    else                               { Write-Warn "Postgres start result: $r" }
+    if     ($r -match "PG_RUNNING")     { Write-Ok "PostgreSQL already running" }
+    elseif ($r -match "PG_READY")       { Write-Ok "PostgreSQL is ready (port 5432)" }
+    elseif ($r -match "PG_STARTED")     { Write-Ok "PostgreSQL container started" }
+    elseif ($r -match "PG_NOT_READY")   { Write-Warn "PostgreSQL did not become ready in 60s" }
+    elseif ($r -match "PG_FAILED")      { Write-Err "PostgreSQL container failed to start" }
+    else                                { Write-Warn "Postgres result: $r" }
 }
 
 # ── Phase 4: Build scriptum + shittim-chest on Windows ───────────────────────
@@ -525,30 +524,27 @@ function Install-Shortcuts {
 
 function Start-ScepterInWSL {
     param([string]$WslSourcePath, [bool]$BuildOk)
-    Write-Step "Phase 6: Starting scepter server in WSL"
+    Write-Step "Phase 6: Starting scepter container"
     if (-not $BuildOk) {
-        Write-Warn "scepter was not built — skipping auto-start."
-        Write-Warn "Start manually: wsl -d $($script:WSLDistro) bash -lc 'cd $WslSourcePath/entelecheia && ./target/release/scepter'"
+        Write-Warn "scepter image not built — skipping auto-start."
+        Write-Warn "Start manually after build: wsl -d $($script:WSLDistro) podman run -d --name scepter -p 8424:8080 entelecheia:latest"
         return
     }
     $r = Invoke-WSL -Command @"
-set -euo pipefail
-source "`$HOME/.cargo/env" 2>/dev/null || true
-cd "$WslSourcePath/entelecheia"
-mkdir -p "`$HOME/.local/share/celestia/logs"
-LOG="`$HOME/.local/share/celestia/logs/scepter.log"
-PID_FILE="`$HOME/.local/share/celestia/logs/scepter.pid"
-if [[ -f "`$PID_FILE" ]] && kill -0 "`$(cat "`$PID_FILE")" 2>/dev/null; then
-    echo "ALREADY_RUNNING: `$(cat "`$PID_FILE")"; exit 0
+set -eu
+SNAME="celestia-scepter-\$(hostname | tr -d '\n')"
+if podman ps --format '{{.Names}}' | grep -qF "\$SNAME"; then
+  echo "ALREADY_RUNNING"
+  exit 0
 fi
-nohup ./target/release/scepter >"`$LOG" 2>&1 &
-echo `$! > "`$PID_FILE"; sleep 2
-if kill -0 "`$(cat "`$PID_FILE")" 2>/dev/null; then echo "STARTED: `$(cat "`$PID_FILE")"
-else echo "FAILED"; fi
+podman rm -f "\$SNAME" 2>/dev/null || true
+podman run -d --name "\$SNAME" -p 8424:8080 \
+  -v "\$HOME/.config/celestia:/home/entelecheia/.config/celestia:ro" \
+  entelecheia:latest 2>&1 && echo "STARTED" || echo "FAILED"
 "@ -NoProfile
-    if     ($r -match "ALREADY_RUNNING"){ Write-Ok "scepter already running (pid: $($r -replace '.*ALREADY_RUNNING:\s*',''))" }
-    elseif ($r -match "STARTED")        { Write-Ok "scepter started (pid: $($r -replace '.*STARTED:\s*',''))" }
-    elseif ($r -match "FAILED")         { Write-Err "scepter failed — check ~/.local/share/celestia/logs/scepter.log" }
+    if     ($r -match "ALREADY_RUNNING"){ Write-Ok "scepter container already running" }
+    elseif ($r -match "STARTED")        { Write-Ok "scepter container started — http://localhost:8424/health" }
+    elseif ($r -match "FAILED")         { Write-Err "scepter container failed — check podman logs" }
     else                                { Write-Warn "scepter start result: $r" }
 }
 
@@ -571,9 +567,8 @@ function Show-Summary {
     Write-Host ""
     Write-Host "  Paths:" -ForegroundColor Yellow
     Write-Host "    WSL source:        $WslSourcePath"
-    Write-Host "    WSL symlink:       ~/projects/celestia"
-    Write-Host "    entelecheia/.env:  $WslSourcePath/entelecheia/.env"
-    Write-Host "    scepter log:       ~/.local/share/celestia/logs/scepter.log"
+    Write-Host "    WSL instance:      $($script:WSLDistro) ($($env:LOCALAPPDATA)\celestia\$($script:WSLDistro))"
+    Write-Host "    scepter log:       podman logs celestia-scepter-*"
     Write-Host "    Windows install:   $script:InstallDir"
     Write-Host "    Start Menu group:  $script:StartMenuDir"
     Write-Host ""
@@ -582,15 +577,15 @@ function Show-Summary {
     Write-Host "    PostgreSQL:        localhost:5432 (in WSL2)"
     Write-Host ""
     Write-Host "  How to use:" -ForegroundColor Yellow
-    Write-Host "    • Launch 'Scriptum' from the Start Menu → TUI connects to scepter."
-    Write-Host "    • Launch 'Shittim Chest' from the Start Menu → desktop app / CLI."
-    Write-Host "    • Edit .env:        wsl -d $($script:WSLDistro) nano $WslSourcePath/entelecheia/.env"
-    Write-Host "    • Tail scepter log: wsl -d $($script:WSLDistro) tail -f ~/.local/share/celestia/logs/scepter.log"
+    Write-Host "    • Open browser:    http://localhost:5173 (shittim-chest)"
+    Write-Host "    • Connect scriptum: cd scriptum && cargo run"
+    Write-Host "    • Edit .env:        wsl -d $($script:WSLDistro) vi $WslSourcePath/entelecheia/.env"
+    Write-Host "    • Scepter logs:     wsl -d $($script:WSLDistro) podman logs scepter"
     Write-Host ""
     Write-Host "  Stop / restart:" -ForegroundColor Yellow
-    Write-Host "    Stop scepter:  wsl -d $($script:WSLDistro) bash -lc 'kill `$(cat ~/.local/share/celestia/logs/scepter.pid)'"
-    Write-Host "    Stop postgres: wsl -d $($script:WSLDistro) bash -lc 'cd $WslSourcePath/entelecheia && docker compose -f tests/docker/docker-compose.e2e.yml down'"
-    Write-Host "    Restart all:   re-run this script (idempotent)."
+    Write-Host "    Stop scepter:   wsl -d $($script:WSLDistro) podman stop scepter"
+    Write-Host "    Stop postgres:  wsl -d $($script:WSLDistro) podman stop celestia-pg-*"
+    Write-Host "    Restart all:    re-run this script (idempotent)."
     Write-Host ""; Write-Host $sep
 }
 
