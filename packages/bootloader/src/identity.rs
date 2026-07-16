@@ -7,7 +7,7 @@
 //! path — for evernight that is `~/.config/evernight/config.toml`, for the
 //! entelecheia CLI it is the existing prefix mechanism.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use rand::Rng;
@@ -177,6 +177,82 @@ fn replace_or_insert_instance_section(text: &str, id: u16) -> String {
     out
 }
 
+/// Configuration for writing the endpoint-discovery file
+/// (`~/.config/celestia/instance.toml`). Consumed by shittim-chest WebUI/Tauri,
+/// scriptum CLI, and any other client that needs to auto-discover a running
+/// celestia-XXX instance.
+#[derive(Debug, Clone)]
+pub struct InstanceEndpointConfig {
+    pub id: u16,
+    pub scepter_port: u32,
+    pub repo_root: String,
+    pub mounted_projects: Vec<String>,
+}
+
+/// Write `~/.config/celestia/instance.toml` with scepter endpoint and project
+/// mount information. Returns the path that was written.
+///
+/// Called by:
+/// - `evernight supervise` on startup (inside WSL2/VM instance)
+/// - `celestia-init.sh` on first init
+/// - `celestia-install.ps1` after instance setup
+///
+/// Consumers:
+/// - shittim-chest `useInstanceDiscovery` (Windows reads `\\wsl$\{instance}\...`)
+/// - shittim-chest Tauri desktop (reads local file + cross-validates with evernight config)
+/// - scriptum CLI (reads local `~/.config/celestia/instance.toml`)
+pub fn write_instance_toml(config: &InstanceEndpointConfig) -> Result<PathBuf, anyhow::Error> {
+    let base_dir = dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from("/tmp"));
+    write_instance_toml_at(config, &base_dir)
+}
+
+/// Write instance.toml under a specific config base directory (for testing).
+pub fn write_instance_toml_at(
+    config: &InstanceEndpointConfig,
+    config_base_dir: &Path,
+) -> Result<PathBuf, anyhow::Error> {
+    let toml_path = config_base_dir.join("celestia").join("instance.toml");
+
+    if let Some(parent) = toml_path.parent() {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create {}", parent.display()))?;
+    }
+
+    let name = node_id_for(config.id);
+    let mounted = config
+        .mounted_projects
+        .iter()
+        .map(|p| format!("\"{p}\""))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let content = format!(
+        r#"[instance]
+id = {id}
+name = "{name}"
+
+[scepter]
+host = "localhost"
+port = {port}
+health_url = "http://localhost:{port}/health"
+
+[projects]
+root = "{repo_root}"
+mounted = [{mounted}]
+"#,
+        id = config.id,
+        name = name,
+        port = config.scepter_port,
+        repo_root = config.repo_root,
+        mounted = mounted,
+    );
+
+    std::fs::write(&toml_path, &content)
+        .with_context(|| format!("failed to write {}", toml_path.display()))?;
+
+    Ok(toml_path)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -241,5 +317,73 @@ mod tests {
     #[test]
     fn out_of_range_rejected() {
         assert!(InstanceIdentity::new(1000).is_err());
+    }
+
+    // -- instance_toml tests --
+
+    #[test]
+    fn write_instance_toml_generates_valid_file() {
+        let tmp = tempfile::tempdir().unwrap();
+
+        let config = InstanceEndpointConfig {
+            id: 42,
+            scepter_port: 8424,
+            repo_root: "/celestia".into(),
+            mounted_projects: vec!["entelecheia".into(), "shittim-chest".into(), "arona".into()],
+        };
+
+        let path = write_instance_toml_at(&config, tmp.path()).unwrap();
+        assert!(path.exists());
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains("id = 42"));
+        assert!(content.contains("celestia-042"));
+        assert!(content.contains("host = \"localhost\""));
+        assert!(content.contains("port = 8424"));
+        assert!(content.contains("http://localhost:8424/health"));
+        assert!(content.contains("root = \"/celestia\""));
+        assert!(content.contains("\"entelecheia\", \"shittim-chest\", \"arona\""));
+    }
+
+    #[test]
+    fn write_instance_toml_is_valid_toml() {
+        let tmp = tempfile::tempdir().unwrap();
+
+        let config = InstanceEndpointConfig {
+            id: 7,
+            scepter_port: 8424 + 7 * 100,
+            repo_root: "/home/user/celestia".into(),
+            mounted_projects: vec![],
+        };
+        let path = write_instance_toml_at(&config, tmp.path()).unwrap();
+        let content = std::fs::read_to_string(&path).unwrap();
+        let parsed: toml::Value = toml::from_str(&content).expect("must be valid TOML");
+        assert_eq!(parsed["instance"]["id"].as_integer(), Some(7));
+        assert_eq!(
+            parsed["scepter"]["health_url"].as_str(),
+            Some("http://localhost:9124/health")
+        );
+        assert_eq!(parsed["projects"]["mounted"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn write_instance_toml_port_offset_formula() {
+        let tmp = tempfile::tempdir().unwrap();
+
+        for id in [0u32, 1, 42, 128, 999] {
+            let scepter_port = 8424u32 + id * 100;
+            let config = InstanceEndpointConfig {
+                id: id as u16,
+                scepter_port,
+                repo_root: "/celestia".into(),
+                mounted_projects: vec![],
+            };
+            let path = write_instance_toml_at(&config, tmp.path()).unwrap();
+            let content = std::fs::read_to_string(&path).unwrap();
+            assert!(
+                content.contains(&format!("port = {scepter_port}")),
+                "id={id} should produce port={scepter_port}"
+            );
+        }
     }
 }

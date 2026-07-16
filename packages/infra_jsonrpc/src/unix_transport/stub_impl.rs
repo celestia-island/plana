@@ -14,6 +14,8 @@ use std::path::Path;
 
 use anyhow::{Result, bail};
 
+use crate::types::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
+
 /// Placeholder transport type. Cannot be constructed on non-Unix targets.
 pub struct JsonRpcTransport {
     _private: (),
@@ -53,20 +55,70 @@ pub enum IncomingMessage {
     Response(crate::types::JsonRpcResponse),
 }
 
+fn platform_error() -> anyhow::Error {
+    anyhow::anyhow!(
+        "Unix-domain-socket JSON-RPC transport is not available on this platform \
+         (use the WebSocket transport instead)"
+    )
+}
+
 impl JsonRpcTransport {
     pub async fn connect(_socket_path: &Path) -> Result<Self> {
-        bail!(
-            "Unix-domain-socket JSON-RPC transport is not available on this platform \
-             (use the WebSocket transport instead)"
-        );
+        bail!(platform_error());
+    }
+
+    pub fn split(self) -> (JsonRpcSender, JsonRpcReceiver) {
+        (
+            JsonRpcSender { _private: () },
+            JsonRpcReceiver { _private: () },
+        )
+    }
+
+    pub async fn send(
+        &mut self,
+        _request: &JsonRpcRequest,
+        _policy: TimeoutPolicy,
+    ) -> Result<crate::types::JsonRpcResponse> {
+        bail!(platform_error());
+    }
+
+    pub async fn send_notification(&mut self, _notification: &JsonRpcNotification) -> Result<()> {
+        bail!(platform_error());
+    }
+
+    pub async fn send_response(&mut self, _response: &JsonRpcResponse) -> Result<()> {
+        bail!(platform_error());
+    }
+
+    pub async fn send_raw(&mut self, _text: &str) -> Result<()> {
+        bail!(platform_error());
+    }
+
+    pub async fn receive(&mut self) -> Result<Option<IncomingMessage>> {
+        Ok(None)
+    }
+}
+
+impl JsonRpcSender {
+    pub async fn send_response(&mut self, _response: &JsonRpcResponse) -> Result<()> {
+        bail!(platform_error());
+    }
+
+    pub async fn send_notification(&mut self, _notification: &JsonRpcNotification) -> Result<()> {
+        bail!(platform_error());
+    }
+
+    pub async fn send_request(&mut self, _request: &JsonRpcRequest) -> Result<()> {
+        bail!(platform_error());
     }
 }
 
 impl JsonRpcServer {
     pub async fn bind(_socket_path: &Path) -> Result<Self> {
-        bail!(
-            "Unix-domain-socket JSON-RPC server is not available on this platform \
-             (use the WebSocket transport instead)"
-        );
+        bail!(platform_error());
+    }
+
+    pub async fn accept(&self) -> Result<JsonRpcTransport> {
+        bail!(platform_error());
     }
 }
