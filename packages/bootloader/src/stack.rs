@@ -346,10 +346,7 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
             path = %repo_root.display(),
             "bind-mounting celestia monorepo into scepter container"
         );
-        volumes.push(VolumeMount::ro(
-            repo_root.to_string_lossy(),
-            "/celestia",
-        ));
+        volumes.push(VolumeMount::ro(repo_root.to_string_lossy(), "/celestia"));
     }
     if let Some(ref dir) = cfg.model_cache_dir {
         volumes.push(VolumeMount::ro(dir.to_string_lossy(), "/models"));

@@ -27,7 +27,7 @@ pub mod platform;
 pub mod stack;
 
 pub use identity::{
-    InstanceIdentity, InstanceEndpointConfig, container_prefix_for, generate_instance_id,
+    InstanceEndpointConfig, InstanceIdentity, container_prefix_for, generate_instance_id,
     node_id_for, write_instance_toml, write_instance_toml_at,
 };
 pub use platform::{ServiceInstaller, ServiceSpec, ServiceStatus, default_service_installer};

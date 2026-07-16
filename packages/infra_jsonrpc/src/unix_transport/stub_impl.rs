@@ -68,11 +68,16 @@ impl JsonRpcTransport {
     }
 
     pub fn split(self) -> (JsonRpcSender, JsonRpcReceiver) {
-        (JsonRpcSender { _private: () }, JsonRpcReceiver { _private: () })
+        (
+            JsonRpcSender { _private: () },
+            JsonRpcReceiver { _private: () },
+        )
     }
 
     pub async fn send(
-        &mut self, _request: &JsonRpcRequest, _policy: TimeoutPolicy,
+        &mut self,
+        _request: &JsonRpcRequest,
+        _policy: TimeoutPolicy,
     ) -> Result<crate::types::JsonRpcResponse> {
         bail!(platform_error());
     }

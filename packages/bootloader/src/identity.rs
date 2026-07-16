@@ -363,10 +363,7 @@ mod tests {
             parsed["scepter"]["health_url"].as_str(),
             Some("http://localhost:9124/health")
         );
-        assert_eq!(
-            parsed["projects"]["mounted"].as_array().unwrap().len(),
-            0
-        );
+        assert_eq!(parsed["projects"]["mounted"].as_array().unwrap().len(), 0);
     }
 
     #[test]
