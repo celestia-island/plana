@@ -75,8 +75,12 @@ function Confirm-Prompt {
 function Invoke-WSL {
     param([Parameter(Mandatory)][string]$Command, [switch]$NoProfile)
     $wslArgs = @("-d", $script:WSLDistro)
-    if ($NoProfile) { $wslArgs += @("--", "env", "-i", "bash", "-c", $Command) }
-    else            { $wslArgs += @("--", "bash", "-lc", $Command) }
+    # Alpine uses sh as default shell; bash is installed during init.
+    # Detect which shell is available and use it.
+    $shell = & wsl -d $script:WSLDistro -- sh -c "command -v bash || echo sh" 2>$null | Select-Object -First 1
+    if (-not $shell) { $shell = "sh" }
+    if ($NoProfile) { $wslArgs += @("--", "env", "-i", $shell, "-c", $Command) }
+    else            { $wslArgs += @("--", $shell, "-lc", $Command) }
     return (& wsl @wslArgs 2>&1)
 }
 
