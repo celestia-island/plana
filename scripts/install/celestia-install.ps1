@@ -281,14 +281,12 @@ function Initialize-WslInstance {
 function Set-ProjectSymlinkInWSL {
     param([string]$WslSourcePath)
     Write-Step "Phase 3: Linking source into WSL workspace"
-    $r = Invoke-WSL -Command @"
-set -euo pipefail
-SRC="$WslSourcePath"
-LINK="`$HOME/projects/celestia"
-mkdir -p "`$(dirname "`$LINK")"
-if [[ -L "`$LINK" ]]; then rm -f "`$LINK"; fi
-if [[ ! -e "`$LINK" ]]; then ln -s "`$SRC" "`$LINK"; echo "LINKED"; else echo "EXISTS"; fi
-"@ -NoProfile
+    $r = Invoke-WSL -Command ('set -euo pipefail
+SRC="' + $WslSourcePath + '"
+LINK="$HOME/projects/celestia"
+mkdir -p "$(dirname "$LINK")"
+if [ -L "$LINK" ]; then rm -f "$LINK"; fi
+if [ ! -e "$LINK" ]; then ln -s "$SRC" "$LINK"; echo "LINKED"; else echo "EXISTS"; fi') -NoProfile
     if ($r -match "LINKED") { Write-Ok "Symlink created: ~/projects/celestia -> $WslSourcePath" }
     else                    { Write-Ok "Symlink already exists: ~/projects/celestia" }
 }
@@ -299,15 +297,13 @@ function Build-EntelecheiaInWSL {
     Write-Step "Building entelecheia scepter container via podman"
     Write-Info "This will take 10-30 minutes on first run (downloading Rust + deps)."
     Write-Info "Subsequent builds use Docker layer cache — much faster."
-    $r = Invoke-WSL -Command @"
-set -eu
-cd "$WslSourcePath"
+    $r = Invoke-WSL -Command ('set -eu
+cd "' + $WslSourcePath + '"
 podman build -t entelecheia:latest \
   --build-arg HTTP_PROXY="" --build-arg HTTPS_PROXY="" \
   --build-arg http_proxy="" --build-arg https_proxy="" \
   --build-arg FEATURES="scepter/embedded-db" \
-  -f entelecheia/Dockerfile . 2>&1 && echo BUILD_OK || echo BUILD_FAILED
-"@ -NoProfile
+  -f entelecheia/Dockerfile . 2>&1 && echo BUILD_OK || echo BUILD_FAILED') -NoProfile
     if ($r -match "BUILD_OK") { Write-Ok "scepter container image built: entelecheia:latest"; return $true }
     Write-Err "scepter container build failed."
     Write-Err "Check logs or run manually: wsl -d $($script:WSLDistro) podman build -t entelecheia:latest -f entelecheia/Dockerfile <source-root>"
@@ -324,14 +320,13 @@ function Build-EvernightInWSL {
 function Set-EntelecheiaEnv {
     param([string]$WslSourcePath)
     Write-Step "Ensuring entelecheia/.env exists"
-    $r = Invoke-WSL -Command @"
-set -euo pipefail
-cd "$WslSourcePath/entelecheia"
-if [[ -f .env ]]; then echo "ENV_EXISTS"
-elif [[ -f .env.example.minimal ]]; then cp .env.example.minimal .env; echo "ENV_FROM_MINIMAL"
-elif [[ -f .env.example ]]; then cp .env.example .env; echo "ENV_FROM_EXAMPLE"
+    $r = Invoke-WSL -Command ('set -eu
+cd "' + $WslSourcePath + '/entelecheia"
+if [ -f .env ]; then echo "ENV_EXISTS"
+elif [ -f .env.example.minimal ]; then cp .env.example.minimal .env; echo "ENV_FROM_MINIMAL"
+elif [ -f .env.example ]; then cp .env.example .env; echo "ENV_FROM_EXAMPLE"
 else
-    cat > .env <<'ENVEOF'
+    cat > .env <<ENVEOF
 LLM_API_KEY=sk-your-key-here
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-4o
@@ -340,8 +335,7 @@ SERVER_BIND_ADDRESS=127.0.0.1:8424
 RUST_LOG=info
 ENVEOF
     echo "ENV_MINIMAL_CREATED"
-fi
-"@ -NoProfile
+fi') -NoProfile
     if     ($r -match "ENV_EXISTS")         { Write-Ok ".env already exists" }
     elseif ($r -match "ENV_FROM_MINIMAL")   { Write-Ok ".env created from .env.example.minimal" }
     elseif ($r -match "ENV_FROM_EXAMPLE")   { Write-Ok ".env created from .env.example" }
@@ -351,33 +345,31 @@ fi
 
 function Start-PostgresInWSL {
     param([string]$WslSourcePath)
-    Write-Step "Starting PostgreSQL via docker compose"
-    $dir = "$WslSourcePath/entelecheia"
-    $r = Invoke-WSL -Command @"
+    Write-Step "Starting PostgreSQL via podman"
+    $r = Invoke-WSL -Command @'
 set -eu
-# Start postgres via podman (no docker compose needed)
-PG_NAME="celestia-pg-\$(hostname | tr -d '\n')"
-if podman ps --format '{{.Names}}' | grep -qF "\$PG_NAME"; then
+PG_NAME="celestia-pg-$(hostname | tr -d '\n')"
+if podman ps --format '{{.Names}}' | grep -qF "$PG_NAME"; then
   echo "PG_RUNNING"
   exit 0
 fi
-podman rm -f "\$PG_NAME" 2>/dev/null || true
-podman run -d --name "\$PG_NAME" \
+podman rm -f "$PG_NAME" 2>/dev/null || true
+podman run -d --name "$PG_NAME" \
   -p 5432:5432 \
   -e POSTGRES_USER=entelecheia \
   -e POSTGRES_PASSWORD=password \
   -e POSTGRES_DB=entelecheia \
   docker.io/library/postgres:16-alpine 2>&1 || { echo "PG_FAILED"; exit 1; }
 echo "PG_STARTED"
-for i in \$(seq 1 30); do
-  if podman exec "\$PG_NAME" pg_isready -U entelecheia 2>/dev/null; then
+for i in $(seq 1 30); do
+  if podman exec "$PG_NAME" pg_isready -U entelecheia 2>/dev/null; then
     echo "PG_READY"
     exit 0
   fi
   sleep 2
 done
 echo "PG_NOT_READY"
-"@ -NoProfile
+'@ -NoProfile
     if     ($r -match "PG_RUNNING")     { Write-Ok "PostgreSQL already running" }
     elseif ($r -match "PG_READY")       { Write-Ok "PostgreSQL is ready (port 5432)" }
     elseif ($r -match "PG_STARTED")     { Write-Ok "PostgreSQL container started" }
@@ -530,18 +522,18 @@ function Start-ScepterInWSL {
         Write-Warn "Start manually after build: wsl -d $($script:WSLDistro) podman run -d --name scepter -p 8424:8080 entelecheia:latest"
         return
     }
-    $r = Invoke-WSL -Command @"
+    $r = Invoke-WSL -Command @'
 set -eu
-SNAME="celestia-scepter-\$(hostname | tr -d '\n')"
-if podman ps --format '{{.Names}}' | grep -qF "\$SNAME"; then
+SNAME="celestia-scepter-$(hostname | tr -d '\n')"
+if podman ps --format '{{.Names}}' | grep -qF "$SNAME"; then
   echo "ALREADY_RUNNING"
   exit 0
 fi
-podman rm -f "\$SNAME" 2>/dev/null || true
-podman run -d --name "\$SNAME" -p 8424:8080 \
-  -v "\$HOME/.config/celestia:/home/entelecheia/.config/celestia:ro" \
+podman rm -f "$SNAME" 2>/dev/null || true
+podman run -d --name "$SNAME" -p 8424:8080 \
+  -v "$HOME/.config/celestia:/home/entelecheia/.config/celestia:ro" \
   entelecheia:latest 2>&1 && echo "STARTED" || echo "FAILED"
-"@ -NoProfile
+'@ -NoProfile
     if     ($r -match "ALREADY_RUNNING"){ Write-Ok "scepter container already running" }
     elseif ($r -match "STARTED")        { Write-Ok "scepter container started — http://localhost:8424/health" }
     elseif ($r -match "FAILED")         { Write-Err "scepter container failed — check podman logs" }
