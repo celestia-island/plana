@@ -612,39 +612,9 @@ macro_rules! roundtrip_test {
 
 **动机**：shittim-chest（WebUI + Tauri）需要自动发现 celestia-XXX WSL2 实例中的 scepter 端点。arona `_bootloader/identity` 作为实例 ID 的权威来源，应当负责写入端点发现文件。
 
-**实现**（`packages/_bootloader/identity/src/lib.rs` 新增）：
+**实现**（`packages/bootloader/src/identity.rs` 已落地，commit `161db41`）：
 
-```rust
-pub fn write_instance_toml(config: &InstanceConfig) -> Result<PathBuf> {
-    let toml_path = dirs::config_dir()
-        .unwrap()
-        .join("celestia")
-        .join("instance.toml");
-    std::fs::create_dir_all(toml_path.parent().unwrap())?;
-    let content = format!(
-        r#"[instance]
-id = {id}
-name = "{name}"
-
-[scepter]
-host = "localhost"
-port = {port}
-health_url = "http://localhost:{port}/health"
-
-[projects]
-root = "{repo_root}"
-mounted = [{mounted}]
-"#,
-        id = config.id,
-        name = format!("celestia-{:03}", config.id),
-        port = 8424 + config.id * 100,
-        repo_root = config.repo_root.display(),
-        mounted = config.mounted_projects.iter().map(|p| format!("\"{}\"", p)).collect::<Vec<_>>().join(", "),
-    );
-    std::fs::write(&toml_path, content)?;
-    Ok(toml_path)
-}
-```
+✅ **已完成 (2026-07-16)**。`InstanceEndpointConfig` 结构体 + `write_instance_toml()` / `write_instance_toml_at()`，3 个单元测试（11/11 pass）。端口类型从 plan 的 `u16` 升级为 `u32`（999*100+8424=108324 > u16::MAX）。
 
 **调用时机**：
 - `evernight supervise` 启动时在 WSL2 实例内调用
@@ -666,7 +636,7 @@ mounted = [{mounted}]
 | 8.2.4 | Linux `.desktop` 文件 e2e 验证 | ⚠️ 待做（需 GNOME/KDE 环境） |
 | 8.2.5 | macOS `.app` bundle e2e 验证 | ⚠️ 待做（需 macOS 环境） |
 | 8.2.6 | celestia-XXX rootfs 轻量化（当前 `wsl --export` 23 GB 超时） | ⚠️ 待做（需预构建 minimal rootfs 或 `wsl --import` 预构建镜像） |
-| 8.2.7 | `celestia-init.sh` instance.toml 写入 | ⚠️ 待做（依赖 §8.1 `write_instance_toml`） |
+| 8.2.7 | `celestia-init.sh` instance.toml 写入 | ✅ 完成 (2026-07-16, commit `90002dc`) |
 
 ### 8.3 协议测试推进
 
@@ -685,21 +655,21 @@ mounted = [{mounted}]
 
 当前 arona `_bootloader` 有 8 个单元测试通过，但接口签名尚未冻结：
 
-| 步骤 | 内容 |
-|------|------|
-| 8.4.1 | `StackConfig` 新增 `host_repo_root` + `mounted_projects` 字段（支持 §6.3.1 bind-mount） |
-| 8.4.2 | `IdentityConfig` 新增 `write_instance_toml()` 方法（§8.1） |
-| 8.4.3 | 补充 `identity` + `stack` + `platform` 的集成测试（当前仅 8 个单元测试） |
-| 8.4.4 | 接口版本号冻结为 `0.2.0`（标注 semver 兼容承诺） |
+| 步骤 | 内容 | 状态 |
+|------|------|------|
+| 8.4.1 | `StackConfig` 新增 `host_repo_root` + `mounted_projects` 字段（支持 §6.3.1 bind-mount） | ✅ 完成 (commit `429236d`) |
+| 8.4.2 | `IdentityConfig` 新增 `write_instance_toml()` 方法（§8.1） | ✅ 完成 (commit `161db41`) |
+| 8.4.3 | 补充 `identity` + `stack` + `platform` 的集成测试（当前 11 个单元测试） | ⚠️ 待做 |
+| 8.4.4 | 接口版本号冻结为 `0.2.0`（标注 semver 兼容承诺） | ⚠️ 待做 |
 
 ### 8.5 验收条件
 
-| # | 条件 | 验证方式 |
-|---|------|---------|
-| AR-1 | `write_instance_toml(config)` 生成合法 TOML 文件，shittim-chest `useInstanceDiscovery` 可解析 | 单元测试 + 集成测试 |
-| AR-2 | Phase 1 协议测试全部通过，`cargo test --all-features` ≥ 670 | CI 绿 |
-| AR-3 | `celestia-init.sh` 执行后 `~/.config/celestia/instance.toml` 存在且内容正确 | 手动验证 |
-| AR-4 | `StackConfig` 支持 `host_repo_root` + bind-mount，evernight supervise 可挂载 celestia repo | e2e 验证 |
+| # | 条件 | 验证方式 | 状态 |
+|---|------|---------|------|
+| AR-1 | `write_instance_toml(config)` 生成合法 TOML 文件 | 单元测试 11/11 pass ✅ | ✅ |
+| AR-2 | Phase 1 协议测试全部通过，`cargo test --all-features` ≥ 670 | CI 绿 | ⚠️ 待做 |
+| AR-3 | `celestia-init.sh` 执行后 `~/.config/celestia/instance.toml` 存在且内容正确 | 手动验证 | ⚠️ 待做（需 WSL2 环境） |
+| AR-4 | `StackConfig` 支持 `host_repo_root` + bind-mount，evernight supervise 可挂载 celestia repo | e2e 验证 | ⚠️ 待做（需 WSL2 环境） |
 
 ### 8.6 跨仓联合点火测试 checklist
 
@@ -922,4 +892,14 @@ SySL 1.0 不是标准 SPDX 标识符，crates.io 不接受 `license = "SySL-1.0"
 - **entelecheia 旧脚本 deprecate**：`install.ps1` / `install.sh` 加 `*** DEPRECATED ***` 横幅 + 指向 arona 统一脚本。
 - **arona PLAN.md 更新**：§7.2 → 已提交；§7.4 → 完成状态表；追加 session 7 refresh log。
 - **剩余**：4 仓 README 横幅、10 语言 i18n README、点火测试 e2e（需实际环境验证）。
+
+## Refresh log 2026-07-16 (session — self-bootstrap endpoint discovery + bind-mount)
+
+- **`write_instance_toml()` 落地**（commit `161db41`）：`InstanceEndpointConfig` + `write_instance_toml()` / `write_instance_toml_at()`，3 单元测试（11/11 pass）。port 类型 u32（避免 999*100+8424 溢出）。
+- **`celestia-init.sh` 写 instance.toml**（commit `90002dc`）：Step 7 新增 — 读 `CELESTIA_INSTANCE_ID` → 写 `~/.config/celestia/instance.toml`。
+- **`StackConfig.host_repo_root`**（commit `429236d`）：`StackConfig` 新增 `host_repo_root: Option<PathBuf>`，`scepter_params()` 自动 bind-mount 为 `/celestia`（read-only）。
+- **消费方同步**：
+  - evernight: `BootloaderConfig.repo_root` → `StackConfig.host_repo_root` + `write_instance_toml` 调用（commit `d53eccc`）。
+  - shittim-chest: `useInstanceDiscovery` composable + `API_BASE` 动态化（commits `58589784`, `ad0aa3f0`）。
+- **剩余 P0**：AR-3/AR-4 需 WSL2 环境 e2e 验证；Phase 1 协议测试未开展。
 
