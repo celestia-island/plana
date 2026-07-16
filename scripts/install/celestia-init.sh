@@ -7,8 +7,8 @@
 # auto-detection (fastest available, not hardcoded).
 #
 # What it does:
-#   1. Detect fastest Alpine + pip mirror (touch linuxmirrors.cn style)
-#   2. Install podman + curl + bash + python3
+#   1. Detect fastest Alpine mirror (pure shell, no Python)
+#   2. Install podman + curl + bash + fuse-overlayfs
 #   3. Configure Docker registry mirrors (auto-detect best)
 #   4. Write instance.toml for endpoint discovery
 #
@@ -101,7 +101,7 @@ fi
 
 c_step "Step 2: Installing podman + tools"
 apk update
-apk add podman podman-docker curl bash python3 py3-pip shadow fuse-overlayfs
+apk add podman podman-docker curl bash shadow fuse-overlayfs
 c_ok "podman $(podman --version)"
 mount -t cgroup2 cgroup2 /sys/fs/cgroup 2>/dev/null || true
 
@@ -141,25 +141,9 @@ else
     c_ok "Not in China — no mirror needed"
 fi
 
-# ── Step 4: Configure pip mirror ─────────────────────────────────────────────
+# ── Step 4: Write instance.toml ──────────────────────────────────────────────
 
-c_step "Step 4: Configuring pip mirror"
-if detect_china; then
-    PIP_INDEX=$(fastest_mirror \
-        "https://mirrors.aliyun.com/pypi/simple/" \
-        "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/" \
-        "https://pypi.org/simple/")
-    c_ok "Fastest pip: $PIP_INDEX"
-    mkdir -p ~/.config/pip
-    cat > ~/.config/pip/pip.conf <<EOF
-[global]
-index-url = ${PIP_INDEX}
-EOF
-fi
-
-# ── Step 5: Write instance.toml ──────────────────────────────────────────────
-
-c_step "Step 5: Writing instance discovery endpoint"
+c_step "Step 4: Writing instance discovery endpoint"
 mkdir -p ~/.config/celestia
 cat > ~/.config/celestia/instance.toml <<TOML
 [instance]
@@ -185,8 +169,7 @@ printf '%.0s─' {1..60}; echo
 echo "  celestia-init complete — ${INSTANCE_NAME}"
 printf '%.0s─' {1..60}; echo
 echo "  podman:    $(podman --version 2>/dev/null || echo MISSING)"
-echo "  python:    $(python3 --version 2>/dev/null || echo MISSING)"
 echo "  alpine:    $(cat /etc/alpine-release 2>/dev/null || echo unknown)"
 echo "  instance:  ${INSTANCE_NAME} (scepter port ${SCEPTER_PORT})"
-echo "  mirrors:   alpine=${ALPINE_REPO} docker=${MIRROR_HOST:-none} pip=${PIP_INDEX:-default}"
+echo "  mirrors:   alpine=${ALPINE_REPO} docker=${MIRROR_HOST:-none}"
 printf '%.0s─' {1..60}; echo
