@@ -45,6 +45,10 @@ $script:StateFile    = Join-Path $env:TEMP "celestia-install.state"
 $script:InstallDir   = Join-Path $env:LOCALAPPDATA "Programs\celestia"
 $script:StartMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Celestia"
 $script:ScepterPort  = "8424"
+# Alpine minirootfs — lightweight WSL2 base (~3.3 MB). No existing WSL distro
+# required; runs on any Windows machine with WSL2 enabled. Same model as
+# Docker Desktop's managed WSL engine: self-contained, no host-side effects.
+$script:BaseRootfsUrl = "https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/x86_64/alpine-minirootfs-3.21.3-x86_64.tar.gz"
 # WSL distro name is auto-generated per celestia isolation principle.
 # NEVER hardcode Ubuntu-24.04 — see Resolve-CelestiaWslInstance.
 $script:WSLDistro    = ""
@@ -146,51 +150,38 @@ function New-CelestiaWslInstance {
     $name = New-CelestiaInstanceName
     Write-Step "Creating isolated WSL2 instance: $name"
 
-    # Find a suitable base distro to export as template (read-only, does NOT
-    # modify the source distro). Prefer any Ubuntu variant; fall back to
-    # whatever WSL distro exists.
-    $distros = & wsl --list --quiet 2>&1 | Where-Object { $_ -match '\S' } | ForEach-Object { $_.Trim() }
-    $template = $null
-    foreach ($d in $distros) {
-        if ($d -match 'Ubuntu') { $template = $d; break }
-    }
-    if (-not $template -and $distros) { $template = $distros[0] }
-
-    if (-not $template) {
-        Write-Err "No WSL distribution found to use as base template."
-        Write-Err "Please install WSL2 first: wsl --install -d Ubuntu-24.04"
-        Write-Err "Then re-run this script — it will auto-create celestia-XXX from the base image."
-        exit 1
-    }
-
-    Write-Info "Exporting base template from '$template' (read-only, no side effects)..."
-    $tempTar = Join-Path $env:TEMP "celestia-base-template-$name.tar"
+    # Download Alpine minirootfs (~3.3 MB). No dependency on any pre-existing
+    # WSL distro — works on a fresh Windows+WSL2 install with zero host setup.
+    # Same model as Docker Desktop's self-contained WSL engine.
+    $rootfsUrl = $script:BaseRootfsUrl
+    $tempRootfs = Join-Path $env:TEMP "celestia-alpine-rootfs-$name.tar.gz"
+    Write-Info "Downloading Alpine Linux base image (~3 MB)..."
+    Write-Info "  $rootfsUrl"
     try {
-        & wsl --export $template $tempTar 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0 -or -not (Test-Path $tempTar)) {
-            throw "wsl --export failed"
-        }
+        Invoke-WebRequest -Uri $rootfsUrl -OutFile $tempRootfs -UseBasicParsing -TimeoutSec 120
+        $sizeMB = [math]::Round((Get-Item $tempRootfs).Length / 1MB, 1)
+        Write-Ok "Downloaded: $sizeMB MB"
     } catch {
-        Write-Err "Failed to export base template from '$template'."
-        Write-Err "Ensure the distro is stopped: wsl --terminate $template"
-        if (Test-Path $tempTar) { Remove-Item $tempTar -Force }
+        Write-Err "Failed to download Alpine rootfs: $_"
+        if (Test-Path $tempRootfs) { Remove-Item $tempRootfs -Force }
         exit 1
     }
 
     $installLoc = Join-Path $env:LOCALAPPDATA "celestia\$name"
     New-Item -ItemType Directory -Force -Path $installLoc | Out-Null
 
-    Write-Info "Importing as isolated instance '$name'..."
-    & wsl --import $name $installLoc $tempTar 2>&1 | Out-Null
+    Write-Info "Importing as WSL2 instance '$name'..."
+    & wsl --import $name $installLoc $tempRootfs --version 2 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Err "wsl --import failed for $name"
-        Remove-Item $tempTar -Force -ErrorAction SilentlyContinue
+        Remove-Item $tempRootfs -Force -ErrorAction SilentlyContinue
         exit 1
     }
-    Remove-Item $tempTar -Force -ErrorAction SilentlyContinue
+    Remove-Item $tempRootfs -Force -ErrorAction SilentlyContinue
 
     Persist-CelestiaInstanceEnv -Name $name
     Write-Ok "Isolated WSL2 instance created: $name"
+    Write-Ok "  Base:     Alpine Linux (~3 MB rootfs)"
     Write-Ok "  Location: $installLoc"
     Write-Ok "  Env var:  CELESTIA_WSL_INSTANCE=$name (persisted to User scope)"
     return $name
