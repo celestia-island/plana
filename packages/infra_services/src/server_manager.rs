@@ -7,6 +7,7 @@ use std::{
 use tracing::{debug, error, info};
 
 use _config::UserConfig;
+use _config::ensure_provider_config_from_env;
 use _container::{ServerStatus as DomainServerStatus, ops::ContainerOps};
 use _infra_utils::async_bridge;
 
@@ -285,6 +286,20 @@ impl ServerManager {
             "[ServerManager] Initialized aporia config at {}",
             config_path.display()
         );
+
+        // Also generate provider_config.toml from env vars so LLM routing
+        // can find these providers immediately without requiring the TUI to
+        // be opened first. ensure_provider_config_from_env() is a no-op if
+        // provider_config.toml already exists.
+        if let Err(e) = ensure_provider_config_from_env() {
+            info!(
+                "[ServerManager] provider_config.toml generation skipped or failed: {}",
+                e
+            );
+        } else {
+            info!("[ServerManager] provider_config.toml ensured alongside aporia.toml");
+        }
+
         Ok(())
     }
 

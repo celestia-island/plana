@@ -299,15 +299,23 @@ elif \$IN_CHINA; then
 else
     echo "NO_MIRROR_NEEDED"; exit 0
 fi
-MIRROR_JSON=\$(printf '%s\n' "\${MIRRORS[@]}" | jq -R . | jq -s . 2>/dev/null || \
-    python3 -c "import json,sys; print(json.dumps(sys.argv[1:]))" "\${MIRRORS[@]}")
+# Build JSON array of mirrors: \["url1","url2"\]
+MIRROR_JSON='['
+first=true
+for m in "\${MIRRORS[@]}"; do
+    if \$first; then first=false; else MIRROR_JSON+=","; fi
+    MIRROR_JSON+="\"\$m\""
+done
+MIRROR_JSON+=']'
 mkdir -p /etc/docker
 TMP=\$(mktemp)
 if [[ -f /etc/docker/daemon.json ]]; then
     if command -v jq >/dev/null 2>&1; then
         jq --argjson m "\$MIRROR_JSON" '.["registry-mirrors"]=\$m' /etc/docker/daemon.json > "\$TMP"
     else
-        python3 -c "import json; d=json.load(open('/etc/docker/daemon.json')); d['registry-mirrors']=\$MIRROR_JSON; json.dump(d, open('\$TMP','w'), indent=2)"
+        # Pure shell fallback: remove existing registry-mirrors key, insert new one
+        sed '/"registry-mirrors"/,/]/d' /etc/docker/daemon.json > "\$TMP"
+        sed -i '\$s/}/,\n  "registry-mirrors": '\$MIRROR_JSON'\n}/' "\$TMP"
     fi
 else
     echo "{\\"registry-mirrors\\": \$MIRROR_JSON}" > "\$TMP"
