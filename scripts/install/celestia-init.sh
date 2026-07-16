@@ -2,131 +2,184 @@
 #
 # celestia-init.sh — First-boot init for celestia-XXX WSL2 instance.
 #
-# Runs inside a freshly-imported Alpine Linux WSL2 instance. Installs
-# podman + minimal toolchain. No apt, no systemd, no host-side effects.
+# Runs inside a freshly-imported Alpine Linux WSL2 instance. No apt, no
+# systemd, no host-side effects. Mirror selection via linuxmirrors.cn-style
+# auto-detection (fastest available, not hardcoded).
 #
 # What it does:
-#   1. Install podman + curl + bash + python3
-#   2. Configure Docker registry mirrors (auto-detect China)
-#   3. Install celestia-devtools (pip)
+#   1. Detect fastest Alpine + pip mirror (touch linuxmirrors.cn style)
+#   2. Install podman + curl + bash + python3
+#   3. Configure Docker registry mirrors (auto-detect best)
 #   4. Write instance.toml for endpoint discovery
 #
 # Usage (run from INSIDE the celestia-XXX WSL2 instance):
-#   sh celestia-init.sh
-#   sh celestia-init.sh --no-mirror
-#   sh celestia-init.sh --mirror https://docker.1ms.run
+#   CELESTIA_INSTANCE_ID=42 sh celestia-init.sh
 #
+
 set -eu
-
-NO_MIRROR=0
-MIRROR=""
-
-while [ $# -gt 0 ]; do
-    case "$1" in
-        --no-mirror) NO_MIRROR=1; shift ;;
-        --mirror)    MIRROR="$2"; shift 2 ;;
-        -h|--help)   echo "Usage: celestia-init.sh [--no-mirror] [--mirror URL]"; exit 0 ;;
-        *) echo "Unknown: $1"; exit 1 ;;
-    esac
-done
 
 c_info()  { printf '\033[1;34m[INIT]  %s\033[0m\n'  "$*"; }
 c_ok()    { printf '\033[1;32m[INIT]  %s\033[0m\n'  "$*"; }
 c_warn()  { printf '\033[1;33m[INIT]  %s\033[0m\n'  "$*"; }
 c_step()  { printf '\n\033[1;36m[INIT]  ==> %s\033[0m\n'  "$*"; }
 
+# ── Resolve instance ID ──────────────────────────────────────────────────────
+
+resolve_instance_id() {
+    if [ -n "${CELESTIA_INSTANCE_ID:-}" ]; then
+        echo "$CELESTIA_INSTANCE_ID"
+        return
+    fi
+    # Parse from WSL distro name "celestia-NNN" → NNN
+    local hn
+    hn=$(hostname 2>/dev/null || cat /etc/hostname 2>/dev/null || echo "")
+    if echo "$hn" | grep -qE '^celestia-[0-9]{3}$'; then
+        echo "$hn" | sed 's/celestia-//'
+        return
+    fi
+    # Parse from /etc/hostname in WSL (the distro name is written there by wsl --import)
+    if [ -f /etc/hostname ]; then
+        local name
+        name=$(cat /etc/hostname)
+        if echo "$name" | grep -qE '^celestia-[0-9]{3}$'; then
+            echo "$name" | sed 's/celestia-//'
+            return
+        fi
+    fi
+    # Fallback
+    echo $((RANDOM % 1000))
+}
+
+INSTANCE_ID=$(resolve_instance_id)
+INSTANCE_NAME=$(printf "celestia-%03d" "$INSTANCE_ID")
+SCEPTER_PORT=$((8424 + INSTANCE_ID * 100))
+
+# ── Mirror detection ─────────────────────────────────────────────────────────
+
 detect_china() {
     curl -s --connect-timeout 3 --max-time 5 https://www.baidu.com >/dev/null 2>&1
 }
 
-# ── Step 1: Install podman ──────────────────────────────────────────
-c_step "Step 1: Installing podman + tools"
+# Test which of a list of URLs is fastest (by connect time). Returns the winner.
+fastest_mirror() {
+    local best="" best_time=999
+    for url in "$@"; do
+        local t
+        t=$(curl -s -o /dev/null -w '%{time_connect}' --connect-timeout 3 "$url" 2>/dev/null || echo "999")
+        if echo "$t $best_time" | awk '{exit !($1 < $2)}'; then
+            best="$url"
+            best_time="$t"
+        fi
+    done
+    echo "${best:-$1}"
+}
 
+# ── Step 1: Configure fastest Alpine mirror ───────────────────────────────────
+
+c_step "Step 1: Configuring fastest Alpine mirror"
+
+ALPINE_REPO="dl-cdn.alpinelinux.org"
+if detect_china; then
+    c_info "China network — testing Alpine mirrors..."
+    ALPINE_REPO=$(fastest_mirror \
+        "mirrors.tuna.tsinghua.edu.cn" \
+        "mirrors.ustc.edu.cn" \
+        "mirrors.aliyun.com" \
+        "mirrors.163.com" \
+        "dl-cdn.alpinelinux.org")
+    c_ok "Fastest: $ALPINE_REPO"
+    # Write APK repositories with the selected mirror
+    cat > /etc/apk/repositories <<EOF
+https://${ALPINE_REPO}/alpine/v3.21/main
+https://${ALPINE_REPO}/alpine/v3.21/community
+EOF
+else
+    c_ok "Using default Alpine CDN"
+fi
+
+# ── Step 2: Install tools ────────────────────────────────────────────────────
+
+c_step "Step 2: Installing podman + tools"
 apk update
 apk add podman podman-docker curl bash python3 py3-pip shadow fuse-overlayfs
 c_ok "podman $(podman --version)"
-
-# Start cgroups (required for podman rootless)
 mount -t cgroup2 cgroup2 /sys/fs/cgroup 2>/dev/null || true
 
-# ── Step 2: Configure registry mirrors ──────────────────────────────
-if [ "$NO_MIRROR" -eq 1 ]; then
-    c_info "Step 2: Skipping mirror (--no-mirror)"
-else
-    c_step "Step 2: Configuring Docker registry mirrors"
-    if [ -n "$MIRROR" ]; then
-        mirrors="$MIRROR"
-    elif detect_china; then
-        c_info "China network detected"
-        mirrors='docker.1ms.run docker.xuanyuan.me docker.m.daocloud.io'
-    else
-        c_ok "Not in China — no mirror needed."
-        mirrors=""
-    fi
+# ── Step 3: Configure Docker registry mirrors ─────────────────────────────────
 
-    if [ -n "$mirrors" ]; then
-        mkdir -p /etc/containers
-        # Build registries.conf with mirror entries
-        {
-            echo '[[registry]]'
-            echo 'prefix = "docker.io"'
-            echo 'location = "docker.io"'
-            for m in $mirrors; do
-                echo ''
-                echo '[[registry.mirror]]'
-                echo "location = \"$m\""
-            done
-        } > /etc/containers/registries.conf
-        c_ok "Mirrors: $mirrors"
-    fi
+c_step "Step 3: Configuring Docker registry mirrors"
+
+mkdir -p /etc/containers
+cat > /etc/containers/registries.conf <<'HEADER'
+[[registry]]
+prefix = "docker.io"
+location = "docker.io"
+HEADER
+
+if detect_china; then
+    c_info "Testing Docker mirrors..."
+    DOCKER_MIRROR=$(fastest_mirror \
+        "https://docker.1ms.run" \
+        "https://docker.xuanyuan.me" \
+        "https://docker.m.daocloud.io")
+    c_ok "Fastest Docker mirror: $DOCKER_MIRROR"
+    # Strip https:// prefix for registries.conf
+    MIRROR_HOST=$(echo "$DOCKER_MIRROR" | sed 's|https://||')
+    cat >> /etc/containers/registries.conf <<EOF
+
+[[registry.mirror]]
+location = "${MIRROR_HOST}"
+EOF
+else
+    c_ok "Not in China — no mirror needed"
 fi
 
-# ── Step 3: Install celestia-devtools ────────────────────────────────
-c_step "Step 3: Installing celestia-devtools"
-pip3 install --break-system-packages git+https://github.com/celestia-island/celestia-devtools.git 2>/dev/null || \
-    pip3 install --break-system-packages celestia-devtools 2>/dev/null || \
-    c_warn "celestia-devtools not available (will use git deps directly)"
-c_ok "devtools ready"
+# ── Step 4: Configure pip mirror ─────────────────────────────────────────────
 
-# ── Step 4: Write instance.toml ──────────────────────────────────────
-c_step "Step 4: Writing instance discovery endpoint"
+c_step "Step 4: Configuring pip mirror"
+if detect_china; then
+    PIP_INDEX=$(fastest_mirror \
+        "https://mirrors.aliyun.com/pypi/simple/" \
+        "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/" \
+        "https://pypi.org/simple/")
+    c_ok "Fastest pip: $PIP_INDEX"
+    mkdir -p ~/.config/pip
+    cat > ~/.config/pip/pip.conf <<EOF
+[global]
+index-url = ${PIP_INDEX}
+EOF
+fi
 
-instance_id="${CELESTIA_INSTANCE_ID:-$((RANDOM % 1000))}"
-instance_name=$(printf "celestia-%03d" "$instance_id")
-scepter_port=$((8424 + instance_id * 100))
+# ── Step 5: Write instance.toml ──────────────────────────────────────────────
 
+c_step "Step 5: Writing instance discovery endpoint"
 mkdir -p ~/.config/celestia
 cat > ~/.config/celestia/instance.toml <<TOML
 [instance]
-id = ${instance_id}
-name = "${instance_name}"
+id = ${INSTANCE_ID}
+name = "${INSTANCE_NAME}"
 
 [scepter]
 host = "localhost"
-port = ${scepter_port}
-health_url = "http://localhost:${scepter_port}/health"
+port = ${SCEPTER_PORT}
+health_url = "http://localhost:${SCEPTER_PORT}/health"
 
 [projects]
 root = "/celestia"
 mounted = ["entelecheia", "evernight", "shittim-chest", "arona", "noa", "scriptum"]
 TOML
-
 c_ok "Wrote ~/.config/celestia/instance.toml"
-c_ok "  Instance: ${instance_name}  (port=${scepter_port})"
+c_ok "  Instance: ${INSTANCE_NAME}  (port=${SCEPTER_PORT})"
 
-# ── Step 5: Pull base image (optional warmup) ────────────────────────
-c_step "Step 5: Pre-pulling rust builder image"
-podman pull docker.io/library/rust:1.85-bookworm 2>/dev/null && \
-    c_ok "rust:1.85-bookworm ready" || \
-    c_warn "Pull failed (network?) — will pull on first build"
+# ── Done ─────────────────────────────────────────────────────────────────────
 
-# ── Done ─────────────────────────────────────────────────────────────
 echo ""
 printf '%.0s─' {1..60}; echo
-echo "  celestia-init complete"
+echo "  celestia-init complete — ${INSTANCE_NAME}"
 printf '%.0s─' {1..60}; echo
-echo "  podman:  $(podman --version 2>/dev/null || echo MISSING)"
-echo "  python:  $(python3 --version 2>/dev/null || echo MISSING)"
-echo "  mirrors: ${mirrors:-none}"
-echo "  instance: ${instance_name} (port=${scepter_port})"
+echo "  podman:    $(podman --version 2>/dev/null || echo MISSING)"
+echo "  python:    $(python3 --version 2>/dev/null || echo MISSING)"
+echo "  alpine:    $(cat /etc/alpine-release 2>/dev/null || echo unknown)"
+echo "  instance:  ${INSTANCE_NAME} (scepter port ${SCEPTER_PORT})"
+echo "  mirrors:   alpine=${ALPINE_REPO} docker=${MIRROR_HOST:-none} pip=${PIP_INDEX:-default}"
 printf '%.0s─' {1..60}; echo

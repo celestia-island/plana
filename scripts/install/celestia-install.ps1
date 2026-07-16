@@ -241,33 +241,34 @@ function Initialize-WslInstance {
     $initScript = Join-Path $PSScriptRoot "celestia-init.sh"
     if (Test-Path $initScript) {
         $wslInitPath = Convert-WinPathToWSL -Path $initScript
-        $initArgs = @()
-        if ($NoMirror) { $initArgs += "--no-mirror" }
-        if ($Mirror)    { $initArgs += "--mirror"; $initArgs += $Mirror }
-        if ($Quick)     { $initArgs += "--quick" }
-        $initArgsStr = $initArgs -join ' '
 
-        Write-Info "Running celestia-init.sh inside $($script:WSLDistro)..."
-        $r = Invoke-WSL -Command "bash '$wslInitPath' $initArgsStr 2>&1" -NoProfile
-        # Stream output to console in real-time.
+        # Extract numeric instance ID from celestia-NNN
+        $instanceId = 0
+        if ($script:WSLDistro -match 'celestia-(\d{3})$') {
+            $instanceId = [int]$Matches[1]
+        }
+
+        Write-Info "Running celestia-init.sh inside $($script:WSLDistro) (id=$instanceId)..."
+        # Use sh (Alpine default), not bash (may not be installed yet).
+        # Pass CELESTIA_INSTANCE_ID so the init script uses the correct port offset.
+        $r = Invoke-WSL -Command "CELESTIA_INSTANCE_ID=$instanceId sh '$wslInitPath' 2>&1" -NoProfile
         if ($r) {
             $r | ForEach-Object {
-                if     ($_ -match '\[INIT\].*MISSING|\[INIT\].*FAILED|error') { Write-Host $_ -ForegroundColor Red }
-                elseif ($_ -match '\[INIT\].*OK|\[INIT\].*complete')          { Write-Host $_ -ForegroundColor Green }
-                elseif ($_ -match '\[INIT\].*==>')                          { Write-Host $_ -ForegroundColor Cyan }
-                elseif ($_ -match '\[INIT\].*WARN')                         { Write-Host $_ -ForegroundColor Yellow }
+                if     ($_ -match '\[INIT\].*(?:MISSING|FAILED)|error')   { Write-Host $_ -ForegroundColor Red }
+                elseif ($_ -match '\[INIT\].*OK|\[INIT\].*complete')      { Write-Host $_ -ForegroundColor Green }
+                elseif ($_ -match '\[INIT\].*==>')                        { Write-Host $_ -ForegroundColor Cyan }
+                elseif ($_ -match '\[INIT\].*WARN')                       { Write-Host $_ -ForegroundColor Yellow }
                 else { Write-Host $_ }
             }
         }
-        # Verify essential services after init.
-        if (-not (Invoke-WSL -Command "docker info &>/dev/null && echo running" -NoProfile)) {
-            Write-Warn "Docker daemon may not be running. Try: wsl -d $($script:WSLDistro) sudo service docker start"
+        # Verify podman is running after init.
+        if (-not (Invoke-WSL -Command "podman info &>/dev/null && echo running" -NoProfile)) {
+            Write-Warn "Podman may not be running. Start manually: wsl -d $($script:WSLDistro) -u root podman system service --time=0 unix:///run/podman/podman.sock &"
         } else {
-            Write-Ok "Docker Engine is running inside $($script:WSLDistro)"
+            Write-Ok "Podman is running inside $($script:WSLDistro)"
         }
     } else {
         Write-Warn "celestia-init.sh not found at $initScript — skipping WSL initialization."
-        Write-Warn "Run celestia-init.sh manually inside the WSL instance to set up Docker."
     }
 }
 
