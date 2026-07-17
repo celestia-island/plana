@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [master]
   pull_request:
-    branches: [main, dev]
+    branches: [master]
 
 env:
   CARGO_TERM_COLOR: always
@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo check --all-targets --all-features
 
@@ -21,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -39,5 +41,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
