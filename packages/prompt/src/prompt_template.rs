@@ -247,7 +247,7 @@ impl PromptTemplateService {
     pub fn render_raw(&self, template: &str, variables: &HashMap<&str, String>) -> String {
         let mut ctx = Context::new();
         for (k, v) in variables {
-            ctx.insert(*k, v);
+            ctx.insert(k.to_string(), v);
         }
         tera::Tera::one_off(template, &ctx, false).unwrap_or_else(|e| {
             warn!("raw template render error: {}", e);
