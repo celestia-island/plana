@@ -90,13 +90,12 @@ parking_lot = "^0.12"
 pci-ids = "^0.2"
 rand = "^0.8"
 regex = "^1"
-reqwest = { version = "^0.13", default-features = false, features = [
+reqwest = { version = "^0.12", default-features = false, features = [
     "json",
     "rustls-tls",
     "stream",
     "charset",
     "http2",
-    "macos-system-configuration",
 ] }
 russh = "^0.45"
 schemars = { version = "^1", features = ["derive", "uuid1"] }
