@@ -122,7 +122,7 @@ tera = "^2"
 thiserror = "^2"
 tokio = { version = "^1", features = ["rt", "rt-multi-thread", "macros", "time", "net", "io-util", "fs", "sync", "signal", "process"] }
 tokio-test = "^0.4"
-tokio-tungstenite = "^0.29"
+tokio-tungstenite = "^0.30"
 tokio-util = "^0.7"
 toml = "^0.8"
 tower = "^0.5"
