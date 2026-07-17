@@ -74,7 +74,7 @@ bytes = "^1"
 chrono = { version = "^0.4", features = ["serde", "clock"] }
 dashmap = "^6"
 deadpool-postgres = "^0.14"
-dirs = "^5"
+dirs = "^6"
 dotenvy = "^0.15"
 flume = "^0.12"
 futures = "^0.3"
