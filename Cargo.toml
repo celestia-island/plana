@@ -90,13 +90,18 @@ parking_lot = "^0.12"
 pci-ids = "^0.2"
 rand = "^0.8"
 regex = "^1"
-reqwest = { version = "^0.12", default-features = false, features = [
+reqwest = { version = "^0.13", default-features = false, features = [
     "json",
-    "rustls-tls",
+    "rustls-no-provider",
     "stream",
     "charset",
     "http2",
 ] }
+# Pure-Rust TLS: use rustls+ring instead of aws-lc-rs (avoids C compilation of aws-lc-sys).
+# Pinning rustls/hyper-rustls/tokio-rustls here with ring kills aws-lc-rs at the source.
+rustls = { version = "^0.23", default-features = false, features = ["ring", "std", "tls12"] }
+hyper-rustls = { version = "^0.27", default-features = false, features = ["native-tokio", "http1", "tls12", "ring"] }
+tokio-rustls = { version = "^0.26", default-features = false, features = ["ring", "tls12"] }
 russh = "^0.45"
 schemars = { version = "^1", features = ["derive", "uuid1"] }
 sea-orm = { version = "^2.0.0-rc", features = [
