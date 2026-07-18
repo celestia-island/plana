@@ -59,7 +59,7 @@ pub enum BaseMessage {
 /// `arona` dependency at the use-site. Values: `local` (Windows-native or
 /// same-host WSL2 peer, trust established by shared-secret handshake),
 /// `remote_lan` (RFC1918 without that secret), `remote_internet` (else).
-pub use arona::ConnectionType;
+pub use plana::ConnectionType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RouteInfo {
