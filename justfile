@@ -1,4 +1,4 @@
-# arona — single-crate repo (protocol types + TS bindings + build scripts).
+# plana — single-crate repo (protocol types + TS bindings + build scripts).
 # scripts/ hosts the shared Python build scripts; consumer repos now reach them
 # via the shared celestia-devtools justfile import.
 #
@@ -76,7 +76,7 @@ test:
 gen target='bindings':
     set -euo pipefail
     case "{{target}}" in
-      bindings) cargo test --package arona ;;
+      bindings) cargo test --package plana ;;
       *) echo "Usage: just gen bindings"; exit 1 ;;
     esac
 

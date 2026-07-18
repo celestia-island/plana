@@ -19,7 +19,7 @@ strum.workspace = true
 paste = "1"
 
 _state_sync = { workspace = true }
-arona.workspace = true
+plana.workspace = true
 
 [dev-dependencies]
 criterion = "^0.5"
