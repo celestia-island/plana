@@ -1,29 +1,27 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
-<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/docs.celestia.world/dev/res/logo/arona.webp" alt="Arona" width="200" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/docs.celestia.world/dev/res/logo/plana.webp" alt="Plana" width="200" /></p>
 
-<h1 align="center">Arona</h1>
+<h1 align="center">Plana</h1>
 
 <p align="center"><strong>JSON-RPC 2.0 protocol types &amp; TypeScript bindings</strong></p>
 
 <div align="center">
 
 [![License: SySL-1.0](https://img.shields.io/badge/License-SySL--1.0-blue.svg)](https://sysl.celestia.world)
-[![GitHub](https://img.shields.io/badge/github-celestia--island%2Farona-blue.svg)](https://github.com/celestia-island/arona)
-[![docs.rs](https://docs.rs/arona/badge.svg)](https://docs.rs/arona)
-[![CI](https://img.shields.io/github/actions/workflow/status/celestia-island/arona/ci.yml)](https://github.com/celestia-island/arona/actions/workflows/ci.yml)
+[![GitHub](https://img.shields.io/badge/github-celestia--island%2Fplana-blue.svg)](https://github.com/celestia-island/plana)
 
 </div>
 
 <div align="center">
 
 **English** ·
-[简体中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zhs/guides/platforms/README-arona.md) ·
-[繁體中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zht/guides/platforms/README-arona.md) ·
-[日本語](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ja/guides/platforms/README-arona.md) ·
-[한국어](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ko/guides/platforms/README-arona.md) ·
-[Français](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/fr/guides/platforms/README-arona.md) ·
-[Español](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/es/guides/platforms/README-arona.md) ·
-[Русский](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ru/guides/platforms/README-arona.md)
+[简体中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zhs/guides/platforms/README-plana.md) ·
+[繁體中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zht/guides/platforms/README-plana.md) ·
+[日本語](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ja/guides/platforms/README-plana.md) ·
+[한국어](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ko/guides/platforms/README-plana.md) ·
+[Français](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/fr/guides/platforms/README-plana.md) ·
+[Español](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/es/guides/platforms/README-plana.md) ·
+[Русский](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ru/guides/platforms/README-plana.md)
 
 </div>
 <!-- markdownlint-enable MD033 MD041 MD036 -->
@@ -44,7 +42,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --all -- --check
 
 # Generate TypeScript bindings only
-cargo test --package arona
+cargo test --package plana
 ```
 
 Or use the [just](https://github.com/casey/just) task runner:
@@ -59,4 +57,4 @@ just fmt-check
 
 Architecture, design, and guides live at [docs.celestia.world](https://github.com/celestia-island/docs.celestia.world/tree/master/docs/en/guides/platforms).
 
-Source: [arona](https://github.com/celestia-island/arona).
+Source: [plana](https://github.com/celestia-island/plana).

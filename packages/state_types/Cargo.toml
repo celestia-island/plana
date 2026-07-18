@@ -22,7 +22,7 @@ _config = { workspace = true }
 _text = { workspace = true }
 _domain_agent = { workspace = true }
 _container = { workspace = true }
-arona.workspace = true
+plana.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

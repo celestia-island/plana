@@ -24,7 +24,7 @@
 
 - **名称**：`arona`
 - **简介**：celestia-island 共享协议类型库 + 宿主 bootloader 抽象，含 TypeScript 绑定与构建脚本。
-- **远程仓库**：https://github.com/celestia-island/arona.git
+- **远程仓库**：https://github.com/celestia-island/plana.git
 - **技术栈**：Rust / Node/TypeScript / just
 - **类别**：rust-lib + supervisor-shared
 

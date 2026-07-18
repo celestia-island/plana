@@ -2,7 +2,7 @@
 resolver = "2"
 
 members = [
-    "packages/arona",
+    "packages/plana",
     "packages/core",
     "packages/config",
     "packages/text",
@@ -33,14 +33,14 @@ authors = ["langyo <langyo.china@gmail.com>"]
 license-file = "LICENSE"
 license = "SySL-1.0"
 description = "Shared infrastructure and protocol types for celestia-island"
-repository = "https://github.com/celestia-island/arona"
+repository = "https://github.com/celestia-island/plana"
 keywords = ["json-rpc", "protocol", "ai-agent", "infrastructure", "shared-types"]
 categories = ["data-structures", "development-tools"]
 
 [workspace.dependencies]
 
 # ── Internal crate aliases ──────────────────────────────────
-arona = { path = "packages/arona" }
+plana = { path = "packages/plana" }
 _core = { path = "packages/core" }
 _config = { path = "packages/config" }
 _text = { path = "packages/text" }
