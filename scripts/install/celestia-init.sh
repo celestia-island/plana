@@ -1,19 +1,27 @@
 #!/bin/sh
 #
-# celestia-init.sh — First-boot init for celestia-XXX WSL2 instance.
+# celestia-init.sh — First-boot init for celestia nodes (WSL2 Alpine / Linux).
 #
-# Runs inside a freshly-imported Alpine Linux WSL2 instance. No apt, no
-# systemd, no host-side effects. Mirror selection via linuxmirrors.cn-style
-# auto-detection (fastest available, not hardcoded).
+# Runs either inside a freshly-imported Alpine Linux WSL2 instance, or on a
+# standard Linux node (Ubuntu/Debian) for installing and starting scepter
+# from pre-built binaries.
+#
+# No apt, no systemd, no host-side effects in WSL2 Alpine mode.
+# Mirror selection via linuxmirrors.cn-style auto-detection (fastest available).
 #
 # What it does:
-#   1. Detect fastest Alpine mirror (pure shell, no Python)
-#   2. Install podman + curl + bash + fuse-overlayfs
-#   3. Configure Docker registry mirrors (auto-detect best)
-#   4. Write instance.toml for endpoint discovery
+#   1. Detect OS type (Alpine WSL2 vs Debian/Ubuntu Linux)
+#   2. Install podman/Docker + curl + bash + fuse-overlayfs
+#   3. Configure registry mirrors (auto-detect best)
+#   4. Write instance.toml + systemd service (Linux mode)
+#   5. Install pre-built scepter binary from offline dir
 #
-# Usage (run from INSIDE the celestia-XXX WSL2 instance):
+# Usage (standalone on a Linux node):
 #   CELESTIA_INSTANCE_ID=42 sh celestia-init.sh
+#   CELESTIA_INSTANCE_ID=42 sh celestia-init.sh --offline-dir /tmp/offline
+#
+# Usage (from celestia-install.sh for remote target-init):
+#   sh celestia-init.sh --offline-dir /tmp/offline --target-ip 192.168.2.148 --target-pass hydroSinap2024
 #
 
 set -eu
@@ -21,7 +29,50 @@ set -eu
 c_info()  { printf '\033[1;34m[INIT]  %s\033[0m\n'  "$*"; }
 c_ok()    { printf '\033[1;32m[INIT]  %s\033[0m\n'  "$*"; }
 c_warn()  { printf '\033[1;33m[INIT]  %s\033[0m\n'  "$*"; }
+c_err()   { printf '\033[1;31m[INIT]  %s\033[0m\n'  "$*"; }
 c_step()  { printf '\n\033[1;36m[INIT]  ==> %s\033[0m\n'  "$*"; }
+
+# ── Defaults ──────────────────────────────────────────────────────────────────
+OFFLINE_DIR=""
+TARGET_IP=""
+DEPLOY_USER="lab"
+SSH_PASS="hydroSinap2024"
+SCEPTER_PORT=8424
+INSTALL_DIR="${HOME}/.local/share/celestia"
+LOG_DIR="${HOME}/.local/share/celestia/logs"
+SKIP_SERVICE=0
+
+# ── Argument parsing ──────────────────────────────────────────────────────────
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --offline-dir)  OFFLINE_DIR="$2"; shift 2 ;;
+        --target-ip)    TARGET_IP="$2"; shift 2 ;;
+        --target-user)  DEPLOY_USER="$2"; shift 2 ;;
+        --target-pass)  SSH_PASS="$2"; shift 2 ;;
+        --skip-service) SKIP_SERVICE=1; shift ;;
+        *) c_warn "Unknown option: $1"; shift ;;
+    esac
+done
+
+# ── Detect OS ─────────────────────────────────────────────────────────────────
+detect_os() {
+    if [ -f /etc/alpine-release ]; then
+        echo "alpine"
+    elif [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID" in
+            debian|ubuntu|linuxmint|pop|raspbian) echo "debian" ;;
+            fedora|rhel|centos|rocky|almalinux) echo "rhel" ;;
+            arch|manjaro) echo "arch" ;;
+            *) echo "linux" ;;
+        esac
+    elif [ "$(uname -s)" = "Linux" ]; then
+        echo "linux"
+    else
+        echo "unknown"
+    fi
+}
+OS_TYPE=$(detect_os)
 
 # ── Resolve instance ID ──────────────────────────────────────────────────────
 
@@ -162,14 +213,104 @@ TOML
 c_ok "Wrote ~/.config/celestia/instance.toml"
 c_ok "  Instance: ${INSTANCE_NAME}  (port=${SCEPTER_PORT})"
 
+# ── Linux-native init (non-Alpine) ───────────────────────────────────────────
+if [ "$OS_TYPE" != "alpine" ]; then
+    c_step "Linux native mode: installing scepter from offline bundle"
+
+    mkdir -p "$INSTALL_DIR" "$LOG_DIR"
+
+    if [ -n "$OFFLINE_DIR" ] && [ -d "$OFFLINE_DIR" ]; then
+        for bin in scepter entelecheia evernight scriptum chest-cli; do
+            local_src="$OFFLINE_DIR/$bin"
+            if [ -f "$local_src" ]; then
+                cp -f "$local_src" "$INSTALL_DIR/$bin"
+                chmod +x "$INSTALL_DIR/$bin"
+                c_ok "Installed $bin from offline bundle"
+            fi
+        done
+    fi
+
+    if [ -f "$INSTALL_DIR/scepter" ] || [ -f "$INSTALL_DIR/entelecheia" ]; then
+        BINARY="$INSTALL_DIR/scepter"
+        [ -f "$BINARY" ] || BINARY="$INSTALL_DIR/entelecheia"
+        chmod +x "$BINARY"
+        c_ok "scepter binary found at $BINARY"
+    else
+        c_warn "No scepter binary found in $INSTALL_DIR — deploy it first"
+    fi
+
+    c_info "Writing scepter environment config..."
+    INSTALL_DIR="$INSTALL_DIR" SCEPTER_PORT="$SCEPTER_PORT" LOG_DIR="$LOG_DIR" c_info "Writing instance.toml"
+fi
+
+# If skip-service is set or on Alpine, don't create systemd services
+if [ "$SKIP_SERVICE" -eq 1 ] || [ "$OS_TYPE" = "alpine" ]; then
+    c_info "Skipping systemd service creation"
+else
+    c_step "Creating systemd service for scepter"
+
+    SCEPTER_BIN="${INSTALL_DIR}/scepter"
+    if [ ! -f "$SCEPTER_BIN" ]; then
+        SCEPTER_BIN="${INSTALL_DIR}/entelecheia"
+    fi
+
+    if [ -f "$SCEPTER_BIN" ]; then
+        sudo tee /etc/systemd/system/scepter.service >/dev/null <<SVC
+[Unit]
+Description=Entelecheia Scepter Server
+After=network.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=${INSTALL_DIR}
+ExecStart=${SCEPTER_BIN}
+Restart=always
+RestartSec=5
+StandardOutput=append:${LOG_DIR}/scepter.log
+StandardError=append:${LOG_DIR}/scepter.log
+
+[Install]
+WantedBy=multi-user.target
+SVC
+        sudo tee "${INSTALL_DIR}/.env" >/dev/null <<ENVEOF
+SERVER_BIND_ADDRESS=0.0.0.0:${SCEPTER_PORT}
+RUST_LOG=info
+LLM_API_KEY=sk-your-key-here
+LLM_BASE_URL=https://api.deepseek.com/v1
+LLM_MODEL=deepseek-chat
+ENTELECHEIA_WORKSPACE_DIR=/mnt/codespace
+ENVEOF
+        sudo systemctl daemon-reload
+        sudo systemctl enable scepter
+        sudo systemctl start scepter 2>/dev/null || c_warn "Could not start scepter — check logs"
+        sleep 2
+        if systemctl is-active scepter >/dev/null 2>&1; then
+            c_ok "scepter service is running"
+        else
+            c_warn "scepter service not running — check: systemctl status scepter"
+        fi
+    else
+        c_warn "No scepter binary — skipping systemd service"
+    fi
+fi
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 
 echo ""
 printf '%.0s─' {1..60}; echo
 echo "  celestia-init complete — ${INSTANCE_NAME}"
 printf '%.0s─' {1..60}; echo
-echo "  podman:    $(podman --version 2>/dev/null || echo MISSING)"
-echo "  alpine:    $(cat /etc/alpine-release 2>/dev/null || echo unknown)"
+echo "  os:        ${OS_TYPE}"
+if [ "$OS_TYPE" = "alpine" ]; then
+    echo "  podman:    $(podman --version 2>/dev/null || echo MISSING)"
+    echo "  alpine:    $(cat /etc/alpine-release 2>/dev/null || echo unknown)"
+    echo "  mirrors:   alpine=${ALPINE_REPO} docker=${MIRROR_HOST:-none}"
+else
+    echo "  scepter:   ${INSTALL_DIR}/scepter"
+    echo "  port:      ${SCEPTER_PORT}"
+    echo "  log:       ${LOG_DIR}/scepter.log"
+    echo "  workspace: /mnt/codespace"
+fi
 echo "  instance:  ${INSTANCE_NAME} (scepter port ${SCEPTER_PORT})"
-echo "  mirrors:   alpine=${ALPINE_REPO} docker=${MIRROR_HOST:-none}"
 printf '%.0s─' {1..60}; echo
