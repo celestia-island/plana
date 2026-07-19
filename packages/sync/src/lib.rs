@@ -42,11 +42,11 @@ pub use tree::{PatchEvent, ScopeKey, ScopeOwner, StateTree};
 // ═══════════════════════════════════════════════════════════════
 
 /// JSON-RPC method name for state patch notifications.
-pub const METHOD_STATE_PATCH: &str = "Tui.StatePatch";
+pub const METHOD_STATE_PATCH: &str = "Sync.StatePatch";
 /// JSON-RPC method name for state snapshot notifications.
-pub const METHOD_STATE_SNAPSHOT: &str = "Tui.StateSnapshot";
+pub const METHOD_STATE_SNAPSHOT: &str = "Sync.StateSnapshot";
 /// JSON-RPC method name for channel event notifications.
-pub const METHOD_CHANNEL_EVENT: &str = "Tui.ChannelEvent";
+pub const METHOD_CHANNEL_EVENT: &str = "Sync.ChannelEvent";
 
 /// RPC method for subscribing to state viewports.
 pub const RPC_STATE_SUBSCRIBE: &str = "state.subscribe";
@@ -67,28 +67,28 @@ pub const SNAPSHOT_TICK_SECS: u64 = 3;
 /// State-snapshot methods are deliberately excluded (they belong to the
 /// sync context, not the push context).
 pub const ALL_TOPICS: &[(&str, &str)] = &[
-    ("Tui.AgentStreamingChunk", "agent_streaming"),
-    ("Tui.AgentThinkingStep", "agent_thinking"),
-    ("Tui.AgentToolCall", "agent_tool_call"),
-    ("Tui.McpToolResult", "mcp_tool_result"),
-    ("Tui.SkillChainStart", "skill_chain"),
-    ("Tui.SkillChainStep", "skill_chain"),
-    ("Tui.SkillChainComplete", "skill_chain"),
-    ("Tui.YoloCycleStep", "yolo_cycle"),
-    ("Tui.YoloCycleComplete", "yolo_cycle"),
-    ("Tui.TaskCreated", "task"),
-    ("Tui.TaskStatusUpdate", "task"),
-    ("Tui.ServerLogEntry", "server_logs"),
-    ("Tui.ContainerLogEntry", "container_logs"),
-    ("Tui.AgentReport", "reports"),
-    ("Tui.IndustrialTelemetryPush", "industrial_telemetry"),
-    ("Tui.IndustrialAlarmPush", "industrial_alarm"),
+    ("Sync.AgentStreamingChunk", "agent_streaming"),
+    ("Sync.AgentThinkingStep", "agent_thinking"),
+    ("Sync.AgentToolCall", "agent_tool_call"),
+    ("Sync.McpToolResult", "mcp_tool_result"),
+    ("Sync.SkillChainStart", "skill_chain"),
+    ("Sync.SkillChainStep", "skill_chain"),
+    ("Sync.SkillChainComplete", "skill_chain"),
+    ("Sync.YoloCycleStep", "yolo_cycle"),
+    ("Sync.YoloCycleComplete", "yolo_cycle"),
+    ("Sync.TaskCreated", "task"),
+    ("Sync.TaskStatusUpdate", "task"),
+    ("Sync.ServerLogEntry", "server_logs"),
+    ("Sync.ContainerLogEntry", "container_logs"),
+    ("Sync.AgentReport", "reports"),
+    ("Sync.IndustrialTelemetryPush", "industrial_telemetry"),
+    ("Sync.IndustrialAlarmPush", "industrial_alarm"),
     (
-        "Tui.IndustrialWriteApprovalPush",
+        "Sync.IndustrialWriteApprovalPush",
         "industrial_write_approval",
     ),
-    ("Tui.HumanReviewRequest", "human_review"),
-    ("Tui.AudioPullProgress", "audio_pull_progress"),
+    ("Sync.HumanReviewRequest", "human_review"),
+    ("Sync.AudioPullProgress", "audio_pull_progress"),
 ];
 
 /// Look up the channel topic name for a given JSON-RPC method.

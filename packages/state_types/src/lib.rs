@@ -38,7 +38,7 @@ pub use agent::{
 };
 pub use agent_context::AgentContext;
 pub use agent_error::{AgentErrorCode, StructuredAgentError};
-pub use arona;
+pub use plana;
 pub use doc_loader::{McpToolDoc, McpToolDocLoader};
 pub use gateway::{
     AgentMessage, AskAnswerSource, BaseMessage, ClientCapability, ClientNodeInfo,
