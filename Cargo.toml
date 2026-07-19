@@ -14,7 +14,7 @@ members = [
     "packages/domain_skills_permissions",
     "packages/custom_agent",
     "packages/state_types",
-    "packages/infra_jsonrpc",
+    "packages/jsonrpc",
     "packages/infra_services",
     "packages/infra_utils",
     "packages/bootloader",
@@ -52,7 +52,7 @@ _domain_skills = { path = "packages/domain_skills" }
 _domain_skills_permissions = { path = "packages/domain_skills_permissions" }
 _custom_agent = { path = "packages/custom_agent" }
 _state_sync = { path = "packages/state_types" }
-_infra_jsonrpc = { path = "packages/infra_jsonrpc" }
+_jsonrpc = { path = "packages/jsonrpc" }
 _infra_services = { path = "packages/infra_services" }
 _infra_utils = { path = "packages/infra_utils" }
 _llm_provider = { path = "packages/llm_provider" }
