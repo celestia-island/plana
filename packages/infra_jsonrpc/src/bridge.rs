@@ -105,7 +105,7 @@ impl GatewayMethod {
 
     pub fn type_prefix(&self) -> &'static str {
         match self {
-            Self::Tui(_) => "Tui",
+            Self::Tui(_) => "Sync",
             Self::Base(_) => "Base",
             Self::Agent(_) => "Agent",
             Self::Mcp(_) => "Mcp",
