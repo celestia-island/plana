@@ -42,7 +42,7 @@ pub async fn remove_agent(tree: &StateTree, agent_id: &str) {
 ///
 /// entelecheia 的 `TuiMessage::AgentPatch { patches: Vec<AgentPatch> }`
 /// 序列化后 jsonrpc method = `Tui.AgentPatch`，params = `{"patches":[...]}`
-/// （action 字段被 infra_jsonrpc 剥掉）。每个 patch 有 `agent_id` +
+/// （action 字段被 jsonrpc 剥掉）。每个 patch 有 `agent_id` +
 /// 若干可选字段（work_status / current_model / cpu_usage / ...）—— 是
 /// 字段级增量，不是完整 agent 对象。
 ///
