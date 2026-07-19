@@ -660,7 +660,10 @@ mod tests {
     #[test]
     fn test_parse_roundtrip() {
         assert_eq!(
-            "Sync.ServerVersion".parse::<Method>().unwrap().method_name(),
+            "Sync.ServerVersion"
+                .parse::<Method>()
+                .unwrap()
+                .method_name(),
             "Sync.ServerVersion"
         );
         assert_eq!(
