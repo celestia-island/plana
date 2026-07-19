@@ -87,7 +87,7 @@ pub enum MessageKind {
 
 // ── Per-namespace definitions ─────────────────────────────────
 
-namespace!("Tui", Tui, TuiMethod,
+namespace!("Sync", Tui, TuiMethod,
     ServerVersion              as OneWay,
     ConnectHandshake           as SyncReq   => HandshakeAck,
     HandshakeAck               as OneWay,
@@ -555,7 +555,7 @@ impl std::str::FromStr for Method {
             .split_once('.')
             .ok_or(strum::ParseError::VariantNotFound)?;
         Ok(match ns {
-            "Tui" => Method::Tui(action.parse()?),
+            "Tui" | "Sync" => Method::Tui(action.parse()?),
             "Cli" => Method::Cli(action.parse()?),
             "Mcp" => Method::Mcp(action.parse()?),
             "Skill" => Method::Skill(action.parse()?),
