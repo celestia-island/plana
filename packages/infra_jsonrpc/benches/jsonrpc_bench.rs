@@ -54,7 +54,7 @@ fn bench_from_jsonrpc_method(c: &mut Criterion) {
     c.bench_function("from_jsonrpc_method", |b| {
         b.iter(|| {
             from_jsonrpc_method(
-                black_box("Tui.OpenWorkspace"),
+                black_box("Sync.OpenWorkspace"),
                 black_box(Some(params.clone())),
             )
         })

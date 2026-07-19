@@ -84,7 +84,7 @@ impl GatewayMethod {
 
     pub fn as_str(&self) -> String {
         match self {
-            Self::Tui(action) => format!("Tui.{}", action),
+            Self::Tui(action) => format!("Sync.{}", action),
             Self::Base(action) => format!("Base.{}", action),
             Self::Agent(action) => format!("Agent.{}", action),
             Self::Mcp(action) => format!("Mcp.{}", action),
@@ -161,46 +161,46 @@ impl std::str::FromStr for GatewayMethod {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Tui.Ping" => Ok(Self::TUI_PING),
-            "Tui.AgentPatch" => Ok(Self::TUI_AGENT_PATCH),
-            "Tui.OrchestrationStatus" => Ok(Self::TUI_ORCHESTRATION_STATUS),
-            "Tui.McpToolResult" => Ok(Self::TUI_MCP_TOOL_RESULT),
-            "Tui.AgentStreamingChunk" => Ok(Self::TUI_AGENT_STREAMING_CHUNK),
-            "Tui.AgentReport" => Ok(Self::TUI_AGENT_REPORT),
-            "Tui.AskHumanRequest" => Ok(Self::TUI_ASK_HUMAN_REQUEST),
-            "Tui.UserMessage" => Ok(Self::TUI_USER_MESSAGE),
-            "Tui.AgentResponse" => Ok(Self::TUI_AGENT_RESPONSE),
-            "Tui.RequestFullSnapshot" => Ok(Self::TUI_REQUEST_FULL_SNAPSHOT),
-            "Tui.RequestGlobalSnapshot" => Ok(Self::TUI_REQUEST_GLOBAL_SNAPSHOT),
-            "Tui.GlobalSnapshot" => Ok(Self::TUI_GLOBAL_SNAPSHOT),
-            "Tui.ModelsSnapshot" => Ok(Self::TUI_MODELS_SNAPSHOT),
-            "Tui.ProvidersSnapshot" => Ok(Self::TUI_PROVIDERS_SNAPSHOT),
-            "Tui.ContainerSnapshot" => Ok(Self::TUI_CONTAINER_SNAPSHOT),
-            "Tui.ContainerPatch" => Ok(Self::TUI_CONTAINER_PATCH),
-            "Tui.TaskPatch" => Ok(Self::TUI_TASK_PATCH),
-            "Tui.TasksSnapshot" => Ok(Self::TUI_TASKS_SNAPSHOT),
-            "Tui.ListAgents" => Ok(Self::TUI_LIST_AGENTS),
-            "Tui.ServerVersion" => Ok(Self::TUI_SERVER_VERSION),
-            "Tui.OpenGitWorkspace" | "Tui.OpenWorkspace" => Ok(Self::TUI_OPEN_WORKSPACE),
-            "Tui.WorkspaceStatus" => Ok(Self::TUI_WORKSPACE_STATUS),
-            "Tui.RequestWorkspaceStatus" => Ok(Self::TUI_REQUEST_WORKSPACE_STATUS),
-            "Tui.SystemMessage" => Ok(Self::TUI_SYSTEM_MESSAGE),
-            "Tui.WebUiControl" => Ok(Self::TUI_WEBUI_CONTROL),
-            "Tui.WebUiControlResponse" => Ok(Self::TUI_WEBUI_CONTROL_RESPONSE),
-            "Tui.WebUiStatus" => Ok(Self::TUI_WEBUI_STATUS),
-            "Tui.RequestWebUiStatus" => Ok(Self::TUI_REQUEST_WEBUI_STATUS),
-            "Tui.AuthLogin" => Ok(Self::TUI_AUTH_LOGIN),
-            "Tui.AuthLoginResponse" => Ok(Self::TUI_AUTH_LOGIN_RESPONSE),
-            "Tui.AuthRegister" => Ok(Self::TUI_AUTH_REGISTER),
-            "Tui.AuthRegisterResponse" => Ok(Self::TUI_AUTH_REGISTER_RESPONSE),
-            "Tui.AuthListUsers" => Ok(Self::TUI_AUTH_LIST_USERS),
-            "Tui.AuthListUsersResponse" => Ok(Self::TUI_AUTH_LIST_USERS_RESPONSE),
-            "Tui.AuthGetUser" => Ok(Self::TUI_AUTH_GET_USER),
-            "Tui.AuthGetUserResponse" => Ok(Self::TUI_AUTH_GET_USER_RESPONSE),
-            "Tui.AuthDeleteUser" => Ok(Self::TUI_AUTH_DELETE_USER),
-            "Tui.AuthDeleteUserResponse" => Ok(Self::TUI_AUTH_DELETE_USER_RESPONSE),
-            "Tui.AuthChangePassword" => Ok(Self::TUI_AUTH_CHANGE_PASSWORD),
-            "Tui.AuthChangePasswordResponse" => Ok(Self::TUI_AUTH_CHANGE_PASSWORD_RESPONSE),
+            "Sync.Ping" => Ok(Self::TUI_PING),
+            "Sync.AgentPatch" => Ok(Self::TUI_AGENT_PATCH),
+            "Sync.OrchestrationStatus" => Ok(Self::TUI_ORCHESTRATION_STATUS),
+            "Sync.McpToolResult" => Ok(Self::TUI_MCP_TOOL_RESULT),
+            "Sync.AgentStreamingChunk" => Ok(Self::TUI_AGENT_STREAMING_CHUNK),
+            "Sync.AgentReport" => Ok(Self::TUI_AGENT_REPORT),
+            "Sync.AskHumanRequest" => Ok(Self::TUI_ASK_HUMAN_REQUEST),
+            "Sync.UserMessage" => Ok(Self::TUI_USER_MESSAGE),
+            "Sync.AgentResponse" => Ok(Self::TUI_AGENT_RESPONSE),
+            "Sync.RequestFullSnapshot" => Ok(Self::TUI_REQUEST_FULL_SNAPSHOT),
+            "Sync.RequestGlobalSnapshot" => Ok(Self::TUI_REQUEST_GLOBAL_SNAPSHOT),
+            "Sync.GlobalSnapshot" => Ok(Self::TUI_GLOBAL_SNAPSHOT),
+            "Sync.ModelsSnapshot" => Ok(Self::TUI_MODELS_SNAPSHOT),
+            "Sync.ProvidersSnapshot" => Ok(Self::TUI_PROVIDERS_SNAPSHOT),
+            "Sync.ContainerSnapshot" => Ok(Self::TUI_CONTAINER_SNAPSHOT),
+            "Sync.ContainerPatch" => Ok(Self::TUI_CONTAINER_PATCH),
+            "Sync.TaskPatch" => Ok(Self::TUI_TASK_PATCH),
+            "Sync.TasksSnapshot" => Ok(Self::TUI_TASKS_SNAPSHOT),
+            "Sync.ListAgents" => Ok(Self::TUI_LIST_AGENTS),
+            "Sync.ServerVersion" => Ok(Self::TUI_SERVER_VERSION),
+            "Sync.OpenGitWorkspace" | "Sync.OpenWorkspace" => Ok(Self::TUI_OPEN_WORKSPACE),
+            "Sync.WorkspaceStatus" => Ok(Self::TUI_WORKSPACE_STATUS),
+            "Sync.RequestWorkspaceStatus" => Ok(Self::TUI_REQUEST_WORKSPACE_STATUS),
+            "Sync.SystemMessage" => Ok(Self::TUI_SYSTEM_MESSAGE),
+            "Sync.WebUiControl" => Ok(Self::TUI_WEBUI_CONTROL),
+            "Sync.WebUiControlResponse" => Ok(Self::TUI_WEBUI_CONTROL_RESPONSE),
+            "Sync.WebUiStatus" => Ok(Self::TUI_WEBUI_STATUS),
+            "Sync.RequestWebUiStatus" => Ok(Self::TUI_REQUEST_WEBUI_STATUS),
+            "Sync.AuthLogin" => Ok(Self::TUI_AUTH_LOGIN),
+            "Sync.AuthLoginResponse" => Ok(Self::TUI_AUTH_LOGIN_RESPONSE),
+            "Sync.AuthRegister" => Ok(Self::TUI_AUTH_REGISTER),
+            "Sync.AuthRegisterResponse" => Ok(Self::TUI_AUTH_REGISTER_RESPONSE),
+            "Sync.AuthListUsers" => Ok(Self::TUI_AUTH_LIST_USERS),
+            "Sync.AuthListUsersResponse" => Ok(Self::TUI_AUTH_LIST_USERS_RESPONSE),
+            "Sync.AuthGetUser" => Ok(Self::TUI_AUTH_GET_USER),
+            "Sync.AuthGetUserResponse" => Ok(Self::TUI_AUTH_GET_USER_RESPONSE),
+            "Sync.AuthDeleteUser" => Ok(Self::TUI_AUTH_DELETE_USER),
+            "Sync.AuthDeleteUserResponse" => Ok(Self::TUI_AUTH_DELETE_USER_RESPONSE),
+            "Sync.AuthChangePassword" => Ok(Self::TUI_AUTH_CHANGE_PASSWORD),
+            "Sync.AuthChangePasswordResponse" => Ok(Self::TUI_AUTH_CHANGE_PASSWORD_RESPONSE),
             "Base.Heartbeat" => Ok(Self::BASE_HEARTBEAT),
             "Base.Error" => Ok(Self::BASE_ERROR),
             "Base.Ack" => Ok(Self::BASE_ACK),
@@ -468,14 +468,14 @@ mod tests {
 
     #[test]
     fn gateway_method_parse_open_workspace() -> anyhow::Result<()> {
-        let method: GatewayMethod = "Tui.OpenWorkspace".parse()?;
+        let method: GatewayMethod = "Sync.OpenWorkspace".parse()?;
         assert_eq!(method.as_str(), GatewayMethod::TUI_OPEN_WORKSPACE.as_str());
         Ok(())
     }
 
     #[test]
     fn gateway_method_parse_workspace_status() -> anyhow::Result<()> {
-        let method: GatewayMethod = "Tui.WorkspaceStatus".parse()?;
+        let method: GatewayMethod = "Sync.WorkspaceStatus".parse()?;
         assert_eq!(
             method.as_str(),
             GatewayMethod::TUI_WORKSPACE_STATUS.as_str()
@@ -509,10 +509,10 @@ mod tests {
     #[test]
     fn gateway_method_parse_methods() -> anyhow::Result<()> {
         for (s, expected) in [
-            ("Tui.SystemMessage", GatewayMethod::TUI_SYSTEM_MESSAGE),
-            ("Tui.AuthLogin", GatewayMethod::TUI_AUTH_LOGIN),
+            ("Sync.SystemMessage", GatewayMethod::TUI_SYSTEM_MESSAGE),
+            ("Sync.AuthLogin", GatewayMethod::TUI_AUTH_LOGIN),
             (
-                "Tui.AuthLoginResponse",
+                "Sync.AuthLoginResponse",
                 GatewayMethod::TUI_AUTH_LOGIN_RESPONSE,
             ),
         ] {

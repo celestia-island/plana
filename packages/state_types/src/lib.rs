@@ -38,7 +38,6 @@ pub use agent::{
 };
 pub use agent_context::AgentContext;
 pub use agent_error::{AgentErrorCode, StructuredAgentError};
-pub use arona;
 pub use doc_loader::{McpToolDoc, McpToolDocLoader};
 pub use gateway::{
     AgentMessage, AskAnswerSource, BaseMessage, ClientCapability, ClientNodeInfo,
@@ -77,4 +76,5 @@ pub use mcp::{
     PreserveState, PromptInjectionPolicy, SkillInfo, SkillLocation, TodoMarker, ToolLocation,
     ToolMaturity, ToolVisibility,
 };
+pub use plana;
 pub use types::{ModelTier, TaskStatus, UnknownTaskStatusError};

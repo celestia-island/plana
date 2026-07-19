@@ -647,9 +647,9 @@ mod tests {
     fn test_wire_from_enum_path() {
         assert_eq!(
             Method::Tui(TuiMethod::ServerVersion).method_name(),
-            "Tui.ServerVersion"
+            "Sync.ServerVersion"
         );
-        assert_eq!(Method::TuiServerVersion.method_name(), "Tui.ServerVersion"); // flat alias
+        assert_eq!(Method::TuiServerVersion.method_name(), "Sync.ServerVersion"); // flat alias
         assert_eq!(Method::Cli(CliMethod::Status).method_name(), "Cli.Status");
         assert_eq!(Method::CliStatus.method_name(), "Cli.Status");
         assert_eq!(
@@ -660,8 +660,11 @@ mod tests {
     #[test]
     fn test_parse_roundtrip() {
         assert_eq!(
-            "Tui.ServerVersion".parse::<Method>().unwrap().method_name(),
-            "Tui.ServerVersion"
+            "Sync.ServerVersion"
+                .parse::<Method>()
+                .unwrap()
+                .method_name(),
+            "Sync.ServerVersion"
         );
         assert_eq!(
             "Cli.Status".parse::<Method>().unwrap().method_name(),
@@ -703,6 +706,6 @@ mod tests {
     fn test_prepare_notify() {
         let f = PendingRegistry::prepare_notify(Method::TuiAgentReport, serde_json::json!({"x":1}));
         assert!(f.get("id").is_none());
-        assert_eq!(f["method"], "Tui.AgentReport");
+        assert_eq!(f["method"], "Sync.AgentReport");
     }
 }
