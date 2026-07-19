@@ -1,7 +1,7 @@
 //! JSON-RPC 2.0 envelope types (TS-exporting copy).
 //!
 //! NOTE: This is the TS-bindings copy for the `arona` crate. The canonical
-//! wire-layer copy lives in `_infra_jsonrpc::types`. The two are kept in sync
+//! wire-layer copy lives in `_jsonrpc::types`. The two are kept in sync
 //! manually — they define the same types but the arona copy additionally
 //! exports TypeScript bindings. A future refactor could extract the envelope
 //! into a shared leaf crate to eliminate this duplication, but that would

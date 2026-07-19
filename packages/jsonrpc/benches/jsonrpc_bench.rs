@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
-use _infra_jsonrpc::{
+use _jsonrpc::{
     JsonRpcRequest, core_message_to_method_and_params, deserialize_from_jsonrpc,
     from_jsonrpc_method, serialize_to_jsonrpc,
 };
