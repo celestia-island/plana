@@ -125,8 +125,17 @@ impl StateTreeRegistry {
             loop {
                 ticker.tick().await;
                 me.reap_once(idle_ttl).await;
+                me.sweep_init_locks();
             }
         })
+    }
+
+    /// Remove init_lock entries whose mutex is uncontended (strong count == 1).
+    fn sweep_init_locks(&self) {
+        // Retain only entries whose mutex is contested (someone is waiting).
+        self.init_locks.retain(|_, lock| {
+            Arc::strong_count(lock) > 1
+        });
     }
 
     async fn reap_once(&self, idle_ttl: Duration) {

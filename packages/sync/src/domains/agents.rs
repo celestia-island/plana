@@ -102,6 +102,9 @@ fn agent_key(a: &Value) -> Option<String> {
         .or_else(|| {
             a.get("agent_type")
                 .and_then(|v| v.as_str())
+                .inspect(|_| {
+                    tracing::warn!(agent = ?a, "agent entry is missing agent_id — falling back to agent_type as key");
+                })
                 .map(|s| s.to_string())
         })
 }
