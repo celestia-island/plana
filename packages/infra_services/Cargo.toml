@@ -11,7 +11,7 @@ _core = { workspace = true }
 _config = { workspace = true }
 _container = { workspace = true }
 _infra_utils = { workspace = true }
-_infra_jsonrpc = { workspace = true }
+_jsonrpc = { workspace = true }
 _state_sync = { workspace = true }
 
 anyhow.workspace = true
