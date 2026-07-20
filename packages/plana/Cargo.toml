@@ -25,6 +25,7 @@ uuid = { workspace = true }
 ts-rs = { workspace = true }
 sha2.workspace = true
 hex.workspace = true
+kirino = { workspace = true }
 
 chrono = { workspace = true, optional = true }
 tracing-subscriber = { workspace = true, optional = true }

@@ -43,6 +43,30 @@ impl std::fmt::Display for AccessMode {
     }
 }
 
+/// Map a kirino `Permission` name string to an `AccessMode`.
+///
+/// The mapping follows the convention established in the hierarchical
+/// permission model:
+///   - `.read` / `.list`         → `AccessMode::Read`
+///   - `.write` / `.create` / `.update` / `.delete` → `AccessMode::Write`
+///   - `.execute` / `.use` / `.manage` / `.connect` → `AccessMode::Execute`
+#[must_use]
+pub fn permission_name_to_access_mode(name: &str) -> Option<AccessMode> {
+    if name.ends_with(".read") || name.ends_with(".list") {
+        Some(AccessMode::Read)
+    } else if name.ends_with(".write") || name.ends_with(".create")
+        || name.ends_with(".update") || name.ends_with(".delete")
+    {
+        Some(AccessMode::Write)
+    } else if name.ends_with(".execute") || name.ends_with(".use")
+        || name.ends_with(".manage") || name.ends_with(".connect")
+    {
+        Some(AccessMode::Execute)
+    } else {
+        None
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
 pub enum RiskLevel {
