@@ -22,6 +22,7 @@ pub mod identity;
 pub mod mcp;
 pub mod model;
 pub mod protocol;
+pub mod rbac;
 pub mod ws;
 
 #[cfg(feature = "tracing-helpers")]

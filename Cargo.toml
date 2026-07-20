@@ -61,6 +61,7 @@ _prompt = { path = "packages/prompt" }
 _res = { path = "packages/res" }
 _sync = { path = "packages/sync" }
 _bootloader = { path = "packages/bootloader" }
+kirino = { path = "../kirino" }
 
 # External dependency versions (carried from entelecheia workspace)
 anyhow = "^1"
