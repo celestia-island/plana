@@ -58,7 +58,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_places_devices_under_state_devices() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_devices(
             &tree,
             &[
@@ -83,7 +83,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_deep_merges_existing_device() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_devices(
             &tree,
             &[json!({"node_id":"node-1","name":"worker-a","status":"online"})],
@@ -100,7 +100,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_skips_entries_without_node_id() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_devices(&tree, &[json!({"no_id":true}), json!({"name":"x"})]).await;
         let all = tree.read_all().await;
         let devices = all["state"]["devices"].as_object();
@@ -109,7 +109,7 @@ mod tests {
 
     #[tokio::test]
     async fn viewport_snapshot_returns_only_devices() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_devices(&tree, &[json!({"node_id":"node-1","status":"online"})]).await;
         // 另写一个非 devices 的键。
         tree.write(PatchOp::set(
@@ -126,7 +126,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_device_deletes_key() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_devices(&tree, &[json!({"node_id":"node-1"})]).await;
         remove_device(&tree, "node-1").await;
         let all = tree.read_all().await;
