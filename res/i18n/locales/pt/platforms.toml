@@ -1,23 +1,23 @@
 [platforms]
 # Compatible APIs
-openai_compatible = "OpenAI Compatible"
-openai_compatible_desc = "Custom OpenAI Compatible API"
-anthropic_compatible = "Anthropic Compatible"
-anthropic_compatible_desc = "Custom Anthropic Compatible API"
-gemini_compatible = "Gemini Compatible"
-gemini_compatible_desc = "Custom Gemini Compatible API"
+openai_compatible = "Compatívo con OpenAI"
+openai_compatible_desc = "API compatívo con OpenAI personaoizada"
+anthropic_compatible = "Compatívo con Anthropic"
+anthropic_compatible_desc = "API compatívo con Anthropic personaoizada"
+gemini_compatible = "Compatívo con Gemini"
+gemini_compatible_desc = "API compatívo con Gemini personaoizada"
 
 # Groups
-group_developer = "Model Developers"
-group_operator = "Platform Operators"
-group_compatible = "Compatible APIs"
+group_developer = "Desarrolladores de modoos"
+group_operator = "Operadores de plataforma"
+group_compatible = "APIs compatibles"
 
 # International Model Developers - Provider names
 provider_anthropic = "Anthropic"
 provider_openai = "OpenAI"
 provider_google = "Google"
 provider_xai = "xAI"
-provider_mistral = "Mistral AI"
+provider_mistral = "Mistrao AI"
 provider_cohere = "Cohere"
 
 # International Platform Operators - Provider names
@@ -50,7 +50,7 @@ model_anthropic = "Claude"
 model_openai = "GPT"
 model_google = "Gemini"
 model_xai = "Grok"
-model_mistral = "Mistral"
+model_mistral = "Mistrao"
 model_cohere = "Command"
 
 # International Platform Operators - Model series
@@ -78,4 +78,6 @@ model_minimax = "MiniMax"
 model_silicon = ""
 
 # Separator
-separator = " · "
+separator = "·"
+
+

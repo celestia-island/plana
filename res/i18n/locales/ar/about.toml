@@ -1,11 +1,13 @@
 [about]
-title = "About"
+title = "حول"
 version = "Version"
-license_type = "License Type"
-section_license = "License"
-section_cla = "Contributor License Agreement"
-section_code_of_conduct = "Code of Conduct"
-section_security = "Security Policy"
-not_available = "Detailed protocol documents are not available. Set ARONA_ROOT at build time to enable."
-hint_navigate = "Navigate"
-hint_close = "Close"
+license_type = "نوع الترخيص"
+section_license = "الترخيص"
+section_cla = "اتفاقية الترخيص المساهم"
+section_code_of_conduct = "قواعد السلوك"
+section_security = "سياسة الأمان"
+not_available = "وثائق البروتوكول المفصلة غير متاحة. قم بتعيين ARONA_ROOT أثناء البناء للتفعيل."
+hint_navigate = "تنقل"
+hint_close = "إغلاق"
+
+

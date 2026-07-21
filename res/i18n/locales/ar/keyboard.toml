@@ -1,9 +1,11 @@
 [keyboard]
-exit_confirm_title = "Exit Confirm"
-exit_confirm_message = "Are you sure you want to exit?"
-execute_skill = "Execute Skill"
-user_prompt = "User Prompt"
-description = "Description"
-unknown_command_title = "Unknown Command"
-unknown_command_message = "Command not recognized. Type /help for available commands."
-exit_progress_message = "Exiting..."
+exit_confirm_title = "تأكيد sortie"
+exit_confirm_message = "Êtes-vous sûr vouloir quitter ?"
+execute_skill = "تنفيذ compétence"
+user_prompt = "Invite utilisateur"
+description = "وصف"
+unknown_command_title = "أمر غير معروفe"
+unknown_command_message = "أمر non reconnue. Tapez /help pour comman متاحة."
+exit_progress_message = "Fermeture en cours..."
+
+

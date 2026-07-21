@@ -1,4 +1,6 @@
 [report]
-no_reports = "No Reports"
-pending_suffix = "Pending"
-pending_reply = "Pending Reply"
+no_reports = "Aucun rapport"
+pending_suffix = "En attente"
+pending_reply = "Réponse en attente"
+
+

@@ -1,10 +1,12 @@
 [offline_dialog]
 title = "Offline"
-gateway_error = "Gateway Error"
-retrying = "Retrying"
-retry_attempt = "Retry Attempt"
-error_prefix = "Error"
-select_action = "Select Action"
-option_retry = "Retry"
-option_restart = "Restart"
-option_exit = "Exit"
+gateway_error = "Fehler passerelle"
+retrying = "Nouvel tentative"
+retry_attempt = "Wiederholen"
+error_prefix = "Fehler"
+select_action = "Auswählen une action"
+option_retry = "Wiederholen"
+option_restart = "Redémarrer"
+option_exit = "Beenden"
+
+
