@@ -79,6 +79,7 @@ impl StateTreeRegistry {
         let _guard = lock.lock().await;
         // Double-check。
         if let Some(t) = self.trees.get(&scope) {
+            t.touch();
             return t.clone();
         }
         let tree = StateTree::new(scope);
@@ -124,8 +125,17 @@ impl StateTreeRegistry {
             loop {
                 ticker.tick().await;
                 me.reap_once(idle_ttl).await;
+                me.sweep_init_locks();
             }
         })
+    }
+
+    /// Remove init_lock entries whose mutex is uncontended (strong count == 1).
+    fn sweep_init_locks(&self) {
+        // Retain only entries whose mutex is contested (someone is waiting).
+        self.init_locks.retain(|_, lock| {
+            Arc::strong_count(lock) > 1
+        });
     }
 
     async fn reap_once(&self, idle_ttl: Duration) {
@@ -147,6 +157,15 @@ impl StateTreeRegistry {
             // flush 整棵树到 store 后移除。
             let snapshot = tree.read_all().await;
             drop(tree); // 释放 dashmap 读锁引用再 remove。
+            // Double-check: a new subscriber may have joined between the
+            // idle check and the flush+remove.  Re-acquire via trees.get
+            // to avoid evicting a live tree.
+            if let Some(recheck) = self.trees.get(&scope) {
+                if recheck.subscriber_count() > 0 {
+                    continue;
+                }
+                drop(recheck);
+            }
             if !snapshot.as_object().map(|m| m.is_empty()).unwrap_or(true) {
                 self.store.put(scope, "", snapshot).await;
             }
@@ -187,7 +206,7 @@ mod tests {
     #[tokio::test]
     async fn get_or_load_creates_then_reuses() {
         let reg = StateTreeRegistry::new(Arc::new(store::NoopStore));
-        let scope = ScopeKey::workspace(Uuid::nil());
+        let scope = ScopeKey::workspace(Uuid::nil(), Uuid::nil());
         let t1 = reg.get_or_load(scope).await;
         let t2 = reg.get_or_load(scope).await;
         assert!(Arc::ptr_eq(&t1, &t2), "second get should reuse same tree");
@@ -198,7 +217,7 @@ mod tests {
     async fn lazy_load_from_store() {
         // 预置 store 里有数据 —— get_or_load 应载入。
         let mem = store::MemoryStore::default();
-        let scope = ScopeKey::workspace(Uuid::nil());
+        let scope = ScopeKey::workspace(Uuid::nil(), Uuid::nil());
         mem.put(scope, "state.x", json!(1)).await;
         let reg = StateTreeRegistry::new(Arc::new(mem));
         let tree = reg.get_or_load(scope).await;
@@ -210,7 +229,7 @@ mod tests {
     async fn reaper_evicts_idle_unsubscribed_tree() {
         let mem = store::MemoryStore::default();
         let reg = StateTreeRegistry::new(Arc::new(mem.clone()));
-        let scope = ScopeKey::workspace(Uuid::nil());
+        let scope = ScopeKey::workspace(Uuid::nil(), Uuid::nil());
         let tree = reg.get_or_load(scope).await;
         tree.write(PatchOp::set("state.x", json!(1))).await;
         assert_eq!(reg.len(), 1);
@@ -227,7 +246,7 @@ mod tests {
     #[tokio::test]
     async fn reaper_keeps_tree_with_subscriber() {
         let reg = StateTreeRegistry::new(Arc::new(store::NoopStore));
-        let scope = ScopeKey::workspace(Uuid::nil());
+        let scope = ScopeKey::workspace(Uuid::nil(), Uuid::nil());
         let tree = reg.get_or_load(scope).await;
         // 持有一个 receiver —— 模拟 ws_bridge writer 在订阅。
         let _rx = tree.subscribe_events();
@@ -242,7 +261,7 @@ mod tests {
     #[tokio::test]
     async fn reaper_does_not_evict_recently_accessed() {
         let reg = StateTreeRegistry::new(Arc::new(store::NoopStore));
-        let scope = ScopeKey::workspace(Uuid::nil());
+        let scope = ScopeKey::workspace(Uuid::nil(), Uuid::nil());
         let tree = reg.get_or_load(scope).await;
         tree.write(PatchOp::set("state.x", json!(1))).await;
         // ttl 很大 —— 刚访问过的树不会被回收。

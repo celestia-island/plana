@@ -46,7 +46,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_writes_tree_to_state_todo() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_todo(
             &tree,
             &[
@@ -63,7 +63,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_replaces_entire_tree() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_todo(&tree, &[json!({"id":"t1","title":"old"})]).await;
         upsert_todo(&tree, &[json!({"id":"t2","title":"new"})]).await;
         let all = tree.read_all().await;
@@ -74,7 +74,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_empty_removes_todo_key() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_todo(&tree, &[json!({"id":"t1"})]).await;
         upsert_todo(&tree, &[]).await;
         let all = tree.read_all().await;
@@ -83,7 +83,7 @@ mod tests {
 
     #[tokio::test]
     async fn viewport_snapshot_returns_only_todo() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_todo(&tree, &[json!({"id":"t1"})]).await;
         tree.write(PatchOp::set(
             "state.agents.hubris",
@@ -96,7 +96,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_todo_deletes_key() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_todo(&tree, &[json!({"id":"t1"})]).await;
         remove_todo(&tree).await;
         let all = tree.read_all().await;
@@ -105,7 +105,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_handles_nested_tree() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_todo(
             &tree,
             &[json!({

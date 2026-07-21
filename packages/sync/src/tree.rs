@@ -23,37 +23,39 @@ use uuid::Uuid;
 use crate::patch::{self, PatchOp};
 use crate::snapshot;
 
-/// 树的所有者：workspace 全局树 或 user 私有树。
+/// 树的所有者：workspace 树 或 user 私有树。
 ///
-/// 两级隔离（符合用户要求"以 workspace 为单位各自持有一个全局状态树 +
-/// 每个 user 也有自己的状态空间，原理类似、全局状态树本身是隔离的"）：
-/// - `Workspace(ws)` —— 该 workspace 所有 user 共享的树。
-/// - `User(user)` —— 该 user 私有的树（与 workspace 管理无关，全树隔离）。
+/// 三级隔离：「游戏房间」式强同步——同一 `(group_id, workspace_id)` 下
+/// 的所有用户共享 workspace 树，各自有独立 user 树。直接成员（未通过
+/// 组授权访问）以 `user_id` 作为个人伪组 ID。
+///
+/// `group_id` 始终存在，绝不为 `None`。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ScopeKey {
     pub workspace_id: Uuid,
+    pub group_id: Uuid,
     pub owner: ScopeOwner,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ScopeOwner {
-    /// workspace 全局树 —— 该 workspace 所有连接的 user 都可读。
     Workspace,
-    /// user 私有树 —— 仅该 user 可读，与 workspace 隔离。
     User(Uuid),
 }
 
 impl ScopeKey {
-    pub fn workspace(workspace_id: Uuid) -> Self {
+    pub fn workspace(workspace_id: Uuid, group_id: Uuid) -> Self {
         Self {
             workspace_id,
+            group_id,
             owner: ScopeOwner::Workspace,
         }
     }
 
-    pub fn user(workspace_id: Uuid, user_id: Uuid) -> Self {
+    pub fn user(workspace_id: Uuid, user_id: Uuid, group_id: Uuid) -> Self {
         Self {
             workspace_id,
+            group_id,
             owner: ScopeOwner::User(user_id),
         }
     }
@@ -83,6 +85,8 @@ pub struct StateTree {
     events_tx: broadcast::Sender<PatchEvent>,
     /// 写锁 —— 串行化所有写操作，保证 diff 的 before/after 一致性。
     write_lock: Mutex<()>,
+    /// 最近 64 条 patch 的环形缓冲区 —— 新订阅者 replay 用。
+    recent_patches: Mutex<Vec<PatchEvent>>,
 }
 
 impl StateTree {
@@ -95,6 +99,7 @@ impl StateTree {
             last_access_ns: AtomicU64::new(now_ns()),
             events_tx,
             write_lock: Mutex::new(()),
+            recent_patches: Mutex::new(Vec::with_capacity(64)),
         })
     }
 
@@ -102,7 +107,7 @@ impl StateTree {
         self.scope
     }
 
-    /// 订阅变更广播。
+    /// Subscribe to change broadcasts.
     pub fn subscribe_events(&self) -> broadcast::Receiver<PatchEvent> {
         self.events_tx.subscribe()
     }
@@ -122,7 +127,7 @@ impl StateTree {
         self.version.load(Ordering::Relaxed)
     }
 
-    fn touch(&self) {
+    pub fn touch(&self) {
         self.last_access_ns.store(now_ns(), Ordering::Relaxed);
     }
 
@@ -189,7 +194,15 @@ impl StateTree {
         };
         let ops_count = event.ops.len();
         // 广播 —— 没有订阅者时 send 返回 Err，忽略（树仍是权威源）。
-        let _ = self.events_tx.send(event);
+        let _ = self.events_tx.send(event.clone());
+        // Record in ring buffer for late subscribers to replay.
+        {
+            let mut buf = self.recent_patches.lock().await;
+            if buf.len() >= 64 {
+                buf.remove(0);
+            }
+            buf.push(event);
+        }
         trace!(
             scope = ?self.scope,
             version = new_version,
@@ -221,7 +234,7 @@ mod tests {
 
     #[tokio::test]
     async fn write_and_read_roundtrip() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         tree.write(PatchOp::set(
             "state.agents.hubris",
             json!({"status":"idle"}),
@@ -236,7 +249,7 @@ mod tests {
 
     #[tokio::test]
     async fn write_broadcasts_patch_event() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         let mut rx = tree.subscribe_events();
         tree.write(PatchOp::set("state.x", json!(1))).await;
         let event = rx.recv().await.expect("should receive event");
@@ -251,7 +264,7 @@ mod tests {
 
     #[tokio::test]
     async fn idempotent_write_does_not_increment_version() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         tree.write(PatchOp::set("state.x", json!(1))).await;
         let v1 = tree.version();
         // 再写一次相同值 —— diff 应为空，版本不变、不广播。
@@ -261,7 +274,7 @@ mod tests {
 
     #[tokio::test]
     async fn read_viewport_crops() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         tree.write(PatchOp::set("state.agents.hubris", json!(1)))
             .await;
         tree.write(PatchOp::set("state.devices.n1", json!(2))).await;
@@ -271,7 +284,7 @@ mod tests {
 
     #[tokio::test]
     async fn batch_write_single_broadcast() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         let mut rx = tree.subscribe_events();
         tree.write_ops(vec![
             PatchOp::set("state.a", json!(1)),
@@ -289,7 +302,7 @@ mod tests {
 
     #[tokio::test]
     async fn replace_root_diffs_against_empty() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         let mut rx = tree.subscribe_events();
         tree.replace_root(json!({"state":{"x":1}})).await;
         let event = rx.recv().await.expect("should receive event");
@@ -300,8 +313,8 @@ mod tests {
 
     #[test]
     fn scope_key_isolation() {
-        let ws = ScopeKey::workspace(Uuid::nil());
-        let u = ScopeKey::user(Uuid::nil(), Uuid::nil());
+        let ws = ScopeKey::workspace(Uuid::nil(), Uuid::nil());
+        let u = ScopeKey::user(Uuid::nil(), Uuid::nil(), Uuid::nil());
         assert_ne!(ws, u);
         assert_eq!(ws.owner, ScopeOwner::Workspace);
         assert_eq!(u.owner, ScopeOwner::User(Uuid::nil()));

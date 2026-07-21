@@ -102,6 +102,9 @@ fn agent_key(a: &Value) -> Option<String> {
         .or_else(|| {
             a.get("agent_type")
                 .and_then(|v| v.as_str())
+                .inspect(|_| {
+                    tracing::warn!(agent = ?a, "agent entry is missing agent_id — falling back to agent_type as key");
+                })
                 .map(|s| s.to_string())
         })
 }
@@ -121,7 +124,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_places_agents_under_state_agents() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_agents(
             &tree,
             &[
@@ -146,7 +149,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_deep_merges_existing_agent() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_agents(
             &tree,
             &[json!({"agent_id":"hubris-1","status":"Online","model":"glm"})],
@@ -163,7 +166,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_skips_entries_without_id() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_agents(
             &tree,
             &[json!({"no_id":true}), json!({"agent_type":"Fallback"})],
@@ -176,7 +179,7 @@ mod tests {
 
     #[tokio::test]
     async fn viewport_snapshot_returns_only_agents() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_agents(&tree, &[json!({"agent_id":"hubris-1","status":"Online"})]).await;
         // 另写一个非 agents 的键。
         tree.write(PatchOp::set("state.devices.n1", json!({"online":true})))
@@ -190,7 +193,7 @@ mod tests {
 
     #[tokio::test]
     async fn remove_agent_deletes_key() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_agents(&tree, &[json!({"agent_id":"hubris-1"})]).await;
         remove_agent(&tree, "hubris-1").await;
         let all = tree.read_all().await;
@@ -200,7 +203,7 @@ mod tests {
     #[tokio::test]
     async fn upsert_patches_field_level_incremental() {
         // 模拟 entelecheia 的 Tui.AgentPatch：字段级增量。
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         // 先建一个 agent。
         upsert_agents(
             &tree,
@@ -233,7 +236,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_patches_skips_no_id() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_agent_patches(&tree, &[json!({"work_status":"x"})]).await;
         let all = tree.read_all().await;
         // 没有 agent_id 的 patch 被跳过 —— agents 子树应为空或不存在。
@@ -243,7 +246,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_patches_fallback_to_agent_number() {
-        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         upsert_agent_patches(
             &tree,
             &[json!({"agent_number":"001","work_status":{"Idle":{}}})],
