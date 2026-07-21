@@ -86,6 +86,7 @@ gen target='bindings':
 # Warnings (tab characters, untranslated duplicate paragraphs) are printed
 # to stderr but do not cause a non-zero exit.
 fmt:
+    just fmt-toml
     just fmt-markdown .
     cargo fmt --all
 
