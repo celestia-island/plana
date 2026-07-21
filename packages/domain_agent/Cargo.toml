@@ -7,11 +7,11 @@ publish = false
 license.workspace = true
 
 [dependencies]
+
 _core = { workspace = true }
+_macros = { workspace = true }
 anyhow.workspace = true
+dashmap.workspace = true
 serde = { workspace = true, features = ["derive"] }
 thiserror.workspace = true
-dashmap.workspace = true
-_macros = { workspace = true }
-
 [dev-dependencies]
