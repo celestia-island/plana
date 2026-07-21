@@ -1,4 +1,6 @@
 [hints]
-select_platform = "Select Platform"
-select_skill = "Select Skill"
-select_tool = "Select Tool"
+select_platform = "Sélectionnez plateforme"
+select_skill = "Sélectionnez compétence"
+select_tool = "Auswählen un outil"
+
+

@@ -1,11 +1,13 @@
 [query_dialog]
-title = "Query"
-source_label = "Source"
-select_reply = "Select Reply"
-custom_reply = "Custom Reply"
-custom_input = "Custom Input"
-input_placeholder = "Input Placeholder"
-enter_confirm_selection = "Confirm selection"
-enter_send_reply = "Send reply"
-tab_switch_input = "Switch input"
-tab_switch_option = "Switch option"
+title = "Anfrage"
+source_label = "Quelle"
+select_reply = "Sélectionnez Répondre"
+custom_reply = "Réponse benutzerdefinierte"
+custom_input = "Entrée benutzerdefinierte"
+input_placeholder = "Espace réservé saisie"
+enter_confirm_selection = "Bestätigen sélection"
+enter_send_reply = "Envoyer réponse"
+tab_switch_input = "Ändern saisie"
+tab_switch_option = "Ändern l'option"
+
+

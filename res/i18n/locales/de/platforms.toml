@@ -1,16 +1,16 @@
 [platforms]
 # Compatible APIs
-openai_compatible = "OpenAI Compatible"
-openai_compatible_desc = "Custom OpenAI Compatible API"
-anthropic_compatible = "Anthropic Compatible"
-anthropic_compatible_desc = "Custom Anthropic Compatible API"
-gemini_compatible = "Gemini Compatible"
-gemini_compatible_desc = "Custom Gemini Compatible API"
+openai_compatible = "Compatib OpenAI"
+openai_compatible_desc = "API compatib OpenAI benutzerdefinierte"
+anthropic_compatible = "Compatib Anthropic"
+anthropic_compatible_desc = "API compatib Anthropic benutzerdefinierte"
+gemini_compatible = "Compatib Gemini"
+gemini_compatible_desc = "API compatib Gemini benutzerdefinierte"
 
 # Groups
-group_developer = "Model Developers"
-group_operator = "Platform Operators"
-group_compatible = "Compatible APIs"
+group_developer = "Développeurs Modelle"
+group_operator = "Opérateurs plateforme"
+group_compatible = "APIs compatibles"
 
 # International Model Developers - Provider names
 provider_anthropic = "Anthropic"
@@ -30,7 +30,7 @@ provider_together = "Together AI"
 
 # Chinese Model Developers - Provider names
 provider_glm = "Zhipu AI"
-provider_glm_china = "Zhipu AI (China)"
+provider_glm_china = "Zhipu AI (Chine)"
 provider_deepseek = "DeepSeek"
 provider_qwen = "Alibaba Cloud"
 provider_moonshot = "Moonshot AI"
@@ -78,4 +78,6 @@ model_minimax = "MiniMax"
 model_silicon = ""
 
 # Separator
-separator = " · "
+separator = "·"
+
+

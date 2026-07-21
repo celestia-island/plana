@@ -1,4 +1,6 @@
 [renderer]
-hint = "Hint"
-waiting_for_input = "Waiting for Input"
-all_tasks_completed = "All Tasks Completed"
+hint = "Indice"
+waiting_for_input = "Ausstehend saisie"
+all_tasks_completed = "Toutes tâches sont terminées"
+
+
