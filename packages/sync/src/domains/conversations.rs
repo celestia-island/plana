@@ -44,7 +44,7 @@ pub async fn remove_conversation(tree: &StateTree, id: &str) {
 
 /// user 私有 scope（conversations 专属）。
 pub fn user_scope(workspace_id: Uuid, user_id: Uuid) -> ScopeKey {
-    ScopeKey::user(workspace_id, user_id)
+    ScopeKey::user(workspace_id, user_id, user_id)
 }
 
 #[cfg(test)]
@@ -54,7 +54,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_places_conversations() {
-        let tree = StateTree::new(ScopeKey::user(Uuid::nil(), Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::user(Uuid::nil(), Uuid::nil(), Uuid::nil()));
         upsert_conversations(
             &tree,
             &[
@@ -76,7 +76,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_single_and_remove() {
-        let tree = StateTree::new(ScopeKey::user(Uuid::nil(), Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::user(Uuid::nil(), Uuid::nil(), Uuid::nil()));
         upsert_conversation(&tree, "c1", json!({"id":"c1","title":"x"})).await;
         assert!(tree.read_all().await["state"]["user"]["conversations"]["c1"].is_object());
         remove_conversation(&tree, "c1").await;
@@ -90,7 +90,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_skips_no_id() {
-        let tree = StateTree::new(ScopeKey::user(Uuid::nil(), Uuid::nil()));
+        let tree = StateTree::new(ScopeKey::user(Uuid::nil(), Uuid::nil(), Uuid::nil()));
         upsert_conversations(&tree, &[json!({"title":"no id"})]).await;
         let all = tree.read_all().await;
         let c = all["state"]["user"]["conversations"].as_object();
