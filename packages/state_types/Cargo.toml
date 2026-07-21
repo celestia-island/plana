@@ -8,21 +8,21 @@ license.workspace = true
 description = "Wire protocol and state types for the entelecheia platform"
 
 [dependencies]
+
+_config = { workspace = true }
+_container = { workspace = true }
+_core = { workspace = true }
+_domain_agent = { workspace = true }
+_text = { workspace = true }
+chrono.workspace = true
+plana.workspace = true
+regex.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-uuid.workspace = true
-chrono.workspace = true
 thiserror.workspace = true
 toml.workspace = true
-regex.workspace = true
 tracing.workspace = true
-
-_core = { workspace = true }
-_config = { workspace = true }
-_text = { workspace = true }
-_domain_agent = { workspace = true }
-_container = { workspace = true }
-plana.workspace = true
-
+uuid.workspace = true
 [dev-dependencies]
+
 anyhow.workspace = true
