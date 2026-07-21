@@ -790,13 +790,13 @@ pub struct GrantItem {
 }
 
 impl GrantItem {
-    /// Validate that the `permission` field holds a valid kirino Permission path
+    /// Validate that the `permission` field holds a valid Permission path
     /// (leaf node like `"agent.read"`) or domain name (branch like `"agent"`).
     /// Returns `None` when valid; otherwise returns the invalid path.
     #[must_use]
     pub fn validate_permission(&self) -> Option<&str> {
-        let valid = crate::rbac::parse_permission(&self.permission).is_some()
-            || !kirino::rbac::permission::Permission::expand_domain(&self.permission).is_empty();
+        let valid = crate::rbac::Permission::from_path(&self.permission).is_some()
+            || !crate::rbac::Permission::expand_domain(&self.permission).is_empty();
         if valid {
             None
         } else {
