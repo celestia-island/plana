@@ -39,26 +39,26 @@ categories = ["data-structures", "development-tools"]
 
 [workspace.dependencies]
 
-_bootloader = { path = "packages/bootloader" }
-_config = { path = "packages/config" }
-_container = { path = "packages/container" }
-_container_runtime = { path = "packages/container_runtime" }
-_core = { path = "packages/core" }
-_custom_agent = { path = "packages/custom_agent" }
-_domain_agent = { path = "packages/domain_agent" }
-_domain_skills = { path = "packages/domain_skills" }
-_domain_skills_permissions = { path = "packages/domain_skills_permissions" }
-_infra_services = { path = "packages/infra_services" }
-_infra_utils = { path = "packages/infra_utils" }
-_jsonrpc = { path = "packages/jsonrpc" }
-_llm_provider = { path = "packages/llm_provider" }
-_macros = { path = "packages/macros" }
-_prompt = { path = "packages/prompt" }
-_res = { path = "packages/res" }
-_state_sync = { path = "packages/state_types" }
-_sync = { path = "packages/sync" }
-_text = { path = "packages/text" }
-_timeline = { path = "packages/timeline" }
+_bootloader = { package = "plana_bootloader", path = "packages/bootloader" }
+_config = { package = "plana_config", path = "packages/config" }
+_container = { package = "plana_container", path = "packages/container" }
+_container_runtime = { package = "plana_container_runtime", path = "packages/container_runtime" }
+_core = { package = "plana_core", path = "packages/core" }
+_custom_agent = { package = "plana_custom_agent", path = "packages/custom_agent" }
+_domain_agent = { package = "plana_domain_agent", path = "packages/domain_agent" }
+_domain_skills = { package = "plana_domain_skills", path = "packages/domain_skills" }
+_domain_skills_permissions = { package = "plana_domain_skills_permissions", path = "packages/domain_skills_permissions" }
+_infra_services = { package = "plana_infra_services", path = "packages/infra_services" }
+_infra_utils = { package = "plana_infra_utils", path = "packages/infra_utils" }
+_jsonrpc = { package = "plana_jsonrpc", path = "packages/jsonrpc" }
+_llm_provider = { package = "plana_llm_provider", path = "packages/llm_provider" }
+_macros = { package = "plana_macros", path = "packages/macros" }
+_prompt = { package = "plana_prompt", path = "packages/prompt" }
+_res = { package = "plana_res", path = "packages/res" }
+_state_sync = { package = "plana_state_sync", path = "packages/state_types" }
+_sync = { package = "plana_sync", path = "packages/sync" }
+_text = { package = "plana_text", path = "packages/text" }
+_timeline = { package = "plana_timeline", path = "packages/timeline" }
 # ── Internal crate aliases ──────────────────────────────────
 plana = { path = "packages/plana" }
 

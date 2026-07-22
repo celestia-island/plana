@@ -1,5 +1,5 @@
 [package]
-name = "_custom_agent"
+name = "plana_custom_agent"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
