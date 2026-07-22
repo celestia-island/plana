@@ -273,7 +273,7 @@ export class RpcClient {
         reject(new RpcError("timeout", method, `rpc call '${method}' timed out`));
       }, timeoutMs);
 
-      this.#pending.set(id, { resolve, reject, timer, method });
+      this.#pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timer, method });
 
       try {
         this.#ws!.send(JSON.stringify({ jsonrpc: "2.0", id, method, params: params ?? undefined }));
