@@ -1,5 +1,5 @@
 [package]
-name = "_macros"
+name = "plana_macros"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

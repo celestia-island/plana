@@ -1,5 +1,5 @@
 [package]
-name = "_domain_agent"
+name = "plana_domain_agent"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

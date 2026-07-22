@@ -1,5 +1,5 @@
 [package]
-name = "_llm_provider"
+name = "plana_llm_provider"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

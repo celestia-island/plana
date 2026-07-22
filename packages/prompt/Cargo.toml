@@ -1,5 +1,5 @@
 [package]
-name = "_prompt"
+name = "plana_prompt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
