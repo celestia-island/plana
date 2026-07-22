@@ -1,5 +1,5 @@
 [package]
-name = "_container"
+name = "plana_container"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

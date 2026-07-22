@@ -1,5 +1,5 @@
 [package]
-name = "_bootloader"
+name = "plana_bootloader"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

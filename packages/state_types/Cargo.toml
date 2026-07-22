@@ -1,5 +1,5 @@
 [package]
-name = "_state_sync"
+name = "plana_state_sync"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
