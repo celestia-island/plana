@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD033 MD041 MD036 -->
-<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/docs.celestia.world/dev/res/logo/plana.webp" alt="Plana" width="200" /></p>
+<p align="center"><img src="https://raw.githubusercontent.com/celestia-island/docs.celestia.world/master/res/logo/plana.webp" alt="Plana" width="200" /></p>
 
 <h1 align="center">Plana</h1>
 
