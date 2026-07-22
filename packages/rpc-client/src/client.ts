@@ -218,6 +218,9 @@ export class RpcClient {
     ws.onerror = () => {
       if (this.#wsGen !== gen) return;
       this.#setState("disconnected");
+      // WS failed — tear down immediately, fall back to HTTP-only
+      this.#teardownWs();
+      this.#disposed = false; // allow HTTP calls to continue
     };
 
     ws.onmessage = (event) => {
