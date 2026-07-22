@@ -1,4 +1,11 @@
-//! Unix-domain-socket JSON-RPC bridge connecting the TUI to the orchestration backend.
+//! JSON-RPC 2.0 transport layer for entelecheia IPC.
+//!
+//! Two transport backends:
+//! - **Unix socket** — Unix-domain-socket bridge connecting the TUI to the orchestration
+//!   backend (abstract namespace on Linux, file-system socket elsewhere).
+//! - **HTTP / WS** — [`rpc_router::RpcMethodMap`] provides an axum-compatible method
+//!   registry that can be mounted at any path, accepting both HTTP POST and WebSocket
+//!   upgrade, suitable for web frontends (chest, arona).
 //!
 //! This crate is the *wire layer* of the entelecheia IPC architecture. The TUI process
 //! (a terminal application) and the backend process (the agent orchestrator) run in
@@ -29,6 +36,7 @@
 pub mod bridge;
 pub mod json_keys;
 pub mod pending;
+pub mod rpc_router;
 pub mod types;
 pub mod unix_socket;
 pub mod unix_transport;

@@ -10,6 +10,7 @@ license.workspace = true
 
 _state_sync = { workspace = true }
 anyhow.workspace = true
+axum.workspace = true
 interprocess.workspace = true
 paste = "1"
 plana.workspace = true
