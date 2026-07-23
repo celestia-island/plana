@@ -56,12 +56,16 @@ pub async fn sse_events_handler(
     Query(q): Query<EventsQuery>,
     sessions: axum::extract::State<SessionManager>,
 ) -> Sse<impl futures::Stream<Item = Result<Event, Infallible>>> {
-    let session_id = q.session;
+    sse_events_handler_impl(sessions.0, q.session).await
+}
 
+/// Direct implementation for backends that hold SessionManager in their own state.
+pub async fn sse_events_handler_impl(
+    sessions: SessionManager,
+    session_id: String,
+) -> Sse<impl futures::Stream<Item = Result<Event, Infallible>>> {
     let (tx, rx) = mpsc::unbounded();
     sessions.sessions.lock().unwrap().insert(session_id.clone(), tx);
-
     let stream = rx.map(move |msg| Ok(Event::default().data(msg)));
-
     Sse::new(stream)
 }
