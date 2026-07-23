@@ -284,7 +284,8 @@ pub fn core_message_to_method_and_params(msg: &CoreMessage) -> (String, Option<V
                     .and_then(|v| v.as_str())
                     .unwrap_or("Unknown");
 
-                let method = format!("{}.{}", type_name, action);
+                let wire_prefix = bridge_wire_prefix(type_name);
+                let method = format!("{}.{}", wire_prefix, action);
 
                 let params: serde_json::Map<String, Value> = data_map
                     .into_iter()
@@ -306,8 +307,25 @@ pub fn core_message_to_method_and_params(msg: &CoreMessage) -> (String, Option<V
     }
 }
 
+fn bridge_type_name(wire_prefix: &str) -> &str {
+    if wire_prefix == "Sync" {
+        "Tui"
+    } else {
+        wire_prefix
+    }
+}
+
+fn bridge_wire_prefix(type_name: &str) -> &str {
+    if type_name == "Tui" {
+        "Sync"
+    } else {
+        type_name
+    }
+}
+
 pub fn from_jsonrpc_method(method: &str, params: Option<Value>) -> Option<CoreMessage> {
-    let (type_name, action) = method.split_once('.')?;
+    let (wire_prefix, action) = method.split_once('.')?;
+    let type_name = bridge_type_name(wire_prefix);
 
     let data = match params {
         Some(Value::Object(mut map)) => {

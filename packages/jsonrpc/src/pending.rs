@@ -87,7 +87,7 @@ pub enum MessageKind {
 
 // ── Per-namespace definitions ─────────────────────────────────
 
-namespace!("Tui", Tui, TuiMethod,
+namespace!("Sync", Tui, TuiMethod,
     ServerVersion              as OneWay,
     ConnectHandshake           as SyncReq   => HandshakeAck,
     HandshakeAck               as OneWay,
