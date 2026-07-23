@@ -108,7 +108,7 @@ pub struct AgentReportParams {
 
 /// Reply payload for an inquiry (`report_type: "query"`) report.
 ///
-/// Wire method: `Tui.AgentReportReply` (server-bound). `report_id` mirrors
+/// Wire method: `Sync.AgentReportReply` (server-bound). `report_id` mirrors
 /// the `agent_id` of the originating `AgentReportParams` so the upstream can
 /// correlate without keeping a separate consultation registry.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

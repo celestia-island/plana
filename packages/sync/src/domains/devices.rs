@@ -1,8 +1,8 @@
 //! devices 域 —— 状态树第二个域（验证迁移模式可复制）。
 //!
-//! 把 PolemosDeviceList（mock/空 或 scepter 推的 `Tui.PolemosDeviceList`）
+//! 把 PolemosDeviceList（mock/空 或 scepter 推的 `Sync.PolemosDeviceList`）
 //! upsert 进 `state.devices.<node_id>`。客户端声明视口 `state.devices` 即可
-//! 收到增量 patch + 周期全量快照，不再需要重连时发 `Tui.ListPolemosDevices`。
+//! 收到增量 patch + 周期全量快照，不再需要重连时发 `Sync.ListPolemosDevices`。
 //!
 //! 与 agents 域同构：完整对象列表 upsert，键 = `node_id`。device 没有字段级
 //! 增量格式（不像 entelecheia 的 AgentPatch），所以只提供 `upsert_devices`。
@@ -15,7 +15,7 @@ use crate::{PatchOp, ScopeKey, StateTree};
 ///
 /// 每个 device 的 `node_id`（字符串形态的 UUID）作为键。已存在的同键
 /// device 会被深合并覆盖。调用方通常是 `process_upstream_text`
-/// （收到 Tui.PolemosDeviceList 时）。
+/// （收到 Sync.PolemosDeviceList 时）。
 pub async fn upsert_devices(tree: &StateTree, devices: &[Value]) {
     let ops: Vec<PatchOp> = devices
         .iter()
@@ -45,7 +45,7 @@ fn device_key(d: &Value) -> Option<String> {
 
 /// 首次访问该 scope 的树时的懒载入（预留）。device 在 mock-mode 下为空
 /// （mock 的 ListPolemosDevices 返回 []），非 mock 由 scepter 的
-/// Tui.PolemosDeviceList 推送填充，所以这里不需要预置 roster。
+/// Sync.PolemosDeviceList 推送填充，所以这里不需要预置 roster。
 pub async fn load_initial(_registry: &crate::StateTreeRegistry, scope: ScopeKey) {
     let _ = scope;
 }

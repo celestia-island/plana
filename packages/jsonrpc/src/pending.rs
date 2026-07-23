@@ -13,10 +13,10 @@ use uuid::Uuid;
 //   - No hand-written wire strings — derived from enum path.
 //
 // Generates:
-//   1.  Inner enum (TuiMethod, CliMethod, …) with strum derives
+//   1.  Inner enum (SyncMethod, CliMethod, …) with strum derives
 //   2.  wire()  —  "{Prefix}.{Variant}"  via concat!
 //   3.  kind() / is_one_way() / response()  for the inner enum
-//   4.  Paste-based flat aliases on Method  (Method::TuiServerVersion)
+//   4.  Paste-based flat aliases on Method  (Method::SyncServerVersion)
 // ══════════════════════════════════════════════════════════════
 
 macro_rules! namespace {
@@ -69,7 +69,7 @@ macro_rules! namespace_resp {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Method {
-    Tui(TuiMethod),
+    Sync(SyncMethod),
     Cli(CliMethod),
     Mcp(McpMethod),
     Skill(SkillMethod),
@@ -87,7 +87,7 @@ pub enum MessageKind {
 
 // ── Per-namespace definitions ─────────────────────────────────
 
-namespace!("Sync", Tui, TuiMethod,
+namespace!("Sync", Sync, SyncMethod,
     ServerVersion              as OneWay,
     ConnectHandshake           as SyncReq   => HandshakeAck,
     HandshakeAck               as OneWay,
@@ -309,8 +309,8 @@ macro_rules! flat_aliases {
 }
 
 flat_aliases!(
-    Tui,
-    TuiMethod,
+    Sync,
+    SyncMethod,
     ServerVersion,
     ConnectHandshake,
     HandshakeAck,
@@ -512,7 +512,7 @@ flat_aliases!(Screen, ScreenMethod, Offer, Answer, Ice, IceCandidate);
 impl Method {
     pub fn method_name(self) -> &'static str {
         match self {
-            Method::Tui(m) => m.wire(),
+            Method::Sync(m) => m.wire(),
             Method::Cli(m) => m.wire(),
             Method::Mcp(m) => m.wire(),
             Method::Skill(m) => m.wire(),
@@ -523,7 +523,7 @@ impl Method {
     }
     pub fn kind(self) -> MessageKind {
         match self {
-            Method::Tui(m) => m.kind(),
+            Method::Sync(m) => m.kind(),
             Method::Cli(m) => m.kind(),
             Method::Mcp(m) => m.kind(),
             Method::Skill(m) => m.kind(),
@@ -537,7 +537,7 @@ impl Method {
     }
     pub fn response(self) -> Option<Method> {
         match self {
-            Method::Tui(m) => m.response().map(Method::Tui),
+            Method::Sync(m) => m.response().map(Method::Sync),
             Method::Cli(m) => m.response().map(Method::Cli),
             Method::Mcp(m) => m.response().map(Method::Mcp),
             Method::Skill(m) => m.response().map(Method::Skill),
@@ -555,7 +555,7 @@ impl std::str::FromStr for Method {
             .split_once('.')
             .ok_or(strum::ParseError::VariantNotFound)?;
         Ok(match ns {
-            "Tui" | "Sync" => Method::Tui(action.parse()?),
+            "Tui" | "Sync" => Method::Sync(action.parse()?),
             "Cli" => Method::Cli(action.parse()?),
             "Mcp" => Method::Mcp(action.parse()?),
             "Skill" => Method::Skill(action.parse()?),
@@ -646,10 +646,10 @@ mod tests {
     #[test]
     fn test_wire_from_enum_path() {
         assert_eq!(
-            Method::Tui(TuiMethod::ServerVersion).method_name(),
+            Method::Sync(SyncMethod::ServerVersion).method_name(),
             "Sync.ServerVersion"
         );
-        assert_eq!(Method::TuiServerVersion.method_name(), "Sync.ServerVersion"); // flat alias
+        assert_eq!(Method::SyncServerVersion.method_name(), "Sync.ServerVersion"); // flat alias
         assert_eq!(Method::Cli(CliMethod::Status).method_name(), "Cli.Status");
         assert_eq!(Method::CliStatus.method_name(), "Cli.Status");
         assert_eq!(
@@ -680,20 +680,20 @@ mod tests {
     }
     #[test]
     fn test_kind() {
-        assert_eq!(TuiMethod::ServerVersion.kind(), MessageKind::OneWay);
-        assert_eq!(TuiMethod::ConnectHandshake.kind(), MessageKind::SyncReq);
-        assert_eq!(TuiMethod::YoloStart.kind(), MessageKind::AsyncReq);
-        assert_eq!(Method::TuiServerVersion.kind(), MessageKind::OneWay);
+        assert_eq!(SyncMethod::ServerVersion.kind(), MessageKind::OneWay);
+        assert_eq!(SyncMethod::ConnectHandshake.kind(), MessageKind::SyncReq);
+        assert_eq!(SyncMethod::YoloStart.kind(), MessageKind::AsyncReq);
+        assert_eq!(Method::SyncServerVersion.kind(), MessageKind::OneWay);
     }
     #[test]
     fn test_response() {
         assert_eq!(
-            TuiMethod::ConnectHandshake.response(),
-            Some(TuiMethod::HandshakeAck)
+            SyncMethod::ConnectHandshake.response(),
+            Some(SyncMethod::HandshakeAck)
         );
-        assert_eq!(TuiMethod::Ping.response(), Some(TuiMethod::Pong));
-        assert_eq!(TuiMethod::ServerVersion.response(), None);
-        assert_eq!(Method::TuiServerVersion.response(), None);
+        assert_eq!(SyncMethod::Ping.response(), Some(SyncMethod::Pong));
+        assert_eq!(SyncMethod::ServerVersion.response(), None);
+        assert_eq!(Method::SyncServerVersion.response(), None);
     }
     #[tokio::test]
     async fn test_pending() {
@@ -704,7 +704,7 @@ mod tests {
     }
     #[test]
     fn test_prepare_notify() {
-        let f = PendingRegistry::prepare_notify(Method::TuiAgentReport, serde_json::json!({"x":1}));
+        let f = PendingRegistry::prepare_notify(Method::SyncAgentReport, serde_json::json!({"x":1}));
         assert!(f.get("id").is_none());
         assert_eq!(f["method"], "Sync.AgentReport");
     }

@@ -6,5 +6,5 @@ pub use types::{
     IndustrialAlarmHistory, IndustrialAlarmHistoryEntry, IndustrialAlarmLevel,
     IndustrialAlarmThresholds, IndustrialDiscoveryPhase, IndustrialDiscoveryProgress,
     IndustrialSensorReading, IndustrialStationField, IndustrialStationInfo, NoaEvent,
-    PolemosDeviceInfo, ThinkingStepEntry, TuiMessage, WriteApprovalRequest, WriteApprovalRisk,
+    PolemosDeviceInfo, ThinkingStepEntry, SyncMessage, WriteApprovalRequest, WriteApprovalRisk,
 };

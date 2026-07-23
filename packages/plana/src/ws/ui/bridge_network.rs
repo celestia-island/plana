@@ -82,12 +82,12 @@ pub struct WorkspaceNode {
     pub token_usage: Vec<WorkspaceTokenUsage>,
 }
 
-/// `Tui.RequestBridgeNetwork` — request the host/workspace roster.
+/// `Sync.RequestBridgeNetwork` — request the host/workspace roster.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/bridgeNetwork.ts")]
 pub struct RequestBridgeNetworkParams {}
 
-/// `Tui.BridgeNetwork` — the host/workspace roster response/push.
+/// `Sync.BridgeNetwork` — the host/workspace roster response/push.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/bridgeNetwork.ts")]
 pub struct BridgeNetworkParams {

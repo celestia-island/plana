@@ -1,10 +1,10 @@
-//! Domain-grouped view of [`super::TuiMessage`] variants.
+//! Domain-grouped view of [`super::SyncMessage`] variants.
 //!
 //! This module provides categorized documentation and re-exports of
-//! `TuiMessage` variant *names* (as constants) so that developers can
+//! `SyncMessage` variant *names* (as constants) so that developers can
 //! quickly discover which variants belong to which functional domain.
 //!
-//! The full enum remains in [`super::TuiMessage`]; nothing here changes
+//! The full enum remains in [`super::SyncMessage`]; nothing here changes
 //! the public API. This is the first step toward eventual full
 //! decomposition of the 150-variant enum into separate types.
 
