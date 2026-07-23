@@ -6,10 +6,10 @@ use _jsonrpc::{
     JsonRpcRequest, core_message_to_method_and_params, deserialize_from_jsonrpc,
     from_jsonrpc_method, serialize_to_jsonrpc,
 };
-use _state_sync::gateway::{BaseMessage, Message as CoreMessage, TuiMessage};
+use _state_sync::gateway::{BaseMessage, Message as CoreMessage, SyncMessage};
 
 fn bench_serialize_roundtrip(c: &mut Criterion) {
-    let msg = CoreMessage::Tui(TuiMessage::OpenWorkspace {
+    let msg = CoreMessage::Sync(SyncMessage::OpenWorkspace {
         uri: "git://https://github.com/org/repo.git".to_string(),
     });
     c.bench_function("serialize_roundtrip", |b| {
@@ -41,7 +41,7 @@ fn bench_deserialize_notification(c: &mut Criterion) {
 }
 
 fn bench_core_message_to_method(c: &mut Criterion) {
-    let msg = CoreMessage::Tui(TuiMessage::OpenWorkspace {
+    let msg = CoreMessage::Sync(SyncMessage::OpenWorkspace {
         uri: "git://https://github.com/org/repo.git".to_string(),
     });
     c.bench_function("core_message_to_method", |b| {

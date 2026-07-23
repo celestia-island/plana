@@ -38,7 +38,7 @@ pub struct PolemosDeviceInfo {
 // stores/industrial.ts` so both sides of the WebSocket stay in sync.
 //
 // Field naming uses snake_case end-to-end (matches serde defaults and
-// the existing TuiMessage variants); the webui's TS mirrors use the
+// the existing SyncMessage variants); the webui's TS mirrors use the
 // same shape so no remapping is required.
 
 /// Severity ordering matches ISA-18.2 alarm severity.
@@ -352,7 +352,7 @@ pub struct ThinkingStepEntry {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "action")]
-pub enum TuiMessage {
+pub enum SyncMessage {
     // ═══ Protocol / Connection ═══
     Ping {
         timestamp: u64,

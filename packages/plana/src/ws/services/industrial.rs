@@ -205,8 +205,8 @@ pub struct IndustrialAlarmHistory {
 // ── WS push / RPC param wrappers ───────────────────────────
 //
 // These wrap the canonical value types above as the `params` payload of the
-// `Industrial*` / `topology.*` TuiMessage variants. They are arona-specific
-// (entelecheia dispatches them inline on the TuiMessage enum) but are vendored
+// `Industrial*` / `topology.*` SyncMessage variants. They are arona-specific
+// (entelecheia dispatches them inline on the SyncMessage enum) but are vendored
 // by shittim-chest's webui, so they are retained here.
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

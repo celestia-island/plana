@@ -6,7 +6,7 @@ use _state_sync::gateway::Message as CoreMessage;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GatewayMethod {
-    Tui(&'static str),
+    Sync(&'static str),
     Base(&'static str),
     Agent(&'static str),
     Mcp(&'static str),
@@ -27,48 +27,48 @@ pub enum GatewayMethod {
 }
 
 impl GatewayMethod {
-    pub const TUI_PING: Self = Self::Tui("Ping");
-    pub const TUI_AGENT_PATCH: Self = Self::Tui("AgentPatch");
-    pub const TUI_ORCHESTRATION_STATUS: Self = Self::Tui("OrchestrationStatus");
-    pub const TUI_MCP_TOOL_RESULT: Self = Self::Tui("McpToolResult");
-    pub const TUI_AGENT_STREAMING_CHUNK: Self = Self::Tui("AgentStreamingChunk");
-    pub const TUI_AGENT_REPORT: Self = Self::Tui("AgentReport");
-    pub const TUI_AGENT_TRANSFER: Self = Self::Tui("AgentTransfer");
-    pub const TUI_ASK_HUMAN_REQUEST: Self = Self::Tui("AskHumanRequest");
-    pub const TUI_USER_MESSAGE: Self = Self::Tui("UserMessage");
-    pub const TUI_AGENT_RESPONSE: Self = Self::Tui("AgentResponse");
-    pub const TUI_REQUEST_FULL_SNAPSHOT: Self = Self::Tui("RequestFullSnapshot");
-    pub const TUI_REQUEST_GLOBAL_SNAPSHOT: Self = Self::Tui("RequestGlobalSnapshot");
-    pub const TUI_GLOBAL_SNAPSHOT: Self = Self::Tui("GlobalSnapshot");
-    pub const TUI_MODELS_SNAPSHOT: Self = Self::Tui("ModelsSnapshot");
-    pub const TUI_PROVIDERS_SNAPSHOT: Self = Self::Tui("ProvidersSnapshot");
-    pub const TUI_CONTAINER_SNAPSHOT: Self = Self::Tui("ContainerSnapshot");
-    pub const TUI_CONTAINER_PATCH: Self = Self::Tui("ContainerPatch");
-    pub const TUI_TASK_PATCH: Self = Self::Tui("TaskPatch");
-    pub const TUI_TASKS_SNAPSHOT: Self = Self::Tui("TasksSnapshot");
-    pub const TUI_LIST_AGENTS: Self = Self::Tui("ListAgents");
-    pub const TUI_SERVER_VERSION: Self = Self::Tui("ServerVersion");
-    pub const TUI_OPEN_WORKSPACE: Self = Self::Tui("OpenWorkspace");
-    pub const TUI_WORKSPACE_STATUS: Self = Self::Tui("WorkspaceStatus");
-    pub const TUI_REQUEST_WORKSPACE_STATUS: Self = Self::Tui("RequestWorkspaceStatus");
-    pub const TUI_SYSTEM_MESSAGE: Self = Self::Tui("SystemMessage");
-    pub const TUI_WEBUI_CONTROL: Self = Self::Tui("WebUiControl");
-    pub const TUI_WEBUI_CONTROL_RESPONSE: Self = Self::Tui("WebUiControlResponse");
-    pub const TUI_WEBUI_STATUS: Self = Self::Tui("WebUiStatus");
-    pub const TUI_REQUEST_WEBUI_STATUS: Self = Self::Tui("RequestWebUiStatus");
+    pub const SYNC_PING: Self = Self::Sync("Ping");
+    pub const SYNC_AGENT_PATCH: Self = Self::Sync("AgentPatch");
+    pub const SYNC_ORCHESTRATION_STATUS: Self = Self::Sync("OrchestrationStatus");
+    pub const SYNC_MCP_TOOL_RESULT: Self = Self::Sync("McpToolResult");
+    pub const SYNC_AGENT_STREAMING_CHUNK: Self = Self::Sync("AgentStreamingChunk");
+    pub const SYNC_AGENT_REPORT: Self = Self::Sync("AgentReport");
+    pub const SYNC_AGENT_TRANSFER: Self = Self::Sync("AgentTransfer");
+    pub const SYNC_ASK_HUMAN_REQUEST: Self = Self::Sync("AskHumanRequest");
+    pub const SYNC_USER_MESSAGE: Self = Self::Sync("UserMessage");
+    pub const SYNC_AGENT_RESPONSE: Self = Self::Sync("AgentResponse");
+    pub const SYNC_REQUEST_FULL_SNAPSHOT: Self = Self::Sync("RequestFullSnapshot");
+    pub const SYNC_REQUEST_GLOBAL_SNAPSHOT: Self = Self::Sync("RequestGlobalSnapshot");
+    pub const SYNC_GLOBAL_SNAPSHOT: Self = Self::Sync("GlobalSnapshot");
+    pub const SYNC_MODELS_SNAPSHOT: Self = Self::Sync("ModelsSnapshot");
+    pub const SYNC_PROVIDERS_SNAPSHOT: Self = Self::Sync("ProvidersSnapshot");
+    pub const SYNC_CONTAINER_SNAPSHOT: Self = Self::Sync("ContainerSnapshot");
+    pub const SYNC_CONTAINER_PATCH: Self = Self::Sync("ContainerPatch");
+    pub const SYNC_TASK_PATCH: Self = Self::Sync("TaskPatch");
+    pub const SYNC_TASKS_SNAPSHOT: Self = Self::Sync("TasksSnapshot");
+    pub const SYNC_LIST_AGENTS: Self = Self::Sync("ListAgents");
+    pub const SYNC_SERVER_VERSION: Self = Self::Sync("ServerVersion");
+    pub const SYNC_OPEN_WORKSPACE: Self = Self::Sync("OpenWorkspace");
+    pub const SYNC_WORKSPACE_STATUS: Self = Self::Sync("WorkspaceStatus");
+    pub const SYNC_REQUEST_WORKSPACE_STATUS: Self = Self::Sync("RequestWorkspaceStatus");
+    pub const SYNC_SYSTEM_MESSAGE: Self = Self::Sync("SystemMessage");
+    pub const SYNC_WEBUI_CONTROL: Self = Self::Sync("WebUiControl");
+    pub const SYNC_WEBUI_CONTROL_RESPONSE: Self = Self::Sync("WebUiControlResponse");
+    pub const SYNC_WEBUI_STATUS: Self = Self::Sync("WebUiStatus");
+    pub const SYNC_REQUEST_WEBUI_STATUS: Self = Self::Sync("RequestWebUiStatus");
 
-    pub const TUI_AUTH_LOGIN: Self = Self::Tui("AuthLogin");
-    pub const TUI_AUTH_LOGIN_RESPONSE: Self = Self::Tui("AuthLoginResponse");
-    pub const TUI_AUTH_REGISTER: Self = Self::Tui("AuthRegister");
-    pub const TUI_AUTH_REGISTER_RESPONSE: Self = Self::Tui("AuthRegisterResponse");
-    pub const TUI_AUTH_LIST_USERS: Self = Self::Tui("AuthListUsers");
-    pub const TUI_AUTH_LIST_USERS_RESPONSE: Self = Self::Tui("AuthListUsersResponse");
-    pub const TUI_AUTH_GET_USER: Self = Self::Tui("AuthGetUser");
-    pub const TUI_AUTH_GET_USER_RESPONSE: Self = Self::Tui("AuthGetUserResponse");
-    pub const TUI_AUTH_DELETE_USER: Self = Self::Tui("AuthDeleteUser");
-    pub const TUI_AUTH_DELETE_USER_RESPONSE: Self = Self::Tui("AuthDeleteUserResponse");
-    pub const TUI_AUTH_CHANGE_PASSWORD: Self = Self::Tui("AuthChangePassword");
-    pub const TUI_AUTH_CHANGE_PASSWORD_RESPONSE: Self = Self::Tui("AuthChangePasswordResponse");
+    pub const SYNC_AUTH_LOGIN: Self = Self::Sync("AuthLogin");
+    pub const SYNC_AUTH_LOGIN_RESPONSE: Self = Self::Sync("AuthLoginResponse");
+    pub const SYNC_AUTH_REGISTER: Self = Self::Sync("AuthRegister");
+    pub const SYNC_AUTH_REGISTER_RESPONSE: Self = Self::Sync("AuthRegisterResponse");
+    pub const SYNC_AUTH_LIST_USERS: Self = Self::Sync("AuthListUsers");
+    pub const SYNC_AUTH_LIST_USERS_RESPONSE: Self = Self::Sync("AuthListUsersResponse");
+    pub const SYNC_AUTH_GET_USER: Self = Self::Sync("AuthGetUser");
+    pub const SYNC_AUTH_GET_USER_RESPONSE: Self = Self::Sync("AuthGetUserResponse");
+    pub const SYNC_AUTH_DELETE_USER: Self = Self::Sync("AuthDeleteUser");
+    pub const SYNC_AUTH_DELETE_USER_RESPONSE: Self = Self::Sync("AuthDeleteUserResponse");
+    pub const SYNC_AUTH_CHANGE_PASSWORD: Self = Self::Sync("AuthChangePassword");
+    pub const SYNC_AUTH_CHANGE_PASSWORD_RESPONSE: Self = Self::Sync("AuthChangePasswordResponse");
 
     pub const BASE_HEARTBEAT: Self = Self::Base("Heartbeat");
     pub const BASE_ERROR: Self = Self::Base("Error");
@@ -84,7 +84,7 @@ impl GatewayMethod {
 
     pub fn as_str(&self) -> String {
         match self {
-            Self::Tui(action) => format!("Sync.{}", action),
+            Self::Sync(action) => format!("Sync.{}", action),
             Self::Base(action) => format!("Base.{}", action),
             Self::Agent(action) => format!("Agent.{}", action),
             Self::Mcp(action) => format!("Mcp.{}", action),
@@ -105,7 +105,7 @@ impl GatewayMethod {
 
     pub fn type_prefix(&self) -> &'static str {
         match self {
-            Self::Tui(_) => "Sync",
+            Self::Sync(_) => "Sync",
             Self::Base(_) => "Base",
             Self::Agent(_) => "Agent",
             Self::Mcp(_) => "Mcp",
@@ -126,7 +126,7 @@ impl GatewayMethod {
 
     pub fn action(&self) -> &str {
         match self {
-            Self::Tui(a)
+            Self::Sync(a)
             | Self::Base(a)
             | Self::Agent(a)
             | Self::Mcp(a)
@@ -161,46 +161,46 @@ impl std::str::FromStr for GatewayMethod {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "Sync.Ping" => Ok(Self::TUI_PING),
-            "Sync.AgentPatch" => Ok(Self::TUI_AGENT_PATCH),
-            "Sync.OrchestrationStatus" => Ok(Self::TUI_ORCHESTRATION_STATUS),
-            "Sync.McpToolResult" => Ok(Self::TUI_MCP_TOOL_RESULT),
-            "Sync.AgentStreamingChunk" => Ok(Self::TUI_AGENT_STREAMING_CHUNK),
-            "Sync.AgentReport" => Ok(Self::TUI_AGENT_REPORT),
-            "Sync.AskHumanRequest" => Ok(Self::TUI_ASK_HUMAN_REQUEST),
-            "Sync.UserMessage" => Ok(Self::TUI_USER_MESSAGE),
-            "Sync.AgentResponse" => Ok(Self::TUI_AGENT_RESPONSE),
-            "Sync.RequestFullSnapshot" => Ok(Self::TUI_REQUEST_FULL_SNAPSHOT),
-            "Sync.RequestGlobalSnapshot" => Ok(Self::TUI_REQUEST_GLOBAL_SNAPSHOT),
-            "Sync.GlobalSnapshot" => Ok(Self::TUI_GLOBAL_SNAPSHOT),
-            "Sync.ModelsSnapshot" => Ok(Self::TUI_MODELS_SNAPSHOT),
-            "Sync.ProvidersSnapshot" => Ok(Self::TUI_PROVIDERS_SNAPSHOT),
-            "Sync.ContainerSnapshot" => Ok(Self::TUI_CONTAINER_SNAPSHOT),
-            "Sync.ContainerPatch" => Ok(Self::TUI_CONTAINER_PATCH),
-            "Sync.TaskPatch" => Ok(Self::TUI_TASK_PATCH),
-            "Sync.TasksSnapshot" => Ok(Self::TUI_TASKS_SNAPSHOT),
-            "Sync.ListAgents" => Ok(Self::TUI_LIST_AGENTS),
-            "Sync.ServerVersion" => Ok(Self::TUI_SERVER_VERSION),
-            "Sync.OpenGitWorkspace" | "Sync.OpenWorkspace" => Ok(Self::TUI_OPEN_WORKSPACE),
-            "Sync.WorkspaceStatus" => Ok(Self::TUI_WORKSPACE_STATUS),
-            "Sync.RequestWorkspaceStatus" => Ok(Self::TUI_REQUEST_WORKSPACE_STATUS),
-            "Sync.SystemMessage" => Ok(Self::TUI_SYSTEM_MESSAGE),
-            "Sync.WebUiControl" => Ok(Self::TUI_WEBUI_CONTROL),
-            "Sync.WebUiControlResponse" => Ok(Self::TUI_WEBUI_CONTROL_RESPONSE),
-            "Sync.WebUiStatus" => Ok(Self::TUI_WEBUI_STATUS),
-            "Sync.RequestWebUiStatus" => Ok(Self::TUI_REQUEST_WEBUI_STATUS),
-            "Sync.AuthLogin" => Ok(Self::TUI_AUTH_LOGIN),
-            "Sync.AuthLoginResponse" => Ok(Self::TUI_AUTH_LOGIN_RESPONSE),
-            "Sync.AuthRegister" => Ok(Self::TUI_AUTH_REGISTER),
-            "Sync.AuthRegisterResponse" => Ok(Self::TUI_AUTH_REGISTER_RESPONSE),
-            "Sync.AuthListUsers" => Ok(Self::TUI_AUTH_LIST_USERS),
-            "Sync.AuthListUsersResponse" => Ok(Self::TUI_AUTH_LIST_USERS_RESPONSE),
-            "Sync.AuthGetUser" => Ok(Self::TUI_AUTH_GET_USER),
-            "Sync.AuthGetUserResponse" => Ok(Self::TUI_AUTH_GET_USER_RESPONSE),
-            "Sync.AuthDeleteUser" => Ok(Self::TUI_AUTH_DELETE_USER),
-            "Sync.AuthDeleteUserResponse" => Ok(Self::TUI_AUTH_DELETE_USER_RESPONSE),
-            "Sync.AuthChangePassword" => Ok(Self::TUI_AUTH_CHANGE_PASSWORD),
-            "Sync.AuthChangePasswordResponse" => Ok(Self::TUI_AUTH_CHANGE_PASSWORD_RESPONSE),
+            "Sync.Ping" => Ok(Self::SYNC_PING),
+            "Sync.AgentPatch" => Ok(Self::SYNC_AGENT_PATCH),
+            "Sync.OrchestrationStatus" => Ok(Self::SYNC_ORCHESTRATION_STATUS),
+            "Sync.McpToolResult" => Ok(Self::SYNC_MCP_TOOL_RESULT),
+            "Sync.AgentStreamingChunk" => Ok(Self::SYNC_AGENT_STREAMING_CHUNK),
+            "Sync.AgentReport" => Ok(Self::SYNC_AGENT_REPORT),
+            "Sync.AskHumanRequest" => Ok(Self::SYNC_ASK_HUMAN_REQUEST),
+            "Sync.UserMessage" => Ok(Self::SYNC_USER_MESSAGE),
+            "Sync.AgentResponse" => Ok(Self::SYNC_AGENT_RESPONSE),
+            "Sync.RequestFullSnapshot" => Ok(Self::SYNC_REQUEST_FULL_SNAPSHOT),
+            "Sync.RequestGlobalSnapshot" => Ok(Self::SYNC_REQUEST_GLOBAL_SNAPSHOT),
+            "Sync.GlobalSnapshot" => Ok(Self::SYNC_GLOBAL_SNAPSHOT),
+            "Sync.ModelsSnapshot" => Ok(Self::SYNC_MODELS_SNAPSHOT),
+            "Sync.ProvidersSnapshot" => Ok(Self::SYNC_PROVIDERS_SNAPSHOT),
+            "Sync.ContainerSnapshot" => Ok(Self::SYNC_CONTAINER_SNAPSHOT),
+            "Sync.ContainerPatch" => Ok(Self::SYNC_CONTAINER_PATCH),
+            "Sync.TaskPatch" => Ok(Self::SYNC_TASK_PATCH),
+            "Sync.TasksSnapshot" => Ok(Self::SYNC_TASKS_SNAPSHOT),
+            "Sync.ListAgents" => Ok(Self::SYNC_LIST_AGENTS),
+            "Sync.ServerVersion" => Ok(Self::SYNC_SERVER_VERSION),
+            "Sync.OpenGitWorkspace" | "Sync.OpenWorkspace" => Ok(Self::SYNC_OPEN_WORKSPACE),
+            "Sync.WorkspaceStatus" => Ok(Self::SYNC_WORKSPACE_STATUS),
+            "Sync.RequestWorkspaceStatus" => Ok(Self::SYNC_REQUEST_WORKSPACE_STATUS),
+            "Sync.SystemMessage" => Ok(Self::SYNC_SYSTEM_MESSAGE),
+            "Sync.WebUiControl" => Ok(Self::SYNC_WEBUI_CONTROL),
+            "Sync.WebUiControlResponse" => Ok(Self::SYNC_WEBUI_CONTROL_RESPONSE),
+            "Sync.WebUiStatus" => Ok(Self::SYNC_WEBUI_STATUS),
+            "Sync.RequestWebUiStatus" => Ok(Self::SYNC_REQUEST_WEBUI_STATUS),
+            "Sync.AuthLogin" => Ok(Self::SYNC_AUTH_LOGIN),
+            "Sync.AuthLoginResponse" => Ok(Self::SYNC_AUTH_LOGIN_RESPONSE),
+            "Sync.AuthRegister" => Ok(Self::SYNC_AUTH_REGISTER),
+            "Sync.AuthRegisterResponse" => Ok(Self::SYNC_AUTH_REGISTER_RESPONSE),
+            "Sync.AuthListUsers" => Ok(Self::SYNC_AUTH_LIST_USERS),
+            "Sync.AuthListUsersResponse" => Ok(Self::SYNC_AUTH_LIST_USERS_RESPONSE),
+            "Sync.AuthGetUser" => Ok(Self::SYNC_AUTH_GET_USER),
+            "Sync.AuthGetUserResponse" => Ok(Self::SYNC_AUTH_GET_USER_RESPONSE),
+            "Sync.AuthDeleteUser" => Ok(Self::SYNC_AUTH_DELETE_USER),
+            "Sync.AuthDeleteUserResponse" => Ok(Self::SYNC_AUTH_DELETE_USER_RESPONSE),
+            "Sync.AuthChangePassword" => Ok(Self::SYNC_AUTH_CHANGE_PASSWORD),
+            "Sync.AuthChangePasswordResponse" => Ok(Self::SYNC_AUTH_CHANGE_PASSWORD_RESPONSE),
             "Base.Heartbeat" => Ok(Self::BASE_HEARTBEAT),
             "Base.Error" => Ok(Self::BASE_ERROR),
             "Base.Ack" => Ok(Self::BASE_ACK),
@@ -284,7 +284,8 @@ pub fn core_message_to_method_and_params(msg: &CoreMessage) -> (String, Option<V
                     .and_then(|v| v.as_str())
                     .unwrap_or("Unknown");
 
-                let method = format!("{}.{}", type_name, action);
+                let wire_prefix = type_name;
+                let method = format!("{}.{}", wire_prefix, action);
 
                 let params: serde_json::Map<String, Value> = data_map
                     .into_iter()
@@ -307,7 +308,8 @@ pub fn core_message_to_method_and_params(msg: &CoreMessage) -> (String, Option<V
 }
 
 pub fn from_jsonrpc_method(method: &str, params: Option<Value>) -> Option<CoreMessage> {
-    let (type_name, action) = method.split_once('.')?;
+    let (wire_prefix, action) = method.split_once('.')?;
+    let type_name = wire_prefix;
 
     let data = match params {
         Some(Value::Object(mut map)) => {
@@ -367,24 +369,24 @@ pub fn deserialize_from_jsonrpc(json: &str) -> Result<Option<CoreMessage>, JsonR
 #[cfg(test)]
 mod tests {
     use super::*;
-    use _state_sync::gateway::{BaseMessage, TuiMessage};
+    use _state_sync::gateway::{BaseMessage, SyncMessage};
     use anyhow::Context;
 
     #[test]
     fn roundtrip_user_message() -> anyhow::Result<()> {
-        let msg = CoreMessage::Tui(TuiMessage::Ping {
+        let msg = CoreMessage::Sync(SyncMessage::Ping {
             timestamp: 12345u64,
         });
         let (method, params) = core_message_to_method_and_params(&msg);
-        assert_eq!(method, GatewayMethod::TUI_PING.as_str());
+        assert_eq!(method, GatewayMethod::SYNC_PING.as_str());
 
         let reconstructed =
             from_jsonrpc_method(&method, params).context("failed to reconstruct Ping message")?;
         match reconstructed {
-            CoreMessage::Tui(TuiMessage::Ping { timestamp }) => {
+            CoreMessage::Sync(SyncMessage::Ping { timestamp }) => {
                 assert_eq!(timestamp, 12345u64);
             }
-            other => anyhow::bail!("Expected {}, got {:?}", GatewayMethod::TUI_PING, other),
+            other => anyhow::bail!("Expected {}, got {:?}", GatewayMethod::SYNC_PING, other),
         }
         Ok(())
     }
@@ -412,16 +414,16 @@ mod tests {
 
     #[test]
     fn roundtrip_open_workspace() -> anyhow::Result<()> {
-        let msg = CoreMessage::Tui(TuiMessage::OpenWorkspace {
+        let msg = CoreMessage::Sync(SyncMessage::OpenWorkspace {
             uri: "git://https://github.com/org/repo.git".to_string(),
         });
         let (method, params) = core_message_to_method_and_params(&msg);
-        assert_eq!(method, GatewayMethod::TUI_OPEN_WORKSPACE.as_str());
+        assert_eq!(method, GatewayMethod::SYNC_OPEN_WORKSPACE.as_str());
 
         let reconstructed =
             from_jsonrpc_method(&method, params).context("failed to reconstruct OpenWorkspace")?;
         match reconstructed {
-            CoreMessage::Tui(TuiMessage::OpenWorkspace { uri }) => {
+            CoreMessage::Sync(SyncMessage::OpenWorkspace { uri }) => {
                 assert_eq!(uri, "git://https://github.com/org/repo.git");
             }
             other => anyhow::bail!("Expected OpenWorkspace, got {:?}", other),
@@ -433,7 +435,7 @@ mod tests {
     fn roundtrip_workspace_status() -> anyhow::Result<()> {
         let test_ws_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000123")
             .context("test precondition")?;
-        let msg = CoreMessage::Tui(TuiMessage::WorkspaceStatus {
+        let msg = CoreMessage::Sync(SyncMessage::WorkspaceStatus {
             workspace_id: test_ws_id,
             display_name: Some("my-repo".to_string()),
             connection_kind: "git".to_string(),
@@ -443,12 +445,12 @@ mod tests {
             host_id: None,
         });
         let (method, params) = core_message_to_method_and_params(&msg);
-        assert_eq!(method, GatewayMethod::TUI_WORKSPACE_STATUS.as_str());
+        assert_eq!(method, GatewayMethod::SYNC_WORKSPACE_STATUS.as_str());
 
         let reconstructed = from_jsonrpc_method(&method, params)
             .context("failed to reconstruct WorkspaceStatus")?;
         match reconstructed {
-            CoreMessage::Tui(TuiMessage::WorkspaceStatus {
+            CoreMessage::Sync(SyncMessage::WorkspaceStatus {
                 workspace_id,
                 connection_kind,
                 remote_url,
@@ -469,7 +471,7 @@ mod tests {
     #[test]
     fn gateway_method_parse_open_workspace() -> anyhow::Result<()> {
         let method: GatewayMethod = "Sync.OpenWorkspace".parse()?;
-        assert_eq!(method.as_str(), GatewayMethod::TUI_OPEN_WORKSPACE.as_str());
+        assert_eq!(method.as_str(), GatewayMethod::SYNC_OPEN_WORKSPACE.as_str());
         Ok(())
     }
 
@@ -478,23 +480,23 @@ mod tests {
         let method: GatewayMethod = "Sync.WorkspaceStatus".parse()?;
         assert_eq!(
             method.as_str(),
-            GatewayMethod::TUI_WORKSPACE_STATUS.as_str()
+            GatewayMethod::SYNC_WORKSPACE_STATUS.as_str()
         );
         Ok(())
     }
 
     #[test]
     fn roundtrip_system_message() -> anyhow::Result<()> {
-        let msg = CoreMessage::Tui(TuiMessage::SystemMessage {
+        let msg = CoreMessage::Sync(SyncMessage::SystemMessage {
             notification: _state_sync::SystemNotification::WebUiStarted,
             timestamp: "2026-05-11T12:00:00Z".to_string(),
         });
         let (method, params) = core_message_to_method_and_params(&msg);
-        assert_eq!(method, GatewayMethod::TUI_SYSTEM_MESSAGE.as_str());
+        assert_eq!(method, GatewayMethod::SYNC_SYSTEM_MESSAGE.as_str());
         let reconstructed =
             from_jsonrpc_method(&method, params).context("system message roundtrip")?;
         match reconstructed {
-            CoreMessage::Tui(TuiMessage::SystemMessage {
+            CoreMessage::Sync(SyncMessage::SystemMessage {
                 notification,
                 timestamp,
             }) => {
@@ -509,11 +511,11 @@ mod tests {
     #[test]
     fn gateway_method_parse_methods() -> anyhow::Result<()> {
         for (s, expected) in [
-            ("Sync.SystemMessage", GatewayMethod::TUI_SYSTEM_MESSAGE),
-            ("Sync.AuthLogin", GatewayMethod::TUI_AUTH_LOGIN),
+            ("Sync.SystemMessage", GatewayMethod::SYNC_SYSTEM_MESSAGE),
+            ("Sync.AuthLogin", GatewayMethod::SYNC_AUTH_LOGIN),
             (
                 "Sync.AuthLoginResponse",
-                GatewayMethod::TUI_AUTH_LOGIN_RESPONSE,
+                GatewayMethod::SYNC_AUTH_LOGIN_RESPONSE,
             ),
         ] {
             let method: GatewayMethod = s.parse()?;

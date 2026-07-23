@@ -1,9 +1,9 @@
 //! agents 域 —— 状态树试点域。
 //!
-//! 把 agent 列表（mock roster 或 scepter 的 Tui.AgentListResponse /
+//! 把 agent 列表（mock roster 或 scepter 的 Sync.AgentListResponse /
 //! AgentUpdate）upsert 进 `state.agents.<agent_id>`。客户端声明视口
 //! `state.agents` 即可收到这些 agent 的增量 patch + 周期全量快照，不再
-//! 需要重连时发 `Tui.ListAgents`。
+//! 需要重连时发 `Sync.ListAgents`。
 //!
 //! 这是「联机游戏式」同步的第一个落地点，验证整条链路（树 → 广播 →
 //! 视口过滤 → patch/snapshot → 客户端 apply）打通。其余 6 个旧域
@@ -18,7 +18,7 @@ use crate::{PatchOp, ScopeKey, StateTree, StateTreeRegistry};
 ///
 /// 每个 agent 的 `agent_id`（缺失则退 `agent_type`）作为键。已存在的同
 /// 键 agent 会被深合并覆盖。调用方通常是 `process_upstream_text`
-/// （收到 Tui.AgentListResponse / AgentUpdate 时）或 Loader。
+/// （收到 Sync.AgentListResponse / AgentUpdate 时）或 Loader。
 pub async fn upsert_agents(tree: &StateTree, agents: &[Value]) {
     let ops: Vec<PatchOp> = agents
         .iter()
@@ -40,8 +40,8 @@ pub async fn remove_agent(tree: &StateTree, agent_id: &str) {
 
 /// 把 entelecheia 的字段级增量 `AgentPatch` 数组 upsert 进树。
 ///
-/// entelecheia 的 `TuiMessage::AgentPatch { patches: Vec<AgentPatch> }`
-/// 序列化后 jsonrpc method = `Tui.AgentPatch`，params = `{"patches":[...]}`
+/// entelecheia 的 `SyncMessage::AgentPatch { patches: Vec<AgentPatch> }`
+/// 序列化后 jsonrpc method = `Sync.AgentPatch`，params = `{"patches":[...]}`
 /// （action 字段被 jsonrpc 剥掉）。每个 patch 有 `agent_id` +
 /// 若干可选字段（work_status / current_model / cpu_usage / ...）—— 是
 /// 字段级增量，不是完整 agent 对象。
@@ -112,7 +112,7 @@ fn agent_key(a: &Value) -> Option<String> {
 /// 首次访问该 scope 的树时的懒载入钩子。
 ///
 /// 消费方可自行实现初始数据载入（如从数据库或 mock roster）。
-/// 默认实现为 no-op（agent 由后续 Tui.AgentListResponse 填充）。
+/// 默认实现为 no-op（agent 由后续 Sync.AgentListResponse 填充）。
 pub async fn load_initial(_registry: &StateTreeRegistry, _scope: ScopeKey, _workspace_id: Uuid) {
     // No-op by default. Consumers can override this behavior.
 }
@@ -202,7 +202,7 @@ mod tests {
 
     #[tokio::test]
     async fn upsert_patches_field_level_incremental() {
-        // 模拟 entelecheia 的 Tui.AgentPatch：字段级增量。
+        // 模拟 entelecheia 的 Sync.AgentPatch：字段级增量。
         let tree = StateTree::new(ScopeKey::workspace(Uuid::nil(), Uuid::nil()));
         // 先建一个 agent。
         upsert_agents(
