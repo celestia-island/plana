@@ -415,7 +415,9 @@ export class RpcClient {
     if (this.#eventSource) {
       this.#eventSource.close();
     }
-    const url = this.#baseUrl + this.#rpcPath + "/events?session=" + this.#sessionId;
+    // Strip query params from rpcPath before appending /events
+    const cleanPath = this.#rpcPath.split("?")[0];
+    const url = this.#baseUrl + cleanPath + "/events?session=" + this.#sessionId;
     try {
       const es = new EventSource(url);
       this.#eventSource = es;
