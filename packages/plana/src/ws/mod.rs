@@ -1,5 +1,5 @@
 //! WebSocket TUI message domains — the variant params of the platform's
-//! `TuiMessage` enum, mirroring entelecheia's `tui_types/message/types`.
+//! `SyncMessage` enum, mirroring entelecheia's `tui_types/message/types`.
 //!
 //! Each submodule's types are re-exported at the crate root
 //! (`arona::TypeName`); the TypeScript bindings land under `ws/*.ts`, matching

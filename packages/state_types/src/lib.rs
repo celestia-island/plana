@@ -9,7 +9,7 @@
 //!   [`AgentCategory`] distinguishes simple tools from complex multi-instance
 //!   agents with badge assignment.
 //! - [`Message`] — tagged union of all gateway message variants (Base, Agent,
-//!   Mcp, Skill, Node, Monitor, Tui, Conversation), forming the wire protocol
+//!   Mcp, Skill, Node, Monitor, Sync, Conversation), forming the wire protocol
 //!   between agents and the control plane.
 //! - [`McpToolInfo`] / [`McpToolCallRequest`] / [`McpToolCallResponse`] —
 //!   MCP tool metadata, invocation contracts, and response envelopes with
@@ -44,7 +44,7 @@ pub use gateway::{
     ConversationMessage, CosmosContainerInfo, CosmosOperationLogEntry, FilePayload, McpMessage,
     Message, MetricsData, MonitorMessage, NodeInfo, NodeMessage, PolemosDeviceInfo,
     ReportSelection, ReportType, RetryReason, RouteInfo, SkillMessage, SkillStage,
-    SystemNotification, TuiMessage,
+    SystemNotification, SyncMessage,
     tui_types::{
         AgentPatch, AgentSnapshot, AgentUpdateParams, AuthUserInfo, CompletionOutcome,
         ConfiguredProvider, ContainerInfo, ContainerPatch, ContainerSnapshot, CustomAgentInfo,
@@ -63,7 +63,7 @@ pub use gateway::{
             QueryResultChunk, SubscriptionStatus, SubscriptionType, SyncSubscriptionRequest,
             SyncSubscriptionResponse,
         },
-        message::TuiMessage as GatewayTuiMessage,
+        message::SyncMessage as GatewaySyncMessage,
         yolo::{
             YoloFullConfig, YoloTaskResult, YoloTaskStatus, YoloTaskTier, YoloTierConfig,
             YoloTierStatus, YoloTierTaskConfig,

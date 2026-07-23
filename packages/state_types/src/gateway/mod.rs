@@ -22,7 +22,7 @@ pub use tui_types::{
     MaxConcurrentInfo, MessagesPage, ModelFsInfo, ModelFsPricing, ModelInfo, NoaEvent, PeriodType,
     PolemosDeviceInfo, ProviderCapabilitiesInfo, ProviderFsInfo, ProviderInfo, ProviderLimitsInfo,
     QuotaInfo, RateRuleInfo, RequestState, SearchHit, SearchResponse, TaskInfo, TaskPatch,
-    TasksSnapshot, TuiAgentInfo, TuiMessage, UsagePeriodData, UserInfo,
+    TasksSnapshot, TuiAgentInfo, SyncMessage, UsagePeriodData, UserInfo,
     knowledge_base::{
         AddDocumentRequest, AddDocumentResponse, CreateKnowledgeBaseRequest,
         CreateKnowledgeBaseResponse, CreateSubscriptionRequest, CreateSubscriptionResponse,
@@ -30,7 +30,7 @@ pub use tui_types::{
         QueryKnowledgeBaseRequest, QueryKnowledgeBaseResponse, SubscriptionStatus,
         SubscriptionType, SyncSubscriptionRequest, SyncSubscriptionResponse,
     },
-    message::TuiMessage as TuiGatewayMessage,
+    message::SyncMessage as SyncGatewayMessage,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,7 +42,7 @@ pub enum Message {
     Skill(SkillMessage),
     Node(NodeMessage),
     Monitor(MonitorMessage),
-    Tui(TuiMessage),
+    Sync(SyncMessage),
     Conversation(ConversationMessage),
 }
 

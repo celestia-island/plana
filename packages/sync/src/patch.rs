@@ -18,7 +18,7 @@ use serde_json::{Map, Value};
 
 /// 单个 patch 操作。`path` 用点分隔（`state.agents.hubris`）。
 ///
-/// 序列化后即 `Tui.StatePatch` 通知的 params 形态。
+/// 序列化后即 `Sync.StatePatch` 通知的 params 形态。
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PatchOp {
     pub op: PatchKind,
