@@ -77,6 +77,11 @@ export class RpcClient {
   #pending = new Map<string, PendingCall>();
   #disposed = false;
 
+  // HTTP long-polling fallback
+  #sessionId: string;
+  #eventSource: EventSource | null = null;
+  #useHttpOnly = false;
+
   #hbTimer: ReturnType<typeof setInterval> | null = null;
   #hbAckTimer: ReturnType<typeof setTimeout> | null = null;
   #reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -105,6 +110,7 @@ export class RpcClient {
     this.#heartbeatTimeout = opts.heartbeatTimeout ?? HB_TIMEOUT;
     this.#reconnectMax = opts.reconnectMax ?? RECONNECT_MAX;
     this.#callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT;
+    this.#sessionId = crypto.randomUUID();
   }
 
   // ── main API ────────────────────────────────────────────
@@ -218,9 +224,11 @@ export class RpcClient {
     ws.onerror = () => {
       if (this.#wsGen !== gen) return;
       this.#setState("disconnected");
-      // WS failed — tear down immediately, fall back to HTTP-only
+      // WS failed — tear down immediately, open HTTP event stream
       this.#teardownWs();
-      this.#disposed = false; // allow HTTP calls to continue
+      this.#disposed = false;
+      this.#useHttpOnly = true;
+      this.#openEventStream();
     };
 
     ws.onmessage = (event) => {
@@ -299,6 +307,7 @@ export class RpcClient {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       const token = this.#getToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
+      headers["X-Session-Id"] = this.#sessionId;
 
       const resp = await fetch(url, {
         method: "POST",
@@ -402,7 +411,43 @@ export class RpcClient {
 
   // ── private: teardown ──────────────────────────────────
 
+  #openEventStream(): void {
+    if (this.#eventSource) {
+      this.#eventSource.close();
+    }
+    const url = this.#baseUrl + this.#rpcPath + "/events?session=" + this.#sessionId;
+    try {
+      const es = new EventSource(url);
+      this.#eventSource = es;
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.method && data.params !== undefined) {
+            this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
+          }
+          if (data.method === "Base.HeartbeatAck") {
+            this.#heartbeatHandlers.forEach((h) => h());
+          }
+        } catch { /* ignore parse errors */ }
+      };
+      es.onerror = () => {
+        this.#eventSource?.close();
+        this.#eventSource = null;
+        if (!this.#disposed) {
+          setTimeout(() => this.#openEventStream(), 3000);
+        }
+      };
+      es.onopen = () => {
+        this.#setState("connected");
+      };
+    } catch {
+      // EventSource not supported, fall back to HTTP-only
+    }
+  }
+
   #teardownWs(): void {
+    this.#eventSource?.close();
+    this.#eventSource = null;
     if (this.#reconnectTimer) { clearTimeout(this.#reconnectTimer); this.#reconnectTimer = null; }
     if (this.#reconnectCountdown) { clearInterval(this.#reconnectCountdown); this.#reconnectCountdown = null; }
     this.#clearHeartbeat();
