@@ -1,0 +1,20 @@
+[package]
+name = "plana-rpc-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "JSON-RPC server session management and SSE transport for plana"
+repository = "https://github.com/celestia-island/plana"
+publish = false
+
+[dependencies]
+kirino = { workspace = true }
+
+serde = { workspace = true }
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+tracing.workspace = true
+uuid = { workspace = true }

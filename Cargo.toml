@@ -2,7 +2,8 @@
 resolver = "2"
 
 members = [
-    "packages/plana",
+    "packages/types",
+    "packages/rpc_server",
     "packages/core",
     "packages/config",
     "packages/text",
@@ -60,7 +61,7 @@ _sync = { package = "plana_sync", path = "packages/sync" }
 _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
 # ── Internal crate aliases ──────────────────────────────────
-plana = { path = "packages/plana" }
+plana = { path = "packages/types" }
 
 kirino = { version = "^0.6" }
 
