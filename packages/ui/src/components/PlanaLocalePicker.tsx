@@ -80,10 +80,10 @@ export const PlanaLocalePicker = defineComponent({
                   border: "none",
                   borderRadius: "4px",
                   background: loc.code === props.currentLocale
-                    ? "var(--c-primary-subtle)"
+                    ? "var(--c-primary-subtle, rgb(var(--color-primary) / 8%))"
                     : "transparent",
                   color: loc.code === props.currentLocale
-                    ? "var(--c-primary)"
+                    ? "var(--c-primary, rgb(var(--color-primary)))"
                     : "rgb(var(--color-text))",
                   fontSize: "0.75rem",
                   cursor: "pointer",
@@ -92,7 +92,7 @@ export const PlanaLocalePicker = defineComponent({
                 }}
                 onMouseenter={(e: MouseEvent) => {
                   if (loc.code !== props.currentLocale) {
-                    (e.currentTarget as HTMLElement).style.background = "var(--c-primary-overlay)";
+                    (e.currentTarget as HTMLElement).style.background = "var(--c-primary-overlay, rgb(var(--color-primary) / 15%))";
                   }
                 }}
                 onMouseleave={(e: MouseEvent) => {
