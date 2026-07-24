@@ -41,17 +41,21 @@ export const PlanaAdminHeader = defineComponent({
       <header
         class="plana-admin-header"
         style={{
+          position: "relative",
           display: "flex",
           alignItems: "center",
           gap: "0.75rem",
           padding: "0 1.5rem",
           height: "48px",
-          background: "rgb(var(--color-surface))",
-          backdropFilter: "blur(var(--blur-md, 12px))",
-          borderBottom: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
           flexShrink: 0,
         }}
       >
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "rgb(var(--color-surface))",
+          backdropFilter: "blur(var(--blur-md, 12px))",
+          borderBottom: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
+        }} />
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {props.authenticated && props.username ? (
             <>
