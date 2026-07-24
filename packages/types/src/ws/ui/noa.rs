@@ -1,4 +1,4 @@
-//! NOA Workspace — TuiMessage variant params.
+//! NOA Workspace — SyncMessage variant params.
 //!
 //! Mirrors `entelecheia/packages/shared/state_types/src/gateway/
 //! tui_types/message/types/mod.rs`. The NOA handshake is a 4-message round trip:

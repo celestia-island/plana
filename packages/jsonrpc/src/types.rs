@@ -530,8 +530,8 @@ pub enum UnixMethod {
     CosmosSetRagContext,
     BridgeCall,
     BridgeListTools,
-    TuiUserMessage,
-    TuiAgentResponse,
+    SyncUserMessage,
+    SyncAgentResponse,
     AuthStatus,
     AuthLockdown,
     AuthRestore,
@@ -553,8 +553,8 @@ impl UnixMethod {
             Self::CosmosSetRagContext => "cosmos.set_rag_context",
             Self::BridgeCall => "bridge.call",
             Self::BridgeListTools => "bridge.list_tools",
-            Self::TuiUserMessage => "tui.user_message",
-            Self::TuiAgentResponse => "tui.agent_response",
+            Self::SyncUserMessage => "tui.user_message",
+            Self::SyncAgentResponse => "tui.agent_response",
             Self::AuthStatus => "auth.status",
             Self::AuthLockdown => "auth.lockdown",
             Self::AuthRestore => "auth.restore",
@@ -576,8 +576,8 @@ impl UnixMethod {
             "cosmos.set_rag_context" => Some(Self::CosmosSetRagContext),
             "bridge.call" => Some(Self::BridgeCall),
             "bridge.list_tools" => Some(Self::BridgeListTools),
-            "tui.user_message" => Some(Self::TuiUserMessage),
-            "tui.agent_response" => Some(Self::TuiAgentResponse),
+            "tui.user_message" => Some(Self::SyncUserMessage),
+            "tui.agent_response" => Some(Self::SyncAgentResponse),
             "auth.status" => Some(Self::AuthStatus),
             "auth.lockdown" => Some(Self::AuthLockdown),
             "auth.restore" => Some(Self::AuthRestore),
@@ -606,8 +606,8 @@ pub mod methods {
     pub const COSMOS_SET_RAG_CONTEXT: UnixMethod = UnixMethod::CosmosSetRagContext;
     pub const BRIDGE_CALL: UnixMethod = UnixMethod::BridgeCall;
     pub const BRIDGE_LIST_TOOLS: UnixMethod = UnixMethod::BridgeListTools;
-    pub const TUI_USER_MESSAGE: UnixMethod = UnixMethod::TuiUserMessage;
-    pub const TUI_AGENT_RESPONSE: UnixMethod = UnixMethod::TuiAgentResponse;
+    pub const SYNC_USER_MESSAGE: UnixMethod = UnixMethod::SyncUserMessage;
+    pub const SYNC_AGENT_RESPONSE: UnixMethod = UnixMethod::SyncAgentResponse;
 }
 
 /// Build a JSON-RPC notification string from a method name and serializable params.
@@ -759,8 +759,8 @@ mod tests {
             UnixMethod::CosmosSetRagContext,
             UnixMethod::BridgeCall,
             UnixMethod::BridgeListTools,
-            UnixMethod::TuiUserMessage,
-            UnixMethod::TuiAgentResponse,
+            UnixMethod::SyncUserMessage,
+            UnixMethod::SyncAgentResponse,
             UnixMethod::AuthStatus,
             UnixMethod::AuthLockdown,
             UnixMethod::AuthRestore,

@@ -44,7 +44,7 @@ pub struct PingParams {
 //
 // Mirrors `entelecheia/packages/shared/state_types/src/gateway/
 // tui_types/message/types/mod.rs`. The webui declares capabilities
-// in its `Tui.ConnectHandshake` so scepter's `client_node_registry`
+// in its `Sync.ConnectHandshake` so scepter's `client_node_registry`
 // can route capability-scoped requests back to it (e.g. NOA
 // handshakes are only sent to sessions that declared
 // `ClientCapability::NoaWorkspace`).

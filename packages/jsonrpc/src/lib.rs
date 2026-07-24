@@ -21,7 +21,7 @@
 //!   correlation (using JSON-RPC `id` fields).
 //! - **`bridge`** — the [`GatewayMethod`] enum maps every cross-process message
 //!   (agent reports, snapshots, user commands, auth tokens) into typed variants
-//!   (`Tui::AgentReport`, `Tui::ContainerSnapshot`, etc.) and provides
+//!   (`Sync::AgentReport`, `Sync::ContainerSnapshot`, etc.) and provides
 //!   serialization/deserialization helpers.
 //! - **`json_keys`** — typed parameter-key enums that replace raw `&str` key lookups
 //!   with compile-time-checked variants, reducing debugging surface when the protocol

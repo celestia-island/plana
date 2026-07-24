@@ -351,10 +351,10 @@ pub struct ModelInferenceResult {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// WS protocol — TuiMessage variants for model management
+// WS protocol — SyncMessage variants for model management
 // ═══════════════════════════════════════════════════════════════
 
-/// `Tui.RequestModelList` — enumerate available models.
+/// `Sync.RequestModelList` — enumerate available models.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "model.ts")]
 pub struct RequestModelListParams {
@@ -364,7 +364,7 @@ pub struct RequestModelListParams {
     pub category: Option<ModelCategory>,
 }
 
-/// `Tui.ModelList` — model catalogue response.
+/// `Sync.ModelList` — model catalogue response.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "model.ts")]
 pub struct ModelListParams {
@@ -372,21 +372,21 @@ pub struct ModelListParams {
     pub servers: Vec<ModelServerInfo>,
 }
 
-/// `Tui.RequestModelInference` — ask the engine to run a model.
+/// `Sync.RequestModelInference` — ask the engine to run a model.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "model.ts")]
 pub struct RequestModelInferenceParams {
     pub request: ModelInferenceRequest,
 }
 
-/// `Tui.ModelInferenceResult` — inference result push.
+/// `Sync.ModelInferenceResult` — inference result push.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "model.ts")]
 pub struct ModelInferenceResultParams {
     pub result: ModelInferenceResult,
 }
 
-/// `Tui.RequestModelServerAction` — ask evernight (via scepter) to start /
+/// `Sync.RequestModelServerAction` — ask evernight (via scepter) to start /
 /// stop / restart a model server. Neither chest nor scepter performs the
 /// deployment directly; the action is forwarded to evernight's model lifecycle
 /// manager.
@@ -402,7 +402,7 @@ pub struct RequestModelServerActionParams {
     pub preferred_backend: Option<ModelBackend>,
 }
 
-/// `Tui.ModelServerActionResult` — action result.
+/// `Sync.ModelServerActionResult` — action result.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "model.ts")]
 pub struct ModelServerActionResultParams {

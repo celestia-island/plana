@@ -10,7 +10,7 @@
 // Foundational shared enums are defined directly in this file (below). The
 // other type groups live under a small set of domain folders:
 //   protocol/ — JSON-RPC envelope, base messages, handshake (WS transport)
-//   ws/       — TuiMessage variant params (agent / ui / services sub-groups)
+//   ws/       — SyncMessage variant params (agent / ui / services sub-groups)
 //   mcp/      — per-agent MCP tool I/O structs
 // and a few single-file modules at the root (enums, http, model,
 // external_mcp). The glob re-exports at the bottom keep every type reachable
@@ -506,7 +506,7 @@ pub use enums::*;
 // for ergonomic access: `arona::ModelCapability` not `arona::model::…`)
 pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
 
-// ws/ — TuiMessage variant params (types at crate root)
+// ws/ — SyncMessage variant params (types at crate root)
 pub use ws::agent::{agent_lifecycle::*, layer2::*, state_sync::*, tasks::*, yolo::*};
 pub use ws::services::{auth::*, industrial::*, knowledge_base::*, llm_provider::*};
 pub use ws::ui::{

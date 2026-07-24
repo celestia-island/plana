@@ -1,4 +1,4 @@
-//! File Browsing — TuiMessage variant params.
+//! File Browsing — SyncMessage variant params.
 //!
 //! Browse/read files inside a container (#demiurge / #NNN), on a host machine,
 //! or in a workspace checkout. Targets are distinguished by `FileTargetKind`.
@@ -47,7 +47,7 @@ pub struct FileTreeEntry {
     pub size: u64,
 }
 
-/// `Tui.RequestFileTree` — list one level of a directory.
+/// `Sync.RequestFileTree` — list one level of a directory.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/fileBrowsing.ts")]
 pub struct RequestFileTreeParams {
@@ -57,7 +57,7 @@ pub struct RequestFileTreeParams {
     pub path: String,
 }
 
-/// `Tui.FileTree` — directory listing response.
+/// `Sync.FileTree` — directory listing response.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/fileBrowsing.ts")]
 pub struct FileTreeParams {
@@ -66,7 +66,7 @@ pub struct FileTreeParams {
     pub entries: Vec<FileTreeEntry>,
 }
 
-/// `Tui.RequestFileRead` — read a single (text) file, capped server-side.
+/// `Sync.RequestFileRead` — read a single (text) file, capped server-side.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/fileBrowsing.ts")]
 pub struct RequestFileReadParams {
@@ -74,7 +74,7 @@ pub struct RequestFileReadParams {
     pub path: String,
 }
 
-/// `Tui.FileRead` — file-content response.
+/// `Sync.FileRead` — file-content response.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/fileBrowsing.ts")]
 pub struct FileReadParams {
