@@ -22,7 +22,7 @@ tokio.workspace = true
 tracing.workspace = true
 [dev-dependencies]
 
-criterion = "^0.5"
+criterion = "^0.8"
 tokio-test.workspace = true
 [[bench]]
 name = "skills_bench"
