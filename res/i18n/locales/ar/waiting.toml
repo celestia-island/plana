@@ -1,6 +1,8 @@
 [waiting]
-waiting_for_connection = "Waiting for Connection"
-connecting_websocket = "Connecting to WebSocket"
-waiting_for_query = "Waiting for Query"
-create_agent_hint = "Create Agent Hint"
-no_data = "No Data"
+waiting_for_connection = "En attente connexion"
+connecting_websocket = "اتصال à un WebSocket"
+waiting_for_query = "En attente demande"
+create_agent_hint = "Créez un agent pour commencer"
+no_data = "Aucune donnée"
+
+

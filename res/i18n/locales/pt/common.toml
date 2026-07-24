@@ -1,5 +1,7 @@
 [common]
-close = "Close"
-navigate = "Navigate"
-select = "Select"
+close = "Fechar"
+navigate = "Navegar"
+select = "Seleccionar"
 frontmatter = "Frontmatter"
+
+

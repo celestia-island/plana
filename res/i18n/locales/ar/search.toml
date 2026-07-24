@@ -1,9 +1,11 @@
 [search]
-title = "Search"
-placeholder = "Type to search, then Enter…"
-searching = "Searching…"
-no_results = "No results"
-results = "Results"
-hint_empty = "Type a query for semantic search"
-hint_open = "Open"
-detail = "Detail"
+title = "بحث"
+placeholder = "Saisir puis Entrée…"
+searching = "Recherche…"
+no_results = "Aucun résultat"
+results = "Résultats"
+hint_empty = "Saisissez une requête sémantique"
+hint_open = "فتح"
+detail = "Détail"
+
+

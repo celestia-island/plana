@@ -1,8 +1,10 @@
 [container]
-status_connected = "Connected"
-status_running = "Running"
-status_starting = "Starting"
-status_stopped = "Stopped"
-status_unhealthy = "Unhealthy"
-status_not_exists = "Not Exists"
+status_connected = "Conectado"
+status_running = "Ejecutándose"
+status_starting = "Iniciando"
+status_stopped = "Detenido"
+status_unhealthy = "En Estado Crítico"
+status_not_exists = "No Existe"
 status_error = "Error"
+
+
