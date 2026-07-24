@@ -3,3 +3,4 @@ export { PlanaAdminHeader } from "./components/PlanaAdminHeader";
 export { PlanaStatusBar } from "./components/PlanaStatusBar";
 export { PlanaLocalePicker } from "./components/PlanaLocalePicker";
 export type { LocaleOption } from "./components/PlanaAdminHeader";
+export type { PlanaConnectionInfo } from "./components/PlanaStatusBar";
