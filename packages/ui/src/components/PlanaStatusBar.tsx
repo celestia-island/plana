@@ -113,6 +113,7 @@ export const PlanaStatusBar = defineComponent({
             onMouseenter={onTagEnter}
             onMouseleave={onTagLeave}
             style={{
+              position: "relative", zIndex: 1,
               display: "inline-flex", alignItems: "center",
               height: "24px", gap: "5px", padding: "0 8px",
               borderRadius: "var(--radius-md, 6px)",

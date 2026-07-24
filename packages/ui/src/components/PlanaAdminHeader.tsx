@@ -56,6 +56,7 @@ export const PlanaAdminHeader = defineComponent({
           backdropFilter: "blur(var(--blur-md, 12px))",
           borderBottom: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
         }} />
+        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", width: "100%", gap: "0.5rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           {props.authenticated && props.username ? (
             <>
@@ -132,6 +133,7 @@ export const PlanaAdminHeader = defineComponent({
               <LogOut size={16} />
             </button>
           )}
+        </div>
         </div>
       </header>
     );
