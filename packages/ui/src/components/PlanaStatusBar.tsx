@@ -27,12 +27,12 @@ export const PlanaStatusBar = defineComponent({
           bottom: 0,
           left: 0,
           right: 0,
-          height: "var(--s-footer-height)",
+          height: "var(--s-footer-height, 2.5rem)",
           display: "flex",
           alignItems: "center",
           padding: "0 var(--space-16, 1rem)",
           background: "rgb(var(--color-surface))",
-          backdropFilter: "blur(var(--blur-md))",
+          backdropFilter: "blur(var(--blur-md, 12px))",
           borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
           zIndex: "var(--z-sidebar, 30)",
           flexShrink: 0,
@@ -46,10 +46,10 @@ export const PlanaStatusBar = defineComponent({
             height: "24px",
             gap: "5px",
             padding: "0 8px",
-            borderRadius: "var(--radius-md)",
+              borderRadius: "var(--radius-md, 6px)",
             fontSize: "var(--text-2xs, 0.625rem)",
             lineHeight: 1,
-            background: "rgb(var(--color-surface) / var(--opacity-half))",
+              background: "rgb(var(--color-surface) / var(--opacity-half, 0.5))",
             color: "rgb(var(--color-muted))",
             userSelect: "none",
           }}
@@ -65,7 +65,7 @@ export const PlanaStatusBar = defineComponent({
             }}
           />
           <span style={{ opacity: 0.6 }}>面板</span>
-          <span style={{ fontFamily: "var(--font-mono)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
+          <span style={{               fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
             {props.version}
           </span>
         </span>

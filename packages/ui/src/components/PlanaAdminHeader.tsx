@@ -47,7 +47,7 @@ export const PlanaAdminHeader = defineComponent({
           padding: "0 1.5rem",
           height: "48px",
           background: "rgb(var(--color-surface))",
-          backdropFilter: "blur(var(--blur-md))",
+          backdropFilter: "blur(var(--blur-md, 12px))",
           borderBottom: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
           flexShrink: 0,
         }}
@@ -63,8 +63,8 @@ export const PlanaAdminHeader = defineComponent({
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: "var(--c-primary-light)",
-                  color: "var(--c-primary)",
+                  background: "var(--c-primary-light, rgb(var(--color-primary) / 15%))",
+                  color: "var(--c-primary, rgb(var(--color-primary)))",
                   fontSize: "0.75rem",
                   fontWeight: 700,
                   userSelect: "none",
@@ -72,7 +72,7 @@ export const PlanaAdminHeader = defineComponent({
               >
                 {props.username.charAt(0).toUpperCase()}
               </span>
-              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary)", maxWidth: "8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary, var(--color-text))", maxWidth: "8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {props.username}
               </span>
             </>
@@ -80,7 +80,7 @@ export const PlanaAdminHeader = defineComponent({
         </div>
 
         {props.title && (
-          <h2 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary)", margin: 0 }}>
+          <h2 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary, var(--color-text))", margin: 0 }}>
             {props.title}
           </h2>
         )}
