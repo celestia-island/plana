@@ -99,7 +99,7 @@ export const PlanaStatusBar = defineComponent({
             background: "rgb(var(--color-surface))",
             backdropFilter: "blur(var(--blur-md, 12px))",
             borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
-            zIndex: "var(--z-sidebar, 30)", flexShrink: 0,
+            zIndex: "var(--z-header, 30)", flexShrink: 0,
           }}
         >
           <span
