@@ -13,3 +13,4 @@ dist/
 /.just/
 /celestia-devtools.just
 .cargo/config.toml
+node_modules/
