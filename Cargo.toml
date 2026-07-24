@@ -70,7 +70,7 @@ append-only-bytes = "^0.1"
 async-trait = "^0.1"
 # Container / infrastructure
 axum = { version = "^0.8", features = ["ws"] }
-base64 = "^0.22"
+base64 = "^0.23"
 boa_engine = "^0.21"
 boa_gc = "^0.21"
 boa_runtime = "^0.21"
