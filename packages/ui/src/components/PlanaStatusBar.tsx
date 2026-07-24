@@ -95,13 +95,16 @@ export const PlanaStatusBar = defineComponent({
             position: "fixed", bottom: 0, left: 0, right: 0,
             height: "var(--s-footer-height, 2.5rem)",
             display: "flex", alignItems: "center",
+            zIndex: "var(--z-header, 30)", flexShrink: 0,
             padding: "0 var(--space-16, 1rem)",
+          }}
+        >
+          <div style={{
+            position: "absolute", inset: 0,
             background: "rgb(var(--color-surface))",
             backdropFilter: "blur(var(--blur-md, 12px))",
             borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
-            zIndex: "var(--z-header, 30)", flexShrink: 0,
-          }}
-        >
+          }} />
           <span
             ref={anchorRef}
             class="s-status-bar-tag"
