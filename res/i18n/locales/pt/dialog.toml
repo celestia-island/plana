@@ -1,11 +1,13 @@
 [dialog]
-confirm = "Confirm"
-cancel = "Cancel"
-switch_focus = "Switch Focus"
-select = "Select"
-enter_confirm = "Confirm"
-esc_cancel = "Cancel"
-tab_switch = "Switch"
-up_down_select = "Up/Down to Select"
-up_down_navigate = "Up/Down to Navigate"
-notification_ending = " [ending]"
+confirm = "Confirmar"
+cancel = "Cancelar"
+switch_focus = "Cambiar enfoque"
+select = "Seleccionar"
+enter_confirm = "Confirmar"
+esc_cancel = "Cancelar"
+tab_switch = "Cambiar"
+up_down_select = "Arriba/Abajo para seleccionar"
+up_down_navigate = "Arriba/Abajo para navegar"
+notification_ending = "[ending]"
+
+

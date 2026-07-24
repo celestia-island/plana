@@ -1,11 +1,13 @@
 [about]
-title = "About"
+title = "Über"
 version = "Version"
-license_type = "License Type"
-section_license = "License"
-section_cla = "Contributor License Agreement"
-section_code_of_conduct = "Code of Conduct"
-section_security = "Security Policy"
-not_available = "Detailed protocol documents are not available. Set ARONA_ROOT at build time to enable."
-hint_navigate = "Navigate"
-hint_close = "Close"
+license_type = "Lizenztyp"
+section_license = "Lizenz"
+section_cla = "Lizenzvereinbarung Mitwirkender"
+section_code_of_conduct = "Verhaltenskodex"
+section_security = "Sicherheitsrichtlinie"
+not_available = "Detaillierte Protokolldokumente sind nicht verfügbar. Setzen Sie ARONA_ROOT während der Build-Erstellung um sie zu aktivieren."
+hint_navigate = "Navigieren"
+hint_close = "Schließen"
+
+

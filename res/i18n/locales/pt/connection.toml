@@ -1,6 +1,8 @@
 [connection]
-status_disconnected = "Disconnected"
-status_connecting = "Connecting"
-status_connected = "Connected"
-status_reconnecting = "Reconnecting"
-status_offline = "Offline"
+status_disconnected = "Desconectado"
+status_connecting = "Conectando"
+status_connected = "Conectado"
+status_reconnecting = "Reconectando"
+status_offline = "Sin conexião"
+
+

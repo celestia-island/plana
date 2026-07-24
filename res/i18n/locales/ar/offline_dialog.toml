@@ -1,10 +1,12 @@
 [offline_dialog]
-title = "Offline"
-gateway_error = "Gateway Error"
-retrying = "Retrying"
-retry_attempt = "Retry Attempt"
-error_prefix = "Error"
-select_action = "Select Action"
-option_retry = "Retry"
-option_restart = "Restart"
-option_exit = "Exit"
+title = "غير متصل"
+gateway_error = "خطأ غيرserelle"
+retrying = "Nouvel tentative"
+retry_attempt = "إعادة محاولة"
+error_prefix = "خطأ"
+select_action = "اختيار une action"
+option_retry = "إعادة محاولة"
+option_restart = "Redémarrer"
+option_exit = "خروج"
+
+
