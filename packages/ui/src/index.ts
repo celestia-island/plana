@@ -4,5 +4,5 @@ export { PlanaStatusBar } from "./components/PlanaStatusBar";
 export { PlanaLocalePicker } from "./components/PlanaLocalePicker";
 export type { LocaleOption } from "./components/PlanaAdminHeader";
 export type { PlanaConnectionInfo } from "./components/PlanaConnectionInfo";
-export { usePlanaConnectionInfo } from "./components/PlanaConnectionInfo";
+export { useConnectionInfo } from "./components/PlanaConnectionInfo";
 export type { ConnectionStateInput } from "./components/PlanaConnectionInfo";
