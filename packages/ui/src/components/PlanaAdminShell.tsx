@@ -2,7 +2,7 @@ import { defineComponent, ref } from "vue";
 import { Drawer, ScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { provideActionBar } from "../composables/useActionBar";
 
-export const PlanaAdminShell = defineComponent({
+export const AdminShell = defineComponent({
   name: "PlanaAdminShell",
   props: {
     sidebarCollapsed: { type: Boolean, default: false },

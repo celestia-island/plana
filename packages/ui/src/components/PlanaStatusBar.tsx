@@ -40,7 +40,7 @@ function qualityIcon(quality: string, size: number) {
   return <WifiOff size={size} />;
 }
 
-export const PlanaStatusBar = defineComponent({
+export const StatusBar = defineComponent({
   name: "PlanaStatusBar",
   props: {
     version: { type: String, default: "0.1.0" },
