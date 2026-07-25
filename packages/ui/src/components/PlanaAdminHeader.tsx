@@ -1,6 +1,6 @@
-import { defineComponent, type PropType } from "vue";
-import { LogOut } from "lucide-vue-next";
-import { PlanaLocalePicker } from "./PlanaLocalePicker";
+import { defineComponent, ref, type PropType, type VNode } from "vue";
+import { Camera, Languages, LogOut, Menu } from "lucide-vue-next";
+import { Badge, Button, Divider, Popover } from "@celestia-island/hikari";
 
 export interface LocaleOption {
   code: string;
@@ -10,131 +10,195 @@ export interface LocaleOption {
 export const PlanaAdminHeader = defineComponent({
   name: "PlanaAdminHeader",
   props: {
-    title: {
-      type: String,
-      default: "",
-    },
-    authenticated: {
-      type: Boolean,
-      default: false,
-    },
-    username: {
-      type: String,
-      default: "",
-    },
-    locales: {
-      type: Array as PropType<LocaleOption[]>,
-      default: () => [],
-    },
-    currentLocale: {
-      type: String,
-      default: "en",
-    },
-    tLocale: {
-      type: Function as PropType<(key: string) => string>,
-      default: undefined,
-    },
+    title: { type: String, required: true },
+    showHamburger: { type: Boolean, default: false },
+    compact: { type: Boolean, default: false },
+    actions: { type: Array as PropType<VNode[]>, default: () => [] },
+    username: { type: String, default: "" },
+    avatarUrl: { type: String, default: "" },
+    userEmail: { type: String, default: "" },
+    userGroups: { type: Array as PropType<{ id: string; name: string }[]>, default: () => [] },
+    showEmergencyStop: { type: Boolean, default: false },
+    emergencyStopActive: { type: Boolean, default: false },
+    emergencyStopActiveLabel: { type: String, default: "" },
+    emergencyStopActiveTitle: { type: String, default: "" },
+    emergencyStopLabel: { type: String, default: "" },
+    emergencyStopTitle: { type: String, default: "" },
+    emergencyStopLoading: { type: Boolean, default: false },
+    avatarMenuLabel: { type: String, default: "Avatar" },
+    localeMenuLabel: { type: String, default: "Language" },
+    logoutLabel: { type: String, default: "Logout" },
+    adminGroupLabel: { type: String, default: "Administrators" },
   },
-  emits: ["logout", "localeSelect"],
-  setup(props, { emit }) {
+  emits: {
+    logout: () => true,
+    hamburger: () => true,
+    emergencyStop: () => true,
+    avatarClick: () => true,
+  },
+  setup(props, { emit, slots }) {
+    const userMenuOpen = ref(false);
+    const userTriggerRef = ref<HTMLElement>();
+    const avatarModalOpen = ref(false);
+    const avatarFailed = ref(false);
+    const localeMenuOpen = ref(false);
+    const localeTriggerRef = ref<HTMLElement | null>(null);
+
     return () => (
       <header
-        class="plana-admin-header"
-        style={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.75rem",
-          padding: "0 1.5rem",
-          height: "48px",
-          flexShrink: 0,
-        }}
+        class={[
+          "s-glass-header",
+          props.compact ? "px-4 gap-2" : "px-6 gap-3",
+        ]}
       >
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "rgb(var(--color-surface))",
-          backdropFilter: "blur(var(--blur-md, 12px))",
-          borderBottom: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
-        }} />
-        <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", width: "100%", gap: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          {props.authenticated && props.username ? (
-            <>
-              <span
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "var(--c-primary-light, rgb(var(--color-primary) / 15%))",
-                  color: "var(--c-primary, rgb(var(--color-primary)))",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  userSelect: "none",
-                }}
-              >
-                {props.username.charAt(0).toUpperCase()}
-              </span>
-              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary, var(--color-text))", maxWidth: "8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {props.username}
-              </span>
-            </>
-          ) : null}
-        </div>
-
-        {props.title && (
-          <h2 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-primary, var(--color-text))", margin: 0 }}>
-            {props.title}
-          </h2>
+        {props.showHamburger && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => emit("hamburger")}
+          >
+            <Menu size={20} class="w-5 h-5" />
+          </Button>
         )}
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.375rem" }}>
-          <PlanaLocalePicker
-            locales={props.locales}
-            currentLocale={props.currentLocale}
-            onSelect={(code: string) => emit("localeSelect", code)}
-          />
+        <div ref={userTriggerRef} class="flex items-center gap-2">
+          <button
+            class={[
+              "w-7 h-7 rounded-full overflow-hidden shrink-0 cursor-pointer transition-opacity relative group p-0 border-0",
+              props.avatarUrl
+                ? ""
+                : "bg-primary/10 border-2 border-primary/15 hover:border-primary/30",
+            ]}
+            onClick={(e) => {
+              e.stopPropagation();
+              avatarModalOpen.value = true;
+              emit("avatarClick");
+            }}
+          >
+            {props.avatarUrl && !avatarFailed.value ? (
+              <img
+                src={props.avatarUrl}
+                alt={props.username}
+                class="w-full h-full object-cover"
+                onError={() => { avatarFailed.value = true; }}
+              />
+            ) : (
+              <span class="text-xs font-bold text-primary/70">
+                {props.username?.charAt(0).toUpperCase() || "?"}
+              </span>
+            )}
+            <div class="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Camera size={10} class="text-white" />
+            </div>
+          </button>
+          <span class="text-sm font-semibold text-text truncate max-w-[8rem]">
+            {props.username}
+          </span>
+        </div>
 
-          {props.authenticated && (
+        <Popover
+          modelValue={userMenuOpen.value}
+          onUpdate:modelValue={(v: boolean) => { userMenuOpen.value = v; }}
+          placement="bottom-start"
+          anchorRef={userTriggerRef.value ?? null}
+          class="w-40"
+        >
+          <div class="py-1">
+            {props.userGroups && props.userGroups.length > 0 && (
+              <>
+                <div class="px-3 py-1.5 flex flex-wrap gap-1">
+                  {props.userGroups.map((g: { id: string; name: string }) => (
+                    <Badge
+                      key={g.id}
+                      variant={g.name === "Administrators" ? "error" : "primary"}
+                      size="sm"
+                    >
+                      {g.name === "Administrators" ? props.adminGroupLabel : g.name}
+                    </Badge>
+                  ))}
+                </div>
+                <Divider spacing="sm" />
+              </>
+            )}
             <button
-              class="plana-admin-header-logout"
-              type="button"
-              title={props.tLocale ? props.tLocale("common.logout") : "Logout"}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "32px",
-                height: "32px",
-                padding: 0,
-                border: "1px solid transparent",
-                borderRadius: "var(--radius-sm, 4px)",
-                background: "transparent",
-                color: "rgb(var(--color-muted))",
-                cursor: "pointer",
-                transition: "color 0.15s, background 0.15s, border-color 0.15s",
+              class="s-popup-menu-item"
+              onClick={() => {
+                userMenuOpen.value = false;
+                avatarModalOpen.value = true;
               }}
-              onMouseenter={(e: MouseEvent) => {
-                const target = e.currentTarget as HTMLElement;
-                target.style.color = "rgb(var(--color-error))";
-                target.style.background = "rgb(var(--color-error) / 10%)";
-                target.style.borderColor = "rgb(var(--color-error) / 25%)";
-              }}
-              onMouseleave={(e: MouseEvent) => {
-                const target = e.currentTarget as HTMLElement;
-                target.style.color = "rgb(var(--color-muted))";
-                target.style.background = "transparent";
-                target.style.borderColor = "transparent";
-              }}
-              onClick={() => emit("logout")}
             >
-              <LogOut size={16} />
+              <Camera size={14} />
+              {props.avatarMenuLabel}
+            </button>
+            <div ref={localeTriggerRef}>
+              <button
+                class="s-popup-menu-item"
+                onClick={() => (localeMenuOpen.value = !localeMenuOpen.value)}
+              >
+                <Languages size={14} />
+                {props.localeMenuLabel}
+              </button>
+              {slots["locale-picker"]?.({
+                open: localeMenuOpen.value,
+                onUpdateOpen: (v: boolean) => {
+                  localeMenuOpen.value = v;
+                  if (!v) userMenuOpen.value = false;
+                },
+                triggerRef: localeTriggerRef.value,
+              })}
+            </div>
+            {slots["user-menu-extra"]?.()}
+            <Divider spacing="sm" />
+            <button
+              class="s-popup-menu-item"
+              onClick={() => {
+                userMenuOpen.value = false;
+                emit("logout");
+              }}
+            >
+              <LogOut size={14} />
+              {props.logoutLabel}
+            </button>
+          </div>
+        </Popover>
+
+        <h2 class="text-sm font-semibold text-text">
+          {props.title}
+        </h2>
+        <div class="ml-auto flex items-center gap-1.5">
+          {props.showEmergencyStop && (
+            <button
+              class={[
+                "px-3 py-1 rounded-md text-xs font-bold border transition-all",
+                props.emergencyStopLoading ? "opacity-50 cursor-wait" : "cursor-pointer",
+                props.emergencyStopActive
+                  ? "bg-red-600 text-white border-red-700 animate-pulse"
+                  : "bg-red-600/10 text-red-500 border-red-500/40 hover:bg-red-600/25",
+              ]}
+              disabled={props.emergencyStopLoading}
+              title={props.emergencyStopActive
+                ? props.emergencyStopActiveTitle
+                : props.emergencyStopTitle}
+              onClick={() => emit("emergencyStop")}
+            >
+              {props.emergencyStopActive
+                ? props.emergencyStopActiveLabel
+                : props.emergencyStopLabel}
             </button>
           )}
+          {slots["emergency-stop-extra"]?.()}
+          {(props.actions || []).map((vnode, i) => (
+            <span key={i} class="flex items-center gap-1">
+              {vnode}
+            </span>
+          ))}
+          {slots["theme-toggle"]?.()}
         </div>
-        </div>
+
+        {slots["avatar-modal"]?.({
+          open: avatarModalOpen.value,
+          onUpdateOpen: (v: boolean) => { avatarModalOpen.value = v; },
+        })}
       </header>
     );
   },

@@ -1,5 +1,5 @@
 import { defineComponent, ref, type PropType } from "vue";
-import { HkPopover } from "@celestia-island/hikari";
+import { Popover } from "@celestia-island/hikari";
 import { Wifi, WifiOff, Globe, Cpu } from "lucide-vue-next";
 import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
 
@@ -110,7 +110,7 @@ export const PlanaStatusBar = defineComponent({
             </span>
           </span>
 
-          <HkPopover
+          <Popover
             modelValue={popupOpen.value}
             onUpdate:modelValue={(v: boolean) => { popupOpen.value = v; }}
             placement="top-start"
@@ -157,7 +157,7 @@ export const PlanaStatusBar = defineComponent({
                 <div style={{ opacity: 0.5 }}>获取连接信息中...</div>
               )}
             </div>
-          </HkPopover>
+          </Popover>
         </>
       );
 
