@@ -38,8 +38,12 @@ export default defineComponent({
       return [...visible, ...hidden];
     });
 
+    function advance() {
+      page.value++;
+    }
+
     onMounted(() => {
-      if (total.value > 2) timer = setInterval(() => { page.value++; }, props.intervalMs);
+      if (total.value > 2) timer = setInterval(advance, props.intervalMs);
     });
     onBeforeUnmount(() => { if (timer) clearInterval(timer); });
 
@@ -58,7 +62,7 @@ export default defineComponent({
               <div
                 key={it.label}
                 class="p-gauge-carousel__item"
-                style={isVisible ? undefined : { opacity: 0, pointerEvents: "none" }}
+                style={isVisible ? undefined : { display: "none" }}
               >
                 {slots.default?.({ item: it })}
               </div>
