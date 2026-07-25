@@ -19,16 +19,33 @@ export default defineComponent({
   setup(props, { slots }) {
     const page = ref(0);
     const transitioning = ref(false);
+    const viewportRef = ref<HTMLDivElement | null>(null);
+    const viewportW = ref(0);
     let timer: ReturnType<typeof setInterval> | null = null;
 
     const total = computed(() => props.items.length);
     const isActive = computed(() => total.value > 2);
     const doubled = computed(() => [...props.items, ...props.items]);
 
-    // Track width: each item ~50% → for N unique items, track = N × 50%
-    const trackWidthPct = computed(() => total.value * 50);
+    const itemWidthPx = computed(() => {
+      const w = viewportW.value || 200;
+      return Math.round(w / 2);
+    });
 
-    const offsetPct = computed(() => -(page.value * 50));
+    const gapPx = 4;
+    const stepPx = computed(() => itemWidthPx.value + gapPx);
+    const offsetPx = computed(() => -(page.value * stepPx.value));
+    const trackStyle = computed(() => ({
+      width: `${(itemWidthPx.value + gapPx) * doubled.value.length}px`,
+      transform: `translateX(${offsetPx.value}px)`,
+      transition: transitioning.value ? "transform 0.3s var(--ease-out-expo, ease-out)" : "none",
+      display: "flex",
+      flexWrap: "nowrap" as const,
+      gap: `${gapPx}px`,
+    }));
+    const itemStyle = computed(() => ({
+      flex: `0 0 ${itemWidthPx.value}px`,
+    }));
 
     function advance() {
       if (!isActive.value) return;
@@ -46,6 +63,12 @@ export default defineComponent({
     }
 
     onMounted(() => {
+      if (viewportRef.value) {
+        viewportW.value = viewportRef.value.offsetWidth;
+        new ResizeObserver(([e]) => {
+          if (e) viewportW.value = e.contentRect.width;
+        }).observe(viewportRef.value);
+      }
       if (isActive.value) timer = setInterval(advance, props.intervalMs);
     });
     onBeforeUnmount(() => { if (timer) clearInterval(timer); });
@@ -53,7 +76,7 @@ export default defineComponent({
     return () => (
       <div class="p-gauge-carousel">
         {!isActive.value ? (
-          <div class="p-gauge-carousel__track">
+          <div class="p-gauge-carousel__static">
             {props.items.map((it) => (
               <div key={it.label} class="p-gauge-carousel__item">
                 {slots.default?.({ item: it })}
@@ -61,18 +84,10 @@ export default defineComponent({
             ))}
           </div>
         ) : (
-          <div class="p-gauge-carousel__viewport">
-            <div
-              class="p-gauge-carousel__track"
-              style={{
-                width: `${trackWidthPct.value}%`,
-                transform: `translateX(${offsetPct.value}%)`,
-                transition: transitioning.value ? "transform 0.3s var(--ease-out-expo, ease-out)" : "none",
-              }}
-              onTransitionend={handleTransitionEnd}
-            >
+          <div ref={viewportRef} class="p-gauge-carousel__viewport">
+            <div style={trackStyle.value} onTransitionend={handleTransitionEnd}>
               {doubled.value.map((it, i) => (
-                <div key={`${it.label}-${i < total.value ? "a" : "b"}`} class="p-gauge-carousel__item">
+                <div key={`${it.label}-${i < total.value ? "a" : "b"}`} style={itemStyle.value}>
                   {slots.default?.({ item: it })}
                 </div>
               ))}
