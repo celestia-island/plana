@@ -3,7 +3,7 @@ import { Cookie } from "lucide-vue-next";
 
 const STORAGE_KEY = "plana-cookies-accepted";
 
-export const CookieConsent = defineComponent({
+export const PCookieConsent = defineComponent({
   name: "PlanaCookieConsent",
   setup() {
     const accepted = ref(false);

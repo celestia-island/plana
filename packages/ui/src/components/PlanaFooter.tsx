@@ -1,6 +1,6 @@
 import { defineComponent, ref } from "vue";
 
-export const Footer = defineComponent({
+export const PFooter = defineComponent({
   name: "PlanaFooter",
   props: {
     height: { type: String, default: "var(--s-footer-height)" },

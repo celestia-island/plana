@@ -1,6 +1,6 @@
 import { defineComponent, ref, onMounted, onUnmounted } from "vue";
 
-export const Clock = defineComponent({
+export const PClock = defineComponent({
   name: "PlanaClock",
   setup() {
     const now = ref("");

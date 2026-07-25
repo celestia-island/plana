@@ -1,5 +1,5 @@
 import { defineComponent, ref, type PropType } from "vue";
-import { Popover } from "@celestia-island/hikari";
+import { HPopover } from "@celestia-island/hikari";
 import { Wifi, WifiOff, Globe, Cpu } from "lucide-vue-next";
 import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
 
@@ -40,7 +40,7 @@ function qualityIcon(quality: string, size: number) {
   return <WifiOff size={size} />;
 }
 
-export const StatusBar = defineComponent({
+export const PStatusBar = defineComponent({
   name: "PlanaStatusBar",
   props: {
     version: { type: String, default: "0.1.0" },
@@ -110,7 +110,7 @@ export const StatusBar = defineComponent({
             </span>
           </span>
 
-          <Popover
+          <HPopover
             modelValue={popupOpen.value}
             onUpdate:modelValue={(v: boolean) => { popupOpen.value = v; }}
             placement="top-start"
@@ -157,7 +157,7 @@ export const StatusBar = defineComponent({
                 <div style={{ opacity: 0.5 }}>获取连接信息中...</div>
               )}
             </div>
-          </Popover>
+          </HPopover>
         </>
       );
 

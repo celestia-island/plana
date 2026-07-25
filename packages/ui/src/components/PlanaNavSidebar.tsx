@@ -1,6 +1,6 @@
 import { defineComponent, type Component, type PropType } from "vue";
 
-import { NavItem, Sidebar } from "@celestia-island/hikari";
+import { HNavItem, HSidebar } from "@celestia-island/hikari";
 import { BarChart3, Bell, Bot, Box, Cable, Cpu, FileText, FolderOpen, Gauge, Key, Layers, LayoutDashboard, Mic, Monitor, Send, Settings, Share2, Shield, Webhook, Zap } from "lucide-vue-next";
 
 interface NavItem {
@@ -35,7 +35,7 @@ const iconMap: Record<string, Component> = {
   manifest: FileText,
 };
 
-export const NavSidebar = defineComponent({
+export const PNavSidebar = defineComponent({
   name: "PlanaNavSidebar",
   props: {
     navItems: {
@@ -54,7 +54,7 @@ export const NavSidebar = defineComponent({
   emits: ["navigate"],
   setup(props, { emit }) {
     return () => (
-      <Sidebar width="224px">
+      <HSidebar width="224px">
         {{
           default: () => (
             <nav>
@@ -62,7 +62,7 @@ export const NavSidebar = defineComponent({
                 const active = props.currentRoute === item.route;
                 const IconComp = iconMap[item.icon];
                 return (
-                  <NavItem
+                  <HNavItem
                     key={item.key}
                     active={active}
                     disabled={item.disabled}
@@ -84,13 +84,13 @@ export const NavSidebar = defineComponent({
                         </span>
                       ),
                     }}
-                  </NavItem>
+                  </HNavItem>
                 );
               })}
             </nav>
           ),
         }}
-      </Sidebar>
+      </HSidebar>
     );
   },
 });
