@@ -14,6 +14,10 @@ export default defineComponent({
   props: {
     items: { type: Array as PropType<GaugeItem[]>, required: true },
     intervalMs: { type: Number, default: 3000 },
+    /** Called when slide transition starts — consumer plugs into animation bus. */
+    onTransitionStart: { type: Function as PropType<(() => void) | undefined>, default: undefined },
+    /** Called when slide transition ends — consumer cancels animation bus handle. */
+    onTransitionEnd: { type: Function as PropType<(() => void) | undefined>, default: undefined },
   },
   setup(props, { slots }) {
     const page = ref(0);
@@ -31,13 +35,15 @@ export default defineComponent({
 
     function advance() {
       if (!isActive.value) return;
+      props.onTransitionStart?.();
       transitioning.value = true;
       const next = (page.value + 1) % total.value;
       page.value = next;
     }
 
-    function onTransitionEnd() {
+    function handleTransitionEnd() {
       transitioning.value = false;
+      props.onTransitionEnd?.();
       // When we reach the "clone" half, reset silently to the original position
       if (page.value >= total.value) {
         page.value = page.value % total.value;
@@ -73,7 +79,7 @@ export default defineComponent({
                 transition: transitioning.value ? "transform 0.3s var(--ease-out-expo)" : "none",
                 gap: "var(--plana-gc-gap, 8px)",
               }}
-              onTransitionend={onTransitionEnd}
+              onTransitionend={handleTransitionEnd}
             >
               {doubled.value.map((it, i) => (
                 <div key={`${it.label}-${i < total.value ? "a" : "b"}`} class="plana-gauge-carousel__item">
