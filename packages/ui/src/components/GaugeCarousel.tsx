@@ -1,4 +1,4 @@
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref, type PropType, TransitionGroup } from "vue";
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref, type PropType } from "vue";
 import "./GaugeCarousel.scss";
 
 export interface GaugeItem {
@@ -19,56 +19,28 @@ export default defineComponent({
     let timer: ReturnType<typeof setInterval> | null = null;
     const total = computed(() => props.items.length);
 
-    const visibleSet = computed(() => {
+    const visible = computed(() => {
       const n = total.value;
-      if (n <= 2) return new Set(props.items.map((_, i) => i));
+      if (n <= 2) return props.items;
       const i = (page.value * 2) % n;
       const j = (i + 1) % n;
-      return new Set([i, j]);
+      return [props.items[i], props.items[j]];
     });
-
-    const ordered = computed(() => {
-      const n = total.value;
-      const set = visibleSet.value;
-      const visible = Array.from(set).sort((a, b) => a - b);
-      const hidden = [];
-      for (let i = 0; i < n; i++) {
-        if (!set.has(i)) hidden.push(i);
-      }
-      return [...visible, ...hidden];
-    });
-
-    function advance() {
-      page.value++;
-    }
 
     onMounted(() => {
-      if (total.value > 2) timer = setInterval(advance, props.intervalMs);
+      if (total.value > 2) timer = setInterval(() => { page.value++; }, props.intervalMs);
     });
     onBeforeUnmount(() => { if (timer) clearInterval(timer); });
 
     return () => (
-      <div class="p-gauge-carousel" style={total.value > 2 ? { overflow: "hidden" } : undefined}>
-        <TransitionGroup
-          tag="div"
-          class="p-gauge-carousel__grid"
-          name="gc-move"
-          moveClass="gc-move"
-        >
-          {ordered.value.map((i) => {
-            const it = props.items[i];
-            const isVisible = visibleSet.value.has(i);
-            return (
-              <div
-                key={it.label}
-                class="p-gauge-carousel__item"
-                style={isVisible ? undefined : { display: "none" }}
-              >
-                {slots.default?.({ item: it })}
-              </div>
-            );
-          })}
-        </TransitionGroup>
+      <div class="p-gauge-carousel">
+        <div class="p-gauge-carousel__track">
+          {visible.value.map((it) => (
+            <div key={it.label} class="p-gauge-carousel__item">
+              {slots.default?.({ item: it })}
+            </div>
+          ))}
+        </div>
       </div>
     );
   },

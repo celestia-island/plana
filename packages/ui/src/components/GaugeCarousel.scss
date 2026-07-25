@@ -2,18 +2,14 @@
   width: 100%;
 }
 
-.p-gauge-carousel__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.p-gauge-carousel__track {
+  display: flex;
   gap: var(--p-gc-gap, 8px);
+  justify-content: center;
 }
 
 .p-gauge-carousel__item {
+  flex: 1 1 50%;
   display: flex;
   align-items: center;
-}
-
-/* Move transition for Vue TransitionGroup */
-.gc-move {
-  transition: transform 0.35s var(--ease-out-expo, ease-out);
 }
