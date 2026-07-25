@@ -60,6 +60,7 @@ export const PlanaStatusBar = defineComponent({
       type: Object as PropType<PlanaConnectionInfo | null>,
       default: null,
     },
+    standalone: { type: Boolean, default: true },
   },
   setup(props) {
     const popupOpen = ref(false);
@@ -88,23 +89,8 @@ export const PlanaStatusBar = defineComponent({
 
     return () => {
       const info = props.connectionInfo;
-      return (
-        <footer
-          class="s-status-bar"
-          style={{
-            position: "fixed", bottom: 0, left: 0, right: 0,
-            height: "var(--s-footer-height, 2.5rem)",
-            display: "flex", alignItems: "center",
-            zIndex: "var(--z-header, 30)", flexShrink: 0,
-            padding: "0 var(--space-16, 1rem)",
-          }}
-        >
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "rgb(var(--color-surface))",
-            backdropFilter: "blur(var(--blur-md, 12px))",
-            borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
-          }} />
+      const inner = (
+        <>
           <span
             ref={anchorRef}
             class="s-status-bar-tag"
@@ -144,10 +130,8 @@ export const PlanaStatusBar = defineComponent({
               onMouseenter={onPopupEnter}
               onMouseleave={onPopupLeave}
               style={{
-                minWidth: "220px",
-                padding: "10px 14px",
-                fontSize: "0.75rem",
-                lineHeight: 1.6,
+                minWidth: "220px", padding: "10px 14px",
+                fontSize: "0.75rem", lineHeight: 1.6,
                 color: "rgb(var(--color-text))",
               }}
             >
@@ -168,18 +152,13 @@ export const PlanaStatusBar = defineComponent({
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: latencyColor(info.latencyMs), flexShrink: 0 }} />
                       <span style={{ opacity: 0.5, marginRight: "auto" }}>延迟</span>
-                      <span style={{ color: latencyColor(info.latencyMs), fontFamily: "var(--font-mono, monospace)", fontWeight: 600 }}>
-                        {info.latencyMs} ms
-                      </span>
+                      <span style={{ color: latencyColor(info.latencyMs), fontFamily: "var(--font-mono, monospace)", fontWeight: 600 }}>{info.latencyMs} ms</span>
                     </div>
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>网络</span>
-                    <span>
-                      {regionFlag[info.region] ?? ""} {regionLabel[info.region] ?? info.region}
-                      {info.isLocalhost ? " · 本地" : ""}
-                    </span>
+                    <span>{regionFlag[info.region] ?? ""} {regionLabel[info.region] ?? info.region}{info.isLocalhost ? " · 本地" : ""}</span>
                   </div>
                 </>
               ) : (
@@ -187,6 +166,26 @@ export const PlanaStatusBar = defineComponent({
               )}
             </div>
           </HkPopover>
+        </>
+      );
+
+      if (!props.standalone) return inner;
+
+      return (
+        <footer class="s-status-bar" style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          height: "var(--s-footer-height, 2.5rem)",
+          display: "flex", alignItems: "center",
+          zIndex: "var(--z-header, 30)", flexShrink: 0,
+          padding: "0 var(--space-16, 1rem)",
+        }}>
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "rgb(var(--color-surface))",
+            backdropFilter: "blur(var(--blur-md, 12px))",
+            borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
+          }} />
+          {inner}
         </footer>
       );
     };
