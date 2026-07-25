@@ -27,7 +27,7 @@ export const AdminShell = defineComponent({
 
     return () => (
       <div class="flex flex-col h-full w-full overflow-hidden">
-        {slots.header?.() && (
+        {slots.header && (
           <div style={{ flexShrink: 0 }}>
             {slots.header({
               isDesktop: isDesktop.value,
@@ -40,7 +40,7 @@ export const AdminShell = defineComponent({
         )}
 
         <div class="flex flex-1 min-h-0" style={{ paddingBottom: props.footerHeight }}>
-          {isDesktop.value && !props.sidebarCollapsed && slots.sidebar?.() && (
+          {isDesktop.value && !props.sidebarCollapsed && slots.sidebar && (
             <aside
               style={{
                 width: props.sidebarWidth,
@@ -72,13 +72,13 @@ export const AdminShell = defineComponent({
           )}
         </div>
 
-        {slots.footer?.() && (
+        {slots.footer && (
           <footer class="s-status-bar" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 40 }}>
             {slots.footer()}
           </footer>
         )}
 
-        {slots.overlays?.()}
+        {slots.overlays}
       </div>
     );
   },
