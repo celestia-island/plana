@@ -1,15 +1,7 @@
 import { defineComponent, ref, type PropType } from "vue";
 import { HkPopover } from "@celestia-island/hikari";
 import { Wifi, WifiOff, Globe, Cpu } from "lucide-vue-next";
-
-export interface PlanaConnectionInfo {
-  state: "connected" | "reconnecting" | "disconnected";
-  tier: string;
-  quality: string;
-  latencyMs: number | null;
-  isLocalhost: boolean;
-  region: string;
-}
+import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
 
 const tierLabel: Record<string, string> = {
   local: "HTTP local",
