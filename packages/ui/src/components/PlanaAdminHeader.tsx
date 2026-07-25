@@ -1,6 +1,6 @@
 import { defineComponent, ref, type PropType, type VNode } from "vue";
 import { Camera, Languages, LogOut, Menu } from "lucide-vue-next";
-import { HkBadge, HkButton, HkDivider, HkPopover } from "@celestia-island/hikari";
+import { Badge, Button, Divider, Popover } from "@celestia-island/hikari";
 
 export interface LocaleOption {
   code: string;
@@ -52,13 +52,13 @@ export const PlanaAdminHeader = defineComponent({
         ]}
       >
         {props.showHamburger && (
-          <HkButton
+          <Button
             variant="ghost"
             size="sm"
             onClick={() => emit("hamburger")}
           >
             <Menu size={20} class="w-5 h-5" />
-          </HkButton>
+          </Button>
         )}
 
         <div ref={userTriggerRef} class="flex items-center gap-2">
@@ -96,7 +96,7 @@ export const PlanaAdminHeader = defineComponent({
           </span>
         </div>
 
-        <HkPopover
+        <Popover
           modelValue={userMenuOpen.value}
           onUpdate:modelValue={(v: boolean) => { userMenuOpen.value = v; }}
           placement="bottom-start"
@@ -108,16 +108,16 @@ export const PlanaAdminHeader = defineComponent({
               <>
                 <div class="px-3 py-1.5 flex flex-wrap gap-1">
                   {props.userGroups.map((g: { id: string; name: string }) => (
-                    <HkBadge
+                    <Badge
                       key={g.id}
                       variant={g.name === "Administrators" ? "error" : "primary"}
                       size="sm"
                     >
                       {g.name === "Administrators" ? props.adminGroupLabel : g.name}
-                    </HkBadge>
+                    </Badge>
                   ))}
                 </div>
-                <HkDivider spacing="sm" />
+                <Divider spacing="sm" />
               </>
             )}
             <button
@@ -148,7 +148,7 @@ export const PlanaAdminHeader = defineComponent({
               })}
             </div>
             {slots["user-menu-extra"]?.()}
-            <HkDivider spacing="sm" />
+            <Divider spacing="sm" />
             <button
               class="s-popup-menu-item"
               onClick={() => {
@@ -160,7 +160,7 @@ export const PlanaAdminHeader = defineComponent({
               {props.logoutLabel}
             </button>
           </div>
-        </HkPopover>
+        </Popover>
 
         <h2 class="text-sm font-semibold text-text">
           {props.title}
