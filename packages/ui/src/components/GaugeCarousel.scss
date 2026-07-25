@@ -1,19 +1,16 @@
 .p-gauge-carousel {
   width: 100%;
-  overflow: hidden;
 }
 
-.p-gauge-carousel__viewport {
-  overflow: hidden;
-  width: 100%;
-}
-
-.p-gauge-carousel__static {
+.p-gauge-carousel__track {
   display: flex;
   gap: var(--p-gc-gap, 8px);
+  justify-content: center;
 }
 
 .p-gauge-carousel__item {
+  flex: 1 1 50%;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
