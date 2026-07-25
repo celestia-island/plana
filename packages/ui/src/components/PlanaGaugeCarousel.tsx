@@ -23,17 +23,12 @@ export default defineComponent({
 
     const total = computed(() => props.items.length);
     const isActive = computed(() => total.value > 2);
-
-    // Track width as %: each item = 50%, doubled = 2 * total items
-    const trackPct = computed(() => total.value * 100);
-
-    const offsetPct = computed(() => {
-      // With 2 visible items (step=50%), advance by 50% per page
-      return -(page.value * 50);
-    });
-
-    // Double items for seamless infinite scroll
     const doubled = computed(() => [...props.items, ...props.items]);
+
+    // Track width: each item ~50% → for N unique items, track = N × 50%
+    const trackWidthPct = computed(() => total.value * 50);
+
+    const offsetPct = computed(() => -(page.value * 50));
 
     function advance() {
       if (!isActive.value) return;
@@ -55,37 +50,29 @@ export default defineComponent({
     });
     onBeforeUnmount(() => { if (timer) clearInterval(timer); });
 
-    const itemStyle = {
-      flex: "0 0 calc(50% - 4px)",
-      display: "flex",
-      alignItems: "center",
-    };
-
     return () => (
-      <div style={{ width: "100%", overflow: "hidden" }}>
+      <div class="plana-gauge-carousel">
         {!isActive.value ? (
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div class="plana-gauge-carousel__track">
             {props.items.map((it) => (
-              <div key={it.label} style={itemStyle}>
+              <div key={it.label} class="plana-gauge-carousel__item">
                 {slots.default?.({ item: it })}
               </div>
             ))}
           </div>
         ) : (
-          <div style={{ overflow: "hidden", width: "100%" }}>
+          <div class="plana-gauge-carousel__viewport">
             <div
+              class="plana-gauge-carousel__track"
               style={{
-                display: "flex",
-                flexWrap: "nowrap",
-                width: `${trackPct.value}%`,
+                width: `${trackWidthPct.value}%`,
                 transform: `translateX(${offsetPct.value}%)`,
-                transition: transitioning.value ? "transform 0.3s var(--ease-out-expo)" : "none",
-                gap: "8px",
+                transition: transitioning.value ? "transform 0.3s var(--ease-out-expo, ease-out)" : "none",
               }}
               onTransitionend={handleTransitionEnd}
             >
               {doubled.value.map((it, i) => (
-                <div key={`${it.label}-${i < total.value ? "a" : "b"}`} style={itemStyle}>
+                <div key={`${it.label}-${i < total.value ? "a" : "b"}`} class="plana-gauge-carousel__item">
                   {slots.default?.({ item: it })}
                 </div>
               ))}
