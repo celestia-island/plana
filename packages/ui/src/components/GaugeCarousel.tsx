@@ -1,5 +1,5 @@
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, type PropType } from "vue";
-import "./PlanaGaugeCarousel.scss";
+import "./GaugeCarousel.scss";
 
 export interface GaugeItem {
   label: string;
@@ -9,7 +9,7 @@ export interface GaugeItem {
 }
 
 export default defineComponent({
-  name: "PlanaGaugeCarousel",
+  name: "GaugeCarousel",
   props: {
     items: { type: Array as PropType<GaugeItem[]>, required: true },
     intervalMs: { type: Number, default: 3000 },
@@ -51,19 +51,19 @@ export default defineComponent({
     onBeforeUnmount(() => { if (timer) clearInterval(timer); });
 
     return () => (
-      <div class="plana-gauge-carousel">
+      <div class="p-gauge-carousel">
         {!isActive.value ? (
-          <div class="plana-gauge-carousel__track">
+          <div class="p-gauge-carousel__track">
             {props.items.map((it) => (
-              <div key={it.label} class="plana-gauge-carousel__item">
+              <div key={it.label} class="p-gauge-carousel__item">
                 {slots.default?.({ item: it })}
               </div>
             ))}
           </div>
         ) : (
-          <div class="plana-gauge-carousel__viewport">
+          <div class="p-gauge-carousel__viewport">
             <div
-              class="plana-gauge-carousel__track"
+              class="p-gauge-carousel__track"
               style={{
                 width: `${trackWidthPct.value}%`,
                 transform: `translateX(${offsetPct.value}%)`,
@@ -72,7 +72,7 @@ export default defineComponent({
               onTransitionend={handleTransitionEnd}
             >
               {doubled.value.map((it, i) => (
-                <div key={`${it.label}-${i < total.value ? "a" : "b"}`} class="plana-gauge-carousel__item">
+                <div key={`${it.label}-${i < total.value ? "a" : "b"}`} class="p-gauge-carousel__item">
                   {slots.default?.({ item: it })}
                 </div>
               ))}
