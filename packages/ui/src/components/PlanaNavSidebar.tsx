@@ -35,7 +35,7 @@ const iconMap: Record<string, Component> = {
   manifest: FileText,
 };
 
-export default defineComponent({
+export const NavSidebar = defineComponent({
   name: "PlanaNavSidebar",
   props: {
     navItems: {
