@@ -37,14 +37,15 @@ export default defineComponent({
       if (!isActive.value) return;
       props.onTransitionStart?.();
       transitioning.value = true;
-      const next = (page.value + 1) % total.value;
-      page.value = next;
+      // Allow page to advance through the doubled track for seamless wrap
+      page.value = page.value + 1;
     }
 
     function handleTransitionEnd() {
       transitioning.value = false;
       props.onTransitionEnd?.();
-      // When we reach the "clone" half, reset silently to the original position
+      // When we've scrolled past the original set, jump back to the
+      // equivalent position in the first copy (no visual change, no transition)
       if (page.value >= total.value) {
         page.value = page.value % total.value;
       }

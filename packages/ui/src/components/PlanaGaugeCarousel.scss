@@ -1,5 +1,6 @@
 .plana-gauge-carousel {
   width: 100%;
+  overflow: hidden;
 }
 
 .plana-gauge-carousel__viewport {
@@ -9,6 +10,7 @@
 
 .plana-gauge-carousel__track {
   display: flex;
+  flex-wrap: nowrap;
 }
 
 .plana-gauge-carousel__track--animated {
@@ -16,7 +18,7 @@
 }
 
 .plana-gauge-carousel__item {
-  flex: 0 0 calc(50% - var(--plana-gc-gap, 8px) / 2);
+  flex: 0 0 calc(50% - 4px);
   display: flex;
   align-items: center;
 }
