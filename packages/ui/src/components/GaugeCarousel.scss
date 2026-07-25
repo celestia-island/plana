@@ -2,6 +2,11 @@
   width: 100%;
 }
 
+.p-gauge-carousel__track {
+  display: flex;
+  gap: var(--p-gc-gap, 8px);
+}
+
 .p-gauge-carousel__viewport {
   overflow: hidden;
   width: 100%;
