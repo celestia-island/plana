@@ -34,7 +34,7 @@ export interface PlanaConnectionInfo {
   region: string;
 }
 
-export function useConnectionInfo(
+export function usePlanaConnectionInfo(
   connectionState: Ref<ConnectionStateInput>,
   transportTier?: Ref<string>,
 ): { connectionInfo: Ref<PlanaConnectionInfo> } {
