@@ -11,11 +11,11 @@
 .p-gauge-carousel__track {
   display: flex;
   flex-wrap: nowrap;
-  gap: var(--p-gc-gap, 8px);
+  gap: var(--p-gc-gap, 4px);
 }
 
 .p-gauge-carousel__item {
-  flex: 0 0 calc(50% - var(--p-gc-gap, 8px) / 2);
+  flex: 0 0 calc(50% - var(--p-gc-gap, 4px) / 2);
   display: flex;
   align-items: center;
 }
