@@ -2,14 +2,13 @@
   width: 100%;
 }
 
-.p-gauge-carousel__track {
-  display: flex;
-  gap: var(--p-gc-gap, 8px);
-  justify-content: center;
+.p-gauge-carousel__viewport {
+  overflow: hidden;
+  width: 100%;
 }
 
-.p-gauge-carousel__item {
-  flex: 1 1 50%;
+.p-gauge-carousel__stage {
   display: flex;
-  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--p-gc-gap, 8px);
 }
