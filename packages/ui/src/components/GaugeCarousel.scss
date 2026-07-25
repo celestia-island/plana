@@ -4,7 +4,7 @@
 
 .p-gauge-carousel__track {
   display: flex;
-  gap: var(--p-gc-gap, 8px);
+  gap: var(--p-gc-gap, 4px);
 }
 
 .p-gauge-carousel__viewport {
@@ -15,5 +15,5 @@
 .p-gauge-carousel__stage {
   display: flex;
   flex-wrap: nowrap;
-  gap: var(--p-gc-gap, 8px);
+  gap: var(--p-gc-gap, 4px);
 }
