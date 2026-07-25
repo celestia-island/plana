@@ -2,8 +2,8 @@ import { defineComponent, ref } from "vue";
 import { Drawer, ScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { provideActionBar } from "../composables/useActionBar";
 
-export const AdminShell = defineComponent({
-  name: "AdminShell",
+export const PlanaAdminShell = defineComponent({
+  name: "PlanaAdminShell",
   props: {
     sidebarCollapsed: { type: Boolean, default: false },
     sidebarWidth: { type: String, default: "224px" },
@@ -59,7 +59,7 @@ export const AdminShell = defineComponent({
             </ScrollContainer>
           </main>
 
-          {!isDesktop.value && !props.sidebarCollapsed && (
+          {!isDesktop.value && (
             <Drawer
               modelValue={sidebarOpen.value}
               onUpdate:modelValue={(v: boolean) => (sidebarOpen.value = v)}
