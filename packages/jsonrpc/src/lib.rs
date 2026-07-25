@@ -37,6 +37,7 @@ pub mod bridge;
 pub mod json_keys;
 pub mod pending;
 pub mod rpc_router;
+pub mod session;
 pub mod types;
 pub mod unix_socket;
 pub mod unix_transport;

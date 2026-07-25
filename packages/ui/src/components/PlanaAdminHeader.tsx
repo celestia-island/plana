@@ -7,7 +7,7 @@ export interface LocaleOption {
   label: string;
 }
 
-export const PlanaAdminHeader = defineComponent({
+export const AdminHeader = defineComponent({
   name: "PlanaAdminHeader",
   props: {
     title: { type: String, required: true },
