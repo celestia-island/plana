@@ -8,6 +8,8 @@ export type ConnectionState =
 export interface ConnectionStateEvent {
   state: ConnectionState;
   retryIn?: number;
+  retryCount?: number;
+  maxRetries?: number;
 }
 
 export type RpcErrorKind =
@@ -72,6 +74,7 @@ const HB_TIMEOUT = 10_000;
 const CALL_TIMEOUT = 30_000;
 const LOCAL_CALL_TIMEOUT = 5_000;
 const SSE_MAX_RETRIES = 3;
+const MAX_RETRIES = 10;
 const POLL_INTERVAL = 30_000;
 
 function isLocalhost(baseUrl: string): boolean {
@@ -116,10 +119,12 @@ export class RpcClient {
 
   #state: ConnectionState = "disconnected";
   #wsConnectGate: Promise<void> | null = null;
+  #retryCount = 0;
 
   get state(): ConnectionState { return this.#state; }
   get connected(): boolean { return this.#ws?.readyState === WebSocket.OPEN; }
   get transportTier(): TransportTier { return this.#tier; }
+  get retryCount(): number { return this.#retryCount; }
 
   constructor(opts: RpcClientOpts) {
     this.#baseUrl = opts.baseUrl.replace(/\/+$/, "");
@@ -169,6 +174,7 @@ export class RpcClient {
 
   connect(): void {
     this.#disposed = false;
+    this.#retryCount = 0;
     if (this.#local) {
       this.#tier = "local";
       console.info("[RpcClient:local] detected localhost, using direct HTTP");
@@ -187,6 +193,7 @@ export class RpcClient {
 
   forceReconnect(): void {
     if (this.#disposed) return;
+    this.#retryCount = 0;
     this.#teardownAll();
     if (this.#local) {
       this.#tier = "local";
@@ -231,6 +238,7 @@ export class RpcClient {
   // ═══════════════════════════════════════════════════════════
 
   #connectWs(): void {
+    this.#retryCount++;
     if (this.#tier !== "ws" || this.#disposed) return;
     if (!this.#getToken()) return;
     if (this.#ws) {
@@ -344,6 +352,7 @@ export class RpcClient {
   }
 
   #openEventStream(): void {
+    this.#retryCount++;
     if (this.#tier !== "sse" || this.#disposed) return;
     if (this.#eventSource) this.#eventSource.close();
 
@@ -398,6 +407,7 @@ export class RpcClient {
   // ═══════════════════════════════════════════════════════════
 
   #downgradeToPoll(): void {
+    this.#retryCount++;
     this.#tier = "poll";
     this.#eventSource?.close();
     this.#eventSource = null;
@@ -557,7 +567,8 @@ export class RpcClient {
 
   #setState(state: ConnectionState, retryIn?: number): void {
     this.#state = state;
-    this.#stateHandlers.forEach((h) => h({ state, retryIn }));
+    const retryCount = this.#retryCount;
+    this.#stateHandlers.forEach((h) => h({ state, retryIn, retryCount, maxRetries: MAX_RETRIES }));
   }
 
   #rejectAllPending(reason: string): void {
