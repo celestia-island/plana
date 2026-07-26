@@ -1,0 +1,19 @@
+{
+  "connection": {
+    "p.statusBar.panel": "パネル",
+    "p.statusBar.connected": "接続済み",
+    "p.statusBar.reconnecting": "再接続中",
+    "p.statusBar.disconnected": "切断",
+    "p.statusBar.retrying": "再試行中 {retryCount} / {maxRetries}",
+    "p.statusBar.clickReconnect": "クリックして再接続",
+    "p.statusBar.protocol": "プロトコル",
+    "p.statusBar.latency": "レイテンシ",
+    "p.statusBar.network": "ネットワーク地域",
+    "p.statusBar.local": "ローカル",
+    "p.statusBar.fetching": "接続情報を取得中...",
+    "p.statusBar.tier.local": "HTTP ローカル",
+    "p.statusBar.tier.ws": "WebSocket",
+    "p.statusBar.tier.sse": "SSE ストリーム",
+    "p.statusBar.tier.poll": "HTTP ポーリング"
+  }
+}

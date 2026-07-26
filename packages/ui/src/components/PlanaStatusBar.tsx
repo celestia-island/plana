@@ -1,31 +1,28 @@
-import { defineComponent, ref, type PropType } from "vue";
-import { HPopover } from "@celestia-island/hikari";
-import { Wifi, WifiOff, Globe, Cpu } from "lucide-vue-next";
+import { defineComponent, ref, onMounted, type PropType } from "vue";
+import { HPopover, useI18n, mergeMessages } from "@celestia-island/hikari";
+import { Wifi, WifiOff, Globe, Cable, Cpu } from "lucide-vue-next";
 import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
 
-const tierLabel: Record<string, string> = {
-  local: "HTTP local",
-  ws: "WebSocket",
-  sse: "SSE events",
-  poll: "HTTP poll",
-};
-
-const regionFlag: Record<string, string> = {
-  CN: "🇨🇳", JP: "🇯🇵", KR: "🇰🇷",
-  US: "🇺🇸", GB: "🇬🇧", DE: "🇩🇪",
-  FR: "🇫🇷", SA: "🇸🇦", TW: "🇹🇼",
-  HK: "🇭🇰", BR: "🇧🇷", RU: "🇷🇺",
-  CA: "🇨🇦", AU: "🇦🇺", PT: "🇵🇹",
-  ES: "🇪🇸",
-};
+import enLocale from "../i18n/locales/en/connection.json";
+import zhsLocale from "../i18n/locales/zhs/connection.json";
+import zhtLocale from "../i18n/locales/zht/connection.json";
+import jaLocale from "../i18n/locales/ja/connection.json";
+import koLocale from "../i18n/locales/ko/connection.json";
+import ruLocale from "../i18n/locales/ru/connection.json";
+import arLocale from "../i18n/locales/ar/connection.json";
+import deLocale from "../i18n/locales/de/connection.json";
+import esLocale from "../i18n/locales/es/connection.json";
+import frLocale from "../i18n/locales/fr/connection.json";
+import ptLocale from "../i18n/locales/pt/connection.json";
 
 const regionLabel: Record<string, string> = {
-  CN: "中国大陆", JP: "日本", KR: "韩国",
-  US: "美国", GB: "英国", DE: "德国",
-  FR: "法国", SA: "沙特", TW: "台湾",
-  HK: "香港", BR: "巴西", RU: "俄罗斯",
-  CA: "加拿大", AU: "澳大利亚",
-  PT: "葡萄牙", ES: "西班牙",
+  CN: "\u4e2d\u56fd\u5927\u9646", JP: "\u65e5\u672c", KR: "\u97e9\u56fd",
+  US: "\u7f8e\u56fd", GB: "\u82f1\u56fd", DE: "\u5fb7\u56fd",
+  FR: "\u6cd5\u56fd", SA: "\u6c99\u7279", TW: "\u4e2d\u56fd\u53f0\u6e7e",
+  HK: "\u4e2d\u56fd\u9999\u6e2f", MO: "\u4e2d\u56fd\u6fb3\u95e8",
+  BR: "\u5df4\u897f", RU: "\u4fc4\u7f57\u65af",
+  CA: "\u52a0\u62ff\u5927", AU: "\u6fb3\u5927\u5229\u4e9a",
+  PT: "\u8461\u8404\u7259", ES: "\u897f\u73ed\u7259",
 };
 
 function latencyColor(ms: number | null): string {
@@ -35,7 +32,8 @@ function latencyColor(ms: number | null): string {
   return "rgb(var(--color-error))";
 }
 
-function qualityIcon(quality: string, size: number) {
+function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: number) {
+  if (isLocalhost) return <Cable size={size} />;
   if (quality === "excellent" || quality === "good") return <Wifi size={size} />;
   return <WifiOff size={size} />;
 }
@@ -59,6 +57,20 @@ export const PStatusBar = defineComponent({
     const anchorRef = ref<HTMLElement | null>(null);
     let closeTimer: ReturnType<typeof setTimeout> | null = null;
 
+    onMounted(() => {
+      mergeMessages(enLocale.connection, "en");
+      mergeMessages(zhsLocale.connection, "zhs");
+      mergeMessages(zhtLocale.connection, "zht");
+      mergeMessages(jaLocale.connection, "ja");
+      mergeMessages(koLocale.connection, "ko");
+      mergeMessages(ruLocale.connection, "ru");
+      mergeMessages(arLocale.connection, "ar");
+      mergeMessages(deLocale.connection, "de");
+      mergeMessages(esLocale.connection, "es");
+      mergeMessages(frLocale.connection, "fr");
+      mergeMessages(ptLocale.connection, "pt");
+    });
+
     const dotColorMap: Record<string, string> = {
       connected: "rgb(var(--color-success))",
       reconnecting: "rgb(var(--color-warning))",
@@ -80,7 +92,14 @@ export const PStatusBar = defineComponent({
     }
 
     return () => {
+      const { t } = useI18n();
       const info = props.connectionInfo;
+
+      const tierLabelKey = `p.statusBar.tier.${info?.tier ?? "ws"}`;
+      const statusText = info?.state === "connected" ? t("p.statusBar.connected", "Connected")
+        : info?.state === "reconnecting" ? t("p.statusBar.reconnecting", "Reconnecting")
+        : t("p.statusBar.disconnected", "Disconnected");
+
       const inner = (
         <>
           <span
@@ -104,7 +123,7 @@ export const PStatusBar = defineComponent({
               width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
               background: dotColorMap[props.connectionStatus] ?? dotColorMap.disconnected,
             }} />
-            <span style={{ opacity: 0.6 }}>面板</span>
+            <span style={{ opacity: 0.6 }}>{t("p.statusBar.panel", "Panel")}</span>
             <span style={{ fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
               {props.version}
             </span>
@@ -130,31 +149,41 @@ export const PStatusBar = defineComponent({
               {info ? (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", fontWeight: 600, fontSize: "0.8125rem" }}>
-                    {qualityIcon(info.quality, 14)}
+                    {qualityIcon(info.quality, info.tier, info.isLocalhost, 14)}
                     <span style={{ color: dotColorMap[info.state] ?? dotColorMap.disconnected }}>
-                      {info.state === "connected" ? "已连接" : info.state === "reconnecting" ? "重连中" : "断开"}
+                      {statusText}
                     </span>
+                    {info.latencyMs !== null && (
+                      <span style={{ marginLeft: "auto", color: latencyColor(info.latencyMs), fontFamily: "var(--font-mono, monospace)", fontWeight: 600, fontSize: "0.6875rem" }}>
+                        {info.latencyMs} ms
+                      </span>
+                    )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Cpu size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <span style={{ opacity: 0.5, marginRight: "auto" }}>协议</span>
-                    <span>{tierLabel[info.tier] ?? info.tier}</span>
-                  </div>
-                  {info.latencyMs !== null && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: latencyColor(info.latencyMs), flexShrink: 0 }} />
-                      <span style={{ opacity: 0.5, marginRight: "auto" }}>延迟</span>
-                      <span style={{ color: latencyColor(info.latencyMs), fontFamily: "var(--font-mono, monospace)", fontWeight: 600 }}>{info.latencyMs} ms</span>
+                  {info.state === "reconnecting" && info.retryCount > 0 && (
+                    <div style={{ color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
+                      {t("p.statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
+                        .replace("{retryCount}", String(info.retryCount))
+                        .replace("{maxRetries}", String(info.maxRetries))}
+                    </div>
+                  )}
+                  {info.state === "disconnected" && (
+                    <div style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7 }}>
+                      {t("p.statusBar.clickReconnect", "Click to retry")}
                     </div>
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Cpu size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("p.statusBar.protocol", "Protocol")}</span>
+                    <span>{t(tierLabelKey, info?.tier ?? "ws")}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <span style={{ opacity: 0.5, marginRight: "auto" }}>网络</span>
-                    <span>{regionFlag[info.region] ?? ""} {regionLabel[info.region] ?? info.region}{info.isLocalhost ? " · 本地" : ""}</span>
+                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("p.statusBar.network", "Network")}</span>
+                    <span>{regionLabel[info.region] ?? info.region}{info.isLocalhost ? " \u00b7 " + t("p.statusBar.local", "Local") : ""}</span>
                   </div>
                 </>
               ) : (
-                <div style={{ opacity: 0.5 }}>获取连接信息中...</div>
+                <div style={{ opacity: 0.5 }}>{t("p.statusBar.fetching", "Fetching connection info...")}</div>
               )}
             </div>
           </HPopover>
