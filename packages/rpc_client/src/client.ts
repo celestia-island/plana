@@ -239,6 +239,12 @@ export class RpcClient {
 
   #connectWs(): void {
     this.#retryCount++;
+    if (this.#retryCount > MAX_RETRIES) {
+      console.warn("[RpcClient] max retries exceeded");
+      this.#teardownAll();
+      this.#setState("failed");
+      return;
+    }
     if (this.#tier !== "ws" || this.#disposed) return;
     if (!this.#getToken()) return;
     if (this.#ws) {

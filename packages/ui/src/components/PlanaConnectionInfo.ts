@@ -47,6 +47,7 @@ export function useConnectionInfo(
     let state: PlanaConnectionInfo["state"] = "disconnected";
     if (s === "connected") state = "connected";
     else if (s === "connecting" || s === "reconnecting") state = "reconnecting";
+    else if (s === "failed") state = "disconnected";
 
     const tierValue = transportTier?.value ?? (isLocalhostUrl() ? "local" : "ws");
     let quality = "unknown";
