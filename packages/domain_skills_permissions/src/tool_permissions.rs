@@ -54,12 +54,16 @@ impl std::fmt::Display for AccessMode {
 pub fn permission_name_to_access_mode(name: &str) -> Option<AccessMode> {
     if name.ends_with(".read") || name.ends_with(".list") {
         Some(AccessMode::Read)
-    } else if name.ends_with(".write") || name.ends_with(".create")
-        || name.ends_with(".update") || name.ends_with(".delete")
+    } else if name.ends_with(".write")
+        || name.ends_with(".create")
+        || name.ends_with(".update")
+        || name.ends_with(".delete")
     {
         Some(AccessMode::Write)
-    } else if name.ends_with(".execute") || name.ends_with(".use")
-        || name.ends_with(".manage") || name.ends_with(".connect")
+    } else if name.ends_with(".execute")
+        || name.ends_with(".use")
+        || name.ends_with(".manage")
+        || name.ends_with(".connect")
     {
         Some(AccessMode::Execute)
     } else {
