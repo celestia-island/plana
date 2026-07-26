@@ -649,7 +649,10 @@ mod tests {
             Method::Sync(SyncMethod::ServerVersion).method_name(),
             "Sync.ServerVersion"
         );
-        assert_eq!(Method::SyncServerVersion.method_name(), "Sync.ServerVersion"); // flat alias
+        assert_eq!(
+            Method::SyncServerVersion.method_name(),
+            "Sync.ServerVersion"
+        ); // flat alias
         assert_eq!(Method::Cli(CliMethod::Status).method_name(), "Cli.Status");
         assert_eq!(Method::CliStatus.method_name(), "Cli.Status");
         assert_eq!(
@@ -704,7 +707,8 @@ mod tests {
     }
     #[test]
     fn test_prepare_notify() {
-        let f = PendingRegistry::prepare_notify(Method::SyncAgentReport, serde_json::json!({"x":1}));
+        let f =
+            PendingRegistry::prepare_notify(Method::SyncAgentReport, serde_json::json!({"x":1}));
         assert!(f.get("id").is_none());
         assert_eq!(f["method"], "Sync.AgentReport");
     }

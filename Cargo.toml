@@ -61,7 +61,7 @@ _sync = { package = "plana_sync", path = "packages/sync" }
 _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
 # ── Internal crate aliases ──────────────────────────────────
-plana = { path = "packages/types" }
+plana = { package = "plana-types", path = "packages/types" }
 
 kirino = { version = "^0.6" }
 

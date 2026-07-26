@@ -5,8 +5,8 @@ use axum::{
     extract::Query,
     response::sse::{Event, Sse},
 };
-use futures::channel::mpsc;
 use futures::StreamExt;
+use futures::channel::mpsc;
 use serde::Deserialize;
 use std::convert::Infallible;
 use uuid::Uuid;
@@ -21,14 +21,19 @@ pub struct SessionManager {
 
 impl SessionManager {
     pub fn new() -> Self {
-        Self { sessions: Arc::new(Mutex::new(HashMap::new())) }
+        Self {
+            sessions: Arc::new(Mutex::new(HashMap::new())),
+        }
     }
 
     /// Create a new session and return its ID. The session is not yet
     /// ready for streaming until the client opens the SSE endpoint.
     pub fn create_id(&self) -> SessionId {
         let id = Uuid::new_v4().to_string();
-        self.sessions.lock().unwrap().insert(id.clone(), mpsc::unbounded().0);
+        self.sessions
+            .lock()
+            .unwrap()
+            .insert(id.clone(), mpsc::unbounded().0);
         id
     }
 
@@ -65,7 +70,11 @@ pub async fn sse_events_handler_impl(
     session_id: String,
 ) -> Sse<impl futures::Stream<Item = Result<Event, Infallible>>> {
     let (tx, rx) = mpsc::unbounded();
-    sessions.sessions.lock().unwrap().insert(session_id.clone(), tx);
+    sessions
+        .sessions
+        .lock()
+        .unwrap()
+        .insert(session_id.clone(), tx);
     let stream = rx.map(move |msg| Ok(Event::default().data(msg)));
     Sse::new(stream)
 }

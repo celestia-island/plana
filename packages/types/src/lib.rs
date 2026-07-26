@@ -23,6 +23,7 @@ pub mod mcp;
 pub mod model;
 pub mod protocol;
 pub mod rbac;
+pub mod region;
 pub mod ws;
 
 #[cfg(feature = "tracing-helpers")]
@@ -501,6 +502,9 @@ pub use protocol::jsonrpc;
 
 // enums/ — foundational shared enums (ConnectionType, Agent, WorkStatus, etc.)
 pub use enums::*;
+
+// region/ — regional compliance policy types
+pub use region::*;
 
 // model/ — unified model management (re-export key types to crate root
 // for ergonomic access: `arona::ModelCapability` not `arona::model::…`)
