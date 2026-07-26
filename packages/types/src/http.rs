@@ -797,11 +797,7 @@ impl GrantItem {
     pub fn validate_permission(&self) -> Option<&str> {
         let valid = crate::rbac::Permission::from_path(&self.permission).is_some()
             || !crate::rbac::Permission::expand_domain(&self.permission).is_empty();
-        if valid {
-            None
-        } else {
-            Some(&self.permission)
-        }
+        if valid { None } else { Some(&self.permission) }
     }
 }
 

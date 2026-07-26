@@ -7,9 +7,7 @@ use ts_rs::TS;
 /// (1) User        — individual account
 /// (2) UserGroup   — collection of users sharing permissions
 /// (3) ModelGroup  — collection of models with access policies (replaces "workspace")
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessDimension {
     User,
@@ -31,9 +29,7 @@ pub enum PermissionScope {
 /// Every discrete operation that can be authorised in the arona platform.
 ///
 /// Serialised as a dotted path (`gateway.chat`, `model.deploy`, …).
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
 pub enum Permission {
     // ── Gateway & Proxy ──────────────────────────────────────────
     #[serde(rename = "gateway.chat")]
@@ -338,7 +334,11 @@ impl Permission {
         vec![
             (
                 "gateway".into(),
-                vec![Self::GatewayChat, Self::GatewayListModels, Self::GatewayStream],
+                vec![
+                    Self::GatewayChat,
+                    Self::GatewayListModels,
+                    Self::GatewayStream,
+                ],
             ),
             (
                 "conversation".into(),
@@ -373,11 +373,7 @@ impl Permission {
             ),
             (
                 "agent".into(),
-                vec![
-                    Self::AgentRegister,
-                    Self::AgentRead,
-                    Self::AgentDeregister,
-                ],
+                vec![Self::AgentRegister, Self::AgentRead, Self::AgentDeregister],
             ),
             (
                 "user".into(),
@@ -394,11 +390,7 @@ impl Permission {
             ),
             (
                 "system".into(),
-                vec![
-                    Self::SystemSettings,
-                    Self::SystemMetrics,
-                    Self::SystemAdmin,
-                ],
+                vec![Self::SystemSettings, Self::SystemMetrics, Self::SystemAdmin],
             ),
         ]
     }
@@ -432,8 +424,7 @@ impl Role {
     pub fn developer() -> Self {
         Self {
             name: "developer".into(),
-            description: "Can chat, manage models, and handle own conversations & API keys."
-                .into(),
+            description: "Can chat, manage models, and handle own conversations & API keys.".into(),
             permissions: vec![
                 Permission::GatewayChat,
                 Permission::GatewayListModels,
@@ -456,8 +447,7 @@ impl Role {
     pub fn viewer() -> Self {
         Self {
             name: "viewer".into(),
-            description: "Read-only access to models, providers, agents, and own resources."
-                .into(),
+            description: "Read-only access to models, providers, agents, and own resources.".into(),
             permissions: vec![
                 Permission::GatewayListModels,
                 Permission::ConversationRead,
@@ -518,9 +508,7 @@ pub fn parse_permission(s: &str) -> Option<Permission> {
 pub fn validate_grant_permissions(grants: &[String]) -> Result<(), Vec<String>> {
     let invalid: Vec<String> = grants
         .iter()
-        .filter(|g| {
-            Permission::from_path(g).is_none() && Permission::expand_domain(g).is_empty()
-        })
+        .filter(|g| Permission::from_path(g).is_none() && Permission::expand_domain(g).is_empty())
         .cloned()
         .collect();
     if invalid.is_empty() {
@@ -532,7 +520,10 @@ pub fn validate_grant_permissions(grants: &[String]) -> Result<(), Vec<String>> 
 
 /// Return the serde names of all leaf permissions.
 pub fn list_all_permission_names() -> Vec<String> {
-    Permission::all().iter().map(|p| p.as_str().to_string()).collect()
+    Permission::all()
+        .iter()
+        .map(|p| p.as_str().to_string())
+        .collect()
 }
 
 /// Return all domain prefix strings.

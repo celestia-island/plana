@@ -11,9 +11,9 @@
 //! ## Phase 1: worker lifecycle (TBD)
 //! - DrainRequest / WorkerRegistration / WorkerStatus / HealthResponse
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-use schemars::JsonSchema;
 
 /// A rebuild has completed and restart is proposed for a supervised worker.
 #[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]

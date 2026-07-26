@@ -503,6 +503,9 @@ pub use protocol::jsonrpc;
 // enums/ — foundational shared enums (ConnectionType, Agent, WorkStatus, etc.)
 pub use enums::*;
 
+// malkuth/ — supervision protocol types (restart authorization gate)
+pub use malkuth::*;
+
 // model/ — unified model management (re-export key types to crate root
 // for ergonomic access: `arona::ModelCapability` not `arona::model::…`)
 pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
