@@ -1,0 +1,19 @@
+{
+  "connection": {
+    "p.statusBar.panel": "面板",
+    "p.statusBar.connected": "已連線",
+    "p.statusBar.reconnecting": "重連中",
+    "p.statusBar.disconnected": "斷開",
+    "p.statusBar.retrying": "正在重試 {retryCount} / {maxRetries} 次",
+    "p.statusBar.clickReconnect": "點擊以嘗試重連",
+    "p.statusBar.protocol": "協定",
+    "p.statusBar.latency": "延遲",
+    "p.statusBar.network": "網路區域",
+    "p.statusBar.local": "本機",
+    "p.statusBar.fetching": "取得連線資訊中...",
+    "p.statusBar.tier.local": "HTTP 本地",
+    "p.statusBar.tier.ws": "WebSocket",
+    "p.statusBar.tier.sse": "SSE 串流",
+    "p.statusBar.tier.poll": "HTTP 輪詢"
+  }
+}
