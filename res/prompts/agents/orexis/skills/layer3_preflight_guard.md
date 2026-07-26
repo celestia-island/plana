@@ -67,3 +67,31 @@ All REPL injection findings are severity `critical` and trigger `decision = bloc
    - `block` — high/critical findings; stop activation immediately.
 
 > Return type and IEPL enforcement: @system/return-type-convention
+
+## Restart Audit (target: "restart")
+
+When `target = "restart"`, the preflight guard audits a `RestartProposal`
+instead of agent artifacts:
+
+1. **Collect proposal artifacts** — Receive `RestartProposal` with
+   `worker_id`, `repo_path`, `git_diff_summary`, `affected_services`,
+   and `risk_estimate`.
+
+2. **Check diff integrity** — Scan the git diff summary for injection
+   patterns targeting the drain/auth flow, privilege escalation to RBAC
+   or supervision config, and dependency poisoning.
+
+3. **Check scope consistency** — Verify changed files are within the
+   declared repo. Flag cross-repo protocol changes lacking corresponding
+   plana type updates.
+
+4. **Check blast radius** — Assess `affected_services`. Multi-repo changes
+   require all downstream repos to have compatible changes ready.
+
+5. **Render gate decision**:
+   - `allow` — zero findings above Info; auto-restart in YOLO mode
+   - `review` — Warning findings; escalate to human even in YOLO
+   - `block` — Critical findings; refuse restart, raise security alert
+
+When `security_policy.audit_only` is `true`, ALL restart proposals
+escalate to `review` regardless of findings.
