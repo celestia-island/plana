@@ -19,10 +19,11 @@ impl SessionManager {
     }
 
     pub async fn create(&self) -> Arc<Session> {
-        let session = Arc::new(Session {
-            id: Uuid::now_v7(),
-        });
-        self.sessions.write().await.insert(session.id, session.clone());
+        let session = Arc::new(Session { id: Uuid::now_v7() });
+        self.sessions
+            .write()
+            .await
+            .insert(session.id, session.clone());
         session
     }
 

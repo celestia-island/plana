@@ -43,8 +43,8 @@ pub use gateway::{
     AgentMessage, AskAnswerSource, BaseMessage, ClientCapability, ClientNodeInfo,
     ConversationMessage, CosmosContainerInfo, CosmosOperationLogEntry, FilePayload, McpMessage,
     Message, MetricsData, MonitorMessage, NodeInfo, NodeMessage, PolemosDeviceInfo,
-    ReportSelection, ReportType, RetryReason, RouteInfo, SkillMessage, SkillStage,
-    SystemNotification, SyncMessage,
+    ReportSelection, ReportType, RetryReason, RouteInfo, SkillMessage, SkillStage, SyncMessage,
+    SystemNotification,
     tui_types::{
         AgentPatch, AgentSnapshot, AgentUpdateParams, AuthUserInfo, CompletionOutcome,
         ConfiguredProvider, ContainerInfo, ContainerPatch, ContainerSnapshot, CustomAgentInfo,

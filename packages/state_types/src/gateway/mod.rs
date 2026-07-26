@@ -21,8 +21,8 @@ pub use tui_types::{
     KnowledgeBaseStatus, Layer2AgentInfo, Layer2McpToolInfo, Layer2SkillInfo, LogEntryData,
     MaxConcurrentInfo, MessagesPage, ModelFsInfo, ModelFsPricing, ModelInfo, NoaEvent, PeriodType,
     PolemosDeviceInfo, ProviderCapabilitiesInfo, ProviderFsInfo, ProviderInfo, ProviderLimitsInfo,
-    QuotaInfo, RateRuleInfo, RequestState, SearchHit, SearchResponse, TaskInfo, TaskPatch,
-    TasksSnapshot, TuiAgentInfo, SyncMessage, UsagePeriodData, UserInfo,
+    QuotaInfo, RateRuleInfo, RequestState, SearchHit, SearchResponse, SyncMessage, TaskInfo,
+    TaskPatch, TasksSnapshot, TuiAgentInfo, UsagePeriodData, UserInfo,
     knowledge_base::{
         AddDocumentRequest, AddDocumentResponse, CreateKnowledgeBaseRequest,
         CreateKnowledgeBaseResponse, CreateSubscriptionRequest, CreateSubscriptionResponse,
