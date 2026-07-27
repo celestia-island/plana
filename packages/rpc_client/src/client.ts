@@ -450,19 +450,18 @@ export class RpcClient {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // Tier 3 — HTTP long polling (single fetch)
+  // Tier 3 — HTTP POST probe (uses health endpoint)
   // ═══════════════════════════════════════════════════════════
 
   async #tryPollOnce(timeoutMs: number): Promise<boolean> {
     try {
-      const cleanPath = this.#rpcPath.split("?")[0];
-      const url = this.#baseUrl + cleanPath + "/events?session=" + this.#sessionId;
+      const url = this.#baseUrl + "/api/health";
       const headers: Record<string, string> = {};
       const token = this.#getToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      headers["X-Session-Id"] = this.#sessionId;
 
       const resp = await fetch(url, {
+        method: "GET",
         headers,
         signal: AbortSignal.timeout(timeoutMs),
         credentials: "include",
@@ -470,26 +469,9 @@ export class RpcClient {
 
       if (!resp.ok) return false;
 
-      const text = await resp.text();
-      const events = text.split("\n\n");
-      for (const block of events) {
-        const dataLine = block.split("\n").find((l) => l.startsWith("data:"));
-        if (!dataLine) continue;
-        try {
-          const data = JSON.parse(dataLine.slice(5).trim());
-          if (data.method && data.params !== undefined) {
-            this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
-          }
-          if (data.method === "Base.HeartbeatAck") {
-            this.#heartbeatHandlers.forEach((h) => h());
-          }
-        } catch { /* ignore */ }
-      }
-
       this.#setState("connected");
       return true;
     } catch {
-      this.#setState("disconnected");
       return false;
     }
   }
