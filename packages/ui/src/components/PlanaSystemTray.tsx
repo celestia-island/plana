@@ -1,22 +1,13 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
-import { useI18n } from "@celestia-island/hikari";
-
-import enLocale from "../i18n/locales/en/connection.json";
-import zhsLocale from "../i18n/locales/zhs/connection.json";
-import zhtLocale from "../i18n/locales/zht/connection.json";
+import { Circle, Square, Triangle, X } from "lucide-vue-next";
 
 const CYCLE_MS = 1000;
 const TICK_MS = 30_000;
 
-const Triangle = () => <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L2 22h20z"/></svg>;
-const Circle = () => <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>;
-const Cross = () => <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M2 2l20 20M22 2L2 20"/></svg>;
-const Square = () => <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="2" y="2" width="20" height="20"/></svg>;
-
 const BUTTONS = [
   { component: Triangle, colorVar: "--color-success", name: "triangle" },
   { component: Circle, colorVar: "--color-error", name: "circle" },
-  { component: Cross, colorVar: "--color-warning", name: "cross" },
+  { component: X, colorVar: "--color-warning", name: "x" },
   { component: Square, colorVar: "--color-primary", name: "square" },
 ] as const;
 
@@ -44,23 +35,21 @@ export const PSystemTray = defineComponent({
     });
 
     return () => (
-      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        {BUTTONS.map(({ component: Icon, colorVar, name }, i) => (
-          <span
-            key={name}
-            data-active={i === activeIndex.value || undefined}
-            style={{
-              display: "inline-flex", opacity: i === activeIndex.value ? 1 : 0.3,
-              color: i === activeIndex.value ? `rgb(var(${colorVar}))` : undefined,
-              transition: "opacity 0.15s, color 0.15s",
-            }}
-          >
-            <Icon />
-          </span>
-        ))}
-        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: "0.75rem", color: "rgb(var(--color-muted))" }}>
-          {now.value}
-        </span>
+      <div class="s-status-bar-right">
+        <div class="s-status-bar-gamepad">
+          {BUTTONS.map(({ component: Icon, colorVar, name }, i) => (
+            <span
+              key={name}
+              class="s-status-bar-btn"
+              data-shape={name}
+              data-active={(i === activeIndex.value) || undefined}
+              style={i === activeIndex.value ? { color: `rgb(var(${colorVar}))` } : undefined}
+            >
+              <Icon />
+            </span>
+          ))}
+        </div>
+        <span class="s-status-bar-time">{now.value}</span>
       </div>
     );
   },
