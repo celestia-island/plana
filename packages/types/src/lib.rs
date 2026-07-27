@@ -19,6 +19,7 @@ pub mod enums;
 pub mod external_mcp;
 pub mod http;
 pub mod identity;
+pub mod malkuth;
 pub mod mcp;
 pub mod model;
 pub mod protocol;
@@ -503,6 +504,8 @@ pub use protocol::jsonrpc;
 // enums/ — foundational shared enums (ConnectionType, Agent, WorkStatus, etc.)
 pub use enums::*;
 
+// malkuth/ — supervision protocol types (restart authorization gate)
+pub use malkuth::*;
 // region/ — regional compliance policy types
 pub use region::*;
 

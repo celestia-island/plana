@@ -19,6 +19,8 @@ export * from "./ws/industrial";
 export * from "./ws/views";
 export * from "./ws/fileBrowsing";
 export * from "./ws/bridgeNetwork";
+// Malkuth supervision protocol types (restart authorization gate).
+export * from "./ws/malkuth";
 // HTTP REST API types.
 export * from "./httpTypes";
 // Unified model management types.
