@@ -207,49 +207,64 @@ export class RpcClient {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // Progressive connect
+  // Progressive connect: 3 rounds, each tries ws+sse+poll in parallel.
+  // Priority: ws > sse > poll. Timeouts: 1s, 3s, 5s.
   // ═══════════════════════════════════════════════════════════
 
   async #progressiveConnect(): Promise<void> {
-    const tiers: TransportTier[] = ["ws", "sse", "poll"];
-
-    for (const tier of tiers) {
+    for (let round = 0; round < MAX_RETRIES; round++) {
       if (this.#disposed) return;
-      this.#tier = tier;
+      const timeoutMs = ATTEMPT_TIMEOUTS[round];
+      const roundNum = round + 1;
+      this.#retryCount = roundNum;
 
-      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        if (this.#disposed) return;
-        const timeoutMs = ATTEMPT_TIMEOUTS[attempt];
-        const attemptNum = attempt + 1;
-        this.#retryCount = attemptNum;
+      this.#setState("connecting", undefined, undefined, roundNum, Math.ceil(timeoutMs / 1000));
 
-        this.#setState("connecting", undefined, tier, attemptNum, Math.ceil(timeoutMs / 1000));
-
-        await sleep(0);
-
-        let remaining = Math.ceil(timeoutMs / 1000);
-        const countdownTimer = setInterval(() => {
-          remaining--;
-          if (remaining >= 0) {
-            this.#stateHandlers.forEach((h) => h({
+      let remaining = Math.ceil(timeoutMs / 1000);
+      const countdownTimer = setInterval(() => {
+        remaining--;
+        if (remaining >= 0) {
+          this.#stateHandlers.forEach((h) =>
+            h({
               state: "connecting",
-              transportTier: tier,
-              attemptNumber: attemptNum,
+              attemptNumber: roundNum,
               countdown: remaining,
-              retryCount: attemptNum,
+              retryCount: roundNum,
               maxRetries: MAX_RETRIES,
-            }));
-          }
-        }, 1000);
+            })
+          );
+        }
+      }, 1000);
 
-        const success = await this.#tryTransportOnce(tier, timeoutMs);
-        clearInterval(countdownTimer);
+      const tier = await this.#raceTransports(timeoutMs);
+      clearInterval(countdownTimer);
 
-        if (success) return;
+      if (tier) {
+        this.#tier = tier;
+        this.#setState("connected");
+        return;
       }
     }
 
-    this.#setState("failed", undefined, "poll", undefined, undefined);
+    this.#setState("failed");
+  }
+
+  /** Try ws, sse, poll in parallel. Return highest-priority tier that succeeded. */
+  async #raceTransports(timeoutMs: number): Promise<TransportTier | null> {
+    const results = await Promise.allSettled([
+      this.#tryWsOnce(timeoutMs).then((ok) => ({ tier: "ws" as TransportTier, ok })),
+      this.#trySseOnce(timeoutMs).then((ok) => ({ tier: "sse" as TransportTier, ok })),
+      this.#tryPollOnce(timeoutMs).then((ok) => ({ tier: "poll" as TransportTier, ok })),
+    ]);
+
+    const priority: TransportTier[] = ["ws", "sse", "poll"];
+    for (const tier of priority) {
+      const r = results[priority.indexOf(tier)];
+      if (r.status === "fulfilled" && r.value.ok) {
+        return tier;
+      }
+    }
+    return null;
   }
 
   async #tryTransportOnce(tier: TransportTier, timeoutMs: number): Promise<boolean> {
