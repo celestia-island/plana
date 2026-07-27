@@ -34,6 +34,7 @@ export interface PlanaConnectionInfo {
   region: string;
   retryCount: number;
   maxRetries: number;
+  asn: number | null;
 }
 
 export function useConnectionInfo(
@@ -64,6 +65,7 @@ export function useConnectionInfo(
       region: detectRegion(),
       retryCount: retryCount?.value ?? 0,
       maxRetries: maxRetries?.value ?? 10,
+      asn: null,
     };
   });
 
