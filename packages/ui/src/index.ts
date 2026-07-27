@@ -1,3 +1,4 @@
+export { PAuthCard } from "./components/PlanaAuthCard";
 export { PAdminShell } from "./components/PlanaAdminShell";
 export { PAdminHeader } from "./components/PlanaAdminHeader";
 export { PStatusBar } from "./components/PlanaStatusBar";
