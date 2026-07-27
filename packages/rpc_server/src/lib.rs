@@ -11,7 +11,9 @@
 //! Pair with `plana-rpc-client` (npm: `@celestia-island/plana-rpc-client`)
 //! for the browser-side 4-tier fallback transport.
 
+pub mod network;
 pub mod session;
 pub mod sse;
 
+pub use network::detect_network;
 pub use session::SessionManager;

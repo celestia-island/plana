@@ -9,8 +9,15 @@ description = "JSON-RPC server session management and SSE transport for plana"
 repository = "https://github.com/celestia-island/plana"
 publish = false
 
+[features]
+default = []
+client = []
+
 [dependencies]
 kirino = { workspace = true }
+
+axum = { workspace = true }
+plana = { workspace = true }
 
 serde = { workspace = true }
 serde_json.workspace = true
