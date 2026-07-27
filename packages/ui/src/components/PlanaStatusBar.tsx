@@ -202,12 +202,12 @@ export const PStatusBar = defineComponent({
                   {connecting && attempt > 0 && (
                     <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
                       <span>
-                        {t("plana::statusBar.retrying", "Attempt {retryCount} / {maxRetries}")
+                        {t("plana::statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
                           .replace("{retryCount}", String(attempt))
                           .replace("{maxRetries}", String(3))}
                       </span>
                       {countdown > 0 && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "1px", fontFamily: "var(--font-mono, monospace)" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: "var(--font-mono, monospace)", marginLeft: "8px" }}>
                           <PCountdownDigit value={countdown} />
                         </span>
                       )}
@@ -221,7 +221,13 @@ export const PStatusBar = defineComponent({
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Cpu size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("plana::statusBar.protocol", "Protocol")}</span>
-                    <span>{t(tierLabelKey, tier)}</span>
+                    {connecting ? (
+                      <span style={{ color: "rgb(var(--color-warning))" }}>
+                        {t("plana::statusBar.probing", "Probing...")}
+                      </span>
+                    ) : (
+                      <span>{t(tierLabelKey, tier)}</span>
+                    )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
