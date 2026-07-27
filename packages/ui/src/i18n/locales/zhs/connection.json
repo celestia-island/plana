@@ -1,19 +1,19 @@
 {
   "connection": {
-    "p.statusBar.panel": "面板",
-    "p.statusBar.connected": "已连接",
-    "p.statusBar.reconnecting": "重连中",
-    "p.statusBar.disconnected": "断开",
-    "p.statusBar.retrying": "正在重试 {retryCount} / {maxRetries} 次",
-    "p.statusBar.clickReconnect": "点击以尝试重连",
-    "p.statusBar.protocol": "协议",
-    "p.statusBar.latency": "延迟",
-    "p.statusBar.network": "网络区域",
-    "p.statusBar.local": "本地",
-    "p.statusBar.fetching": "获取连接信息中...",
-    "p.statusBar.tier.local": "HTTP 本地",
-    "p.statusBar.tier.ws": "WebSocket",
-    "p.statusBar.tier.sse": "SSE 流",
-    "p.statusBar.tier.poll": "HTTP 轮询"
+    "plana::statusBar.panel": "面板",
+    "plana::statusBar.connected": "已连接",
+    "plana::statusBar.reconnecting": "重连中",
+    "plana::statusBar.disconnected": "断开",
+    "plana::statusBar.retrying": "正在重试 {retryCount} / {maxRetries} 次",
+    "plana::statusBar.clickReconnect": "点击以尝试重连",
+    "plana::statusBar.protocol": "协议",
+    "plana::statusBar.latency": "延迟",
+    "plana::statusBar.network": "网络区域",
+    "plana::statusBar.local": "本地",
+    "plana::statusBar.fetching": "获取连接信息中...",
+    "plana::statusBar.tier.local": "HTTP 本地",
+    "plana::statusBar.tier.ws": "WebSocket",
+    "plana::statusBar.tier.sse": "SSE 流",
+    "plana::statusBar.tier.poll": "HTTP 轮询"
   }
 }
