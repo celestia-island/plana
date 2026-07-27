@@ -2,6 +2,7 @@
   "connection": {
     "plana::statusBar.panel": "Panel",
     "plana::statusBar.connected": "Connected",
+    "plana::statusBar.connecting": "Connecting...",
     "plana::statusBar.reconnecting": "Reconnecting",
     "plana::statusBar.disconnected": "Disconnected",
     "plana::statusBar.retrying": "Retrying {retryCount} / {maxRetries}",

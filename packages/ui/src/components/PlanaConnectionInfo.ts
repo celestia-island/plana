@@ -35,6 +35,8 @@ export interface PlanaConnectionInfo {
   retryCount: number;
   maxRetries: number;
   asn: number | null;
+  attemptNumber: number;
+  countdown: number;
 }
 
 export function useConnectionInfo(
@@ -42,6 +44,8 @@ export function useConnectionInfo(
   transportTier?: Ref<string>,
   retryCount?: Ref<number>,
   maxRetries?: Ref<number>,
+  attemptNumber?: Ref<number>,
+  countdown?: Ref<number>,
 ): { connectionInfo: Ref<PlanaConnectionInfo> } {
   const info = computed<PlanaConnectionInfo>(() => {
     const s = connectionState.value;
@@ -64,8 +68,10 @@ export function useConnectionInfo(
       isLocalhost: isLocalhostUrl(),
       region: detectRegion(),
       retryCount: retryCount?.value ?? 0,
-      maxRetries: maxRetries?.value ?? 10,
+      maxRetries: maxRetries?.value ?? 3,
       asn: null,
+      attemptNumber: attemptNumber?.value ?? 0,
+      countdown: countdown?.value ?? 0,
     };
   });
 
