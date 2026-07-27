@@ -1,16 +1,15 @@
 use std::{collections::HashMap, future::Future, pin::Pin, sync::Arc};
 
 use axum::{
-    Router,
+    Json, Router,
     extract::ws::Message,
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Json,
 };
 use serde_json::Value;
 
-use crate::types::{JsonRpcError, JsonRpcRequest, JsonRpcResponse, Id};
+use crate::types::{Id, JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 
 pub type RpcHandlerFn = Arc<
     dyn Fn(Value) -> Pin<Box<dyn Future<Output = Result<Value, JsonRpcError>> + Send>>
@@ -67,23 +66,22 @@ pub fn rpc_axum_router(methods: RpcMethodMap) -> Router {
     let map_post = map.clone();
     let map_ws = map;
 
-    Router::new()
-        .route(
-            "/",
-            post(move |Json(body): Json<Value>| {
-                let map = map_post.clone();
-                async move {
-                    match handle_request(&map, body).await {
-                        Ok(response) => Json(serde_json::to_value(response).unwrap()).into_response(),
-                        Err((status, json)) => (status, json).into_response(),
-                    }
+    Router::new().route(
+        "/",
+        post(move |Json(body): Json<Value>| {
+            let map = map_post.clone();
+            async move {
+                match handle_request(&map, body).await {
+                    Ok(response) => Json(serde_json::to_value(response).unwrap()).into_response(),
+                    Err((status, json)) => (status, json).into_response(),
                 }
-            })
-            .get(move |ws: axum::extract::WebSocketUpgrade| {
-                let map = map_ws.clone();
-                async move { ws.on_upgrade(move |socket| handle_ws(socket, map)) }
-            }),
-        )
+            }
+        })
+        .get(move |ws: axum::extract::WebSocketUpgrade| {
+            let map = map_ws.clone();
+            async move { ws.on_upgrade(move |socket| handle_ws(socket, map)) }
+        }),
+    )
 }
 
 async fn handle_request(
@@ -95,8 +93,7 @@ async fn handle_request(
             StatusCode::BAD_REQUEST,
             Json(
                 serde_json::to_value(
-                    JsonRpcError::parse_error()
-                        .with_data(Value::String(e.to_string())),
+                    JsonRpcError::parse_error().with_data(Value::String(e.to_string())),
                 )
                 .unwrap(),
             ),
@@ -120,10 +117,7 @@ async fn handle_request(
     }
 }
 
-async fn handle_ws(
-    mut socket: axum::extract::ws::WebSocket,
-    methods: Arc<RpcMethodMap>,
-) {
+async fn handle_ws(mut socket: axum::extract::ws::WebSocket, methods: Arc<RpcMethodMap>) {
     while let Some(Ok(msg)) = socket.recv().await {
         match msg {
             Message::Text(text) => {
@@ -145,9 +139,7 @@ async fn handle_ws(
 
                 let response = match handle_request(&methods, body).await {
                     Ok(resp) => serde_json::to_string(&resp).unwrap_or_default(),
-                    Err((_, err_json)) => {
-                        serde_json::to_string(&err_json.0).unwrap_or_default()
-                    }
+                    Err((_, err_json)) => serde_json::to_string(&err_json.0).unwrap_or_default(),
                 };
                 let _ = socket.send(Message::Text(response.into())).await;
             }

@@ -24,6 +24,7 @@ pub mod mcp;
 pub mod model;
 pub mod protocol;
 pub mod rbac;
+pub mod region;
 pub mod ws;
 
 #[cfg(feature = "tracing-helpers")]
@@ -505,6 +506,8 @@ pub use enums::*;
 
 // malkuth/ — supervision protocol types (restart authorization gate)
 pub use malkuth::*;
+// region/ — regional compliance policy types
+pub use region::*;
 
 // model/ — unified model management (re-export key types to crate root
 // for ergonomic access: `arona::ModelCapability` not `arona::model::…`)

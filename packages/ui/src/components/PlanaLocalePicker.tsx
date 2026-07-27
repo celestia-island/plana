@@ -5,7 +5,7 @@ export interface LocaleOption {
   label: string;
 }
 
-export const LocalePicker = defineComponent({
+export const PLocalePicker = defineComponent({
   name: "PlanaLocalePicker",
   props: {
     locales: {

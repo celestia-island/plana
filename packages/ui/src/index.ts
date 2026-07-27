@@ -1,8 +1,12 @@
-export { AdminShell } from "./components/PlanaAdminShell";
-export { AdminHeader } from "./components/PlanaAdminHeader";
-export { StatusBar } from "./components/PlanaStatusBar";
-export { LocalePicker } from "./components/PlanaLocalePicker";
-export { NavSidebar } from "./components/PlanaNavSidebar";
+export { PAdminShell } from "./components/PlanaAdminShell";
+export { PAdminHeader } from "./components/PlanaAdminHeader";
+export { PStatusBar } from "./components/PlanaStatusBar";
+export { PLocalePicker } from "./components/PlanaLocalePicker";
+export { PNavSidebar } from "./components/PlanaNavSidebar";
+export { PFooter } from "./components/PlanaFooter";
+export { PClock } from "./components/PlanaClock";
+export { PCookieConsent } from "./components/PlanaCookieConsent";
+export { PICPBadge } from "./components/PlanaICPBadge";
 export type { LocaleOption } from "./components/PlanaAdminHeader";
 export type { PlanaConnectionInfo } from "./components/PlanaConnectionInfo";
 export { useConnectionInfo } from "./components/PlanaConnectionInfo";
