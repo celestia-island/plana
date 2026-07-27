@@ -136,11 +136,13 @@ pub struct HealthResponse {
     pub kind: BackendKind,
     pub uptime: u64,
     pub network: NetworkInfo,
+    pub build_hash: Option<String>,
+    pub engine_version: Option<String>,
 }
 
 impl HealthResponse {
     pub fn ok(version: impl Into<String>, kind: BackendKind, uptime: u64, network: NetworkInfo) -> Self {
-        Self { status: ServiceStatus::Ok, version: version.into(), kind, uptime, network }
+        Self { status: ServiceStatus::Ok, version: version.into(), kind, uptime, network, build_hash: None, engine_version: None }
     }
 }
 

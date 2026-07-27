@@ -40,7 +40,7 @@ function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: 
 }
 
 function fmtVer(v: string, hash?: string): string {
-  if (hash && import.meta.env.DEV) return `${v}.${hash}`;
+  if (hash) return `${v}.${hash}`;
   return v;
 }
 
