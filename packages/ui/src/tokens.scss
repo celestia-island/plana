@@ -222,6 +222,56 @@
   50%      { box-shadow: 0 0 0 4px rgb(var(--color-error) / 0); }
 }
 
+/* ── System tray (gamepad + clock) ─ */
+.s-status-bar-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1px;
+}
+
+.s-status-bar-gamepad {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.s-status-bar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--color-muted));
+  opacity: 0.45;
+  transition:
+    color var(--duration-normal) ease,
+    opacity var(--duration-normal) ease;
+
+  svg {
+    width: 9px;
+    height: 9px;
+    display: block;
+    stroke-width: 2.5;
+  }
+}
+
+.s-status-bar-btn[data-shape="x"] svg {
+  width: 11px;
+  height: 11px;
+}
+
+.s-status-bar-btn[data-active] {
+  opacity: 1;
+}
+
+.s-status-bar-time {
+  font-size: var(--text-2xs);
+  font-family: var(--font-mono);
+  color: rgb(var(--color-muted));
+  opacity: 0.6;
+  line-height: 1;
+}
+
 /* ── Auth card (login/register pages) ─ */
 .s-auth-card {
   max-width: 28rem;
@@ -282,6 +332,13 @@
 
 .s-auth-form {
   padding: var(--space-24, 1.5rem) var(--space-32, 2rem) var(--space-32, 2rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16, 1rem);
+}
+
+.s-auth-form > form,
+.s-auth-form > * {
   display: flex;
   flex-direction: column;
   gap: var(--space-16, 1rem);
