@@ -18,7 +18,7 @@ export const PCountdownDigit = defineComponent({
     });
 
     return () => {
-      const digits = String(props.value).padStart(props.value >= 100 ? 3 : 2, "0").split("");
+      const digits = String(props.value).split("");
 
       return (
         <span class="plana-countdown-digit" style={{
