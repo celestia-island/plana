@@ -212,6 +212,7 @@ export class RpcClient {
   // ═══════════════════════════════════════════════════════════
 
   async #progressiveConnect(): Promise<void> {
+    this.#tier = "poll";
     for (let round = 0; round < MAX_RETRIES; round++) {
       if (this.#disposed) return;
       const timeoutMs = ATTEMPT_TIMEOUTS[round];
@@ -248,7 +249,8 @@ export class RpcClient {
       }
     }
 
-    this.#setState("failed");
+    this.#tier = "poll";
+    this.#setState("failed", undefined, "poll", undefined, undefined);
   }
 
   /** Try ws, sse, poll in parallel. Return highest-priority tier that succeeded.
