@@ -27,6 +27,8 @@ pub mod rbac;
 pub mod region;
 pub mod ws;
 
+pub use http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
+
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;
 
