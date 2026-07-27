@@ -189,7 +189,7 @@ export const PStatusBar = defineComponent({
               {info ? (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", fontWeight: 600, fontSize: "0.8125rem" }}>
-                    {qualityIcon(info.quality, tier, info.isLocalhost, 14)}
+                    {qualityIcon(mode === "connected" ? "good" : "unknown", tier, info.isLocalhost, 14)}
                     <span style={{ color: dotColorMap[mode] ?? dotColorMap.disconnected }}>
                       {statusText}
                     </span>
