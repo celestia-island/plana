@@ -1,6 +1,7 @@
 {
   "connection": {
     "plana::statusBar.panel": "パネル",
+    "plana::statusBar.engine": "エンジン",
     "plana::statusBar.connected": "接続済み",
     "plana::statusBar.connecting": "接続中...",
     "plana::statusBar.reconnecting": "再接続中",

@@ -130,7 +130,7 @@ export const PStatusBar = defineComponent({
       const pv = fmtVer(props.version, props.panelBuildHash);
       const ev = props.engineVersion;
       const versionParts = ev
-        ? `${pv} | ${fmtVer(ev, props.engineBuildHash)}`
+        ? `${pv} | ${t("plana::statusBar.engine", "Engine")} ${fmtVer(ev, props.engineBuildHash)}`
         : pv;
 
       const inner = (
@@ -149,7 +149,7 @@ export const PStatusBar = defineComponent({
             style={{
               position: "relative", zIndex: 51,
               display: "inline-flex", alignItems: "center",
-              height: "24px", gap: "4px", padding: "0 8px",
+              height: "24px", gap: "8px", padding: "0 8px",
               borderRadius: "var(--radius-md, 6px)",
               fontSize: "var(--text-2xs, 0.625rem)", lineHeight: 1,
               background: connecting
