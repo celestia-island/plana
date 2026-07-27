@@ -2,6 +2,7 @@
   "connection": {
     "plana::statusBar.panel": "面板",
     "plana::statusBar.connected": "已连接",
+    "plana::statusBar.connecting": "连接中...",
     "plana::statusBar.reconnecting": "重连中",
     "plana::statusBar.disconnected": "断开",
     "plana::statusBar.retrying": "正在重试 {retryCount} / {maxRetries} 次",

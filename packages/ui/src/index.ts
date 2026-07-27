@@ -9,6 +9,7 @@ export { PClock } from "./components/PlanaClock";
 export { PSystemTray } from "./components/PlanaSystemTray";
 export { PCookieConsent } from "./components/PlanaCookieConsent";
 export { PICPBadge } from "./components/PlanaICPBadge";
+export { PCountdownDigit } from "./components/PlanaCountdownDigit";
 export type { LocaleOption } from "./components/PlanaAdminHeader";
 export type { PlanaConnectionInfo } from "./components/PlanaConnectionInfo";
 export { useConnectionInfo } from "./components/PlanaConnectionInfo";
