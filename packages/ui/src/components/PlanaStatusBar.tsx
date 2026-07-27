@@ -39,10 +39,18 @@ function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: 
   return <WifiOff size={size} />;
 }
 
+function fmtVer(v: string, hash?: string): string {
+  if (hash && import.meta.env.DEV) return `${v}.${hash}`;
+  return v;
+}
+
 export const PStatusBar = defineComponent({
   name: "PlanaStatusBar",
   props: {
     version: { type: String, default: "0.1.0" },
+    engineVersion: { type: String as PropType<string | null>, default: null },
+    panelBuildHash: { type: String as PropType<string | undefined>, default: undefined },
+    engineBuildHash: { type: String as PropType<string | undefined>, default: undefined },
     connectionStatus: {
       type: String as PropType<"connected" | "reconnecting" | "disconnected" | "connecting">,
       default: "disconnected",
@@ -119,6 +127,12 @@ export const PStatusBar = defineComponent({
 
       const connecting = mode === "reconnecting" || mode === "connecting";
 
+      const pv = fmtVer(props.version, props.panelBuildHash);
+      const ev = props.engineVersion;
+      const versionParts = ev
+        ? `${pv} | ${fmtVer(ev, props.engineBuildHash)}`
+        : pv;
+
       const inner = (
         <>
           <span
@@ -151,13 +165,8 @@ export const PStatusBar = defineComponent({
             }} />
             <span style={{ opacity: 0.6 }}>{t("plana::statusBar.panel", "Panel")}</span>
             <span style={{ fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
-              {props.version}
+              {versionParts}
             </span>
-            {connecting && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", color: "rgb(var(--color-warning))", fontWeight: 600 }}>
-                {countdown > 0 ? <PCountdownDigit value={countdown} /> : <span style={{ opacity: 0.7 }}>...</span>}
-              </span>
-            )}
           </span>
 
           <HPopover
