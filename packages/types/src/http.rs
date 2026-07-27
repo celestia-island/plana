@@ -106,12 +106,38 @@ pub struct StatusResponse {
 
 // ── Health ─────────────────────────────────────────────────
 
+/// Standard application health response returned by /api/health.
+/// All plana-based backends (arona, chest, scepter) use this shape.
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
 pub struct HealthResponse {
     pub status: String,
     pub version: String,
-    pub mock: bool,
+    /// Whether the database connection is healthy (optional if no DB).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database: Option<bool>,
+    /// Whether the mock/dev mode is active.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mock: Option<bool>,
+    /// Product name ("arona", "shittim-chest", "entelecheia").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub product: Option<String>,
+    /// Server uptime in seconds.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uptime_secs: Option<u64>,
+}
+
+impl HealthResponse {
+    pub fn ok(version: impl Into<String>) -> Self {
+        Self {
+            status: "ok".into(),
+            version: version.into(),
+            database: None,
+            mock: None,
+            product: None,
+            uptime_secs: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
