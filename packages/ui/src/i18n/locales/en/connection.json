@@ -6,6 +6,7 @@
     "plana::statusBar.reconnecting": "Reconnecting",
     "plana::statusBar.disconnected": "Disconnected",
     "plana::statusBar.retrying": "Retrying {retryCount} / {maxRetries}",
+    "plana::statusBar.probing": "Probing...",
     "plana::statusBar.clickReconnect": "Click to retry",
     "plana::statusBar.protocol": "Protocol",
     "plana::statusBar.latency": "Latency",
