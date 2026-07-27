@@ -241,6 +241,8 @@ export class RpcClient {
 
       if (tier) {
         this.#tier = tier;
+        if (tier === "ws") this.#startHeartbeat();
+        else { this.#eventSource?.close(); this.#eventSource = null; if (this.#ws) { this.#cleanupWs(this.#ws, this.#wsGen); } }
         this.#setState("connected");
         return;
       }
@@ -249,12 +251,14 @@ export class RpcClient {
     this.#setState("failed");
   }
 
-  /** Try ws, sse, poll in parallel. Return highest-priority tier that succeeded. */
+  /** Try ws, sse, poll in parallel. Return highest-priority tier that succeeded.
+   *  Always waits the full timeout so the countdown is visible. */
   async #raceTransports(timeoutMs: number): Promise<TransportTier | null> {
     const results = await Promise.allSettled([
       this.#tryWsOnce(timeoutMs).then((ok) => ({ tier: "ws" as TransportTier, ok })),
       this.#trySseOnce(timeoutMs).then((ok) => ({ tier: "sse" as TransportTier, ok })),
       this.#tryPollOnce(timeoutMs).then((ok) => ({ tier: "poll" as TransportTier, ok })),
+      sleep(timeoutMs),
     ]);
 
     const priority: TransportTier[] = ["ws", "sse", "poll"];
@@ -303,8 +307,6 @@ export class RpcClient {
         if (settled || this.#wsGen !== gen) return;
         settled = true;
         clearTimeout(timer);
-        this.#setState("connected");
-        this.#startHeartbeat();
         resolve(true);
       };
 
@@ -437,7 +439,6 @@ export class RpcClient {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        this.#setState("connected");
         resolve(true);
       };
 
@@ -484,7 +485,6 @@ export class RpcClient {
 
       if (!resp.ok) return false;
 
-      this.#setState("connected");
       return true;
     } catch {
       return false;
