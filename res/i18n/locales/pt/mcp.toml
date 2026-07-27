@@ -1,0 +1,20 @@
+[mcp]
+panel_title = "Herramientas MCP"
+search_placeholder = "Pesquisar herramientas MCP..."
+user_provided = "Proporcionado por Usuário"
+coming_soon = "Próximamente"
+loading = "Cargando"
+add_tool = "Agregar herramienta"
+add_custom_tool = "+ Agregar herramienta personaoizada..."
+no_matching_tools = "Sin herramientas coincidentes"
+name = "nombre"
+agent = "agente"
+description = "Descripcião"
+parameters = "Parámetros"
+no_parameters = "Sin Parámetros"
+hint_switch_view = "Cambiar Vista"
+hint_navigate = "Navegar"
+hint_switch_panel = "Cambiar panel"
+hint_close = "Fechar"
+
+

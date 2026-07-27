@@ -1,0 +1,11 @@
+[keyboard]
+exit_confirm_title = "Confirmar saoida"
+exit_confirm_message = "¿Estás seguro de que quieres saoir?"
+execute_skill = "Ejecutar habilidade"
+user_prompt = "Aviso de usuário"
+description = "Descripcião"
+unknown_command_title = "Comando Desconocido"
+unknown_command_message = "Comando no reconocido. Escriba /help para ver os comandos disponíveis."
+exit_progress_message = "Saoiendo..."
+
+

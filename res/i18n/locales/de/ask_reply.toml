@@ -1,0 +1,20 @@
+[ask_reply]
+page_title = "Répondre"
+reply_to = "Répondre à"
+question_label = "Question"
+options_label = "Optionen"
+custom_answer = "Réponse benutzerdefinierte..."
+submit = "Envoyer"
+hint_select = "Auswählen"
+hint_toggle = "Basculer"
+hint_submit = "Envoyer"
+hint_back = "Zurück"
+answered_by_human = "Répon par l'humain"
+answered_by_auto = "Réponse automatique"
+answered_by_timeout = "Délai expiré"
+auto_answer_prefix = "(auto)"
+status_pending = "Ausstehend"
+status_answered = "Répondu"
+no_pending_questions = "Aucune question ausstehend"
+
+

@@ -1,0 +1,21 @@
+[cmd]
+models = "نموذجs"
+mcp = "MCP"
+agents = "Agents"
+projects = "مشروعs"
+logs = "Journaux"
+status = "État"
+theme = "المظهر"
+language = "لغة"
+help = "مساعدة"
+clear = "Effacer"
+settings = "الإعدادات"
+exit = "خروج"
+undo = "إلغاء"
+history = "Historique"
+edit = "تعديل"
+git_open = "فتح l'espace Git"
+search = "Recherche sémantique"
+about = "حول"
+
+

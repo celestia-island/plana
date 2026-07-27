@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "Офлайн"
+gateway_error = "Ошибка шлюза"
+retrying = "Повторная попытка"
+retry_attempt = "Повторить попытку"
+error_prefix = "Ошибка"
+select_action = "Выберите действие"
+option_retry = "Повторить попытку"
+option_restart = "Перезапуск"
+option_exit = "Выход"

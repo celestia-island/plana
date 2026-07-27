@@ -1,0 +1,26 @@
+[package]
+name = "plana_bootloader"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+
+_container = { workspace = true }
+_infra_services = { workspace = true }
+_infra_utils = { workspace = true }
+anyhow.workspace = true
+async-trait.workspace = true
+bollard.workspace = true
+chrono.workspace = true
+dirs.workspace = true
+rand.workspace = true
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "time", "process", "fs", "io-util"] }
+toml.workspace = true
+tracing.workspace = true
+[dev-dependencies]
+
+tempfile.workspace = true

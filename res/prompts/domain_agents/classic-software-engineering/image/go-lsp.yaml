@@ -1,0 +1,21 @@
+id: go-lsp
+display_name: "Go LSP (gopls)"
+source_image: "golang:1.23-alpine"
+source_image_is_alpine: true
+binary_paths:
+  - /usr/local/go
+  - /go
+available_tools:
+  gopls: "gopls version"
+env:
+  GOROOT: /tools/go-lsp/usr/local/go
+  GOPATH: /tools/go-lsp/go
+  PATH_PREFIX: /tools/go-lsp/usr/local/go/bin:/tools/go-lsp/go/bin
+supported_languages:
+  - go
+verify:
+  - "gopls version"
+lsp_servers:
+  - language: go
+    cmd:
+      - gopls

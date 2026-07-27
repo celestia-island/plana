@@ -1,0 +1,6 @@
+[renderer]
+hint = "sugerência"
+waiting_for_input = "Esperando entrada"
+all_tasks_completed = "Todas as tareas se completan"
+
+

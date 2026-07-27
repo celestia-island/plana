@@ -1,0 +1,9 @@
+[keyboard]
+exit_confirm_title = "Подтверждение выхода"
+exit_confirm_message = "Вы уверены, что хотите выйти?"
+execute_skill = "Выполнить навык"
+user_prompt = "Пользовательское приглашение"
+description = "Описание"
+unknown_command_title = "Неизвестная команда"
+unknown_command_message = "Команда не распознана. Введите /help для списка доступных команд."
+exit_progress_message = "Завершение работы..."

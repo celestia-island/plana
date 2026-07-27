@@ -1,0 +1,20 @@
+[mcp]
+panel_title = "أداةs MCP"
+search_placeholder = "بحث outils MCP..."
+user_provided = "Fourni par l'utilisateur"
+coming_soon = "Bientôt disponible"
+loading = "Chargement"
+add_tool = "إضافة un outil"
+add_custom_tool = "+ إضافة un outil personnalisé..."
+no_matching_tools = "Aucun outil correspondant"
+name = "الاسم"
+agent = "Agent"
+description = "وصف"
+parameters = "الإعدادات"
+no_parameters = "Aucun paramètre"
+hint_switch_view = "تغيير vue"
+hint_navigate = "تنقل"
+hint_switch_panel = "تغيير panneau"
+hint_close = "إغلاق"
+
+

@@ -1,0 +1,16 @@
+[skills]
+panel_title = "مهارةs"
+search_placeholder = "بحث compétences..."
+by_agent = "Par agent"
+all = "Tous"
+name = "الاسم"
+agent = "Agent"
+description = "وصف"
+required_tools = "أداةs requis"
+none = "Aucun"
+hint_switch_view = "تغيير vue"
+hint_navigate = "تنقل"
+hint_switch_panel = "تغيير panneau"
+hint_close = "إغلاق"
+
+

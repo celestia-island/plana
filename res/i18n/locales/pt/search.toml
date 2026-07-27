@@ -1,0 +1,11 @@
+[search]
+title = "Pesquisar"
+placeholder = "Escribe y Enter…"
+searching = "Buscando…"
+no_results = "Sin resultados"
+results = "Resultados"
+hint_empty = "Escribe uma consulta semántica"
+hint_open = "Abrir"
+detail = "Detaole"
+
+

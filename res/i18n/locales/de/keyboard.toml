@@ -1,0 +1,11 @@
+[keyboard]
+exit_confirm_title = "Bestätigen sortie"
+exit_confirm_message = "Êtes-vous sûr vouloir quitter ?"
+execute_skill = "Ausführen compétence"
+user_prompt = "Invite utilisateur"
+description = "Beschreibung"
+unknown_command_title = "Befehl Unbekannte"
+unknown_command_message = "Befehl non reconnue. Tapez /help pour comman verfügbar."
+exit_progress_message = "Fermeture en cours..."
+
+

@@ -1,0 +1,21 @@
+[shortcuts]
+quit = "Beenden"
+next_tab = "Onglet suivant"
+previous_tab = "Onglet précédent"
+refresh = "Aktualisieren"
+connect = "Connecter"
+select_next = "Sélection suivante"
+select_previous = "Sélection précédente"
+confirm = "Bestätigen"
+cancel = "Abbrechen"
+start = "Starten"
+stop = "Stoppen"
+config = "Konfiguration"
+config_save = "Speichern configuration"
+config_cancel = "Abbrechen configuration"
+scroll_up = "Défiler vers haut"
+scroll_down = "Défiler vers bas"
+scroll_top = "Aller en haut"
+scroll_bottom = "Aller en bas"
+
+

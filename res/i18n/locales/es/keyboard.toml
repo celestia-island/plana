@@ -1,0 +1,9 @@
+[keyboard]
+exit_confirm_title = "Confirmar salida"
+exit_confirm_message = "¿Estás seguro de que quieres salir?"
+execute_skill = "Ejecutar habilidad"
+user_prompt = "Aviso de usuario"
+description = "Descripción"
+unknown_command_title = "Comando Desconocido"
+unknown_command_message = "Comando no reconocido. Escriba /help para ver los comandos disponibles."
+exit_progress_message = "Saliendo..."

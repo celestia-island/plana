@@ -1,0 +1,13 @@
+[query_dialog]
+title = "طلب"
+source_label = "مصدر"
+select_reply = "Sélectionnez Répondre"
+custom_reply = "Réponse personnalisée"
+custom_input = "Entrée personnalisée"
+input_placeholder = "Espace réservé saisie"
+enter_confirm_selection = "تأكيد sélection"
+enter_send_reply = "Envoyer réponse"
+tab_switch_input = "تغيير saisie"
+tab_switch_option = "تغيير l'option"
+
+

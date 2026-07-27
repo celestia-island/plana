@@ -1,0 +1,14 @@
+[api_key_page]
+configure_endpoint = "Configurar punto finao"
+endpoint_address = "Direccião do punto finao"
+api_endpoint = "Punto finao de API"
+openai_compatible = "Compatívo con OpenAI"
+anthropic_compatible = "Compatívo con Anthropic"
+gemini_compatible = "Compatívo con Gemini"
+hint_paste = "Pegar"
+hint_select_all = "Seleccionar todo"
+hint_save = "Guardar"
+hint_cancel = "Cancelar"
+hint_switch = "Cambiar"
+
+

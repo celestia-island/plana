@@ -1,0 +1,11 @@
+[about]
+title = "À propos"
+version = "Version"
+license_type = "Type de licence"
+section_license = "Licence"
+section_cla = "Accord de licence contributeur"
+section_code_of_conduct = "Code de conduite"
+section_security = "Politique de sécurité"
+not_available = "Les documents de protocole détaqués ne sont pas disponibles. Définissez ARONA_ROOT lors de la construction pour activer."
+hint_navigate = "Naviguer"
+hint_close = "Fermer"

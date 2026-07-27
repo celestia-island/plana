@@ -1,0 +1,19 @@
+{
+  "connection": {
+    "p.statusBar.panel": "Panel",
+    "p.statusBar.connected": "Connected",
+    "p.statusBar.reconnecting": "Reconnecting",
+    "p.statusBar.disconnected": "Disconnected",
+    "p.statusBar.retrying": "Retrying {retryCount} / {maxRetries}",
+    "p.statusBar.clickReconnect": "Click to retry",
+    "p.statusBar.protocol": "Protocol",
+    "p.statusBar.latency": "Latency",
+    "p.statusBar.network": "Network",
+    "p.statusBar.local": "Local",
+    "p.statusBar.fetching": "Fetching connection info...",
+    "p.statusBar.tier.local": "HTTP local",
+    "p.statusBar.tier.ws": "WebSocket",
+    "p.statusBar.tier.sse": "SSE stream",
+    "p.statusBar.tier.poll": "HTTP poll"
+  }
+}

@@ -1,0 +1,13 @@
+[query_dialog]
+title = "Anfrage"
+source_label = "Quelle"
+select_reply = "Sélectionnez Répondre"
+custom_reply = "Réponse benutzerdefinierte"
+custom_input = "Entrée benutzerdefinierte"
+input_placeholder = "Espace réservé saisie"
+enter_confirm_selection = "Bestätigen sélection"
+enter_send_reply = "Envoyer réponse"
+tab_switch_input = "Ändern saisie"
+tab_switch_option = "Ändern l'option"
+
+

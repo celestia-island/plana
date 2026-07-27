@@ -1,0 +1,81 @@
+[platforms]
+# Compatible APIs
+openai_compatible = "Совместим с OpenAI"
+openai_compatible_desc = "Пользовательский API, совместимый с OpenAI"
+anthropic_compatible = "Совместим с Anthropic"
+anthropic_compatible_desc = "Пользовательский API, совместимый с Anthropic"
+gemini_compatible = "Совместим с Gemini"
+gemini_compatible_desc = "Пользовательский API, совместимый с Gemini"
+
+# Groups
+group_developer = "Разработчики моделей"
+group_operator = "Операторы платформ"
+group_compatible = "Совместимые API"
+
+# International Model Developers - Provider names
+provider_anthropic = "Anthropic"
+provider_openai = "OpenAI"
+provider_google = "Google"
+provider_xai = "xAI"
+provider_mistral = "Mistral AI"
+provider_cohere = "Cohere"
+
+# International Platform Operators - Provider names
+provider_openrouter = "OpenRouter"
+provider_groq = "Groq"
+provider_perplexity = "Perplexity AI"
+provider_fireworks = "Fireworks AI"
+provider_cerebras = "Cerebras"
+provider_together = "Together AI"
+
+# Chinese Model Developers - Provider names
+provider_glm = "Zhipu AI"
+provider_glm_china = "Zhipu AI (Китай)"
+provider_deepseek = "DeepSeek"
+provider_qwen = "Alibaba Cloud"
+provider_moonshot = "Moonshot AI"
+provider_yi = "01.AI"
+provider_baichuan = "Baichuan"
+
+# Chinese Platform Operators - Provider names
+provider_doubao = "ByteDance"
+provider_hunyuan = "Tencent"
+provider_baidu = "Baidu"
+provider_stepfun = "Stepfun"
+provider_minimax = "MiniMax"
+provider_silicon = "SiliconFlow"
+
+# International Model Developers - Model series
+model_anthropic = "Claude"
+model_openai = "GPT"
+model_google = "Gemini"
+model_xai = "Grok"
+model_mistral = "Mistral"
+model_cohere = "Command"
+
+# International Platform Operators - Model series
+model_openrouter = ""
+model_groq = ""
+model_perplexity = "Sonar"
+model_fireworks = ""
+model_cerebras = ""
+model_together = ""
+
+# Chinese Model Developers - Model series
+model_glm = "GLM"
+model_deepseek = "DeepSeek"
+model_qwen = "Qwen"
+model_moonshot = "Kimi"
+model_yi = "Yi"
+model_baichuan = "Baichuan"
+
+# Chinese Platform Operators - Model series
+model_doubao = "Doubao"
+model_hunyuan = "Hunyuan"
+model_baidu = "ERNIE"
+model_stepfun = "Step"
+model_minimax = "MiniMax"
+model_silicon = ""
+
+# Separator
+separator = " · "

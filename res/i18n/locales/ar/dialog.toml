@@ -1,0 +1,13 @@
+[dialog]
+confirm = "تأكيد"
+cancel = "إلغاء"
+switch_focus = "تغيير focus"
+select = "اختيار"
+enter_confirm = "تأكيد"
+esc_cancel = "إلغاء"
+tab_switch = "تغيير"
+up_down_select = "Haut/Bas pour sélectionner"
+up_down_navigate = "Haut/Bas pour naviguer"
+notification_ending = "[ending]"
+
+

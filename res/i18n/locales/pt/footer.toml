@@ -1,0 +1,20 @@
+[footer]
+status_connected = "Conectado"
+status_connecting = "Conectando"
+status_disconnected = "Desconectado"
+text_connected = "Conectado"
+text_connecting = "Conectando"
+text_disconnected = "Desconectado"
+text_temporary_connected = "Conectado temporaomente"
+tab_text = "Pestanha"
+ctrl_p_text = "Paoeta de comandos"
+entelecheia = "Entelecheia"
+hint_exit_panel = "Saoir do panel"
+hint_clear_input = "Limpiar entrada"
+hint_reply = "Responder"
+hint_configure = "Configurar"
+hint_move_text = "Mover texto"
+hint_group_move_text = "Mover texto en grupo"
+hint_page_up_down = "Página Arriba/Abajo"
+
+

@@ -1,0 +1,19 @@
+{
+  "connection": {
+    "p.statusBar.panel": "패널",
+    "p.statusBar.connected": "연결됨",
+    "p.statusBar.reconnecting": "재연결 중",
+    "p.statusBar.disconnected": "연결 끊김",
+    "p.statusBar.retrying": "재시도 중 {retryCount} / {maxRetries}",
+    "p.statusBar.clickReconnect": "클릭하여 재연결",
+    "p.statusBar.protocol": "프로토콜",
+    "p.statusBar.latency": "지연 시간",
+    "p.statusBar.network": "네트워크 지역",
+    "p.statusBar.local": "로컬",
+    "p.statusBar.fetching": "연결 정보를 가져오는 중...",
+    "p.statusBar.tier.local": "HTTP 로컬",
+    "p.statusBar.tier.ws": "WebSocket",
+    "p.statusBar.tier.sse": "SSE 스트림",
+    "p.statusBar.tier.poll": "HTTP 폴링"
+  }
+}

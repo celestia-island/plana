@@ -1,0 +1,7 @@
+[common]
+close = "Fechar"
+navigate = "Navegar"
+select = "Seleccionar"
+frontmatter = "Frontmatter"
+
+

@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "Hors ligne"
+gateway_error = "Erreur de passerelle"
+retrying = "Nouvelle tentative"
+retry_attempt = "Réessayer"
+error_prefix = "Erreur"
+select_action = "Sélectionner une action"
+option_retry = "Réessayer"
+option_restart = "Redémarrer"
+option_exit = "Quitter"

@@ -1,0 +1,8 @@
+[container]
+status_connected = "已连接"
+status_running = "运行中"
+status_starting = "启动中"
+status_stopped = "已停止"
+status_unhealthy = "不健康"
+status_not_exists = "不存在"
+status_error = "错误"

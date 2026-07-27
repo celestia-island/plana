@@ -1,0 +1,13 @@
+[dialog]
+confirm = "Bestätigen"
+cancel = "Abbrechen"
+switch_focus = "Ändern focus"
+select = "Auswählen"
+enter_confirm = "Bestätigen"
+esc_cancel = "Abbrechen"
+tab_switch = "Ändern"
+up_down_select = "Haut/Bas pour sélectionner"
+up_down_navigate = "Haut/Bas pour naviguer"
+notification_ending = "[ending]"
+
+

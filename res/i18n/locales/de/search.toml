@@ -1,0 +1,11 @@
+[search]
+title = "Suchen"
+placeholder = "Saisir puis Entrée…"
+searching = "Suche…"
+no_results = "Aucun résultat"
+results = "Résultats"
+hint_empty = "Saisissez une requête sémantique"
+hint_open = "Öffnen"
+detail = "Détail"
+
+

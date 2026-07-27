@@ -1,0 +1,6 @@
+[tool_status]
+enabled = "Aktiviert"
+disabled = "Deaktiviert"
+auto = "Auto"
+
+

@@ -1,0 +1,14 @@
+[api_key_page]
+configure_endpoint = "Konfigurieren point terminaison"
+endpoint_address = "Adresse point terminaison"
+api_endpoint = "API-Endpunkt"
+openai_compatible = "Compatib OpenAI"
+anthropic_compatible = "Compatib Anthropic"
+gemini_compatible = "Compatib Gemini"
+hint_paste = "Einfügen"
+hint_select_all = "Tout sélectionner"
+hint_save = "Speichern"
+hint_cancel = "Abbrechen"
+hint_switch = "Basculer"
+
+
