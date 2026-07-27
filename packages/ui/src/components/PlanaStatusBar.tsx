@@ -51,6 +51,8 @@ export const PStatusBar = defineComponent({
       default: null,
     },
     standalone: { type: Boolean, default: true },
+    onRetry: { type: Function as PropType<() => void>, default: undefined },
+    latencyMs: { type: Number, default: null },
   },
   setup(props) {
     const popupOpen = ref(false);
@@ -90,10 +92,16 @@ export const PStatusBar = defineComponent({
     function onPopupLeave() {
       popupOpen.value = false;
     }
+    function onTagClick() {
+      if (props.connectionStatus !== "connected") {
+        props.onRetry?.();
+      }
+    }
 
     return () => {
       const { t } = useI18n();
       const info = props.connectionInfo;
+      const latency = props.latencyMs ?? info?.latencyMs ?? null;
 
       const tierLabelKey = `p.statusBar.tier.${info?.tier ?? "ws"}`;
       const statusText = info?.state === "connected" ? t("p.statusBar.connected", "Connected")
@@ -109,6 +117,10 @@ export const PStatusBar = defineComponent({
             tabindex={0}
             onMouseenter={onTagEnter}
             onMouseleave={onTagLeave}
+            onClick={onTagClick}
+            onKeydown={(e: KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTagClick(); }
+            }}
             style={{
               position: "relative", zIndex: 1,
               display: "inline-flex", alignItems: "center",
@@ -153,9 +165,9 @@ export const PStatusBar = defineComponent({
                     <span style={{ color: dotColorMap[info.state] ?? dotColorMap.disconnected }}>
                       {statusText}
                     </span>
-                    {info.latencyMs !== null && (
-                      <span style={{ marginLeft: "auto", color: latencyColor(info.latencyMs), fontFamily: "var(--font-mono, monospace)", fontWeight: 600, fontSize: "0.6875rem" }}>
-                        {info.latencyMs} ms
+                    {latency !== null && (
+                      <span style={{ marginLeft: "auto", color: latencyColor(latency), fontFamily: "var(--font-mono, monospace)", fontWeight: 600, fontSize: "0.6875rem" }}>
+                        {latency} ms
                       </span>
                     )}
                   </div>
