@@ -6,6 +6,7 @@
     "plana::statusBar.reconnecting": "再接続中",
     "plana::statusBar.disconnected": "切断",
     "plana::statusBar.retrying": "再試行中 {retryCount} / {maxRetries}",
+    "plana::statusBar.probing": "63a27d224e2d...",
     "plana::statusBar.clickReconnect": "クリックして再接続",
     "plana::statusBar.protocol": "プロトコル",
     "plana::statusBar.latency": "レイテンシ",
