@@ -24,6 +24,7 @@ members = [
     "packages/prompt",
     "packages/res",
     "packages/sync",
+    "packages/dev_server",
 ]
 
 [workspace.package]
