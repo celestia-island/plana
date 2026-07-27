@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, type Ref } from "vue";
+import { ref, onMounted, onUnmounted, type Ref } from "vue";
 import { RpcClient } from "@celestia-island/plana-rpc-client";
 import type { ConnectionStateEvent } from "@celestia-island/plana-rpc-client";
 
@@ -9,6 +9,9 @@ export interface ProbeResult {
   latencyMs: number | null;
   retryCount: number;
   retryTotal: number;
+  transportTier: string;
+  attemptNumber: number;
+  countdown: number;
 }
 
 let sharedClient: RpcClient | null = null;
@@ -27,7 +30,10 @@ export function useConnectionProbe(): {
     tier: "ws",
     latencyMs: null,
     retryCount: 0,
-    retryTotal: 10,
+    retryTotal: 3,
+    transportTier: "ws",
+    attemptNumber: 0,
+    countdown: 0,
   });
 
   let unsub: (() => void) | null = null;
@@ -38,7 +44,10 @@ export function useConnectionProbe(): {
       connected: e.state === "connected",
       state: e.state as ProbeResult["state"],
       retryCount: e.retryCount ?? 0,
-      retryTotal: e.maxRetries ?? 10,
+      retryTotal: e.maxRetries ?? 3,
+      transportTier: e.transportTier ?? result.value.transportTier,
+      attemptNumber: e.attemptNumber ?? 0,
+      countdown: e.countdown ?? 0,
     };
   }
 
@@ -48,11 +57,11 @@ export function useConnectionProbe(): {
 
   onMounted(() => {
     if (sharedClient) {
-      updateState({ 
-        state: sharedClient.state, 
-        retryCount: sharedClient.retryCount 
+      updateState({
+        state: sharedClient.state,
+        retryCount: sharedClient.retryCount,
+        transportTier: sharedClient.transportTier,
       });
-      result.value.tier = sharedClient.transportTier;
       unsub = sharedClient.on("state", updateState);
     }
   });

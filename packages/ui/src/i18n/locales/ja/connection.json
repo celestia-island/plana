@@ -2,6 +2,7 @@
   "connection": {
     "plana::statusBar.panel": "パネル",
     "plana::statusBar.connected": "接続済み",
+    "plana::statusBar.connecting": "接続中...",
     "plana::statusBar.reconnecting": "再接続中",
     "plana::statusBar.disconnected": "切断",
     "plana::statusBar.retrying": "再試行中 {retryCount} / {maxRetries}",
