@@ -103,7 +103,7 @@ export const PStatusBar = defineComponent({
       const info = props.connectionInfo;
       const latency = props.latencyMs ?? info?.latencyMs ?? null;
 
-      const tierLabelKey = `p.statusBar.tier.${info?.tier ?? "ws"}`;
+      const tierLabelKey = `plana::statusBar.tier.${info?.tier ?? "ws"}`;
       const statusText = info?.state === "connected" ? t("plana::statusBar.connected", "Connected")
         : info?.state === "reconnecting" ? t("plana::statusBar.reconnecting", "Reconnecting")
         : t("plana::statusBar.disconnected", "Disconnected");
