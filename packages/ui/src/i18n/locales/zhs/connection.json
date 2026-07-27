@@ -1,6 +1,7 @@
 {
   "connection": {
     "plana::statusBar.panel": "面板",
+    "plana::statusBar.engine": "引擎",
     "plana::statusBar.connected": "已连接",
     "plana::statusBar.connecting": "连接中...",
     "plana::statusBar.reconnecting": "重连中",
