@@ -1,6 +1,7 @@
 {
   "connection": {
     "plana::statusBar.panel": "Panel",
+    "plana::statusBar.engine": "Engine",
     "plana::statusBar.connected": "Connected",
     "plana::statusBar.connecting": "Connecting...",
     "plana::statusBar.reconnecting": "Reconnecting",
