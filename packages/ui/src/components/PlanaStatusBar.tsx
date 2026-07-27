@@ -147,7 +147,7 @@ export const PStatusBar = defineComponent({
               if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTagClick(); }
             }}
             style={{
-              position: "relative", zIndex: 1,
+              position: "relative", zIndex: 51,
               display: "inline-flex", alignItems: "center",
               height: "24px", gap: "4px", padding: "0 8px",
               borderRadius: "var(--radius-md, 6px)",

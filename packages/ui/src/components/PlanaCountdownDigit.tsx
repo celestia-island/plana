@@ -1,4 +1,4 @@
-import { defineComponent, ref, watch, type PropType } from "vue";
+import { defineComponent, ref, watch } from "vue";
 
 export const PCountdownDigit = defineComponent({
   name: "PlanaCountdownDigit",
@@ -7,21 +7,25 @@ export const PCountdownDigit = defineComponent({
   },
   setup(props) {
     const prevValue = ref(props.value);
-    const animating = ref(false);
+    const key = ref(0);
+    const oldDigit = ref(String(props.value));
+    const newDigit = ref(String(props.value));
 
-    watch(() => props.value, (next, old) => {
-      if (next !== old) {
-        prevValue.value = old;
-        animating.value = true;
-        setTimeout(() => { animating.value = false; }, 350);
-      }
-    });
+    watch(
+      () => props.value,
+      (next, old) => {
+        if (next !== old) {
+          oldDigit.value = String(old);
+          newDigit.value = String(next);
+          key.value++;
+        }
+      },
+    );
 
-    return () => {
-      const digits = String(props.value).split("");
-
-      return (
-        <span class="plana-countdown-digit" style={{
+    return () => (
+      <span
+        class="plana-countdown-digit"
+        style={{
           display: "inline-flex",
           alignItems: "center",
           gap: "0",
@@ -29,42 +33,65 @@ export const PCountdownDigit = defineComponent({
           height: "1em",
           lineHeight: 1,
           fontWeight: 700,
-        }}>
-          {digits.map((d, i) => (
-            <span
-              key={i}
-              class="plana-countdown-digit-slot"
-              style={{
-                position: "relative",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: `${0.65}em`,
-                height: "1em",
-                overflow: "hidden",
-              }}
-            >
-              <span
-                class={animating.value ? "plana-countdown-digit-flip" : ""}
-                style={{
-                  display: "inline-block",
-                  lineHeight: 1,
-                  transition: animating.value ? "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)" : "none",
-                  transform: animating.value ? "translateY(-0.6em)" : "translateY(0)",
-                }}
-              >
-                {d}
-              </span>
-            </span>
-          ))}
-          <span style={{
+        }}
+      >
+        <span
+          key={key.value}
+          class="plana-countdown-digit-slot"
+          style={{
+            position: "relative",
+            display: "inline-flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            height: "1em",
+            width: "1ch",
+          }}
+        >
+          <span
+            class="plana-flip-out"
+            style={{
+              display: "block",
+              lineHeight: 1,
+              animation: "plana-flip-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) both",
+            }}
+          >
+            {oldDigit.value}
+          </span>
+          <span
+            class="plana-flip-in"
+            style={{
+              display: "block",
+              lineHeight: 1,
+              position: "absolute",
+              inset: 0,
+              animation: "plana-flip-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both",
+            }}
+          >
+            {newDigit.value}
+          </span>
+        </span>
+        <span
+          style={{
             fontSize: "0.75em",
             opacity: 0.6,
             fontWeight: 400,
-            marginLeft: "1px",
-          }}>s</span>
+          }}
+        >
+          s
         </span>
-      );
-    };
+        <style>{`
+          @keyframes plana-flip-out {
+            0%   { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-1em); opacity: 0; }
+          }
+          @keyframes plana-flip-in {
+            0%   { transform: translateY(1em); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+          }
+        `}</style>
+      </span>
+    );
   },
 });
