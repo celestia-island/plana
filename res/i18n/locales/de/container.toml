@@ -1,0 +1,10 @@
+[container]
+status_connected = "Verbunden"
+status_running = "En cours exécution"
+status_starting = "Démarrage"
+status_stopped = "Arrêté"
+status_unhealthy = "Défaillant"
+status_not_exists = "N'existe pas"
+status_error = "Fehler"
+
+

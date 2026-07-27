@@ -1,0 +1,9 @@
+[search]
+title = "搜索"
+placeholder = "输入搜索内容后回车…"
+searching = "搜索中…"
+no_results = "无结果"
+results = "结果"
+hint_empty = "输入关键词进行语义搜索"
+hint_open = "打开"
+detail = "详情"

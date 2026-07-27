@@ -1,0 +1,4 @@
+[report]
+no_reports = "レポートなし"
+pending_suffix = "保留中"
+pending_reply = "返信待ち"

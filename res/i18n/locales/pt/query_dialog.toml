@@ -1,0 +1,13 @@
+[query_dialog]
+title = "Consulta"
+source_label = "Fuente"
+select_reply = "Seleccione Responder"
+custom_reply = "Respuesta personaoizada"
+custom_input = "Entrada personaoizada"
+input_placeholder = "Marcador de posicião de entrada"
+enter_confirm_selection = "Confirmar seleccião"
+enter_send_reply = "Enviar respuesta"
+tab_switch_input = "Cambiar entrada"
+tab_switch_option = "Cambiar opcião"
+
+

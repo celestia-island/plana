@@ -1,0 +1,12 @@
+[offline_dialog]
+title = "غير متصل"
+gateway_error = "خطأ غيرserelle"
+retrying = "Nouvel tentative"
+retry_attempt = "إعادة محاولة"
+error_prefix = "خطأ"
+select_action = "اختيار une action"
+option_retry = "إعادة محاولة"
+option_restart = "Redémarrer"
+option_exit = "خروج"
+
+

@@ -1,0 +1,81 @@
+[platforms]
+# Compatible APIs
+openai_compatible = "OpenAI 兼容"
+openai_compatible_desc = "自定义 OpenAI 兼容 API"
+anthropic_compatible = "Anthropic 兼容"
+anthropic_compatible_desc = "自定义 Anthropic 兼容 API"
+gemini_compatible = "Gemini 兼容"
+gemini_compatible_desc = "自定义 Gemini 兼容 API"
+
+# Groups
+group_developer = "模型研发商"
+group_operator = "平台运营商"
+group_compatible = "兼容接口"
+
+# International Model Developers - Provider names
+provider_anthropic = "Anthropic"
+provider_openai = "OpenAI"
+provider_google = "Google"
+provider_xai = "xAI"
+provider_mistral = "Mistral AI"
+provider_cohere = "Cohere"
+
+# International Platform Operators - Provider names
+provider_openrouter = "OpenRouter"
+provider_groq = "Groq"
+provider_perplexity = "Perplexity AI"
+provider_fireworks = "Fireworks AI"
+provider_cerebras = "Cerebras"
+provider_together = "Together AI"
+
+# Chinese Model Developers - Provider names
+provider_glm = "智谱 AI"
+provider_glm_china = "智谱 AI 国内版"
+provider_deepseek = "深度求索"
+provider_qwen = "阿里云"
+provider_moonshot = "月之暗面"
+provider_yi = "零一万物"
+provider_baichuan = "百川智能"
+
+# Chinese Platform Operators - Provider names
+provider_doubao = "字节跳动"
+provider_hunyuan = "腾讯"
+provider_baidu = "百度"
+provider_stepfun = "阶跃星辰"
+provider_minimax = "稀宇科技"
+provider_silicon = "硅基流动"
+
+# International Model Developers - Model series
+model_anthropic = "Claude"
+model_openai = "GPT"
+model_google = "Gemini"
+model_xai = "Grok"
+model_mistral = "Mistral"
+model_cohere = "Command"
+
+# International Platform Operators - Model series
+model_openrouter = ""
+model_groq = ""
+model_perplexity = "Sonar"
+model_fireworks = ""
+model_cerebras = ""
+model_together = ""
+
+# Chinese Model Developers - Model series
+model_glm = "GLM"
+model_deepseek = "DeepSeek"
+model_qwen = "千问"
+model_moonshot = "Kimi"
+model_yi = "Yi"
+model_baichuan = "百川"
+
+# Chinese Platform Operators - Model series
+model_doubao = "豆包"
+model_hunyuan = "混元"
+model_baidu = "文心"
+model_stepfun = "Step"
+model_minimax = "MiniMax"
+model_silicon = ""
+
+# Separator
+separator = " · "

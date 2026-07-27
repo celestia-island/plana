@@ -1,0 +1,21 @@
+[cmd]
+models = "Modelle"
+mcp = "MCP"
+agents = "Agents"
+projects = "Projekts"
+logs = "Journaux"
+status = "État"
+theme = "Design"
+language = "Sprache"
+help = "Hilfe"
+clear = "Effacer"
+settings = "Einstellungen"
+exit = "Beenden"
+undo = "Abbrechen"
+history = "Verlauf"
+edit = "Bearbeiten"
+git_open = "Öffnen l'espace Git"
+search = "Suche sémantique"
+about = "Über"
+
+

@@ -1,0 +1,226 @@
+import { defineComponent, ref, onMounted, type PropType } from "vue";
+import { HPopover, useI18n, mergeMessages } from "@celestia-island/hikari";
+import { Wifi, WifiOff, Globe, Cable, Cpu } from "lucide-vue-next";
+import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
+
+import enLocale from "../i18n/locales/en/connection.json";
+import zhsLocale from "../i18n/locales/zhs/connection.json";
+import zhtLocale from "../i18n/locales/zht/connection.json";
+import jaLocale from "../i18n/locales/ja/connection.json";
+import koLocale from "../i18n/locales/ko/connection.json";
+import ruLocale from "../i18n/locales/ru/connection.json";
+import arLocale from "../i18n/locales/ar/connection.json";
+import deLocale from "../i18n/locales/de/connection.json";
+import esLocale from "../i18n/locales/es/connection.json";
+import frLocale from "../i18n/locales/fr/connection.json";
+import ptLocale from "../i18n/locales/pt/connection.json";
+
+const regionLabel: Record<string, string> = {
+  CN: "\u4e2d\u56fd\u5927\u9646", JP: "\u65e5\u672c", KR: "\u97e9\u56fd",
+  US: "\u7f8e\u56fd", GB: "\u82f1\u56fd", DE: "\u5fb7\u56fd",
+  FR: "\u6cd5\u56fd", SA: "\u6c99\u7279", TW: "\u4e2d\u56fd\u53f0\u6e7e",
+  HK: "\u4e2d\u56fd\u9999\u6e2f", MO: "\u4e2d\u56fd\u6fb3\u95e8",
+  BR: "\u5df4\u897f", RU: "\u4fc4\u7f57\u65af",
+  CA: "\u52a0\u62ff\u5927", AU: "\u6fb3\u5927\u5229\u4e9a",
+  PT: "\u8461\u8404\u7259", ES: "\u897f\u73ed\u7259",
+};
+
+function latencyColor(ms: number | null): string {
+  if (ms === null) return "var(--color-muted)";
+  if (ms < 30) return "rgb(var(--color-success))";
+  if (ms < 100) return "rgb(var(--color-warning))";
+  return "rgb(var(--color-error))";
+}
+
+function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: number) {
+  if (isLocalhost) return <Cable size={size} />;
+  if (quality === "excellent" || quality === "good") return <Wifi size={size} />;
+  return <WifiOff size={size} />;
+}
+
+export const PStatusBar = defineComponent({
+  name: "PlanaStatusBar",
+  props: {
+    version: { type: String, default: "0.1.0" },
+    connectionStatus: {
+      type: String as PropType<"connected" | "reconnecting" | "disconnected">,
+      default: "disconnected",
+    },
+    connectionInfo: {
+      type: Object as PropType<PlanaConnectionInfo | null>,
+      default: null,
+    },
+    standalone: { type: Boolean, default: true },
+    onRetry: { type: Function as PropType<() => void>, default: undefined },
+    latencyMs: { type: Number, default: null },
+  },
+  setup(props) {
+    const popupOpen = ref(false);
+    const anchorRef = ref<HTMLElement | null>(null);
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    onMounted(() => {
+      mergeMessages(enLocale.connection, "en");
+      mergeMessages(zhsLocale.connection, "zhs");
+      mergeMessages(zhtLocale.connection, "zht");
+      mergeMessages(jaLocale.connection, "ja");
+      mergeMessages(koLocale.connection, "ko");
+      mergeMessages(ruLocale.connection, "ru");
+      mergeMessages(arLocale.connection, "ar");
+      mergeMessages(deLocale.connection, "de");
+      mergeMessages(esLocale.connection, "es");
+      mergeMessages(frLocale.connection, "fr");
+      mergeMessages(ptLocale.connection, "pt");
+    });
+
+    const dotColorMap: Record<string, string> = {
+      connected: "rgb(var(--color-success))",
+      reconnecting: "rgb(var(--color-warning))",
+      disconnected: "rgb(var(--color-error))",
+    };
+
+    function onTagEnter() {
+      if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+      popupOpen.value = true;
+    }
+    function onTagLeave() {
+      closeTimer = setTimeout(() => { popupOpen.value = false; }, 250);
+    }
+    function onPopupEnter() {
+      if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    }
+    function onPopupLeave() {
+      popupOpen.value = false;
+    }
+    function onTagClick() {
+      if (props.connectionStatus !== "connected") {
+        props.onRetry?.();
+      }
+    }
+
+    return () => {
+      const { t } = useI18n();
+      const info = props.connectionInfo;
+      const latency = props.latencyMs ?? info?.latencyMs ?? null;
+
+      const tierLabelKey = `p.statusBar.tier.${info?.tier ?? "ws"}`;
+      const statusText = info?.state === "connected" ? t("p.statusBar.connected", "Connected")
+        : info?.state === "reconnecting" ? t("p.statusBar.reconnecting", "Reconnecting")
+        : t("p.statusBar.disconnected", "Disconnected");
+
+      const inner = (
+        <>
+          <span
+            ref={anchorRef}
+            class="s-status-bar-tag"
+            role="button"
+            tabindex={0}
+            onMouseenter={onTagEnter}
+            onMouseleave={onTagLeave}
+            onClick={onTagClick}
+            onKeydown={(e: KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onTagClick(); }
+            }}
+            style={{
+              position: "relative", zIndex: 1,
+              display: "inline-flex", alignItems: "center",
+              height: "24px", gap: "5px", padding: "0 8px",
+              borderRadius: "var(--radius-md, 6px)",
+              fontSize: "var(--text-2xs, 0.625rem)", lineHeight: 1,
+              background: "rgb(var(--color-surface) / var(--opacity-half, 0.5))",
+              color: "rgb(var(--color-muted))", userSelect: "none", cursor: "pointer",
+            }}
+          >
+            <span class="s-status-bar-dot" style={{
+              width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
+              background: dotColorMap[props.connectionStatus] ?? dotColorMap.disconnected,
+            }} />
+            <span style={{ opacity: 0.6 }}>{t("p.statusBar.panel", "Panel")}</span>
+            <span style={{ fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
+              {props.version}
+            </span>
+          </span>
+
+          <HPopover
+            modelValue={popupOpen.value}
+            onUpdate:modelValue={(v: boolean) => { popupOpen.value = v; }}
+            placement="top-start"
+            backdrop={false}
+            closeOnBackdrop={false}
+            anchorRef={anchorRef.value}
+          >
+            <div
+              onMouseenter={onPopupEnter}
+              onMouseleave={onPopupLeave}
+              style={{
+                minWidth: "220px", padding: "10px 14px",
+                fontSize: "0.75rem", lineHeight: 1.6,
+                color: "rgb(var(--color-text))",
+              }}
+            >
+              {info ? (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", fontWeight: 600, fontSize: "0.8125rem" }}>
+                    {qualityIcon(info.quality, info.tier, info.isLocalhost, 14)}
+                    <span style={{ color: dotColorMap[info.state] ?? dotColorMap.disconnected }}>
+                      {statusText}
+                    </span>
+                    {latency !== null && (
+                      <span style={{ marginLeft: "auto", color: latencyColor(latency), fontFamily: "var(--font-mono, monospace)", fontWeight: 600, fontSize: "0.6875rem" }}>
+                        {latency} ms
+                      </span>
+                    )}
+                  </div>
+                  {info.state === "reconnecting" && info.retryCount > 0 && (
+                    <div style={{ color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
+                      {t("p.statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
+                        .replace("{retryCount}", String(info.retryCount))
+                        .replace("{maxRetries}", String(info.maxRetries))}
+                    </div>
+                  )}
+                  {info.state === "disconnected" && (
+                    <div style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7 }}>
+                      {t("p.statusBar.clickReconnect", "Click to retry")}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Cpu size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("p.statusBar.protocol", "Protocol")}</span>
+                    <span>{t(tierLabelKey, info?.tier ?? "ws")}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("p.statusBar.network", "Network")}</span>
+                    <span>{regionLabel[info.region] ?? info.region}{info.isLocalhost ? " \u00b7 " + t("p.statusBar.local", "Local") : ""}</span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ opacity: 0.5 }}>{t("p.statusBar.fetching", "Fetching connection info...")}</div>
+              )}
+            </div>
+          </HPopover>
+        </>
+      );
+
+      if (!props.standalone) return inner;
+
+      return (
+        <footer class="s-status-bar" style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          height: "var(--s-footer-height, 2.5rem)",
+          display: "flex", alignItems: "center",
+          zIndex: "var(--z-header, 30)", flexShrink: 0,
+          padding: "0 var(--space-16, 1rem)",
+        }}>
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "rgb(var(--color-surface))",
+            backdropFilter: "blur(var(--blur-md, 12px))",
+            borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
+          }} />
+          {inner}
+        </footer>
+      );
+    };
+  },
+});

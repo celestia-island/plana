@@ -1,0 +1,9 @@
+[search]
+title = "検索"
+placeholder = "入力して Enter…"
+searching = "検索中…"
+no_results = "結果なし"
+results = "結果"
+hint_empty = "意味検索のクエリを入力"
+hint_open = "開く"
+detail = "詳細"

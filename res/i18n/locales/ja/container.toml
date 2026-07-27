@@ -1,0 +1,8 @@
+[container]
+status_connected = "接続済み"
+status_running = "実行中"
+status_starting = "起動中"
+status_stopped = "停止済み"
+status_unhealthy = "異常"
+status_not_exists = "存在しません"
+status_error = "エラー"

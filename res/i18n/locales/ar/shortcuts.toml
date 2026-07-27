@@ -1,0 +1,21 @@
+[shortcuts]
+quit = "خروج"
+next_tab = "Onglet suivant"
+previous_tab = "Onglet précédent"
+refresh = "تحديث"
+connect = "Connecter"
+select_next = "Sélection suivante"
+select_previous = "Sélection précédente"
+confirm = "تأكيد"
+cancel = "إلغاء"
+start = "بدء"
+stop = "إيقاف"
+config = "Configuration"
+config_save = "حفظ configuration"
+config_cancel = "إلغاء configuration"
+scroll_up = "Défiler vers haut"
+scroll_down = "Défiler vers bas"
+scroll_top = "Aller en haut"
+scroll_bottom = "Aller en bas"
+
+

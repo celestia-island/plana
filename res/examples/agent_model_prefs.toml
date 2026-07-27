@@ -1,0 +1,58 @@
+# Agent & Skill Model Preferences
+#
+# This file overrides the default 3-tier (Deep/Normal/Basic) model selection
+# with per-agent and per-skill model preferences. When an agent triggers a
+# skill, the system checks preferences in this order:
+#
+#   1. Skill-level preferred models
+#   2. Agent-level preferred models
+#   3. Capability-keyed models (e.g. generate_image → specific image model)
+#   4. Tier fallback (Deep/Normal/Basic)
+#
+# Place this file at:
+#   ~/.config/entelecheia/agent_model_prefs.toml
+#
+# Or set ENTELECHEIA_PREFS_PATH to point to a custom location.
+
+# ── Per-agent preferences ────────────────────────────────────────────
+# Agent names are the AgentKind folder_name values:
+# haplotes, skopeo, hubris, kalos, neikos, skemma, aporia, eleos,
+# epieikeia, orexis, philia, polemos
+# (Layer2: web_automation, classic_software_engineering, web_ui_panel,
+#  industrial_iot, remote_operations)
+
+[[agent_prefs]]
+agent = "aporia"
+# Direct model overrides — these models are tried first, in order
+preferred_models = [
+  { provider_id = "anthropic", model_name = "claude-sonnet-4-20250514" },
+  { provider_id = "openai", model_name = "gpt-4o" },
+]
+
+[[agent_prefs]]
+agent = "kalos"
+preferred_models = [
+  { provider_id = "anthropic", model_name = "claude-opus-4-20250514" },
+]
+# Capability-keyed overrides: when a task requires a specific capability,
+# use these models instead of preferred_models
+[agent_prefs.by_capability]
+"generate_image" = [
+  { provider_id = "openai", model_name = "gpt-image-2" },
+]
+
+# ── Per-skill preferences ────────────────────────────────────────────
+# Skill names match the skill registry identifiers.
+
+[[skill_prefs]]
+skill = "smart_write_file"
+preferred_models = [
+  { provider_id = "anthropic", model_name = "claude-opus-4-20250514" },
+]
+fallback_tier = "Deep"
+
+[[skill_prefs]]
+skill = "remote_deploy_amphoreus"
+preferred_models = [
+  { provider_id = "openai", model_name = "o3" },
+]

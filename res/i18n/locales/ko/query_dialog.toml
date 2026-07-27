@@ -1,0 +1,11 @@
+[query_dialog]
+title = "질문"
+source_label = "출처"
+select_reply = "답장 선택"
+custom_reply = "맞춤 답장"
+custom_input = "사용자 정의 입력"
+input_placeholder = "입력 자리 표시자"
+enter_confirm_selection = "선택 확인"
+enter_send_reply = "답장 보내기"
+tab_switch_input = "입력 전환"
+tab_switch_option = "옵션 전환"

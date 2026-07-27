@@ -1,0 +1,5 @@
+[common]
+close = "關閉"
+navigate = "導航"
+select = "選擇"
+frontmatter = "前置元資料"
