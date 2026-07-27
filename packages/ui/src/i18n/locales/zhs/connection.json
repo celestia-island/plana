@@ -6,7 +6,7 @@
     "plana::statusBar.reconnecting": "重连中",
     "plana::statusBar.disconnected": "断开",
     "plana::statusBar.retrying": "正在重试 {retryCount} / {maxRetries} 次",
-    "plana::statusBar.probing": "63a26d4b4e2d...",
+    "plana::statusBar.probing": "\u63a2\u6d4b\u4e2d...",
     "plana::statusBar.clickReconnect": "点击以尝试重连",
     "plana::statusBar.protocol": "协议",
     "plana::statusBar.latency": "延迟",
