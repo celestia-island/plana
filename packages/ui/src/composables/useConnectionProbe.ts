@@ -4,6 +4,7 @@ import type { ConnectionStateEvent } from "@celestia-island/plana-rpc-client";
 
 export interface ProbeResult {
   connected: boolean;
+  state: "connected" | "disconnected" | "connecting" | "reconnecting" | "failed";
   tier: string;
   latencyMs: number | null;
   retryCount: number;
@@ -22,6 +23,7 @@ export function useConnectionProbe(): {
 } {
   const result = ref<ProbeResult>({
     connected: false,
+    state: "disconnected",
     tier: "ws",
     latencyMs: null,
     retryCount: 0,
@@ -34,6 +36,7 @@ export function useConnectionProbe(): {
     result.value = {
       ...result.value,
       connected: e.state === "connected",
+      state: e.state as ProbeResult["state"],
       retryCount: e.retryCount ?? 0,
       retryTotal: e.maxRetries ?? 10,
     };
@@ -45,7 +48,10 @@ export function useConnectionProbe(): {
 
   onMounted(() => {
     if (sharedClient) {
-      updateState({ state: sharedClient.state });
+      updateState({ 
+        state: sharedClient.state, 
+        retryCount: sharedClient.retryCount 
+      });
       result.value.tier = sharedClient.transportTier;
       unsub = sharedClient.on("state", updateState);
     }
