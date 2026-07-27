@@ -39,13 +39,15 @@ export function useConnectionProbe(): {
   let unsub: (() => void) | null = null;
 
   function updateState(e: ConnectionStateEvent): void {
+    const actualTier = e.transportTier ?? sharedClient?.transportTier ?? result.value.transportTier;
     result.value = {
       ...result.value,
       connected: e.state === "connected",
       state: e.state as ProbeResult["state"],
       retryCount: e.retryCount ?? 0,
       retryTotal: e.maxRetries ?? 3,
-      transportTier: e.transportTier ?? result.value.transportTier,
+      transportTier: actualTier,
+      tier: actualTier,
       attemptNumber: e.attemptNumber ?? 0,
       countdown: e.countdown ?? 0,
     };
@@ -62,6 +64,7 @@ export function useConnectionProbe(): {
         retryCount: sharedClient.retryCount,
         transportTier: sharedClient.transportTier,
       });
+      result.value.tier = sharedClient.transportTier;
       unsub = sharedClient.on("state", updateState);
     }
   });
