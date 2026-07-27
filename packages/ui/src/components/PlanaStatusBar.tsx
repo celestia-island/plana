@@ -104,9 +104,9 @@ export const PStatusBar = defineComponent({
       const latency = props.latencyMs ?? info?.latencyMs ?? null;
 
       const tierLabelKey = `p.statusBar.tier.${info?.tier ?? "ws"}`;
-      const statusText = info?.state === "connected" ? t("p.statusBar.connected", "Connected")
-        : info?.state === "reconnecting" ? t("p.statusBar.reconnecting", "Reconnecting")
-        : t("p.statusBar.disconnected", "Disconnected");
+      const statusText = info?.state === "connected" ? t("plana::statusBar.connected", "Connected")
+        : info?.state === "reconnecting" ? t("plana::statusBar.reconnecting", "Reconnecting")
+        : t("plana::statusBar.disconnected", "Disconnected");
 
       const inner = (
         <>
@@ -135,7 +135,7 @@ export const PStatusBar = defineComponent({
               width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
               background: dotColorMap[props.connectionStatus] ?? dotColorMap.disconnected,
             }} />
-            <span style={{ opacity: 0.6 }}>{t("p.statusBar.panel", "Panel")}</span>
+            <span style={{ opacity: 0.6 }}>{t("plana::statusBar.panel", "Panel")}</span>
             <span style={{ fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
               {props.version}
             </span>
@@ -173,29 +173,29 @@ export const PStatusBar = defineComponent({
                   </div>
                   {info.state === "reconnecting" && info.retryCount > 0 && (
                     <div style={{ color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
-                      {t("p.statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
+                      {t("plana::statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
                         .replace("{retryCount}", String(info.retryCount))
                         .replace("{maxRetries}", String(info.maxRetries))}
                     </div>
                   )}
                   {info.state === "disconnected" && (
                     <div style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7 }}>
-                      {t("p.statusBar.clickReconnect", "Click to retry")}
+                      {t("plana::statusBar.clickReconnect", "Click to retry")}
                     </div>
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Cpu size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("p.statusBar.protocol", "Protocol")}</span>
+                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("plana::statusBar.protocol", "Protocol")}</span>
                     <span>{t(tierLabelKey, info?.tier ?? "ws")}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("p.statusBar.network", "Network")}</span>
-                    <span>{regionLabel[info.region] ?? info.region}{info.isLocalhost ? " \u00b7 " + t("p.statusBar.local", "Local") : ""}</span>
+                    <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("plana::statusBar.network", "Network")}</span>
+                    <span>{regionLabel[info.region] ?? info.region}{info.isLocalhost ? " \u00b7 " + t("plana::statusBar.local", "Local") : ""}</span>
                   </div>
                 </>
               ) : (
-                <div style={{ opacity: 0.5 }}>{t("p.statusBar.fetching", "Fetching connection info...")}</div>
+                <div style={{ opacity: 0.5 }}>{t("plana::statusBar.fetching", "Fetching connection info...")}</div>
               )}
             </div>
           </HPopover>
