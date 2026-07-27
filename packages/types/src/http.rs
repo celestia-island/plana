@@ -106,37 +106,57 @@ pub struct StatusResponse {
 
 // ── Health ─────────────────────────────────────────────────
 
-/// Standard application health response returned by /api/health.
-/// All plana-based backends (arona, chest, scepter) use this shape.
-#[derive(Debug, Clone, Serialize, TS)]
+/// Service health status.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "httpTypes.ts")]
+#[serde(rename_all = "lowercase")]
+pub enum ServiceStatus {
+    Ok,
+    Degraded,
+    Unhealthy,
+}
+
+/// Backend build profile.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "httpTypes.ts")]
+#[serde(rename_all = "lowercase")]
+pub enum BackendKind {
+    Dev,
+    Nightly,
+    Prod,
+    Mock,
+}
+
+/// Network context from the requesting client.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "httpTypes.ts")]
+pub struct NetworkInfo {
+    pub transport: String,
+    pub region: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub asn: Option<u32>,
+}
+
+impl NetworkInfo {
+    pub fn unknown() -> Self {
+        Self { transport: "sse".into(), region: "XX".into(), asn: None }
+    }
+}
+
+/// Standard /api/health response for all plana backends.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
 pub struct HealthResponse {
-    pub status: String,
+    pub status: ServiceStatus,
     pub version: String,
-    /// Whether the database connection is healthy (optional if no DB).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub database: Option<bool>,
-    /// Whether the mock/dev mode is active.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub mock: Option<bool>,
-    /// Product name ("arona", "shittim-chest", "entelecheia").
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub product: Option<String>,
-    /// Server uptime in seconds.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub uptime_secs: Option<u64>,
+    pub kind: BackendKind,
+    pub uptime: u64,
+    pub network: NetworkInfo,
 }
 
 impl HealthResponse {
-    pub fn ok(version: impl Into<String>) -> Self {
-        Self {
-            status: "ok".into(),
-            version: version.into(),
-            database: None,
-            mock: None,
-            product: None,
-            uptime_secs: None,
-        }
+    pub fn ok(version: impl Into<String>, kind: BackendKind, uptime: u64, network: NetworkInfo) -> Self {
+        Self { status: ServiceStatus::Ok, version: version.into(), kind, uptime, network }
     }
 }
 
