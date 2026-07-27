@@ -153,9 +153,9 @@ export const PStatusBar = defineComponent({
             <span style={{ fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
               {props.version}
             </span>
-            {connecting && countdown > 0 && (
+            {connecting && (
               <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", color: "rgb(var(--color-warning))", fontWeight: 600 }}>
-                <PCountdownDigit value={countdown} />
+                {countdown > 0 ? <PCountdownDigit value={countdown} /> : <span style={{ opacity: 0.7 }}>...</span>}
               </span>
             )}
           </span>
