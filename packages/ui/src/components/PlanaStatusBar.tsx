@@ -79,6 +79,7 @@ export const PStatusBar = defineComponent({
 
     const dotColorMap: Record<string, string> = {
       connected: "rgb(var(--color-success))",
+      connecting: "rgb(var(--color-warning))",
       reconnecting: "rgb(var(--color-warning))",
       disconnected: "rgb(var(--color-error))",
     };
