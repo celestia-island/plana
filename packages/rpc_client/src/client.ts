@@ -225,6 +225,8 @@ export class RpcClient {
 
         this.#setState("connecting", undefined, tier, attemptNum, Math.ceil(timeoutMs / 1000));
 
+        await sleep(0);
+
         let remaining = Math.ceil(timeoutMs / 1000);
         const countdownTimer = setInterval(() => {
           remaining--;
