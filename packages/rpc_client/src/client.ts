@@ -10,6 +10,9 @@ export interface ConnectionStateEvent {
   retryIn?: number;
   retryCount?: number;
   maxRetries?: number;
+  transportTier?: string;
+  attemptNumber?: number;
+  countdown?: number;
 }
 
 export type RpcErrorKind =
@@ -42,15 +45,8 @@ export interface RpcClientOpts {
   heartbeatInterval?: number;
   heartbeatTimeout?: number;
   callTimeoutMs?: number;
-  /** Max EventSource retries before falling back to long polling (default 3). */
   sseMaxRetries?: number;
-  /** Poll interval in ms for tier-3 long polling (default 30_000). */
   pollIntervalMs?: number;
-  /**
-   * Force local (tier 0) mode even when baseUrl is not localhost.
-   * When true, the client skips WebSocket and uses HTTP directly.
-   * Auto-detected when baseUrl is localhost / 127.0.0.1 / [::1].
-   */
   local?: boolean;
 }
 
@@ -73,13 +69,15 @@ const HB_INTERVAL = 15_000;
 const HB_TIMEOUT = 10_000;
 const CALL_TIMEOUT = 30_000;
 const LOCAL_CALL_TIMEOUT = 5_000;
-const SSE_MAX_RETRIES = 3;
-const MAX_RETRIES = 10;
+const MAX_RETRIES = 3;
 const POLL_INTERVAL = 30_000;
+const ATTEMPT_TIMEOUTS = [1_000, 3_000, 5_000];
 
 function isLocalhost(baseUrl: string): boolean {
-  try { return new URL(baseUrl).hostname === "localhost" || new URL(baseUrl).hostname === "127.0.0.1" || new URL(baseUrl).hostname === "[::1]"; }
-  catch { return false; }
+  try {
+    const host = new URL(baseUrl).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+  } catch { return false; }
 }
 
 export class RpcClient {
@@ -90,7 +88,6 @@ export class RpcClient {
   readonly #heartbeatInterval: number;
   readonly #heartbeatTimeout: number;
   readonly #callTimeoutMs: number;
-  readonly #sseMaxRetries: number;
   readonly #pollIntervalMs: number;
 
   #ws: WebSocket | null = null;
@@ -101,8 +98,6 @@ export class RpcClient {
 
   #sessionId: string;
   #eventSource: EventSource | null = null;
-  #sseRetryCount = 0;
-  #sseRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
   #pollTimer: ReturnType<typeof setInterval> | null = null;
   #tier: TransportTier = "ws";
@@ -118,7 +113,6 @@ export class RpcClient {
   #authLostHandlers = new Set<AuthLostHandler>();
 
   #state: ConnectionState = "disconnected";
-  #wsConnectGate: Promise<void> | null = null;
   #retryCount = 0;
 
   get state(): ConnectionState { return this.#state; }
@@ -134,7 +128,6 @@ export class RpcClient {
     this.#heartbeatInterval = opts.heartbeatInterval ?? HB_INTERVAL;
     this.#heartbeatTimeout = opts.heartbeatTimeout ?? HB_TIMEOUT;
     this.#callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT;
-    this.#sseMaxRetries = opts.sseMaxRetries ?? SSE_MAX_RETRIES;
     this.#pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL;
     this.#sessionId = crypto.randomUUID();
     this.#local = opts.local ?? isLocalhost(this.#baseUrl);
@@ -145,12 +138,10 @@ export class RpcClient {
   async call<T>(method: string, params?: unknown, timeoutMs?: number): Promise<T> {
     const timeout = timeoutMs ?? (this.#tier === "local" ? LOCAL_CALL_TIMEOUT : this.#callTimeoutMs);
 
-    // Tier 0 / Tiers 2/3: HTTP POST
     if (this.#tier !== "ws") {
       try {
         return await this.#sendOverHttp<T>(method, params, timeout);
       } catch (e) {
-        // On local tier: first failure downgrades to ws (backend may have moved)
         if (this.#tier === "local" && !this.#disposed) {
           console.info("[RpcClient:local] request failed, downgrading to ws");
           this.#downgradeToWs();
@@ -159,14 +150,8 @@ export class RpcClient {
       }
     }
 
-    // Tier 1: WS if connected
     if (this.connected) {
       return this.#sendOverWs<T>(method, params, timeout);
-    }
-
-    if (this.#wsConnectGate) {
-      try { await Promise.race([this.#wsConnectGate, sleep(3000)]); } catch { /* fall through */ }
-      if (this.connected) return this.#sendOverWs<T>(method, params, timeout);
     }
 
     return this.#sendOverHttp<T>(method, params, timeout);
@@ -180,8 +165,7 @@ export class RpcClient {
       console.info("[RpcClient:local] detected localhost, using direct HTTP");
       this.#setState("connected");
     } else {
-      this.#tier = "ws";
-      this.#connectWs();
+      this.#progressiveConnect();
     }
   }
 
@@ -199,8 +183,7 @@ export class RpcClient {
       this.#tier = "local";
       this.#setState("connected");
     } else {
-      this.#tier = "ws";
-      this.#connectWs();
+      this.#progressiveConnect();
     }
   }
 
@@ -224,107 +207,164 @@ export class RpcClient {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // Tier 0 → 1 downgrade
+  // Progressive connect
   // ═══════════════════════════════════════════════════════════
 
-  #downgradeToWs(): void {
-    this.#tier = "ws";
-    this.#teardownAll();
-    this.#connectWs();
+  async #progressiveConnect(): Promise<void> {
+    const tiers: TransportTier[] = ["ws", "sse", "poll"];
+
+    for (const tier of tiers) {
+      if (this.#disposed) return;
+      this.#tier = tier;
+
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (this.#disposed) return;
+        const timeoutMs = ATTEMPT_TIMEOUTS[attempt];
+        const attemptNum = attempt + 1;
+        this.#retryCount = attemptNum;
+
+        this.#setState("connecting", undefined, tier, attemptNum, Math.ceil(timeoutMs / 1000));
+
+        let remaining = Math.ceil(timeoutMs / 1000);
+        const countdownTimer = setInterval(() => {
+          remaining--;
+          if (remaining >= 0) {
+            this.#stateHandlers.forEach((h) => h({
+              state: "connecting",
+              transportTier: tier,
+              attemptNumber: attemptNum,
+              countdown: remaining,
+              retryCount: attemptNum,
+              maxRetries: MAX_RETRIES,
+            }));
+          }
+        }, 1000);
+
+        const success = await this.#tryTransportOnce(tier, timeoutMs);
+        clearInterval(countdownTimer);
+
+        if (success) return;
+      }
+    }
+
+    this.#setState("failed", undefined, "poll", undefined, undefined);
+  }
+
+  async #tryTransportOnce(tier: TransportTier, timeoutMs: number): Promise<boolean> {
+    switch (tier) {
+      case "ws": return this.#tryWsOnce(timeoutMs);
+      case "sse": return this.#trySseOnce(timeoutMs);
+      case "poll": return this.#tryPollOnce(timeoutMs);
+      default: return false;
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // Tier 1 — WebSocket
+  // Tier 1 — WebSocket (single attempt, promise-based)
   // ═══════════════════════════════════════════════════════════
 
-  #connectWs(): void {
-    this.#retryCount++;
-    if (this.#retryCount > MAX_RETRIES) {
-      console.warn("[RpcClient] max retries exceeded");
-      this.#teardownAll();
-      this.#setState("failed");
-      return;
-    }
-    if (this.#tier !== "ws" || this.#disposed) return;
-    if (!this.#getToken()) return;
-    if (this.#ws) {
-      const rs = this.#ws.readyState;
-      if (rs === WebSocket.CONNECTING || rs === WebSocket.OPEN) return;
-    }
-    this.#setState("connecting");
-    const gen = this.#wsGen = this.#wsGen + 1;
+  async #tryWsOnce(timeoutMs: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const token = this.#getToken();
+      if (!token) { resolve(false); return; }
 
-    const wsUrl = this.#baseUrl.replace(/^http/, "ws") + this.#rpcPath;
-    const token = this.#getToken();
-    if (!token) return;
+      const wsUrl = this.#baseUrl.replace(/^http/, "ws") + this.#rpcPath;
+      const gen = ++this.#wsGen;
+      const ws = new WebSocket(wsUrl, ["jwt." + token]);
+      ws.binaryType = "arraybuffer";
+      this.#ws = ws;
+      let settled = false;
 
-    const ws = new WebSocket(wsUrl, ["jwt." + token]);
-    ws.binaryType = "arraybuffer";
-    this.#ws = ws;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        this.#cleanupWs(ws, gen);
+        resolve(false);
+      }, timeoutMs);
 
-    ws.onopen = () => {
-      if (this.#wsGen !== gen) { ws.close(1000, "stale"); return; }
-      this.#setState("connected");
-      this.#startHeartbeat();
-    };
+      ws.onopen = () => {
+        if (settled || this.#wsGen !== gen) return;
+        settled = true;
+        clearTimeout(timer);
+        this.#setState("connected");
+        this.#startHeartbeat();
+        resolve(true);
+      };
 
-    ws.onclose = () => {
-      if (this.#wsGen !== gen || this.#tier !== "ws") return;
-      this.#clearHeartbeat();
-      this.#rejectAllPending("connection lost");
-      this.#setState("disconnected");
-    };
+      ws.onerror = () => {
+        if (settled || this.#wsGen !== gen) return;
+        settled = true;
+        clearTimeout(timer);
+        this.#cleanupWs(ws, gen);
+        resolve(false);
+      };
 
-    ws.onerror = () => {
-      if (this.#wsGen !== gen || this.#tier !== "ws") return;
-      // WS failed — tear down and downgrade to tier 2 (SSE)
-      this.#teardownAll();
-      this.#downgradeToSse();
-    };
+      ws.onclose = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        this.#cleanupWs(ws, gen);
+        if (this.#tier === "ws" && !this.#disposed) {
+          this.#setState("disconnected");
+        }
+        resolve(false);
+      };
 
-    ws.onmessage = (event) => {
-      if (this.#wsGen !== gen) return;
-      this.#resetHeartbeatTimeout();
-
-      if (event.data instanceof ArrayBuffer) {
-        this.#binaryHandlers.forEach((h) => h(event.data as ArrayBuffer));
-        return;
-      }
-      if (event.data instanceof Blob) {
-        event.data.arrayBuffer().then((buf) => { this.#binaryHandlers.forEach((h) => h(buf)); }).catch(() => {});
-        return;
-      }
-
-      let data: any;
-      try { data = JSON.parse(event.data); } catch { return; }
-
-      if (data.method === "Base.HeartbeatAck") {
+      ws.onmessage = (event) => {
+        if (this.#wsGen !== gen) return;
         this.#resetHeartbeatTimeout();
-        this.#heartbeatHandlers.forEach((h) => h());
-        return;
-      }
 
-      if (data.method && data.id === undefined) {
-        this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
-        return;
-      }
+        if (event.data instanceof ArrayBuffer) {
+          this.#binaryHandlers.forEach((h) => h(event.data as ArrayBuffer));
+          return;
+        }
+        if (event.data instanceof Blob) {
+          event.data.arrayBuffer().then((buf) => { this.#binaryHandlers.forEach((h) => h(buf)); }).catch(() => {});
+          return;
+        }
 
-      if (data.id !== undefined) {
-        const id = String(data.id);
-        const entry = this.#pending.get(id);
-        if (entry) {
-          this.#pending.delete(id);
-          clearTimeout(entry.timer);
-          if (data.error) {
-            const msg: string = data.error.message || "unknown rpc error";
-            const kind: RpcErrorKind = data.error.code === -32003 ? "forbidden" : "rpc";
-            entry.reject(new RpcError(kind, entry.method, msg));
-          } else {
-            entry.resolve(data.result);
+        let data: any;
+        try { data = JSON.parse(event.data); } catch { return; }
+
+        if (data.method === "Base.HeartbeatAck") {
+          this.#resetHeartbeatTimeout();
+          this.#heartbeatHandlers.forEach((h) => h());
+          return;
+        }
+
+        if (data.method && data.id === undefined) {
+          this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
+          return;
+        }
+
+        if (data.id !== undefined) {
+          const id = String(data.id);
+          const entry = this.#pending.get(id);
+          if (entry) {
+            this.#pending.delete(id);
+            clearTimeout(entry.timer);
+            if (data.error) {
+              const msg: string = data.error.message || "unknown rpc error";
+              const kind: RpcErrorKind = data.error.code === -32003 ? "forbidden" : "rpc";
+              entry.reject(new RpcError(kind, entry.method, msg));
+            } else {
+              entry.resolve(data.result);
+            }
           }
         }
-      }
-    };
+      };
+    });
+  }
+
+  #cleanupWs(ws: WebSocket, gen: number): void {
+    ws.onopen = null;
+    ws.onerror = null;
+    ws.onclose = null;
+    ws.onmessage = null;
+    ws.close();
+    if (this.#ws === ws) this.#ws = null;
+    this.#clearHeartbeat();
+    this.#rejectAllPending("connection lost");
   }
 
   #sendOverWs<T>(method: string, params: unknown, timeoutMs: number): Promise<T> {
@@ -348,27 +388,50 @@ export class RpcClient {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // Tier 2 — EventSource (SSE / HTTP stream)
+  // Tier 2 — EventSource (SSE, single attempt)
   // ═══════════════════════════════════════════════════════════
 
-  #downgradeToSse(): void {
-    this.#tier = "sse";
-    this.#sseRetryCount = 0;
-    this.#openEventStream();
-  }
+  async #trySseOnce(timeoutMs: number): Promise<boolean> {
+    if (typeof EventSource === "undefined") return false;
 
-  #openEventStream(): void {
-    this.#retryCount++;
-    if (this.#tier !== "sse" || this.#disposed) return;
-    if (this.#eventSource) this.#eventSource.close();
+    return new Promise((resolve) => {
+      const cleanPath = this.#rpcPath.split("?")[0];
+      const url = this.#baseUrl + cleanPath + "/events?session=" + this.#sessionId;
+      let settled = false;
 
-    const cleanPath = this.#rpcPath.split("?")[0];
-    const url = this.#baseUrl + cleanPath + "/events?session=" + this.#sessionId;
-    console.info("[RpcClient:sse] opening", url);
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        es.close();
+        this.#eventSource = null;
+        resolve(false);
+      }, timeoutMs);
 
-    try {
-      const es = new EventSource(url);
-      this.#eventSource = es;
+      let es: EventSource;
+      try {
+        es = new EventSource(url);
+        this.#eventSource = es;
+      } catch {
+        resolve(false);
+        return;
+      }
+
+      es.onopen = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        this.#setState("connected");
+        resolve(true);
+      };
+
+      es.onerror = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        es.close();
+        this.#eventSource = null;
+        resolve(false);
+      };
 
       es.onmessage = (event) => {
         try {
@@ -379,58 +442,19 @@ export class RpcClient {
           if (data.method === "Base.HeartbeatAck") {
             this.#heartbeatHandlers.forEach((h) => h());
           }
-        } catch { /* ignore comment / keep-alive events */ }
+        } catch { /* ignore */ }
       };
-
-      es.onerror = () => {
-        this.#eventSource?.close();
-        this.#eventSource = null;
-        this.#sseRetryCount++;
-
-        if (this.#sseRetryCount > this.#sseMaxRetries) {
-          console.warn("[RpcClient:sse] exhausted retries, downgrading to long poll");
-          this.#downgradeToPoll();
-          return;
-        }
-
-        console.warn("[RpcClient:sse] error, retry %d/%d in 3s", this.#sseRetryCount, this.#sseMaxRetries);
-        this.#sseRetryTimer = setTimeout(() => this.#openEventStream(), 3000);
-      };
-
-      es.onopen = () => {
-        this.#sseRetryCount = 0;
-        console.info("[RpcClient:sse] connected");
-        this.#setState("connected");
-      };
-    } catch {
-      console.warn("[RpcClient:sse] not supported, downgrading to long poll");
-      this.#downgradeToPoll();
-    }
+    });
   }
 
   // ═══════════════════════════════════════════════════════════
-  // Tier 3 — HTTP long polling
+  // Tier 3 — HTTP long polling (single fetch)
   // ═══════════════════════════════════════════════════════════
 
-  #downgradeToPoll(): void {
-    this.#retryCount++;
-    this.#tier = "poll";
-    this.#eventSource?.close();
-    this.#eventSource = null;
-    this.#setState("disconnected");
-    console.info("[RpcClient:poll] starting long-poll every %dms", this.#pollIntervalMs);
-
-    this.#pollTimer = setInterval(() => {
-      this.#pollEvents();
-    }, this.#pollIntervalMs);
-    this.#pollEvents(); // immediate first poll
-  }
-
-  async #pollEvents(): Promise<void> {
-    if (this.#tier !== "poll" || this.#disposed) return;
-    const cleanPath = this.#rpcPath.split("?")[0];
-    const url = this.#baseUrl + cleanPath + "/events?session=" + this.#sessionId;
+  async #tryPollOnce(timeoutMs: number): Promise<boolean> {
     try {
+      const cleanPath = this.#rpcPath.split("?")[0];
+      const url = this.#baseUrl + cleanPath + "/events?session=" + this.#sessionId;
       const headers: Record<string, string> = {};
       const token = this.#getToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -438,13 +462,12 @@ export class RpcClient {
 
       const resp = await fetch(url, {
         headers,
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(timeoutMs),
         credentials: "include",
       });
 
-      if (!resp.ok) return;
+      if (!resp.ok) return false;
 
-      // SSE over HTTP — read each event line
       const text = await resp.text();
       const events = text.split("\n\n");
       for (const block of events) {
@@ -462,9 +485,21 @@ export class RpcClient {
       }
 
       this.#setState("connected");
+      return true;
     } catch {
       this.#setState("disconnected");
+      return false;
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Tier 0 → 1 downgrade
+  // ═══════════════════════════════════════════════════════════
+
+  #downgradeToWs(): void {
+    this.#tier = "ws";
+    this.#teardownAll();
+    this.#progressiveConnect();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -555,7 +590,6 @@ export class RpcClient {
   #teardownAll(): void {
     this.#eventSource?.close();
     this.#eventSource = null;
-    if (this.#sseRetryTimer) { clearTimeout(this.#sseRetryTimer); this.#sseRetryTimer = null; }
     if (this.#pollTimer) { clearInterval(this.#pollTimer); this.#pollTimer = null; }
     this.#clearHeartbeat();
 
@@ -563,18 +597,25 @@ export class RpcClient {
       this.#ws.onclose = null;
       this.#ws.onerror = null;
       this.#ws.onmessage = null;
+      this.#ws.onopen = null;
       this.#ws.close();
       this.#ws = null;
     }
     this.#wsGen++;
     this.#rejectAllPending("disconnected");
-    this.#wsConnectGate = null;
   }
 
-  #setState(state: ConnectionState, retryIn?: number): void {
+  #setState(state: ConnectionState, retryIn?: number, transportTier?: string, attemptNumber?: number, countdown?: number): void {
     this.#state = state;
-    const retryCount = this.#retryCount;
-    this.#stateHandlers.forEach((h) => h({ state, retryIn, retryCount, maxRetries: MAX_RETRIES }));
+    this.#stateHandlers.forEach((h) => h({
+      state,
+      retryIn,
+      retryCount: MAX_RETRIES - this.#retryCount >= 0 ? this.#retryCount : undefined,
+      maxRetries: MAX_RETRIES,
+      transportTier,
+      attemptNumber,
+      countdown,
+    }));
   }
 
   #rejectAllPending(reason: string): void {

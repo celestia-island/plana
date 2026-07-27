@@ -2,6 +2,7 @@
   "connection": {
     "plana::statusBar.panel": "패널",
     "plana::statusBar.connected": "연결됨",
+    "plana::statusBar.connecting": "연결 중...",
     "plana::statusBar.reconnecting": "재연결 중",
     "plana::statusBar.disconnected": "연결 끊김",
     "plana::statusBar.retrying": "재시도 중 {retryCount} / {maxRetries}",

@@ -2,6 +2,7 @@ import { defineComponent, ref, onMounted, type PropType } from "vue";
 import { HPopover, useI18n, mergeMessages } from "@celestia-island/hikari";
 import { Wifi, WifiOff, Globe, Cable, Cpu } from "lucide-vue-next";
 import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
+import { PCountdownDigit } from "./PlanaCountdownDigit";
 
 import enLocale from "../i18n/locales/en/connection.json";
 import zhsLocale from "../i18n/locales/zhs/connection.json";
@@ -43,7 +44,7 @@ export const PStatusBar = defineComponent({
   props: {
     version: { type: String, default: "0.1.0" },
     connectionStatus: {
-      type: String as PropType<"connected" | "reconnecting" | "disconnected">,
+      type: String as PropType<"connected" | "reconnecting" | "disconnected" | "connecting">,
       default: "disconnected",
     },
     connectionInfo: {
@@ -53,6 +54,9 @@ export const PStatusBar = defineComponent({
     standalone: { type: Boolean, default: true },
     onRetry: { type: Function as PropType<() => void>, default: undefined },
     latencyMs: { type: Number, default: null },
+    transportTier: { type: String as PropType<string>, default: undefined },
+    attemptNumber: { type: Number, default: undefined },
+    countdown: { type: Number, default: undefined },
   },
   setup(props) {
     const popupOpen = ref(false);
@@ -102,11 +106,17 @@ export const PStatusBar = defineComponent({
       const { t } = useI18n();
       const info = props.connectionInfo;
       const latency = props.latencyMs ?? info?.latencyMs ?? null;
+      const mode = props.connectionStatus;
+      const tier = props.transportTier ?? info?.tier ?? "ws";
+      const attempt = props.attemptNumber ?? info?.attemptNumber ?? 0;
+      const countdown = props.countdown ?? info?.countdown ?? 0;
 
-      const tierLabelKey = `plana::statusBar.tier.${info?.tier ?? "ws"}`;
-      const statusText = info?.state === "connected" ? t("plana::statusBar.connected", "Connected")
-        : info?.state === "reconnecting" ? t("plana::statusBar.reconnecting", "Reconnecting")
+      const tierLabelKey = `plana::statusBar.tier.${tier}`;
+      const statusText = mode === "connected" ? t("plana::statusBar.connected", "Connected")
+        : mode === "reconnecting" || mode === "connecting" ? t("plana::statusBar.connecting", "Connecting...")
         : t("plana::statusBar.disconnected", "Disconnected");
+
+      const connecting = mode === "reconnecting" || mode === "connecting";
 
       const inner = (
         <>
@@ -124,21 +134,29 @@ export const PStatusBar = defineComponent({
             style={{
               position: "relative", zIndex: 1,
               display: "inline-flex", alignItems: "center",
-              height: "24px", gap: "5px", padding: "0 8px",
+              height: "24px", gap: "4px", padding: "0 8px",
               borderRadius: "var(--radius-md, 6px)",
               fontSize: "var(--text-2xs, 0.625rem)", lineHeight: 1,
-              background: "rgb(var(--color-surface) / var(--opacity-half, 0.5))",
+              background: connecting
+                ? "rgb(var(--color-warning) / 14%)"
+                : "rgb(var(--color-surface) / var(--opacity-half, 0.5))",
               color: "rgb(var(--color-muted))", userSelect: "none", cursor: "pointer",
+              transition: "background var(--duration-short) ease",
             }}
           >
             <span class="s-status-bar-dot" style={{
               width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
-              background: dotColorMap[props.connectionStatus] ?? dotColorMap.disconnected,
+              background: dotColorMap[mode] ?? dotColorMap.disconnected,
             }} />
             <span style={{ opacity: 0.6 }}>{t("plana::statusBar.panel", "Panel")}</span>
             <span style={{ fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
               {props.version}
             </span>
+            {connecting && countdown > 0 && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "2px", color: "rgb(var(--color-warning))", fontWeight: 600 }}>
+                <PCountdownDigit value={countdown} />
+              </span>
+            )}
           </span>
 
           <HPopover
@@ -161,8 +179,8 @@ export const PStatusBar = defineComponent({
               {info ? (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", fontWeight: 600, fontSize: "0.8125rem" }}>
-                    {qualityIcon(info.quality, info.tier, info.isLocalhost, 14)}
-                    <span style={{ color: dotColorMap[info.state] ?? dotColorMap.disconnected }}>
+                    {qualityIcon(info.quality, tier, info.isLocalhost, 14)}
+                    <span style={{ color: dotColorMap[mode] ?? dotColorMap.disconnected }}>
                       {statusText}
                     </span>
                     {latency !== null && (
@@ -171,14 +189,21 @@ export const PStatusBar = defineComponent({
                       </span>
                     )}
                   </div>
-                  {info.state === "reconnecting" && info.retryCount > 0 && (
-                    <div style={{ color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
-                      {t("plana::statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
-                        .replace("{retryCount}", String(info.retryCount))
-                        .replace("{maxRetries}", String(info.maxRetries))}
+                  {connecting && attempt > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
+                      <span>
+                        {t("plana::statusBar.retrying", "Attempt {retryCount} / {maxRetries}")
+                          .replace("{retryCount}", String(attempt))
+                          .replace("{maxRetries}", String(3))}
+                      </span>
+                      {countdown > 0 && (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "1px", fontFamily: "var(--font-mono, monospace)" }}>
+                          <PCountdownDigit value={countdown} />
+                        </span>
+                      )}
                     </div>
                   )}
-                  {info.state === "disconnected" && (
+                  {mode === "disconnected" && (
                     <div style={{ fontStyle: "italic", fontSize: "0.6875rem", marginBottom: "4px", opacity: 0.7 }}>
                       {t("plana::statusBar.clickReconnect", "Click to retry")}
                     </div>
@@ -186,7 +211,7 @@ export const PStatusBar = defineComponent({
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Cpu size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("plana::statusBar.protocol", "Protocol")}</span>
-                    <span>{t(tierLabelKey, info?.tier ?? "ws")}</span>
+                    <span>{t(tierLabelKey, tier)}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
