@@ -6,8 +6,8 @@ location = "cosmos"
 
 [description]
 en = "Run language-specific static analysis (cargo clippy, eslint, pylint, go vet) via host_command_exec. Parses structured output and returns categorized findings with file/line/severity."
-zhs = "通过 host_command_exec 运行语言特定的静态分析（cargo clippy、eslint、pylint、go vet）。解析结构化输出并返回按文件/行号/严重性分类的问题。"
-zht = "通過 host_command_exec 運行語言特定的靜態分析（cargo clippy、eslint、pylint、go vet）。解析結構化輸出並返回按檔案/行號/嚴重性分類的問題。"
+zh-Hans = "通过 host_command_exec 运行语言特定的静态分析（cargo clippy、eslint、pylint、go vet）。解析结构化输出并返回按文件/行号/严重性分类的问题。"
+zh-Hant = "通過 host_command_exec 運行語言特定的靜態分析（cargo clippy、eslint、pylint、go vet）。解析結構化輸出並返回按檔案/行號/嚴重性分類的問題。"
 ja = "host_command_exec 経由で言語固有の静的解析（cargo clippy、eslint、pylint、go vet）を実行。構造化出力を解析し、ファイル/行/重大度で分類した結果を返します。"
 ko = "host_command_exec를 통해 언어별 정적 분석(cargo clippy, eslint, pylint, go vet) 실행. 구조화된 출력을 파싱하고 파일/줄/심각도별로 분류된 결과를 반환합니다."
 fr = "Exécuter l'analyse statique spécifique au langage (cargo clippy, eslint, pylint, go vet) via host_command_exec. Analyse la sortie structurée et retourne les résultats catégorisés par fichier/ligne/sévérité."

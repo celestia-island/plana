@@ -56,8 +56,8 @@ impl Language {
     /// Language code used in doc directories (for locating language folders under docs/agents)
     pub fn doc_code(&self) -> &'static str {
         match self {
-            Language::ZHS => "zhs",
-            Language::ZHT => "zht",
+            Language::ZHS => "zh-Hans",
+            Language::ZHT => "zh-Hant",
             Language::En => "en",
             Language::Ja => "ja",
             Language::Ko => "ko",
@@ -78,8 +78,8 @@ impl Language {
     /// Key name used in entrypoint TOML
     pub fn entry_point_lang_key(&self) -> &'static str {
         match self {
-            Language::ZHS => "zhs",
-            Language::ZHT => "zht",
+            Language::ZHS => "zh-Hans",
+            Language::ZHT => "zh-Hant",
             Language::En => "en",
             Language::Ja => "ja",
             Language::Ko => "ko",
@@ -112,8 +112,8 @@ impl Language {
     /// Parse a language from its code
     pub fn from_code(code: &str) -> Option<Self> {
         match code {
-            "zhs" | "ZHS" => Some(Language::ZHS),
-            "zht" | "ZHT" => Some(Language::ZHT),
+            "zh-Hans" | "zhs" | "ZHS" => Some(Language::ZHS),
+            "zh-Hant" | "zht" | "ZHT" => Some(Language::ZHT),
             "en" => Some(Language::En),
             "ja" => Some(Language::Ja),
             "ko" => Some(Language::Ko),
@@ -222,7 +222,7 @@ pub const SUPPORTED_LANGUAGES: &[Language] = &[
 
 /// List of supported language codes (as strings)
 pub const SUPPORTED_LANG_CODES: &[&str] = &[
-    "zhs", "zht", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
+    "zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
 ];
 
 #[cfg(test)]
@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn test_language_codes() -> Result<()> {
-        assert_eq!(Language::ZHS.doc_code(), "zhs");
+        assert_eq!(Language::ZHS.doc_code(), "zh-Hans");
         assert_eq!(Language::En.doc_code(), "en");
         assert_eq!(Language::Ja.doc_code(), "ja");
         Ok(())
@@ -240,13 +240,14 @@ mod tests {
 
     #[test]
     fn test_entry_point_keys() -> Result<()> {
-        assert_eq!(Language::ZHS.entry_point_lang_key(), "zhs");
+        assert_eq!(Language::ZHS.entry_point_lang_key(), "zh-Hans");
         assert_eq!(Language::En.entry_point_lang_key(), "en");
         Ok(())
     }
 
     #[test]
     fn test_from_code() -> Result<()> {
+        assert_eq!(Language::from_code("zh-Hans"), Some(Language::ZHS));
         assert_eq!(Language::from_code("zhs"), Some(Language::ZHS));
         assert_eq!(Language::from_code("en"), Some(Language::En));
         assert_eq!(Language::from_code("invalid"), None);

@@ -5,8 +5,8 @@ config = ["target_language"]
 
 [description]
 en = "Translate report content to the user's preferred language before delivering to human"
-zhs = "在报告送达人类之前，将报告内容翻译为用户偏好的语言"
-zht = "在報告送達人類之前，將報告內容翻譯為使用者偏好的語言"
+zh-Hans = "在报告送达人类之前，将报告内容翻译为用户偏好的语言"
+zh-Hant = "在報告送達人類之前，將報告內容翻譯為使用者偏好的語言"
 ja = "人間へのレポート配信前に、レポート内容をユーザーの優先言語に翻訳する"
 ko = "인간에게 보고서를 전달하기 전에 보고서 내용을 사용자 선호 언어로 번역합니다"
 fr = "Traduire le contenu du rapport dans la langue préférée de l'utilisateur avant de le livrer"

@@ -15,7 +15,7 @@ name = "infer_semantics"
 
 [description]
 en = "Autonomous discovery of an unknown industrial corridor. Probe transport endpoints, identify protocols (Modbus/S7comm/MC), scan data models (registers/DBs), and collect raw data for semantic inference. This skill is READ-ONLY: it never writes to any device."
-zhs = "自主发现未知工业走廊。探测传输端点，识别协议（Modbus/S7comm/MC），扫描数据模型（寄存器/DB），收集原始数据供语义推断。此技能为只读：绝不向任何设备写入数据。"
+zh-Hans = "自主发现未知工业走廊。探测传输端点，识别协议（Modbus/S7comm/MC），扫描数据模型（寄存器/DB），收集原始数据供语义推断。此技能为只读：绝不向任何设备写入数据。"
 
 [[related_tools]]
 agent_name = "industrial_iot"

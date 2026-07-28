@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Set the security policy for the agent"
-zhs = "设置代理的安全策略"
+zh-Hans = "设置代理的安全策略"
 +++
 
 ## Parameters

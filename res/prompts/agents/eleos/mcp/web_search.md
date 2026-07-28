@@ -3,8 +3,8 @@ name = "web_search"
 
 [description]
 en = "Search the web for information"
-zhs = "在网上搜索信息"
-zht = "在網路上搜尋資訊"
+zh-Hans = "在网上搜索信息"
+zh-Hant = "在網路上搜尋資訊"
 ja = "ウェブ上で情報を検索する"
 ko = "웹에서 정보 검색"
 fr = "Rechercher des informations sur le web"

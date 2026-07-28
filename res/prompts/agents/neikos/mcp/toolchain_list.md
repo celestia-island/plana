@@ -4,7 +4,7 @@ agent = "neikos"
 
 [description]
 en = "List available toolchains"
-zhs = "列出可用的工具链"
+zh-Hans = "列出可用的工具链"
 +++
 
 ## Parameters

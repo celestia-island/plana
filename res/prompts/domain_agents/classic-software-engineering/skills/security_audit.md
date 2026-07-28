@@ -5,8 +5,8 @@ execution_mode = "read"
 
 [description]
 en = "Orchestrate security auditing: delegate to OreXis for vulnerability scanning, then enrich with code-level context."
-zhs = "安全审计编排：委托OreXis扫描漏洞，然后用代码级上下文丰富结果"
-zht = "安全審計編排：委託OreXis掃描漏洞，然後用程式碼級上下文豐富結果"
+zh-Hans = "安全审计编排：委托OreXis扫描漏洞，然后用代码级上下文丰富结果"
+zh-Hant = "安全審計編排：委託OreXis掃描漏洞，然後用程式碼級上下文豐富結果"
 ja = "セキュリティ監査オーケストレーション：OreXisに脆弱性スキャンを委任し、コードレベルのコンテキストで結果を強化"
 ko = "보안 감사 오케스트레이션: OreXis에 취약점 스캔을 위임하고 코드 수준 컨텍스트로 결과 보강"
 fr = "Orchestration d'audit de sécurité : déléguer à OreXis pour l'analyse des vulnérabilités, puis enrichir avec le contexte au niveau du code"
