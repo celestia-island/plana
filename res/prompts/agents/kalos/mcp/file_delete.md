@@ -3,8 +3,8 @@ name = "file_delete"
 
 [description]
 en = "Delete specified files or directories"
-zhs = "删除指定的文件或目录"
-zht = "刪除指定的檔案或目錄"
+zh-Hans = "删除指定的文件或目录"
+zh-Hant = "刪除指定的檔案或目錄"
 ja = "指定されたファイルまたはディレクトリを削除"
 ko = "지정된 파일 또는 디렉토리 삭제"
 fr = "Supprimer les fichiers ou répertoires spécifiés"

@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Inspect a tool call for security compliance"
-zhs = "检查工具调用的安全合规性"
+zh-Hans = "检查工具调用的安全合规性"
 +++
 
 ## Parameters

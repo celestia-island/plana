@@ -17,8 +17,8 @@ name = "task_decompose"
 
 [description]
 en = "Triage incoming issues, analyze priority and scope, create corresponding TODO items"
-zhs = "对传入 Issue 进行分诊，分析优先级与范围，创建对应的 TODO 项"
-zht = "對傳入 Issue 進行分類，分析優先級與範圍，建立對應的 TODO 項目"
+zh-Hans = "对传入 Issue 进行分诊，分析优先级与范围，创建对应的 TODO 项"
+zh-Hant = "對傳入 Issue 進行分類，分析優先級與範圍，建立對應的 TODO 項目"
 ja = "受信 Issue のトリアージ、優先度とスコープを分析し、対応する TODO 項目を作成"
 ko = "수신된 이슈를 분류하고, 우선순위와 범위를 분석하여 해당 TODO 항목 생성"
 fr = "Trier les incidents entrants, analyser la priorité et la portée, créer les TODO correspondants"

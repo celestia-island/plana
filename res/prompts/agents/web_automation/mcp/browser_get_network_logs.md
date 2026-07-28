@@ -4,7 +4,7 @@ agent = "web_automation"
 
 [description]
 en = "Get browser network request logs"
-zhs = "获取浏览器网络请求日志"
+zh-Hans = "获取浏览器网络请求日志"
 +++
 
 ## Parameters

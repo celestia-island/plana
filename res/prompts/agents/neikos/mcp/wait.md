@@ -4,8 +4,8 @@ agent = "neikos"
 
 [description]
 en = "Register a wait timer"
-zhs = "注册等待计时器"
-zht = "註冊等待計時器"
+zh-Hans = "注册等待计时器"
+zh-Hant = "註冊等待計時器"
 ja = "待機タイマーを登録"
 ko = "대기 타이머 등록"
 fr = "Enregistrer un minuteur d'attente"

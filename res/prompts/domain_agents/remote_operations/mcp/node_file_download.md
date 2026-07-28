@@ -4,7 +4,7 @@ agent = "remote_operations"
 
 [description]
 en = "Download a file from a remote node"
-zhs = "从远程节点下载文件"
+zh-Hans = "从远程节点下载文件"
 +++
 
 ## Parameters

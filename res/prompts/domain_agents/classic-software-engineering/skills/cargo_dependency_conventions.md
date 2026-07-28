@@ -5,8 +5,8 @@ status = "ruleset"
 
 [description]
 en = "Configurable ruleset for Cargo.toml dependency grouping, ordering, and versioning. Loaded by code_standards during Standards Discovery."
-zhs = "Cargo.toml 依赖分组、排序与版本规范的可配置规则集。由 code_standards 在标准发现阶段加载。"
-zht = "Cargo.toml 依賴分組、排序與版本規範的可配置規則集。由 code_standards 在標準發現階段載入。"
+zh-Hans = "Cargo.toml 依赖分组、排序与版本规范的可配置规则集。由 code_standards 在标准发现阶段加载。"
+zh-Hant = "Cargo.toml 依賴分組、排序與版本規範的可配置規則集。由 code_standards 在標準發現階段載入。"
 ja = "Cargo.tomlの依存関係グループ化、順序付け、バージョン管理のための設定可能なルールセット。code_standardsが標準検出フェーズで読み込む。"
 ko = "Cargo.toml 종속성 그룹화, 순서 지정 및 버전 관리를 위한 구성 가능한 규칙 세트. code_standards가 표준 검색 단계에서 로드합니다."
 fr = "Ensemble de règles configurables pour le regroupement, l'ordonnancement et le versionnement des dépendances Cargo.toml. Chargé par code_standards lors de la découverte des normes."

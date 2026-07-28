@@ -4,8 +4,8 @@ agent = "orexis"
 
 [description]
 en = "Audit legality compliance against jurisdiction requirements"
-zhs = "审计合法性与司法管辖区要求的合规性"
-zht = "審計合法性與司法管轄區要求的合規性"
+zh-Hans = "审计合法性与司法管辖区要求的合规性"
+zh-Hant = "審計合法性與司法管轄區要求的合規性"
 ja = "管轄区要件に対する適法性コンプライアンスを監査"
 ko = "관할 구역 요구 사항에 대한 합법성 규정 준수 감사"
 fr = "Auditer la conformité légale par rapport aux exigences de juridiction"

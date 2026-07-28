@@ -4,7 +4,7 @@ agent = "neikos"
 
 [description]
 en = "Spawn a sidecar process"
-zhs = "启动一个边车进程"
+zh-Hans = "启动一个边车进程"
 +++
 
 ## Parameters
