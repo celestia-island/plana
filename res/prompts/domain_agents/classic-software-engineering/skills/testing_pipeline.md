@@ -5,8 +5,8 @@ execution_mode = "read"
 
 [description]
 en = "Orchestrate testing pipeline: analyze test coverage, verify test quality, and generate test improvement recommendations."
-zh-Hans = "测试流水线：分析测试覆盖率 + 验证测试质量 + 生成改进建议"
-zh-Hant = "測試流水線：分析測試覆蓋率 + 驗證測試品質 + 生成改進建議"
+zhs = "测试流水线：分析测试覆盖率 + 验证测试质量 + 生成改进建议"
+zht = "測試流水線：分析測試覆蓋率 + 驗證測試品質 + 生成改進建議"
 ja = "テストパイプライン：テストカバレッジ分析 + テスト品質検証 + 改善提案の生成"
 ko = "테스트 파이프라인: 테스트 커버리지 분석 + 테스트 품질 검증 + 개선 권장 사항 생성"
 fr = "Pipeline de test : analyser la couverture de tests + vérifier la qualité des tests + générer des recommandations d'amélioration"

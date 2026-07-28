@@ -4,8 +4,8 @@ agent = "web_automation"
 
 [description]
 en = "Create a new browser instance for automated testing"
-zh-Hans = "创建新的浏览器实例用于自动化测试"
-zh-Hant = "建立新的瀏覽器實例用於自動化測試"
+zhs = "创建新的浏览器实例用于自动化测试"
+zht = "建立新的瀏覽器實例用於自動化測試"
 ja = "自動テスト用の新しいブラウザインスタンスを作成する"
 ko = "자동화된 테스트를 위한 새 브라우저 인스턴스 생성"
 fr = "Créer une nouvelle instance de navigateur pour les tests automatisés"

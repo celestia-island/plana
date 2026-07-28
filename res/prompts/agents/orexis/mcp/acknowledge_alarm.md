@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Acknowledge an active alarm"
-zh-Hans = "确认一个活跃报警"
+zhs = "确认一个活跃报警"
 +++
 
 ## Parameters

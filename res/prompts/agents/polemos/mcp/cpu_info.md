@@ -4,8 +4,8 @@ agent = "polemos"
 
 [description]
 en = "Read and return CPU information from /proc/cpuinfo."
-zh-Hans = "读取并返回 /proc/cpuinfo 中的 CPU 信息。"
-zh-Hant = "讀取並回傳 /proc/cpuinfo 中的 CPU 資訊。"
+zhs = "读取并返回 /proc/cpuinfo 中的 CPU 信息。"
+zht = "讀取並回傳 /proc/cpuinfo 中的 CPU 資訊。"
 ja = "/proc/cpuinfo から CPU 情報を読み取り、返却する。"
 ko = "/proc/cpuinfo에서 CPU 정보를 읽어 반환합니다."
 fr = "Lire et retourner les informations CPU depuis /proc/cpuinfo."

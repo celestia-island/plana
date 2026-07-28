@@ -4,7 +4,7 @@ agent = "hubris"
 
 [description]
 en = "Resolves merge conflicts between parallel container overlays by intelligently merging or selecting the correct version for each conflicting file."
-zh-Hans = "解决并行容器覆盖层之间的合并冲突，通过智能合并或为每个冲突文件选择正确版本来解决冲突。"
+zhs = "解决并行容器覆盖层之间的合并冲突，通过智能合并或为每个冲突文件选择正确版本来解决冲突。"
 
 [[related_tools]]
 agent_name = "kalos"

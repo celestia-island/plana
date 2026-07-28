@@ -4,8 +4,8 @@ agent = "neikos"
 
 [description]
 en = "Execute a command inside a container"
-zh-Hans = "在容器内执行命令"
-zh-Hant = "在容器內執行命令"
+zhs = "在容器内执行命令"
+zht = "在容器內執行命令"
 ja = "コンテナ内でコマンドを実行する"
 ko = "컨테이너 내에서 명령 실행"
 fr = "Exécuter une commande dans un conteneur"

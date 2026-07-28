@@ -4,7 +4,7 @@ agent = "polemos"
 
 [description]
 en = "Execute a command on the host machine via evernight IPC"
-zh-Hans = "通过 evernight IPC 在宿主机执行命令"
+zhs = "通过 evernight IPC 在宿主机执行命令"
 +++
 
 ## Parameters

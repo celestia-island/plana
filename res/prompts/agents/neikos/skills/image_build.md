@@ -4,8 +4,8 @@ agent = "neikos"
 
 [description]
 en = "Verify, pull, or build container images to ensure image availability and correctness."
-zh-Hans = "验证、拉取或构建容器镜像，确保镜像的可用性和正确性。"
-zh-Hant = "驗證、拉取或建構容器映像，確保映像的可用性和正確性。"
+zhs = "验证、拉取或构建容器镜像，确保镜像的可用性和正确性。"
+zht = "驗證、拉取或建構容器映像，確保映像的可用性和正確性。"
 ja = "コンテナイメージを検証、プル、またはビルドし、イメージの可用性と正確性を確保します。"
 ko = "컨테이너 이미지를 검증, 풀 또는 빌드하여 이미지 가용성과 정확성을 보장합니다."
 fr = "Vérifier, extraire ou construire des images de conteneur pour assurer leur disponibilité et leur exactitude."

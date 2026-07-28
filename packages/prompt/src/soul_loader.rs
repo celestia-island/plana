@@ -160,20 +160,20 @@ impl SoulLoader {
     }
 
     pub fn get_default_lang() -> String {
-        std::env::var("APP_LANG").unwrap_or_else(|_| "zh-Hans".to_string())
+        std::env::var("APP_LANG").unwrap_or_else(|_| "zhs".to_string())
     }
 
     pub fn is_valid_lang(lang: &str) -> bool {
         matches!(
             lang,
-            "en" | "zh-Hans" | "zhs" | "zh-Hant" | "zht" | "ja" | "ko" | "fr" | "es" | "ru"
+            "en" | "zhs" | "zht" | "ja" | "ko" | "fr" | "es" | "ru"
         )
     }
 
     pub fn normalize_lang(lang: &str) -> String {
         match lang.to_lowercase().as_str() {
-            "zh" | "zh-cn" | "zh_hans" | "zhs" => "zh-Hans".to_string(),
-            "zh-tw" | "zh_hk" | "zh_hant" | "zht" => "zh-Hant".to_string(),
+            "zh" | "zh-cn" | "zh_hans" => "zhs".to_string(),
+            "zh-tw" | "zh_hk" | "zh_hant" => "zht".to_string(),
             "jp" => "ja".to_string(),
             "kr" => "ko".to_string(),
             other => other.to_string(),
@@ -188,7 +188,6 @@ mod tests {
 
     #[test]
     fn test_is_valid_lang() -> Result<()> {
-        assert!(SoulLoader::is_valid_lang("zh-Hans"));
         assert!(SoulLoader::is_valid_lang("zhs"));
         assert!(SoulLoader::is_valid_lang("en"));
         assert!(SoulLoader::is_valid_lang("ja"));
@@ -200,11 +199,9 @@ mod tests {
 
     #[test]
     fn test_normalize_lang() -> Result<()> {
-        assert_eq!(SoulLoader::normalize_lang("zh"), "zh-Hans");
-        assert_eq!(SoulLoader::normalize_lang("zh-cn"), "zh-Hans");
-        assert_eq!(SoulLoader::normalize_lang("zhs"), "zh-Hans");
-        assert_eq!(SoulLoader::normalize_lang("zh-tw"), "zh-Hant");
-        assert_eq!(SoulLoader::normalize_lang("zht"), "zh-Hant");
+        assert_eq!(SoulLoader::normalize_lang("zh"), "zhs");
+        assert_eq!(SoulLoader::normalize_lang("zh-cn"), "zhs");
+        assert_eq!(SoulLoader::normalize_lang("zh-tw"), "zht");
         assert_eq!(SoulLoader::normalize_lang("jp"), "ja");
         assert_eq!(SoulLoader::normalize_lang("en"), "en");
         assert_eq!(SoulLoader::normalize_lang("EN"), "en");
@@ -230,7 +227,7 @@ Some content here."#;
 
     #[test]
     fn test_layer2_soul_path() -> Result<()> {
-        let path = SoulLoader::get_soul_path("web_automation", "zh-Hans");
+        let path = SoulLoader::get_soul_path("web_automation", "zhs");
         assert_eq!(path, PathBuf::from("res/prompts/soul/web_automation.md"));
         Ok(())
     }
@@ -247,7 +244,7 @@ Some content here."#;
 
         std::env::set_current_dir(repo_root)?;
 
-        let result = SoulLoader::load("skopeo", "zh-Hans").await;
+        let result = SoulLoader::load("skopeo", "zhs").await;
         assert!(
             result.is_ok(),
             "Failed to load skopeo soul: {:?}",
@@ -272,7 +269,7 @@ Some content here."#;
 
         std::env::set_current_dir(repo_root)?;
 
-        let result = SoulLoader::load_sync("skopeo", "zh-Hans");
+        let result = SoulLoader::load_sync("skopeo", "zhs");
         assert!(
             result.is_ok(),
             "Failed to load skopeo soul sync: {:?}",
@@ -297,7 +294,7 @@ Some content here."#;
 
         std::env::set_current_dir(repo_root)?;
 
-        let result = SoulLoader::load("web_automation", "zh-Hans").await;
+        let result = SoulLoader::load("web_automation", "zhs").await;
         assert!(
             result.is_ok(),
             "Failed to load web_automation soul: {:?}",

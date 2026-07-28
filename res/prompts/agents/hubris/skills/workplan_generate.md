@@ -8,8 +8,8 @@ name = "plan_execute"
 
 [description]
 en = "Strategic Analysis + Task Estimation + Phased Work Plan Generation"
-zh-Hans = "战略分析 + 任务估算 + 分阶段工作计划生成"
-zh-Hant = "戰略分析 + 任務估算 + 分階段工作計畫生成"
+zhs = "战略分析 + 任务估算 + 分阶段工作计划生成"
+zht = "戰略分析 + 任務估算 + 分階段工作計畫生成"
 ja = "戦略分析 + タスク見積 + 段階別作業計画生成"
 ko = "전략 분석 + 작업 평가 + 단계별 작업 계획 생성"
 fr = "Analyse stratégique + estimation + génération de plan"

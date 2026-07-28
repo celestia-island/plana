@@ -4,8 +4,8 @@ agent = "hubris"
 
 [description]
 en = "Move TODO items from one parent node to another, reorganizing task hierarchy structure. Supports precise position control."
-zh-Hans = "将待办事项从一个父节点移动到另一个父节点，重新组织任务层级结构。支持精确位置控制。"
-zh-Hant = "將待辦事項從一個父節點移動到另一個父節點，重新組織任務階層結構。支援精確位置控制。"
+zhs = "将待办事项从一个父节点移动到另一个父节点，重新组织任务层级结构。支持精确位置控制。"
+zht = "將待辦事項從一個父節點移動到另一個父節點，重新組織任務階層結構。支援精確位置控制。"
 ja = "TODOアイテムをある親ノードから別の親ノードに移動し、タスク階層構造を再編成します。正確な位置制御をサポートします。"
 ko = "TODO 항목을 한 부모 노드에서 다른 부모 노드로 이동하여 작업 계층 구조를 재편성합니다. 정밀한 위치 제어를 지원합니다."
 fr = "Déplacer les éléments TODO d'un nœud parent à un autre, réorganisant la structure hiérarchique des tâches. Prend en charge le contrôle précis de la position."

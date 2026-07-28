@@ -4,7 +4,7 @@ agent = "skopeo"
 
 [description]
 en = "List all goals"
-zh-Hans = "列出所有目标"
+zhs = "列出所有目标"
 +++
 
 ## Parameters

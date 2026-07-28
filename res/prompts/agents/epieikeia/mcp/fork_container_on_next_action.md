@@ -4,7 +4,7 @@ agent = "epieikeia"
 
 [description]
 en = "Fork a container on the next agent action"
-zh-Hans = "在下一个代理操作时复制容器"
+zhs = "在下一个代理操作时复制容器"
 +++
 
 ## Parameters
