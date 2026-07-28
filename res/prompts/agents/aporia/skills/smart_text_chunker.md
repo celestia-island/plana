@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Smart text chunking preserving semantic boundaries"
-zhs = "智能文本分块，保留语义边界"
-zht = "智慧文字分塊，保留語義邊界"
+zh-Hans = "智能文本分块，保留语义边界"
+zh-Hant = "智慧文字分塊，保留語義邊界"
 ja = "セマンティック境界を保持するスマートテキストチャンキング"
 ko = "의미론적 경계를 유지하는 스마트 텍스트 청킹"
 fr = "Découpage intelligent du texte préservant les limites sémantiques"

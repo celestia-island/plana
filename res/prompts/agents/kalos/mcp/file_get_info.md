@@ -3,8 +3,8 @@ name = "file_get_info"
 
 [description]
 en = "Get file or directory metadata"
-zhs = "获取文件或目录的元数据"
-zht = "取得檔案或目錄的元資料"
+zh-Hans = "获取文件或目录的元数据"
+zh-Hant = "取得檔案或目錄的元資料"
 ja = "ファイルまたはディレクトリのメタデータを取得"
 ko = "파일 또는 디렉토리 메타데이터 조회"
 fr = "Obtenir les métadonnées d'un fichier ou d'un répertoire"

@@ -4,7 +4,7 @@ agent = "epieikeia"
 
 [description]
 en = "List active file observers"
-zhs = "列出活动的文件观察者"
+zh-Hans = "列出活动的文件观察者"
 +++
 
 ## Parameters

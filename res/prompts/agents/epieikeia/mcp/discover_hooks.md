@@ -4,7 +4,7 @@ agent = "epieikeia"
 
 [description]
 en = "Discover registered hooks by namespace. Returns list of hooks matching a namespace prefix, enabling epieikeia to diagnose available safety-net capabilities."
-zhs = "按命名空间发现已注册的 hooks。返回匹配命名空间前缀的 hook 列表，使 epieikeia 能够诊断可用的安全网能力。"
+zh-Hans = "按命名空间发现已注册的 hooks。返回匹配命名空间前缀的 hook 列表，使 epieikeia 能够诊断可用的安全网能力。"
 
 [[related_tools]]
 agent_name = "hubris"

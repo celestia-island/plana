@@ -6,8 +6,8 @@ location = "cosmos"
 
 [description]
 en = "Evaluate codebase health: oversized files, unwrap/expect usage, dead code density, and dependency freshness via host_command_exec."
-zhs = "代码健康检查：超大文件、unwrap/expect 使用、死代码密度、依赖新鲜度（通过 host_command_exec）。"
-zht = "程式碼健康檢查：超大檔案、unwrap/expect 使用、死程式碼密度、依賴新鮮度（通過 host_command_exec）。"
+zh-Hans = "代码健康检查：超大文件、unwrap/expect 使用、死代码密度、依赖新鲜度（通过 host_command_exec）。"
+zh-Hant = "程式碼健康檢查：超大檔案、unwrap/expect 使用、死程式碼密度、依賴新鮮度（通過 host_command_exec）。"
 ja = "コードヘルスチェック：巨大ファイル、unwrap/expect使用、デッドコード密度、依存関係の鮮度（host_command_exec経由）。"
 ko = "코드 건강 검사: 과대 파일, unwrap/expect 사용, 데드 코드 밀도, 종속성 신선도 (host_command_exec 경유)."
 fr = "Vérification de santé du code : fichiers surdimensionnés, usage de unwrap/expect, densité de code mort, fraîcheur des dépendances via host_command_exec."

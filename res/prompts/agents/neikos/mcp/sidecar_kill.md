@@ -4,7 +4,7 @@ agent = "neikos"
 
 [description]
 en = "Kill a sidecar process"
-zhs = "终止边车进程"
+zh-Hans = "终止边车进程"
 +++
 
 ## Parameters
