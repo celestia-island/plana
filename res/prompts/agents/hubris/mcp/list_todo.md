@@ -4,8 +4,8 @@ agent = "hubris"
 
 [description]
 en = "Query and display a list of TODO items in multiple view modes. Supports flexible filtering, sorting, and grouping to meet different display needs."
-zh-Hans = "以多种视图模式查询和显示待办事项列表。支持灵活的筛选、排序和分组，满足不同的展示需求。"
-zh-Hant = "以多種檢視模式查詢和顯示待辦事項列表。支援彈性的篩選、排序和分組，滿足不同的展示需求。"
+zhs = "以多种视图模式查询和显示待办事项列表。支持灵活的筛选、排序和分组，满足不同的展示需求。"
+zht = "以多種檢視模式查詢和顯示待辦事項列表。支援彈性的篩選、排序和分組，滿足不同的展示需求。"
 ja = "複数の表示モードでTODOアイテムのリストをクエリおよび表示します。柔軟なフィルタリング、ソート、グループ化をサポートし、さまざまな表示ニーズに対応します。"
 ko = "여러 보기 모드로 TODO 항목 목록을 조회하고 표시합니다. 유연한 필터링, 정렬 및 그룹화를 지원하여 다양한 표시 요구를 충족합니다."
 fr = "Interroger et afficher une liste d'éléments TODO dans plusieurs modes de vue. Prend en charge le filtrage, le tri et le regroupement flexibles pour répondre à différents besoins d'affichage."

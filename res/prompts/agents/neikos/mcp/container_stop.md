@@ -3,8 +3,8 @@ name = "container_stop"
 
 [description]
 en = "Stop a running container."
-zh-Hans = "停止运行中的容器。"
-zh-Hant = "停止運行中的容器。"
+zhs = "停止运行中的容器。"
+zht = "停止運行中的容器。"
 ja = "実行中のコンテナを停止する。"
 ko = "실행 중인 컨테이너를 중지합니다."
 fr = "Arrêter un conteneur en cours d'exécution."

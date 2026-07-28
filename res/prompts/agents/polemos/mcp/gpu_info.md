@@ -4,8 +4,8 @@ agent = "polemos"
 
 [description]
 en = "Query nvidia-smi for GPU information (requires NVIDIA drivers)."
-zh-Hans = "通过 nvidia-smi 查询 GPU 信息（需要 NVIDIA 驱动）。"
-zh-Hant = "透過 nvidia-smi 查詢 GPU 資訊（需要 NVIDIA 驅動程式）。"
+zhs = "通过 nvidia-smi 查询 GPU 信息（需要 NVIDIA 驱动）。"
+zht = "透過 nvidia-smi 查詢 GPU 資訊（需要 NVIDIA 驅動程式）。"
 ja = "nvidia-smi で GPU 情報を照会する（NVIDIA ドライバーが必要）。"
 ko = "nvidia-smi로 GPU 정보를 쿼리합니다 (NVIDIA 드라이버 필요)."
 fr = "Interroger nvidia-smi pour obtenir des informations GPU (nécessite les pilotes NVIDIA)."

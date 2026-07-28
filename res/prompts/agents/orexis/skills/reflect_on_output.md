@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Semantic reflection on a skill's output. Evaluates whether the output achieves the skill's stated goal, whether the reasoning is internally consistent, and whether the approach should be adjusted. This is the Tier 1 reflection mechanism described in the Reflection Architecture."
-zh-Hans = "对技能输出的语义反思。评估输出是否达成了技能声明的目标，推理是否内在自洽，以及方法是否需要调整。这是反思架构中描述的第一层反思机制。"
+zhs = "对技能输出的语义反思。评估输出是否达成了技能声明的目标，推理是否内在自洽，以及方法是否需要调整。这是反思架构中描述的第一层反思机制。"
 
 [[related_tools]]
 agent_name = "aporia"

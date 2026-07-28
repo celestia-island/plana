@@ -4,8 +4,8 @@ agent = "hubris"
 
 [description]
 en = "Delete the specified TODO item and all its sub-items. Supports cascade deletion to ensure task tree integrity."
-zh-Hans = "删除指定的待办事项及其所有子项。支持级联删除以确保任务树的完整性。"
-zh-Hant = "刪除指定的待辦事項及其所有子項。支援級聯刪除以確保任務樹的完整性。"
+zhs = "删除指定的待办事项及其所有子项。支持级联删除以确保任务树的完整性。"
+zht = "刪除指定的待辦事項及其所有子項。支援級聯刪除以確保任務樹的完整性。"
 ja = "指定されたTODOアイテムとすべてのサブアイテムを削除します。タスクツリーの整合性を確保するためのカスケード削除をサポートします。"
 ko = "지정된 TODO 항목과 모든 하위 항목을 삭제합니다. 작업 트리 무결성을 보장하기 위해 연쇄 삭제를 지원합니다."
 fr = "Supprimer l'élément TODO spécifié et tous ses sous-éléments. Prend en charge la suppression en cascade pour garantir l'intégrité de l'arborescence des tâches."

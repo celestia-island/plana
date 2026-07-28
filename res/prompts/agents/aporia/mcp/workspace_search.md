@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Semantic search over indexed workspace files using natural language queries"
-zh-Hans = "使用自然语言查询对已索引的工作区文件进行语义搜索"
-zh-Hant = "使用自然語言查詢對已索引的工作區檔案進行語義搜尋"
+zhs = "使用自然语言查询对已索引的工作区文件进行语义搜索"
+zht = "使用自然語言查詢對已索引的工作區檔案進行語義搜尋"
 ja = "自然言語クエリを使用してインデックス済みワークスペースファイルの意味検索を行う"
 ko = "자연어 쿼리를 사용하여 인덱싱된 워크스페이스 파일의 의미 검색"
 fr = "Recherche sémantique dans les fichiers indexés de l'espace de travail par requêtes en langage naturel"

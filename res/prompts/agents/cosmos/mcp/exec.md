@@ -4,7 +4,7 @@ agent = "cosmos"
 
 [description]
 en = "Execute JavaScript code in the Cosmos runtime"
-zh-Hans = "Execute JavaScript code in the Cosmos runtime"
+zhs = "Execute JavaScript code in the Cosmos runtime"
 +++
 
 ## Parameters

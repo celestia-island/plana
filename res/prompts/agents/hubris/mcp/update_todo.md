@@ -4,8 +4,8 @@ agent = "hubris"
 
 [description]
 en = "Update properties of existing TODO items such as status, priority, description, etc. Supports partial updates - only provide fields that need to be modified."
-zh-Hans = "更新现有待办事项的属性，如状态、优先级、描述等。支持部分更新——只需提供需要修改的字段。"
-zh-Hant = "更新現有待辦事項的屬性，如狀態、優先順序、描述等。支援部分更新——只需提供需要修改的欄位。"
+zhs = "更新现有待办事项的属性，如状态、优先级、描述等。支持部分更新——只需提供需要修改的字段。"
+zht = "更新現有待辦事項的屬性，如狀態、優先順序、描述等。支援部分更新——只需提供需要修改的欄位。"
 ja = "既存のTODOアイテムのステータス、優先度、説明などのプロパティを更新します。部分更新をサポート——変更が必要なフィールドのみ指定してください。"
 ko = "기존 TODO 항목의 상태, 우선순위, 설명 등 속성을 업데이트합니다. 부분 업데이트를 지원합니다 - 수정이 필요한 필드만 제공하면 됩니다."
 fr = "Mettre à jour les propriétés des éléments TODO existants tels que le statut, la priorité, la description, etc. Prend en charge les mises à jour partielles - ne fournir que les champs à modifier."

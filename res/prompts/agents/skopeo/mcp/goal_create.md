@@ -4,7 +4,7 @@ agent = "skopeo"
 
 [description]
 en = "Create a new goal"
-zh-Hans = "创建一个新目标"
+zhs = "创建一个新目标"
 +++
 
 ## Parameters

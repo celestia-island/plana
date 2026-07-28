@@ -4,8 +4,8 @@ agent = "philia"
 
 [description]
 en = "Store a memory node (entity, concept, episode, etc.) into the cognitive memory system. The text is automatically embedded for vector similarity search and linked to related nodes via the knowledge graph."
-zh-Hans = "将记忆节点（实体、概念、事件等）存入认知记忆系统。文本会自动计算嵌入向量用于相似性搜索，并通过知识图谱关联到相关节点。"
-zh-Hant = "將記憶節點（實體、概念、事件等）存入認知記憶系統。文本會自動計算嵌入向量用於相似性搜索，並透過知識圖譜關聯到相關節點。"
+zhs = "将记忆节点（实体、概念、事件等）存入认知记忆系统。文本会自动计算嵌入向量用于相似性搜索，并通过知识图谱关联到相关节点。"
+zht = "將記憶節點（實體、概念、事件等）存入認知記憶系統。文本會自動計算嵌入向量用於相似性搜索，並透過知識圖譜關聯到相關節點。"
 ja = "記憶ノード（エンティティ、概念、エピソードなど）を認知メモリシステムに保存します。テキストは自動的に埋め込みベクトル化され、類似性検索とナレッジグラフによる関連ノードへのリンクに使用されます。"
 ko = "메모리 노드(엔티티, 개념, 에피소드 등)를 인지 메모리 시스템에 저장합니다. 텍스트는 자동으로 임베딩되어 벡터 유사도 검색 및 지식 그래프를 통한 관련 노드 연결에 사용됩니다."
 fr = "Stockez un nœud de mémoire (entité, concept, épisode, etc.) dans le système de mémoire cognitive. Le texte est automatiquement vectorisé pour la recherche de similarité et lié aux nœuds associés via le graphe de connaissances."

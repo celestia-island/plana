@@ -4,8 +4,8 @@ agent = "epieikeia"
 
 [description]
 en = "Verify that all 12 Layer1 agents are instantiated, their MCP tools are accessible, and critical tool endpoints respond. Produces a liveness matrix for system health monitoring."
-zh-Hans = "验证所有 12 个 Layer1 代理是否已实例化，其 MCP 工具可访问，关键工具端点响应正常。生成系统健康监控的存活矩阵。"
-zh-Hant = "驗證所有 12 個 Layer1 代理是否已實例化，其 MCP 工具可訪問，關鍵工具端點響應正常。生成系統健康監控的存活矩陣。"
+zhs = "验证所有 12 个 Layer1 代理是否已实例化，其 MCP 工具可访问，关键工具端点响应正常。生成系统健康监控的存活矩阵。"
+zht = "驗證所有 12 個 Layer1 代理是否已實例化，其 MCP 工具可訪問，關鍵工具端點響應正常。生成系統健康監控的存活矩陣。"
 ja = "12のLayer1エージェントがインスタンス化され、MCPツールにアクセス可能で、重要なツールエンドポイントが応答することを確認します。"
 ko = "12개의 Layer1 에이전트가 인스턴스화되었는지, MCP 도구에 액세스할 수 있는지, 중요 도구 엔드포인트가 응답하는지 확인합니다."
 fr = "Vérifier que les 12 agents Layer1 sont instanciés, leurs outils MCP accessibles et les endpoints critiques répondent."

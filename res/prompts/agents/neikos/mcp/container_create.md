@@ -3,8 +3,8 @@ name = "container_create"
 
 [description]
 en = "Create a new container."
-zh-Hans = "创建新容器。"
-zh-Hant = "建立新容器。"
+zhs = "创建新容器。"
+zht = "建立新容器。"
 ja = "新しいコンテナを作成する。"
 ko = "새 컨테이너를 생성합니다."
 fr = "Créer un nouveau conteneur."

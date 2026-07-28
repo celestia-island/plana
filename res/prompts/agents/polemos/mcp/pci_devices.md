@@ -4,8 +4,8 @@ agent = "polemos"
 
 [description]
 en = "List PCI devices from lspci output."
-zh-Hans = "从 lspci 输出中列出 PCI 设备。"
-zh-Hant = "從 lspci 輸出中列出 PCI 裝置。"
+zhs = "从 lspci 输出中列出 PCI 设备。"
+zht = "從 lspci 輸出中列出 PCI 裝置。"
 ja = "lspci 出力から PCI デバイスを一覧表示する。"
 ko = "lspci 출력에서 PCI 장치를 나열합니다."
 fr = "Lister les périphériques PCI depuis la sortie de lspci."
