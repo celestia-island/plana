@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Return current status of the workspace RAG index"
-zhs = "返回工作区RAG索引的当前状态"
-zht = "返回工作區RAG索引的目前狀態"
+zh-Hans = "返回工作区RAG索引的当前状态"
+zh-Hant = "返回工作區RAG索引的目前狀態"
 ja = "ワークスペースRAGインデックスの現在のステータスを返す"
 ko = "워크스페이스 RAG 인덱스의 현재 상태 반환"
 fr = "Retourner l'état actuel de l'index RAG de l'espace de travail"

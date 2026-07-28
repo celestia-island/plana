@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Unblock a previously blocked tool"
-zhs = "解除对之前被阻止的工具的限制"
+zh-Hans = "解除对之前被阻止的工具的限制"
 +++
 
 ## Parameters

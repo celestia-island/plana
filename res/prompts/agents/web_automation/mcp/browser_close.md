@@ -4,7 +4,7 @@ agent = "web_automation"
 
 [description]
 en = "Close a browser instance"
-zhs = "关闭浏览器实例"
+zh-Hans = "关闭浏览器实例"
 +++
 
 ## Parameters

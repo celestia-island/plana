@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Semantic retrieval and intelligent summarization"
-zhs = "语义检索与智能摘要"
-zht = "語義檢索與智慧摘要"
+zh-Hans = "语义检索与智能摘要"
+zh-Hant = "語義檢索與智慧摘要"
 ja = "セマンティック検索とインテリジェント要約"
 ko = "의미론적 검색 및 지능형 요약"
 fr = "Recherche sémantique et résumé intelligent"

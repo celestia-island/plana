@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Scan and index workspace files into the RAG vector database for semantic retrieval"
-zhs = "扫描工作区文件并索引到RAG向量数据库以支持语义检索"
-zht = "掃描工作區檔案並索引至RAG向量資料庫以支援語義檢索"
+zh-Hans = "扫描工作区文件并索引到RAG向量数据库以支持语义检索"
+zh-Hant = "掃描工作區檔案並索引至RAG向量資料庫以支援語義檢索"
 ja = "ワークスペースファイルをスキャンし、RAGベクトルデータベースにインデックスして意味検索を可能にする"
 ko = "워크스페이스 파일을 스캔하여 RAG 벡터 데이터베이스에 인덱싱하여 의미 검색 지원"
 fr = "Analyser et indexer les fichiers de l'espace de travail dans la base vectorielle RAG"

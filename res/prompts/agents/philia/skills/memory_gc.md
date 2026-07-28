@@ -4,8 +4,8 @@ agent = "philia"
 
 [description]
 en = "Prune stale, orphaned, and low-value memory nodes from the knowledge graph. Identifies unreachable nodes, expired temporal data, and redundant duplicates, then removes them to maintain graph health."
-zhs = "从知识图谱中清除过时、孤立和低价值的记忆节点。识别不可达节点、过期时序数据和冗余副本，然后删除以维护图谱健康。"
-zht = "從知識圖譜中清除過時、孤立和低價值的記憶節點。識別不可達節點、過期時序數據和冗餘副本，然後刪除以維護圖譜健康。"
+zh-Hans = "从知识图谱中清除过时、孤立和低价值的记忆节点。识别不可达节点、过期时序数据和冗余副本，然后删除以维护图谱健康。"
+zh-Hant = "從知識圖譜中清除過時、孤立和低價值的記憶節點。識別不可達節點、過期時序數據和冗餘副本，然後刪除以維護圖譜健康。"
 ja = "ナレッジグラフから古い、孤立した、低価値のメモリノードを整理します。"
 ko = "지식 그래프에서 오래되고 고아되며 가치가 낮은 메모리 노드를 정리합니다."
 fr = "Élaguer les nœuds de mémoire obsolètes, orphelins et de faible valeur du graphe de connaissances."

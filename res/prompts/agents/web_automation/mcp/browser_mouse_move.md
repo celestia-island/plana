@@ -4,7 +4,7 @@ agent = "web_automation"
 
 [description]
 en = "Simulate mouse movement in the browser"
-zhs = "在浏览器中模拟鼠标移动"
+zh-Hans = "在浏览器中模拟鼠标移动"
 +++
 
 ## Parameters

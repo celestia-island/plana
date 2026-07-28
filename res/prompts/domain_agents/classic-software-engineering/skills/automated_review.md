@@ -6,8 +6,8 @@ location = "cosmos"
 
 [description]
 en = "Automated code review pipeline: run static analysis, unwrap/expect audit, and clippy diagnostics, then produce a consolidated report."
-zhs = "自动化审查流水线：运行静态分析、unwrap/expect 审计和 clippy 诊断，生成合并报告。"
-zht = "自動化審查流水線：運行靜態分析、unwrap/expect 審計和 clippy 診斷，生成合併報告。"
+zh-Hans = "自动化审查流水线：运行静态分析、unwrap/expect 审计和 clippy 诊断，生成合并报告。"
+zh-Hant = "自動化審查流水線：運行靜態分析、unwrap/expect 審計和 clippy 診斷，生成合併報告。"
 ja = "自動レビューパイプライン：静的解析、unwrap/expect監査、clippy診断を実行し、統合レポートを生成。"
 ko = "자동 리뷰 파이프라인: 정적 분석, unwrap/expect 감사, clippy 진단을 실행하고 통합 보고서를 생성."
 fr = "Pipeline de revue automatisée : exécuter l'analyse statique, l'audit unwrap/expect et les diagnostics clippy, puis produire un rapport consolidé."

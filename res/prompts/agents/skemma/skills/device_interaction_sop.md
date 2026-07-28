@@ -8,8 +8,8 @@ name = "node_task_summary"
 
 [description]
 en = "Standard Operating Procedure template for safe physical device interaction following the self-discovery protocol"
-zhs = "物理设备安全交互标准操作流程模板，遵循自发现协议的三阶段规范"
-zht = "物理設備安全互動標準操作流程模板，遵循自發現協議的三階段規範"
+zh-Hans = "物理设备安全交互标准操作流程模板，遵循自发现协议的三阶段规范"
+zh-Hant = "物理設備安全互動標準操作流程模板，遵循自發現協議的三階段規範"
 ja = "自己発見プロトコルに従う、安全な物理デバイス操作のための標準操作手順テンプレート"
 ko = "자가 발견 프로토콜을 따르는 안전한 물리적 장치 상호 작용을 위한 표준 운영 절차 템플릿"
 fr = "Modèle de procédure opérationnelle standard pour l'interaction sécurisée avec les appareils physiques suivant le protocole d'auto-découverte"
