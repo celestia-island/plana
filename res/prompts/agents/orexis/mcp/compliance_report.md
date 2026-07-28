@@ -4,8 +4,8 @@ agent = "orexis"
 
 [description]
 en = "Generate a formal compliance audit report for registered standards"
-zhs = "为已注册的标准生成正式合规审计报告"
-zht = "為已註冊的標準產生正式合規審計報告"
+zh-Hans = "为已注册的标准生成正式合规审计报告"
+zh-Hant = "為已註冊的標準產生正式合規審計報告"
 ja = "登録済み標準の正式なコンプライアンス監査レポートを生成する"
 ko = "등록된 표준에 대한 공식 컴플라이언스 감사 보고서 생성"
 fr = "Générer un rapport d'audit de conformité formel pour les normes enregistrées"

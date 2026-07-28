@@ -7,8 +7,8 @@ name = "node_task_summary"
 
 [description]
 en = "Web Search and Summarization"
-zhs = "网页搜索与摘要"
-zht = "網頁搜尋與摘要"
+zh-Hans = "网页搜索与摘要"
+zh-Hant = "網頁搜尋與摘要"
 ja = "Web検索と要約"
 ko = "웹 검색 및 요약"
 fr = "Recherche web et résumé"

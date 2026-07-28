@@ -4,7 +4,7 @@ agent = "web_automation"
 
 [description]
 en = "Take a screenshot of the browser"
-zhs = "截取浏览器截图"
+zh-Hans = "截取浏览器截图"
 +++
 
 ## Parameters

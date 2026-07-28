@@ -4,8 +4,8 @@ agent = "polemos"
 
 [description]
 en = "Read disk and partition information from the system."
-zhs = "读取系统中的磁盘和分区信息。"
-zht = "讀取系統中的磁碟和分割區資訊。"
+zh-Hans = "读取系统中的磁盘和分区信息。"
+zh-Hant = "讀取系統中的磁碟和分割區資訊。"
 ja = "システムからディスクおよびパーティション情報を読み取る。"
 ko = "시스템에서 디스크 및 파티션 정보를 읽어옵니다."
 fr = "Lire les informations sur les disques et partitions du système."

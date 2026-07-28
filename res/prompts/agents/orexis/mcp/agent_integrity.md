@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Check agent integrity and code authenticity"
-zhs = "检查代理完整性和代码真实性"
+zh-Hans = "检查代理完整性和代码真实性"
 +++
 
 ## Parameters

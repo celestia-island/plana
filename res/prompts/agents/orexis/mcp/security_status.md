@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Get the current security status"
-zhs = "获取当前安全状态"
+zh-Hans = "获取当前安全状态"
 +++
 
 ## Parameters

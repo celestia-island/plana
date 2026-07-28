@@ -4,7 +4,7 @@ agent = "classic_software_engineering"
 
 [description]
 en = "Validate build health for a Rust workspace after code modifications. Runs cargo check and cargo test for affected packages, reports results. Designed as a pipeline safety-net hook target."
-zhs = "验证代码修改后的构建健康度。对受影响的包运行 cargo check 和 cargo test，报告结果。设计为 pipeline 安全网 hook 的目标。"
+zh-Hans = "验证代码修改后的构建健康度。对受影响的包运行 cargo check 和 cargo test，报告结果。设计为 pipeline 安全网 hook 的目标。"
 
 [[related_tools]]
 agent_name = "hubris"

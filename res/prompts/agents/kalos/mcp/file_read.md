@@ -3,8 +3,8 @@ name = "file_read"
 
 [description]
 en = "Read file content"
-zhs = "读取文件内容"
-zht = "讀取檔案內容"
+zh-Hans = "读取文件内容"
+zh-Hant = "讀取檔案內容"
 ja = "ファイル内容を読み取り"
 ko = "파일 내용 읽기"
 fr = "Lire le contenu d'un fichier"

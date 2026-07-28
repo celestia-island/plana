@@ -4,8 +4,8 @@ agent = "philia"
 
 [description]
 en = "Query timeseries data for a metric within a specified time range"
-zhs = "在指定时间范围内查询指标的时间序列数据"
-zht = "在指定時間範圍內查詢指標的時間序列資料"
+zh-Hans = "在指定时间范围内查询指标的时间序列数据"
+zh-Hant = "在指定時間範圍內查詢指標的時間序列資料"
 ja = "指定された時間範囲でメトリックのタイムシリーズデータをクエリする"
 ko = "지정된 시간 범위 내에서 메트릭의 시계열 데이터 쿼리"
 fr = "Interroger les données de séries temporelles d'une métrique dans une plage de temps spécifiée"

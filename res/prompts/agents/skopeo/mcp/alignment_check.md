@@ -4,7 +4,7 @@ agent = "skopeo"
 
 [description]
 en = "Check alignment between goals and actions"
-zhs = "检查目标与行动之间的一致性"
+zh-Hans = "检查目标与行动之间的一致性"
 +++
 
 ## Parameters
