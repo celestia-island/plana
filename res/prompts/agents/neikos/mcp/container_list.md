@@ -3,8 +3,8 @@ name = "container_list"
 
 [description]
 en = "List all containers."
-zh-Hans = "列出所有容器。"
-zh-Hant = "列出所有容器。"
+zhs = "列出所有容器。"
+zht = "列出所有容器。"
 ja = "すべてのコンテナを一覧表示する。"
 ko = "모든 컨테이너를 나열합니다."
 fr = "Lister tous les conteneurs."

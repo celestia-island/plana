@@ -4,8 +4,8 @@ agent = "polemos"
 
 [description]
 en = "Visual Analysis is the core visual processing skill of the Polemos agent, specialized in analyzing screenshots and image content. This skill combines advanced computer vision technology to extract text, recognize UI elements, detect visual changes, and provide powerful support for automated testing and visual verification."
-zh-Hans = "视觉分析是Polemos智能体的核心视觉处理技能，专注于分析截图和图像内容。该技能结合先进的计算机视觉技术，提取文本、识别UI元素、检测视觉变化，为自动化测试和视觉验证提供强大支持。"
-zh-Hant = "視覺分析是Polemos智能體的核心視覺處理技能，專注於分析截圖和圖像內容。該技能結合先進的電腦視覺技術，提取文字、辨識UI元素、偵測視覺變化，為自動化測試和視覺驗證提供強大支援。"
+zhs = "视觉分析是Polemos智能体的核心视觉处理技能，专注于分析截图和图像内容。该技能结合先进的计算机视觉技术，提取文本、识别UI元素、检测视觉变化，为自动化测试和视觉验证提供强大支持。"
+zht = "視覺分析是Polemos智能體的核心視覺處理技能，專注於分析截圖和圖像內容。該技能結合先進的電腦視覺技術，提取文字、辨識UI元素、偵測視覺變化，為自動化測試和視覺驗證提供強大支援。"
 ja = "ビジュアル分析はPolemosエージェントのコア視覚処理スキルであり、スクリーンショットと画像コンテンツの分析に特化しています。このスキルは高度なコンピュータビジョン技術を組み合わせ、テキスト抽出、UI要素認識、視覚変化検出を行い、自動テストと視覚検証を強力にサポートします。"
 ko = "시각 분석은 Polemos 에이전트의 핵심 시각 처리 스킬로, 스크린샷 및 이미지 콘텐츠 분석에 특화되어 있습니다. 이 스킬은 고급 컴퓨터 비전 기술을 결합하여 텍스트 추출, UI 요소 인식, 시각적 변화 감지를 수행하며, 자동화 테스트 및 시각 검증을 강력하게 지원합니다."
 fr = "L'analyse visuelle est la compétence de traitement visuel principal de l'agent Polemos, spécialisée dans l'analyse de captures d'écran et de contenu d'images. Cette compétence combine une technologie avancée de vision par ordinateur pour extraire du texte, reconnaître les éléments d'interface, détecter les changements visuels et fournir un support puissant pour les tests automatisés et la vérification visuelle."

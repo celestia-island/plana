@@ -6,8 +6,8 @@ status = "archived"
 
 [description]
 en = "Discover internationalized content, choose a base language, and orchestrate translation sync."
-zh-Hans = "发现国际化内容，选择基础语言，并协调翻译同步"
-zh-Hant = "發現國際化內容，選擇基礎語言，並協調翻譯同步"
+zhs = "发现国际化内容，选择基础语言，并协调翻译同步"
+zht = "發現國際化內容，選擇基礎語言，並協調翻譯同步"
 ja = "国際化コンテンツを発見し、ベース言語を選択し、翻訳同期を調整する"
 ko = "국제화된 콘텐츠를 발견하고, 기본 언어를 선택하며, 번역 동기화를 조율합니다"
 fr = "Découvrir le contenu internationalisé, choisir une langue de base et orchestrer la synchronisation des traductions"

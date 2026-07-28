@@ -4,7 +4,7 @@ agent = "skopeo"
 
 [description]
 en = "Close a track"
-zh-Hans = "关闭一条跟踪"
+zhs = "关闭一条跟踪"
 +++
 
 ## Parameters

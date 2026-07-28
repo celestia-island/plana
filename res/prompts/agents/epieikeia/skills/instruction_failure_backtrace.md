@@ -4,8 +4,8 @@ agent = "epieikeia"
 
 [description]
 en = "`instruction_failure_backtrace` is the core diagnostic skill of the Epieikeia agent, specifically designed to analyze the root causes of instruction execution failures, providing detailed error diagnosis and remediation recommendations. This skill helps quickly locate and resolve faults in complex systems through intelligent backtrace analysis."
-zh-Hans = "`instruction_failure_backtrace`是Epieikeia智能体的核心诊断技能，专为分析指令执行失败的根因而设计，提供详细的错误诊断和修复建议。该技能通过智能回溯分析帮助快速定位和解决复杂系统中的故障。"
-zh-Hant = "`instruction_failure_backtrace`是Epieikeia智能體的核心診斷技能，專為分析指令執行失敗的根因而設計，提供詳細的錯誤診斷和修復建議。該技能透過智慧回溯分析幫助快速定位和解決複雜系統中的故障。"
+zhs = "`instruction_failure_backtrace`是Epieikeia智能体的核心诊断技能，专为分析指令执行失败的根因而设计，提供详细的错误诊断和修复建议。该技能通过智能回溯分析帮助快速定位和解决复杂系统中的故障。"
+zht = "`instruction_failure_backtrace`是Epieikeia智能體的核心診斷技能，專為分析指令執行失敗的根因而設計，提供詳細的錯誤診斷和修復建議。該技能透過智慧回溯分析幫助快速定位和解決複雜系統中的故障。"
 ja = "`instruction_failure_backtrace`はEpieikeiaエージェントのコア診断スキルであり、命令実行失敗の根本原因を分析し、詳細なエラー診断と修復提案を提供することに特化しています。このスキルはインテリジェントなバックトレース分析により、複雑なシステム内の障害を迅速に特定・解決します。"
 ko = "`instruction_failure_backtrace`는 Epieikeia 에이전트의 핵심 진단 스킬로, 명령어 실행 실패의 근본 원인을 분석하고 상세한 오류 진단 및 수정 권고사항을 제공합니다. 이 스킬은 지능형 백트레이스 분석을 통해 복잡한 시스템의 장애를 신속하게 찾아 해결합니다."
 fr = "`instruction_failure_backtrace` est la compétence de diagnostic principale de l'agent Epieikeia, conçue spécifiquement pour analyser les causes profondes des échecs d'exécution d'instructions, en fournissant un diagnostic d'erreur détaillé et des recommandations de remédiation. Cette compétence aide à localiser et résoudre rapidement les défauts dans les systèmes complexes grâce à une analyse intelligente de la trace arrière."

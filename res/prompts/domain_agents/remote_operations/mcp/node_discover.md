@@ -4,8 +4,8 @@ agent = "remote_operations"
 
 [description]
 en = "Discover and scan available nodes in the network."
-zh-Hans = "发现并扫描网络中的可用节点。"
-zh-Hant = "發現並掃描網路中的可用節點。"
+zhs = "发现并扫描网络中的可用节点。"
+zht = "發現並掃描網路中的可用節點。"
 ja = "ネットワーク上の利用可能なノードを検出・スキャンする。"
 ko = "네트워크에서 사용 가능한 노드를 검색 및 스캔합니다."
 fr = "Découvrir et scanner les nœuds disponibles sur le réseau."

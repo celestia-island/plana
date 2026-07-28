@@ -4,8 +4,8 @@ agent = "philia"
 
 [description]
 en = "Validate RAG index quality by checking document counts, embedding dimensions, workspace index status, and detecting stale or corrupted entries. Produces a health report for knowledge base maintenance."
-zh-Hans = "通过检查文档数量、嵌入维度、工作空间索引状态以及检测过期或损坏的条目来验证 RAG 索引质量。生成知识库维护的健康报告。"
-zh-Hant = "通過檢查文檔數量、嵌入維度、工作空間索引狀態以及檢測過期或損壞的條目來驗證 RAG 索引質量。生成知識庫維護的健康報告。"
+zhs = "通过检查文档数量、嵌入维度、工作空间索引状态以及检测过期或损坏的条目来验证 RAG 索引质量。生成知识库维护的健康报告。"
+zht = "通過檢查文檔數量、嵌入維度、工作空間索引狀態以及檢測過期或損壞的條目來驗證 RAG 索引質量。生成知識庫維護的健康報告。"
 ja = "RAG インデックスの品質を検証し、ドキュメント数、埋め込み次元、ワークスペースインデックスの状態、古い/破損したエントリをチェックします。"
 ko = "RAG 인덱스 품질을 검증하여 문서 수, 임베딩 차원, 워크스페이스 인덱스 상태, 오래되거나 손상된 항목을 감지합니다."
 fr = "Valider la qualité de l'index RAG en vérifiant le nombre de documents, les dimensions d'embedding et l'état de l'index."

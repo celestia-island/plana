@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Get security improvement suggestions"
-zh-Hans = "获取安全改进建议"
+zhs = "获取安全改进建议"
 +++
 
 ## Parameters

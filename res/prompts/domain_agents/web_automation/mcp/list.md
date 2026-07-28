@@ -6,8 +6,8 @@ agent = "`web_automation`"
 
 [description]
 en = "List all active browser instances"
-zh-Hans = "列出所有活动浏览器实例"
-zh-Hant = "列出所有活動瀏覽器實例"
+zhs = "列出所有活动浏览器实例"
+zht = "列出所有活動瀏覽器實例"
 ja = "すべてのアクティブなブラウザインスタンスを一覧表示する"
 ko = "모든 활성 브라우저 인스턴스 나열"
 fr = "Lister toutes les instances de navigateur actives"

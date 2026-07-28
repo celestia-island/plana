@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Translate text content to a target language via LLM"
-zh-Hans = "通过大语言模型将文本内容翻译为目标语言"
-zh-Hant = "透過大型語言模型將文字內容翻譯為目標語言"
+zhs = "通过大语言模型将文本内容翻译为目标语言"
+zht = "透過大型語言模型將文字內容翻譯為目標語言"
 ja = "LLMを介してテキストコンテンツを対象言語に翻訳する"
 ko = "LLM을 통해 텍스트 콘텐츠를 대상 언어로 번역"
 fr = "Traduire le contenu textuel vers une langue cible via un LLM"

@@ -4,7 +4,7 @@ agent = "epieikeia"
 
 [description]
 en = "Consume injected prompts"
-zh-Hans = "消费已注入的提示"
+zhs = "消费已注入的提示"
 +++
 
 ## Parameters

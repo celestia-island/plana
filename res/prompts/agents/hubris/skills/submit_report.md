@@ -5,7 +5,7 @@ status = "convention"
 
 [description]
 en = "[CONVENTION] — The report_human pattern. This is a documentation convention, not an executable skill."
-zh-Hans = "[约定] — report_human 模式。这是文档约定，不是可执行技能。"
+zhs = "[约定] — report_human 模式。这是文档约定，不是可执行技能。"
 
 [features]
 execution_mode = "read"

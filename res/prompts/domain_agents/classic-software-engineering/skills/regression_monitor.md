@@ -7,8 +7,8 @@ must_touch_next_action = false
 
 [description]
 en = "Monitor codebase for regression and degradation signals across any language: detect declining test-to-fix ratios, flaky test accumulation, test timeout escalation, broken test infrastructure, ignored test proliferation, coverage erosion, AND false positive (vacuous) tests that always pass regardless of code correctness. Auto-detects project toolchain from config files. Predict future degradation risk from trend analysis. Designed for medium-frequency (Daily tier) YOLO invocation."
-zh-Hans = "跨语言监测代码库退化和质量下行的信号：检测修复-测试比下降、flaky 测试堆积、测试超时连续提升、测试基础设施断裂、ignored 测试增殖、覆盖率侵蚀，以及无论代码正确与否都会通过的假阳性（空转）测试。从项目配置文件自动检测工具链。从趋势分析预测未来退化风险。设计用于中等频率（Daily 层）YOLO 调用。"
-zh-Hant = "跨語言監測程式碼庫退化和品質下行的信號：偵測修復-測試比下降、flaky 測試堆積、測試超時連續提升、測試基礎設施斷裂、ignored 測試增殖、覆蓋率侵蝕。從專案配置檔自動檢測工具鏈。從趨勢分析預測未來退化風險。設計用於中等頻率（Daily 層）YOLO 調用。"
+zhs = "跨语言监测代码库退化和质量下行的信号：检测修复-测试比下降、flaky 测试堆积、测试超时连续提升、测试基础设施断裂、ignored 测试增殖、覆盖率侵蚀，以及无论代码正确与否都会通过的假阳性（空转）测试。从项目配置文件自动检测工具链。从趋势分析预测未来退化风险。设计用于中等频率（Daily 层）YOLO 调用。"
+zht = "跨語言監測程式碼庫退化和品質下行的信號：偵測修復-測試比下降、flaky 測試堆積、測試超時連續提升、測試基礎設施斷裂、ignored 測試增殖、覆蓋率侵蝕。從專案配置檔自動檢測工具鏈。從趨勢分析預測未來退化風險。設計用於中等頻率（Daily 層）YOLO 調用。"
 
 [[related_tools]]
 agent_name = "polemos"

@@ -14,7 +14,7 @@ name = "generate_manifest"
 
 [description]
 en = "Analyze raw scan data from industrial_discover and infer semantic field types, physical units, and alarm thresholds. Use value patterns, change rates, and data type heuristics to assign meaningful names to discovered registers and DB fields."
-zh-Hans = "分析 industrial_discover 的原始扫描数据，推断语义字段类型、物理单位和报警阈值。使用值模式、变化率和数据类型启发式方法为发现的寄存器和 DB 字段分配有意义的名称。"
+zhs = "分析 industrial_discover 的原始扫描数据，推断语义字段类型、物理单位和报警阈值。使用值模式、变化率和数据类型启发式方法为发现的寄存器和 DB 字段分配有意义的名称。"
 
 [[related_tools]]
 agent_name = "aporia"
