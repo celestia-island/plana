@@ -4,7 +4,7 @@ agent = "polemos"
 
 [description]
 en = "Write content to a file on the host machine via evernight IPC"
-zh-Hans = "通过 evernight IPC 写入宿主机文件"
+zhs = "通过 evernight IPC 写入宿主机文件"
 +++
 
 ## Parameters

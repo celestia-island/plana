@@ -4,7 +4,7 @@ agent = "polemos"
 
 [description]
 en = "Read a file from the host machine via evernight IPC"
-zh-Hans = "通过 evernight IPC 读取宿主机文件"
+zhs = "通过 evernight IPC 读取宿主机文件"
 +++
 
 ## Parameters

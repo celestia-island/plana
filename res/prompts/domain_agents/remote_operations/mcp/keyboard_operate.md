@@ -4,8 +4,8 @@ agent = "remote_operations"
 
 [description]
 en = "Perform keyboard operations on a remote device (HMI interaction)"
-zh-Hans = "在远程设备上执行键盘操作（HMI交互）"
-zh-Hant = "在遠程設備上執行鍵盤操作（HMI交互）"
+zhs = "在远程设备上执行键盘操作（HMI交互）"
+zht = "在遠程設備上執行鍵盤操作（HMI交互）"
 ja = "リモートデバイスでキーボード操作（HMIインタラクション）"
 ko = "원격 장치에서 키보드 조작(HMI 상호작용)"
 fr = "Effectuer des opérations de clavier sur un appareil distant (interaction HMI)"

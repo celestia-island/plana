@@ -7,8 +7,8 @@ name = "node_task_summary"
 
 [description]
 en = "Remote deployment of Entelecheia system to new hosts."
-zh-Hans = "将 Entelecheia 系统远程部署到新主机。"
-zh-Hant = "將 Entelecheia 系統遠端部署到新主機。"
+zhs = "将 Entelecheia 系统远程部署到新主机。"
+zht = "將 Entelecheia 系統遠端部署到新主機。"
 ja = "Entelecheiaシステムを新しいホストにリモートデプロイ。"
 ko = "Entelecheia 시스템을 새 호스트에 원격 배포."
 fr = "Déploiement à distance du système Entelecheia sur de nouveaux hôtes."

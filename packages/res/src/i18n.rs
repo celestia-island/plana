@@ -26,10 +26,10 @@ pub fn get_all_locale_dirs() -> Vec<(Language, &'static Dir<'static>)> {
 pub fn check_locale_completeness(language: Language) -> Vec<String> {
     let mut missing = Vec::new();
 
-    // Compare against Chinese (zh-Hans) as baseline
-    let zhs_dir = match LOCALES_DIR.get_dir("zh-Hans") {
+    // Compare against Chinese (zhs) as baseline
+    let zhs_dir = match LOCALES_DIR.get_dir("zhs") {
         Some(dir) => dir,
-        None => return vec!["Chinese (zh-Hans) locale directory not found".to_string()],
+        None => return vec!["Chinese (zhs) locale directory not found".to_string()],
     };
 
     let lang_dir = match LOCALES_DIR.get_dir(language.locale_code()) {
@@ -80,8 +80,8 @@ mod tests {
 
     #[test]
     fn test_locales_dir_exists() -> Result<()> {
-        // Check that the Chinese (zh-Hans) locale directory exists
-        assert!(LOCALES_DIR.get_dir("zh-Hans").is_some());
+        // Check that the Chinese (zhs) locale directory exists
+        assert!(LOCALES_DIR.get_dir("zhs").is_some());
         Ok(())
     }
 

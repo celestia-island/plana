@@ -4,7 +4,7 @@ agent = "skopeo"
 
 [description]
 en = "Mark a goal task as complete"
-zh-Hans = "将目标任务标记为完成"
+zhs = "将目标任务标记为完成"
 +++
 
 ## Parameters

@@ -4,8 +4,8 @@ agent = "polemos"
 
 [description]
 en = "Read and return memory statistics from /proc/meminfo."
-zh-Hans = "读取并返回 /proc/meminfo 中的内存统计信息。"
-zh-Hant = "讀取並回傳 /proc/meminfo 中的記憶體統計資訊。"
+zhs = "读取并返回 /proc/meminfo 中的内存统计信息。"
+zht = "讀取並回傳 /proc/meminfo 中的記憶體統計資訊。"
 ja = "/proc/meminfo からメモリ統計情報を読み取り、返却する。"
 ko = "/proc/meminfo에서 메모리 통계 정보를 읽어 반환합니다."
 fr = "Lire et retourner les statistiques mémoire depuis /proc/meminfo."

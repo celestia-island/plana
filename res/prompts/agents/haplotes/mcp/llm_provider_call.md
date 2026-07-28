@@ -4,8 +4,8 @@ agent = "haplotes"
 
 [description]
 en = "Call an external LLM provider API"
-zh-Hans = "调用外部 LLM 提供商 API"
-zh-Hant = "呼叫外部 LLM 提供者 API"
+zhs = "调用外部 LLM 提供商 API"
+zht = "呼叫外部 LLM 提供者 API"
 ja = "外部LLMプロバイダーAPIを呼び出し"
 ko = "외부 LLM 제공자 API 호출"
 fr = "Appeler une API de fournisseur LLM externe"

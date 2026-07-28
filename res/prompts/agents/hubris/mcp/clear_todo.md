@@ -4,8 +4,8 @@ agent = "hubris"
 
 [description]
 en = "Batch clean up or archive completed TODO items. Supports preview mode to view items to be cleaned before execution."
-zh-Hans = "批量清理或归档已完成的待办事项。支持预览模式，可在执行前查看待清理的项目。"
-zh-Hant = "批次清理或封存已完成的待辦事項。支援預覽模式，可在執行前查看待清理的項目。"
+zhs = "批量清理或归档已完成的待办事项。支持预览模式，可在执行前查看待清理的项目。"
+zht = "批次清理或封存已完成的待辦事項。支援預覽模式，可在執行前查看待清理的項目。"
 ja = "完了したTODOアイテムを一括クリーンアップまたはアーカイブします。実行前にクリーンアップ対象を確認できるプレビューモードをサポートします。"
 ko = "완료된 TODO 항목을 일괄 정리 또는 보관합니다. 실행 전 정리 대상 항목을 미리 볼 수 있는 미리보기 모드를 지원합니다."
 fr = "Nettoyer ou archiver en lot les éléments TODO terminés. Prend en charge le mode aperçu pour visualiser les éléments à nettoyer avant l'exécution."

@@ -4,7 +4,7 @@ agent = "industrial_iot"
 
 [description]
 en = "Connect to a Siemens S7 PLC over TCP:102, scan data blocks, and probe DB structure for type inference."
-zh-Hans = "通过 TCP:102 连接西门子 S7 PLC，扫描数据块并探测 DB 结构以供类型推断。"
+zhs = "通过 TCP:102 连接西门子 S7 PLC，扫描数据块并探测 DB 结构以供类型推断。"
 +++
 
 # s7comm_discover

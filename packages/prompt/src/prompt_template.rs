@@ -104,8 +104,8 @@ impl PromptTemplateService {
 
     pub fn render_skill_error_title(&self, skill_name: &str, lang: &str) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => format!("Execution failed: {}", skill_name),
-            "zh-Hant" | "zht" | "zh-TW" => format!("Execution failed: {}", skill_name),
+            "zhs" | "zh-CN" | "zh" => format!("Execution failed: {}", skill_name),
+            "zht" | "zh-TW" => format!("Execution failed: {}", skill_name),
             "ja" => format!("Execution failed: {}", skill_name),
             "ko" => format!("실행 실패 {}", skill_name),
             "fr" => format!("Échec de {}", skill_name),
@@ -122,11 +122,11 @@ impl PromptTemplateService {
         lang: &str,
     ) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => format!(
+            "zhs" | "zh-CN" | "zh" => format!(
                 "Skill `{}` did not call `report()` after {} retries, execution paused.",
                 skill_name, retries
             ),
-            "zh-Hant" | "zht" | "zh-TW" => format!(
+            "zht" | "zh-TW" => format!(
                 "Skill `{}` did not call `report()` after {} retries, execution paused.",
                 skill_name, retries
             ),
@@ -175,8 +175,8 @@ impl PromptTemplateService {
 
     fn render_model_selection_error(&self, _error_content: &str, lang: &str) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => "No available LLM model found. Please check model configuration or environment variables (LLM_ENDPOINT / LLM_API_KEY).".to_string(),
-            "zh-Hant" | "zht" | "zh-TW" => "No available LLM model found. Please check model configuration or environment variables (LLM_ENDPOINT / LLM_API_KEY).".to_string(),
+            "zhs" | "zh-CN" | "zh" => "No available LLM model found. Please check model configuration or environment variables (LLM_ENDPOINT / LLM_API_KEY).".to_string(),
+            "zht" | "zh-TW" => "No available LLM model found. Please check model configuration or environment variables (LLM_ENDPOINT / LLM_API_KEY).".to_string(),
             "ja" => "No available LLM model found. Please check model configuration or environment variables (LLM_ENDPOINT / LLM_API_KEY).".to_string(),
             "ko" => "사용 가능한 LLM 모델을 찾을 수 없습니다. 모델 설정 또는 환경 변수(LLM_ENDPOINT / LLM_API_KEY)가 올바르게 설정되었는지 확인하세요.".to_string(),
             "fr" => "Aucun modèle LLM disponible. Vérifiez la configuration des modèles ou les variables d'environnement (LLM_ENDPOINT / LLM_API_KEY).".to_string(),
@@ -188,10 +188,10 @@ impl PromptTemplateService {
 
     fn render_empty_response_error(&self, _error_content: &str, lang: &str) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => {
+            "zhs" | "zh-CN" | "zh" => {
                 "LLM returned an empty response. Please try again later.".to_string()
             }
-            "zh-Hant" | "zht" | "zh-TW" => {
+            "zht" | "zh-TW" => {
                 "LLM returned an empty response. Please try again later.".to_string()
             }
             "ja" => "LLM returned an empty response. Please try again later.".to_string(),
@@ -207,8 +207,8 @@ impl PromptTemplateService {
 
     fn render_llm_call_error(&self, _error_content: &str, lang: &str) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => "LLM call failed. Please check network connection and API key configuration.".to_string(),
-            "zh-Hant" | "zht" | "zh-TW" => "LLM call failed. Please check network connection and API key configuration.".to_string(),
+            "zhs" | "zh-CN" | "zh" => "LLM call failed. Please check network connection and API key configuration.".to_string(),
+            "zht" | "zh-TW" => "LLM call failed. Please check network connection and API key configuration.".to_string(),
             "ja" => "LLM call failed. Please check network connection and API key configuration.".to_string(),
             "ko" => "LLM 호출에 실패했습니다. 네트워크 연결과 API 키 설정을 확인하세요.".to_string(),
             "fr" => "L'appel LLM a échoué. Vérifiez la connexion réseau et la configuration de la clé API.".to_string(),
@@ -220,8 +220,8 @@ impl PromptTemplateService {
 
     pub fn render_chain_error_title(&self, lang: &str) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => "Request Execution Failed".to_string(),
-            "zh-Hant" | "zht" | "zh-TW" => "Request Execution Failed".to_string(),
+            "zhs" | "zh-CN" | "zh" => "Request Execution Failed".to_string(),
+            "zht" | "zh-TW" => "Request Execution Failed".to_string(),
             "ja" => "Request Execution Failed".to_string(),
             "ko" => "요청 실행 실패".to_string(),
             "fr" => "Échec de la requête".to_string(),
@@ -233,8 +233,8 @@ impl PromptTemplateService {
 
     pub fn render_chain_error_content(&self, lang: &str) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => "An error occurred during skill chain execution. Please try again later.".to_string(),
-            "zh-Hant" | "zht" | "zh-TW" => "An error occurred during skill chain execution. Please try again later.".to_string(),
+            "zhs" | "zh-CN" | "zh" => "An error occurred during skill chain execution. Please try again later.".to_string(),
+            "zht" | "zh-TW" => "An error occurred during skill chain execution. Please try again later.".to_string(),
             "ja" => "An error occurred during skill chain execution. Please try again later.".to_string(),
             "ko" => "스킬 체인 실행 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.".to_string(),
             "fr" => "Une erreur s'est produite lors de l'exécution de la chaîne de compétences. Veuillez réessayer plus tard.".to_string(),

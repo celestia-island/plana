@@ -5,8 +5,8 @@ agent = "aporia"
 
 [description]
 en = "Retrieve relevant knowledge from the RAG database using semantic similarity search"
-zh-Hans = "使用语义相似性搜索从RAG数据库中检索相关知识"
-zh-Hant = "使用語義相似性搜尋從RAG資料庫中檢索相關知識"
+zhs = "使用语义相似性搜索从RAG数据库中检索相关知识"
+zht = "使用語義相似性搜尋從RAG資料庫中檢索相關知識"
 ja = "セマンティック類似性検索を使用してRAGデータベースから関連知識を取得する"
 ko = "의미 유사도 검색을 사용하여 RAG 데이터베이스에서 관련 지식 검색"
 fr = "Récupérer les connaissances pertinentes de la base de données RAG par recherche de similarité sémantique"

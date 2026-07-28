@@ -4,8 +4,8 @@ agent = "web_automation"
 
 [description]
 en = "Capture a screenshot of the current page or a specified element"
-zh-Hans = "截取当前页面或指定元素的屏幕截图"
-zh-Hant = "擷取目前頁面或指定元素的螢幕截圖"
+zhs = "截取当前页面或指定元素的屏幕截图"
+zht = "擷取目前頁面或指定元素的螢幕截圖"
 ja = "現在のページまたは指定された要素のスクリーンショットを撮る"
 ko = "현재 페이지 또는 지정된 요소의 스크린샷 캡처"
 fr = "Capturer une capture d'écran de la page actuelle ou d'un élément spécifié"

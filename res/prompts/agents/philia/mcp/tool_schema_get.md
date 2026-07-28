@@ -4,8 +4,8 @@ agent = "philia"
 
 [description]
 en = "Get the .d.ts type declaration for a specific MCP tool"
-zh-Hans = "获取指定MCP工具的.d.ts类型声明"
-zh-Hant = "取得指定MCP工具的.d.ts型別宣告"
+zhs = "获取指定MCP工具的.d.ts类型声明"
+zht = "取得指定MCP工具的.d.ts型別宣告"
 ja = "特定のMCPツールの.d.ts型宣言を取得する"
 ko = "특정 MCP 도구의 .d.ts 타입 선언 가져오기"
 fr = "Obtenir la déclaration de type .d.ts pour un outil MCP spécifique"

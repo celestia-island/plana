@@ -41,8 +41,8 @@ name = "task_decompose"
 
 [description]
 en = "Respond to hardware alarm triggers from industrial sensors and devices. Evaluate alarm severity, determine escalation path, and initiate corrective action or human notification."
-zh-Hans = "响应来自工业传感器和设备的硬件报警触发。评估报警严重程度，确定升级路径，并启动纠正措施或人工通知。"
-zh-Hant = "回應來自工業傳感器和設備的硬件警報觸發。評估警報嚴重程度，確定升級路徑，並啟動糾正措施或人工通知。"
+zhs = "响应来自工业传感器和设备的硬件报警触发。评估报警严重程度，确定升级路径，并启动纠正措施或人工通知。"
+zht = "回應來自工業傳感器和設備的硬件警報觸發。評估警報嚴重程度，確定升級路徑，並啟動糾正措施或人工通知。"
 ja = "産業センサーおよびデバイスからのハードウェアアラームトリガーに対応。アラームの重大度を評価し、エスカレーションパスを決定し、是正措置または人への通知を開始する。"
 ko = "산업 센서 및 장치의 하드웨어 알람 트리거에 대응. 알람 심각도를 평가하고, 에스컬레이션 경로를 결정하며, 시정 조치 또는 인적 알림을 시작한다."
 
