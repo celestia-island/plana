@@ -5,8 +5,8 @@ report_only = true
 
 [description]
 en = "Submit results to the skill chain orchestrator — the chain CONTINUES to the next skill. Use this when downstream skills need your output as input."
-zhs = "向技能链编排器提交结果——链条会继续到下一个技能。当下游技能需要你的输出作为输入时使用。"
-zht = "回報執行結果。路由目標由技能鏈配置自動決定。"
+zh-Hans = "向技能链编排器提交结果——链条会继续到下一个技能。当下游技能需要你的输出作为输入时使用。"
+zh-Hant = "回報執行結果。路由目標由技能鏈配置自動決定。"
 ja = "実行結果を報告する。ルーティング先はスキルチェーン設定により自動決定される。"
 ko = "실행 결과를 보고합니다. 라우팅 대상은 스킬 체인 설정에 의해 자동으로 결정됩니다."
 fr = "Signaler les résultats d'exécution. La destination est déterminée automatiquement par la configuration de la chaîne de compétences."

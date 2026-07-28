@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Toggle the default-deny industrial write policy for unknown hardware."
-zhs = "为未知硬件开启/关闭默认拒绝写入策略。"
+zh-Hans = "为未知硬件开启/关闭默认拒绝写入策略。"
 +++
 
 # set_default_write_policy

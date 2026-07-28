@@ -8,8 +8,8 @@ name = "plan_execute"
 
 [description]
 en = "Intelligent command execution gateway: converts natural language to safe shell commands within containers, executes with security scanning, and intelligently compresses output. This is the sole command execution gateway — the upstream caller does NOT have direct access to exec."
-zhs = "智能命令执行网关：将自然语言转换为容器内的安全shell命令，执行时进行安全扫描，并智能压缩输出。这是唯一的命令执行网关——上游调用方不直接访问 exec。"
-zht = "智慧命令執行閘道：將自然語言轉換為容器內的安全shell命令，執行時進行安全掃描，並智慧壓縮輸出。這是唯一的命令執行閘道——上游調用方不直接訪問 exec。"
+zh-Hans = "智能命令执行网关：将自然语言转换为容器内的安全shell命令，执行时进行安全扫描，并智能压缩输出。这是唯一的命令执行网关——上游调用方不直接访问 exec。"
+zh-Hant = "智慧命令執行閘道：將自然語言轉換為容器內的安全shell命令，執行時進行安全掃描，並智慧壓縮輸出。這是唯一的命令執行閘道——上游調用方不直接訪問 exec。"
 ja = "インテリジェントコマンド実行ゲートウェイ：自然言語をコンテナ内の安全なシェルコマンドに変換し、セキュリティスキャン付きで実行し、出力をインテリジェントに圧縮します。これは唯一のコマンド実行ゲートウェイです。"
 ko = "지능형 명령 실행 게이트웨이: 자연어를 컨테이너 내 안전한 셸 명령으로 변환하고, 보안 스캔과 함께 실행하며, 출력을 지능적으로 압축합니다. 이것이 유일한 명령 실행 게이트웨이입니다."
 fr = "Passerelle intelligente d'exécution de commandes : convertit le langage naturel en commandes shell sécurisées dans les conteneurs, exécute avec analyse de sécurité et compresse intelligemment la sortie. C'est la seule passerelle d'exécution de commandes."

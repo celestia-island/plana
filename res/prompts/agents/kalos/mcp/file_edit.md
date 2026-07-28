@@ -3,8 +3,8 @@ name = "file_edit"
 
 [description]
 en = "Edit file content with partial replacement"
-zhs = "通过部分替换编辑文件内容"
-zht = "透過部分替換編輯檔案內容"
+zh-Hans = "通过部分替换编辑文件内容"
+zh-Hant = "透過部分替換編輯檔案內容"
 ja = "部分置換によるファイル内容の編集"
 ko = "부분 교체로 파일 내용 편집"
 fr = "Modifier le contenu d'un fichier avec remplacement partiel"

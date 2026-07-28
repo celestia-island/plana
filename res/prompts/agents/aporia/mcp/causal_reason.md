@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Cross-correlation causal reasoning between a target variable and candidate variables"
-zhs = "目标变量与候选变量之间的交叉相关因果推理"
-zht = "目標變數與候選變數之間的交叉相關因果推理"
+zh-Hans = "目标变量与候选变量之间的交叉相关因果推理"
+zh-Hant = "目標變數與候選變數之間的交叉相關因果推理"
 ja = "ターゲット変数と候補変数間の相互相関因果推論"
 ko = "대상 변수와 후보 변수 간의 교차 상관 인과 추론"
 fr = "Raisonnement causal par corrélation croisée entre une variable cible et des candidates"

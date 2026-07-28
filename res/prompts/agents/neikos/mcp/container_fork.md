@@ -3,8 +3,8 @@ name = "container_fork"
 
 [description]
 en = "Fork an existing container to create a copy"
-zhs = "复制现有容器以创建副本"
-zht = "複製現有容器以建立副本"
+zh-Hans = "复制现有容器以创建副本"
+zh-Hant = "複製現有容器以建立副本"
 ja = "既存のコンテナをフォークしてコピーを作成"
 ko = "기존 컨테이너를 포크하여 복사본 생성"
 fr = "Forker un conteneur existant pour en créer une copie"

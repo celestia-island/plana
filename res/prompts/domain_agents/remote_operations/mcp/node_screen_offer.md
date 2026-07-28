@@ -4,7 +4,7 @@ agent = "remote_operations"
 
 [description]
 en = "Offer screen sharing from a remote node"
-zhs = "从远程节点提供屏幕共享"
+zh-Hans = "从远程节点提供屏幕共享"
 +++
 
 ## Parameters

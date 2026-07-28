@@ -4,7 +4,7 @@ agent = "remote_operations"
 
 [description]
 en = "Resize a node terminal session"
-zhs = "调整节点终端会话大小"
+zh-Hans = "调整节点终端会话大小"
 +++
 
 ## Parameters

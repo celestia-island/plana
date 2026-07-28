@@ -4,8 +4,8 @@ agent = "web_automation"
 
 [description]
 en = "Retrieve browser network request logs"
-zhs = "检索浏览器网络请求日志"
-zht = "檢索瀏覽器網路請求日誌"
+zh-Hans = "检索浏览器网络请求日志"
+zh-Hant = "檢索瀏覽器網路請求日誌"
 ja = "ブラウザのネットワークリクエストログを取得する"
 ko = "브라우저 네트워크 요청 로그 조회"
 fr = "Récupérer les journaux des requêtes réseau du navigateur"

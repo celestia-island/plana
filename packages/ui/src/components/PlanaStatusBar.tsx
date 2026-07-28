@@ -5,8 +5,8 @@ import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
 import { PCountdownDigit } from "./PlanaCountdownDigit";
 
 import enLocale from "../i18n/locales/en/connection.json";
-import zhsLocale from "../i18n/locales/zhs/connection.json";
-import zhtLocale from "../i18n/locales/zht/connection.json";
+import zhsLocale from "../i18n/locales/zh-Hans/connection.json";
+import zhtLocale from "../i18n/locales/zh-Hant/connection.json";
 import jaLocale from "../i18n/locales/ja/connection.json";
 import koLocale from "../i18n/locales/ko/connection.json";
 import ruLocale from "../i18n/locales/ru/connection.json";
@@ -73,8 +73,8 @@ export const PStatusBar = defineComponent({
 
     onMounted(() => {
       mergeMessages(enLocale.connection, "en");
-      mergeMessages(zhsLocale.connection, "zhs");
-      mergeMessages(zhtLocale.connection, "zht");
+      mergeMessages(zhsLocale.connection, "zh-Hans");
+      mergeMessages(zhtLocale.connection, "zh-Hant");
       mergeMessages(jaLocale.connection, "ja");
       mergeMessages(koLocale.connection, "ko");
       mergeMessages(ruLocale.connection, "ru");

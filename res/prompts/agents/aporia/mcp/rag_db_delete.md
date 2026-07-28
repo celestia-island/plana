@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Delete specified knowledge items from the RAG database"
-zhs = "从RAG数据库中删除指定的知识条目"
-zht = "從RAG資料庫中刪除指定的知識項目"
+zh-Hans = "从RAG数据库中删除指定的知识条目"
+zh-Hant = "從RAG資料庫中刪除指定的知識項目"
 ja = "RAGデータベースから指定されたナレッジアイテムを削除する"
 ko = "RAG 데이터베이스에서 지정된 지식 항목 삭제"
 fr = "Supprimer les éléments de connaissances spécifiés de la base de données RAG"

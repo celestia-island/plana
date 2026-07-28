@@ -4,8 +4,8 @@ agent = "skopeo"
 
 [description]
 en = "This skill intelligently compresses and summarizes historical content when conversation context approaches or exceeds limits, ensuring no loss of critical information."
-zhs = "此技能在对话上下文接近或超过限制时，智能压缩和总结历史内容，确保关键信息不丢失。"
-zht = "此技能在對話上下文接近或超過限制時，智慧壓縮和總結歷史內容，確保關鍵資訊不遺失。"
+zh-Hans = "此技能在对话上下文接近或超过限制时，智能压缩和总结历史内容，确保关键信息不丢失。"
+zh-Hant = "此技能在對話上下文接近或超過限制時，智慧壓縮和總結歷史內容，確保關鍵資訊不遺失。"
 ja = "このスキルは会話コンテキストが制限に近づくまたは超過した際、履歴コンテンツをインテリジェントに圧縮・要約し、重要な情報の損失を防ぎます。"
 ko = "이 스킬은 대화 컨텍스트가 한계에 근접하거나 초과할 때 이력 콘텐츠를 지능적으로 압축 및 요약하여 중요 정보의 손실을 방지합니다."
 fr = "Cette compétence compresse et résume intelligemment le contenu historique lorsque le contexte de conversation approche ou dépasse les limites, garantissant aucune perte d'informations critiques."

@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Approve (or revoke) write access for a specific register/DB offset on a station, with optional value bounds."
-zhs = "批准（或撤销）某站点上特定寄存器/DB 偏移的写入权限，可设置数值上下限。"
+zh-Hans = "批准（或撤销）某站点上特定寄存器/DB 偏移的写入权限，可设置数值上下限。"
 +++
 
 # whitelist_write_address
