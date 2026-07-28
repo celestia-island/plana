@@ -3,8 +3,8 @@ name = "container_snapshot"
 
 [description]
 en = "Create a snapshot of a container"
-zhs = "创建容器快照"
-zht = "建立容器快照"
+zh-Hans = "创建容器快照"
+zh-Hant = "建立容器快照"
 ja = "コンテナのスナップショットを作成"
 ko = "컨테이너 스냅샷 생성"
 fr = "Créer un instantané d'un conteneur"

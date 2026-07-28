@@ -4,7 +4,7 @@ agent = "epieikeia"
 
 [description]
 en = "Unregister a previously registered file operation observer"
-zhs = "取消注册已注册的文件操作观察者"
+zh-Hans = "取消注册已注册的文件操作观察者"
 +++
 
 ## Parameters

@@ -166,7 +166,7 @@ impl Skill {
     /// Build complete system prompt (specified language)
     ///
     /// # Parameters
-    /// - `lang`: language code (e.g. "en", "zhs", "ja"), uses default language if None
+    /// - `lang`: language code (e.g. "en", "zh-Hans", "ja"), uses default language if None
     ///
     /// This method attempts to load the system prompt and soul file for the given language and include them in the system prompt
     pub fn build_system_prompt_with_lang(&self, lang: Option<&str>) -> String {
@@ -196,7 +196,7 @@ impl Skill {
     /// Get soul content (not included in system prompt)
     ///
     /// # Parameters
-    /// - `lang`: language code (e.g. "en", "zhs", "ja"), uses default language if None
+    /// - `lang`: language code (e.g. "en", "zh-Hans", "ja"), uses default language if None
     pub fn get_soul_content(&self, lang: Option<&str>) -> Option<SoulContent> {
         let default_lang = SoulLoader::get_default_lang();
         let lang_code = lang.unwrap_or(&default_lang);
@@ -277,7 +277,7 @@ impl SkillRegistry {
     ///
     /// # Parameters
     /// - `name`: skill name
-    /// - `lang`: language code (e.g. "en", "zhs", "ja"), uses default language if None
+    /// - `lang`: language code (e.g. "en", "zh-Hans", "ja"), uses default language if None
     pub async fn get_system_prompt_with_lang(
         &self,
         name: &str,
@@ -292,7 +292,7 @@ impl SkillRegistry {
     ///
     /// # Parameters
     /// - `name`: skill name
-    /// - `lang`: language code (e.g. "en", "zhs", "ja"), uses default language if None
+    /// - `lang`: language code (e.g. "en", "zh-Hans", "ja"), uses default language if None
     pub async fn get_soul_content(&self, name: &str, lang: Option<&str>) -> Option<SoulContent> {
         self.get(name)
             .await

@@ -4,7 +4,7 @@ agent = "web_automation"
 
 [description]
 en = "Get browser console logs"
-zhs = "获取浏览器控制台日志"
+zh-Hans = "获取浏览器控制台日志"
 +++
 
 ## Parameters
