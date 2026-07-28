@@ -5,8 +5,8 @@ execution_mode = "read"
 
 [description]
 en = "Comprehensive architecture review combining dependency analysis, quality metrics, and symbol mapping to evaluate system structure."
-zhs = "架构审查：依赖分析 + 质量指标 + 符号映射 → 结构评估报告"
-zht = "架構審查：依賴分析 + 品質指標 + 符號映射 → 結構評估報告"
+zh-Hans = "架构审查：依赖分析 + 质量指标 + 符号映射 → 结构评估报告"
+zh-Hant = "架構審查：依賴分析 + 品質指標 + 符號映射 → 結構評估報告"
 ja = "アーキテクチャレビュー：依存関係分析 + 品質メトリクス + シンボルマッピング → 構造評価レポート"
 ko = "아키텍처 리뷰: 종속성 분석 + 품질 메트릭 + 심볼 매핑 → 구조 평가 보고서"
 fr = "Revue d'architecture : analyse des dépendances + métriques qualité + cartographie des symboles → rapport d'évaluation structurelle"

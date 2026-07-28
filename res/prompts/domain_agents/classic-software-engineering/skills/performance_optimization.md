@@ -5,8 +5,8 @@ execution_mode = "read"
 
 [description]
 en = "Identify and resolve performance bottlenecks by combining profiling data, quality metrics, and refactoring suggestions."
-zhs = "性能优化：性能分析 + 质量指标 + 重构建议 → 目标优化计划"
-zht = "效能最佳化：效能分析 + 品質指標 + 重構建議 → 目標最佳化計畫"
+zh-Hans = "性能优化：性能分析 + 质量指标 + 重构建议 → 目标优化计划"
+zh-Hant = "效能最佳化：效能分析 + 品質指標 + 重構建議 → 目標最佳化計畫"
 ja = "パフォーマンス最適化：プロファイリング + 品質メトリクス + リファクタリング提案 → 最適化計画"
 ko = "성능 최적화: 프로파일링 + 품질 메트릭 + 리팩토링 제안 → 최적화 계획"
 fr = "Optimisation des performances : profilage + métriques qualité + suggestions de refactoring → plan d'optimisation"

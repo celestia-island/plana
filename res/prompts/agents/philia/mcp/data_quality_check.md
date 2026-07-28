@@ -4,8 +4,8 @@ agent = "philia"
 
 [description]
 en = "Check data quality for a timeseries metric, detecting gaps, outliers, and staleness"
-zhs = "检查时间序列指标的数据质量，检测数据缺失、异常值和过期问题"
-zht = "檢查時間序列指標的資料品質，偵測資料缺失、異常值和過期問題"
+zh-Hans = "检查时间序列指标的数据质量，检测数据缺失、异常值和过期问题"
+zh-Hant = "檢查時間序列指標的資料品質，偵測資料缺失、異常值和過期問題"
 ja = "タイムシリーズメトリックのデータ品質をチェックし、ギャップ、外れ値、古さを検出する"
 ko = "시계열 메트릭의 데이터 품질을 확인하여 간격, 이상값, 지연을 감지"
 fr = "Vérifier la qualité des données d'une métrique de série temporelle, détecter les lacunes, les valeurs aberrantes et l'obsolescence"

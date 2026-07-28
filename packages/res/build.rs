@@ -8,7 +8,7 @@ use std::{
 include!("src/agent_names.rs");
 
 const REQUIRED_LANGS: &[&str] = &[
-    "zhs", "en", "zht", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
+    "zh-Hans", "en", "zh-Hant", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
 ];
 const SECTION_SKILLS: &str = "skills";
 const FILE_EXT_MD_DOT: &str = ".md";
@@ -135,7 +135,7 @@ fn main() {
 
 fn check_i18n_toml_keys() -> Result<(), Vec<String>> {
     let locales_path = Path::new("../../res/i18n/locales");
-    let zhs_path = locales_path.join("zhs");
+    let zhs_path = locales_path.join("zh-Hans");
     let mut errors = Vec::new();
 
     if !zhs_path.exists() {
@@ -546,7 +546,7 @@ fn extract_front_matter(content: &str) -> Option<String> {
 // ── about/protocol doc bundling from arona ────────────────────────────
 
 const ABOUT_LANGS: &[&str] = &[
-    "zhs", "zht", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
+    "zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
 ];
 const ABOUT_DOC_TYPES: &[&str] = &["license", "cla", "code-of-conduct", "security"];
 

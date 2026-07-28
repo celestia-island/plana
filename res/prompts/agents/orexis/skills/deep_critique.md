@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Deep philosophical critique of an entire completed chain. Examines whether the approach itself was correct, which assumptions were wrong, and what lessons should be persisted for future chains. This is the Tier 2 reflection mechanism described in the Reflection Architecture."
-zhs = "对整个已完成链的深度哲学式批判。审视方法本身是否正确，哪些假设是错误的，以及应该为未来的链持久化哪些教训。这是反思架构中描述的第二层反思机制。"
+zh-Hans = "对整个已完成链的深度哲学式批判。审视方法本身是否正确，哪些假设是错误的，以及应该为未来的链持久化哪些教训。这是反思架构中描述的第二层反思机制。"
 
 [[related_tools]]
 agent_name = "aporia"

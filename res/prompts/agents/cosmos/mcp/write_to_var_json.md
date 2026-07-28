@@ -4,7 +4,7 @@ agent = "cosmos"
 
 [description]
 en = "Write a JSON value to the persistent vars store"
-zhs = "Write a JSON value to the persistent vars store"
+zh-Hans = "Write a JSON value to the persistent vars store"
 +++
 
 ## Parameters

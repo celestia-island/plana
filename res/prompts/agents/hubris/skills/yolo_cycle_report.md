@@ -4,8 +4,8 @@ agent = "hubris"
 
 [description]
 en = "Analyze YOLO auto-cruise cycle results and produce a meta-report summarizing system health, skill execution outcomes, token usage trends, and anomalies across all YOLO tiers."
-zhs = "分析 YOLO 自动巡航周期结果，生成元报告，汇总系统健康状态、技能执行结果、Token 使用趋势和跨层异常。"
-zht = "分析 YOLO 自動巡航週期結果，生成元報告，匯總系統健康狀態、技能執行結果、Token 使用趨勢和跨層異常。"
+zh-Hans = "分析 YOLO 自动巡航周期结果，生成元报告，汇总系统健康状态、技能执行结果、Token 使用趋势和跨层异常。"
+zh-Hant = "分析 YOLO 自動巡航週期結果，生成元報告，匯總系統健康狀態、技能執行結果、Token 使用趨勢和跨層異常。"
 ja = "YOLO 自動クルーズサイクルの結果を分析し、システムヘルス、スキル実行結果、トークン使用傾向、異常のメタレポートを生成します。"
 ko = "YOLO 자동 순환 주기 결과를 분석하여 시스템 상태, 스킬 실행 결과, 토큰 사용 추세 및 이상에 대한 메타 보고서를 생성합니다."
 fr = "Analyser les résultats du cycle YOLO et produire un méta-rapport sur la santé du système."

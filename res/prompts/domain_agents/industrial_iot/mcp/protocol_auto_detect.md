@@ -4,7 +4,7 @@ agent = "industrial_iot"
 
 [description]
 en = "Auto-detect the protocol of an unknown transport endpoint (TCP or serial) via a probe chain."
-zhs = "通过探测链自动识别未知传输端点（TCP 或串口）使用的协议。"
+zh-Hans = "通过探测链自动识别未知传输端点（TCP 或串口）使用的协议。"
 +++
 
 # protocol_auto_detect
