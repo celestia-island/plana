@@ -141,8 +141,8 @@ impl McpToolDocLoader {
     fn extract_description(toml_value: &toml::Value, lang: &str) -> Option<String> {
         let desc_table = toml_value.get("description")?.as_table()?;
         let normalized = match lang {
-            "zh" | "zhs" | "zh-Hans" => "zh-Hans",
-            "zht" | "zh-Hant" => "zh-Hant",
+            "zh" | "zhs" => "zhs",
+            "zht" => "zht",
             "ja" => "ja",
             "ko" => "ko",
             "fr" => "fr",

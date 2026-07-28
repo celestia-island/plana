@@ -4,8 +4,8 @@ agent = "remote_operations"
 
 [description]
 en = "Connect to a remote device via SSH"
-zh-Hans = "通过 SSH 连接远程设备"
-zh-Hant = "通過 SSH 連接遠程設備"
+zhs = "通过 SSH 连接远程设备"
+zht = "通過 SSH 連接遠程設備"
 ja = "SSH経由でリモートデバイスに接続"
 ko = "SSH를 통해 원격 장치에 연결"
 fr = "Se connecter à un appareil distant via SSH"

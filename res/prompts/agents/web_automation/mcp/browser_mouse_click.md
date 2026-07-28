@@ -4,7 +4,7 @@ agent = "web_automation"
 
 [description]
 en = "Simulate a mouse click in the browser"
-zh-Hans = "在浏览器中模拟鼠标点击"
+zhs = "在浏览器中模拟鼠标点击"
 +++
 
 ## Parameters

@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Get statistics about the RAG vector database"
-zh-Hans = "获取 RAG 向量数据库统计信息"
-zh-Hant = "獲取 RAG 向量數據庫統計信息"
+zhs = "获取 RAG 向量数据库统计信息"
+zht = "獲取 RAG 向量數據庫統計信息"
 ja = "RAGベクトルデータベースの統計情報を取得"
 ko = "RAG 벡터 데이터베이스 통계 정보 조회"
 fr = "Obtenir les statistiques de la base de données vectorielle RAG"

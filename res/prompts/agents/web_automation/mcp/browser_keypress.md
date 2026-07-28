@@ -4,7 +4,7 @@ agent = "web_automation"
 
 [description]
 en = "Simulate a keypress in the browser"
-zh-Hans = "在浏览器中模拟按键"
+zhs = "在浏览器中模拟按键"
 +++
 
 ## Parameters

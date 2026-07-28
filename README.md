@@ -15,8 +15,8 @@
 <div align="center">
 
 **English** ·
-[简体中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zh-Hans/guides/platforms/README-plana.md) ·
-[繁體中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zh-Hant/guides/platforms/README-plana.md) ·
+[简体中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zhs/guides/platforms/README-plana.md) ·
+[繁體中文](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/zht/guides/platforms/README-plana.md) ·
 [日本語](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ja/guides/platforms/README-plana.md) ·
 [한국어](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/ko/guides/platforms/README-plana.md) ·
 [Français](https://github.com/celestia-island/docs.celestia.world/blob/master/docs/fr/guides/platforms/README-plana.md) ·

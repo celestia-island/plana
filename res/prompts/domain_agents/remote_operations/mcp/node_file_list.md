@@ -4,7 +4,7 @@ agent = "remote_operations"
 
 [description]
 en = "List files on a remote node"
-zh-Hans = "列出远程节点上的文件"
+zhs = "列出远程节点上的文件"
 +++
 
 ## Parameters

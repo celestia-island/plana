@@ -4,8 +4,8 @@ agent = "web_automation"
 
 [description]
 en = "Execute JavaScript code within a browser page"
-zh-Hans = "在浏览器页面中执行JavaScript代码"
-zh-Hant = "在瀏覽器頁面中執行JavaScript程式碼"
+zhs = "在浏览器页面中执行JavaScript代码"
+zht = "在瀏覽器頁面中執行JavaScript程式碼"
 ja = "ブラウザページ内でJavaScriptコードを実行する"
 ko = "브라우저 페이지 내에서 JavaScript 코드 실행"
 fr = "Exécuter du code JavaScript dans une page de navigateur"

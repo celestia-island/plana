@@ -7,8 +7,8 @@ name = "node_task_summary"
 
 [description]
 en = "This skill specializes in detecting and resolving conflict issues in parallel container operations, ensuring operation consistency and data integrity in multi-container environments."
-zh-Hans = "该技能专注于检测和解决并行容器操作中的冲突问题，确保多容器环境下的操作一致性和数据完整性。"
-zh-Hant = "該技能專注於偵測和解決平行容器操作中的衝突問題，確保多容器環境下的操作一致性和資料完整性。"
+zhs = "该技能专注于检测和解决并行容器操作中的冲突问题，确保多容器环境下的操作一致性和数据完整性。"
+zht = "該技能專注於偵測和解決平行容器操作中的衝突問題，確保多容器環境下的操作一致性和資料完整性。"
 ja = "このスキルは並行コンテナ操作における競合問題の検出と解決に特化し、マルチコンテナ環境での操作の一貫性とデータの完全性を確保します。"
 ko = "이 스킬은 병렬 컨테이너 작업의 충돌 문제 감지 및 해결에 특화되어 있으며, 다중 컨테이너 환경에서 작업 일관성과 데이터 무결성을 보장합니다."
 fr = "Cette compétence se spécialise dans la détection et la résolution des problèmes de conflit dans les opérations parallèles de conteneurs, assurant la cohérence des opérations et l'intégrité des données dans les environnements multi-conteneurs."

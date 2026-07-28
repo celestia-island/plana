@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Get the current alarm policy state and active alarms"
-zh-Hans = "获取当前报警策略状态和活跃报警"
+zhs = "获取当前报警策略状态和活跃报警"
 +++
 
 ## Parameters

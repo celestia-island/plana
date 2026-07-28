@@ -4,7 +4,7 @@ agent = "hubris"
 
 [description]
 en = "Read recent YOLO reports, extract actionable issues, register them as tech_debt TODOs for automated repayment."
-zh-Hans = "读取最近的 YOLO 报告，提取可操作问题，注册为 tech_debt TODO 以供自动偿还。"
+zhs = "读取最近的 YOLO 报告，提取可操作问题，注册为 tech_debt TODO 以供自动偿还。"
 
 [[related_tools]]
 agent_name = "hubris"
