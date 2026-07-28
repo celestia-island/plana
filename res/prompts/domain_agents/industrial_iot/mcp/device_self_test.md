@@ -4,8 +4,8 @@ agent = "industrial_iot"
 
 [description]
 en = "Run hardware diagnostic self-tests on a connected device or the local host."
-zhs = "在连接的设备或本地主机上运行硬件诊断自检。"
-zht = "在連接的裝置或本機主機上執行硬體診斷自我測試。"
+zh-Hans = "在连接的设备或本地主机上运行硬件诊断自检。"
+zh-Hant = "在連接的裝置或本機主機上執行硬體診斷自我測試。"
 ja = "接続されたデバイスまたはローカルホストでハードウェア診断セルフテストを実行する。"
 ko = "연결된 장치 또는 로컬 호스트에서 하드웨어 진단 자체 테스트를 실행합니다."
 fr = "Exécuter des autotests de diagnostic matériel sur un appareil connecté ou l'hôte local."

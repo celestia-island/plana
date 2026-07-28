@@ -5,8 +5,8 @@ agent = "aporia"
 
 [description]
 en = "Interact with a Large Language Model (LLM) to generate text responses"
-zhs = "与大语言模型（LLM）交互以生成文本响应"
-zht = "與大型語言模型（LLM）互動以產生文字回應"
+zh-Hans = "与大语言模型（LLM）交互以生成文本响应"
+zh-Hant = "與大型語言模型（LLM）互動以產生文字回應"
 ja = "大規模言語モデル（LLM）と対話してテキスト応答を生成する"
 ko = "대규모 언어 모델(LLM)과 상호작용하여 텍스트 응답 생성"
 fr = "Interagir avec un Grand Modèle de Langage (LLM) pour générer des réponses textuelles"

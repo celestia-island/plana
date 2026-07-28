@@ -4,7 +4,7 @@ agent = "remote_operations"
 
 [description]
 en = "Close a node terminal session"
-zhs = "关闭节点终端会话"
+zh-Hans = "关闭节点终端会话"
 +++
 
 ## Parameters

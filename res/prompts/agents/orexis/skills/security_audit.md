@@ -4,8 +4,8 @@ agent = "orexis"
 
 [description]
 en = "Vulnerability Security Audit Workflow is a comprehensive security audit skill for systematically checking security vulnerabilities and compliance issues in codebases, dependencies, and infrastructure configurations. This skill integrates multiple security inspection tools and methodologies, providing end-to-end security assessment capabilities."
-zhs = "漏洞安全审计流程是一项全面的安全审计技能，用于系统地检查代码库、依赖项和基础设施配置中的安全漏洞和合规性问题。该技能整合了多种安全检查工具和方法论，提供端到端的安全评估能力。"
-zht = "漏洞安全審計流程是一項全面的安全審計技能，用於系統地檢查程式碼庫、依賴項和基礎設施配置中的安全漏洞和合規性問題。該技能整合了多種安全檢查工具和方法論，提供端到端的安全評估能力。"
+zh-Hans = "漏洞安全审计流程是一项全面的安全审计技能，用于系统地检查代码库、依赖项和基础设施配置中的安全漏洞和合规性问题。该技能整合了多种安全检查工具和方法论，提供端到端的安全评估能力。"
+zh-Hant = "漏洞安全審計流程是一項全面的安全審計技能，用於系統地檢查程式碼庫、依賴項和基礎設施配置中的安全漏洞和合規性問題。該技能整合了多種安全檢查工具和方法論，提供端到端的安全評估能力。"
 ja = "脆弱性セキュリティ監査ワークフローは、コードベース、依存関係、インフラ構成におけるセキュリティ脆弱性とコンプライアンス問題を体系的にチェックする包括的なセキュリティ監査スキルです。このスキルは複数のセキュリティ検査ツールと方法論を統合し、エンドツーエンドのセキュリティ評価機能を提供します。"
 ko = "취약점 보안 감사 워크플로우는 코드베이스, 의존성 및 인프라 구성의 보안 취약점과 규정 준수 문제를 체계적으로 검사하는 포괄적인 보안 감사 스킬입니다. 이 스킬은 여러 보안 검사 도구와 방법론을 통합하여 엔드투엔드 보안 평가 기능을 제공합니다."
 fr = "Le flux de travail d'audit de sécurité des vulnérabilités est une compétence d'audit de sécurité complète pour vérifier systématiquement les vulnérabilités de sécurité et les problèmes de conformité dans les bases de code, les dépendances et les configurations d'infrastructure. Cette compétence intègre plusieurs outils d'inspection de sécurité et des méthodologies, offrant des capacités d'évaluation de sécurité de bout en bout."
