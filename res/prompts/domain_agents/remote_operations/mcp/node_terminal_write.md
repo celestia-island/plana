@@ -4,7 +4,7 @@ agent = "remote_operations"
 
 [description]
 en = "Write input to a node terminal session"
-zhs = "向节点终端会话写入输入"
+zh-Hans = "向节点终端会话写入输入"
 +++
 
 ## Parameters

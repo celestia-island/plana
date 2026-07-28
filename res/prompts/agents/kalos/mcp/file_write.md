@@ -3,8 +3,8 @@ name = "file_write"
 
 [description]
 en = "Write or overwrite file content"
-zhs = "写入或覆盖文件内容"
-zht = "寫入或覆蓋檔案內容"
+zh-Hans = "写入或覆盖文件内容"
+zh-Hant = "寫入或覆蓋檔案內容"
 ja = "ファイル内容を書き込みまたは上書き"
 ko = "파일 내용 쓰기 또는 덮어쓰기"
 fr = "Écrire ou écraser le contenu d'un fichier"

@@ -8,8 +8,8 @@ name = "plan_execute"
 
 [description]
 en = "Safe file writing with backup, diff preview, and conflict prevention"
-zhs = "安全文件写入：备份、差异预览、冲突预防"
-zht = "安全檔案寫入：備份、差異預覽、衝突預防"
+zh-Hans = "安全文件写入：备份、差异预览、冲突预防"
+zh-Hant = "安全檔案寫入：備份、差異預覽、衝突預防"
 ja = "バックアップ、差分プレビュー、競合防止を備えた安全なファイル書き込み"
 ko = "백업, 차이 미리보기, 충돌 방지를 갖춘 안전한 파일 쓰기"
 fr = "Écriture de fichier sécurisée avec sauvegarde, aperçu des différences et prévention des conflits"

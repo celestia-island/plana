@@ -4,8 +4,8 @@ agent = "aporia"
 
 [description]
 en = "Detect anomalies in numeric data using isolation forest, z-score, or IQR methods"
-zhs = "使用隔离森林、Z分数或IQR方法检测数值数据中的异常"
-zht = "使用隔離森林、Z分數或IQR方法檢測數值資料中的異常"
+zh-Hans = "使用隔离森林、Z分数或IQR方法检测数值数据中的异常"
+zh-Hant = "使用隔離森林、Z分數或IQR方法檢測數值資料中的異常"
 ja = "アイソレーションフォレスト、Zスコア、またはIQRメソッドを使用して数値データの異常を検出する"
 ko = "격리 포리스트, Z-점수 또는 IQR 방법을 사용하여 수치 데이터의 이상 감지"
 fr = "Détecter les anomalies dans les données numériques via isolation forest, z-score ou IQR"

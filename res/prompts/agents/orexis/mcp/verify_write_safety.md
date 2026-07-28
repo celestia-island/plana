@@ -4,7 +4,7 @@ agent = "orexis"
 
 [description]
 en = "Pre-write safety verification: confirms the address is whitelisted and the value is within approved bounds."
-zhs = "写入前安全校验：确认地址已加入白名单且数值在批准范围内。"
+zh-Hans = "写入前安全校验：确认地址已加入白名单且数值在批准范围内。"
 +++
 
 # verify_write_safety

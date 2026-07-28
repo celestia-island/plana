@@ -4,8 +4,8 @@ agent = "orexis"
 
 [description]
 en = "Audit Alignment Skill is a specialized skill for checking whether code complies with security standards and coding standards. This skill ensures code follows organizational security policies, industry standards, and best practices through automated scanning and rule matching, playing a key role in code review, compliance verification, and quality gates."
-zhs = "审计对齐技能是一项专门技能，用于检查代码是否符合安全标准和编码规范。该技能通过自动化扫描和规则匹配确保代码遵循组织安全策略、行业标准和最佳实践，在代码审查、合规验证和质量门禁中发挥关键作用。"
-zht = "審計對齊技能是一項專門技能，用於檢查程式碼是否符合安全標準和編碼規範。該技能透過自動化掃描和規則匹配確保程式碼遵循組織安全策略、產業標準和最佳實踐，在程式碼審查、合規驗證和品質門禁中發揮關鍵作用。"
+zh-Hans = "审计对齐技能是一项专门技能，用于检查代码是否符合安全标准和编码规范。该技能通过自动化扫描和规则匹配确保代码遵循组织安全策略、行业标准和最佳实践，在代码审查、合规验证和质量门禁中发挥关键作用。"
+zh-Hant = "審計對齊技能是一項專門技能，用於檢查程式碼是否符合安全標準和編碼規範。該技能透過自動化掃描和規則匹配確保程式碼遵循組織安全策略、產業標準和最佳實踐，在程式碼審查、合規驗證和品質門禁中發揮關鍵作用。"
 ja = "監査アライメントスキルは、コードがセキュリティ標準とコーディング標準に準拠しているかを確認する専門スキルです。このスキルは自動スキャンとルールマッチングにより、コードが組織のセキュリティポリシー、業界標準、ベストプラクティスに従うことを確保し、コードレビュー、コンプライアンス検証、品質ゲートで重要な役割を果たします。"
 ko = "감사 정렬 스킬은 코드가 보안 표준 및 코딩 표준을 준수하는지 확인하는 전문 스킬입니다. 이 스킬은 자동 스캔 및 규칙 매칭을 통해 코드가 조직 보안 정책, 업계 표준 및 모범 사례를 따르도록 보장하며, 코드 검토, 규정 준수 검증 및 품질 게이트에서 핵심적인 역할을 합니다."
 fr = "La compétence d'alignement d'audit est une compétence spécialisée pour vérifier si le code respecte les normes de sécurité et les normes de codage. Cette compétence assure que le code suit les politiques de sécurité organisationnelles, les normes de l'industrie et les meilleures pratiques grâce à une analyse automatisée et au matching de règles, jouant un rôle clé dans la revue de code, la vérification de conformité et les portes de qualité."

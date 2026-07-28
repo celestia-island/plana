@@ -4,8 +4,8 @@ agent = "skemma"
 
 [description]
 en = "Intelligent Script Execution and Result Analysis"
-zhs = "智能脚本执行与结果分析"
-zht = "智慧腳本執行與結果分析"
+zh-Hans = "智能脚本执行与结果分析"
+zh-Hant = "智慧腳本執行與結果分析"
 ja = "インテリジェントなスクリプト実行と結果分析"
 ko = "지능형 스크립트 실행 및 결과 분석"
 fr = "Exécution intelligente de scripts et analyse des résultats"

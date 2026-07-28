@@ -8,7 +8,7 @@ name = "plan_execute"
 
 [description]
 en = "Container image build gateway with Dockerfile validation, multi-stage support, and registry push"
-zhs = "容器镜像构建网关：Dockerfile验证、多阶段构建、仓库推送"
+zh-Hans = "容器镜像构建网关：Dockerfile验证、多阶段构建、仓库推送"
 
 [[related_tools]]
 agent_name = "cosmos"

@@ -11,8 +11,8 @@ name = "code_verify"
 
 [description]
 en = "Generate code from a structured workplan. Reads existing codebase context, produces implementation files, and writes them to the workspace."
-zhs = "从结构化工作计划生成代码。读取现有代码库上下文，生成实现文件并写入工作区。"
-zht = "從結構化工作計劃生成程式碼。讀取現有程式碼庫上下文，生成實現檔案並寫入工作區。"
+zh-Hans = "从结构化工作计划生成代码。读取现有代码库上下文，生成实现文件并写入工作区。"
+zh-Hant = "從結構化工作計劃生成程式碼。讀取現有程式碼庫上下文，生成實現檔案並寫入工作區。"
 ja = "構造化された作業計画からコードを生成します。既存のコードベースコンテキストを読み取り、実装ファイルを生成してワークスペースに書き込みます。"
 ko = "구조화된 작업 계획에서 코드를 생성합니다. 기존 코드베이스 컨텍스트를 읽고 구현 파일을 생성하여 작업 공간에 씁니다."
 fr = "Générer du code à partir d'un plan de travail structuré. Lit le contexte du codebase existant, produit les fichiers d'implémentation et les écrit dans l'espace de travail."
