@@ -25,6 +25,7 @@ members = [
     "packages/res",
     "packages/sync",
     "packages/dev_server",
+    "packages/assets",
 ]
 
 [workspace.package]
