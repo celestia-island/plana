@@ -4,8 +4,8 @@ agent = "remote_operations"
 
 [description]
 en = "Execute a command on a remote device"
-zhs = "在远程设备上执行命令"
-zht = "在遠程設備上執行命令"
+zh-Hans = "在远程设备上执行命令"
+zh-Hant = "在遠程設備上執行命令"
 ja = "リモートデバイスでコマンドを実行"
 ko = "원격 장치에서 명령 실행"
 fr = "Exécuter une commande sur un appareil distant"

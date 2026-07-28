@@ -4,8 +4,8 @@ agent = "kalos"
 
 [description]
 en = "Standardized code review skill provides Kalos agent with the ability to perform systematic, consistent code reviews. This skill provides code quality, security, and maintainability checking capabilities through predefined check rules and practical experience."
-zhs = "标准化代码审查技能为 Kalos 代理提供系统化、一致的代码审查能力。此技能通过预定义的检查规则和实践经验，提供代码质量、安全性和可维护性检查能力。"
-zht = "標準化程式碼審查技能為 Kalos 代理提供系統化、一致的程式碼審查能力。此技能透過預定義的檢查規則和實踐經驗，提供程式碼品質、安全性和可維護性檢查能力。"
+zh-Hans = "标准化代码审查技能为 Kalos 代理提供系统化、一致的代码审查能力。此技能通过预定义的检查规则和实践经验，提供代码质量、安全性和可维护性检查能力。"
+zh-Hant = "標準化程式碼審查技能為 Kalos 代理提供系統化、一致的程式碼審查能力。此技能透過預定義的檢查規則和實踐經驗，提供程式碼品質、安全性和可維護性檢查能力。"
 ja = "標準化されたコードレビュースキルは、Kalosエージェントに体系的で一貫性のあるコードレビューを実行する能力を提供します。このスキルは事前定義されたチェックルールと実践的経験を通じて、コード品質、セキュリティ、保守性のチェック機能を提供します。"
 ko = "표준화된 코드 리뷰 스킬은 Kalos 에이전트에게 체계적이고 일관된 코드 리뷰를 수행할 수 있는 능력을 제공합니다. 이 스킬은 사전 정의된 검사 규칙과 실무 경험을 통해 코드 품질, 보안 및 유지보수성 검사 기능을 제공합니다."
 fr = "La compétence de revue de code standardisée fournit à l'agent Kalos la capacité d'effectuer des revues de code systématiques et cohérentes. Cette compétence fournit des capacités de vérification de la qualité, de la sécurité et de la maintenabilité du code via des règles de vérification prédéfinies et de l'expérience pratique."

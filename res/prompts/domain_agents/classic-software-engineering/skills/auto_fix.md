@@ -7,8 +7,8 @@ must_touch_next_action = false
 
 [description]
 en = "Self-iteration loop: scan for warnings/errors, auto-fix what is safe (unused imports, clippy suggestions, i18n gaps), verify with cargo check, and commit. Runs a bounded number of fix cycles."
-zhs = "自迭代循环：扫描警告/错误，自动修复安全项（未使用的导入、clippy 建议、i18n 缺失），用 cargo check 验证并提交。运行有限次修复循环。"
-zht = "自迭代循環：掃描警告/錯誤，自動修復安全項（未使用的導入、clippy 建議、i18n 缺失），用 cargo check 驗證並提交。運行有限次修復循環。"
+zh-Hans = "自迭代循环：扫描警告/错误，自动修复安全项（未使用的导入、clippy 建议、i18n 缺失），用 cargo check 验证并提交。运行有限次修复循环。"
+zh-Hant = "自迭代循環：掃描警告/錯誤，自動修復安全項（未使用的導入、clippy 建議、i18n 缺失），用 cargo check 驗證並提交。運行有限次修復循環。"
 ja = "自己反復ループ：警告/エラーをスキャンし、安全な項目（未使用インポート、clippy提案、i18n欠落）を自動修正し、cargo checkで検証してコミット。制限付き修正サイクルを実行。"
 ko = "자체 반복 루프: 경고/오류를 스캔하고, 안전한 항목(미사용 임포트, clippy 제안, i18n 누락)을 자동 수정하고, cargo check로 검증 후 커밋. 제한된 수정 사이클 실행."
 fr = "Boucle d'auto-itération : scanner les avertissements/erreurs, corriger automatiquement ce qui est sûr (imports inutilisés, suggestions clippy, lacunes i18n), vérifier avec cargo check et committer. Exécute un nombre limité de cycles de correction."

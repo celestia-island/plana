@@ -4,8 +4,8 @@ agent = "skopeo"
 
 [description]
 en = "This skill is responsible for coordinating task allocation among multiple agents and managing the complete lifecycle of containers, including creation, startup, shutdown, and destruction."
-zhs = "此技能负责协调多个代理之间的任务分配，并管理容器的完整生命周期，包括创建、启动、关闭和销毁。"
-zht = "此技能負責協調多個代理之間的任務分配，並管理容器的完整生命週期，包括建立、啟動、關閉和銷毀。"
+zh-Hans = "此技能负责协调多个代理之间的任务分配，并管理容器的完整生命周期，包括创建、启动、关闭和销毁。"
+zh-Hant = "此技能負責協調多個代理之間的任務分配，並管理容器的完整生命週期，包括建立、啟動、關閉和銷毀。"
 ja = "このスキルは複数のエージェント間のタスク割り当てを調整し、コンテナの作成、起動、シャットダウン、破棄を含む完全なライフサイクルを管理します。"
 ko = "이 스킬은 여러 에이전트 간의 작업 할당을 조정하고, 생성, 시작, 종료, 파기를 포함한 컨테이너의 전체 수명 주기를 관리합니다."
 fr = "Cette compétence est responsable de la coordination de l'allocation des tâches entre plusieurs agents et de la gestion du cycle de vie complet des conteneurs, y compris la création, le démarrage, l'arrêt et la destruction."

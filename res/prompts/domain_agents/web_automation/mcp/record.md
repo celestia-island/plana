@@ -4,8 +4,8 @@ agent = "web_automation"
 
 [description]
 en = "Record a video of the browser session"
-zhs = "录制浏览器会话视频"
-zht = "錄製瀏覽器工作階段影片"
+zh-Hans = "录制浏览器会话视频"
+zh-Hant = "錄製瀏覽器工作階段影片"
 ja = "ブラウザセッションの動画を録画する"
 ko = "브라우저 세션 비디오 녹화"
 fr = "Enregistrer une vidéo de la session de navigation"

@@ -4,8 +4,8 @@ agent = "philia"
 
 [description]
 en = "Store a memory node into the cognitive memory system with automatic embedding for semantic search."
-zhs = "将记忆节点存入认知记忆系统，自动计算嵌入向量用于语义搜索。"
-zht = "將記憶節點存入認知記憶系統，自動計算嵌入向量用於語義搜索。"
+zh-Hans = "将记忆节点存入认知记忆系统，自动计算嵌入向量用于语义搜索。"
+zh-Hant = "將記憶節點存入認知記憶系統，自動計算嵌入向量用於語義搜索。"
 ja = "意味検索のための自動埋め込み付きでメモリノードを認知メモリシステムに保存します。"
 ko = "의미 검색을 위한 자동 임베딩과 함께 메모리 노드를 인지 메모리 시스템에 저장합니다."
 fr = "Stockez un nœud de mémoire dans le système de mémoire cognitive avec vectorisation automatique."

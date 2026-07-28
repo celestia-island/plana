@@ -14,7 +14,7 @@ name = "code_verify"
 
 [description]
 en = "Generate a HardwareManifest TOML file from the semantic inference results. Write the manifest to disk for operator review and evernight sensor-poll loading."
-zhs = "根据语义推断结果生成 HardwareManifest TOML 文件。将清单写入磁盘供操作员审查和 evernight sensor-poll 加载。"
+zh-Hans = "根据语义推断结果生成 HardwareManifest TOML 文件。将清单写入磁盘供操作员审查和 evernight sensor-poll 加载。"
 
 [[related_tools]]
 agent_name = "kalos"

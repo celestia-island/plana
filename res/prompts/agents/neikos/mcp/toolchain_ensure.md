@@ -4,7 +4,7 @@ agent = "neikos"
 
 [description]
 en = "Ensure a toolchain is installed and available"
-zhs = "确保工具链已安装且可用"
+zh-Hans = "确保工具链已安装且可用"
 +++
 
 ## Parameters

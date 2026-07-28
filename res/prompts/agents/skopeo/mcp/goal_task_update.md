@@ -4,7 +4,7 @@ agent = "skopeo"
 
 [description]
 en = "Update a goal task"
-zhs = "更新目标任务"
+zh-Hans = "更新目标任务"
 +++
 
 ## Parameters
