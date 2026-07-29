@@ -35,7 +35,7 @@ export const PSystemTray = defineComponent({
     });
 
     return () => (
-      <div class="s-status-bar-right">
+      <div class="s-status-bar-system-tray">
         <div class="s-status-bar-gamepad">
           {BUTTONS.map(({ component: Icon, colorVar, name }, i) => (
             <span
