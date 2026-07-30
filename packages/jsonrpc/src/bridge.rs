@@ -311,30 +311,39 @@ pub fn from_jsonrpc_method(method: &str, params: Option<Value>) -> Option<CoreMe
     let (wire_prefix, action) = method.split_once('.')?;
     let type_name = wire_prefix;
 
-    let data = match params {
-        Some(Value::Object(mut map)) => {
-            map.insert(
-                BridgeKey::Action.as_ref().to_string(),
-                Value::String(action.to_string()),
-            );
-            Value::Object(map)
-        }
-        _ => Value::Object({
-            let mut map = serde_json::Map::new();
-            map.insert(
-                BridgeKey::Action.as_ref().to_string(),
-                Value::String(action.to_string()),
-            );
-            map
-        }),
+    let mut data = match params {
+        Some(Value::Object(map)) => map,
+        _ => serde_json::Map::new(),
     };
+    data.insert(
+        BridgeKey::Action.as_ref().to_string(),
+        Value::String(action.to_string()),
+    );
+
+    // Ensure required fields for Mcp/Skill messages are present
+    if type_name == "Mcp" {
+        if !data.contains_key("agent_type") {
+            data.insert("agent_type".into(), Value::String("SkoPeo".into()));
+        }
+        if !data.contains_key("parameters") {
+            data.insert("parameters".into(), Value::Object(serde_json::Map::new()));
+        }
+    }
+    if type_name == "Skill" {
+        if !data.contains_key("agent_type") {
+            data.insert("agent_type".into(), Value::String("SkoPeo".into()));
+        }
+        if !data.contains_key("parameters") {
+            data.insert("parameters".into(), Value::Object(serde_json::Map::new()));
+        }
+    }
 
     let mut reconstructed_map = serde_json::Map::new();
     reconstructed_map.insert(
         BridgeKey::Type.as_ref().to_string(),
         Value::String(type_name.to_string()),
     );
-    reconstructed_map.insert(BridgeKey::Data.as_ref().to_string(), data);
+    reconstructed_map.insert(BridgeKey::Data.as_ref().to_string(), Value::Object(data));
     let reconstructed = Value::Object(reconstructed_map);
 
     serde_json::from_value::<CoreMessage>(reconstructed).ok()
