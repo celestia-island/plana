@@ -307,6 +307,7 @@ pub enum GenProtocol {
     AnthropicMessagesV1,
     AnthropicMessagesV2,
     GeminiGenerateV1,
+    RpcV1,
 
     // ═══ Image generation ═══
     OpenAIImageGenV1,
@@ -337,6 +338,7 @@ impl GenProtocol {
         Self::AnthropicMessagesV1,
         Self::AnthropicMessagesV2,
         Self::GeminiGenerateV1,
+        Self::RpcV1,
         Self::OpenAIImageGenV1,
         Self::StabilityImageGenV3_5,
         Self::JimengAsyncV1,
@@ -359,6 +361,7 @@ impl GenProtocol {
             Self::AnthropicMessagesV1 => "anthropic_messages_v1",
             Self::AnthropicMessagesV2 => "anthropic_messages_v2",
             Self::GeminiGenerateV1 => "gemini_generate_v1",
+            Self::RpcV1 => "rpc_v1",
             Self::OpenAIImageGenV1 => "openai_image_gen_v1",
             Self::StabilityImageGenV3_5 => "stability_image_gen_v3.5",
             Self::JimengAsyncV1 => "jimeng_async_v1",
@@ -382,6 +385,7 @@ impl GenProtocol {
             Self::AnthropicMessagesV1 => "Anthropic Messages v1",
             Self::AnthropicMessagesV2 => "Anthropic Messages v2",
             Self::GeminiGenerateV1 => "Gemini Generate v1",
+            Self::RpcV1 => "Plana RPC v1",
             Self::OpenAIImageGenV1 => "OpenAI Image Gen v1",
             Self::StabilityImageGenV3_5 => "Stability Image Gen v3.5",
             Self::JimengAsyncV1 => "Jimeng Async v1",
@@ -428,6 +432,7 @@ impl GenProtocol {
                 | Self::AnthropicMessagesV1
                 | Self::AnthropicMessagesV2
                 | Self::GeminiGenerateV1
+                | Self::RpcV1
         )
     }
 
@@ -436,7 +441,9 @@ impl GenProtocol {
     pub fn validation_url(&self, base_url: &str) -> String {
         let base = base_url.trim_end_matches('/');
         match self {
-            Self::OpenAIChatV1 | Self::OpenAIResponsesV1 => format!("{}/models", base),
+            Self::OpenAIChatV1 | Self::OpenAIResponsesV1 | Self::RpcV1 => {
+                format!("{}/models", base)
+            }
             Self::AnthropicMessagesV1 | Self::AnthropicMessagesV2 => {
                 let base = base.trim_end_matches("/v1");
                 format!("{}/v1/models", base)
@@ -500,6 +507,7 @@ impl GenProtocol {
         match provider_id {
             "anthropic" | "anthropic_compatible" => Self::AnthropicMessagesV2,
             "google" | "gemini" | "gemini_compatible" => Self::GeminiGenerateV1,
+            "rpc" => Self::RpcV1,
             _ => Self::OpenAIChatV1,
         }
     }
@@ -513,6 +521,7 @@ impl ProtocolCapability for GenProtocol {
             Self::AnthropicMessagesV1 => &CAPS_ANTHROPIC_MESSAGES_V1,
             Self::AnthropicMessagesV2 => &CAPS_ANTHROPIC_MESSAGES_V2,
             Self::GeminiGenerateV1 => &CAPS_GEMINI_GENERATE_V1,
+            Self::RpcV1 => &CAPS_RPC_V1,
             Self::OpenAIImageGenV1 => &CAPS_OPENAI_IMAGE_GEN_V1,
             Self::StabilityImageGenV3_5 => &CAPS_STABILITY_IMAGE_GEN_V3_5,
             Self::JimengAsyncV1 => &CAPS_JIMENG_ASYNC_V1,
@@ -630,6 +639,16 @@ static CAPS_GEMINI_GENERATE_V1: [Capability; 8] = [
     Capability::ToolCalling,
     Capability::Streaming,
     Capability::DeepReasoning,
+];
+
+static CAPS_RPC_V1: [Capability; 7] = [
+    Capability::ReadText,
+    Capability::ReadImage,
+    Capability::ReadAudio(AudioKind::General),
+    Capability::ReadVideo,
+    Capability::GenerateText,
+    Capability::ToolCalling,
+    Capability::Streaming,
 ];
 
 static CAPS_OPENAI_IMAGE_GEN_V1: [Capability; 3] = [
