@@ -152,15 +152,22 @@ impl LlmProvider for RpcProvider {
         let base_url = self.get_base_url(config);
         let model = self.resolve_model(&request, config);
 
-        let url = format!("{}/api/rpc", base_url);
+        let url = format!("{}/api/rpc", base_url)
+            .replace("http://", "ws://")
+            .replace("https://", "wss://");
 
-        let ws_request = http::Request::builder()
-            .uri(&url)
-            .header("Authorization", format!("Bearer {}", config.api_key_str()))
-            .body(())
+        use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+        let mut ws_request = url
+            .into_client_request()
             .map_err(|e| {
-                ProviderError::NetworkError(format!("Failed to build WS request: {}", e))
+                ProviderError::NetworkError(format!("Invalid WS URL: {}", e))
             })?;
+        let headers = ws_request.headers_mut();
+        headers.insert(
+            http::header::AUTHORIZATION,
+            http::HeaderValue::from_str(&format!("Bearer {}", config.api_key_str()))
+                .map_err(|e| ProviderError::NetworkError(format!("Invalid auth header: {}", e)))?,
+        );
 
         let (mut ws_stream, _) = connect_async(ws_request)
             .await
@@ -356,6 +363,18 @@ impl LlmProvider for RpcProvider {
                                     }
 
                                     if sp.is_complete {
+                                        if tx
+                                            .send(Ok(LlmStreamChunk {
+                                                content: None,
+                                                tool_call: None,
+                                                finish_reason: Some(FinishReason::Stop),
+                                                usage: sp.usage.as_ref().and_then(|u| {
+                                                    serde_json::from_value::<LlmUsage>(u.clone()).ok()
+                                                }),
+                                            }))
+                                            .await
+                                            .is_err()
+                                        {}
                                         return;
                                     }
                                 }
