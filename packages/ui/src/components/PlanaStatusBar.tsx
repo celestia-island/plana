@@ -36,6 +36,7 @@ function latencyColor(ms: number | null): string {
 function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: number) {
   if (isLocalhost) return <Cable size={size} />;
   if (quality === "excellent" || quality === "good") return <Wifi size={size} />;
+  if (quality === "unknown") return <Wifi size={size} style={{ opacity: 0.4 }} />;
   return <WifiOff size={size} />;
 }
 
