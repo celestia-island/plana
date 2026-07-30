@@ -20,6 +20,7 @@ pub mod openai;
 pub mod openai_responses;
 pub mod quota_meter;
 pub mod registry;
+pub mod rpc;
 pub mod sse_util;
 pub mod verification;
 
@@ -41,6 +42,7 @@ pub use openai::{
 };
 pub use openai_responses::OpenAiResponsesProvider;
 pub use registry::ProviderRegistry;
+pub use rpc::RpcProvider;
 use tracing::warn;
 pub use verification::{ContentIntegrity, ContentVerification, VerificationStatus};
 
@@ -602,6 +604,7 @@ pub fn register_all_providers() {
         Box::new(AnthropicProvider::new()),
     );
     registry.register(GeminiGenerateV1.as_str(), Box::new(GeminiProvider::new()));
+    registry.register(RpcV1.as_str(), Box::new(RpcProvider::new()));
 }
 
 #[cfg(test)]
