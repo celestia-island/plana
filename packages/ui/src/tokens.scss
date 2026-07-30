@@ -540,3 +540,58 @@
   .s-auth-form  { padding: var(--space-20, 1.25rem) var(--space-16, 1rem) var(--space-24, 1.5rem); }
   .s-auth-footer { padding-left: var(--space-16, 1rem); padding-right: var(--space-16, 1rem); }
 }
+
+/* ── Arona app utility classes ── */
+.a-text-primary {
+  color: var(--color-text-primary);
+}
+
+.a-text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.a-text-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+.a-text-danger {
+  color: var(--hi-color-danger, #ef4444);
+}
+
+.a-icon-inline {
+  display: inline;
+}
+
+.a-icon-success {
+  color: var(--color-success, #22c55e);
+}
+
+.a-icon-warning {
+  color: var(--color-warning, #f59e0b);
+}
+
+.a-bg-secondary {
+  background: var(--color-bg-secondary, #18181b);
+}
+
+.a-bg-tertiary {
+  background: var(--color-bg-tertiary, #27272a);
+}
+
+.a-latency-text {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+.a-error-banner {
+  background: var(--hi-color-danger, rgba(239, 68, 68, 0.1));
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, #ef4444) 20%, transparent);
+}
+
+.a-tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.a-auth-page {
+  min-height: calc(100vh - var(--s-footer-height, 3rem));
+}
