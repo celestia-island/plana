@@ -134,11 +134,15 @@ export const PStatusBar = defineComponent({
         ? `${pv} | ${t("plana::statusBar.engine", "Engine")} ${fmtVer(ev, props.engineBuildHash)}`
         : pv;
 
+      const tagClass = connecting
+        ? "s-status-bar-tag s-status-bar-tag-reconnecting"
+        : "s-status-bar-tag";
+
       const inner = (
         <>
           <span
             ref={anchorRef}
-            class="s-status-bar-tag"
+            class={tagClass}
             role="button"
             tabindex={0}
             onMouseenter={onTagEnter}
@@ -149,23 +153,13 @@ export const PStatusBar = defineComponent({
             }}
             style={{
               position: "relative", zIndex: 51,
-              display: "inline-flex", alignItems: "center",
-              height: "24px", gap: "8px", padding: "0 8px",
-              borderRadius: "var(--radius-md, 6px)",
-              fontSize: "var(--text-2xs, 0.625rem)", lineHeight: 1,
-              background: connecting
-                ? "rgb(var(--color-warning) / 14%)"
-                : "rgb(var(--color-surface) / var(--opacity-half, 0.5))",
-              color: "rgb(var(--color-muted))", userSelect: "none", cursor: "pointer",
-              transition: "background var(--duration-short) ease",
             }}
           >
             <span class="s-status-bar-dot" style={{
-              width: "7px", height: "7px", borderRadius: "50%", flexShrink: 0,
               background: dotColorMap[mode] ?? dotColorMap.disconnected,
             }} />
-            <span style={{ opacity: 0.6 }}>{t("plana::statusBar.panel", "Panel")}</span>
-            <span style={{ fontFamily: "var(--font-mono, monospace)", color: "rgb(var(--color-text))", opacity: 0.85 }}>
+            <span class="s-status-bar-tag-label">{t("plana::statusBar.panel", "Panel")}</span>
+            <span class="s-status-bar-tag-value">
               {versionParts}
             </span>
           </span>
@@ -247,19 +241,7 @@ export const PStatusBar = defineComponent({
       if (!props.standalone) return inner;
 
       return (
-        <footer class="s-status-bar" style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          height: "var(--s-footer-height, 2.5rem)",
-          display: "flex", alignItems: "center",
-          zIndex: "var(--z-header, 30)", flexShrink: 0,
-          padding: "0 var(--space-16, 1rem)",
-        }}>
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "rgb(var(--color-surface))",
-            backdropFilter: "blur(var(--blur-md, 12px))",
-            borderTop: "1px solid var(--border-faint, rgb(var(--color-border) / 10%))",
-          }} />
+        <footer class="s-status-bar">
           {inner}
         </footer>
       );
