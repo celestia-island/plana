@@ -39,7 +39,7 @@ export function provideActionBar() {
 }
 
 export function useActionBar() {
-  const ctx = inject<ActionBarContext>(KEY, null);
+  const ctx = inject<ActionBarContext | null>(KEY, null);
   if (!ctx) {
     // No provider (e.g. outside any layout) — return a no-op.
     return {

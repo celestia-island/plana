@@ -1,6 +1,6 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
-use _core::{ContainerId, LlmSessionId, truncate};
+use plana_core::{ContainerId, LlmSessionId, truncate};
 
 fn bench_container_id_new(c: &mut Criterion) {
     c.bench_function("container_id_new", |b| {
