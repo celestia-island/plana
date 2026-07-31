@@ -6,8 +6,7 @@
 
 use futures::StreamExt;
 use plana_llm_provider::{
-    FinishReason, LlmChatRequest, LlmMessage, LlmProvider, MessageRole, ProviderConfig,
-    RpcProvider,
+    FinishReason, LlmChatRequest, LlmMessage, LlmProvider, MessageRole, ProviderConfig, RpcProvider,
 };
 use std::process::{Child, Command};
 use std::time::Duration;
@@ -108,7 +107,8 @@ async fn rpc_provider_chat_stream_basic() {
                         if let Some(t) = &c.content {
                             tokens.push(t.clone());
                         }
-                        if c.finish_reason == Some(FinishReason::Stop) || c.finish_reason.is_some() {
+                        if c.finish_reason == Some(FinishReason::Stop) || c.finish_reason.is_some()
+                        {
                             complete = true;
                         }
                     }
@@ -124,11 +124,17 @@ async fn rpc_provider_chat_stream_basic() {
                     }
                 }
             }
-            assert!(!tokens.is_empty(), "Expected at least one token from chat.stream");
+            assert!(
+                !tokens.is_empty(),
+                "Expected at least one token from chat.stream"
+            );
             let combined: String = tokens.concat();
             assert!(!combined.is_empty(), "Expected non-empty stream content");
-            eprintln!("RPC chat.stream tokens ({} chunks, {} bytes): {combined:.100}...",
-                tokens.len(), combined.len());
+            eprintln!(
+                "RPC chat.stream tokens ({} chunks, {} bytes): {combined:.100}...",
+                tokens.len(),
+                combined.len()
+            );
             assert!(complete, "Expected stream to complete");
         }
         Err(e) => {
@@ -156,7 +162,10 @@ async fn rpc_provider_chat_non_streaming_returns_error() {
     let request = make_request("gpt-5.5", "Hello");
 
     let result = provider.chat(request, &config).await;
-    assert!(result.is_err(), "Non-streaming chat should return an error for RpcProvider");
+    assert!(
+        result.is_err(),
+        "Non-streaming chat should return an error for RpcProvider"
+    );
     let err = result.unwrap_err();
     let err_str = format!("{err}");
     assert!(
