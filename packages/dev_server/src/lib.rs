@@ -9,10 +9,10 @@ mod cache;
 
 use std::path::PathBuf;
 
+use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::response::Response;
-use axum::Router;
 use notify::Watcher;
 use std::sync::Arc;
 
@@ -33,7 +33,11 @@ pub struct DevFileServer {
 impl DevFileServer {
     pub fn new(config: DevFileServerConfig) -> Self {
         let cache = Arc::new(Cache::new(&config.root_dir));
-        let s = Self { root: config.root_dir, spa: config.spa_fallback, cache };
+        let s = Self {
+            root: config.root_dir,
+            spa: config.spa_fallback,
+            cache,
+        };
         s.spawn_watcher();
         s
     }
@@ -44,11 +48,13 @@ impl DevFileServer {
 
         std::thread::spawn(move || {
             let (tx, rx) = std::sync::mpsc::channel();
-            let mut watcher = notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
-                if let Ok(e) = res {
-                    let _ = tx.send(e);
-                }
-            }).ok();
+            let mut watcher =
+                notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
+                    if let Ok(e) = res {
+                        let _ = tx.send(e);
+                    }
+                })
+                .ok();
 
             if let Some(ref mut w) = watcher {
                 let _ = w.watch(&root, notify::RecursiveMode::Recursive);

@@ -159,9 +159,7 @@ impl LlmProvider for RpcProvider {
         use tokio_tungstenite::tungstenite::client::IntoClientRequest;
         let mut ws_request = url
             .into_client_request()
-            .map_err(|e| {
-                ProviderError::NetworkError(format!("Invalid WS URL: {}", e))
-            })?;
+            .map_err(|e| ProviderError::NetworkError(format!("Invalid WS URL: {}", e)))?;
         let headers = ws_request.headers_mut();
         headers.insert(
             http::header::AUTHORIZATION,
@@ -369,7 +367,8 @@ impl LlmProvider for RpcProvider {
                                                 tool_call: None,
                                                 finish_reason: Some(FinishReason::Stop),
                                                 usage: sp.usage.as_ref().and_then(|u| {
-                                                    serde_json::from_value::<LlmUsage>(u.clone()).ok()
+                                                    serde_json::from_value::<LlmUsage>(u.clone())
+                                                        .ok()
                                                 }),
                                             }))
                                             .await
