@@ -1,6 +1,6 @@
 import { defineComponent, ref, onMounted, type PropType } from "vue";
 import { HPopover, useI18n, mergeMessages } from "@celestia-island/hikari";
-import { Wifi, WifiOff, Globe, Cable, Cpu } from "lucide-vue-next";
+import { Wifi, WifiOff, Globe, Cable, Cpu } from "@lucide/vue";
 import type { PlanaConnectionInfo } from "./PlanaConnectionInfo";
 import { PCountdownDigit } from "./PlanaCountdownDigit";
 

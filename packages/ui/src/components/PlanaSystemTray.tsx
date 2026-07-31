@@ -1,5 +1,5 @@
 import { defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
-import { Circle, Square, Triangle, X } from "lucide-vue-next";
+import { Circle, Square, Triangle, X } from "@lucide/vue";
 
 const CYCLE_MS = 1000;
 const TICK_MS = 30_000;

@@ -1,5 +1,5 @@
 import { defineComponent, ref, onMounted } from "vue";
-import { Cookie } from "lucide-vue-next";
+import { Cookie } from "@lucide/vue";
 
 const STORAGE_KEY = "plana-cookies-accepted";
 
