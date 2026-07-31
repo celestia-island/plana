@@ -1,4 +1,4 @@
-import { defineComponent, type Component, type PropType } from "vue";
+import { defineComponent, h, type Component, type PropType } from "vue";
 
 import { HNavItem, HSidebar } from "@celestia-island/hikari";
 import { BarChart3, Bell, Bot, Box, Cable, Cpu, FileText, FolderOpen, Gauge, Key, Layers, LayoutDashboard, Mic, Monitor, Send, Settings, Share2, Shield, Webhook, Zap } from "lucide-vue-next";
@@ -69,7 +69,10 @@ export const PNavSidebar = defineComponent({
                     onClick={() => emit("navigate", item.route)}
                   >
                     {{
-                      icon: () => (IconComp ? <IconComp size={16} /> : null),
+                      // Render via h(): Vue's `Component` union includes
+                      // non-callable option types, so `<IconComp />` is not a
+                      // valid JSX element type (matches hikari's HkTree).
+                      icon: () => (IconComp ? h(IconComp, { size: 16 }) : null),
                       default: () => (
                         <span class="s-nav-item-content">
                           <span class="truncate">{item.label}</span>

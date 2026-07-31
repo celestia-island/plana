@@ -1,6 +1,6 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
-use _domain_skills::ParsedToolCall;
+use plana_domain_skills::ParsedToolCall;
 
 fn bench_parse_simple(c: &mut Criterion) {
     c.bench_function("parse_tool_call_simple", |b| {

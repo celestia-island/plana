@@ -9,9 +9,10 @@ fn data_dir() -> PathBuf {
 }
 
 #[tokio::test]
-#[ignore = "requires root: sudo cargo test -p _container_runtime --test integration -- --ignored"]
+#[ignore = "requires root: sudo cargo test -p plana_container_runtime --test integration -- --ignored"]
 async fn test_full_lifecycle() -> Result<()> {
-    let mgr = _container_runtime::YoukiManager::new(&data_dir()).context("create YoukiManager")?;
+    let mgr =
+        plana_container_runtime::YoukiManager::new(&data_dir()).context("create YoukiManager")?;
     mgr.initialize().await.context("initialize")?;
 
     let params = ContainerCreateParams::simple("test-lifecycle", "host");
@@ -35,12 +36,13 @@ async fn test_full_lifecycle() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "requires root: sudo cargo test -p _container_runtime --test integration -- --ignored"]
+#[ignore = "requires root: sudo cargo test -p plana_container_runtime --test integration -- --ignored"]
 async fn test_host_rootfs_overlay() -> Result<()> {
-    let mgr = _container_runtime::YoukiManager::new(&data_dir()).context("create YoukiManager")?;
+    let mgr =
+        plana_container_runtime::YoukiManager::new(&data_dir()).context("create YoukiManager")?;
     mgr.initialize().await.context("initialize")?;
 
-    let rootfs_mgr = _container_runtime::RootfsManager::new(&data_dir());
+    let rootfs_mgr = plana_container_runtime::RootfsManager::new(&data_dir());
     let cid = format!("test-overlay-{}", Uuid::now_v7().as_simple());
 
     let merged = rootfs_mgr
@@ -74,9 +76,10 @@ async fn test_host_rootfs_overlay() -> Result<()> {
 }
 
 #[tokio::test]
-#[ignore = "requires root: sudo cargo test -p _container_runtime --test integration -- --ignored"]
+#[ignore = "requires root: sudo cargo test -p plana_container_runtime --test integration -- --ignored"]
 async fn test_list_and_inspect() -> Result<()> {
-    let mgr = _container_runtime::YoukiManager::new(&data_dir()).context("create YoukiManager")?;
+    let mgr =
+        plana_container_runtime::YoukiManager::new(&data_dir()).context("create YoukiManager")?;
     mgr.initialize().await.context("initialize")?;
 
     let params = ContainerCreateParams::simple("test-list", "host");
