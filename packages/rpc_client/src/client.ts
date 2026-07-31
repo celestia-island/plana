@@ -260,7 +260,9 @@ export class RpcClient {
       this.#tryWsOnce(timeoutMs).then((ok) => ({ tier: "ws" as TransportTier, ok })),
       this.#trySseOnce(timeoutMs).then((ok) => ({ tier: "sse" as TransportTier, ok })),
       this.#tryPollOnce(timeoutMs).then((ok) => ({ tier: "poll" as TransportTier, ok })),
-      sleep(timeoutMs),
+      // Sentinel keeps the settled-result type homogeneous ({ tier, ok }) so
+      // `r.value.ok` below is well-typed; its value is never read.
+      sleep(timeoutMs).then(() => ({ tier: null, ok: false })),
     ]);
 
     const priority: TransportTier[] = ["ws", "sse", "poll"];
