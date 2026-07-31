@@ -271,20 +271,75 @@ fn period_cutoff(period: BudgetPeriod) -> DateTime<Utc> {
     }
 }
 
+/// Look up per-1M-token pricing `(input, output)` in USD for a model family.
+///
+/// This is the canonical pricing table shared across celestia-island services
+/// (arona, entelecheia, evernight, ...).  Model matching is substring-based on
+/// the lowercased model id; more specific families are matched before broader
+/// ones.  Returns `None` when the model family is not in the table.
+pub fn lookup_pricing(model: &str) -> Option<(f64, f64)> {
+    let lower = model.to_lowercase();
+    if lower.contains("claude") {
+        if lower.contains("haiku") {
+            return Some((0.80, 4.00));
+        }
+        if lower.contains("opus") {
+            return Some((15.00, 75.00));
+        }
+        return Some((3.00, 15.00));
+    }
+    if lower.contains("gemini") {
+        if lower.contains("flash") {
+            return Some((0.075, 0.30));
+        }
+        return Some((1.25, 5.00));
+    }
+    if lower.contains("o1") || lower.contains("o3") {
+        return Some((10.00, 40.00));
+    }
+    if lower.contains("gpt") && lower.contains("mini") {
+        return Some((0.15, 0.60));
+    }
+    if lower.contains("gpt-4o") {
+        return Some((2.50, 10.00));
+    }
+    if lower.contains("gpt-4") {
+        return Some((30.00, 60.00));
+    }
+    if lower.contains("gpt-3.5") {
+        return Some((0.50, 1.50));
+    }
+    if lower.contains("deepseek") {
+        return Some((0.14, 0.28));
+    }
+    if lower.contains("qwen") {
+        return Some((0.50, 2.00));
+    }
+    if lower.contains("llama-3") || lower.contains("llama3") {
+        return Some((0.20, 0.80));
+    }
+    if lower.contains("mistral") {
+        return Some((0.20, 0.80));
+    }
+    None
+}
+
 /// Rough cost estimation for metering when actual cost isn't provided.
-/// Uses simplified per-model pricing; overridden by explicit cost tracking.
-fn estimate_cost(provider: &str, model: &str, input: u64, output: u64) -> f64 {
-    let (in_price, out_price) = match (provider, model.contains("haiku")) {
-        ("anthropic", true) => (0.8, 4.0),
-        ("anthropic", _) if model.contains("opus") => (15.0, 75.0),
-        ("anthropic", _) => (3.0, 15.0),
-        ("openai", _) if model.contains("mini") => (0.15, 0.6),
-        ("openai", _) if model.contains("o3") || model.contains("o1") => (10.0, 40.0),
-        ("openai", _) => (2.5, 10.0),
-        ("gemini", _) if model.contains("flash") => (0.075, 0.3),
-        ("gemini", _) => (1.25, 5.0),
-        _ => (3.0, 15.0),
-    };
+/// Consults the canonical [`lookup_pricing`] table first, then falls back to
+/// provider-keyed pricing for model families not in the table.
+pub fn estimate_cost(provider: &str, model: &str, input: u64, output: u64) -> f64 {
+    let (in_price, out_price) =
+        lookup_pricing(model).unwrap_or_else(|| match (provider, model.contains("haiku")) {
+            ("anthropic", true) => (0.8, 4.0),
+            ("anthropic", _) if model.contains("opus") => (15.0, 75.0),
+            ("anthropic", _) => (3.0, 15.0),
+            ("openai", _) if model.contains("mini") => (0.15, 0.6),
+            ("openai", _) if model.contains("o3") || model.contains("o1") => (10.0, 40.0),
+            ("openai", _) => (2.5, 10.0),
+            ("gemini", _) if model.contains("flash") => (0.075, 0.3),
+            ("gemini", _) => (1.25, 5.0),
+            _ => (3.0, 15.0),
+        });
     (in_price * input as f64 / 1_000_000.0) + (out_price * output as f64 / 1_000_000.0)
 }
 
@@ -400,5 +455,35 @@ mod tests {
         let cost1 = estimate_cost("anthropic", "claude-sonnet-4-20250514", 1000, 500);
         let cost2 = estimate_cost("anthropic", "claude-sonnet-4-20250514", 2000, 1000);
         assert!((cost2 / cost1 - 2.0).abs() < 0.01, "should scale linearly");
+    }
+
+    #[test]
+    fn canonical_pricing_lookup() {
+        assert_eq!(lookup_pricing("gpt-4o"), Some((2.50, 10.00)));
+        assert_eq!(lookup_pricing("gpt-4o-mini"), Some((0.15, 0.60)));
+        assert_eq!(lookup_pricing("gpt-4-turbo"), Some((30.00, 60.00)));
+        assert_eq!(lookup_pricing("gpt-3.5-turbo"), Some((0.50, 1.50)));
+        assert_eq!(lookup_pricing("o3-mini"), Some((10.00, 40.00)));
+        assert_eq!(
+            lookup_pricing("claude-opus-4-20250514"),
+            Some((15.00, 75.00))
+        );
+        assert_eq!(
+            lookup_pricing("claude-sonnet-4-20250514"),
+            Some((3.00, 15.00))
+        );
+        assert_eq!(lookup_pricing("claude-3-5-haiku"), Some((0.80, 4.00)));
+        assert_eq!(lookup_pricing("gemini-2.5-flash"), Some((0.075, 0.30)));
+        assert_eq!(lookup_pricing("gemini-2.5-pro"), Some((1.25, 5.00)));
+        assert_eq!(lookup_pricing("deepseek-chat"), Some((0.14, 0.28)));
+        assert_eq!(
+            lookup_pricing("deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"),
+            Some((0.14, 0.28))
+        );
+        assert_eq!(lookup_pricing("Qwen/Qwen3-1.7B"), Some((0.50, 2.00)));
+        assert_eq!(lookup_pricing("llama-3-8b-instruct"), Some((0.20, 0.80)));
+        assert_eq!(lookup_pricing("mistral-7b-instruct"), Some((0.20, 0.80)));
+        assert_eq!(lookup_pricing("google/gemma-3-1b-it"), None);
+        assert_eq!(lookup_pricing("HuggingFaceTB/SmolLM2-1.7B-Instruct"), None);
     }
 }
