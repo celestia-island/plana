@@ -44,8 +44,15 @@ impl Cache {
     pub fn new(root: &Path) -> Self {
         let root_str = root.to_string_lossy().to_string();
         let files = Self::scan(&root_str);
-        tracing::info!("[dev-server] cached {} files from {}", files.len(), root_str);
-        Self { root: root_str, files: RwLock::new(Some(files)) }
+        tracing::info!(
+            "[dev-server] cached {} files from {}",
+            files.len(),
+            root_str
+        );
+        Self {
+            root: root_str,
+            files: RwLock::new(Some(files)),
+        }
     }
 
     fn scan(root_str: &str) -> HashMap<String, CachedFile> {
@@ -62,15 +69,20 @@ impl Cache {
                     } else if let Ok(content) = fs::read(&path) {
                         if let Ok(rel) = path.strip_prefix(root) {
                             let key = rel.to_string_lossy().replace('\\', "/");
-                            let ext = path.extension()
-                                .and_then(|e| e.to_str())
-                                .unwrap_or("");
-                            let content_type = MIME_MAP.iter()
+                            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                            let content_type = MIME_MAP
+                                .iter()
                                 .find(|(e, _)| *e == ext)
                                 .map(|(_, ct)| *ct)
                                 .unwrap_or("application/octet-stream");
 
-                            map.insert(key, CachedFile { content, content_type });
+                            map.insert(
+                                key,
+                                CachedFile {
+                                    content,
+                                    content_type,
+                                },
+                            );
                         }
                     }
                 }
@@ -92,15 +104,23 @@ impl Cache {
         if let Some(map) = guard.as_mut() {
             let path = Path::new(&self.root).join(key);
             if let Ok(content) = fs::read(&path) {
-                let ext = Path::new(key).extension()
+                let ext = Path::new(key)
+                    .extension()
                     .and_then(|e| e.to_str())
                     .unwrap_or("");
-                let content_type = MIME_MAP.iter()
+                let content_type = MIME_MAP
+                    .iter()
                     .find(|(e, _)| *e == ext)
                     .map(|(_, ct)| *ct)
                     .unwrap_or("application/octet-stream");
 
-                map.insert(key.to_string(), CachedFile { content, content_type });
+                map.insert(
+                    key.to_string(),
+                    CachedFile {
+                        content,
+                        content_type,
+                    },
+                );
             } else {
                 map.remove(key);
             }
