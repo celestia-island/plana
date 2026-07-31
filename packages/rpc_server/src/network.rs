@@ -1,36 +1,40 @@
+use plana::http::NetworkInfo;
 use std::net::{IpAddr, SocketAddr};
 use std::sync::OnceLock;
-use plana::http::NetworkInfo;
 
 static GEOIP_READER: OnceLock<Option<maxminddb::Reader<Vec<u8>>>> = OnceLock::new();
 static ASN_READER: OnceLock<Option<maxminddb::Reader<Vec<u8>>>> = OnceLock::new();
 
 fn geoip_reader() -> Option<&'static maxminddb::Reader<Vec<u8>>> {
-    GEOIP_READER.get_or_init(|| {
-        let path = std::env::var("GEOIP_DB_PATH")
-            .unwrap_or_else(|_| "/usr/share/GeoIP/GeoLite2-Country.mmdb".into());
-        match maxminddb::Reader::open_readfile(&path) {
-            Ok(r) => Some(r),
-            Err(e) => {
-                tracing::debug!("GeoIP database not available: {e}");
-                None
+    GEOIP_READER
+        .get_or_init(|| {
+            let path = std::env::var("GEOIP_DB_PATH")
+                .unwrap_or_else(|_| "/usr/share/GeoIP/GeoLite2-Country.mmdb".into());
+            match maxminddb::Reader::open_readfile(&path) {
+                Ok(r) => Some(r),
+                Err(e) => {
+                    tracing::debug!("GeoIP database not available: {e}");
+                    None
+                }
             }
-        }
-    }).as_ref()
+        })
+        .as_ref()
 }
 
 fn asn_reader() -> Option<&'static maxminddb::Reader<Vec<u8>>> {
-    ASN_READER.get_or_init(|| {
-        let path = std::env::var("ASN_DB_PATH")
-            .unwrap_or_else(|_| "/usr/share/GeoIP/GeoLite2-ASN.mmdb".into());
-        match maxminddb::Reader::open_readfile(&path) {
-            Ok(r) => Some(r),
-            Err(e) => {
-                tracing::debug!("ASN database not available: {e}");
-                None
+    ASN_READER
+        .get_or_init(|| {
+            let path = std::env::var("ASN_DB_PATH")
+                .unwrap_or_else(|_| "/usr/share/GeoIP/GeoLite2-ASN.mmdb".into());
+            match maxminddb::Reader::open_readfile(&path) {
+                Ok(r) => Some(r),
+                Err(e) => {
+                    tracing::debug!("ASN database not available: {e}");
+                    None
+                }
             }
-        }
-    }).as_ref()
+        })
+        .as_ref()
 }
 
 /// Build NetworkInfo from server-side request data.
@@ -40,7 +44,11 @@ pub fn detect_network(addr: &SocketAddr, headers: &axum::http::HeaderMap) -> Net
     let transport = detect_transport(&client_ip, headers);
     let region = detect_region(&client_ip);
     let asn = detect_asn(&client_ip);
-    NetworkInfo { transport, region, asn }
+    NetworkInfo {
+        transport,
+        region,
+        asn,
+    }
 }
 
 fn client_ip_from_headers(headers: &axum::http::HeaderMap) -> Option<IpAddr> {

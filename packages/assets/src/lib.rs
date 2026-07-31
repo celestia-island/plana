@@ -102,7 +102,8 @@ fn insert_headers(resp: &mut Response, content_type: &str, cache_control: Option
     if let Some(cc) = cache_control {
         resp.headers_mut().insert(
             header::CACHE_CONTROL,
-            header::HeaderValue::from_str(cc).unwrap_or(header::HeaderValue::from_static("no-store")),
+            header::HeaderValue::from_str(cc)
+                .unwrap_or(header::HeaderValue::from_static("no-store")),
         );
     }
 }
@@ -119,7 +120,11 @@ async fn root_handler(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<AssetServer>>,
 ) -> Response {
     if let Some(mut resp) = serve_file(state.root, "/index.html") {
-        insert_headers(&mut resp, "text/html; charset=utf-8", state.cache_control.as_deref());
+        insert_headers(
+            &mut resp,
+            "text/html; charset=utf-8",
+            state.cache_control.as_deref(),
+        );
         resp
     } else {
         (StatusCode::NOT_FOUND, "index.html not found").into_response()
@@ -137,7 +142,11 @@ async fn path_handler(
     }
     if state.spa_fallback {
         if let Some(mut resp) = serve_file(state.root, "/index.html") {
-            insert_headers(&mut resp, "text/html; charset=utf-8", state.cache_control.as_deref());
+            insert_headers(
+                &mut resp,
+                "text/html; charset=utf-8",
+                state.cache_control.as_deref(),
+            );
             return resp;
         }
     }
