@@ -1,0 +1,5 @@
+packages:
+  - 'packages/ui'
+  - 'packages/rpc_client'
+overrides:
+  typescript: ~6.0
