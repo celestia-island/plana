@@ -141,8 +141,21 @@ pub struct HealthResponse {
 }
 
 impl HealthResponse {
-    pub fn ok(version: impl Into<String>, kind: BackendKind, uptime: u64, network: NetworkInfo) -> Self {
-        Self { status: ServiceStatus::Ok, version: version.into(), kind, uptime, network, build_hash: None, engine_version: None }
+    pub fn ok(
+        version: impl Into<String>,
+        kind: BackendKind,
+        uptime: u64,
+        network: NetworkInfo,
+    ) -> Self {
+        Self {
+            status: ServiceStatus::Ok,
+            version: version.into(),
+            kind,
+            uptime,
+            network,
+            build_hash: None,
+            engine_version: None,
+        }
     }
 }
 
@@ -158,7 +171,11 @@ pub struct NetworkInfo {
 
 impl NetworkInfo {
     pub fn unknown() -> Self {
-        Self { transport: "sse".into(), region: "XX".into(), asn: None }
+        Self {
+            transport: "sse".into(),
+            region: "XX".into(),
+            asn: None,
+        }
     }
 }
 
