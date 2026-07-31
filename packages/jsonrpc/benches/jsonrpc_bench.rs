@@ -2,11 +2,11 @@ use anyhow::Result;
 
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
-use _jsonrpc::{
+use _state_sync::gateway::{BaseMessage, Message as CoreMessage, SyncMessage};
+use plana_jsonrpc::{
     JsonRpcRequest, core_message_to_method_and_params, deserialize_from_jsonrpc,
     from_jsonrpc_method, serialize_to_jsonrpc,
 };
-use _state_sync::gateway::{BaseMessage, Message as CoreMessage, SyncMessage};
 
 fn bench_serialize_roundtrip(c: &mut Criterion) {
     let msg = CoreMessage::Sync(SyncMessage::OpenWorkspace {
