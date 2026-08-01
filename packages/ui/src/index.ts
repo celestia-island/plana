@@ -32,4 +32,40 @@ export {
   formatUptime,
   formatMediaTime,
   formatNumber,
+  formatBytes,
+  formatPriceUsd,
 } from "./utils/format";
+
+// ── Chat / LLM component kit ──────────────────────────────────────
+export { PRichInput } from "./components/PlanaRichInput";
+export { PVoiceInputPopup } from "./components/PlanaVoiceInputPopup";
+export { PAttachmentModal } from "./components/PlanaAttachmentModal";
+export { PChatMessage } from "./components/PlanaChatMessage";
+export { PMcpToolBlock, parseMcpCallText } from "./components/PlanaMcpToolBlock";
+export type { PParsedMcpCall } from "./components/PlanaMcpToolBlock";
+export { PTokenUsageBadge } from "./components/PlanaTokenUsageBadge";
+export { PTokenUsagePanel } from "./components/PlanaTokenUsagePanel";
+export { PModelTag } from "./components/PlanaModelTag";
+export {
+  getModelMeta,
+  registerModelCatalog,
+  splitModelId,
+} from "./components/PlanaModelCatalog";
+export type {
+  PModelCatalog,
+  PModelMeta,
+  PModelPricing,
+} from "./components/PlanaModelCatalog";
+export { PModelDownloadCard } from "./components/PlanaModelDownloadCard";
+export type {
+  PAttachmentDetail,
+  PAttachmentItem,
+  PChatRole,
+  PMcpToolCall,
+  PMcpToolCallStatus,
+  PModelCosts,
+  PModelDownloadStatus,
+  PModelUsageEntry,
+  PVoicePopupMode,
+  PVoiceState,
+} from "./components/PlanaChatTypes";

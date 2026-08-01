@@ -36,6 +36,23 @@ export function formatUptime(seconds: number): string {
   return `${Math.floor(seconds)}s`;
 }
 
+/** "512" -> "512B", "1536" -> "1.5KB", "2621440" -> "2.5MB", "3221225472" -> "3.0GB". */
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0B";
+  if (bytes < 1024) return `${Math.floor(bytes)}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}GB`;
+}
+
+/** USD amount -> "$0.10" / "$1.5" / "$120". Negative/NaN clamp to 0. */
+export function formatPriceUsd(n: number, currency = "$"): string {
+  if (!Number.isFinite(n) || n < 0) n = 0;
+  if (n >= 100) return `${currency}${Math.round(n)}`;
+  if (n >= 1) return `${currency}${n.toFixed(1)}`;
+  return `${currency}${n.toFixed(2)}`;
+}
+
 /** Timestamp -> "Just now" / "5m ago" / "3h ago" / "2d ago" / locale date. */
 export function formatRelativeTime(input: string | number | Date): string {
   if (!input) return "";
