@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "Vorschau konnte nicht geladen werden.",
     "plana::mcp.waitingArgs": "Warte auf Argumente…",
     "plana::mcp.executing": "Wird ausgeführt…",
-    "plana::chat.you": "Du"
+    "plana::chat.you": "Du",
+    "plana::mcp.exec": "Ausführen",
+    "plana::mcp.writeToVar": "In Variable schreiben",
+    "plana::mcp.varWritten": "Variable geschrieben ({bytes} Bytes)",
+    "plana::attachment.loading": "Wird geladen…",
+    "plana::attachment.noPreview": "Keine Vorschau verfügbar."
   }
 }

@@ -39,10 +39,11 @@ export {
 // ── Chat / LLM component kit ──────────────────────────────────────
 export { PRichInput } from "./components/PlanaRichInput";
 export { PVoiceInputPopup } from "./components/PlanaVoiceInputPopup";
-export { PAttachmentModal } from "./components/PlanaAttachmentModal";
+export { PAttachmentModal, previewKindFor } from "./components/PlanaAttachmentModal";
+export type { PAttachmentPreviewType } from "./components/PlanaAttachmentModal";
 export { PChatMessage } from "./components/PlanaChatMessage";
-export { PMcpToolBlock, parseMcpCallText } from "./components/PlanaMcpToolBlock";
-export type { PParsedMcpCall } from "./components/PlanaMcpToolBlock";
+export { PMcpToolBlock, parseMcpCallText, buildJsonTree, buildHighlightedLines, extractExecCode } from "./components/PlanaMcpToolBlock";
+export type { PHighlightedLine, PJsonNode, PMcpToolBlockVariant, PParsedMcpCall } from "./components/PlanaMcpToolBlock";
 export { PTokenUsageBadge } from "./components/PlanaTokenUsageBadge";
 export { PTokenUsagePanel } from "./components/PlanaTokenUsagePanel";
 export { PModelTag } from "./components/PlanaModelTag";

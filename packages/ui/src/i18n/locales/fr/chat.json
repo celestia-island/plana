@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "Impossible de charger l'aperçu.",
     "plana::mcp.waitingArgs": "En attente d'arguments…",
     "plana::mcp.executing": "Exécution…",
-    "plana::chat.you": "Vous"
+    "plana::chat.you": "Vous",
+    "plana::mcp.exec": "Exécuter",
+    "plana::mcp.writeToVar": "Écrire dans une variable",
+    "plana::mcp.varWritten": "Variable écrite ({bytes} octets)",
+    "plana::attachment.loading": "Chargement…",
+    "plana::attachment.noPreview": "Aucun aperçu disponible."
   }
 }

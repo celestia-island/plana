@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "Falha ao carregar a pré-visualização.",
     "plana::mcp.waitingArgs": "Aguardando argumentos…",
     "plana::mcp.executing": "Executando…",
-    "plana::chat.you": "Você"
+    "plana::chat.you": "Você",
+    "plana::mcp.exec": "Executar",
+    "plana::mcp.writeToVar": "Gravar em variável",
+    "plana::mcp.varWritten": "Variável gravada ({bytes} bytes)",
+    "plana::attachment.loading": "Carregando…",
+    "plana::attachment.noPreview": "Nenhuma pré-visualização disponível."
   }
 }
