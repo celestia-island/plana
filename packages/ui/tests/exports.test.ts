@@ -4,16 +4,25 @@
  */
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
+  PAboutModal,
   PAdminTablePage,
   PAttachmentModal,
+  PBreadcrumb,
+  PCaptchaModal,
+  PCaptchaWidget,
   PChatMessage,
+  PColorSchemeDialog,
   PConnectionStatus,
+  PLogWindow,
   PMcpToolBlock,
   PModelDownloadCard,
   PModelTag,
   PPageHeader,
+  PProtocolModal,
   PRichInput,
+  PSecretRevealModal,
   PStatusBar,
+  PThemeToggle,
   PTokenUsageBadge,
   PTokenUsagePanel,
   PVoiceInputPopup,
@@ -35,8 +44,13 @@ import {
   type EngineHealth,
   type PAttachmentItem,
   type PBackendStatus,
+  type PBreadcrumbBadge,
+  type PBreadcrumbItem,
+  type PBreadcrumbParamChip,
+  type PCaptchaProvider,
   type PMcpToolCall,
   type PModelMeta,
+  type PLogTab,
   type PTableColumn,
   type PVoiceState,
   type ProbeResult,
@@ -93,6 +107,30 @@ describe("package exports", () => {
     expect(voice.mode).toBe("listening");
     expect(meta.contextWindow).toBe(8192);
     expectTypeOf<PMcpToolCall["status"]>().toEqualTypeOf<"pending" | "running" | "done" | "error">();
+  });
+
+  it("exposes the platform/auth polish kit components and types", () => {
+    expect(PCaptchaWidget).toBeDefined();
+    expect(PCaptchaModal).toBeDefined();
+    expect(PProtocolModal).toBeDefined();
+    expect(PAboutModal).toBeDefined();
+    expect(PThemeToggle).toBeDefined();
+    expect(PColorSchemeDialog).toBeDefined();
+    expect(PSecretRevealModal).toBeDefined();
+    expect(PLogWindow).toBeDefined();
+    expect(PBreadcrumb).toBeDefined();
+
+    const provider: PCaptchaProvider = "recaptcha";
+    const tab: PLogTab = { key: "server", title: "Server", lines: ["ok"] };
+    const item: PBreadcrumbItem = { label: "Home", to: "/", active: false };
+    const badge: PBreadcrumbBadge = { id: "b1", text: "OK", variant: "success" };
+    const param: PBreadcrumbParamChip = { id: "p1", label: "engine", value: "demo" };
+    expect(provider).toBe("recaptcha");
+    expect(tab.lines).toContain("ok");
+    expect(item.active).toBe(false);
+    expect(badge.variant).toBe("success");
+    expect(param.value).toBe("demo");
+    expectTypeOf<PCaptchaProvider>().toEqualTypeOf<"turnstile" | "recaptcha">();
   });
 
   it("exposes the new public types", () => {
