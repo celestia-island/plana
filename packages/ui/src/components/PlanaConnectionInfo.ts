@@ -46,6 +46,7 @@ export function useConnectionInfo(
   maxRetries?: Ref<number>,
   attemptNumber?: Ref<number>,
   countdown?: Ref<number>,
+  latencyMs?: Ref<number | null>,
 ): { connectionInfo: Ref<PlanaConnectionInfo> } {
   const info = computed<PlanaConnectionInfo>(() => {
     const s = connectionState.value;
@@ -64,7 +65,7 @@ export function useConnectionInfo(
       state,
       tier: tierValue,
       quality,
-      latencyMs: null,
+      latencyMs: latencyMs?.value ?? null,
       isLocalhost: isLocalhostUrl(),
       region: detectRegion(),
       retryCount: retryCount?.value ?? 0,
