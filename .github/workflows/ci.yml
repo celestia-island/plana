@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
   pull_request:
@@ -11,7 +12,7 @@ env:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v7
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
@@ -19,7 +20,7 @@ jobs:
       - run: cargo check --all-targets --all-features
 
   clippy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v7
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
@@ -29,7 +30,7 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
 
   fmt:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -38,7 +39,7 @@ jobs:
       - run: cargo fmt --all -- --check
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v7
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
