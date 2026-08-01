@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "プレビューの読み込みに失敗しました。",
     "plana::mcp.waitingArgs": "引数を待機中…",
     "plana::mcp.executing": "実行中…",
-    "plana::chat.you": "あなた"
+    "plana::chat.you": "あなた",
+    "plana::mcp.exec": "実行",
+    "plana::mcp.writeToVar": "変数に書き込み",
+    "plana::mcp.varWritten": "変数に書き込みました（{bytes} バイト）",
+    "plana::attachment.loading": "読み込み中…",
+    "plana::attachment.noPreview": "プレビューは利用できません。"
   }
 }

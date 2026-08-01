@@ -1,6 +1,6 @@
 {
   "name": "@celestia-island/plana-ui",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": false,
   "type": "module",
   "description": "Plana business component library for Celestia admin panels",
