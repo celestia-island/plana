@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
-use bollard::service::{Mount, MountTypeEnum, PortBinding};
+use bollard::service::{Mount, MountType, PortBinding};
 
 use super::{
     errors::{ContainerError, ContainerResult},
@@ -223,7 +223,7 @@ impl ContainerManager {
                 let is_named_volume = !v.host_path.starts_with('/');
                 let (typ, bind_options, volume_options) = if is_named_volume {
                     (
-                        Some(MountTypeEnum::VOLUME),
+                        Some(MountType::VOLUME),
                         None,
                         Some(bollard::service::MountVolumeOptions {
                             no_copy: None,
@@ -234,7 +234,7 @@ impl ContainerManager {
                     )
                 } else {
                     (
-                        Some(MountTypeEnum::BIND),
+                        Some(MountType::BIND),
                         Some(bollard::service::MountBindOptions {
                             propagation: None,
                             non_recursive: None,
