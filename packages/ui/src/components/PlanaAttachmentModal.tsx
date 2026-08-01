@@ -2,7 +2,9 @@ import { computed, defineComponent, onMounted, ref, watch, type PropType } from 
 import { Film, File as FileIcon, ImageIcon, Music } from "lucide-vue-next";
 import {
   HBadge,
+  HImageViewer,
   HMarkdownRenderer,
+  HMediaPlayer,
   HModal,
   HScrollContainer,
   mergeMessages,
@@ -43,21 +45,51 @@ function codeLanguage(name: string): string | undefined {
 const TEXT_EXTS = new Set([".md", ".markdown", ".txt", ".log", ".csv"]);
 const CODE_EXTS = new Set(Object.keys(CODE_LANGS));
 
+/** Kind of rich preview to render; inferred from MIME unless hinted. */
+export type PAttachmentPreviewType = "image" | "video" | "audio" | "other";
+
+/** Resolve the preview kind: an explicit hint wins, MIME prefix otherwise. */
+export function previewKindFor(
+  att: Pick<PAttachmentDetail, "type"> | null | undefined,
+  hint?: PAttachmentPreviewType,
+): PAttachmentPreviewType {
+  if (hint) return hint;
+  const type = att?.type ?? "";
+  if (type.startsWith("image/")) return "image";
+  if (type.startsWith("video/")) return "video";
+  if (type.startsWith("audio/")) return "audio";
+  return "other";
+}
+
+function isTextFile(att: PAttachmentDetail): boolean {
+  const ext = att.name.slice(att.name.lastIndexOf(".")).toLowerCase();
+  return att.type.startsWith("text/") || TEXT_EXTS.has(ext) || CODE_EXTS.has(ext);
+}
+
 /**
  * PAttachmentModal — generic file-picker preview modal.
  *
- * Renders an attachment by MIME type: image (img), video/audio (native
- * controls), text/code (HMarkdownRenderer, with syntax fences for known
- * code extensions) or a generic file chip. Text content is read via the
- * attachment's `file` handle when provided; URL-only attachments skip the
- * text preview (deferred — the chest version routes URL fetches through
- * its authed transport, which is app-specific).
+ * Renders an attachment by preview kind: image (HImageViewer), video/audio
+ * (HMediaPlayer), text/code (HMarkdownRenderer, with syntax fences for
+ * known code extensions) or a generic file chip.
+ *
+ * URL handling is transport-agnostic: when the attachment carries no
+ * `preview`/`url`, the consumer may pass `resolveUrl` (its own API client /
+ * transport knows how to turn a backend file name into an authed URL).
+ * The resolved URL is used for media previews, the text fetch and the
+ * download action. Text content is read via the attachment's `file` handle
+ * when provided.
  */
 export const PAttachmentModal = defineComponent({
   name: "PlanaAttachmentModal",
   props: {
     modelValue: { type: Boolean, default: false },
     attachment: { type: Object as PropType<PAttachmentDetail | null>, default: null },
+    /** Transport-provided URL resolver; called with the file name when the
+     *  attachment has neither `preview` nor `url`. */
+    resolveUrl: { type: Function as PropType<(name: string) => Promise<string>>, default: undefined },
+    /** Preview kind hint; inferred from the MIME type when omitted. */
+    previewType: { type: String as PropType<PAttachmentPreviewType>, default: undefined },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
@@ -79,17 +111,46 @@ export const PAttachmentModal = defineComponent({
 
     const { t } = useI18n();
 
-    const isImage = computed(() => props.attachment?.type.startsWith("image/") ?? false);
-    const isVideo = computed(() => props.attachment?.type.startsWith("video/") ?? false);
-    const isAudio = computed(() => props.attachment?.type.startsWith("audio/") ?? false);
-    const isText = computed(() => {
-      const att = props.attachment;
-      if (!att) return false;
-      const ext = att.name.slice(att.name.lastIndexOf(".")).toLowerCase();
-      return att.type.startsWith("text/") || TEXT_EXTS.has(ext) || CODE_EXTS.has(ext);
-    });
+    const kind = computed(() => previewKindFor(props.attachment, props.previewType));
+    const isText = computed(() => (props.attachment ? isTextFile(props.attachment) : false));
 
-    const src = computed(() => props.attachment?.preview || props.attachment?.url || "");
+    /* ── URL resolution ──────────────────────────────────────────── */
+    const resolvedSrc = ref("");
+    const srcLoading = ref(false);
+    const srcError = ref<string | null>(null);
+
+    async function resolveSrc() {
+      const att = props.attachment;
+      srcLoading.value = false;
+      srcError.value = null;
+      if (!att) {
+        resolvedSrc.value = "";
+        return;
+      }
+      if (att.preview || att.url) {
+        resolvedSrc.value = att.preview || att.url || "";
+        return;
+      }
+      if (props.resolveUrl) {
+        srcLoading.value = true;
+        try {
+          resolvedSrc.value = await props.resolveUrl(att.name);
+        } catch (e) {
+          resolvedSrc.value = "";
+          srcError.value = e instanceof Error ? e.message : String(e);
+        } finally {
+          srcLoading.value = false;
+        }
+        return;
+      }
+      resolvedSrc.value = "";
+    }
+
+    watch(
+      () => [props.attachment, props.resolveUrl, props.previewType] as const,
+      () => { void resolveSrc(); },
+      { immediate: true },
+    );
 
     /* ── Text / code preview ─────────────────────────────────────── */
     const textContent = ref("");
@@ -103,22 +164,28 @@ export const PAttachmentModal = defineComponent({
       textLoading.value = true;
       textError.value = null;
       try {
+        let raw: string;
         if (att.file) {
-          textContent.value = await att.file.text();
+          raw = await att.file.text();
+        } else if (resolvedSrc.value) {
+          // The resolved URL comes from the consumer's transport (via
+          // `resolveUrl`) or was already a usable preview/object URL.
+          const res = await fetch(resolvedSrc.value);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          raw = await res.text();
         } else {
-          // URL-only: fetching through the app's authed transport is
-          // deferred to the consumer. Render nothing rather than a raw
-          // <a> that would leak the bearer-less URL.
-          textContent.value = "";
+          raw = "";
         }
         const lang = codeLanguage(att.name);
         const isMd = /\.(md|markdown)$/i.test(att.name);
         if (isMd) {
+          textContent.value = raw;
           textPlain.value = false;
         } else if (lang) {
-          textContent.value = "```" + lang + "\n" + textContent.value + "\n```";
+          textContent.value = "```" + lang + "\n" + raw + "\n```";
           textPlain.value = false;
         } else {
+          textContent.value = raw;
           textPlain.value = true;
         }
       } catch (e) {
@@ -128,19 +195,26 @@ export const PAttachmentModal = defineComponent({
       }
     }
 
+    function startTextLoad() {
+      if (!props.modelValue || !props.attachment) return;
+      if (isText.value) void loadText();
+    }
+
     watch(
       () => [props.modelValue, props.attachment] as const,
-      ([open]) => {
-        if (!open || !props.attachment) return;
-        if (isText.value) void loadText();
-      },
+      () => startTextLoad(),
       { immediate: true },
     );
 
+    // Re-fetch text once the transport URL lands (resolveUrl is async).
+    watch(resolvedSrc, () => {
+      if (!props.attachment?.file) startTextLoad();
+    });
+
     function download() {
-      if (!src.value) return;
+      if (!resolvedSrc.value) return;
       const a = document.createElement("a");
-      a.href = src.value;
+      a.href = resolvedSrc.value;
       a.download = props.attachment?.name || "download";
       a.click();
     }
@@ -161,28 +235,34 @@ export const PAttachmentModal = defineComponent({
         title={props.attachment?.name}
         width="44rem"
         footerActions={[
-          { label: t("plana::attachment.download", "Download"), onClick: download, disabled: !src.value },
+          { label: t("plana::attachment.download", "Download"), onClick: download, disabled: !resolvedSrc.value },
           { label: t("plana::attachment.close", "Close"), variant: "secondary", onClick: () => emit("update:modelValue", false) },
         ]}
       >
         <div class="s-attachment-modal">
-          {isImage.value && src.value && (
-            <div class="s-attachment-modal-preview">
-              <img src={src.value} alt={props.attachment?.name ?? ""} />
-            </div>
+          {srcLoading.value && (
+            <p class="s-attachment-modal-text-empty">{t("plana::attachment.loading", "Loading…")}</p>
           )}
 
-          {isVideo.value && src.value && (
-            <video class="s-attachment-modal-preview" src={src.value} controls preload="metadata" />
+          {/* Image — zoomable viewer with minimap navigator */}
+          {!srcLoading.value && kind.value === "image" && resolvedSrc.value && (
+            <HImageViewer src={resolvedSrc.value} alt={props.attachment?.name ?? ""} />
           )}
 
-          {isAudio.value && src.value && (
-            <audio class="s-attachment-modal-preview" src={src.value} controls preload="metadata" />
+          {/* Video — hikari media player with control bar */}
+          {!srcLoading.value && kind.value === "video" && resolvedSrc.value && (
+            <HMediaPlayer type="video" src={resolvedSrc.value} />
           )}
 
+          {/* Audio — hikari media player with visualizer + control bar */}
+          {!srcLoading.value && kind.value === "audio" && resolvedSrc.value && (
+            <HMediaPlayer type="audio" src={resolvedSrc.value} />
+          )}
+
+          {/* Text / code — markdown + highlight.js via HMarkdownRenderer */}
           {isText.value && (
             <HScrollContainer class="s-attachment-modal-text">
-              {props.attachment?.file ? (
+              {props.attachment?.file || resolvedSrc.value ? (
                 <HMarkdownRenderer
                   content={textContent.value}
                   loading={textLoading.value}
@@ -190,7 +270,9 @@ export const PAttachmentModal = defineComponent({
                 />
               ) : (
                 <p class="s-attachment-modal-text-empty">
-                  {textError.value ?? ""}
+                  {srcError.value
+                    ? srcError.value
+                    : t("plana::attachment.noPreview", "No preview available.")}
                 </p>
               )}
               {textError.value && (
@@ -199,11 +281,16 @@ export const PAttachmentModal = defineComponent({
             </HScrollContainer>
           )}
 
-          {!isImage.value && !isVideo.value && !isAudio.value && !isText.value && (
+          {/* Generic file */}
+          {!srcLoading.value && kind.value === "other" && !isText.value && (
             <div class="s-attachment-modal-file">
               {fileIcon()}
               <p class="s-attachment-modal-file-name">{props.attachment?.name}</p>
             </div>
+          )}
+
+          {srcError.value && kind.value !== "other" && (
+            <p class="s-attachment-modal-text-error">{srcError.value}</p>
           )}
 
           <div class="s-attachment-modal-meta">

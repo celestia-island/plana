@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "預覽載入失敗。",
     "plana::mcp.waitingArgs": "等待參數…",
     "plana::mcp.executing": "執行中…",
-    "plana::chat.you": "您"
+    "plana::chat.you": "您",
+    "plana::mcp.exec": "執行",
+    "plana::mcp.writeToVar": "寫入變量",
+    "plana::mcp.varWritten": "變量已寫入（{bytes} 字節）",
+    "plana::attachment.loading": "載入中…",
+    "plana::attachment.noPreview": "沒有可用的預覽。"
   }
 }

@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "فشل تحميل المعاينة.",
     "plana::mcp.waitingArgs": "بانتظار الوسائط…",
     "plana::mcp.executing": "جارٍ التنفيذ…",
-    "plana::chat.you": "أنت"
+    "plana::chat.you": "أنت",
+    "plana::mcp.exec": "تنفيذ",
+    "plana::mcp.writeToVar": "الكتابة إلى متغير",
+    "plana::mcp.varWritten": "تمت كتابة المتغير ({bytes} بايت)",
+    "plana::attachment.loading": "جارٍ التحميل…",
+    "plana::attachment.noPreview": "لا تتوفر معاينة."
   }
 }
