@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "预览加载失败。",
     "plana::mcp.waitingArgs": "等待参数…",
     "plana::mcp.executing": "执行中…",
-    "plana::chat.you": "你"
+    "plana::chat.you": "你",
+    "plana::mcp.exec": "执行",
+    "plana::mcp.writeToVar": "写入变量",
+    "plana::mcp.varWritten": "变量已写入（{bytes} 字节）",
+    "plana::attachment.loading": "加载中…",
+    "plana::attachment.noPreview": "没有可用的预览。"
   }
 }

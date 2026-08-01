@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "Failed to load preview.",
     "plana::mcp.waitingArgs": "Waiting for arguments…",
     "plana::mcp.executing": "Executing…",
-    "plana::chat.you": "You"
+    "plana::chat.you": "You",
+    "plana::mcp.exec": "Exec",
+    "plana::mcp.writeToVar": "Write to var",
+    "plana::mcp.varWritten": "Variable written ({bytes} bytes)",
+    "plana::attachment.loading": "Loading…",
+    "plana::attachment.noPreview": "No preview available."
   }
 }

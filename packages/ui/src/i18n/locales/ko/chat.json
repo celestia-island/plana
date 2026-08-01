@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "미리보기를 불러오지 못했습니다.",
     "plana::mcp.waitingArgs": "인수 대기 중…",
     "plana::mcp.executing": "실행 중…",
-    "plana::chat.you": "당신"
+    "plana::chat.you": "당신",
+    "plana::mcp.exec": "실행",
+    "plana::mcp.writeToVar": "변수에 쓰기",
+    "plana::mcp.varWritten": "변수에 기록됨（{bytes} 바이트）",
+    "plana::attachment.loading": "로드 중…",
+    "plana::attachment.noPreview": "미리보기를 사용할 수 없습니다."
   }
 }

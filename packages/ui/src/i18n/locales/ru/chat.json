@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "Не удалось загрузить предпросмотр.",
     "plana::mcp.waitingArgs": "Ожидание аргументов…",
     "plana::mcp.executing": "Выполняется…",
-    "plana::chat.you": "Вы"
+    "plana::chat.you": "Вы",
+    "plana::mcp.exec": "Выполнение",
+    "plana::mcp.writeToVar": "Запись в переменную",
+    "plana::mcp.varWritten": "Переменная записана ({bytes} байт)",
+    "plana::attachment.loading": "Загрузка…",
+    "plana::attachment.noPreview": "Предпросмотр недоступен."
   }
 }
