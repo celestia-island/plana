@@ -5,21 +5,40 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   PAdminTablePage,
+  PAttachmentModal,
+  PChatMessage,
   PConnectionStatus,
+  PMcpToolBlock,
+  PModelDownloadCard,
+  PModelTag,
   PPageHeader,
+  PRichInput,
   PStatusBar,
+  PTokenUsageBadge,
+  PTokenUsagePanel,
+  PVoiceInputPopup,
+  formatBytes,
   formatMediaTime,
   formatNumber,
+  formatPriceUsd,
   formatRelativeTime,
   formatTokenCount,
   formatUptime,
+  getModelMeta,
+  parseMcpCallText,
+  registerModelCatalog,
   setProbeClient,
+  splitModelId,
   useConnectionInfo,
   useConnectionProbe,
   useEngineHealth,
   type EngineHealth,
+  type PAttachmentItem,
   type PBackendStatus,
+  type PMcpToolCall,
+  type PModelMeta,
   type PTableColumn,
+  type PVoiceState,
   type ProbeResult,
 } from "../src/index";
 
@@ -44,6 +63,36 @@ describe("package exports", () => {
     expect(formatUptime).toBeTypeOf("function");
     expect(formatMediaTime).toBeTypeOf("function");
     expect(formatNumber).toBeTypeOf("function");
+    expect(formatBytes).toBeTypeOf("function");
+    expect(formatPriceUsd).toBeTypeOf("function");
+  });
+
+  it("exposes the chat/LLM kit components and utils", () => {
+    expect(PRichInput).toBeDefined();
+    expect(PVoiceInputPopup).toBeDefined();
+    expect(PAttachmentModal).toBeDefined();
+    expect(PChatMessage).toBeDefined();
+    expect(PMcpToolBlock).toBeDefined();
+    expect(PTokenUsageBadge).toBeDefined();
+    expect(PTokenUsagePanel).toBeDefined();
+    expect(PModelTag).toBeDefined();
+    expect(PModelDownloadCard).toBeDefined();
+    expect(splitModelId).toBeTypeOf("function");
+    expect(getModelMeta).toBeTypeOf("function");
+    expect(registerModelCatalog).toBeTypeOf("function");
+    expect(parseMcpCallText).toBeTypeOf("function");
+  });
+
+  it("exposes the chat/LLM kit public types", () => {
+    const tool: PMcpToolCall = { toolName: "web_search", status: "done", callText: "" };
+    const att: PAttachmentItem = { id: "a", name: "x.txt", type: "text/plain", size: 1 };
+    const voice: PVoiceState = { open: false, mode: "listening" };
+    const meta: PModelMeta = { contextWindow: 8192 };
+    expect(tool.status).toBe("done");
+    expect(att.name).toBe("x.txt");
+    expect(voice.mode).toBe("listening");
+    expect(meta.contextWindow).toBe(8192);
+    expectTypeOf<PMcpToolCall["status"]>().toEqualTypeOf<"pending" | "running" | "done" | "error">();
   });
 
   it("exposes the new public types", () => {
