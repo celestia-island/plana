@@ -17,6 +17,11 @@
     "plana::statusBar.tier.local": "HTTP ローカル",
     "plana::statusBar.tier.ws": "WebSocket",
     "plana::statusBar.tier.sse": "SSE ストリーム",
-    "plana::statusBar.tier.poll": "HTTP ポーリング"
+    "plana::statusBar.tier.poll": "HTTP ポーリング",
+    "plana::statusBar.backend.ok": "正常",
+    "plana::statusBar.backend.warn": "低下",
+    "plana::statusBar.backend.error": "エラー",
+    "plana::statusBar.backend.unknown": "不明",
+    "plana::tablePage.emptyTitle": "データなし"
   }
 }

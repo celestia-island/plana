@@ -17,6 +17,11 @@
     "plana::statusBar.tier.local": "HTTP 로컬",
     "plana::statusBar.tier.ws": "WebSocket",
     "plana::statusBar.tier.sse": "SSE 스트림",
-    "plana::statusBar.tier.poll": "HTTP 폴링"
+    "plana::statusBar.tier.poll": "HTTP 폴링",
+    "plana::statusBar.backend.ok": "정상",
+    "plana::statusBar.backend.warn": "저하",
+    "plana::statusBar.backend.error": "오류",
+    "plana::statusBar.backend.unknown": "알 수 없음",
+    "plana::tablePage.emptyTitle": "데이터 없음"
   }
 }
