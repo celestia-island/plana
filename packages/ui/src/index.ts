@@ -69,3 +69,22 @@ export type {
   PVoicePopupMode,
   PVoiceState,
 } from "./components/PlanaChatTypes";
+
+// ── Platform / auth polish kit ────────────────────────────────────
+export { PCaptchaWidget } from "./components/PlanaCaptchaWidget";
+export type { PCaptchaProvider } from "./components/PlanaCaptchaWidget";
+export { PCaptchaModal } from "./components/PlanaCaptchaModal";
+export { PProtocolModal } from "./components/PlanaProtocolModal";
+export { PAboutModal } from "./components/PlanaAboutModal";
+export type { PAboutLink } from "./components/PlanaAboutModal";
+export { PThemeToggle } from "./components/PlanaThemeToggle";
+export { PColorSchemeDialog } from "./components/PlanaColorSchemeDialog";
+export { PSecretRevealModal } from "./components/PlanaSecretRevealModal";
+export { PLogWindow } from "./components/PlanaLogWindow";
+export type { PLogTab } from "./components/PlanaLogWindow";
+export { PBreadcrumb } from "./components/PlanaBreadcrumb";
+export type {
+  PBreadcrumbBadge,
+  PBreadcrumbItem,
+  PBreadcrumbParamChip,
+} from "./components/PlanaBreadcrumb";
