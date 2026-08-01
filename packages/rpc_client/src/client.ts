@@ -13,6 +13,8 @@ export interface ConnectionStateEvent {
   transportTier?: string;
   attemptNumber?: number;
   countdown?: number;
+  /** Round-trip time of the latest heartbeat, in milliseconds (ws tier only). */
+  latencyMs?: number;
 }
 
 export type RpcErrorKind =
@@ -105,6 +107,8 @@ export class RpcClient {
 
   #hbTimer: ReturnType<typeof setInterval> | null = null;
   #hbAckTimer: ReturnType<typeof setTimeout> | null = null;
+  #hbSentAt: number | null = null;
+  #latencyMs: number | null = null;
 
   #notifHandlers = new Set<NotificationHandler>();
   #binaryHandlers = new Set<BinaryHandler>();
@@ -119,6 +123,8 @@ export class RpcClient {
   get connected(): boolean { return this.#ws?.readyState === WebSocket.OPEN; }
   get transportTier(): TransportTier { return this.#tier; }
   get retryCount(): number { return this.#retryCount; }
+  /** Last measured heartbeat round-trip time (ws tier only); null when unknown. */
+  get latencyMs(): number | null { return this.#latencyMs; }
 
   constructor(opts: RpcClientOpts) {
     this.#baseUrl = opts.baseUrl.replace(/\/+$/, "");
@@ -351,6 +357,11 @@ export class RpcClient {
 
         if (data.method === "Base.HeartbeatAck") {
           this.#resetHeartbeatTimeout();
+          if (this.#hbSentAt !== null) {
+            this.#latencyMs = Math.max(0, Math.round(performance.now() - this.#hbSentAt));
+            this.#hbSentAt = null;
+            this.#emitLatency();
+          }
           this.#heartbeatHandlers.forEach((h) => h());
           return;
         }
@@ -566,15 +577,28 @@ export class RpcClient {
       if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) return;
       if (this.#hbAckTimer) return;
       try {
+        this.#hbSentAt = performance.now();
         this.#ws.send(JSON.stringify({ jsonrpc: "2.0", method: "Base.Heartbeat" }));
         this.#hbAckTimer = setTimeout(() => {
           this.#hbAckTimer = null;
+          this.#hbSentAt = null;
           if (this.#ws && this.#ws.readyState === WebSocket.OPEN) {
             this.#ws.close(4000, "heartbeat timeout");
           }
         }, this.#heartbeatTimeout);
       } catch { /* ignore */ }
     }, this.#heartbeatInterval);
+  }
+
+  /** Notify state handlers about a fresh latency measurement (partial event). */
+  #emitLatency(): void {
+    const latencyMs = this.#latencyMs;
+    if (latencyMs === null) return;
+    this.#stateHandlers.forEach((h) => h({
+      state: this.#state,
+      latencyMs,
+      transportTier: this.#tier,
+    }));
   }
 
   #resetHeartbeatTimeout(): void {
@@ -595,6 +619,8 @@ export class RpcClient {
     this.#eventSource = null;
     if (this.#pollTimer) { clearInterval(this.#pollTimer); this.#pollTimer = null; }
     this.#clearHeartbeat();
+    this.#latencyMs = null;
+    this.#hbSentAt = null;
 
     if (this.#ws) {
       this.#ws.onclose = null;

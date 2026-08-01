@@ -184,7 +184,7 @@ export const PStatusBar = defineComponent({
               {info ? (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", fontWeight: 600, fontSize: "0.8125rem" }}>
-                    {qualityIcon(mode === "connected" ? "good" : "unknown", tier, info.isLocalhost, 14)}
+                    {qualityIcon(info.quality || (mode === "connected" ? "good" : "unknown"), tier, info.isLocalhost, 14)}
                     <span style={{ color: dotColorMap[mode] ?? dotColorMap.disconnected }}>
                       {statusText}
                     </span>
@@ -199,7 +199,7 @@ export const PStatusBar = defineComponent({
                       <span>
                         {t("plana::statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
                           .replace("{retryCount}", String(attempt))
-                          .replace("{maxRetries}", String(3))}
+                          .replace("{maxRetries}", String(info.maxRetries > 0 ? info.maxRetries : 3))}
                       </span>
                       {countdown > 0 && (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: "var(--font-mono, monospace)", marginLeft: "8px" }}>
@@ -227,7 +227,7 @@ export const PStatusBar = defineComponent({
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <Globe size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                     <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("plana::statusBar.network", "Network")}</span>
-                    <span>{regionLabel[info.region] ?? info.region}{info.isLocalhost ? " \u00b7 " + t("plana::statusBar.local", "Local") : ""}</span>
+                    <span>{regionLabel[info.region] ?? info.region}{info.asn != null ? ` · AS${info.asn}` : ""}{info.isLocalhost ? " · " + t("plana::statusBar.local", "Local") : ""}</span>
                   </div>
                 </>
               ) : (

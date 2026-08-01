@@ -17,6 +17,11 @@
     "plana::statusBar.tier.local": "HTTP 本地",
     "plana::statusBar.tier.ws": "WebSocket",
     "plana::statusBar.tier.sse": "SSE 流",
-    "plana::statusBar.tier.poll": "HTTP 轮询"
+    "plana::statusBar.tier.poll": "HTTP 轮询",
+    "plana::statusBar.backend.ok": "正常",
+    "plana::statusBar.backend.warn": "降级",
+    "plana::statusBar.backend.error": "错误",
+    "plana::statusBar.backend.unknown": "未知",
+    "plana::tablePage.emptyTitle": "暂无数据"
   }
 }
