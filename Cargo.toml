@@ -77,7 +77,7 @@ base64 = "^0.22"
 boa_engine = "^0.21"
 boa_gc = "^0.21"
 boa_runtime = "^0.21"
-bollard = "^0.20"
+bollard = "^0.21"
 bytes = "^1"
 chrono = { version = "^0.4", features = ["serde", "clock"] }
 dashmap = "^6"
