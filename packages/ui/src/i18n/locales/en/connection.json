@@ -17,6 +17,11 @@
     "plana::statusBar.tier.local": "HTTP local",
     "plana::statusBar.tier.ws": "WebSocket",
     "plana::statusBar.tier.sse": "SSE stream",
-    "plana::statusBar.tier.poll": "HTTP poll"
+    "plana::statusBar.tier.poll": "HTTP poll",
+    "plana::statusBar.backend.ok": "OK",
+    "plana::statusBar.backend.warn": "Degraded",
+    "plana::statusBar.backend.error": "Error",
+    "plana::statusBar.backend.unknown": "Unknown",
+    "plana::tablePage.emptyTitle": "No data"
   }
 }

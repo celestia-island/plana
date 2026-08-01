@@ -2,6 +2,11 @@ export { PAuthCard } from "./components/PlanaAuthCard";
 export { PAdminShell } from "./components/PlanaAdminShell";
 export { PAdminHeader } from "./components/PlanaAdminHeader";
 export { PStatusBar } from "./components/PlanaStatusBar";
+export { PConnectionStatus } from "./components/PlanaConnectionStatus";
+export type { PBackendStatus } from "./components/PlanaConnectionStatus";
+export { PPageHeader } from "./components/PlanaPageHeader";
+export { PAdminTablePage } from "./components/PlanaAdminTablePage";
+export type { PTableColumn } from "./components/PlanaAdminTablePage";
 export { PLocalePicker } from "./components/PlanaLocalePicker";
 export { PNavSidebar } from "./components/PlanaNavSidebar";
 export { PFooter } from "./components/PlanaFooter";
@@ -18,4 +23,13 @@ export { provideActionBar, useActionBar } from "./composables/useActionBar";
 export type { ActionBarRenderer } from "./composables/useActionBar";
 export { setProbeClient, useConnectionProbe } from "./composables/useConnectionProbe";
 export type { ProbeResult } from "./composables/useConnectionProbe";
+export { useEngineHealth } from "./composables/useEngineHealth";
+export type { EngineHealth, EngineNetworkInfo } from "./composables/useEngineHealth";
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
+export {
+  formatTokenCount,
+  formatRelativeTime,
+  formatUptime,
+  formatMediaTime,
+  formatNumber,
+} from "./utils/format";
