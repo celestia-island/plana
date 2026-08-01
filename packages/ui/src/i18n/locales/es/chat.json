@@ -47,6 +47,11 @@
     "plana::attachment.previewError": "No se pudo cargar la vista previa.",
     "plana::mcp.waitingArgs": "Esperando argumentos…",
     "plana::mcp.executing": "Ejecutando…",
-    "plana::chat.you": "Tú"
+    "plana::chat.you": "Tú",
+    "plana::mcp.exec": "Ejecutar",
+    "plana::mcp.writeToVar": "Escribir en variable",
+    "plana::mcp.varWritten": "Variable escrita ({bytes} bytes)",
+    "plana::attachment.loading": "Cargando…",
+    "plana::attachment.noPreview": "No hay vista previa disponible."
   }
 }
