@@ -30,7 +30,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.8"
+version = "0.1.9"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
@@ -165,3 +165,10 @@ debug = 0
 
 [profile.bench]
 debug = 0
+
+
+# Vendored ts-rs with a fix for the export-merge panic on files whose
+# header contains no imports (upstream ts-rs 12.0.1 bug, unpatched).
+[patch.crates-io]
+ts-rs = { path = "patches/ts-rs" }
+ts-rs-macros = { path = "patches/ts-rs-macros" }

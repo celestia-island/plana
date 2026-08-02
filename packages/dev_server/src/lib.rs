@@ -101,10 +101,11 @@ async fn serve_file(cache: &Cache, path: &str, spa: bool) -> Response {
     }
 
     // SPA fallback — serve index.html for unknown paths that look like routes
-    if spa && !path.contains('.') {
-        if let Some(resp) = cache.get("index.html") {
-            return resp;
-        }
+    if spa
+        && !path.contains('.')
+        && let Some(resp) = cache.get("index.html")
+    {
+        return resp;
     }
 
     let mut resp = Response::new(Body::from("Not Found"));

@@ -8,7 +8,7 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use llm_provider::model_router::{ModelRouter, TaskComplexity};
+//! use plana_llm_provider::model_router::{ModelRouter, TaskComplexity};
 //!
 //! let router = ModelRouter::default();
 //! if let Some(entry) = router.select(TaskComplexity::Standard) {

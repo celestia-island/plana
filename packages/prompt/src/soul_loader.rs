@@ -239,7 +239,6 @@ Some content here."#;
         let repo_root = manifest_path
             .parent()
             .and_then(|p| p.parent())
-            .and_then(|p| p.parent())
             .context("no repo root")?;
 
         std::env::set_current_dir(repo_root)?;
@@ -264,7 +263,6 @@ Some content here."#;
         let repo_root = manifest_path
             .parent()
             .and_then(|p| p.parent())
-            .and_then(|p| p.parent())
             .context("no repo root")?;
 
         std::env::set_current_dir(repo_root)?;
@@ -288,7 +286,6 @@ Some content here."#;
         let manifest_path = std::path::PathBuf::from(manifest_dir);
         let repo_root = manifest_path
             .parent()
-            .and_then(|p| p.parent())
             .and_then(|p| p.parent())
             .context("no repo root")?;
 
