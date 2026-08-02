@@ -4,7 +4,7 @@ use std::fmt;
 use std::str::FromStr;
 use ts_rs::TS;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema, Default)]
 #[ts(export, export_to = "region.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum RegionPolicy {
@@ -34,17 +34,12 @@ pub enum RegionPolicy {
         #[serde(default)]
         payment_mir_supported: bool,
     },
+    #[default]
     FreeMarket,
 }
 
 fn default_true() -> bool {
     true
-}
-
-impl Default for RegionPolicy {
-    fn default() -> Self {
-        RegionPolicy::FreeMarket
-    }
 }
 
 impl RegionPolicy {

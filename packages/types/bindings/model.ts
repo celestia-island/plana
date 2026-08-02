@@ -16,18 +16,19 @@ export type GenerationTier = "fast_preview" | "standard" | "production";
  * leave this as `None`.
  */
 export type HardwareRequirements = {
-/**
- * Minimum VRAM in GB.
- */
-min_vram_gb?: number,
-/**
- * Minimum system RAM in GB.
- */
-min_ram_gb?: number,
-/**
- * Recommended GPU (e.g. `"NVIDIA RTX 4090"`).
- */
-recommended_gpu?: string, };
+  /**
+   * Minimum VRAM in GB.
+   */
+  min_vram_gb?: number;
+  /**
+   * Minimum system RAM in GB.
+   */
+  min_ram_gb?: number;
+  /**
+   * Recommended GPU (e.g. `"NVIDIA RTX 4090"`).
+   */
+  recommended_gpu?: string;
+};
 
 /**
  * Where a model physically executes. evernight chooses the backend based on
@@ -48,12 +49,40 @@ export type ModelBackend = "remote_api" | "gpu" | "cpu";
  * remain for backward compatibility but are superseded by this enum when
  * present.
  */
-export type ModelCapability = "text_chat" | "text_streaming" | "function_calling" | "reasoning" | "code_generation" | "text_embedding" | "speech_to_text" | "text_to_speech" | "image_input" | "video_input" | "visual_critique" | "text_to_image" | "image_to_image" | "image_edit" | "image_upscale" | "text_to_3d" | "image_to_3d" | "three_d_edit" | "three_d_export" | "pbr_texturing" | "mesh_optimization";
+export type ModelCapability =
+  | "text_chat"
+  | "text_streaming"
+  | "function_calling"
+  | "reasoning"
+  | "code_generation"
+  | "text_embedding"
+  | "speech_to_text"
+  | "text_to_speech"
+  | "image_input"
+  | "video_input"
+  | "visual_critique"
+  | "text_to_image"
+  | "image_to_image"
+  | "image_edit"
+  | "image_upscale"
+  | "text_to_3d"
+  | "image_to_3d"
+  | "three_d_edit"
+  | "three_d_export"
+  | "pbr_texturing"
+  | "mesh_optimization";
 
 /**
  * Top-level model category. Determines which subsystem consumes the model.
  */
-export type ModelCategory = "llm" | "embedding" | "speech_to_text" | "text_to_speech" | "image_generation" | "three_d_generation" | "multi_modal";
+export type ModelCategory =
+  | "llm"
+  | "embedding"
+  | "speech_to_text"
+  | "text_to_speech"
+  | "image_generation"
+  | "three_d_generation"
+  | "multi_modal";
 
 /**
  * A unified description of an AI model, shared between scepter and chest.
@@ -62,52 +91,53 @@ export type ModelCategory = "llm" | "embedding" | "speech_to_text" | "text_to_sp
  * inference using this common vocabulary.
  */
 export type ModelDescriptor = {
-/**
- * Unique id, e.g. `"bge-m3"`, `"whisper-tiny"`, `"claude-opus-4.8"`.
- */
-id: string,
-/**
- * Human-readable display name.
- */
-display_name: string,
-/**
- * What kind of model this is.
- */
-category: ModelCategory,
-/**
- * Where it runs.
- */
-backend: ModelBackend,
-/**
- * Size tier (LLM coding-plan concept; `None` for non-LLM models).
- */
-tier?: ModelTier,
-/**
- * Output dimension (embedding models only).
- */
-dimension?: number,
-/**
- * Approximate model size in bytes (local models).
- */
-size_bytes?: bigint,
-/**
- * Provider index (`#N` convention; LLM models only).
- */
-provider_index?: number,
-/**
- * Fine-grained capability flags. When non-empty, the scepter router uses
- * these to match skills that declare `required_capabilities`. When empty,
- * falls back to the legacy boolean flags on `ModelFsInfo`.
- */
-capabilities: Array<ModelCapability>,
-/**
- * Generation quality tier (image / 3D generation models only).
- */
-generation_tier?: GenerationTier,
-/**
- * Hardware requirements (local generative models only).
- */
-hardware_requirements?: HardwareRequirements, };
+  /**
+   * Unique id, e.g. `"bge-m3"`, `"whisper-tiny"`, `"claude-opus-4.8"`.
+   */
+  id: string;
+  /**
+   * Human-readable display name.
+   */
+  display_name: string;
+  /**
+   * What kind of model this is.
+   */
+  category: ModelCategory;
+  /**
+   * Where it runs.
+   */
+  backend: ModelBackend;
+  /**
+   * Size tier (LLM coding-plan concept; `None` for non-LLM models).
+   */
+  tier?: ModelTier;
+  /**
+   * Output dimension (embedding models only).
+   */
+  dimension?: number;
+  /**
+   * Approximate model size in bytes (local models).
+   */
+  size_bytes?: bigint;
+  /**
+   * Provider index (`#N` convention; LLM models only).
+   */
+  provider_index?: number;
+  /**
+   * Fine-grained capability flags. When non-empty, the scepter router uses
+   * these to match skills that declare `required_capabilities`. When empty,
+   * falls back to the legacy boolean flags on `ModelFsInfo`.
+   */
+  capabilities: Array<ModelCapability>;
+  /**
+   * Generation quality tier (image / 3D generation models only).
+   */
+  generation_tier?: GenerationTier;
+  /**
+   * Hardware requirements (local generative models only).
+   */
+  hardware_requirements?: HardwareRequirements;
+};
 
 /**
  * A model inference request, sent from the web UI to the upstream engine
@@ -115,50 +145,55 @@ hardware_requirements?: HardwareRequirements, };
  * backend (local CPU / local GPU / remote GPU / remote API).
  */
 export type ModelInferenceRequest = {
-/**
- * Which model to use (by id).
- */
-model_id: string,
-/**
- * Input data (format depends on category: text for LLM/embedding,
- * base64 audio for STT, base64 image for vision).
- */
-input: string,
-/**
- * Optional parameters (temperature, max_tokens, language hint …).
- */
-parameters?: Record<string, unknown>, };
+  /**
+   * Which model to use (by id).
+   */
+  model_id: string;
+  /**
+   * Input data (format depends on category: text for LLM/embedding,
+   * base64 audio for STT, base64 image for vision).
+   */
+  input: string;
+  /**
+   * Optional parameters (temperature, max_tokens, language hint …).
+   */
+  parameters?: Record<string, unknown>;
+};
 
 /**
  * Inference result returned to the web UI.
  */
 export type ModelInferenceResult = {
-/**
- * Model that produced the output.
- */
-model_id: string,
-/**
- * Output data (text for LLM/embedding/TTS, text for STT, JSON for vision).
- */
-output: string,
-/**
- * Time spent (milliseconds).
- */
-elapsed_ms?: bigint,
-/**
- * Token/processing usage (if applicable).
- */
-usage?: Record<string, unknown>, };
+  /**
+   * Model that produced the output.
+   */
+  model_id: string;
+  /**
+   * Output data (text for LLM/embedding/TTS, text for STT, JSON for vision).
+   */
+  output: string;
+  /**
+   * Time spent (milliseconds).
+   */
+  elapsed_ms?: bigint;
+  /**
+   * Token/processing usage (if applicable).
+   */
+  usage?: Record<string, unknown>;
+};
 
 /**
- * `Tui.ModelInferenceResult` — inference result push.
+ * `Sync.ModelInferenceResult` — inference result push.
  */
-export type ModelInferenceResultParams = { result: ModelInferenceResult, };
+export type ModelInferenceResultParams = { result: ModelInferenceResult };
 
 /**
- * `Tui.ModelList` — model catalogue response.
+ * `Sync.ModelList` — model catalogue response.
  */
-export type ModelListParams = { models: Array<ModelDescriptor>, servers: Array<ModelServerInfo>, };
+export type ModelListParams = {
+  models: Array<ModelDescriptor>;
+  servers: Array<ModelServerInfo>;
+};
 
 /**
  * What to do with a model server.
@@ -166,9 +201,12 @@ export type ModelListParams = { models: Array<ModelDescriptor>, servers: Array<M
 export type ModelServerAction = "start" | "stop" | "restart";
 
 /**
- * `Tui.ModelServerActionResult` — action result.
+ * `Sync.ModelServerActionResult` — action result.
  */
-export type ModelServerActionResultParams = { kind: ModelServerKind, status: ModelServerStatus, };
+export type ModelServerActionResultParams = {
+  kind: ModelServerKind;
+  status: ModelServerStatus;
+};
 
 /**
  * A managed model server instance, deployed and owned by **evernight**.
@@ -176,30 +214,31 @@ export type ModelServerActionResultParams = { kind: ModelServerKind, status: Mod
  * `RequestModelServerAction` and evernight performs the lifecycle.
  */
 export type ModelServerInfo = {
-/**
- * Server kind (determines the Docker image / launch command).
- */
-kind: ModelServerKind,
-/**
- * HTTP endpoint (e.g. `http://localhost:8178`).
- */
-endpoint: string,
-/**
- * Current lifecycle status.
- */
-status: ModelServerStatus,
-/**
- * Which backend this server is running on (GPU or CPU).
- */
-backend: ModelBackend,
-/**
- * Docker container id (managed by evernight's container runtime).
- */
-container_id?: string,
-/**
- * Which models are loaded in this server.
- */
-loaded_models: Array<string>, };
+  /**
+   * Server kind (determines the Docker image / launch command).
+   */
+  kind: ModelServerKind;
+  /**
+   * HTTP endpoint (e.g. `http://localhost:8178`).
+   */
+  endpoint: string;
+  /**
+   * Current lifecycle status.
+   */
+  status: ModelServerStatus;
+  /**
+   * Which backend this server is running on (GPU or CPU).
+   */
+  backend: ModelBackend;
+  /**
+   * Docker container id (managed by evernight's container runtime).
+   */
+  container_id?: string;
+  /**
+   * Which models are loaded in this server.
+   */
+  loaded_models: Array<string>;
+};
 
 /**
  * The type of model server. evernight deploys and manages these; the choice
@@ -213,28 +252,32 @@ export type ModelServerKind = "ollama" | "whisper_cpp" | "vllm";
 export type ModelServerStatus = "running" | "starting" | "stopped" | "failed";
 
 /**
- * `Tui.RequestModelInference` — ask the engine to run a model.
+ * `Sync.RequestModelInference` — ask the engine to run a model.
  */
-export type RequestModelInferenceParams = { request: ModelInferenceRequest, };
+export type RequestModelInferenceParams = { request: ModelInferenceRequest };
 
 /**
- * `Tui.RequestModelList` — enumerate available models.
+ * `Sync.RequestModelList` — enumerate available models.
  */
 export type RequestModelListParams = {
-/**
- * Filter by category (omit for all).
- */
-category?: ModelCategory, };
+  /**
+   * Filter by category (omit for all).
+   */
+  category?: ModelCategory;
+};
 
 /**
- * `Tui.RequestModelServerAction` — ask evernight (via scepter) to start /
+ * `Sync.RequestModelServerAction` — ask evernight (via scepter) to start /
  * stop / restart a model server. Neither chest nor scepter performs the
  * deployment directly; the action is forwarded to evernight's model lifecycle
  * manager.
  */
-export type RequestModelServerActionParams = { kind: ModelServerKind, action: ModelServerAction,
-/**
- * Preferred backend. evernight will honour this if possible; falls back
- * to CPU if the requested GPU is unavailable.
- */
-preferred_backend?: ModelBackend, };
+export type RequestModelServerActionParams = {
+  kind: ModelServerKind;
+  action: ModelServerAction;
+  /**
+   * Preferred backend. evernight will honour this if possible; falls back
+   * to CPU if the requested GPU is unavailable.
+   */
+  preferred_backend?: ModelBackend;
+};

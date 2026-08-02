@@ -102,11 +102,11 @@ impl StateTreeRegistry {
     /// 当 init_lock 无竞争时移除条目，防止 DashMap 无限增长
     /// （仿 UpstreamPool::try_cleanup_init_lock）。
     fn try_cleanup_init_lock(&self, scope: &ScopeKey) {
-        if let Some(lock) = self.init_locks.get(scope) {
-            if lock.try_lock().is_ok() {
-                drop(lock);
-                self.init_locks.remove(scope);
-            }
+        if let Some(lock) = self.init_locks.get(scope)
+            && lock.try_lock().is_ok()
+        {
+            drop(lock);
+            self.init_locks.remove(scope);
         }
     }
 

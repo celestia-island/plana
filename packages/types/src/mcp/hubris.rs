@@ -46,12 +46,12 @@ pub struct ListTodoParams {
 
 impl ListTodoParams {
     pub fn normalize(&mut self) {
-        if self.tree.is_none() {
-            if let Some(ref v) = self.view {
-                match v.as_str() {
-                    "tree" | "true" => self.tree = Some(true),
-                    _ => self.tree = Some(false),
-                }
+        if self.tree.is_none()
+            && let Some(ref v) = self.view
+        {
+            match v.as_str() {
+                "tree" | "true" => self.tree = Some(true),
+                _ => self.tree = Some(false),
             }
         }
     }

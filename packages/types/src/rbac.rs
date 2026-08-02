@@ -267,7 +267,7 @@ impl Permission {
         }
     }
 
-    /// Return all 30 leaf permissions.
+    /// Return all 31 leaf permissions.
     pub fn all() -> Vec<Self> {
         vec![
             Self::GatewayChat,
@@ -589,7 +589,7 @@ mod tests {
     #[test]
     fn all_permissions_count() {
         let names = list_all_permission_names();
-        assert_eq!(names.len(), 30, "expected 30 leaf permissions");
+        assert_eq!(names.len(), 31, "expected 31 leaf permissions");
     }
 
     #[test]
@@ -730,7 +730,7 @@ mod tests {
     #[test]
     fn permission_scope_global_serde() {
         let json = serde_json::to_string(&PermissionScope::Global).unwrap();
-        assert_eq!(json, r#"{"type":"global","value":null}"#);
+        assert_eq!(json, r#"{"type":"global"}"#);
         let back: PermissionScope = serde_json::from_str(&json).unwrap();
         assert_eq!(back, PermissionScope::Global);
     }
@@ -747,7 +747,7 @@ mod tests {
     #[test]
     fn permission_scope_personal_serde() {
         let json = serde_json::to_string(&PermissionScope::Personal).unwrap();
-        assert_eq!(json, r#"{"type":"personal","value":null}"#);
+        assert_eq!(json, r#"{"type":"personal"}"#);
         let back: PermissionScope = serde_json::from_str(&json).unwrap();
         assert_eq!(back, PermissionScope::Personal);
     }

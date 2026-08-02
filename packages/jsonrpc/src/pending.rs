@@ -306,7 +306,9 @@ namespace!(
 macro_rules! flat_aliases {
     ($ns:ident, $inner:ident, $($variant:ident),* $(,)?) => {
         impl Method {
-            $( paste::paste! { pub const [<$ns $variant>]: Method = Method::$ns($inner::$variant); } )*
+            // The paste-generated aliases mix namespaces and variants
+            // (e.g. `SyncServerVersion`); keep the mixed case.
+            $( paste::paste! { #[allow(non_upper_case_globals)] pub const [<$ns $variant>]: Method = Method::$ns($inner::$variant); } )*
         }
     };
 }
@@ -647,7 +649,6 @@ impl Default for PendingRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use strum::IntoEnumIterator;
 
     #[test]
     fn test_wire_from_enum_path() {
