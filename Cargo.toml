@@ -26,10 +26,11 @@ members = [
     "packages/sync",
     "packages/dev_server",
     "packages/assets",
+    "packages/world_state",
 ]
 
 [workspace.package]
-version = "0.1.6"
+version = "0.1.7"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
@@ -62,6 +63,7 @@ _state_sync = { package = "plana_state_sync", path = "packages/state_types" }
 _sync = { package = "plana_sync", path = "packages/sync" }
 _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
+_world_state = { package = "plana_world_state", path = "packages/world_state" }
 # ── Internal crate aliases ──────────────────────────────────
 plana = { package = "plana-types", path = "packages/types" }
 
