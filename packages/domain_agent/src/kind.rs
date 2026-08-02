@@ -45,8 +45,12 @@ pub enum AgentKind {
     WebAutomation,
     /// Classic software engineering (code review, LSP, refactoring)
     ClassicSoftwareEngineering,
-    /// WebUI panel agent — pluggable dashboard views (SCADA, kanban, media flow, etc.)
-    WebUiPanel,
+    /// Digital twin agent — 3D holographic scene, model placement, telemetry overlay
+    DigitalTwin,
+    /// Data grid agent — multidimensional tables, fields, records, views
+    DataGrid,
+    /// Media flow agent — node-graph pipelines for image/3D/audio/video generation
+    MediaFlow,
     /// Industrial IoT agent — PLC communication, sensor polling, alarm management
     IndustrialIoT,
     /// Remote operations agent — SSH, remote terminal, GUI automation, file transfer
@@ -104,7 +108,9 @@ impl AgentKind {
             AgentKind::PoleMos => "PoleMos",
             AgentKind::WebAutomation => "Web Automation",
             AgentKind::ClassicSoftwareEngineering => "Classic Software Engineering",
-            AgentKind::WebUiPanel => "WebUI Panel",
+            AgentKind::DigitalTwin => "Digital Twin",
+            AgentKind::DataGrid => "Data Grid",
+            AgentKind::MediaFlow => "Media Flow",
             AgentKind::IndustrialIoT => "Industrial IoT",
             AgentKind::RemoteOperations => "Remote Operations",
         }
@@ -134,7 +140,9 @@ impl AgentKind {
             AgentKind::PoleMos => "polemos",
             AgentKind::WebAutomation => "web_automation",
             AgentKind::ClassicSoftwareEngineering => "classic_software_engineering",
-            AgentKind::WebUiPanel => "web_ui_panel",
+            AgentKind::DigitalTwin => "digital_twin",
+            AgentKind::DataGrid => "data_grid",
+            AgentKind::MediaFlow => "media_flow",
             AgentKind::IndustrialIoT => "industrial_iot",
             AgentKind::RemoteOperations => "remote_operations",
         }
@@ -160,7 +168,9 @@ impl AgentKind {
             "classic_software_engineering" | "classicsoftwareengineering" => {
                 Some(AgentKind::ClassicSoftwareEngineering)
             }
-            "web_ui_panel" | "webuipanel" => Some(AgentKind::WebUiPanel),
+            "digital_twin" | "digitaltwin" => Some(AgentKind::DigitalTwin),
+            "data_grid" | "datagrid" => Some(AgentKind::DataGrid),
+            "media_flow" | "mediaflow" => Some(AgentKind::MediaFlow),
             "industrial_iot" | "industrialiot" => Some(AgentKind::IndustrialIoT),
             "remote_operations" | "remoteoperations" => Some(AgentKind::RemoteOperations),
             _ => None,
@@ -191,7 +201,9 @@ impl AgentKind {
                 self,
                 AgentKind::WebAutomation
                     | AgentKind::ClassicSoftwareEngineering
-                    | AgentKind::WebUiPanel
+                    | AgentKind::DigitalTwin
+                    | AgentKind::DataGrid
+                    | AgentKind::MediaFlow
                     | AgentKind::IndustrialIoT
                     | AgentKind::RemoteOperations
             )
@@ -231,8 +243,14 @@ impl AgentKind {
             AgentKind::ClassicSoftwareEngineering => {
                 "Code review, LSP integration, and refactoring"
             }
-            AgentKind::WebUiPanel => {
-                "Pluggable dashboard views — SCADA, kanban, media flow, data tables"
+            AgentKind::DigitalTwin => {
+                "Digital twin — 3D scene, model placement, telemetry overlay"
+            }
+            AgentKind::DataGrid => {
+                "Data grid — multidimensional tables, fields, records, views"
+            }
+            AgentKind::MediaFlow => {
+                "Media flow — node-graph pipelines for generation"
             }
             AgentKind::IndustrialIoT => {
                 "Industrial IoT — PLC communication, sensor polling, alarm management"
@@ -304,7 +322,9 @@ impl AgentKind {
         vec![
             AgentKind::WebAutomation,
             AgentKind::ClassicSoftwareEngineering,
-            AgentKind::WebUiPanel,
+            AgentKind::DigitalTwin,
+            AgentKind::DataGrid,
+            AgentKind::MediaFlow,
             AgentKind::IndustrialIoT,
             AgentKind::RemoteOperations,
         ]
@@ -324,8 +344,8 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn all_agents_has_17_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::all_agents().len(), 17);
+    fn all_agents_has_19_variants() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::all_agents().len(), 19);
         Ok(())
     }
 
@@ -336,8 +356,8 @@ mod tests {
     }
 
     #[test]
-    fn layer2_has_5_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::domain_agents().len(), 5);
+    fn layer2_has_7_variants() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::domain_agents().len(), 7);
         Ok(())
     }
 

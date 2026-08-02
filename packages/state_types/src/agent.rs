@@ -149,7 +149,9 @@ agent_variants!(
     PoleMos,
     WebAutomation,
     ClassicSoftwareEngineering,
-    WebUiPanel,
+    DigitalTwin,
+    DataGrid,
+    MediaFlow,
     IndustrialIoT,
     RemoteOperations,
 );
