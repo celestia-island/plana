@@ -271,7 +271,6 @@ pub struct ModbusWriteResult {
 mod tests {
     use super::*;
     use crate::enums::ScriptLanguage;
-    use serde_json::json;
 
     #[test]
     fn script_exec_result_round_trip() {

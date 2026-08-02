@@ -261,6 +261,17 @@ pub fn build_notification_value(method: &str, params: impl serde::Serialize) -> 
     })
 }
 
+// Helper trait only used in tests above — keeps the assertion readable without
+// adding a public method to JsonRpcNotification.
+#[cfg(test)]
+impl JsonRpcNotification {
+    fn id_param_check(&self) -> bool {
+        // Notifications never carry an id by construction; this is a no-op
+        // placeholder to document intent in the test.
+        true
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -873,16 +884,5 @@ mod tests {
             }
             other => panic!("expected Response, got {other:?}"),
         }
-    }
-}
-
-// Helper trait only used in tests above — keeps the assertion readable without
-// adding a public method to JsonRpcNotification.
-#[cfg(test)]
-impl JsonRpcNotification {
-    fn id_param_check(&self) -> bool {
-        // Notifications never carry an id by construction; this is a no-op
-        // placeholder to document intent in the test.
-        true
     }
 }
