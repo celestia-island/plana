@@ -111,7 +111,6 @@ fn insert_headers(resp: &mut Response, content_type: &str, cache_control: Option
 fn serve_file(dir: &'static Dir<'static>, path: &str) -> Option<Response> {
     let normalized = path.trim_start_matches('/');
     let file = dir.get_file(normalized)?;
-    let content_type = mime_for(normalized);
     let body = Body::from(file.contents().to_vec());
     Some(Response::new(body))
 }
@@ -140,15 +139,15 @@ async fn path_handler(
         insert_headers(&mut resp, ct, state.cache_control.as_deref());
         return resp;
     }
-    if state.spa_fallback {
-        if let Some(mut resp) = serve_file(state.root, "/index.html") {
-            insert_headers(
-                &mut resp,
-                "text/html; charset=utf-8",
-                state.cache_control.as_deref(),
-            );
-            return resp;
-        }
+    if state.spa_fallback
+        && let Some(mut resp) = serve_file(state.root, "/index.html")
+    {
+        insert_headers(
+            &mut resp,
+            "text/html; charset=utf-8",
+            state.cache_control.as_deref(),
+        );
+        return resp;
     }
     (StatusCode::NOT_FOUND, "Not Found").into_response()
 }

@@ -453,8 +453,6 @@ body"#;
             .context("manifest has no parent")?
             .parent()
             .context("parent has no parent")?
-            .parent()
-            .context("grandparent has no parent")?
             .join("res/prompts");
         let loader = PromptLoader::new(base_path);
         let prompt = loader.load("human_requirement_parse").await;

@@ -15,7 +15,19 @@ jobs:
     runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v7
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
+      - name: Install libseccomp-dev (retry on apt lock contention)
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            if sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev; then
+              exit 0
+            fi
+            echo "apt failed (attempt $i/5), waiting for lock to clear..."
+            sleep 15
+          done
+          exit 1
+      - name: Sync provider registry data
+        run: python scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo check --all-targets --all-features
 
@@ -23,7 +35,19 @@ jobs:
     runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v7
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
+      - name: Install libseccomp-dev (retry on apt lock contention)
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            if sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev; then
+              exit 0
+            fi
+            echo "apt failed (attempt $i/5), waiting for lock to clear..."
+            sleep 15
+          done
+          exit 1
+      - name: Sync provider registry data
+        run: python scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -42,6 +66,18 @@ jobs:
     runs-on: [self-hosted, linux, x64, local]
     steps:
       - uses: actions/checkout@v7
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev
+      - name: Install libseccomp-dev (retry on apt lock contention)
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            if sudo apt-get update -qq && sudo apt-get install -y -qq libseccomp-dev; then
+              exit 0
+            fi
+            echo "apt failed (attempt $i/5), waiting for lock to clear..."
+            sleep 15
+          done
+          exit 1
+      - name: Sync provider registry data
+        run: python scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features

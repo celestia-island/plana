@@ -66,24 +66,24 @@ impl Cache {
                     let path = entry.path();
                     if path.is_dir() {
                         stack.push(path);
-                    } else if let Ok(content) = fs::read(&path) {
-                        if let Ok(rel) = path.strip_prefix(root) {
-                            let key = rel.to_string_lossy().replace('\\', "/");
-                            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                            let content_type = MIME_MAP
-                                .iter()
-                                .find(|(e, _)| *e == ext)
-                                .map(|(_, ct)| *ct)
-                                .unwrap_or("application/octet-stream");
+                    } else if let Ok(content) = fs::read(&path)
+                        && let Ok(rel) = path.strip_prefix(root)
+                    {
+                        let key = rel.to_string_lossy().replace('\\', "/");
+                        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                        let content_type = MIME_MAP
+                            .iter()
+                            .find(|(e, _)| *e == ext)
+                            .map(|(_, ct)| *ct)
+                            .unwrap_or("application/octet-stream");
 
-                            map.insert(
-                                key,
-                                CachedFile {
-                                    content,
-                                    content_type,
-                                },
-                            );
-                        }
+                        map.insert(
+                            key,
+                            CachedFile {
+                                content,
+                                content_type,
+                            },
+                        );
                     }
                 }
             }
