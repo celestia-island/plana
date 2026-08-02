@@ -995,6 +995,32 @@ pub enum SyncMessage {
         #[serde(default)]
         raw_findings: Option<serde_json::Value>,
     },
+    // ── Dashboard push events (P3#A4: agent → webui panels) ─────────
+    // Payloads match the shittim-chest webui handlers
+    // (`useWebSocketHandlers.ts`): layout_id (layoutId alias), widget_id
+    // (widgetId alias), op ("create" | "update" | "delete"). Layout and
+    // widget bodies travel as opaque JSON the agent constructs.
+    DashboardLayoutPush {
+        layout_id: String,
+        /// Full dashboard descriptor ({title, subtitle?, widgets[]}).
+        layout: serde_json::Value,
+    },
+    ViewDataPush {
+        layout_id: String,
+        widget_id: String,
+        /// Per-widget data payload ({columns/rows}, {items}, …).
+        data: serde_json::Value,
+        /// false = shallow-merge into existing data (incremental).
+        #[serde(default)]
+        full_replace: bool,
+    },
+    ViewInstancePush {
+        layout_id: String,
+        /// "create" | "update" | "delete".
+        op: String,
+        /// Widget descriptor ({id, type, title?, source, span?, …}).
+        widget: serde_json::Value,
+    },
     IndustrialWriteApprovalPush {
         /// Matches `WriteApprovalRequest::request_id` — the operator UI
         /// must echo this back in `industrial.approveWrite` so the resolver
