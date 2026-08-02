@@ -258,12 +258,11 @@ impl LlmProvider for RpcProvider {
                                 result: Some(result),
                                 ..
                             } => {
-                                if stream_id.is_none() {
-                                    if let Ok(chat_result) =
+                                if stream_id.is_none()
+                                    && let Ok(chat_result) =
                                         serde_json::from_value::<ChatSendResult>(result)
-                                    {
-                                        stream_id = Some(chat_result.stream_id);
-                                    }
+                                {
+                                    stream_id = Some(chat_result.stream_id);
                                 }
                             }
                             RpcMessage::Response {
@@ -294,7 +293,7 @@ impl LlmProvider for RpcProvider {
                                     let content = sp.token.clone();
                                     let tool_call = sp.tool_calls.as_ref().and_then(|tc| {
                                         if let Some(arr) = tc.as_array() {
-                                            arr.first().and_then(|t| {
+                                            arr.first().map(|t| {
                                                 let id = t
                                                     .get("id")
                                                     .and_then(|v| v.as_str())
@@ -307,7 +306,7 @@ impl LlmProvider for RpcProvider {
                                                     .get("arguments")
                                                     .and_then(|v| v.as_str())
                                                     .map(String::from);
-                                                Some(crate::ToolCallDelta {
+                                                crate::ToolCallDelta {
                                                     id,
                                                     name,
                                                     arguments,
@@ -316,7 +315,7 @@ impl LlmProvider for RpcProvider {
                                                         .and_then(|v| v.as_u64())
                                                         .map(|i| i as u32),
                                                     integrity: None,
-                                                })
+                                                }
                                             })
                                         } else {
                                             None
@@ -361,7 +360,7 @@ impl LlmProvider for RpcProvider {
                                     }
 
                                     if sp.is_complete {
-                                        if tx
+                                        let _ = tx
                                             .send(Ok(LlmStreamChunk {
                                                 content: None,
                                                 tool_call: None,
@@ -371,9 +370,7 @@ impl LlmProvider for RpcProvider {
                                                         .ok()
                                                 }),
                                             }))
-                                            .await
-                                            .is_err()
-                                        {}
+                                            .await;
                                         return;
                                     }
                                 }

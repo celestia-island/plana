@@ -7,7 +7,7 @@
 //! ## Usage
 //!
 //! ```rust,no_run
-//! use llm_provider::metering::{MeteringEngine, Budget};
+//! use plana_llm_provider::metering::{MeteringEngine, Budget};
 //!
 //! let engine = MeteringEngine::global();
 //!

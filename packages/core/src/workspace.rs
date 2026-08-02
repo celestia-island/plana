@@ -3,9 +3,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 const WORKSPACE_UUID_NAMESPACE: Uuid = Uuid::from_u128(0x3a7bc1d2_e4f56789_0abcdef0_12345678);
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum WorkspaceConnectionKind {
+    #[default]
     LocalFilesystem,
     DockerVolume,
     PolemosRemote,
@@ -16,21 +17,16 @@ pub enum WorkspaceConnectionKind {
     Ephemeral,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum WritebackMode {
     /// All changes are written back to the host workspace (default).
+    #[default]
     ReadWrite,
     /// Files are copied into the container; changes stay in the container's
     /// ephemeral layer and never touch the host. Used for benchmarks and
     /// testing. The user can manually promote changes via a writeback command.
     Ephemeral,
-}
-
-impl Default for WritebackMode {
-    fn default() -> Self {
-        Self::ReadWrite
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

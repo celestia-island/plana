@@ -27,11 +27,8 @@ impl WorkspaceRef {
         if rest.is_empty() {
             return None;
         }
-        let (ws_part, badge_part) = if let Some(pos) = rest.find('#') {
-            (&rest[..pos], &rest[pos..])
-        } else {
-            return None;
-        };
+        let pos = rest.find('#')?;
+        let (ws_part, badge_part) = (&rest[..pos], &rest[pos..]);
         if ws_part.is_empty() {
             return None;
         }
