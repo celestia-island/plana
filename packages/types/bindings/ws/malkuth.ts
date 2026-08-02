@@ -3,11 +3,7 @@
 /**
  * Describes how clients connect to a supervised worker.
  */
-export type ConnectionEndpoint = {
-  protocol: ConnectionProtocol;
-  address: string;
-  port: number;
-};
+export type ConnectionEndpoint = { protocol: ConnectionProtocol, address: string, port: number, };
 
 export type ConnectionProtocol = "http" | "ws" | "ipc" | "tcp";
 
@@ -15,59 +11,40 @@ export type ConnectionProtocol = "http" | "ws" | "ipc" | "tcp";
  * External request to drain (gracefully shut down) a supervised worker.
  * Sent to malkuth daemon after a restart proposal has been approved.
  */
-export type DrainRequest = {
-  /**
-   * Which worker to drain.
-   */
-  worker_id: string;
-  /**
-   * Authorization: must match a previously approved GateDecision.proposal_id.
-   */
-  proposal_id: string;
-  /**
-   * Optional drain budget in seconds (default derived from worker config).
-   */
-  drain_budget_secs: bigint | null;
-};
+export type DrainRequest = { 
+/**
+ * Which worker to drain.
+ */
+worker_id: string, 
+/**
+ * Authorization: must match a previously approved GateDecision.proposal_id.
+ */
+proposal_id: string, 
+/**
+ * Optional drain budget in seconds (default derived from worker config).
+ */
+drain_budget_secs: bigint | null, };
 
 export type GateDecision = "allow" | "review" | "block";
 
 /**
  * Health probe response returned by each worker at `/healthz` or `/readyz`.
  */
-export type HealthResponse = {
-  worker_id: string;
-  healthy: boolean;
-  ready: boolean;
-  /**
-   * If not ready, the reason (e.g. "draining", "starting").
-   */
-  not_ready_reason: string | null;
-  uptime_secs: bigint;
-  version: string;
-};
+export type HealthResponse = { worker_id: string, healthy: boolean, ready: boolean, 
+/**
+ * If not ready, the reason (e.g. "draining", "starting").
+ */
+not_ready_reason: string | null, uptime_secs: bigint, version: string, };
 
 /**
  * OreXis LAYER3_PREFLIGHT_GUARD gate decision for a restart proposal.
  */
-export type RestartGateDecision = {
-  proposal_id: string;
-  decision: GateDecision;
-  findings: Array<string>;
-  reason: string;
-};
+export type RestartGateDecision = { proposal_id: string, decision: GateDecision, findings: Array<string>, reason: string, };
 
 /**
  * A rebuild has completed and restart is proposed for a supervised worker.
  */
-export type RestartProposal = {
-  proposal_id: string;
-  worker_id: string;
-  repo_path: string;
-  git_diff_summary: string;
-  affected_services: Array<string>;
-  risk_estimate: RestartRisk;
-};
+export type RestartProposal = { proposal_id: string, worker_id: string, repo_path: string, git_diff_summary: string, affected_services: Array<string>, risk_estimate: RestartRisk, };
 
 export type RestartRisk = "low" | "medium" | "high" | "critical";
 
@@ -75,25 +52,11 @@ export type RestartRisk = "low" | "medium" | "high" | "critical";
  * Registers a new worker with the malkuth supervisor.
  * Sent by a worker at startup to announce its presence and capabilities.
  */
-export type WorkerRegistration = {
-  worker_id: string;
-  worker_kind: string;
-  repo_path: string;
-  connections: Array<ConnectionEndpoint>;
-  health_check_path: string | null;
-  drain_budget_secs: bigint;
-};
+export type WorkerRegistration = { worker_id: string, worker_kind: string, repo_path: string, connections: Array<ConnectionEndpoint>, health_check_path: string | null, drain_budget_secs: bigint, };
 
 export type WorkerState = "running" | "draining" | "stopped" | "crashed";
 
 /**
  * Current status of a supervised worker returned by malkuth when queried.
  */
-export type WorkerStatus = {
-  worker_id: string;
-  state: WorkerState;
-  pid: number | null;
-  restart_count: number;
-  last_restart_at: string | null;
-  connections: Array<ConnectionEndpoint>;
-};
+export type WorkerStatus = { worker_id: string, state: WorkerState, pid: number | null, restart_count: number, last_restart_at: string | null, connections: Array<ConnectionEndpoint>, };
