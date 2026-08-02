@@ -88,6 +88,7 @@ pub const ALL_TOPICS: &[(&str, &str)] = &[
         "industrial_write_approval",
     ),
     ("Sync.HumanReviewRequest", "human_review"),
+    ("Sync.SystemMessage", "system_notification"),
     ("Sync.AudioPullProgress", "audio_pull_progress"),
 ];
 
@@ -98,4 +99,17 @@ pub fn topic_for_method(method: &str) -> Option<&'static str> {
         .iter()
         .find(|(m, _)| *m == method)
         .map(|(_, t)| *t)
+}
+
+#[cfg(test)]
+mod topic_tests {
+    use super::*;
+
+    #[test]
+    fn system_message_maps_to_system_notification_topic() {
+        assert_eq!(
+            topic_for_method("Sync.SystemMessage"),
+            Some("system_notification")
+        );
+    }
 }
