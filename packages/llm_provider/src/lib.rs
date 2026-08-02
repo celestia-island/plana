@@ -25,6 +25,18 @@ pub mod sse_util;
 pub mod verification;
 
 use futures::Stream;
+
+/// Install the ring-based rustls crypto provider exactly once. Required
+/// because reqwest is built with `rustls-no-provider` (pure-Rust TLS); any
+/// `reqwest::Client` construction panics without an installed provider.
+pub(crate) fn ensure_rustls_crypto_provider() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        rustls::crypto::ring::default_provider()
+            .install_default()
+            .expect("rustls crypto provider already installed");
+    });
+}
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, pin::Pin, time::Duration};
 
@@ -539,6 +551,7 @@ pub trait LlmProvider: Send + Sync {
         &self,
         timeout: Duration,
     ) -> Result<reqwest::Client, crate::errors::ProviderError> {
+        ensure_rustls_crypto_provider();
         reqwest::Client::builder()
             .timeout(timeout)
             .build()
@@ -725,6 +738,7 @@ mod tests {
 
     #[test]
     fn test_provider_config_build_authenticated_post() -> Result<()> {
+        ensure_rustls_crypto_provider();
         let config = ProviderConfig::new("bearer-token").with_base_url("https://api.example.com");
         let client = reqwest::Client::new();
         let req = config.build_authenticated_post(&client, "https://api.example.com/chat");

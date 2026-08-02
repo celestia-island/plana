@@ -2,18 +2,58 @@
 import type { TuiAgentInfo } from "./agentLifecycle";
 import type { ContainerStatus, TaskStatus } from "./core";
 
-export type ContainerInfo = { id: string, name: string, status: ContainerStatus, cpu_usage: number, memory_mb: bigint, image: string, agent_type?: string, parent_id?: string, branch_level: number, is_cosmos: boolean, branch?: string, is_read_only: boolean, badge?: string, current_skill?: string, workspace_id?: string, workspace_path?: string, git_remote_url?: string, git_branch?: string, };
+export type ContainerInfo = {
+  id: string;
+  name: string;
+  status: ContainerStatus;
+  cpu_usage: number;
+  memory_mb: bigint;
+  image: string;
+  agent_type?: string;
+  parent_id?: string;
+  branch_level: number;
+  is_cosmos: boolean;
+  branch?: string;
+  is_read_only: boolean;
+  badge?: string;
+  current_skill?: string;
+  workspace_id?: string;
+  workspace_path?: string;
+  git_remote_url?: string;
+  git_branch?: string;
+};
 
-export type ContainerSnapshotData = { version: bigint, timestamp: bigint, containers: Array<ContainerInfo>, };
+export type ContainerSnapshotData = {
+  version: bigint;
+  timestamp: bigint;
+  containers: Array<ContainerInfo>;
+};
 
-export type ContainerSnapshotParams = { snapshot: ContainerSnapshotData, };
+export type ContainerSnapshotParams = { snapshot: ContainerSnapshotData };
 
-export type GlobalSnapshotData = { version: bigint, timestamp: bigint, agents: Array<TuiAgentInfo>, containers: Array<ContainerInfo>, active_tasks: Array<TaskInfo>, };
+export type GlobalSnapshotData = {
+  version: bigint;
+  timestamp: bigint;
+  agents: Array<TuiAgentInfo>;
+  containers: Array<ContainerInfo>;
+  active_tasks: Array<TaskInfo>;
+};
 
-export type GlobalSnapshotParams = { snapshot: GlobalSnapshotData, };
+export type GlobalSnapshotParams = { snapshot: GlobalSnapshotData };
 
-export type TaskInfo = { id: string, issue_id: string, title: string, status: TaskStatus, progress: number, assigned_agent?: string, };
+export type TaskInfo = {
+  id: string;
+  issue_id: string;
+  title: string;
+  status: TaskStatus;
+  progress: number;
+  assigned_agent?: string;
+};
 
-export type TasksSnapshotData = { version: bigint, timestamp: bigint, tasks: Array<TaskInfo>, };
+export type TasksSnapshotData = {
+  version: bigint;
+  timestamp: bigint;
+  tasks: Array<TaskInfo>;
+};
 
-export type TasksSnapshotParams = { snapshot: TasksSnapshotData, };
+export type TasksSnapshotParams = { snapshot: TasksSnapshotData };

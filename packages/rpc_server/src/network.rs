@@ -82,14 +82,12 @@ fn detect_region(ip: &IpAddr) -> String {
     if ip.is_loopback() || is_private(ip) {
         return "XX".into();
     }
-    if let Some(reader) = geoip_reader() {
-        if let Ok(result) = reader.lookup(*ip) {
-            if let Ok(Some(country)) = result.decode::<maxminddb::geoip2::Country>() {
-                if let Some(iso) = country.country.iso_code {
-                    return iso.to_string();
-                }
-            }
-        }
+    if let Some(reader) = geoip_reader()
+        && let Ok(result) = reader.lookup(*ip)
+        && let Ok(Some(country)) = result.decode::<maxminddb::geoip2::Country>()
+        && let Some(iso) = country.country.iso_code
+    {
+        return iso.to_string();
     }
     "XX".into()
 }
@@ -98,12 +96,11 @@ fn detect_asn(ip: &IpAddr) -> Option<u32> {
     if ip.is_loopback() || is_private(ip) {
         return None;
     }
-    if let Some(reader) = asn_reader() {
-        if let Ok(result) = reader.lookup(*ip) {
-            if let Ok(Some(asn)) = result.decode::<maxminddb::geoip2::Asn>() {
-                return asn.autonomous_system_number;
-            }
-        }
+    if let Some(reader) = asn_reader()
+        && let Ok(result) = reader.lookup(*ip)
+        && let Ok(Some(asn)) = result.decode::<maxminddb::geoip2::Asn>()
+    {
+        return asn.autonomous_system_number;
     }
     None
 }

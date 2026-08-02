@@ -353,23 +353,23 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     if let Some(ref dir) = cfg.model_cache_dir {
         volumes.push(VolumeMount::ro(dir.to_string_lossy(), "/models"));
     }
-    if cfg.source_build {
-        if let Some(ref ws) = cfg.workspace_dir {
-            let bin = ws.join("target/debug/scepter");
-            if bin.exists() {
-                info!(
-                    path = %bin.display(),
-                    "mounting dev scepter binary into container"
-                );
-                volumes.push(VolumeMount::ro(
-                    bin.to_string_lossy(),
-                    "/usr/local/bin/scepter",
-                ));
-            }
-            let ws_str = ws.to_string_lossy().to_string();
-            env.insert("HOST_WORKSPACE_PATH".into(), ws_str.clone());
-            volumes.push(VolumeMount::rw(ws_str, "/workspace"));
+    if cfg.source_build
+        && let Some(ref ws) = cfg.workspace_dir
+    {
+        let bin = ws.join("target/debug/scepter");
+        if bin.exists() {
+            info!(
+                path = %bin.display(),
+                "mounting dev scepter binary into container"
+            );
+            volumes.push(VolumeMount::ro(
+                bin.to_string_lossy(),
+                "/usr/local/bin/scepter",
+            ));
         }
+        let ws_str = ws.to_string_lossy().to_string();
+        env.insert("HOST_WORKSPACE_PATH".into(), ws_str.clone());
+        volumes.push(VolumeMount::rw(ws_str, "/workspace"));
     }
 
     // Inject the docker socket GID so the scepter container can talk to dockerd.

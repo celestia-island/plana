@@ -1,11 +1,7 @@
 use std::{collections::HashMap, future::Future, pin::Pin, sync::Arc};
 
 use axum::{
-    Json, Router,
-    extract::ws::Message,
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, post},
+    Json, Router, extract::ws::Message, http::StatusCode, response::IntoResponse, routing::post,
 };
 use serde_json::Value;
 
