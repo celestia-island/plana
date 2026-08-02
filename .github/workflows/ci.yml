@@ -27,7 +27,7 @@ jobs:
           done
           exit 1
       - name: Sync provider registry data
-        run: python scripts/fetch_provider_registry.py
+        run: python3 scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo check --all-targets --all-features
 
@@ -47,7 +47,7 @@ jobs:
           done
           exit 1
       - name: Sync provider registry data
-        run: python scripts/fetch_provider_registry.py
+        run: python3 scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -78,6 +78,6 @@ jobs:
           done
           exit 1
       - name: Sync provider registry data
-        run: python scripts/fetch_provider_registry.py
+        run: python3 scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
