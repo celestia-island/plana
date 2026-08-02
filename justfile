@@ -76,7 +76,7 @@ test:
 gen target='bindings':
     set -euo pipefail
     case "{{target}}" in
-      bindings) cargo test --package plana ;;
+      bindings) cargo test --package plana-types ;;
       *) echo "Usage: just gen bindings"; exit 1 ;;
     esac
 
