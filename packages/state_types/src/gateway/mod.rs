@@ -251,6 +251,23 @@ pub enum SystemNotification {
         value: String,
         topic: String,
     },
+    /// A Modbus write attempt completed (M5 write-closure audit). Emitted by
+    /// scepter when `industrial_iot.modbus_write` returns, regardless of the
+    /// write result — blocked writes are reported as failures.
+    ModbusWriteAudit {
+        /// Target station id.
+        station: String,
+        /// Target endpoint (host:port or serial device).
+        endpoint: String,
+        /// Number of write operations attempted.
+        writes_attempted: u64,
+        /// Whether every write was verified by a read-back.
+        all_confirmed: bool,
+        /// The agent that issued the write.
+        agent: String,
+        /// Compact per-write outcome summary (JSON).
+        summary: String,
+    },
 }
 
 impl SystemNotification {
@@ -272,6 +289,7 @@ impl SystemNotification {
             Self::SecurityPolicyChanged { .. } => "system.security_policy_changed",
             Self::SecurityToolBlocked { .. } => "system.security_tool_blocked",
             Self::AlarmTriggered { .. } => "system.alarm_triggered",
+            Self::ModbusWriteAudit { .. } => "system.modbus_write_audit",
         }
     }
 
@@ -337,6 +355,23 @@ impl SystemNotification {
                     level.clone(),
                     value.clone(),
                     topic.clone(),
+                ]
+            }
+            Self::ModbusWriteAudit {
+                station,
+                endpoint,
+                writes_attempted,
+                all_confirmed,
+                agent,
+                summary,
+            } => {
+                vec![
+                    station.clone(),
+                    endpoint.clone(),
+                    writes_attempted.to_string(),
+                    all_confirmed.to_string(),
+                    agent.clone(),
+                    summary.clone(),
                 ]
             }
         }
