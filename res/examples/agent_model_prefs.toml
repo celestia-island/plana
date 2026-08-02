@@ -18,7 +18,7 @@
 # Agent names are the AgentKind folder_name values:
 # haplotes, skopeo, hubris, kalos, neikos, skemma, aporia, eleos,
 # epieikeia, orexis, philia, polemos
-# (Layer2: web_automation, classic_software_engineering, web_ui_panel,
+# (Layer2: web_automation, classic_software_engineering, digital_twin, data_grid, media_flow,
 #  industrial_iot, remote_operations)
 
 [[agent_prefs]]
