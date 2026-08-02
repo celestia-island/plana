@@ -97,7 +97,9 @@ fn register_builtins(registry: &AgentMetadataRegistry) {
         "PoleMos"    / "polemos"     / "Hardware & vision"                        / 1 / true,
         "Web Automation" / "web_automation" / "Web automation and browser testing" / 2 / false,
         "Classic Software Engineering" / "classic_software_engineering" / "Code review, LSP integration, and refactoring" / 2 / false,
-        "WebUI Panel" / "web_ui_panel" / "Pluggable dashboard views — SCADA, kanban, media flow, data tables" / 2 / false,
+        "Digital Twin" / "digital_twin" / "Digital twin — 3D scene, model placement, telemetry overlay" / 2 / false,
+        "Data Grid" / "data_grid" / "Data grid — multidimensional tables, fields, records, views" / 2 / false,
+        "Media Flow" / "media_flow" / "Media flow — node-graph pipelines for generation" / 2 / false,
         "Industrial IoT" / "industrial_iot" / "Industrial IoT — PLC communication, sensor polling, alarm management" / 2 / false,
         "Remote Operations" / "remote_operations" / "Remote operations — SSH, remote terminal, file transfer" / 2 / false
     });
@@ -109,10 +111,10 @@ mod tests {
     use anyhow::{Context, Result};
 
     #[test]
-    fn test_registry_has_all_17_agents() -> Result<()> {
+    fn test_registry_has_all_19_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let all = registry.all_agents();
-        assert_eq!(all.len(), 17);
+        assert_eq!(all.len(), 19);
         Ok(())
     }
 
@@ -125,10 +127,10 @@ mod tests {
     }
 
     #[test]
-    fn test_layer2_has_5_agents() -> Result<()> {
+    fn test_layer2_has_7_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let layer2 = registry.layer2_agents();
-        assert_eq!(layer2.len(), 5);
+        assert_eq!(layer2.len(), 7);
         Ok(())
     }
 
