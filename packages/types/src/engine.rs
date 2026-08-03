@@ -84,6 +84,33 @@
 //! 4. **Abort** — either side may emit `Engine.BinaryAbort` to cancel;
 //!    the receiver discards buffered bytes and returns to normal RPC.
 //!
+//! ### Resynchronisation & failure handling (how the receiver always finds
+//! the next JSON message)
+//!
+//! WebSocket frames carry a type (Text vs Binary) and TCP underneath makes
+//! frames ordered and lossless within a connection — the receiver's state
+//! machine therefore never scans bytes for JSON boundaries:
+//!
+//! - **Normal state** accepts only Text frames; a Binary frame without an
+//!   active transfer is a protocol violation → the connection is closed.
+//! - **Binary-receive state** accepts only Binary frames; a Text frame that
+//!   is not `Engine.BinaryEnd`/`Engine.BinaryAbort` means the sender
+//!   abandoned the transfer → buffered bytes are discarded and the Text
+//!   frame is processed normally (the state machine simply resets).
+//! - **Timeouts** ([`ENGINE_BINARY_RECEIVE_TIMEOUT_SECS`]) guard against a
+//!   sender that dies mid-transfer: if the first frame after
+//!   `Engine.BinaryStart`, or any inter-frame gap, exceeds the timeout the
+//!   receiver aborts the transfer (locally and/or via `Engine.BinaryAbort`)
+//!   and returns to normal RPC.
+//! - **Corruption** (byte-count or checksum mismatch at
+//!   `Engine.BinaryEnd`) invalidates the whole transfer — binary payloads
+//!   have no internal boundaries, so partial data can never be trusted.
+//! - **Hard failure** (connection close mid-transfer) resets everything:
+//!   reconnect + re-handshake, then re-run the transfer.
+//!
+//! No sliding window is needed: frames are ordered and lossless, so there
+//! is nothing to reorder or retransmit inside a connection.
+//!
 //! Every transfer is labelled with a MIME type ([`EngineBinaryStartParams`])
 //! — the same MIME vocabulary used by content parts and stream chunks — so
 //! consumers never guess what the bytes are.
@@ -106,6 +133,13 @@ pub const ENGINE_PROTOCOL_VERSION: u32 = 3;
 /// Upper bound for a single binary-transfer frame, in bytes. Senders MUST
 /// split larger payloads; receivers SHOULD refuse oversized frames.
 pub const ENGINE_BINARY_MAX_FRAME_BYTES: usize = 256 * 1024;
+
+/// Timeout guard for an in-flight binary transfer, in seconds. The
+/// receiver aborts the transfer if the first frame after `Engine.BinaryStart`
+/// or any inter-frame gap exceeds this bound (sender died mid-transfer).
+/// A transfer this size or smaller should normally complete in well under
+/// this budget.
+pub const ENGINE_BINARY_RECEIVE_TIMEOUT_SECS: u64 = 60;
 
 // ═══════════════════════════════════════════════════════════
 // Handshake / identity
