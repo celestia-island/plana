@@ -160,6 +160,14 @@ pub struct EngineGpuInfo {
 }
 
 /// `Engine.Handshake` result. `ok: false` closes the connection.
+///
+/// Handshake direction: when the gateway connects to an engine (engine is
+/// the server), the gateway sends `Engine.Handshake` and the engine answers
+/// with this result carrying its **own** declared capabilities, so the
+/// gateway learns modalities/content types before any request. When the
+/// engine connects to the gateway (engine is the client), the engine sends
+/// `Engine.Handshake` with its capabilities in the params and the gateway
+/// answers with `ok` only — the `capabilities` field is then ignored.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "engine.ts")]
 pub struct EngineHandshakeResult {
@@ -168,6 +176,10 @@ pub struct EngineHandshakeResult {
     #[ts(optional)]
     pub error: Option<String>,
     pub protocol_version: u32,
+    /// The engine's own capability declaration (server-mode handshake).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub capabilities: Option<EngineCapabilities>,
 }
 
 // ═══════════════════════════════════════════════════════════
