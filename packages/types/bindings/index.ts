@@ -41,5 +41,7 @@ export * from "./httpTypes";
 export * from "./model";
 // Shared domain vocabulary enums.
 export * from "./enums";
+// Celestia Engine Protocol (CEP) — model-runtime interchange types.
+export * from "./engine";
 // Per-agent MCP tool request/result types (namespaced).
 export * as mcp from "./mcp";
