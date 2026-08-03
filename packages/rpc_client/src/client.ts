@@ -44,6 +44,12 @@ export interface RpcClientOpts {
   rpcPath?: string;
   getToken: () => string | null;
   onAuthLost?: () => void;
+  /**
+   * Called when a request is rejected with 401: return a fresh access token
+   * to retry the request once (the callback owns persisting it), or null to
+   * give up and trigger authLost.
+   */
+  refreshToken?: () => Promise<string | null>;
   heartbeatInterval?: number;
   heartbeatTimeout?: number;
   callTimeoutMs?: number;
@@ -87,6 +93,7 @@ export class RpcClient {
   readonly #rpcPath: string;
   readonly #getToken: () => string | null;
   readonly #onAuthLost?: () => void;
+  readonly #refreshToken?: () => Promise<string | null>;
   readonly #heartbeatInterval: number;
   readonly #heartbeatTimeout: number;
   readonly #callTimeoutMs: number;
@@ -131,6 +138,7 @@ export class RpcClient {
     this.#rpcPath = opts.rpcPath ?? "/api/rpc";
     this.#getToken = opts.getToken;
     this.#onAuthLost = opts.onAuthLost;
+    this.#refreshToken = opts.refreshToken;
     this.#heartbeatInterval = opts.heartbeatInterval ?? HB_INTERVAL;
     this.#heartbeatTimeout = opts.heartbeatTimeout ?? HB_TIMEOUT;
     this.#callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT;
@@ -299,9 +307,13 @@ export class RpcClient {
       const token = this.#getToken();
       if (!token) { resolve(false); return; }
 
-      const wsUrl = this.#baseUrl.replace(/^http/, "ws") + this.#rpcPath;
+      const wsUrl =
+        this.#baseUrl.replace(/^http/, "ws") +
+        this.#rpcPath +
+        "?token=" +
+        encodeURIComponent(token);
       const gen = ++this.#wsGen;
-      const ws = new WebSocket(wsUrl, ["jwt." + token]);
+      const ws = new WebSocket(wsUrl);
       ws.binaryType = "arraybuffer";
       this.#ws = ws;
       let settled = false;
@@ -520,7 +532,7 @@ export class RpcClient {
   // HTTP POST (used by all tiers)
   // ═══════════════════════════════════════════════════════════
 
-  async #sendOverHttp<T>(method: string, params: unknown, timeoutMs: number): Promise<T> {
+  async #sendOverHttp<T>(method: string, params: unknown, timeoutMs: number, retried = false): Promise<T> {
     const url = this.#baseUrl + this.#rpcPath;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -540,6 +552,12 @@ export class RpcClient {
       });
 
       if (resp.status === 401) {
+        if (this.#refreshToken && !retried) {
+          const fresh = await this.#refreshToken();
+          if (fresh) {
+            return this.#sendOverHttp(method, params, timeoutMs, true);
+          }
+        }
         this.#authLostHandlers.forEach((h) => h());
         this.#onAuthLost?.();
         throw new RpcError("forbidden", method, "unauthorized");
