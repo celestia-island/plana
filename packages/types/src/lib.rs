@@ -960,8 +960,13 @@ mod tests {
     // ── CEP engine protocol ────────────────────────────────────────
 
     #[test]
-    fn engine_protocol_version_is_two() {
-        assert_eq!(engine::ENGINE_PROTOCOL_VERSION, 2);
+    fn engine_protocol_version_is_three() {
+        assert_eq!(engine::ENGINE_PROTOCOL_VERSION, 3);
+    }
+
+    #[test]
+    fn engine_binary_max_frame_is_256k() {
+        assert_eq!(engine::ENGINE_BINARY_MAX_FRAME_BYTES, 256 * 1024);
     }
 
     #[test]
@@ -1141,6 +1146,54 @@ mod tests {
         assert_eq!(json["mime"], "audio/wav");
         assert_eq!(json["shape"], json!([1, 16000]));
         assert_eq!(json["is_complete"], true);
+    }
+
+    #[test]
+    fn engine_binary_start_announce_round_trips() {
+        let params = engine::EngineBinaryStartParams {
+            transfer_id: "t-42".into(),
+            mime: "audio/wav".into(),
+            total_bytes: 1_000_000,
+            chunk_count: 4,
+            checksum: Some("deadbeef".into()),
+            stream_id: None,
+        };
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["mime"], "audio/wav");
+        assert_eq!(json["chunk_count"], 4);
+        assert_eq!(json["checksum"], "deadbeef");
+        let back: engine::EngineBinaryStartParams = serde_json::from_value(json).unwrap();
+        assert_eq!(back.total_bytes, 1_000_000);
+    }
+
+    #[test]
+    fn engine_binary_end_validates_receipt() {
+        let end = engine::EngineBinaryEndParams {
+            transfer_id: "t-42".into(),
+            bytes_received: 1_000_000,
+            checksum_ok: Some(true),
+        };
+        let json = serde_json::to_value(&end).unwrap();
+        assert_eq!(json["bytes_received"], 1_000_000);
+        assert_eq!(json["checksum_ok"], true);
+        let abort = engine::EngineBinaryAbortParams {
+            transfer_id: "t-42".into(),
+            reason: "client cancelled".into(),
+        };
+        let j2 = serde_json::to_value(&abort).unwrap();
+        assert_eq!(j2["reason"], "client cancelled");
+        // checksum_ok is optional on the wire.
+        let bare: engine::EngineBinaryEndParams =
+            serde_json::from_str(r#"{"transfer_id":"t","bytes_received":0}"#).unwrap();
+        assert!(bare.checksum_ok.is_none());
+    }
+
+    #[test]
+    fn engine_binary_chunk_size_stays_under_frame_bound() {
+        // A 1 MiB payload with the 256 KiB frame bound needs >= 4 frames.
+        let payload: usize = 1024 * 1024;
+        let frames = payload.div_ceil(engine::ENGINE_BINARY_MAX_FRAME_BYTES);
+        assert_eq!(frames, 4);
     }
 
     #[test]
