@@ -970,6 +970,11 @@ mod tests {
     }
 
     #[test]
+    fn engine_binary_receive_timeout_is_sixty_seconds() {
+        assert_eq!(engine::ENGINE_BINARY_RECEIVE_TIMEOUT_SECS, 60);
+    }
+
+    #[test]
     fn engine_handshake_round_trips_with_optional_fields() {
         let params = engine::EngineHandshakeParams {
             token: None,
