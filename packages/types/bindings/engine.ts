@@ -4,7 +4,27 @@ import type { JsonValue } from "./serde_json/JsonValue";
 /**
  * Static capability declaration supplied at handshake time.
  */
-export type EngineCapabilities = { streaming: boolean, embeddings: boolean, max_context_length: number, hardware: Array<EngineGpuInfo>, };
+export type EngineCapabilities = { streaming: boolean, embeddings: boolean, max_context_length: number, hardware: Array<EngineGpuInfo>, 
+/**
+ * Modalities the engine can consume as input (empty = text only).
+ */
+input_modalities: Array<EngineModality>, 
+/**
+ * Modalities the engine can produce as output.
+ */
+output_modalities: Array<EngineModality>, 
+/**
+ * MIME content types accepted as input (e.g. "audio/wav",
+ * "application/octet-stream", "application/json").
+ */
+content_types: Array<string>, 
+/**
+ * Engine-defined `Engine.Invoke` method names beyond the standard
+ * convenience methods (e.g. "audio.generate", "signal.filter").
+ * Any engine-specific operation is reachable via `Engine.Invoke`
+ * even when absent from this list.
+ */
+methods: Array<string>, };
 
 /**
  * `Engine.ChatChunk` notification — streamed token delta.
@@ -15,12 +35,10 @@ export type EngineChatChunk = { stream_id: string, token: string,
  */
 is_complete: boolean, usage?: EngineUsage, };
 
-export type EngineChatMessage = { role: string, content: string, };
-
 /**
  * `Engine.Chat` (non-streaming) / `Engine.ChatStart` (streaming) params.
  */
-export type EngineChatParams = { model: string, messages: Array<EngineChatMessage>, temperature?: number, max_tokens?: number, 
+export type EngineChatParams = { model: string, messages: Array<EngineMessage>, temperature?: number, max_tokens?: number, 
 /**
  * Present for streaming requests — chunks are tagged with this id.
  */
@@ -41,6 +59,37 @@ export type EngineChatResult = { model: string, content: string, usage?: EngineU
  * before any chunk is sent.
  */
 export type EngineChatStartResult = { ok: boolean, error?: string, stream_id: string, };
+
+/**
+ * One content unit inside a message. Text is a plain string; everything
+ * else is a data block described by mime + encoding so consumers can
+ * decode without prior agreement:
+ * - `data`: base64 bytes (standard `encoding: "base64"`)
+ * - `encoding: "binary-frame"`: bytes arrive in the immediately following
+ *   WebSocket binary frame (JSON notification is the announcer/trailer)
+ * - `encoding: "json"`: `data` is inline JSON (structured sensor readings,
+ *   tensors, feature vectors…)
+ */
+export type EngineContentPart = { 
+/**
+ * MIME type — "text/plain" for plain text parts.
+ */
+mime: string, 
+/**
+ * Encoding of `data` ("base64" | "binary-frame" | "json" | "utf-8").
+ */
+encoding: string, 
+/**
+ * Payload: base64 text, inline JSON, or raw text depending on
+ * `encoding`. Empty for binary-frame parts (bytes follow as a WS
+ * binary frame).
+ */
+data?: JsonValue, 
+/**
+ * Optional shape hint for tensor/sensor parts, e.g. [1, 16000]
+ * (channels × samples) or the sensor schema id.
+ */
+shape?: Array<number>, };
 
 export type EngineEmbeddingsParams = { model: string, input: Array<string>, };
 
@@ -79,6 +128,44 @@ language?: string,
  */
 vendor?: string, };
 
+/**
+ * `Engine.Invoke` / `Engine.InvokeStart` params — the generic extension
+ * channel. `method` is engine-defined (e.g. "audio.generate",
+ * "signal.filter", "train.step"); `params` is any JSON the engine
+ * understands. `messages` is optional and reuses the multimodal content
+ * model for engines that mix free-form payloads with content parts.
+ */
+export type EngineInvokeParams = { method: string, params: JsonValue, messages?: Array<EngineMessage>, 
+/**
+ * Present for streaming invocations — chunks are tagged with this id.
+ */
+stream_id?: string, };
+
+/**
+ * `Engine.Invoke` result — any JSON the engine returns.
+ */
+export type EngineInvokeResult = { method: string, result: JsonValue, };
+
+/**
+ * `Engine.InvokeStart` acceptance result (same shape as ChatStart).
+ */
+export type EngineInvokeStartResult = { ok: boolean, error?: string, stream_id: string, };
+
+/**
+ * A message in an `Engine.Chat` / `Engine.ChatStart` / `Engine.Invoke`
+ * payload. Content is a list of parts so mixed-modality inputs (text +
+ * audio + sensor…) are representable. `role` is advisory; specialised
+ * engines may ignore it.
+ */
+export type EngineMessage = { role: string, content: Array<EngineContentPart>, };
+
+/**
+ * Input/output modalities an engine can handle. The gateway does NOT
+ * assume text — it routes and passes payloads through based on this
+ * declaration.
+ */
+export type EngineModality = "Text" | "Audio" | "Image" | "Video" | "Sensor" | "Tensor" | "Generic";
+
 export type EngineModelInfo = { id: string, context_length?: number, embedding: boolean, };
 
 /**
@@ -104,5 +191,27 @@ gpu_utilization: Array<number>, uptime_secs: bigint,
  * Model id currently loaded, when the engine pins a single model.
  */
 model_loaded?: string, };
+
+/**
+ * `Engine.StreamChunk` notification — a generic streamed data block for
+ * any output modality (audio frame, sensor sample batch, tensor slice…).
+ */
+export type EngineStreamChunk = { stream_id: string, 
+/**
+ * MIME type of this block (e.g. "audio/wav", "application/json").
+ */
+mime: string, 
+/**
+ * "base64" | "binary-frame" | "json" | "utf-8".
+ */
+encoding: string, data?: JsonValue, 
+/**
+ * Optional shape hint for tensor/sensor blocks.
+ */
+shape?: Array<number>, 
+/**
+ * Set on the final block.
+ */
+is_complete: boolean, usage?: EngineUsage, };
 
 export type EngineUsage = { prompt_tokens: number, completion_tokens: number, };
