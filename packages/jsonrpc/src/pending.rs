@@ -212,6 +212,8 @@ namespace!("Sync", Sync, SyncMethod,
     DashboardLayoutPush            as OneWay,
     ViewDataPush                   as OneWay,
     ViewInstancePush               as OneWay,
+    PipelineProgress               as OneWay,
+    PipelineDone                   as OneWay,
     ServerLogEntry             as OneWay,
     ContainerLogEntry          as OneWay,
 );
@@ -440,6 +442,8 @@ flat_aliases!(
     DashboardLayoutPush,
     ViewDataPush,
     ViewInstancePush,
+    PipelineProgress,
+    PipelineDone,
     ServerLogEntry,
     ContainerLogEntry,
 );
