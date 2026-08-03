@@ -548,6 +548,24 @@ pub mod search {
     pub const VARIANTS: &[&str] = &[SEARCH_REQUEST, SEARCH_RESPONSE];
 }
 
+pub mod memory {
+    pub const MEMORY_STORE_REQUEST: &str = "MemoryStoreRequest";
+    pub const MEMORY_STORE_RESPONSE: &str = "MemoryStoreResponse";
+    pub const MEMORY_QUERY_REQUEST: &str = "MemoryQueryRequest";
+    pub const MEMORY_QUERY_RESPONSE: &str = "MemoryQueryResponse";
+    pub const MEMORY_DELETE_REQUEST: &str = "MemoryDeleteRequest";
+    pub const MEMORY_DELETE_RESPONSE: &str = "MemoryDeleteResponse";
+
+    pub const VARIANTS: &[&str] = &[
+        MEMORY_STORE_REQUEST,
+        MEMORY_STORE_RESPONSE,
+        MEMORY_QUERY_REQUEST,
+        MEMORY_QUERY_RESPONSE,
+        MEMORY_DELETE_REQUEST,
+        MEMORY_DELETE_RESPONSE,
+    ];
+}
+
 pub mod conversation {
     pub const CONVERSATION_STARTED: &str = "ConversationStarted";
     pub const REQUEST_RECENT_MESSAGES: &str = "RequestRecentMessages";
@@ -588,10 +606,11 @@ mod tests {
             industrial::VARIANTS.len(),
             search::VARIANTS.len(),
             conversation::VARIANTS.len(),
+            memory::VARIANTS.len(),
         ]
         .iter()
         .sum();
-        assert_eq!(total, 209, "expected 209 grouped variants, got {total}");
+        assert_eq!(total, 215, "expected 215 grouped variants, got {total}");
     }
 
     #[test]
@@ -616,6 +635,7 @@ mod tests {
         all.extend(industrial::VARIANTS);
         all.extend(search::VARIANTS);
         all.extend(conversation::VARIANTS);
+        all.extend(memory::VARIANTS);
         all.sort();
         let dupes: Vec<&str> = all
             .windows(2)
