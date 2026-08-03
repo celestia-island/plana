@@ -960,8 +960,8 @@ mod tests {
     // ── CEP engine protocol ────────────────────────────────────────
 
     #[test]
-    fn engine_protocol_version_is_one() {
-        assert_eq!(engine::ENGINE_PROTOCOL_VERSION, 1);
+    fn engine_protocol_version_is_two() {
+        assert_eq!(engine::ENGINE_PROTOCOL_VERSION, 2);
     }
 
     #[test]
@@ -982,6 +982,14 @@ mod tests {
                     name: "RTX 5880".into(),
                     vram_gb: 47,
                 }],
+                input_modalities: vec![
+                    engine::EngineModality::Text,
+                    engine::EngineModality::Audio,
+                    engine::EngineModality::Sensor,
+                ],
+                output_modalities: vec![engine::EngineModality::Text],
+                content_types: vec!["audio/wav".into(), "application/json".into()],
+                methods: vec!["audio.transcribe".into(), "signal.classify".into()],
             },
         };
         let json = serde_json::to_value(&params).unwrap();
@@ -1000,6 +1008,11 @@ mod tests {
         assert!(!parsed.embeddings);
         assert_eq!(parsed.max_context_length, 128_000);
         assert!(parsed.hardware.is_empty());
+        // v2: modality/capability fields default to empty (text-only).
+        assert!(parsed.input_modalities.is_empty());
+        assert!(parsed.output_modalities.is_empty());
+        assert!(parsed.content_types.is_empty());
+        assert!(parsed.methods.is_empty());
     }
 
     #[test]
@@ -1014,5 +1027,95 @@ mod tests {
         assert_eq!(json["stream_id"], "s1");
         assert_eq!(json["token"], "hello");
         assert_eq!(json["is_complete"], false);
+    }
+
+    // ── CEP v2: multimodal content + generic invocation ────────────
+
+    #[test]
+    fn engine_message_carries_multimodal_parts() {
+        let msg = engine::EngineMessage {
+            role: "user".into(),
+            content: vec![
+                engine::EngineContentPart::text("transcribe this"),
+                engine::EngineContentPart::base64("audio/wav", "UklGRg=="),
+                engine::EngineContentPart::json(
+                    "application/json",
+                    json!({
+                        "sensor": "accel-x", "samples": [1.0, -2.0, 3.5],
+                    }),
+                ),
+            ],
+        };
+        let json = serde_json::to_value(&msg).unwrap();
+        let parts = json["content"].as_array().unwrap();
+        assert_eq!(parts.len(), 3);
+        assert_eq!(parts[0]["mime"], "text/plain");
+        assert_eq!(parts[1]["encoding"], "base64");
+        assert_eq!(parts[2]["data"]["sensor"], "accel-x");
+        let back: engine::EngineMessage = serde_json::from_value(json).unwrap();
+        assert_eq!(back.content[1].mime, "audio/wav");
+    }
+
+    #[test]
+    fn engine_binary_frame_part_needs_no_data() {
+        let part = engine::EngineContentPart::binary_frame("audio/wav");
+        let json = serde_json::to_value(&part).unwrap();
+        assert_eq!(json["encoding"], "binary-frame");
+        assert!(json.get("data").is_none());
+        let back: engine::EngineContentPart = serde_json::from_value(json).unwrap();
+        assert_eq!(back.mime, "audio/wav");
+    }
+
+    #[test]
+    fn engine_invoke_round_trips_free_form_payload() {
+        let params = engine::EngineInvokeParams {
+            method: "signal.filter".into(),
+            params: json!({
+                "filter": "lowpass", "cutoff_hz": 800,
+                "channel": 3,
+            }),
+            messages: Some(vec![engine::EngineMessage::text(
+                "user",
+                "keep the pump vibration band",
+            )]),
+            stream_id: None,
+        };
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["method"], "signal.filter");
+        assert_eq!(json["params"]["cutoff_hz"], 800);
+        let back: engine::EngineInvokeParams = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            back.messages.as_ref().unwrap()[0].content[0].mime,
+            "text/plain"
+        );
+    }
+
+    #[test]
+    fn engine_stream_chunk_describes_audio_block() {
+        let chunk = engine::EngineStreamChunk {
+            stream_id: "s2".into(),
+            mime: "audio/wav".into(),
+            encoding: "base64".into(),
+            data: Some(json!("UklGRgAAAA==")),
+            shape: Some(vec![1, 16000]),
+            is_complete: true,
+            usage: None,
+        };
+        let json = serde_json::to_value(&chunk).unwrap();
+        assert_eq!(json["mime"], "audio/wav");
+        assert_eq!(json["shape"], json!([1, 16000]));
+        assert_eq!(json["is_complete"], true);
+    }
+
+    #[test]
+    fn engine_modality_serde_uses_pascal_case() {
+        assert_eq!(
+            serde_json::to_string(&engine::EngineModality::Sensor).unwrap(),
+            r#""Sensor""#
+        );
+        assert_eq!(
+            serde_json::to_string(&engine::EngineModality::Tensor).unwrap(),
+            r#""Tensor""#
+        );
     }
 }
