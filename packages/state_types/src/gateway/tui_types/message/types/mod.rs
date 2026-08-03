@@ -866,6 +866,45 @@ pub enum SyncMessage {
     SearchResponse {
         response: super::super::search::SearchResponse,
     },
+    // ═══ Long-term Memory ═══
+    /// Store a node into the long-term memory service (Philia).
+    MemoryStoreRequest {
+        text: String,
+        node_type: String,
+        #[serde(default)]
+        source_episode_id: Option<String>,
+        #[serde(default)]
+        related_node_ids: Option<Vec<String>>,
+        #[serde(default)]
+        properties: Option<std::collections::HashMap<String, String>>,
+    },
+    MemoryStoreResponse {
+        node_id: String,
+    },
+    /// Semantic long-term memory query.
+    MemoryQueryRequest {
+        query: String,
+        #[serde(default = "default_search_limit")]
+        limit: u64,
+        #[serde(default)]
+        graph_depth: Option<u64>,
+        #[serde(default)]
+        node_type_filter: Option<String>,
+        #[serde(default)]
+        subgraph: Option<bool>,
+    },
+    MemoryQueryResponse {
+        query: String,
+        total: usize,
+        results: Vec<plana::mcp::philia::MemoryQueryItem>,
+    },
+    /// Delete a stored memory node by id.
+    MemoryDeleteRequest {
+        node_id: String,
+    },
+    MemoryDeleteResponse {
+        deleted: bool,
+    },
     // ═══ Conversation History (lazy-loaded reports) ═══
     /// Emitted once when the server creates a conversation for the active task,
     /// so the client can later request paginated message history.
