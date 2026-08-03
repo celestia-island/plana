@@ -1060,6 +1060,27 @@ pub enum SyncMessage {
         /// Widget descriptor ({id, type, title?, source, span?, …}).
         widget: serde_json::Value,
     },
+    // ── Pipeline execution progress (P3#C2 streaming) ────────────────
+    // Streamed from the chest backend while a media pipeline runs so the
+    // webui can update node states without polling pipeline.history.
+    PipelineProgress {
+        run_id: String,
+        /// Node id currently reporting progress.
+        node_id: String,
+        /// Node status: "running" | "complete" | "error" | "skipped".
+        status: String,
+        /// 0–1 progress (running nodes).
+        #[serde(default)]
+        progress: f64,
+        /// Error message (status == "error").
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        error: Option<String>,
+    },
+    PipelineDone {
+        run_id: String,
+        completed: u32,
+        failed: u32,
+    },
     IndustrialWriteApprovalPush {
         /// Matches `WriteApprovalRequest::request_id` — the operator UI
         /// must echo this back in `industrial.approveWrite` so the resolver
