@@ -2,6 +2,54 @@
 import type { JsonValue } from "./serde_json/JsonValue";
 
 /**
+ * `Engine.BinaryAbort` notification params — cancels an in-flight
+ * transfer; the receiver discards buffered bytes and returns to normal
+ * RPC operation.
+ */
+export type EngineBinaryAbortParams = { transfer_id: string, reason: string, };
+
+/**
+ * `Engine.BinaryEnd` notification params — sent after the final binary
+ * frame; the receiver validates and returns to normal RPC operation.
+ */
+export type EngineBinaryEndParams = { transfer_id: string, 
+/**
+ * Bytes actually received across all frames.
+ */
+bytes_received: bigint, 
+/**
+ * Whether the checksum matched (None when no checksum was announced).
+ */
+checksum_ok?: boolean, };
+
+/**
+ * `Engine.BinaryStart` notification params — the announce packet sent
+ * BEFORE any binary frame. Every payload is labelled with a MIME type.
+ */
+export type EngineBinaryStartParams = { 
+/**
+ * Correlation id shared by announce / frames / finish.
+ */
+transfer_id: string, 
+/**
+ * MIME type of the whole payload (e.g. "audio/wav",
+ * "application/octet-stream"). Empty means unspecified binary.
+ */
+mime: string, total_bytes: bigint, 
+/**
+ * Expected number of binary frames (for early truncation checks).
+ */
+chunk_count: number, 
+/**
+ * Optional SHA-256 hex digest of the payload.
+ */
+checksum?: string, 
+/**
+ * Optional association with a stream (generic streaming).
+ */
+stream_id?: string, };
+
+/**
  * Static capability declaration supplied at handshake time.
  */
 export type EngineCapabilities = { streaming: boolean, embeddings: boolean, max_context_length: number, hardware: Array<EngineGpuInfo>, 
