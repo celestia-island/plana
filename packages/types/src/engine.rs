@@ -56,13 +56,56 @@
 //! The engine MUST send `Engine.Handshake` as its first message. The
 //! gateway replies with [`EngineHandshakeResult`]; a rejected handshake
 //! closes the connection with the given error.
+//!
+//! ## Binary transfer (JSON-RPC cannot carry binary — this is the escape
+//! hatch, and every byte is labelled with a MIME type)
+//!
+//! JSON-RPC 2.0 defines messages as JSON objects; there is no binary frame
+//! in the spec. WebSocket, however, has first-class binary frames that may
+//! interleave with text frames on one connection. CEP uses that:
+//!
+//! 1. **Announce** — the sender emits a JSON-RPC *notification*
+//!    `Engine.BinaryStart` declaring `transfer_id`, the MIME type of the
+//!    payload, `total_bytes`, the expected binary-frame count and an
+//!    optional SHA-256 hex checksum. The receiver switches to
+//!    "binary-receive" state for this transfer id.
+//! 2. **Payload** — the bytes travel as a sequence of raw WebSocket
+//!    **binary frames** (no JSON envelope). Senders MUST split large
+//!    payloads into frames of at most [`ENGINE_BINARY_MAX_FRAME_BYTES`]
+//!    so interop holds across implementations (browsers, embedded
+//!    engines). The receiver concatenates frames in arrival order.
+//! 3. **Finish** — after the last frame the sender emits the JSON-RPC
+//!    *notification* `Engine.BinaryEnd` with the received byte count and
+//!    checksum status. The receiver validates and returns to normal RPC
+//!    operation. A single connection carries at most one active binary
+//!    transfer at a time (frames are ordered per-connection; concurrent
+//!    transfers would be ambiguous — use separate connections or the
+//!    stream channel for concurrency).
+//! 4. **Abort** — either side may emit `Engine.BinaryAbort` to cancel;
+//!    the receiver discards buffered bytes and returns to normal RPC.
+//!
+//! Every transfer is labelled with a MIME type ([`EngineBinaryStartParams`])
+//! — the same MIME vocabulary used by content parts and stream chunks — so
+//! consumers never guess what the bytes are.
+//!
+//! ### Why not base64-only?
+//!
+//! Base64 works everywhere but costs +33% bandwidth and CPU. The
+//! announce/payload/finish triple keeps the JSON-RPC control plane intact
+//! (handshake, correlation, errors all stay JSON) while the bulk bytes
+//! avoid the encoding tax. Engines that prefer simplicity may still send
+//! base64 content parts — both paths are first-class.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// CEP wire-protocol version. Bumped on incompatible payload changes.
-pub const ENGINE_PROTOCOL_VERSION: u32 = 2;
+pub const ENGINE_PROTOCOL_VERSION: u32 = 3;
+
+/// Upper bound for a single binary-transfer frame, in bytes. Senders MUST
+/// split larger payloads; receivers SHOULD refuse oversized frames.
+pub const ENGINE_BINARY_MAX_FRAME_BYTES: usize = 256 * 1024;
 
 // ═══════════════════════════════════════════════════════════
 // Handshake / identity
@@ -472,4 +515,55 @@ pub struct EngineShutdownParams {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub reason: Option<String>,
+}
+
+// ═══════════════════════════════════════════════════════════
+// Binary transfer (JSON-RPC control plane + WS binary frames)
+// ═══════════════════════════════════════════════════════════
+
+/// `Engine.BinaryStart` notification params — the announce packet sent
+/// BEFORE any binary frame. Every payload is labelled with a MIME type.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "engine.ts")]
+pub struct EngineBinaryStartParams {
+    /// Correlation id shared by announce / frames / finish.
+    pub transfer_id: String,
+    /// MIME type of the whole payload (e.g. "audio/wav",
+    /// "application/octet-stream"). Empty means unspecified binary.
+    pub mime: String,
+    pub total_bytes: u64,
+    /// Expected number of binary frames (for early truncation checks).
+    pub chunk_count: u32,
+    /// Optional SHA-256 hex digest of the payload.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub checksum: Option<String>,
+    /// Optional association with a stream (generic streaming).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub stream_id: Option<String>,
+}
+
+/// `Engine.BinaryEnd` notification params — sent after the final binary
+/// frame; the receiver validates and returns to normal RPC operation.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "engine.ts")]
+pub struct EngineBinaryEndParams {
+    pub transfer_id: String,
+    /// Bytes actually received across all frames.
+    pub bytes_received: u64,
+    /// Whether the checksum matched (None when no checksum was announced).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub checksum_ok: Option<bool>,
+}
+
+/// `Engine.BinaryAbort` notification params — cancels an in-flight
+/// transfer; the receiver discards buffered bytes and returns to normal
+/// RPC operation.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "engine.ts")]
+pub struct EngineBinaryAbortParams {
+    pub transfer_id: String,
+    pub reason: String,
 }
