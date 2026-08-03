@@ -243,15 +243,9 @@ impl AgentKind {
             AgentKind::ClassicSoftwareEngineering => {
                 "Code review, LSP integration, and refactoring"
             }
-            AgentKind::DigitalTwin => {
-                "Digital twin — 3D scene, model placement, telemetry overlay"
-            }
-            AgentKind::DataGrid => {
-                "Data grid — multidimensional tables, fields, records, views"
-            }
-            AgentKind::MediaFlow => {
-                "Media flow — node-graph pipelines for generation"
-            }
+            AgentKind::DigitalTwin => "Digital twin — 3D scene, model placement, telemetry overlay",
+            AgentKind::DataGrid => "Data grid — multidimensional tables, fields, records, views",
+            AgentKind::MediaFlow => "Media flow — node-graph pipelines for generation",
             AgentKind::IndustrialIoT => {
                 "Industrial IoT — PLC communication, sensor polling, alarm management"
             }
