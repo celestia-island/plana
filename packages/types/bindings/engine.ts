@@ -111,8 +111,20 @@ token?: string, engine: EngineIdentity, capabilities: EngineCapabilities, };
 
 /**
  * `Engine.Handshake` result. `ok: false` closes the connection.
+ *
+ * Handshake direction: when the gateway connects to an engine (engine is
+ * the server), the gateway sends `Engine.Handshake` and the engine answers
+ * with this result carrying its **own** declared capabilities, so the
+ * gateway learns modalities/content types before any request. When the
+ * engine connects to the gateway (engine is the client), the engine sends
+ * `Engine.Handshake` with its capabilities in the params and the gateway
+ * answers with `ok` only — the `capabilities` field is then ignored.
  */
-export type EngineHandshakeResult = { ok: boolean, error?: string, protocol_version: number, };
+export type EngineHandshakeResult = { ok: boolean, error?: string, protocol_version: number, 
+/**
+ * The engine's own capability declaration (server-mode handshake).
+ */
+capabilities?: EngineCapabilities, };
 
 /**
  * Engine implementation identity (any language is fine — this is the

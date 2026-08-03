@@ -1067,6 +1067,42 @@ mod tests {
     }
 
     #[test]
+    fn engine_handshake_result_optional_capabilities_round_trips() {
+        let caps = engine::EngineCapabilities {
+            streaming: true,
+            embeddings: true,
+            max_context_length: 32_000,
+            hardware: vec![],
+            input_modalities: vec![engine::EngineModality::Audio],
+            output_modalities: vec![engine::EngineModality::Text],
+            content_types: vec!["audio/wav".into()],
+            methods: vec!["audio.transcribe".into()],
+        };
+        let result = engine::EngineHandshakeResult {
+            ok: true,
+            error: None,
+            protocol_version: 2,
+            capabilities: Some(caps),
+        };
+        let json = serde_json::to_value(&result).unwrap();
+        assert_eq!(json["capabilities"]["input_modalities"], json!(["Audio"]));
+        assert_eq!(json["protocol_version"], 2);
+        let back: engine::EngineHandshakeResult = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            back.capabilities.unwrap().methods,
+            vec!["audio.transcribe".to_string()]
+        );
+    }
+
+    #[test]
+    fn engine_handshake_result_without_capabilities_parses() {
+        // Server that doesn't declare capabilities (old engines).
+        let back: engine::EngineHandshakeResult =
+            serde_json::from_str(r#"{"ok":true,"protocol_version":1}"#).unwrap();
+        assert!(back.capabilities.is_none());
+    }
+
+    #[test]
     fn engine_invoke_round_trips_free_form_payload() {
         let params = engine::EngineInvokeParams {
             method: "signal.filter".into(),
