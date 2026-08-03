@@ -15,6 +15,7 @@
 // and a few single-file modules at the root (enums, http, model,
 // external_mcp). The glob re-exports at the bottom keep every type reachable
 // at the crate root (`arona::TypeName`).
+pub mod engine;
 pub mod enums;
 pub mod external_mcp;
 pub mod http;
@@ -954,5 +955,64 @@ mod tests {
     #[test]
     fn default_report_type_is_general() {
         assert_eq!(DEFAULT_REPORT_TYPE, "general");
+    }
+
+    // ── CEP engine protocol ────────────────────────────────────────
+
+    #[test]
+    fn engine_protocol_version_is_one() {
+        assert_eq!(engine::ENGINE_PROTOCOL_VERSION, 1);
+    }
+
+    #[test]
+    fn engine_handshake_round_trips_with_optional_fields() {
+        let params = engine::EngineHandshakeParams {
+            token: None,
+            engine: engine::EngineIdentity {
+                name: "llamacpp".into(),
+                version: "b1234".into(),
+                language: Some("cpp".into()),
+                vendor: Some("ggml-org".into()),
+            },
+            capabilities: engine::EngineCapabilities {
+                streaming: true,
+                embeddings: false,
+                max_context_length: 8192,
+                hardware: vec![engine::EngineGpuInfo {
+                    name: "RTX 5880".into(),
+                    vram_gb: 47,
+                }],
+            },
+        };
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["engine"]["language"], "cpp");
+        assert!(json.get("token").is_none());
+        let back: engine::EngineHandshakeParams = serde_json::from_value(json).unwrap();
+        assert_eq!(back.capabilities.max_context_length, 8192);
+        assert_eq!(back.capabilities.hardware[0].vram_gb, 47);
+    }
+
+    #[test]
+    fn engine_capabilities_defaults_are_lenient() {
+        let parsed: engine::EngineCapabilities =
+            serde_json::from_str(r#"{"streaming":false}"#).unwrap();
+        assert!(!parsed.streaming);
+        assert!(!parsed.embeddings);
+        assert_eq!(parsed.max_context_length, 128_000);
+        assert!(parsed.hardware.is_empty());
+    }
+
+    #[test]
+    fn engine_chat_chunk_serializes_stream_shape() {
+        let chunk = engine::EngineChatChunk {
+            stream_id: "s1".into(),
+            token: "hello".into(),
+            is_complete: false,
+            usage: None,
+        };
+        let json = serde_json::to_value(&chunk).unwrap();
+        assert_eq!(json["stream_id"], "s1");
+        assert_eq!(json["token"], "hello");
+        assert_eq!(json["is_complete"], false);
     }
 }
