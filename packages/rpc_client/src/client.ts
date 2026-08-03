@@ -135,7 +135,7 @@ export class RpcClient {
     this.#heartbeatTimeout = opts.heartbeatTimeout ?? HB_TIMEOUT;
     this.#callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT;
     this.#pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL;
-    this.#sessionId = crypto.randomUUID();
+    this.#sessionId = randomSessionId();
     this.#local = opts.local ?? isLocalhost(this.#baseUrl);
   }
 
@@ -658,4 +658,16 @@ export class RpcClient {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Session id for the RPC client. `crypto.randomUUID()` only exists in secure
+ * contexts (https or localhost); plain-http deployments would crash at
+ * startup, so fall back to a local random id there.
+ */
+function randomSessionId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
