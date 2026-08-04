@@ -28,9 +28,6 @@ importers:
       lucide-vue-next:
         specifier: ^*
         version: 1.0.0(vue@3.5.40(typescript@6.0.3))
-      uuid:
-        specifier: ^*
-        version: 14.0.1
       vue:
         specifier: ^*
         version: 3.5.40(typescript@6.0.3)
@@ -967,10 +964,6 @@ packages:
     hasBin: true
     peerDependencies:
       browserslist: '>= 4.21.0'
-
-  uuid@14.0.1:
-    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
-    hasBin: true
 
   vite@8.2.0:
     resolution: {integrity: sha512-pn+CFpM0lwDeKwmOq1ZaBK/9sjorZcgqxki6MbY/jPEVd9vichIlmlD4HmQ5wdP5EgqQCFRaACBxMC7uEGc6lQ==}
@@ -1985,8 +1978,6 @@ snapshots:
       browserslist: 4.28.7
       escalade: 3.2.0
       picocolors: 1.1.1
-
-  uuid@14.0.1: {}
 
   vite@8.2.0(@types/node@26.1.2)(sass@1.102.0):
     dependencies:
