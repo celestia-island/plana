@@ -40,7 +40,7 @@ export default defineComponent({
     /** Acquire a captcha token; return null to skip captcha. */
     onCaptcha: { type: Function as PropType<() => Promise<string | null>>, default: undefined },
     /** Invoked with the assembled challenge context when ready. */
-    onSubmit: { type: Function as PropType<(ctx: AuthSubmitContext) => Promise<void>>, required: true },
+    doSubmit: { type: Function as PropType<(ctx: AuthSubmitContext) => Promise<void>>, required: true },
   },
   emits: {
     error: (_message: string) => true,
@@ -65,7 +65,7 @@ export default defineComponent({
         if (props.onCaptcha) {
           ctx.captchaToken = await props.onCaptcha();
         }
-        await props.onSubmit(ctx);
+        await props.doSubmit(ctx);
       } catch (e) {
         emit("error", e instanceof Error ? e.message : String(e));
       } finally {
@@ -81,7 +81,6 @@ export default defineComponent({
           block={props.block}
           loading={busy.value}
           disabled={props.disabled || busy.value}
-          type="submit"
           onClick={() => void handleClick()}
         >
           {solving.value
