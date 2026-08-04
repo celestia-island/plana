@@ -36,6 +36,9 @@ export {
   formatPriceUsd,
 } from "./utils/format";
 
+// ── UUID helpers (secure-context safe; upstreamed from shittim-chest P5#A A4) ─
+export { uuid, uuidv7, uuidv5 } from "./utils/uuid";
+
 // ── Chat / LLM component kit ──────────────────────────────────────
 export { PRichInput } from "./components/PlanaRichInput";
 export { PVoiceInputPopup } from "./components/PlanaVoiceInputPopup";
