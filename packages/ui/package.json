@@ -28,7 +28,8 @@
     "@celestia-island/hikari": "workspace:*",
     "@celestia-island/plana-rpc-client": "workspace:*",
     "lucide-vue-next": "^*",
-    "uuid": "^*"
+    "uuid": "^*",
+    "md5": "^*"
   },
   "devDependencies": {
     "@types/node": "^*",
