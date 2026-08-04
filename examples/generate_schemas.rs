@@ -12,8 +12,8 @@ fn main() {
 
     let gen = schemars::gen::SchemaSettings::draft07().into_generator();
 
-    // Generate schema for _jsonrpc::Method enum
-    let method_schema = gen.into_root_schema_for::<plana::_jsonrpc::Method>();
+    // Generate schema for jsonrpc::Method enum
+    let method_schema = gen.into_root_schema_for::<plana::jsonrpc::Method>();
     write_schema(&out_dir, "jsonrpc-method", &method_schema);
 
     println!("Schemas written to {}", out_dir);
