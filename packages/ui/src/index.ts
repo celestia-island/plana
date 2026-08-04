@@ -90,3 +90,5 @@ export type {
   PBreadcrumbParamChip,
 } from "./components/PlanaBreadcrumb";
 export { default as PMinimap } from "./components/PlanaMinimap";
+export { default as PLocalizedInput } from "./components/PlanaLocalizedInput";
+export type { PLocalizedTitle, PLocaleOption } from "./components/PlanaLocalizedInput";
