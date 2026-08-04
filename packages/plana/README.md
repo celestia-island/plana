@@ -1,45 +1,15 @@
 # plana
 
-**plana implements the Sync protocol** - a typed application-layer protocol for
-**real-time state synchronization and control between a client shell and a
-backend service runtime**.
-
-## What the Sync protocol is
-
-A UI that stands in front of a live backend - a chat client, a control panel,
-a terminal - needs more than point-to-point RPC. It needs to:
-
-- **Connect and identify** - version handshake, identity exchange, mismatch
-  handling.
-- **Stay in sync** - the backend pushes *snapshots and patches* of its world
-  state (agents, containers, tasks, VMs, models, providers) so the client
-  mirrors it in real time.
-- **Carry typed bidirectional events** - agent streaming responses, thinking
-  steps, tool calls, reports and transfers; task and container lifecycle;
-  skill-chain execution; system messages.
-- **Involve humans** - ask-human and review flows.
-- **Synchronize catalogs** - models and providers discovered from files or a
-  registry, pushed to every client.
-- **Speak per-domain messages** - auth, industrial telemetry, file browsing,
-  logs, panels and workspaces, device control (e.g. YOLO inference engines).
-
-The Sync protocol defines all of this as **typed messages**, shared by both
-sides through one message model with JSON Schema and TypeScript-bindings
-generation.
-
-## Layering
-
-The Sync protocol is built on **JSON-RPC 2.0** the same way HTTP is built on
-TCP: JSON-RPC supplies generic framing and transports; Sync defines what the
-messages *mean* and how state is synchronized. If you only need generic remote
-calls, use a plain JSON-RPC framework (e.g. jsonrpsee); if you need a real
-synchronization protocol, use plana.
+**PLANA** - *Protocol for Live Agent Network Automation*: a typed
+application-layer protocol for real-time state synchronization and control
+between a client shell and a backend service runtime, built on JSON-RPC 2.0
+(the way HTTP is built on TCP). Not a general-purpose RPC framework.
 
 This repo is split into three publishable crates:
 
 | Crate | Role in the stack |
 |-------|-------------------|
-| `plana-types` | **Message model** - the Sync protocol's typed envelopes and per-domain messages, plus health/network descriptors, identity, RBAC, region policy, model metadata and MCP I/O structs. |
+| `plana-types` | **Message model** - the protocol's typed envelopes and per-domain messages. |
 | `plana-jsonrpc` | **Framing & transport base** - JSON-RPC 2.0 correlation, typed method routing, and Unix-socket / HTTP / WebSocket bindings. |
 | `plana` | **The protocol layer** - re-exports the model and the framing, and adds server-side session management (SSE, events) behind the `rpc-server` feature. |
 
