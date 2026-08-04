@@ -52,6 +52,8 @@ export { useCaptchaGate } from "./composables/useCaptchaGate";
 export type { PCaptchaDescriptor } from "./composables/useCaptchaGate";
 export { useClipboardWithToast } from "./composables/useClipboard";
 export { useRunWithLoading } from "./composables/useRunWithLoading";
+export { fetchChallenge, negotiateNonce } from "./utils/powNonce";
+export type { ChallengeDescriptor } from "./utils/powNonce";
 export { solvePow, solvePowSync, verifyPow, leadingZeroBits } from "./utils/pow";
 export type { PowChallenge, PowSolution } from "./utils/pow";
 export { default as PAuthSubmitButton } from "./components/PlanaAuthSubmitButton";
