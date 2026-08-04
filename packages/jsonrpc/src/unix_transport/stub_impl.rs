@@ -14,7 +14,7 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
-use crate::jsonrpc::types::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
+use crate::types::{JsonRpcNotification, JsonRpcRequest, JsonRpcResponse};
 
 /// Placeholder transport type. Cannot be constructed on non-Unix targets.
 pub struct JsonRpcTransport {
@@ -50,9 +50,9 @@ pub enum TimeoutPolicy {
 /// message-handling logic can pattern-match on it.
 #[derive(Debug)]
 pub enum IncomingMessage {
-    Request(crate::jsonrpc::types::JsonRpcRequest),
-    Notification(crate::jsonrpc::types::JsonRpcNotification),
-    Response(crate::jsonrpc::types::JsonRpcResponse),
+    Request(crate::types::JsonRpcRequest),
+    Notification(crate::types::JsonRpcNotification),
+    Response(crate::types::JsonRpcResponse),
 }
 
 fn platform_error() -> anyhow::Error {
@@ -78,7 +78,7 @@ impl JsonRpcTransport {
         &mut self,
         _request: &JsonRpcRequest,
         _policy: TimeoutPolicy,
-    ) -> Result<crate::jsonrpc::types::JsonRpcResponse> {
+    ) -> Result<crate::types::JsonRpcResponse> {
         bail!(platform_error());
     }
 
