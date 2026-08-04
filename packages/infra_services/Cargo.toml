@@ -12,7 +12,7 @@ _config = { workspace = true }
 _container = { workspace = true }
 _core = { workspace = true }
 _infra_utils = { workspace = true }
-_jsonrpc = { workspace = true }
+plana = { workspace = true, features = ["jsonrpc"] }
 _state_sync = { workspace = true }
 anyhow.workspace = true
 async-trait.workspace = true
