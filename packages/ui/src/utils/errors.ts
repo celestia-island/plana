@@ -61,11 +61,11 @@ export function resolveErrorMessage(
 ): string {
   const k = (key: string) => `${keyPrefix}.${key}`;
   if (!err) {
-    return t(k("generic.unknown"));
+    return t(k("generic.unknown"), "Something went wrong");
   }
 
   if (typeof err === "object" && err !== null && isNetworkFailureMessage(err)) {
-    return t(k("network.connectionLost"));
+    return t(k("network.connectionLost"), "Connection lost");
   }
 
   if (typeof err !== "object" || err === null) {
@@ -85,12 +85,12 @@ export function resolveErrorMessage(
     }
   }
 
-  if (e.status === 401) return t(k("auth.invalidCredentials"));
-  if (e.status === 404) return t(k("api.notFound"));
-  if (e.status === 409) return t(k("api.conflict"));
-  if (e.status === 429) return t(k("api.rateLimited"));
+  if (e.status === 401) return t(k("auth.invalidCredentials"), "Invalid credentials");
+  if (e.status === 404) return t(k("api.notFound"), "Not found");
+  if (e.status === 409) return t(k("api.conflict"), "Conflict");
+  if (e.status === 429) return t(k("api.rateLimited"), "Too many requests");
   if (e.status && e.status >= 500) {
-    let msg = t(k("network.serverError"));
+    let msg = t(k("network.serverError"), "Server error");
     if (e.body) {
       try {
         const parsed = JSON.parse(e.body);
