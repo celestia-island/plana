@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { leadingZeroBits, solvePow, verifyPow } from "./pow";
+import { leadingZeroBits, solvePow, solvePowSync, verifyPow } from "./pow";
 
 describe("pow", () => {
   it("leadingZeroBits counts correctly", () => {
@@ -11,6 +11,14 @@ describe("pow", () => {
   it("solvePow finds a counter meeting the difficulty", async () => {
     const counter = await solvePow({ seed: "test-seed", bits: 8 });
     expect(await verifyPow({ seed: "test-seed", bits: 8 }, counter)).toBe(true);
+  });
+
+  it("the sync solver matches the subtle path (same wire contract)", async () => {
+    const counter = solvePowSync("test-seed", 8);
+    expect(await verifyPow({ seed: "test-seed", bits: 8 }, counter)).toBe(true);
+    const c1 = solvePowSync("fixed-seed", 12);
+    const c2 = solvePowSync("fixed-seed", 12);
+    expect(c1).toBe(c2);
   });
 
   it("the hash layout is deterministic (wire contract)", async () => {
