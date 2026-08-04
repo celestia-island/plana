@@ -123,7 +123,6 @@
 //! avoid the encoding tax. Engines that prefer simplicity may still send
 //! base64 content parts — both paths are first-class.
 
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
