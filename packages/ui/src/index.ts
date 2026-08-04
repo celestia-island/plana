@@ -38,6 +38,13 @@ export {
 
 // ── UUID helpers (secure-context safe; upstreamed from shittim-chest P5#A A4) ─
 export { uuid, uuidv7, uuidv5 } from "./utils/uuid";
+export { resolveErrorMessage, parseServerErrorBody, serverErrorToI18nKey } from "./utils/errors";
+export type { TranslateFn } from "./utils/errors";
+export { useConfirm } from "./composables/useConfirm";
+export { useCaptchaGate } from "./composables/useCaptchaGate";
+export type { PCaptchaDescriptor } from "./composables/useCaptchaGate";
+export { useClipboardWithToast } from "./composables/useClipboard";
+export { useRunWithLoading } from "./composables/useRunWithLoading";
 export { solvePow, solvePowSync, verifyPow, leadingZeroBits } from "./utils/pow";
 export type { PowChallenge, PowSolution } from "./utils/pow";
 export { default as PAuthSubmitButton } from "./components/PlanaAuthSubmitButton";
