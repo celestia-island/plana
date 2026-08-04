@@ -16,7 +16,6 @@ default = []
 
 [dependencies]
 
-plana-types = { version = "0.1.0", path = "../types" }
 anyhow = { workspace = true }
 axum = { workspace = true }
 futures = { workspace = true }
