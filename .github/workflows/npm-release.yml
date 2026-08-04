@@ -1,0 +1,46 @@
+name: npm Release (plana)
+
+on:
+  push:
+    tags: ["plana-npm-v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to bump all packages to before publishing (e.g. 0.1.1), without leading v; empty = current package.json versions"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish plana npm packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - name: Install workspace deps
+        run: pnpm install --no-frozen-lockfile
+      - name: Publish plana-rpc-client
+        run: |
+          cd packages/rpc_client
+          if [ -n "${{ github.event.inputs.version }}" ]; then npm version "${{ github.event.inputs.version }}" --no-git-tag-version --allow-same-version; fi
+          npm publish --access public --provenance
+      - name: Publish plana-types
+        run: |
+          cd packages/types
+          if [ -n "${{ github.event.inputs.version }}" ]; then npm version "${{ github.event.inputs.version }}" --no-git-tag-version --allow-same-version; fi
+          npm publish --access public --provenance
+      - name: Publish plana-ui
+        run: |
+          cd packages/ui
+          if [ -n "${{ github.event.inputs.version }}" ]; then pnpm version "${{ github.event.inputs.version }}" --no-git-tag-version --allow-same-version; fi
+          pnpm publish --access public --no-git-checks
