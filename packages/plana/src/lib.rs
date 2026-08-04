@@ -1,4 +1,10 @@
-//! Scaffolding for a typed bidirectional sync protocol.
+//! A typed application-layer messaging protocol built on JSON-RPC 2.0.
+//!
+//! The layering mirrors HTTP over TCP: JSON-RPC 2.0 supplies the generic
+//! framing and transports (the "TCP" of the stack), while this crate defines
+//! what messages *mean* — typed payloads, protocol semantics, and session
+//! behavior (the "HTTP" of the stack). If you only need generic remote calls,
+//! use a plain JSON-RPC framework; `plana` is a concrete application protocol.
 //!
 //! `plana` is an umbrella crate that re-exports the two standalone
 //! publishable crates and adds one optional server-side module:
