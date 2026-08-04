@@ -5,7 +5,12 @@
 //!
 //! `plana` is an umbrella crate that re-exports the two standalone
 //! publishable crates and adds one optional server-side module:
-pub use plana_types::*;
+#[cfg(feature = "celestia")]
+pub use plana_celestia_types::*;
+#[cfg(feature = "celestia")]
+pub mod celestia {
+    pub use plana_celestia_types::*;
+}
 
 pub mod jsonrpc {
     pub use plana_jsonrpc::*;

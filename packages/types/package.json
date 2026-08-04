@@ -1,9 +1,0 @@
-{
-  "name": "@celestia-island/plana-types",
-  "version": "0.1.1",
-  "description": "TypeScript bindings for the PLANA protocol message model.",
-  "main": "index.ts",
-  "types": "index.ts",
-  "files": ["index.ts", "bindings"],
-  "packageManager": "pnpm@9.15.0"
-}
