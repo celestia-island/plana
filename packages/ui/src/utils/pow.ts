@@ -26,10 +26,10 @@ export interface PowSolution {
  * everywhere, async per batch — the pure-logic path without a worker).
  */
 export async function solvePow(
-  seed: string,
-  bits: number,
+  challenge: PowChallenge,
   onProgress?: (hashed: number) => void,
 ): Promise<number> {
+  const { seed, bits } = challenge;
   const encoder = new TextEncoder();
   const seedBytes = encoder.encode(seed);
   const digest = crypto.subtle ? crypto.subtle.digest.bind(crypto.subtle) : null;
@@ -44,7 +44,7 @@ export async function solvePow(
     for (let i = 0; i < batch; i++) {
       const counter = base + i;
       tasks.push(
-        digest("SHA-256", concat(seedBytes, encoder.encode(String(counter)))).then(
+        digest("SHA-256", concat(seedBytes, encoder.encode(String(counter))).buffer).then(
           (buf) => ({ counter, hash: new Uint8Array(buf) }),
         ),
       );
@@ -60,7 +60,7 @@ export async function solvePow(
   }
 }
 
-function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
+function concat(a: Uint8Array, b: Uint8Array): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(a.length + b.length);
   out.set(a, 0);
   out.set(b, a.length);
@@ -90,7 +90,7 @@ export async function verifyPow(
   const encoder = new TextEncoder();
   const buf = await crypto.subtle.digest(
     "SHA-256",
-    concat(encoder.encode(challenge.seed), encoder.encode(String(counter))),
+    concat(encoder.encode(challenge.seed), encoder.encode(String(counter))).buffer,
   );
   return leadingZeroBits(new Uint8Array(buf)) >= challenge.bits;
 }
