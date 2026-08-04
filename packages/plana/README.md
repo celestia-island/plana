@@ -1,13 +1,21 @@
 # plana
 
-Scaffolding for a typed bidirectional sync protocol. This repo is split into
-three publishable crates:
+A **typed application-layer messaging protocol** built on **JSON-RPC 2.0**.
 
-| Crate | Purpose |
-|-------|---------|
-| `plana-types` | Shared wire types: JSON-RPC envelopes, health/network descriptors, identity, region policy, RBAC, model metadata, and per-tool MCP I/O structs — every type `Serialize`/`Deserialize` with JSON Schema and TypeScript-bindings support. |
-| `plana-jsonrpc` | JSON-RPC 2.0 wire machinery: request/response/notification framing, a method registry, Unix-socket and HTTP/WebSocket transports, and a typed bridge between method strings and serde-serializable messages. |
-| `plana` | Umbrella crate: re-exports `plana-types` at the crate root (`plana::http::...`, `plana::protocol::...`) and `plana-jsonrpc` as the `jsonrpc` module (`plana::jsonrpc::...`), plus server-side session management (SSE, events) behind the `rpc-server` feature. |
+The layering is the same as HTTP over TCP: JSON-RPC 2.0 provides the generic
+framing and transport (the "TCP" of the stack); `plana` defines what the
+messages *mean* — typed payloads, protocol semantics, and session behavior
+(the "HTTP" of the stack). Use it when you need a concrete application
+protocol with strong typing; use a plain JSON-RPC framework (e.g. jsonrpsee)
+when you only need generic remote calls.
+
+This repo is split into three publishable crates:
+
+| Crate | Role in the stack |
+|-------|-------------------|
+| `plana-types` | **Message model** — the application protocol's data vocabulary (envelopes, health/network descriptors, identity, RBAC, region policy, model metadata, MCP I/O structs), all `Serialize`/`Deserialize` with JSON Schema and TypeScript-bindings support. |
+| `plana-jsonrpc` | **Framing & transport base** — JSON-RPC 2.0 correlation, method routing, and Unix-socket / HTTP / WebSocket bindings. |
+| `plana` | **The application protocol layer** — re-exports the model and the framing, and adds server-side session management (SSE, events) behind the `rpc-server` feature. |
 
 ## Usage
 
