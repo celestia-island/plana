@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { onUnmounted, ref } from "vue";
 
 /**
  * Confirmation-dialog state machine (upstreamed from shittim-chest).
@@ -14,11 +14,11 @@ export function useConfirm() {
   const message = ref("");
   let resolvePromise: ((_value: boolean) => void) | null = null;
 
-  function onUnmountedGuard() {
+  onUnmounted(() => {
     resolvePromise?.(false);
     resolvePromise = null;
     visible.value = false;
-  }
+  });
 
   function confirm(titleText: string, messageText: string): Promise<boolean> {
     resolvePromise?.(false);
@@ -42,5 +42,5 @@ export function useConfirm() {
     resolvePromise = null;
   }
 
-  return { visible, title, message, confirm, accept, cancel, onUnmountedGuard };
+  return { visible, title, message, confirm, accept, cancel };
 }
