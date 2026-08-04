@@ -1,5 +1,3 @@
-import type { RouteLocationNormalized, Router } from "vue-router";
-
 export interface AuthGuardOptions {
   loginRoute: string;
   homeRoute: string;
@@ -21,11 +19,22 @@ export interface AuthGuardOptions {
   };
 }
 
-export function createAuthGuard(router: Router, opts: AuthGuardOptions) {
+interface GuardRoute {
+  name?: string | symbol | null;
+  fullPath: string;
+  meta: Record<string, unknown>;
+}
+
+interface GuardRouter {
+  beforeEach: (fn: (to: GuardRoute) => unknown) => void;
+  onError?: (fn: (error: unknown, to: GuardRoute) => void) => void;
+}
+
+export function createAuthGuard(router: GuardRouter, opts: AuthGuardOptions) {
   let sessionRestorePromise: Promise<void> | null = null;
   let setupChecked = false;
 
-  router.beforeEach(async (to: RouteLocationNormalized) => {
+  router.beforeEach(async (to: GuardRoute) => {
     const auth = opts.useAuthStore();
     const permStore = opts.permissions;
 
@@ -79,7 +88,7 @@ export function createAuthGuard(router: Router, opts: AuthGuardOptions) {
   });
 
   if (opts.onLazyLoadError) {
-    router.onError((error: unknown, to: RouteLocationNormalized) => {
+    router.onError((error: unknown, to: GuardRoute) => {
       opts.onLazyLoadError!(error as Error, to.fullPath);
     });
   }
