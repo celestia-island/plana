@@ -39,13 +39,15 @@ export {
 // ── UUID helpers (secure-context safe; upstreamed from shittim-chest P5#A A4) ─
 export { uuid, uuidv7, uuidv5 } from "./utils/uuid";
 export { useAttachments } from "./composables/useAttachments";
+export type { UploadedFile } from "./composables/useAttachments";
+
 export { createAuthGuard } from "./composables/createAuthGuard";
 export type { AuthGuardOptions } from "./composables/createAuthGuard";
 export { renderAvatarTemplate } from "./composables/useAvatarTemplate";
 export { useSendShortcut } from "./composables/useSendShortcut";
 export type { SendShortcutMode } from "./composables/useSendShortcut";
 export { createLocaleOptions, loadLocaleMessages } from "./utils/localeOptions";
-export type { LocaleOption } from "./utils/localeOptions";
+
 export { detectLocale } from "./utils/locale";
 export { resolveErrorMessage, parseServerErrorBody, serverErrorToI18nKey } from "./utils/errors";
 export type { TranslateFn } from "./utils/errors";
