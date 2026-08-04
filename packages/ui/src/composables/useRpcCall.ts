@@ -18,11 +18,6 @@ export interface RpcCallOptions {
   demoHostname?: string | null;
 }
 
-export interface RpcCallContext {
-  /** Whether a mock payload was served for the method. */
-  usedMock: boolean;
-}
-
 /**
  * JSON-RPC call helper with demo-host mock fallback and error toasting
  * (upstreamed from shittim-chest's useJsonRpc).
@@ -36,7 +31,7 @@ export interface RpcCallContext {
  */
 export function createRpcCall(opts: RpcCallOptions) {
   const toast = useToast();
-  const demo = () => (opts.demoHostname === undefined ? isDemoHost() : isDemoHost(opts.demoHostname));
+  const demo = () => isDemoHost(opts.demoHostname ?? (typeof location !== "undefined" ? location.hostname : ""));
 
   async function call<T>(
     method: string,
@@ -78,4 +73,3 @@ export function createRpcCall(opts: RpcCallOptions) {
   return { call };
 }
 
-export type { RpcCallContext };
