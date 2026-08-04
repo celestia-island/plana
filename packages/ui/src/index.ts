@@ -38,7 +38,7 @@ export {
 
 // ── UUID helpers (secure-context safe; upstreamed from shittim-chest P5#A A4) ─
 export { uuid, uuidv7, uuidv5 } from "./utils/uuid";
-export { solvePow, verifyPow, leadingZeroBits } from "./utils/pow";
+export { solvePow, solvePowSync, verifyPow, leadingZeroBits } from "./utils/pow";
 export type { PowChallenge, PowSolution } from "./utils/pow";
 export { default as PAuthSubmitButton } from "./components/PlanaAuthSubmitButton";
 export type { AuthSubmitContext } from "./components/PlanaAuthSubmitButton";
