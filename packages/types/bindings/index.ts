@@ -3,6 +3,7 @@ export * from "./ws/core";
 // WS protocol — per-domain message param structs.
 export * from "./ws/handshake";
 export * from "./ws/noa";
+export * from "./ws/noaPr";
 export * from "./ws/logs";
 export * from "./ws/agentLifecycle";
 export * from "./ws/tasks";
