@@ -40,6 +40,12 @@ export {
 export { uuid, uuidv7, uuidv5 } from "./utils/uuid";
 export { resolveErrorMessage, parseServerErrorBody, serverErrorToI18nKey } from "./utils/errors";
 export type { TranslateFn } from "./utils/errors";
+export { useAsyncData } from "./composables/useAsyncData";
+export type { UseAsyncDataReturn } from "./composables/useAsyncData";
+export { defineMockRpcData, hasMockRpcData, getMockRpcData, isDemoHost, setMockHost } from "./composables/mockRpcData";
+export type { MockRpcRegistry, MockRpcValue } from "./composables/mockRpcData";
+export { createRpcCall } from "./composables/useRpcCall";
+export type { RpcTransport, RpcCallOptions } from "./composables/useRpcCall";
 export { useConfirm } from "./composables/useConfirm";
 export { useCaptchaGate } from "./composables/useCaptchaGate";
 export type { PCaptchaDescriptor } from "./composables/useCaptchaGate";
