@@ -21,12 +21,16 @@ export interface AuthGuardOptions {
 
 interface GuardRoute {
   name?: string | symbol | null;
-  fullPath: string;
-  meta: Record<string, unknown>;
+  fullPath?: string;
+  meta?: Record<string, unknown>;
 }
 
 interface GuardRouter {
-  beforeEach: (fn: (to: GuardRoute) => unknown) => void;
+  // Accepts any guard signature (vue-router's NavigationGuard takes extra
+  // args; slimmer routers take fewer) — the callback just inspects `to`.
+  // The guard callback receives the route; vue-router also passes from/next
+  // which we ignore. `never`-parameter variance keeps both sides assignable.
+  beforeEach: (fn: (to: GuardRoute, ...rest: unknown[]) => unknown) => void;
   onError?: (fn: (error: unknown, to: GuardRoute) => void) => void;
 }
 
@@ -67,8 +71,8 @@ export function createAuthGuard(router: GuardRouter, opts: AuthGuardOptions) {
       }
     }
 
-    if (to.meta.requiresAuth !== false && !auth.isAuthenticated) {
-      const redirect = to.fullPath !== "/" ? to.fullPath : undefined;
+    if (to.meta?.requiresAuth !== false && !auth.isAuthenticated) {
+      const redirect = to.fullPath && to.fullPath !== "/" ? to.fullPath : undefined;
       return { name: opts.loginRoute, query: redirect ? { redirect } : undefined };
     }
 
@@ -89,7 +93,7 @@ export function createAuthGuard(router: GuardRouter, opts: AuthGuardOptions) {
 
   if (opts.onLazyLoadError) {
     router.onError?.((error: unknown, to: GuardRoute) => {
-      opts.onLazyLoadError!(error as Error, to.fullPath);
+      opts.onLazyLoadError!(error as Error, to.fullPath ?? "");
     });
   }
 }
