@@ -1,0 +1,16 @@
+[skills]
+panel_title = "Habilidadees"
+search_placeholder = "Pesquisar habilidadees..."
+by_agent = "Por agente"
+all = "Todos"
+name = "Nombre"
+agent = "Agente"
+description = "Descripcião"
+required_tools = "Herramientas requeridas"
+none = "Ninguno"
+hint_switch_view = "Cambiar vista"
+hint_navigate = "Navegar"
+hint_switch_panel = "Cambiar panel"
+hint_close = "Fechar"
+
+

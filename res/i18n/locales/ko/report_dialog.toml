@@ -1,0 +1,13 @@
+[report_dialog]
+title = "보고서"
+type_label = "유형"
+type_report = "보고서"
+type_query = "질문"
+source_label = "출처"
+time_label = "시간"
+title_label = "제목"
+content_label = "콘텐츠"
+reply_label = "회신"
+seconds_ago = "{}초 전"
+minutes_ago = "{}분 전"
+hours_ago = "{}시간 전"

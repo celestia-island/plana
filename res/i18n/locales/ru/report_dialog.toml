@@ -1,0 +1,13 @@
+[report_dialog]
+title = "Отчёт"
+type_label = "Тип"
+type_report = "Отчёт"
+type_query = "Запрос"
+source_label = "Источник"
+time_label = "Время"
+title_label = "Заголовок"
+content_label = "Содержание"
+reply_label = "Ответ"
+seconds_ago = "{} секунды назад"
+minutes_ago = "{} минут назад"
+hours_ago = "{} часов назад"

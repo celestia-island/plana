@@ -1,0 +1,21 @@
+[logs]
+panel_title = "Registros"
+tab_server = "Scepter"
+tab_tui = "TUI"
+connecting = "Conectando"
+no_logs = "Sin Registros"
+no_tui_logs = "Sin Registros TUI"
+auto_mode = "Desplazamento automático"
+entry_count = "{} Entradas"
+hint_switch_tab = "Cambiar Pestanha"
+hint_navigate = "Navegar"
+hint_expand = "Expandir"
+hint_latest = "Más Reciente"
+hint_close = "Fechar"
+tab_cosmos = "Cosmos"
+sidebar_title = "Contenedores"
+no_containers = "Sin contenedores"
+hint_select = "Seleccionar"
+hint_back = "Volver"
+
+

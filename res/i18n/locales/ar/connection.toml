@@ -1,0 +1,8 @@
+[connection]
+status_disconnected = "غير متصل"
+status_connecting = "اتصال en cours"
+status_connected = "متصل"
+status_reconnecting = "Reconnexion"
+status_offline = "غير متصل"
+
+

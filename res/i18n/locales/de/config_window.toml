@@ -1,0 +1,16 @@
+[config_window]
+mode_general = "Général"
+mode_agents = "Agents"
+mode_skills = "Fertigkeits"
+mode_logs = "Journaux"
+header_template = "Konfiguration - {}"
+auto_connect_label = "Verbindung automatique"
+auto_connect_desc = "Se connecter automatiquement au démarrage"
+refresh_interval_label = "Interval actualisation"
+refresh_interval_desc = "Interval actualisation en secondes"
+log_level_label = "Niveau journalisation"
+log_level_desc = "Niveau journalisation"
+show_timestamp_label = "Anzeigen l'horodatage"
+show_timestamp_desc = "Anzeigen l'horodatage dans journaux"
+
+

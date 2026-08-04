@@ -1,0 +1,21 @@
+[shortcuts]
+quit = "Saoir"
+next_tab = "Pestanha siguiente"
+previous_tab = "Pestanha anterior"
+refresh = "Actuaoizar"
+connect = "Conectar"
+select_next = "Seleccionar siguiente"
+select_previous = "Seleccionar anterior"
+confirm = "Confirmar"
+cancel = "Cancelar"
+start = "Iniciar"
+stop = "Detener"
+config = "Configuracião"
+config_save = "Guardar configuracião"
+config_cancel = "Cancelar configuracião"
+scroll_up = "Desplazar arriba"
+scroll_down = "Desplazar abajo"
+scroll_top = "Ir ao inicio"
+scroll_bottom = "Ir ao finao"
+
+

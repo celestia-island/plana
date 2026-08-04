@@ -1,0 +1,11 @@
+[keyboard]
+exit_confirm_title = "تأكيد sortie"
+exit_confirm_message = "Êtes-vous sûr vouloir quitter ?"
+execute_skill = "تنفيذ compétence"
+user_prompt = "Invite utilisateur"
+description = "وصف"
+unknown_command_title = "أمر غير معروفe"
+unknown_command_message = "أمر non reconnue. Tapez /help pour comman متاحة."
+exit_progress_message = "Fermeture en cours..."
+
+

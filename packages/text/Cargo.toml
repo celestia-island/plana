@@ -1,0 +1,24 @@
+[package]
+name = "plana_text"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+
+anyhow.workspace = true
+append-only-bytes.workspace = true
+regex.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+[dev-dependencies]
+
+criterion = "^0.5"
+serde_json.workspace = true
+[[bench]]
+name = "text_bench"
+harness = false

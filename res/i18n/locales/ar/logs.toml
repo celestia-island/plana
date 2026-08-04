@@ -1,0 +1,21 @@
+[logs]
+panel_title = "Journaux"
+tab_server = "Scepter"
+tab_tui = "TUI"
+connecting = "اتصال"
+no_logs = "Aucun journal"
+no_tui_logs = "Aucun journal TUI"
+auto_mode = "Défilement automatique"
+entry_count = "{} Entrées"
+hint_switch_tab = "تغيير onglet"
+hint_navigate = "تنقل"
+hint_expand = "Développer"
+hint_latest = "Récent"
+hint_close = "إغلاق"
+tab_cosmos = "Cosmos"
+sidebar_title = "Conteneurs"
+no_containers = "Aucun conteneur"
+hint_select = "اختيار"
+hint_back = "رجوع"
+
+

@@ -1,0 +1,20 @@
+[footer]
+status_connected = "Verbunden"
+status_connecting = "Verbindung en cours"
+status_disconnected = "Getrennt"
+text_connected = "Verbunden"
+text_connecting = "Verbindung en cours"
+text_disconnected = "Getrennt"
+text_temporary_connected = "Temporairement verbunden"
+tab_text = "Onglet"
+ctrl_p_text = "Palette commandes"
+entelecheia = "Entelecheia"
+hint_exit_panel = "Beenden panneau"
+hint_clear_input = "Effacer l'entrée"
+hint_reply = "Répondre"
+hint_configure = "Konfigurieren"
+hint_move_text = "Verschieben texte"
+hint_group_move_text = "Verschieben texte en groupe"
+hint_page_up_down = "Page Haut/Bas"
+
+

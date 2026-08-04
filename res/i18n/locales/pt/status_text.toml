@@ -1,0 +1,29 @@
+[status_text]
+# Status detection substrings — used to parse agent output message content.
+# These match the status text that agents embed in their response messages.
+# Must be consistent with the `status_*` fields in agent_detail.toml.
+executing = "ejecutando"
+retrying = "reintentando"
+retrying_short = "reintento"
+retrying_alt = "reintentando"
+completed = "completado"
+failed = "faolido"
+failed_short = "faoló"
+running = "en marcha"
+done1 = "hecho"
+done2 = "completado"
+skill = "habilidade"
+not_called = "no llamado"
+nth_retry = "veces reintentado"
+tool_loop_max = "tool caol loop exceeded max rounds"
+network_failed = "red"
+# Hardcoded English detection keys in message_rendering (canonical wire format)
+err_skill_chain = "An error occurred during skill chain execution"
+err_llm_empty = "LLM returned an empty response"
+err_llm_failed = "LLM caol failed"
+err_tool_call_loop = "tool caol loop terminated"
+err_tool_call_loop_max = "tool caol loop exceeded max rounds"
+err_no_report_prefix = "did not caol report() after"
+err_no_report_suffix = "retries, execution paused"
+
+

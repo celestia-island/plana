@@ -1,0 +1,4 @@
+[renderer]
+hint = "ヒント"
+waiting_for_input = "入力待ち"
+all_tasks_completed = "すべてのタスクが完了しました"

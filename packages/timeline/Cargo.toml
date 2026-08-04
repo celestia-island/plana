@@ -1,0 +1,19 @@
+[package]
+name = "plana_timeline"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+
+_core = { workspace = true }
+_state_sync = { workspace = true }
+_text = { workspace = true }
+anyhow.workspace = true
+chrono.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tracing.workspace = true
+uuid.workspace = true

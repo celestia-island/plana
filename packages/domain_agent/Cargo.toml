@@ -1,0 +1,17 @@
+[package]
+name = "plana_domain_agent"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license.workspace = true
+
+[dependencies]
+
+_core = { workspace = true }
+_macros = { workspace = true }
+anyhow.workspace = true
+dashmap.workspace = true
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true
+[dev-dependencies]

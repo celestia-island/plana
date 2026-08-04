@@ -1,0 +1,27 @@
+{
+  "connection": {
+    "plana::statusBar.panel": "패널",
+    "plana::statusBar.engine": "엔진",
+    "plana::statusBar.connected": "연결됨",
+    "plana::statusBar.connecting": "연결 중...",
+    "plana::statusBar.reconnecting": "재연결 중",
+    "plana::statusBar.disconnected": "연결 끊김",
+    "plana::statusBar.retrying": "재시도 중 {retryCount} / {maxRetries}",
+    "plana::statusBar.probing": "탐색 중...",
+    "plana::statusBar.clickReconnect": "클릭하여 재연결",
+    "plana::statusBar.protocol": "프로토콜",
+    "plana::statusBar.latency": "지연 시간",
+    "plana::statusBar.network": "네트워크 지역",
+    "plana::statusBar.local": "로컬",
+    "plana::statusBar.fetching": "연결 정보를 가져오는 중...",
+    "plana::statusBar.tier.local": "HTTP 로컬",
+    "plana::statusBar.tier.ws": "WebSocket",
+    "plana::statusBar.tier.sse": "SSE 스트림",
+    "plana::statusBar.tier.poll": "HTTP 폴링",
+    "plana::statusBar.backend.ok": "정상",
+    "plana::statusBar.backend.warn": "저하",
+    "plana::statusBar.backend.error": "오류",
+    "plana::statusBar.backend.unknown": "알 수 없음",
+    "plana::tablePage.emptyTitle": "데이터 없음"
+  }
+}

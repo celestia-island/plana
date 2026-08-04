@@ -1,0 +1,11 @@
+[package]
+name = "plana-assets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Compile-time static asset embedding and axum serving with SPA fallback"
+
+[dependencies]
+axum.workspace = true
+include_dir.workspace = true

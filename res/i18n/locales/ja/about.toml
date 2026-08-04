@@ -1,0 +1,11 @@
+[about]
+title = "バージョン情報"
+version = "バージョン"
+license_type = "ライセンスタイプ"
+section_license = "ライセンス"
+section_cla = "コントリビューターライセンス契約"
+section_code_of_conduct = "行動規範"
+section_security = "セキュリティポリシー"
+not_available = "詳細なプロトコル文書は利用できません。ビルド時に ARONA_ROOT を設定して有効化してください。"
+hint_navigate = "ナビゲート"
+hint_close = "閉じる"

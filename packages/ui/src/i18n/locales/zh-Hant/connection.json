@@ -1,0 +1,27 @@
+{
+  "connection": {
+    "plana::statusBar.panel": "面板",
+    "plana::statusBar.engine": "引擎",
+    "plana::statusBar.connected": "已連線",
+    "plana::statusBar.connecting": "連線中...",
+    "plana::statusBar.reconnecting": "重連中",
+    "plana::statusBar.disconnected": "斷開",
+    "plana::statusBar.retrying": "正在重試 {retryCount} / {maxRetries} 次",
+    "plana::statusBar.probing": "探測中...",
+    "plana::statusBar.clickReconnect": "點擊以嘗試重連",
+    "plana::statusBar.protocol": "協定",
+    "plana::statusBar.latency": "延遲",
+    "plana::statusBar.network": "網路區域",
+    "plana::statusBar.local": "本機",
+    "plana::statusBar.fetching": "取得連線資訊中...",
+    "plana::statusBar.tier.local": "HTTP 本地",
+    "plana::statusBar.tier.ws": "WebSocket",
+    "plana::statusBar.tier.sse": "SSE 串流",
+    "plana::statusBar.tier.poll": "HTTP 輪詢",
+    "plana::statusBar.backend.ok": "正常",
+    "plana::statusBar.backend.warn": "降級",
+    "plana::statusBar.backend.error": "錯誤",
+    "plana::statusBar.backend.unknown": "未知",
+    "plana::tablePage.emptyTitle": "暫無資料"
+  }
+}

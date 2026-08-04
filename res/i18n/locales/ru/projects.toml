@@ -1,0 +1,13 @@
+[projects]
+panel_title = "Проекты"
+search_placeholder = "Поиск проектов..."
+search_title = "Поиск"
+no_projects = "Нет проектов"
+create_new = "Создать новый"
+last_accessed = "Последний доступ"
+item_count = "Элементы"
+just_now = "Только что"
+hint_navigate = "Навигация"
+hint_select = "Выбрать"
+hint_paste = "Вставить"
+hint_close = "Закрыть"

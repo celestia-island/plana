@@ -1,0 +1,6 @@
+[report]
+no_reports = "Sin informes"
+pending_suffix = "pendiente"
+pending_reply = "Respuesta pendiente"
+
+

@@ -1,0 +1,10 @@
+[offline_dialog]
+title = "Sin Conexión"
+gateway_error = "Error de Puerta de Enlace"
+retrying = "Reintentando"
+retry_attempt = "Reintento"
+error_prefix = "Error"
+select_action = "Seleccionar Acción"
+option_retry = "Reintentar"
+option_restart = "Reiniciar"
+option_exit = "Salir"

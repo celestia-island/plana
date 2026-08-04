@@ -1,0 +1,4 @@
+[tool_status]
+enabled = "已啟用"
+disabled = "已停用"
+auto = "自動"

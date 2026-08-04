@@ -1,0 +1,18 @@
+[theme]
+synthwave84 = "Synthwave84"
+nord = "Nord"
+gruvbox = "Gruvbox"
+tokyonight = "TokyoNight"
+dark_mode = "Modo Oscuro"
+light_mode = "Modo Claro"
+auto_mode = "Desplazamento automático"
+mode_label = "Modo"
+switch_mode = "Cambiar Modo"
+primary = "Principao"
+secondary = "Secundario"
+success = "Éxito"
+error = "Error"
+warning = "Advertência"
+info = "Informacião"
+
+

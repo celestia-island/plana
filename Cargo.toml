@@ -1,0 +1,173 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "packages/plana",
+    "packages/types",
+    "packages/jsonrpc",
+    "packages/core",
+    "packages/config",
+    "packages/text",
+    "packages/macros",
+    "packages/container",
+    "packages/container_runtime",
+    "packages/domain_agent",
+    "packages/domain_skills",
+    "packages/domain_skills_permissions",
+    "packages/custom_agent",
+    "packages/state_types",
+    "packages/infra_services",
+    "packages/infra_utils",
+    "packages/bootloader",
+    "packages/llm_provider",
+    "packages/timeline",
+    "packages/prompt",
+    "packages/res",
+    "packages/sync",
+    "packages/dev_server",
+    "packages/assets",
+    "packages/world_state",
+]
+
+[workspace.package]
+version = "0.1.15"
+edition = "2024"
+rust-version = "1.91"
+authors = ["langyo <langyo.china@gmail.com>"]
+license-file = "LICENSE"
+license = "SySL-1.0"
+description = "Shared infrastructure and protocol types for celestia-island"
+repository = "https://github.com/celestia-island/plana"
+keywords = ["json-rpc", "protocol", "ai-agent", "infrastructure", "shared-types"]
+categories = ["data-structures", "development-tools"]
+
+[workspace.dependencies]
+
+_bootloader = { package = "plana_bootloader", path = "packages/bootloader" }
+_config = { package = "plana_config", path = "packages/config" }
+_container = { package = "plana_container", path = "packages/container" }
+_container_runtime = { package = "plana_container_runtime", path = "packages/container_runtime" }
+_core = { package = "plana_core", path = "packages/core" }
+_custom_agent = { package = "plana_custom_agent", path = "packages/custom_agent" }
+_domain_agent = { package = "plana_domain_agent", path = "packages/domain_agent" }
+_domain_skills = { package = "plana_domain_skills", path = "packages/domain_skills" }
+_domain_skills_permissions = { package = "plana_domain_skills_permissions", path = "packages/domain_skills_permissions" }
+_infra_services = { package = "plana_infra_services", path = "packages/infra_services" }
+_infra_utils = { package = "plana_infra_utils", path = "packages/infra_utils" }
+_llm_provider = { package = "plana_llm_provider", path = "packages/llm_provider" }
+_macros = { package = "plana_macros", path = "packages/macros" }
+_prompt = { package = "plana_prompt", path = "packages/prompt" }
+_res = { package = "plana_res", path = "packages/res" }
+_state_sync = { package = "plana_state_sync", path = "packages/state_types" }
+_sync = { package = "plana_sync", path = "packages/sync" }
+_text = { package = "plana_text", path = "packages/text" }
+_timeline = { package = "plana_timeline", path = "packages/timeline" }
+_world_state = { package = "plana_world_state", path = "packages/world_state" }
+# ── Internal crate aliases ──────────────────────────────────
+plana = { package = "plana", path = "packages/plana" }
+
+kirino = { version = "^0.6" }
+
+# External dependency versions (carried from entelecheia workspace)
+anyhow = "^1"
+append-only-bytes = "^0.1"
+async-trait = "^0.1"
+# Container / infrastructure
+axum = { version = "^0.8", features = ["ws"] }
+base64 = "^0.22"
+boa_engine = "^0.21"
+boa_gc = "^0.21"
+boa_runtime = "^0.21"
+bollard = "^0.21"
+bytes = "^1"
+chrono = { version = "^0.4", features = ["serde", "clock"] }
+dashmap = "^6"
+deadpool-postgres = "^0.14"
+dirs = "^6"
+dotenvy = "^0.15"
+flume = "^0.12"
+futures = "^0.3"
+hex = "^0.4"
+http = "^1"
+hyper-rustls = { version = "^0.27", default-features = false, features = ["native-tokio", "http1", "tls12", "ring"] }
+include_dir = { version = "^0.7", features = ["glob"] }
+interprocess = "^2"
+libnoa = "^0.4"
+lru = "^0.12"
+mockall = "^0.12"
+notify = "^6"
+os_info = "^3"
+parking_lot = "^0.12"
+pci-ids = "^0.2"
+rand = "^0.8"
+regex = "^1"
+reqwest = { version = "^0.13", default-features = false, features = [
+    "json",
+    "rustls-no-provider",
+    "stream",
+    "charset",
+    "http2",
+] }
+# Pure-Rust TLS: use rustls+ring instead of aws-lc-rs (avoids C compilation of aws-lc-sys).
+# Pinning rustls/hyper-rustls/tokio-rustls here with ring kills aws-lc-rs at the source.
+russh = "^0.45"
+rustls = { version = "^0.23", default-features = false, features = ["ring", "std", "tls12"] }
+schemars = { version = "^1", features = ["derive", "uuid1"] }
+sea-orm = { version = "^2.0.0-rc", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+] }
+sea-orm-migration = "^2.0.0-rc"
+secrecy = { version = "^0.8", features = ["serde"] }
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+serde_yaml = "^0.9"
+sha2 = "^0.10"
+strum = { version = "^0.28", features = ["derive"] }
+swc_core = "^40"
+sys-info = "^0.9"
+sys-locale = "^0.3"
+sysinfo = "^0.30"
+tar = "^0.4"
+tempfile = "^3"
+tera = "^2"
+thiserror = "^2"
+tokio = { version = "^1", features = ["rt", "rt-multi-thread", "macros", "time", "net", "io-util", "fs", "sync", "signal", "process"] }
+tokio-rustls = { version = "^0.26", default-features = false, features = ["ring", "tls12"] }
+tokio-test = "^0.4"
+tokio-tungstenite = "^0.30"
+tokio-util = "^0.7"
+toml = "^0.8"
+tower = "^0.5"
+tower-http = { version = "^0.7", features = ["cors", "trace", "fs"] }
+tracing = { version = "^0.1", features = ["log"] }
+tracing-appender = "^0.2"
+tracing-subscriber = { version = "^0.3", features = ["env-filter", "json"] }
+ts-rs = { version = "^12", features = ["serde-compat", "serde-json-impl", "uuid-impl"] }
+url = "^2"
+uuid = { version = "^1", features = ["v3", "v4", "v5", "v7", "serde"] }
+walkdir = "^2"
+[profile.dev]
+debug = 1
+opt-level = 0
+incremental = true
+
+[profile.dev.package."*"]
+debug = 0
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 16
+debug = 0
+
+[profile.bench]
+debug = 0
+
+
+# Vendored ts-rs with a fix for the export-merge panic on files whose
+# header contains no imports (upstream ts-rs 12.0.1 bug, unpatched).
+[patch.crates-io]
+ts-rs = { path = "patches/ts-rs" }
+ts-rs-macros = { path = "patches/ts-rs-macros" }
