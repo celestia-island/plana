@@ -36,7 +36,7 @@ jobs:
           npm publish --access public --provenance
       - name: Publish plana-types
         run: |
-          cd packages/types
+          cd packages/celestia-types
           if [ -n "${{ github.event.inputs.version }}" ]; then npm version "${{ github.event.inputs.version }}" --no-git-tag-version --allow-same-version; fi
           npm publish --access public --provenance
       - name: Publish plana-ui
