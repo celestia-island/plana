@@ -65,7 +65,7 @@ _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
 _world_state = { package = "plana_world_state", path = "packages/world_state" }
 # ── Internal crate aliases ──────────────────────────────────
-plana = { package = "plana-types", path = "packages/types" }
+plana = { package = "plana-types", version = "0.1.15", path = "packages/types" }
 
 kirino = { version = "^0.6" }
 
