@@ -38,6 +38,7 @@ export {
 
 // ── UUID helpers (secure-context safe; upstreamed from shittim-chest P5#A A4) ─
 export { uuid, uuidv7, uuidv5 } from "./utils/uuid";
+export { detectLocale } from "./utils/locale";
 export { resolveErrorMessage, parseServerErrorBody, serverErrorToI18nKey } from "./utils/errors";
 export type { TranslateFn } from "./utils/errors";
 export { useAsyncData } from "./composables/useAsyncData";
