@@ -52,6 +52,13 @@
     "plana::mcp.writeToVar": "Write to var",
     "plana::mcp.varWritten": "Variable written ({bytes} bytes)",
     "plana::attachment.loading": "Loading…",
-    "plana::attachment.noPreview": "No preview available."
+    "plana::attachment.noPreview": "No preview available.",
+    "plana::localizedInput.enableMultilang": "Enable multi-language",
+    "plana::localizedInput.edit": "Edit",
+    "plana::localizedInput.remove": "Remove",
+    "plana::localizedInput.addLanguage": "Add language",
+    "plana::localizedInput.allAdded": "All languages added",
+    "plana::localizedInput.autoTranslate": "Auto-translate all",
+    "plana::localizedInput.disableMultilang": "Disable multi-language"
   }
 }
