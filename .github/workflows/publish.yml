@@ -21,7 +21,7 @@ jobs:
       - name: Publish plana-types
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
-        run: cargo publish -p plana-types --locked
+        run: cargo publish -p plana-celestia-types --locked
       - name: Publish plana-jsonrpc
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}

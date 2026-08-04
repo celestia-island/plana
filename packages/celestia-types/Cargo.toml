@@ -1,12 +1,12 @@
 [package]
-name = "plana-types"
+name = "plana-celestia-types"
 version = "0.1.0"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 license-file = "LICENSE"
-description = "Message model of the PLANA protocol: typed envelopes for state synchronization, control, and events between client shell and backend runtime, with JSON Schema and TypeScript bindings."
+description = "Celestia platform domain types for the PLANA protocol - the domain profile used by the celestia-island platform. Generic protocol machinery lives in the plana core crate; this crate plugs in via its macro registration mechanism."
 repository = "https://github.com/celestia-island/plana"
 keywords = ["json-rpc", "protocol", "ai-agent", "shared-types"]
 categories = ["api-bindings", "data-structures"]
