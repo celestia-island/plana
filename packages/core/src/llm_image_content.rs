@@ -7,7 +7,7 @@ const MEDIA_TYPE_JPEG: &str = "image/jpeg";
 
 /// Positional role of an image in a multi-image modality (e.g. video
 /// generation models that take 1-2 reference images).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum LlmImagePosition {
     /// First frame / leading reference (video head).
@@ -15,13 +15,8 @@ pub enum LlmImagePosition {
     /// Last frame / trailing reference (video tail).
     Tail,
     /// No positional constraint (any reference).
+    #[default]
     Any,
-}
-
-impl Default for LlmImagePosition {
-    fn default() -> Self {
-        Self::Any
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
