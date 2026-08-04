@@ -89,3 +89,4 @@ export type {
   PBreadcrumbItem,
   PBreadcrumbParamChip,
 } from "./components/PlanaBreadcrumb";
+export { default as PMinimap } from "./components/PlanaMinimap";
