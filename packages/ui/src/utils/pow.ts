@@ -93,6 +93,19 @@ function leadingZeroBits32(hash: Uint32Array): number {
   return count;
 }
 
+/**
+ * SHA-256 digest of `data` (32 bytes) via the dependency-free sync core.
+ * Exported for contract tests (NIST known-answer vectors).
+ */
+export function sha256(data: Uint8Array): Uint8Array {
+  const out = new Uint32Array(8);
+  sha256Into(data, out);
+  const bytes = new Uint8Array(32);
+  const dv = new DataView(bytes.buffer);
+  for (let i = 0; i < 8; i++) dv.setUint32(i * 4, out[i], false);
+  return bytes;
+}
+
 /** Synchronous solver for non-WebCrypto contexts (plain-HTTP origins). */
 export function solvePowSync(
   seed: string,
