@@ -29,7 +29,7 @@
  */
 
 import { computed, defineComponent, nextTick, ref, type PropType } from "vue";
-import { useI18n } from "vue-i18n";
+import { useI18n } from "@celestia-island/hikari";
 
 import { Globe, Plus, X } from "lucide-vue-next";
 import { HSpinner } from "@celestia-island/hikari";
