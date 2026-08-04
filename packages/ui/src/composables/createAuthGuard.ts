@@ -88,7 +88,7 @@ export function createAuthGuard(router: GuardRouter, opts: AuthGuardOptions) {
   });
 
   if (opts.onLazyLoadError) {
-    router.onError((error: unknown, to: GuardRoute) => {
+    router.onError?.((error: unknown, to: GuardRoute) => {
       opts.onLazyLoadError!(error as Error, to.fullPath);
     });
   }
