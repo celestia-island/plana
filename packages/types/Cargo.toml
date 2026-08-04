@@ -1,0 +1,42 @@
+[package]
+name = "plana-types"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+license-file = "LICENSE"
+description = "Shared wire types for a typed bidirectional sync protocol: JSON-RPC envelopes, health and network descriptors, identity, RBAC, region policy, model metadata, and MCP I/O structs with JSON Schema and TypeScript bindings support."
+repository = "https://github.com/celestia-island/plana"
+keywords = ["json-rpc", "protocol", "ai-agent", "shared-types"]
+categories = ["api-bindings", "data-structures"]
+# Keep generated TS bindings out of the published crate.
+exclude = ["bindings"]
+
+[features]
+default = []
+tracing-helpers = ["dep:chrono", "dep:tracing-subscriber"]
+
+[dependencies]
+
+hex.workspace = true
+kirino = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+ts-rs = { workspace = true }
+uuid.workspace = true
+
+# ── tracing-helpers feature ────────────────────────────────────
+chrono = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+
+[dev-dependencies]
+
+anyhow.workspace = true
+toml.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

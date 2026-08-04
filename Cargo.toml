@@ -3,6 +3,8 @@ resolver = "2"
 
 members = [
     "packages/plana",
+    "packages/types",
+    "packages/jsonrpc",
     "packages/core",
     "packages/config",
     "packages/text",

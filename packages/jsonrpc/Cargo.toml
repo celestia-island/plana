@@ -1,0 +1,38 @@
+[package]
+name = "plana-jsonrpc"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+license-file = "LICENSE"
+description = "JSON-RPC 2.0 wire machinery for a typed sync protocol: request/response framing, method routing, Unix-socket and HTTP/WebSocket transports."
+repository = "https://github.com/celestia-island/plana"
+keywords = ["json-rpc", "protocol", "websocket", "unix-socket"]
+categories = ["api-bindings", "web-programming::websocket", "network-programming"]
+
+[features]
+default = []
+
+[dependencies]
+
+plana-types = { version = "0.1.0", path = "../types" }
+anyhow = { workspace = true }
+axum = { workspace = true }
+futures = { workspace = true }
+interprocess = { workspace = true }
+paste = { version = "1" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+
+tempfile.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
