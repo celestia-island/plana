@@ -2,8 +2,7 @@
 resolver = "2"
 
 members = [
-    "packages/types",
-    "packages/rpc_server",
+    "packages/plana",
     "packages/core",
     "packages/config",
     "packages/text",
@@ -15,7 +14,6 @@ members = [
     "packages/domain_skills_permissions",
     "packages/custom_agent",
     "packages/state_types",
-    "packages/jsonrpc",
     "packages/infra_services",
     "packages/infra_utils",
     "packages/bootloader",
@@ -54,7 +52,6 @@ _domain_skills = { package = "plana_domain_skills", path = "packages/domain_skil
 _domain_skills_permissions = { package = "plana_domain_skills_permissions", path = "packages/domain_skills_permissions" }
 _infra_services = { package = "plana_infra_services", path = "packages/infra_services" }
 _infra_utils = { package = "plana_infra_utils", path = "packages/infra_utils" }
-_jsonrpc = { package = "plana_jsonrpc", path = "packages/jsonrpc" }
 _llm_provider = { package = "plana_llm_provider", path = "packages/llm_provider" }
 _macros = { package = "plana_macros", path = "packages/macros" }
 _prompt = { package = "plana_prompt", path = "packages/prompt" }
@@ -65,7 +62,7 @@ _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
 _world_state = { package = "plana_world_state", path = "packages/world_state" }
 # ── Internal crate aliases ──────────────────────────────────
-plana = { package = "plana-types", version = "0.1.15", path = "packages/types" }
+plana = { package = "plana", path = "packages/plana" }
 
 kirino = { version = "^0.6" }
 

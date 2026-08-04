@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use tracing::{info, warn};
 
 use _config::UserConfig;
-use _jsonrpc::unix_socket::log_socket_dir;
+use plana::jsonrpc::unix_socket::log_socket_dir;
 
 const TOKEN_FILE_NAME: &str = "scepter.token";
 
