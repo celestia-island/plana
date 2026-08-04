@@ -1,0 +1,9 @@
+{
+  "name": "@celestia-island/plana-celestia-types",
+  "version": "0.1.0",
+  "description": "TypeScript bindings for the celestia platform domain profile of the PLANA protocol.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "files": ["index.ts", "bindings"],
+  "packageManager": "pnpm@9.15.0"
+}

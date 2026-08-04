@@ -14,12 +14,16 @@ categories = ["api-bindings", "data-structures", "web-programming::websocket", "
 exclude = ["bindings"]
 
 [features]
-default = []
-rpc-server = ["dep:axum", "dep:tokio", "dep:maxminddb", "dep:uuid", "dep:tracing"]
+default = ["celestia"]
+# The celestia-island platform domain profile (plana-celestia-types). PLANA is a
+# general protocol; the celestia platform is its primary consumer, so its domain
+# types ship by default and can be disabled for other uses.
+celestia = ["dep:plana-celestia-types"]
+rpc-server = ["celestia", "dep:axum", "dep:tokio", "dep:maxminddb", "dep:uuid", "dep:tracing"]
 
 [dependencies]
 
-plana-types = { version = "0.1.0", path = "../types" }
+plana-celestia-types = { version = "0.1.0", path = "../celestia-types", optional = true }
 plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
 
 # ── rpc-server module (rpc-server feature) ────────────────────
