@@ -60,6 +60,14 @@
     "plana::localizedInput.allAdded": "All languages added",
     "plana::localizedInput.autoTranslate": "Auto-translate all",
     "plana::localizedInput.disableMultilang": "Disable multi-language",
-    "plana::auth.solvingChallenge": "Verifying challenge…"
+    "plana::auth.solvingChallenge": "Verifying challenge…",
+    "plana::errors.generic.unknown": "Something went wrong",
+    "plana::errors.network.connectionLost": "Connection lost",
+    "plana::errors.network.serverError": "Server error",
+    "plana::errors.auth.invalidCredentials": "Invalid credentials",
+    "plana::errors.api.notFound": "Not found",
+    "plana::errors.api.conflict": "Conflict",
+    "plana::errors.api.rateLimited": "Too many requests",
+    "plana::errors.api.invalidToken": "Invalid token"
   }
 }
