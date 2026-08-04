@@ -8,8 +8,8 @@ use tokio::{
 
 use tracing::{debug, info};
 
-use crate::jsonrpc::types::*;
-use crate::jsonrpc::unix_socket::platform;
+use crate::types::*;
+use crate::unix_socket::platform;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TimeoutPolicy {

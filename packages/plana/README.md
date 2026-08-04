@@ -1,23 +1,29 @@
 # plana
 
-Typed JSON-RPC 2.0 protocol toolkit for Rust: shared wire types, JSON-RPC
-2.0 machinery, Unix-socket and HTTP/WebSocket transports, and server-side
-session management — split into feature-gated modules so you pull in only
-what you need.
+Scaffolding for a typed bidirectional sync protocol. This repo is split into
+three publishable crates:
 
-The `types` module (on by default) provides the wire types themselves:
-`Serialize`/`Deserialize` structs and enums with JSON Schema and
-TypeScript-bindings support, covering protocol envelopes, transport-agnostic
-message params, per-tool MCP I/O structs, health/network descriptors, and
-identity/region/RBAC metadata.
+| Crate | Purpose |
+|-------|---------|
+| `plana-types` | Shared wire types: JSON-RPC envelopes, health/network descriptors, identity, region policy, RBAC, model metadata, and per-tool MCP I/O structs — every type `Serialize`/`Deserialize` with JSON Schema and TypeScript-bindings support. |
+| `plana-jsonrpc` | JSON-RPC 2.0 wire machinery: request/response/notification framing, a method registry, Unix-socket and HTTP/WebSocket transports, and a typed bridge between method strings and serde-serializable messages. |
+| `plana` | Umbrella crate: re-exports `plana-types` at the crate root (`plana::http::...`, `plana::protocol::...`) and `plana-jsonrpc` as the `jsonrpc` module (`plana::jsonrpc::...`), plus server-side session management (SSE, events) behind the `rpc-server` feature. |
 
 ## Usage
 
-Add to your `Cargo.toml`:
+Add to your `Cargo.toml` — either the umbrella crate:
 
 ```toml
 [dependencies]
-plana = { version = "0.1", features = ["jsonrpc", "rpc-server"] }
+plana = { version = "0.1", features = ["rpc-server"] }
+```
+
+or just the parts you need:
+
+```toml
+[dependencies]
+plana-types = { version = "0.1" }
+plana-jsonrpc = { version = "0.1" }
 ```
 
 ### Registering and calling a JSON-RPC method
@@ -69,15 +75,21 @@ let response = transport.send(&JsonRpcRequest::new("ping", None), TimeoutPolicy:
 
 ## Feature flags
 
-| Feature        | Default | What it enables                                                                 |
-|----------------|---------|---------------------------------------------------------------------------------|
-| `types`        | yes     | Shared wire types: protocol envelopes, message params, MCP I/O, http, identity, region, rbac, model. |
-| `jsonrpc`      | no      | JSON-RPC 2.0 layer: request/response/notification types, method registry (`RpcMethodMap`), Unix-socket transports, bridge helpers. |
-| `rpc-server`   | no      | Server-side session management (`SessionManager`), SSE event streaming, request network/geo detection. Implies `jsonrpc`. |
-| `tracing-helpers` | no   | `tracing_helpers` module with a `ShortTimer` formatting type.                  |
+| Feature | Default | What it enables |
+|---------|---------|-----------------|
+| (none) | yes | `plana-types` re-exported at the crate root and `plana-jsonrpc` as the `jsonrpc` module — always available. |
+| `rpc-server` | no | Server-side session management (`rpc_server::SessionManager`), SSE event streaming, request network/geo detection (`rpc_server::detect_network`). |
+| `tracing-helpers` (in `plana-types`) | no | `plana_types::tracing_helpers` module with a `ShortTimer` formatting type. |
 
 ## Stability
 
 Pre-1.0: the API is subject to change. The wire formats (serde layouts,
 method naming conventions) are treated carefully — changes that affect
 on-the-wire compatibility are always considered breaking.
+
+## Not a general-purpose RPC framework
+
+`plana` is the scaffold for one specific typed bidirectional sync protocol,
+not a general-purpose RPC framework. The wire types and JSON-RPC machinery
+are shaped by that protocol's needs; for a generic RPC stack, look at
+established frameworks instead.
