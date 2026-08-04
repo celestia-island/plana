@@ -7,7 +7,6 @@ authors.workspace = true
 license.workspace = true
 description = "Shared protocol types for celestia-island"
 repository = "https://github.com/celestia-island/plana"
-publish = false
 keywords = ["json-rpc", "protocol", "mcp", "typescript", "schema"]
 categories = ["api-bindings", "data-structures", "web-programming::websocket", "network-programming"]
 # Keep generated TS bindings, Python build scripts, and docs out of the published crate.
