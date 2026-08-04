@@ -5,7 +5,7 @@ use axum::{
 };
 use serde_json::Value;
 
-use crate::jsonrpc::types::{Id, JsonRpcError, JsonRpcRequest, JsonRpcResponse};
+use crate::types::{Id, JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 
 pub type RpcHandlerFn = Arc<
     dyn Fn(Value) -> Pin<Box<dyn Future<Output = Result<Value, JsonRpcError>> + Send>>
