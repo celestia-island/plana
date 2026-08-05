@@ -68,6 +68,8 @@
     "plana::errors.api.notFound": "Not found",
     "plana::errors.api.conflict": "Conflict",
     "plana::errors.api.rateLimited": "Too many requests",
-    "plana::errors.api.invalidToken": "Invalid token"
+    "plana::errors.api.invalidToken": "Invalid token",
+    "plana::readonly.search": "Search…",
+    "plana::readonly.noResults": "No matches"
   }
 }
