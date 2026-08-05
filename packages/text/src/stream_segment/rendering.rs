@@ -138,6 +138,9 @@ impl LlmStream {
                 | StreamSegment::DeepThinking { text, .. } => text.is_empty(),
                 StreamSegment::McpCall { params, .. } => params.is_null(),
                 StreamSegment::McpResult { data, .. } => data.is_null(),
+                StreamSegment::AudioPcm { .. }
+                | StreamSegment::VideoFrame { .. }
+                | StreamSegment::ImagePartial { .. } => false,
             })
     }
 
