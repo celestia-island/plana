@@ -20,20 +20,24 @@ data_base64: string, };
 /**
  * Client → gateway realtime events (client-sent).
  *
- * Wired as JSON-RPC notifications on the session channel; binary audio
- * (16 kHz PCM16) travels base64-encoded in `data_base64`.
+ * Canonical vendor-neutral tags (see `docs/en/designs/realtime-media.md`);
+ * wired as JSON-RPC notifications on the session channel. Binary audio
+ * (16 kHz PCM16) travels base64-encoded in `data_base64` (v1) or as WS
+ * binary frames announced via the CEP binary-transfer triple (v2).
  */
-export type RealtimeClientEvent = { "type": "session_update", session: RealtimeSessionConfig, } | { "type": "input_audio_buffer_append", audio: RealtimeAudioChunk, } | { "type": "input_audio_buffer_commit" } | { "type": "input_audio_buffer_clear" } | { "type": "input_image_buffer_append", frame: RealtimeVideoFrame, } | { "type": "response_create" } | { "type": "response_cancel" } | { "type": "session_stop" };
+export type RealtimeClientEvent = { "type": "session.configure", session: RealtimeSessionConfig, } | { "type": "audio.input.append", audio: RealtimeAudioChunk, } | { "type": "audio.input.commit" } | { "type": "audio.input.clear" } | { "type": "video.input.frame", frame: RealtimeVideoFrame, } | { "type": "response.request" } | { "type": "response.cancel" } | { "type": "session.close" };
 
 /**
  * Gateway → client realtime events (server-sent).
  *
- * Wired as JSON-RPC notifications on the session channel; binary audio
- * (24 kHz PCM16) travels base64-encoded in `delta.data_base64`. Clients
- * stop playback on `speech_started` (barge-in) and treat `response_done`
- * as the terminal billing event for one response.
+ * Canonical vendor-neutral tags (see `docs/en/designs/realtime-media.md`);
+ * wired as JSON-RPC notifications on the session channel. Binary audio
+ * (24 kHz PCM16) travels base64-encoded in `delta.data_base64` (v1) or as
+ * WS binary frames (v2). Clients stop playback on `turn.speech_started`
+ * (barge-in) and treat `response.done` as the terminal billing event for
+ * one response.
  */
-export type RealtimeServerEvent = { "type": "session_created", session: RealtimeSessionConfig, } | { "type": "session_updated", session: RealtimeSessionConfig, } | { "type": "speech_started", audio_start_ms: bigint, } | { "type": "speech_stopped", audio_end_ms: bigint, } | { "type": "response_created", response_id: string, } | { "type": "response_audio_delta", response_id: string, delta: RealtimeAudioChunk, } | { "type": "response_audio_done", response_id: string, } | { "type": "response_audio_transcript_delta", response_id: string, delta: string, } | { "type": "response_text_delta", response_id: string, delta: string, } | { "type": "response_done", response_id: string, usage: RealtimeUsage, } | { "type": "response_video_frame", response_id: string, frame: RealtimeVideoFrame, } | { "type": "error", code: string, message: string, };
+export type RealtimeServerEvent = { "type": "session.created", session: RealtimeSessionConfig, } | { "type": "session.configured", session: RealtimeSessionConfig, } | { "type": "turn.speech_started", audio_start_ms: bigint, } | { "type": "turn.speech_stopped", audio_end_ms: bigint, } | { "type": "response.started", response_id: string, } | { "type": "response.audio.delta", response_id: string, delta: RealtimeAudioChunk, } | { "type": "response.audio.end", response_id: string, } | { "type": "response.transcript.delta", response_id: string, delta: string, } | { "type": "response.text.delta", response_id: string, delta: string, } | { "type": "response.done", response_id: string, usage: RealtimeUsage, } | { "type": "response.video.frame", response_id: string, frame: RealtimeVideoFrame, } | { "type": "error", code: string, message: string, };
 
 /**
  * `session.update` payload — the full realtime session configuration.

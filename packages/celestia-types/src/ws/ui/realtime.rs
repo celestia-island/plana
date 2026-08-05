@@ -1,10 +1,17 @@
 //! Realtime omni-session protocol — full-duplex audio/video conversation.
 //!
-//! Wire vocabulary aligned with the Qwen-Omni-Realtime / OpenAI-Realtime
-//! event family (`session.update`, `input_audio_buffer.*`,
-//! `response.audio.delta`, `speech_started`, `response.done`). The gateway
-//! proxies these events between clients and upstream realtime engines
-//! (cloud Qwen-Omni-Realtime / OpenAI Realtime, or a local CEP engine).
+//! **Canonical, vendor-neutral event vocabulary** — see
+//! `docs/en/designs/realtime-media.md`. Event names on the wire are the
+//! canonical forms (`session.configure`, `audio.input.append`,
+//! `response.audio.delta`, …); vendor dialects (OpenAI-Realtime,
+//! Qwen-Omni-Realtime, Gemini Live) are translated ONLY in the gateway
+//! adapters. Rust variant names are semantic (`InputAudioBufferAppend`);
+//! the serde tag is the canonical name.
+//!
+//! Audio waveform contract: PCM16 LE mono — 16 kHz client→model, 24 kHz
+//! model→client (every vendor converges on this pair, so the gateway passes
+//! bytes through untouched). Chunks are self-describing (`mime` +
+//! `sample_rate`), allowing future codecs without breaking decoders.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -114,77 +121,101 @@ pub struct RealtimeUsage {
 
 /// Client → gateway realtime events (client-sent).
 ///
-/// Wired as JSON-RPC notifications on the session channel; binary audio
-/// (16 kHz PCM16) travels base64-encoded in `data_base64`.
+/// Canonical vendor-neutral tags (see `docs/en/designs/realtime-media.md`);
+/// wired as JSON-RPC notifications on the session channel. Binary audio
+/// (16 kHz PCM16) travels base64-encoded in `data_base64` (v1) or as WS
+/// binary frames announced via the CEP binary-transfer triple (v2).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[ts(export, export_to = "ws/realtime.ts")]
 pub enum RealtimeClientEvent {
+    #[serde(rename = "session.configure")]
     SessionUpdate { session: RealtimeSessionConfig },
+    #[serde(rename = "audio.input.append")]
     InputAudioBufferAppend { audio: RealtimeAudioChunk },
+    #[serde(rename = "audio.input.commit")]
     InputAudioBufferCommit,
+    #[serde(rename = "audio.input.clear")]
     InputAudioBufferClear,
+    #[serde(rename = "video.input.frame")]
     InputImageBufferAppend { frame: RealtimeVideoFrame },
+    #[serde(rename = "response.request")]
     ResponseCreate,
+    #[serde(rename = "response.cancel")]
     ResponseCancel,
+    #[serde(rename = "session.close")]
     SessionStop,
 }
 
 /// Gateway → client realtime events (server-sent).
 ///
-/// Wired as JSON-RPC notifications on the session channel; binary audio
-/// (24 kHz PCM16) travels base64-encoded in `delta.data_base64`. Clients
-/// stop playback on `speech_started` (barge-in) and treat `response_done`
-/// as the terminal billing event for one response.
+/// Canonical vendor-neutral tags (see `docs/en/designs/realtime-media.md`);
+/// wired as JSON-RPC notifications on the session channel. Binary audio
+/// (24 kHz PCM16) travels base64-encoded in `delta.data_base64` (v1) or as
+/// WS binary frames (v2). Clients stop playback on `turn.speech_started`
+/// (barge-in) and treat `response.done` as the terminal billing event for
+/// one response.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 #[ts(export, export_to = "ws/realtime.ts")]
 pub enum RealtimeServerEvent {
+    #[serde(rename = "session.created")]
     SessionCreated {
         session: RealtimeSessionConfig,
     },
+    #[serde(rename = "session.configured")]
     SessionUpdated {
         session: RealtimeSessionConfig,
     },
     /// VAD detected speech onset — clients should stop playback (barge-in).
+    #[serde(rename = "turn.speech_started")]
     SpeechStarted {
         audio_start_ms: u64,
     },
+    #[serde(rename = "turn.speech_stopped")]
     SpeechStopped {
         audio_end_ms: u64,
     },
+    #[serde(rename = "response.started")]
     ResponseCreated {
         response_id: String,
     },
     /// Streaming audio output block (base64 PCM16 24 kHz).
+    #[serde(rename = "response.audio.delta")]
     ResponseAudioDelta {
         response_id: String,
         delta: RealtimeAudioChunk,
     },
+    #[serde(rename = "response.audio.end")]
     ResponseAudioDone {
         response_id: String,
     },
     /// Streaming transcript of the audio output.
+    #[serde(rename = "response.transcript.delta")]
     ResponseAudioTranscriptDelta {
         response_id: String,
         delta: String,
     },
     /// Text-only output delta (modalities `["text"]`).
+    #[serde(rename = "response.text.delta")]
     ResponseTextDelta {
         response_id: String,
         delta: String,
     },
     /// Terminal event for one response — carries usage for billing.
+    #[serde(rename = "response.done")]
     ResponseDone {
         response_id: String,
         usage: RealtimeUsage,
     },
     /// Streaming video frame output (LPM-style character video / generated
     /// world-model frames delivered as a live frame stream).
+    #[serde(rename = "response.video.frame")]
     ResponseVideoFrame {
         response_id: String,
         frame: RealtimeVideoFrame,
     },
+    #[serde(rename = "error")]
     Error {
         code: String,
         message: String,
@@ -224,7 +255,7 @@ mod tests {
         let s = serde_json::to_string(&ev).unwrap();
         let back: RealtimeClientEvent = serde_json::from_str(&s).unwrap();
         assert_eq!(back, ev);
-        assert!(s.contains("\"type\":\"session_update\""));
+        assert!(s.contains("\"type\":\"session.configure\""));
     }
 
     #[test]
@@ -239,7 +270,7 @@ mod tests {
         let s = serde_json::to_string(&ev).unwrap();
         let back: RealtimeClientEvent = serde_json::from_str(&s).unwrap();
         assert_eq!(back, ev);
-        assert!(s.contains("\"input_audio_buffer_append\""));
+        assert!(s.contains("\"audio.input.append\""));
     }
 
     #[test]
@@ -255,7 +286,7 @@ mod tests {
         let s = serde_json::to_string(&ev).unwrap();
         let back: RealtimeServerEvent = serde_json::from_str(&s).unwrap();
         assert_eq!(back, ev);
-        assert!(s.contains("\"response_audio_delta\""));
+        assert!(s.contains("\"response.audio.delta\""));
     }
 
     #[test]
@@ -266,7 +297,7 @@ mod tests {
         let s = serde_json::to_string(&ev).unwrap();
         let back: RealtimeServerEvent = serde_json::from_str(&s).unwrap();
         assert_eq!(back, ev);
-        assert!(s.contains("\"speech_started\""));
+        assert!(s.contains("\"turn.speech_started\""));
     }
 
     #[test]
@@ -310,7 +341,7 @@ mod tests {
         let s = serde_json::to_string(&ev).unwrap();
         let back: RealtimeServerEvent = serde_json::from_str(&s).unwrap();
         assert_eq!(back, ev);
-        assert!(s.contains("\"response_video_frame\""));
+        assert!(s.contains("\"response.video.frame\""));
     }
 
     #[test]
