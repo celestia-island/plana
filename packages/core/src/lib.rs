@@ -59,7 +59,7 @@ pub use enums::{
 pub use errors::{AgentErrorCode, CredentialError, StructuredAgentError};
 pub use execution_mode::{ExecutionMode, UnknownExecutionModeError};
 pub use identity::{AgentId, AgentIdentity, ContainerId, LlmSessionId};
-pub use llm_image_content::LlmImageContent;
+pub use llm_image_content::{LlmAudioContent, LlmImageContent};
 pub use logger::{init_logger, init_logger_text, init_logger_tui};
 pub use mcp_call_mode::McpToolCallMode;
 pub use model_tier::ModelTier;

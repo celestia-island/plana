@@ -252,6 +252,12 @@ pub enum StreamChunkKind {
     Text,
     Thinking,
     DeepThinking,
+    /// Raw PCM audio block (base64-encoded in the segment payload).
+    AudioPcm,
+    /// A video frame (base64-encoded image bytes).
+    VideoFrame,
+    /// A partial image generation pass (progressive quality).
+    ImagePartial,
 }
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
@@ -303,6 +309,47 @@ pub enum StreamSegment {
         #[serde(default)]
         #[ts(optional)]
         agent_type: Option<String>,
+        #[serde(default)]
+        #[ts(optional)]
+        #[ts(type = "string")]
+        message_id: Option<uuid::Uuid>,
+    },
+    /// Raw audio block (PCM16 base64) — realtime/omni model output.
+    AudioPcm {
+        /// MIME type of the payload (e.g. "audio/pcm").
+        mime: String,
+        /// Sample rate in Hz when known.
+        #[serde(default)]
+        #[ts(optional)]
+        sample_rate: Option<u32>,
+        /// Base64-encoded audio bytes.
+        data_base64: String,
+        #[serde(default)]
+        #[ts(optional)]
+        #[ts(type = "string")]
+        message_id: Option<uuid::Uuid>,
+    },
+    /// A video frame (image bytes base64) — streamed model output.
+    VideoFrame {
+        /// MIME type of the image (e.g. "image/jpeg").
+        mime: String,
+        /// Monotonic frame sequence number.
+        frame_seq: u32,
+        /// Base64-encoded image bytes.
+        data_base64: String,
+        #[serde(default)]
+        #[ts(optional)]
+        #[ts(type = "string")]
+        message_id: Option<uuid::Uuid>,
+    },
+    /// A partial image generation pass (progressive quality).
+    ImagePartial {
+        /// MIME type of the image.
+        mime: String,
+        /// Quality pass index (0 = first draft).
+        quality_index: u32,
+        /// Base64-encoded image bytes.
+        data_base64: String,
         #[serde(default)]
         #[ts(optional)]
         #[ts(type = "string")]
@@ -530,8 +577,8 @@ pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
 pub use ws::agent::{agent_lifecycle::*, layer2::*, state_sync::*, tasks::*, yolo::*};
 pub use ws::services::{auth::*, industrial::*, knowledge_base::*, llm_provider::*};
 pub use ws::ui::{
-    bridge_network::*, file_browsing::*, logs::*, noa::*, noa_pr::*, system_ui::*, views::*,
-    workspace::*,
+    bridge_network::*, file_browsing::*, logs::*, noa::*, noa_pr::*, realtime::*, system_ui::*,
+    views::*, workspace::*,
 };
 
 #[cfg(test)]
