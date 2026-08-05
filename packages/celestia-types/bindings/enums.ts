@@ -2,8 +2,6 @@
 
 export type AnnotationType = "Note" | "Warning" | "Todo" | "Suggestion" | "Conflict";
 
-export type ConnectionType = "Local" | "RemoteLan" | "RemoteInternet";
-
 export type ConsultationStatus = "WaitingHuman" | "Pending" | "Answered" | "Delivered" | "Scheduled" | "Triggered" | "Cancelled" | "Replied";
 
 export type ContainerOpStatus = "Created" | "Running" | "Stopped" | "Removed" | "Forked";

@@ -16,8 +16,4 @@ protocol_version: number, token: string, session_id?: string, capabilities: Arra
  */
 workspace_id?: string, };
 
-export type HandshakeAckParams = { ok: boolean, error?: string, };
-
-export type PingParams = { timestamp: bigint, };
-
 export type ScepterIdentityParams = { device_id: string, };
