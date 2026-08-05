@@ -1,12 +1,23 @@
+//! RBAC permission and role types for the generic protocol core.
+//!
+//! The permission vocabulary ([`Permission`]) is a v1 baseline **closed set**
+//! of 31 typed variants. Extensibility is planned via a string-permission
+//! mechanism, and the seam already exists: permissions travel over the wire
+//! as dotted strings (`"agent.read"`, …), and the string-level APIs
+//! (`Permission::from_path`, `parse_permission`, `validate_grant_permissions`,
+//! `GrantItem::validate_permission`) already accept and validate arbitrary
+//! dotted paths against the closed vocabulary. The typed enum stays closed
+//! until the opaque string-permission mechanism lands; profiles must use the
+//! 31 built-in leaves (or their domain prefixes) today.
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-/// The three dimensions of access control in arona.
+// The three dimensions of access control.
 ///
 /// (1) User        — individual account
 /// (2) UserGroup   — collection of users sharing permissions
-/// (3) ModelGroup  — collection of models with access policies (replaces "workspace")
+/// (3) ModelGroup  — collection of models with access policies
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AccessDimension {
@@ -26,7 +37,7 @@ pub enum PermissionScope {
     Personal,
 }
 
-/// Every discrete operation that can be authorised in the arona platform.
+/// Every discrete operation that can be authorised by a platform profile.
 ///
 /// Serialised as a dotted path (`gateway.chat`, `model.deploy`, …).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]

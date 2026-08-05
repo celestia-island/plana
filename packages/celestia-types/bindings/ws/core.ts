@@ -38,45 +38,9 @@ export type RouteInfo = { direction: string, target: string, target_token?: stri
 
 export type SkillStage = { "Started": string } | { "Done": string } | { "Complete": string } | { "Failed": string } | { "ToolCall": string } | { "Retrying": [string, number, number, RetryReason | null] } | { "TryingModel": [string, string] } | { "ModelFailed": [string, string, string] } | { "Nudging": string };
 
-export type StreamChunkKind = "Text" | "Thinking" | "DeepThinking" | "AudioPcm" | "VideoFrame" | "ImagePartial";
+export type StreamChunkKind = "Text" | "Thinking" | "DeepThinking";
 
-export type StreamSegment = { "Text": { text: string, message_id?: string, } } | { "Thinking": { text: string, message_id?: string, } } | { "DeepThinking": { text: string, message_id?: string, } } | { "McpCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, } } | { "McpResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, } } | { "AudioPcm": { 
-/**
- * MIME type of the payload (e.g. "audio/pcm").
- */
-mime: string, 
-/**
- * Sample rate in Hz when known.
- */
-sample_rate?: number, 
-/**
- * Base64-encoded audio bytes.
- */
-data_base64: string, message_id?: string, } } | { "VideoFrame": { 
-/**
- * MIME type of the image (e.g. "image/jpeg").
- */
-mime: string, 
-/**
- * Monotonic frame sequence number.
- */
-frame_seq: number, 
-/**
- * Base64-encoded image bytes.
- */
-data_base64: string, message_id?: string, } } | { "ImagePartial": { 
-/**
- * MIME type of the image.
- */
-mime: string, 
-/**
- * Quality pass index (0 = first draft).
- */
-quality_index: number, 
-/**
- * Base64-encoded image bytes.
- */
-data_base64: string, message_id?: string, } };
+export type StreamSegment = { "Text": { text: string, message_id?: string, } } | { "Thinking": { text: string, message_id?: string, } } | { "DeepThinking": { text: string, message_id?: string, } } | { "McpCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, } } | { "McpResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, } };
 
 export type StructuredAgentError = { code: AgentErrorCode, detail?: string, context: { [key in string]: string }, };
 

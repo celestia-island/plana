@@ -113,14 +113,6 @@ pub enum ModelCapability {
     /// This is the key capability for the MediaFlow vision_critique node.
     VisualCritique,
 
-    // ── Realtime / full-duplex ──
-    /// Full-duplex realtime speech — audio goes straight into the model
-    /// (no ASR→LLM→TTS chain) and speech comes straight out.
-    RealtimeSpeech,
-    /// Streaming video frame input/output in a realtime session
-    /// (e.g. ~1 fps camera frames in, generated frames out).
-    RealtimeVideo,
-
     // ── Image generation ──
     /// Text prompt → image.
     TextToImage,
