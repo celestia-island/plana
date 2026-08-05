@@ -78,7 +78,7 @@ export { formatMediaTime } from "@celestia-island/hikari";
 /** Absolute timestamp formatting with a shared locale-aware renderer. */
 export function formatDateTime(
   input: string | number | Date,
-  opts?: { dateStyle?: "short" | "medium"; timeStyle?: "short" | "medium" },
+  opts?: { dateStyle?: "short" | "medium" | "long"; timeStyle?: "short" | "medium" },
 ): string {
   if (!input) return "";
   const d = input instanceof Date ? input : new Date(input);
