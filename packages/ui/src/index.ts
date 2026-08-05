@@ -130,3 +130,5 @@ export { default as PMinimap } from "./components/PlanaMinimap";
 export { default as PLocalizedInput } from "./components/PlanaLocalizedInput";
 export type { PLocalizedTitle, PLocaleOption } from "./components/PlanaLocalizedInput";
 export { LOCALE_FAMILY, resolveLocalizedTitle } from "./utils/localizedTitle";
+
+export { useAvatarUrl, type AvatarUrlUser } from "./composables/useAvatarUrl";
