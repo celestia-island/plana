@@ -30,7 +30,8 @@
     "lucide-vue-next": "^*",
     "uuid": "^*",
     "md5": "^*",
-    "@types/md5": "^*"
+    "@types/md5": "^*",
+    "pinia": "^*"
   },
   "devDependencies": {
     "@types/node": "^*",
