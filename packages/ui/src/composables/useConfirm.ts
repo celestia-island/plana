@@ -1,46 +1,27 @@
-import { onUnmounted, ref } from "vue";
+import { useConfirm as useConfirmHikari } from "@celestia-island/hikari";
 
 /**
- * Confirmation-dialog state machine (upstreamed from shittim-chest).
+ * Confirmation-dialog state machine (thin wrapper over hikari's).
  *
  * `confirm(title, message)` returns a promise that resolves with the user's
  * choice; the view renders its own dialog from `visible/title/message` (or
  * drives an `HConfirmDialog`). The promise is settled with `false` when the
- * owning scope unmounts, so awaiting callers never hang.
+ * owning scope unmounts, so awaiting callers never hang — hikari's
+ * implementation handles that.
  */
 export function useConfirm() {
-  const visible = ref(false);
-  const title = ref("");
-  const message = ref("");
-  let resolvePromise: ((_value: boolean) => void) | null = null;
-
-  onUnmounted(() => {
-    resolvePromise?.(false);
-    resolvePromise = null;
-    visible.value = false;
-  });
+  const core = useConfirmHikari();
 
   function confirm(titleText: string, messageText: string): Promise<boolean> {
-    resolvePromise?.(false);
-    title.value = titleText;
-    message.value = messageText;
-    visible.value = true;
-    return new Promise((resolve) => {
-      resolvePromise = resolve;
-    });
+    return core.confirm(messageText, { title: titleText });
   }
 
-  function accept() {
-    visible.value = false;
-    resolvePromise?.(true);
-    resolvePromise = null;
-  }
-
-  function cancel() {
-    visible.value = false;
-    resolvePromise?.(false);
-    resolvePromise = null;
-  }
-
-  return { visible, title, message, confirm, accept, cancel };
+  return {
+    visible: core.open,
+    title: core.title,
+    message: core.message,
+    confirm,
+    accept: core.onConfirm,
+    cancel: core.onCancel,
+  };
 }
