@@ -1,8 +1,8 @@
 import { onMounted, ref, type Ref } from "vue";
 // Type-only import of the ts-rs generated bindings. The bindings package
-// (packages/types/bindings) is not an npm workspace member, so this MUST stay
+// (packages/protocol-core/bindings) is not an npm workspace member, so this MUST stay
 // type-only: it is erased at build time and never reaches downstream bundlers.
-import type { HealthResponse, NetworkInfo } from "../../../types/bindings/httpTypes";
+import type { HealthResponse, NetworkInfo } from "../../../protocol-core/bindings/httpTypes";
 
 export type { NetworkInfo as EngineNetworkInfo };
 
