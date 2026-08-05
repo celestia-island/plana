@@ -1,4 +1,4 @@
-import { defineComponent, type PropType } from "vue";
+import { computed, defineComponent, type PropType } from "vue";
 import { HMinimap } from "@celestia-island/hikari";
 
 export interface PlanaMinimapBox {
@@ -45,9 +45,12 @@ export default defineComponent({
     resetTitle: { type: String, default: "Fit" },
   },
   setup(props) {
+    const mappedBoxes = computed(() =>
+      props.boxes.map((b) => ({ id: b.id, bounds: b.bounds, color: b.color })),
+    );
     return () => (
       <HMinimap
-        boxes={props.boxes}
+        boxes={mappedBoxes.value}
         hubPos={props.hubPos}
         imageSrc={props.imageSrc}
         imageBounds={props.imageBounds}
