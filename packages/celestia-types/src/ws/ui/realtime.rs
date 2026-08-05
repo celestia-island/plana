@@ -179,6 +179,12 @@ pub enum RealtimeServerEvent {
         response_id: String,
         usage: RealtimeUsage,
     },
+    /// Streaming video frame output (LPM-style character video / generated
+    /// world-model frames delivered as a live frame stream).
+    ResponseVideoFrame {
+        response_id: String,
+        frame: RealtimeVideoFrame,
+    },
     Error {
         code: String,
         message: String,
@@ -289,6 +295,22 @@ mod tests {
         let s = serde_json::to_string(&frame).unwrap();
         let back: RealtimeVideoFrame = serde_json::from_str(&s).unwrap();
         assert_eq!(back, frame);
+    }
+
+    #[test]
+    fn response_video_frame_round_trip() {
+        let ev = RealtimeServerEvent::ResponseVideoFrame {
+            response_id: "resp_v".to_string(),
+            frame: RealtimeVideoFrame {
+                mime: "image/jpeg".to_string(),
+                frame_seq: 7,
+                data_base64: "aW1n".to_string(),
+            },
+        };
+        let s = serde_json::to_string(&ev).unwrap();
+        let back: RealtimeServerEvent = serde_json::from_str(&s).unwrap();
+        assert_eq!(back, ev);
+        assert!(s.contains("\"response_video_frame\""));
     }
 
     #[test]
