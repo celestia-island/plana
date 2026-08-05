@@ -28,7 +28,7 @@ export const PCaptchaModal = defineComponent({
   props: {
     modelValue: { type: Boolean, default: false },
     siteKey: { type: String, required: true },
-    provider: { type: String, default: "turnstile" },
+    provider: { type: String as PropType<PCaptchaProvider>, default: "turnstile" },
     scriptUrl: { type: String, default: undefined },
     attempt: { type: Number, default: 0 },
     title: { type: String, default: undefined },
