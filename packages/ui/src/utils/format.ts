@@ -47,7 +47,19 @@ export function formatPriceUsd(n: number, currency = "$"): string {
 }
 
 /** Timestamp -> "Just now" / "5m ago" / "3h ago" / "2d ago" / locale date. */
-export function formatRelativeTime(input: string | number | Date): string {
+export type RelativeTimeT = (
+  key: string,
+  fallback: string,
+  named?: Record<string, unknown>,
+) => string;
+
+/** Relative-time formatting ("just now / {n} min ago / …").
+ *  Pass an optional translator for localized variants; defaults to
+ *  compact English text. */
+export function formatRelativeTime(
+  input: string | number | Date,
+  t?: RelativeTimeT,
+): string {
   if (!input) return "";
   const d = input instanceof Date ? input : new Date(input);
   if (isNaN(d.getTime())) return "";
@@ -55,10 +67,10 @@ export function formatRelativeTime(input: string | number | Date): string {
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
+  if (mins < 1) return t?.("common.time.justNow", "Just now") ?? "Just now";
+  if (mins < 60) return t?.("common.time.minutesAgo", "{n} min ago", { n: mins }) ?? `${mins}m ago`;
+  if (hours < 24) return t?.("common.time.hoursAgo", "{n} h ago", { n: hours }) ?? `${hours}h ago`;
+  if (days < 7) return t?.("common.time.daysAgo", "{n} d ago", { n: days }) ?? `${days}d ago`;
   return d.toLocaleDateString();
 }
 export { formatMediaTime } from "@celestia-island/hikari";
