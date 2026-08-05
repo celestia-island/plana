@@ -132,3 +132,5 @@ export type { PLocalizedTitle, PLocaleOption } from "./components/PlanaLocalized
 export { LOCALE_FAMILY, resolveLocalizedTitle } from "./utils/localizedTitle";
 
 export { useAvatarUrl, type AvatarUrlUser } from "./composables/useAvatarUrl";
+
+export { formatDateTime } from "./utils/format";
