@@ -84,7 +84,7 @@ export const PCaptchaWidget = defineComponent({
     /** Site key issued by the provider (empty = placeholder/no-op mode). */
     siteKey: { type: String, required: true },
     /** Provider protocol: "turnstile" (default) or "recaptcha". */
-    provider: { type: String, default: "turnstile" },
+    provider: { type: String as () => PCaptchaProvider, default: "turnstile" },
     /** CDN script URL override (defaults to the official provider URL). */
     scriptUrl: { type: String, default: undefined },
     /** Bump to force a token refresh (e.g. after a failed submit). */
