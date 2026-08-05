@@ -29,7 +29,8 @@
     "@celestia-island/plana-rpc-client": "workspace:*",
     "lucide-vue-next": "^*",
     "uuid": "^*",
-    "md5": "^*"
+    "md5": "^*",
+    "@types/md5": "^*"
   },
   "devDependencies": {
     "@types/node": "^*",
