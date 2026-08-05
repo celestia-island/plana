@@ -21,7 +21,7 @@ export default defineComponent({
     hubPos: { type: Object as PropType<{ x: number; y: number } | null>, default: null },
     imageSrc: { type: String, default: undefined },
     imageBounds: {
-      type: Object as PropType<{ x: number; y: number; w: number; h: number }>,
+      type: Object as PropType<{ x: number; y: number; w: number; h: number } | undefined>,
       default: undefined,
     },
     zoom: { type: Number, default: 1 },
@@ -67,9 +67,7 @@ export default defineComponent({
         onZoomOut={props.onZoomOut}
         onReset={props.onReset}
         onPanDelta={props.onPanDelta}
-        zoomOutTitle={props.zoomOutTitle}
-        zoomInTitle={props.zoomInTitle}
-        resetTitle={props.resetTitle}
+        showReset={props.onReset !== undefined}
       />
     );
   },
