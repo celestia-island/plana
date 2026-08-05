@@ -22,7 +22,8 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "vue": "^*"
+    "vue": "^*",
+    "pinia": "^2.0.0"
   },
   "dependencies": {
     "@celestia-island/hikari": "workspace:*",
