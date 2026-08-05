@@ -19,13 +19,6 @@ export function formatNumber(n: number): string {
 }
 
 /** Seconds -> "m:ss" (media player style). Negative/NaN clamp to 0. */
-export function formatMediaTime(sec: number): string {
-  if (!Number.isFinite(sec) || sec < 0) sec = 0;
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 /** Seconds -> "3h 12m" / "12m" / "45s". Negative/NaN clamp to 0. */
 export function formatUptime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
@@ -68,3 +61,4 @@ export function formatRelativeTime(input: string | number | Date): string {
   if (days < 7) return `${days}d ago`;
   return d.toLocaleDateString();
 }
+export { formatMediaTime } from "@celestia-island/hikari";
