@@ -467,6 +467,8 @@ pub enum SyncMessage {
         #[serde(default)]
         images: Option<Vec<_core::LlmImageContent>>,
         #[serde(default)]
+        audio: Option<Vec<_core::LlmAudioContent>>,
+        #[serde(default)]
         workspace_id: Option<Uuid>,
     },
     AgentResponse {
@@ -729,6 +731,7 @@ pub enum SyncMessage {
         supports_image: Option<bool>,
         supports_audio: Option<bool>,
         supports_video: Option<bool>,
+        supports_realtime: Option<bool>,
         can_reason: Option<bool>,
     },
     ModelProviderConfigUpdated {

@@ -50,6 +50,11 @@ impl LlmStreamBuilder {
                     StreamSegment::McpCall { .. } | StreamSegment::McpResult { .. } => {
                         warn!("unexpected McpCall/McpResult segment in chunk push");
                     }
+                    StreamSegment::AudioPcm { .. }
+                    | StreamSegment::VideoFrame { .. }
+                    | StreamSegment::ImagePartial { .. } => {
+                        warn!("unexpected media segment in text chunk push");
+                    }
                 }
                 return;
             }
@@ -67,8 +72,44 @@ impl LlmStreamBuilder {
                 text: chunk.to_string(),
                 message_id,
             },
+            StreamChunkKind::AudioPcm
+            | StreamChunkKind::VideoFrame
+            | StreamChunkKind::ImagePartial => {
+                warn!("text chunk push with media kind {kind:?}; dropping chunk");
+                return;
+            }
         };
         self.segments.push(seg);
+    }
+
+    /// Push a raw audio block (PCM16 base64) — realtime/omni model output.
+    pub fn push_audio(&mut self, mime: &str, sample_rate: Option<u32>, data_base64: String) {
+        self.segments.push(StreamSegment::AudioPcm {
+            mime: mime.to_string(),
+            sample_rate,
+            data_base64,
+            message_id: None,
+        });
+    }
+
+    /// Push a video frame (image bytes base64) — streamed model output.
+    pub fn push_video_frame(&mut self, mime: &str, frame_seq: u32, data_base64: String) {
+        self.segments.push(StreamSegment::VideoFrame {
+            mime: mime.to_string(),
+            frame_seq,
+            data_base64,
+            message_id: None,
+        });
+    }
+
+    /// Push a partial image generation pass (progressive quality).
+    pub fn push_image_partial(&mut self, mime: &str, quality_index: u32, data_base64: String) {
+        self.segments.push(StreamSegment::ImagePartial {
+            mime: mime.to_string(),
+            quality_index,
+            data_base64,
+            message_id: None,
+        });
     }
 
     pub fn push_mcp_call(
@@ -234,6 +275,11 @@ impl LlmStreamBuilder {
                 StreamSegment::McpResult { data, .. } => {
                     total += data.to_string().len();
                 }
+                StreamSegment::AudioPcm { data_base64, .. }
+                | StreamSegment::VideoFrame { data_base64, .. }
+                | StreamSegment::ImagePartial { data_base64, .. } => {
+                    total += data_base64.len();
+                }
             }
         }
         total
@@ -247,6 +293,9 @@ impl LlmStreamBuilder {
                 | StreamSegment::DeepThinking { text, .. } => text.is_empty(),
                 StreamSegment::McpCall { params, .. } => params.is_null(),
                 StreamSegment::McpResult { data, .. } => data.is_null(),
+                StreamSegment::AudioPcm { .. }
+                | StreamSegment::VideoFrame { .. }
+                | StreamSegment::ImagePartial { .. } => false,
             })
     }
 
