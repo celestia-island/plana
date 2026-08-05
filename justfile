@@ -72,11 +72,15 @@ test:
 # ── Generate (codegen) ───────────────────────────────────────────────
 
 # Regenerate artifacts. Default: bindings.
+# TS bindings are emitted by the test builds of the crates that own the
+# exported types, into TWO directories: packages/protocol-core/bindings/
+# (generic types) and packages/celestia-types/bindings/ (domain types).
+# `just gen bindings` regenerates both.
 [script('sh')]
 gen target='bindings':
     set -euo pipefail
     case "{{target}}" in
-      bindings) cargo test --package plana ;;
+      bindings) cargo test --package plana-protocol-core --package plana-celestia-types ;;
       *) echo "Usage: just gen bindings"; exit 1 ;;
     esac
 

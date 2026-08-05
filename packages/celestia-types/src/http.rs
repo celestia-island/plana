@@ -1,10 +1,8 @@
+use plana_protocol_core::http::RbacGroup;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use ts_rs::TS;
-
-// ── Provider / Model / Vendor ──────────────────────────────
-
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
 pub struct ProviderPublic {
@@ -49,158 +47,6 @@ pub struct ValidateKeyResponse {
     pub recommended_models: Vec<String>,
     pub error: Option<String>,
 }
-
-// ── Generic / Status ───────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct OkResponse {
-    pub ok: bool,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct OkIdResponse {
-    pub ok: bool,
-    pub id: String,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct IdResponse {
-    pub id: String,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct CreatedResponse {
-    pub created: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct ErrorResponse {
-    pub error: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub message: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct StatusResponse {
-    pub status: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub agent_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub platform: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub plugin_id: Option<String>,
-}
-
-// ── Health ─────────────────────────────────────────────────
-
-/// Service health status. Serde uses lowercase so JSON returns "ok" etc.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-#[serde(rename_all = "lowercase")]
-pub enum ServiceStatus {
-    Ok,
-    Degraded,
-    Unhealthy,
-}
-
-/// Backend build profile.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-#[serde(rename_all = "lowercase")]
-pub enum BackendKind {
-    Dev,
-    Nightly,
-    Prod,
-    Mock,
-}
-
-/// Standard /api/health response for all plana backends.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct HealthResponse {
-    pub status: ServiceStatus,
-    pub version: String,
-    pub kind: BackendKind,
-    pub uptime: u64,
-    pub network: NetworkInfo,
-    pub build_hash: Option<String>,
-    pub engine_version: Option<String>,
-}
-
-impl HealthResponse {
-    pub fn ok(
-        version: impl Into<String>,
-        kind: BackendKind,
-        uptime: u64,
-        network: NetworkInfo,
-    ) -> Self {
-        Self {
-            status: ServiceStatus::Ok,
-            version: version.into(),
-            kind,
-            uptime,
-            network,
-            build_hash: None,
-            engine_version: None,
-        }
-    }
-}
-
-/// Network context from the incoming request.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct NetworkInfo {
-    pub transport: String,
-    pub region: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub asn: Option<u32>,
-}
-
-impl NetworkInfo {
-    pub fn unknown() -> Self {
-        Self {
-            transport: "sse".into(),
-            region: "XX".into(),
-            asn: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct HealthDetailed {
-    #[serde(rename = "shittimChest")]
-    pub shittim_chest: ConnectionStatus,
-    pub scepter: ConnectionStatus,
-    pub database: ConnectionStatus,
-    #[serde(rename = "activeSessions")]
-    pub active_sessions: u32,
-    pub uptime: u64,
-    pub version: String,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct ConnectionStatus {
-    pub connected: bool,
-    pub latency: u64,
-    #[serde(rename = "lastCheck")]
-    pub last_check: String,
-}
-
 // ── Token usage ────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -243,7 +89,6 @@ pub struct UsageDayEntry {
     pub tokens: u64,
     pub requests: u32,
 }
-
 // ── Proxy / System info ────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -305,66 +150,6 @@ pub struct SystemInfoDatabase {
     pub size_mb: u32,
     pub connections: u32,
 }
-
-// ── RBAC ───────────────────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct RbacUser {
-    pub id: String,
-    pub username: String,
-    pub email: String,
-    pub display_name: String,
-    pub avatar_url: Option<String>,
-    pub is_active: bool,
-    pub is_admin: bool,
-    pub role: String,
-    pub tier: String,
-    pub created_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct RbacUsersResponse {
-    pub users: Vec<RbacUser>,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct RbacGroup {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub member_count: u32,
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct RbacGroupsResponse {
-    pub groups: Vec<RbacGroup>,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct MyPermissions {
-    pub role: String,
-    pub permissions: Vec<String>,
-}
-
-// ── OAuth ──────────────────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct OAuthProvider {
-    pub provider: String,
-    pub client_id: String,
-    pub client_secret_masked: String,
-    pub public_domain: String,
-    pub enabled: bool,
-}
-
 // ── Workspace / Project ────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -412,7 +197,6 @@ pub struct ProjectItem {
     pub created_at: String,
     pub updated_at: String,
 }
-
 // ── Scene ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -492,7 +276,6 @@ pub struct SceneBloom {
     pub radius: f64,
     pub threshold: f64,
 }
-
 // ── Channel ────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -584,7 +367,6 @@ pub struct ChannelMessageListResponse {
     pub messages: Vec<ChannelMessageItem>,
     pub count: usize,
 }
-
 // ── Agent ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -639,7 +421,6 @@ pub struct AgentContainer {
     pub status: String,
     pub uptime_secs: u64,
 }
-
 // ── Webhook ────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -703,7 +484,6 @@ pub struct WebhookDeliveryGenItem {
     #[ts(type = "Record<string, unknown>")]
     pub response_body: serde_json::Value,
 }
-
 // ── Skill ──────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -731,7 +511,6 @@ pub struct SkillItem {
     pub parameters: Vec<SkillParameterItem>,
     pub estimated_duration_secs: u64,
 }
-
 // ── Tool ───────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -749,27 +528,7 @@ pub struct ToolItem {
     pub output_schema: Option<serde_json::Value>,
 }
 
-// ── Common response helpers ────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct DeletedResponse {
-    pub deleted: u64,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct OkMessageResponse {
-    pub ok: bool,
-    pub message: String,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct ReadinessResponse {
-    pub status: String,
-    pub database: bool,
-}
+// ── User / Device / Session / File ──────────────────────────
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
@@ -833,49 +592,6 @@ pub struct UserProfileResponse {
 pub struct AvatarUpdateResponse {
     pub avatar_url: Option<String>,
 }
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct PermissionsResponse {
-    pub role: String,
-    pub permissions: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct GrantItem {
-    pub id: String,
-    pub scope: String,
-    pub user_id: Option<String>,
-    pub group_id: Option<String>,
-    pub permission: String,
-    pub resource_id: Option<String>,
-    pub granted: bool,
-    pub created_at: String,
-}
-
-impl GrantItem {
-    /// Validate that the `permission` field holds a valid Permission path
-    /// (leaf node like `"agent.read"`) or domain name (branch like `"agent"`).
-    /// Returns `None` when valid; otherwise returns the invalid path.
-    #[must_use]
-    pub fn validate_permission(&self) -> Option<&str> {
-        let valid = crate::rbac::Permission::from_path(&self.permission).is_some()
-            || !crate::rbac::Permission::expand_domain(&self.permission).is_empty();
-        if valid {
-            None
-        } else {
-            Some(&self.permission)
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct GrantListResponse {
-    pub grants: Vec<GrantItem>,
-}
-
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
 pub struct DeviceResponse {
