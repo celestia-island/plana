@@ -14,11 +14,6 @@ export type AvatarPlatformResponse = { id: string, slug: string, label: string, 
 
 export type AvatarUpdateResponse = { avatar_url: string | null, };
 
-/**
- * Backend build profile.
- */
-export type BackendKind = "dev" | "nightly" | "prod" | "mock";
-
 export type ChannelConfigDetail = { id: string, platform: string, enabled: boolean, name: string, description?: string, bot_token?: string, app_id?: string, app_secret?: string, verify_token?: string, api_base?: string, extra_config?: Record<string, unknown>, webhook_path: string, last_error?: string, last_tested_at?: string, created_at: string, updated_at: string, };
 
 export type ChannelConfigResponse = { config: ChannelConfigDetail, active: boolean, };
@@ -33,59 +28,21 @@ export type ChannelMessageItem = { id: string, platform: string, direction: stri
 
 export type ChannelMessageListResponse = { messages: Array<ChannelMessageItem>, count: number, };
 
-export type ConnectionStatus = { connected: boolean, latency: bigint, lastCheck: string, };
-
-export type CreatedResponse = { created: Array<string>, };
-
 export type CursorState = { workspace_id?: string, file?: string, line: number, column: number, total_lines?: number, language?: string, visible_range?: CursorVisibleRange, };
 
 export type CursorVisibleRange = { start: number, end: number, };
-
-export type DeletedResponse = { deleted: bigint, };
 
 export type DeliveryListResponse = { deliveries: Array<Record<string, unknown>>, count: number, };
 
 export type DeviceResponse = { id: string, device_id: string, name: string, device_type: string, status: string, last_seen_at: string | null, metadata?: Record<string, unknown>, created_at: string, };
 
-export type ErrorResponse = { error: string, message?: string, };
-
 export type FileEntry = { name: string, type: string, size: bigint | null, };
 
 export type FileListingResponse = { path: string, entries: Array<FileEntry>, };
 
-export type GrantItem = { id: string, scope: string, user_id: string | null, group_id: string | null, permission: string, resource_id: string | null, granted: boolean, created_at: string, };
-
-export type GrantListResponse = { grants: Array<GrantItem>, };
-
-export type HealthDetailed = { shittimChest: ConnectionStatus, scepter: ConnectionStatus, database: ConnectionStatus, activeSessions: number, uptime: bigint, version: string, };
-
-/**
- * Standard /api/health response for all plana backends.
- */
-export type HealthResponse = { status: ServiceStatus, version: string, kind: BackendKind, uptime: bigint, network: NetworkInfo, build_hash: string | null, engine_version: string | null, };
-
-export type IdResponse = { id: string, };
-
 export type IpWhitelistResponse = { enabled: boolean, whitelist: Array<Record<string, unknown>>, };
 
 export type ModelInfo = { id: string, provider_name: string, provider_id: string, category: string, };
-
-export type MyPermissions = { role: string, permissions: Array<string>, };
-
-/**
- * Network context from the incoming request.
- */
-export type NetworkInfo = { transport: string, region: string, asn: number | null, };
-
-export type OAuthProvider = { provider: string, client_id: string, client_secret_masked: string, public_domain: string, enabled: boolean, };
-
-export type OkIdResponse = { ok: boolean, id: string, };
-
-export type OkMessageResponse = { ok: boolean, message: string, };
-
-export type OkResponse = { ok: boolean, };
-
-export type PermissionsResponse = { role: string, permissions: Array<string>, };
 
 export type ProjectItem = { id: string, name: string, description: string | null, sort_order: number, created_at: string, updated_at: string, };
 
@@ -94,14 +51,6 @@ export type ProviderPublic = { id: string, name: string, endpoint: string, api_k
 export type ProxySystemInfo = { version: string, nodeVersion: string, platform: string, cpuUsage: number, memoryUsage: number, diskUsage: number, };
 
 export type RbacGroup = { id: string, name: string, description: string, member_count: number, created_at: string, updated_at: string, };
-
-export type RbacGroupsResponse = { groups: Array<RbacGroup>, };
-
-export type RbacUser = { id: string, username: string, email: string, display_name: string, avatar_url: string | null, is_active: boolean, is_admin: boolean, role: string, tier: string, created_at: string, };
-
-export type RbacUsersResponse = { users: Array<RbacUser>, };
-
-export type ReadinessResponse = { status: string, database: boolean, };
 
 export type ResourceQuota = { id: string, name: string, resource_type: string, limit_value: number, limit_unit: string, used_value: number, period: string, tier: string, enabled: boolean, };
 
@@ -127,11 +76,6 @@ export type SceneLighting = { ambient_color: [number, number, number], ambient_i
 
 export type SceneVec3 = { x: number, y: number, z: number, };
 
-/**
- * Service health status. Serde uses lowercase so JSON returns "ok" etc.
- */
-export type ServiceStatus = "ok" | "degraded" | "unhealthy";
-
 export type SessionCreateResponse = { session_id: string, status: string, signaling?: Record<string, unknown>, };
 
 export type SetupCheckResponse = { needs_setup: boolean, locale?: string, registration_enabled: boolean, };
@@ -139,8 +83,6 @@ export type SetupCheckResponse = { needs_setup: boolean, locale?: string, regist
 export type SkillItem = { skill_id: string, name: string, description: string, category: string, agent: string, agent_types: Array<string>, parameters: Array<SkillParameterItem>, estimated_duration_secs: bigint, };
 
 export type SkillParameterItem = { name: string, type: string, default?: unknown, description: string | null, required: boolean, };
-
-export type StatusResponse = { status: string, agent_id?: string, platform?: string, id?: string, plugin_id?: string, };
 
 export type SystemInfoAgents = { total: number, running: number, idle: number, stopped: number, };
 

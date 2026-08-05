@@ -48,7 +48,7 @@ export type ModelBackend = "remote_api" | "gpu" | "cpu";
  * remain for backward compatibility but are superseded by this enum when
  * present.
  */
-export type ModelCapability = "text_chat" | "text_streaming" | "function_calling" | "reasoning" | "code_generation" | "text_embedding" | "speech_to_text" | "text_to_speech" | "image_input" | "video_input" | "visual_critique" | "realtime_speech" | "realtime_video" | "text_to_image" | "image_to_image" | "image_edit" | "image_upscale" | "text_to_3d" | "image_to_3d" | "three_d_edit" | "three_d_export" | "pbr_texturing" | "mesh_optimization";
+export type ModelCapability = "text_chat" | "text_streaming" | "function_calling" | "reasoning" | "code_generation" | "text_embedding" | "speech_to_text" | "text_to_speech" | "image_input" | "video_input" | "visual_critique" | "text_to_image" | "image_to_image" | "image_edit" | "image_upscale" | "text_to_3d" | "image_to_3d" | "three_d_edit" | "three_d_export" | "pbr_texturing" | "mesh_optimization";
 
 /**
  * Top-level model category. Determines which subsystem consumes the model.

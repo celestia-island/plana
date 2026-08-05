@@ -1,9 +1,11 @@
-//! WebSocket transport core — JSON-RPC 2.0 envelope, base protocol messages,
-//! and the connection handshake.
+//! WebSocket transport domain — client capability payloads and the
+//! scepter-flavored connection handshake.
 //!
-//! `jsonrpc` stays reachable at `arona::jsonrpc` (re-exported as a module from
-//! the crate root) so existing deep-path consumers keep working; the base
-//! messages and handshake types are flat type re-exports at the crate root.
+//! The generic handshake primitives (handshake version, ack, ping) live in
+//! `plana-protocol-core`; this module carries the client-capability
+//! vocabulary and the connection payload that references it. The base
+//! protocol messages (`base_messages`) are re-exported from
+//! `plana-protocol-core` so the domain profile never duplicates them.
 
 pub mod base_messages;
 pub mod handshake;

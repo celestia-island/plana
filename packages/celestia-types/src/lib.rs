@@ -1,55 +1,60 @@
-//! Shared wire types for a typed bidirectional sync protocol.
+//! Celestia platform domain profile for the PLANA protocol.
 //!
-//! `plana-types` is the canonical source of the wire types: the JSON-RPC
-//! envelope ([`protocol`]), transport-agnostic message params (`ws/`),
-//! per-tool MCP I/O structs (`mcp/`), health/network descriptors ([`http`]),
-//! identity, region policy, RBAC, and model metadata. Every type is
+//! `plana-celestia-types` is the celestia-island platform's domain profile:
+//! the agent, task, panel, industrial and MCP domain messages, plus the
+//! scepter-flavored handshake and client-capability payloads. Every type is
 //! `Serialize`/`Deserialize` with JSON Schema and TypeScript bindings
 //! generation support.
 //!
-//! This crate is consumed on both sides of a wire protocol. The JSON-RPC
-//! 2.0 machinery lives in the separate `plana-jsonrpc` crate, and the
-//! `plana` umbrella crate re-exports both.
+//! The generic protocol core (JSON-RPC envelope, base messages, handshake
+//! primitives, health/network descriptors, RBAC, region policy, identity)
+//! lives in the separate `plana-protocol-core` crate, and the JSON-RPC 2.0
+//! machinery lives in `plana-jsonrpc`. The `plana` umbrella crate re-exports
+//! all three.
 //!
 //! A type belongs here only when it is defined in this crate as the
 //! canonical source of truth and consumed on both sides of a wire protocol.
 //! Anything else stays out.
+//!
+//! > **Migration note:** the `tracing-helpers` feature that previously lived
+//! > in this crate has moved to `plana-protocol-core` (`plana_protocol_core::tracing_helpers`,
+//! > feature `tracing-helpers`), forwarded by the `plana` umbrella as
+//! > `plana::tracing_helpers`. Consumers enabling `tracing-helpers` on this
+//! > crate's old versions should enable it on `plana` or `plana-protocol-core`.
 
 // ── Module tree ─────────────────────────────────────────────
 // Foundational shared enums are defined directly in this file (below). The
 // other type groups live under a small set of domain folders:
-//   protocol/ — JSON-RPC envelope, base messages, handshake (WS transport)
 //   ws/       — SyncMessage variant params (agent / ui / services sub-groups)
 //   mcp/      — per-tool MCP I/O structs
-// and a few single-file modules at the root (enums, http, model,
-// external_mcp). The glob re-exports at the bottom keep every type reachable
-// at the crate root (`plana_types::TypeName`).
+// and a few single-file modules at the root (enums, engine, http, model,
+// external_mcp, malkuth). The glob re-exports at the bottom keep every type
+// reachable at the crate root (`plana_celestia_types::TypeName`).
 pub mod engine;
 pub mod enums;
 pub mod external_mcp;
 pub mod http;
-pub mod identity;
 pub mod malkuth;
 pub mod mcp;
 pub mod model;
 pub mod protocol;
-pub mod rbac;
-pub mod region;
 pub mod ws;
-
-pub use http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
-
-#[cfg(feature = "tracing-helpers")]
-pub mod tracing_helpers;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-/// Protocol version advertised by the platform.
-pub const PROTOCOL_VERSION: &str = "1.0.0";
 /// Default report type when none is specified.
 pub const DEFAULT_REPORT_TYPE: &str = "general";
+
+/// Generic health/network descriptors, re-exported here so the `celestia`
+/// module surface keeps matching the umbrella root (`plana::http::*`).
+///
+/// NOTE: this explicit re-export also pins `HealthResponse` at the crate
+/// root to the generic HTTP type, shadowing the unrelated supervision
+/// `malkuth::HealthResponse` (reachable at
+/// `plana::celestia::malkuth::HealthResponse`).
+pub use plana_protocol_core::http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
 
 /// Serde default helper for `bool` fields that default to `true`.
 pub(crate) fn default_true() -> bool {
@@ -252,12 +257,6 @@ pub enum StreamChunkKind {
     Text,
     Thinking,
     DeepThinking,
-    /// Raw PCM audio block (base64-encoded in the segment payload).
-    AudioPcm,
-    /// A video frame (base64-encoded image bytes).
-    VideoFrame,
-    /// A partial image generation pass (progressive quality).
-    ImagePartial,
 }
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
@@ -309,47 +308,6 @@ pub enum StreamSegment {
         #[serde(default)]
         #[ts(optional)]
         agent_type: Option<String>,
-        #[serde(default)]
-        #[ts(optional)]
-        #[ts(type = "string")]
-        message_id: Option<uuid::Uuid>,
-    },
-    /// Raw audio block (PCM16 base64) — realtime/omni model output.
-    AudioPcm {
-        /// MIME type of the payload (e.g. "audio/pcm").
-        mime: String,
-        /// Sample rate in Hz when known.
-        #[serde(default)]
-        #[ts(optional)]
-        sample_rate: Option<u32>,
-        /// Base64-encoded audio bytes.
-        data_base64: String,
-        #[serde(default)]
-        #[ts(optional)]
-        #[ts(type = "string")]
-        message_id: Option<uuid::Uuid>,
-    },
-    /// A video frame (image bytes base64) — streamed model output.
-    VideoFrame {
-        /// MIME type of the image (e.g. "image/jpeg").
-        mime: String,
-        /// Monotonic frame sequence number.
-        frame_seq: u32,
-        /// Base64-encoded image bytes.
-        data_base64: String,
-        #[serde(default)]
-        #[ts(optional)]
-        #[ts(type = "string")]
-        message_id: Option<uuid::Uuid>,
-    },
-    /// A partial image generation pass (progressive quality).
-    ImagePartial {
-        /// MIME type of the image.
-        mime: String,
-        /// Quality pass index (0 = first draft).
-        quality_index: u32,
-        /// Base64-encoded image bytes.
-        data_base64: String,
         #[serde(default)]
         #[ts(optional)]
         #[ts(type = "string")]
@@ -547,27 +505,30 @@ pub enum YoloTaskTier {
 // Root re-exports
 //
 // The foundational enums above stay defined here. The domain structs live in
-// the folder modules (`protocol/`, `ws/{agent,ui,services}/`) but are
-// re-exported at the crate root so the public surface is unchanged —
-// `plana_types::TuiAgentInfo`, `plana_types::HandshakeAckParams`, etc. all
-// still resolve.
+// the folder modules (`ws/{agent,ui,services}/`) but are re-exported at the
+// crate root so the public surface is unchanged — `TuiAgentInfo`,
+// `ConnectHandshakeParams`, etc. all still resolve. Generic protocol-core
+// types are NOT re-exported here — except `base_messages`, kept for
+// root-surface parity with the pre-split crate; everything else comes from
+// `plana-protocol-core` and is re-exported once by the `plana` umbrella crate.
 // ═══════════════════════════════════════════════════════════════
 
-// protocol/ — transport core
+// The client-capability handshake payload types (scepter-flavored) stay at
+// the crate root. The generic handshake primitives (HandshakeAckParams,
+// PingParams, HANDSHAKE_VERSION) live in plana-protocol-core.
 pub use protocol::base_messages::*;
 pub use protocol::handshake::*;
-// The protocol envelope copy stays reachable at the crate root
-// (`plana_types::jsonrpc`); the `plana` umbrella crate shadows that path
-// with its own `plana::jsonrpc` module re-exporting `plana-jsonrpc`.
+// The platform-specific JSON-RPC error codes stay reachable at the crate
+// root (`plana_celestia_types::jsonrpc::error_codes`); the generic envelope
+// copy lives in plana-protocol-core, and the canonical wire layer lives in
+// plana-jsonrpc (re-exported by the umbrella as `plana::jsonrpc`).
 pub use protocol::jsonrpc;
 
-// enums/ — foundational shared enums (ConnectionType, Agent, WorkStatus, etc.)
+// enums/ — foundational shared enums (Agent, WorkStatus, etc.)
 pub use enums::*;
 
 // malkuth/ — supervision protocol types (restart authorization gate)
 pub use malkuth::*;
-// region/ — regional compliance policy types
-pub use region::*;
 
 // model/ — unified model management (re-export key types to crate root
 // for ergonomic access: `arona::ModelCapability` not `arona::model::…`)
@@ -577,8 +538,7 @@ pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
 pub use ws::agent::{agent_lifecycle::*, layer2::*, state_sync::*, tasks::*, yolo::*};
 pub use ws::services::{auth::*, industrial::*, knowledge_base::*, llm_provider::*};
 pub use ws::ui::{
-    bridge_network::*, file_browsing::*, logs::*, noa::*, noa_pr::*, realtime::*, system_ui::*,
-    views::*, workspace::*,
+    bridge_network::*, file_browsing::*, logs::*, noa::*, system_ui::*, views::*, workspace::*,
 };
 
 #[cfg(test)]
@@ -1004,11 +964,6 @@ mod tests {
     }
 
     // ── Constants ──────────────────────────────────────────────────
-
-    #[test]
-    fn protocol_version_is_one_point_zero() {
-        assert_eq!(PROTOCOL_VERSION, "1.0.0");
-    }
 
     #[test]
     fn default_report_type_is_general() {

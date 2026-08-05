@@ -1,0 +1,38 @@
+[package]
+name = "plana-protocol-core"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license-file = "LICENSE"
+description = "Generic protocol core of PLANA: handshake and identity negotiation, state synchronization primitives, health and network descriptors, RBAC, and region policy - independent of any specific platform domain."
+repository = "https://github.com/celestia-island/plana"
+keywords = ["json-rpc", "protocol", "websocket", "shared-types"]
+categories = ["api-bindings", "data-structures"]
+# Keep generated TS bindings out of the published crate.
+exclude = ["bindings"]
+
+[features]
+default = []
+tracing-helpers = ["dep:chrono", "dep:tracing-subscriber"]
+
+[dependencies]
+
+hex.workspace = true
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json.workspace = true
+sha2.workspace = true
+ts-rs = { workspace = true }
+uuid.workspace = true
+
+# ── tracing-helpers feature ────────────────────────────────────
+chrono = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+
+[dev-dependencies]
+
+anyhow.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

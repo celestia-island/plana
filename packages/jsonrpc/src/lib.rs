@@ -22,8 +22,11 @@
 //! - **`json_keys`** — typed parameter-key enums that replace raw `&str` key
 //!   lookups with compile-time-checked variants, reducing debugging surface
 //!   when the protocol evolves.
-//! - **`pending`** — pending-request registry with `Method` catalog and
-//!   one-shot completion handles.
+//! - **`pending`** — pending-request registry with `Method` catalog,
+//!   one-shot completion handles, and the [`namespace!`] macro used to
+//!   declare typed method namespaces (built-in protocol families only — the
+//!   `Method` enum is a closed set; third-party method names register
+//!   directly into [`rpc_router::RpcMethodMap`]).
 //!
 //! Design philosophy: the bridge is *intentionally narrow*. Both sides agree
 //! on an exhaustive message catalog; clients never open a raw socket — they
@@ -50,6 +53,7 @@ pub use json_keys::{
     McpCallParamKey, McpListToolsResultKey, ReplParamKey, ResponseKey,
 };
 pub use pending::{MessageKind, Method, PendingHandle, PendingRegistry};
+pub use rpc_router::{rpc_axum_router, RpcMethodMap};
 pub use types::{UnixMethod, *};
 pub use unix_socket::{
     bind_interprocess, bind_log_socket, chmod_socket, connect_interprocess, connect_log_socket,

@@ -4,34 +4,32 @@ version = "0.1.0"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
-license.workspace = true
 license-file = "LICENSE"
-description = "Celestia platform domain types for the PLANA protocol - the domain profile used by the celestia-island platform. Generic protocol machinery lives in the plana core crate; this crate plugs in via its macro registration mechanism."
+description = "Celestia platform domain profile for the PLANA protocol: agent, task, panel, industrial and MCP domain messages, built on the generic plana-protocol-core protocol."
 repository = "https://github.com/celestia-island/plana"
 keywords = ["json-rpc", "protocol", "ai-agent", "shared-types"]
 categories = ["api-bindings", "data-structures"]
 # Keep generated TS bindings out of the published crate.
 exclude = ["bindings"]
 
+# NOTE (migration): the `tracing-helpers` feature was removed from this crate
+# when the generic core was split out — it moved to `plana-protocol-core`
+# (`plana_protocol_core::tracing_helpers`, feature `tracing-helpers`), which
+# the `plana` umbrella crate forwards. Enable it there instead.
+
 [features]
 default = []
-tracing-helpers = ["dep:chrono", "dep:tracing-subscriber"]
 
 [dependencies]
 
-hex.workspace = true
 kirino = { workspace = true }
+plana-protocol-core = { version = "0.1.0", path = "../protocol-core" }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json.workspace = true
-sha2.workspace = true
 thiserror.workspace = true
 ts-rs = { workspace = true }
 uuid.workspace = true
-
-# ── tracing-helpers feature ────────────────────────────────────
-chrono = { workspace = true, optional = true }
-tracing-subscriber = { workspace = true, optional = true }
 
 [dev-dependencies]
 

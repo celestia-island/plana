@@ -3,7 +3,9 @@
 //! Platform-wide enumerations consumed by MCP tool types and protocol
 //! messages. These are *vocabulary*, not tool I/O shapes, so they live at the
 //! crate root rather than under `mcp/`. Per-agent tool request/result structs
-//! (see `mcp/`) reference the types defined here.
+//! (see `mcp/`) reference the types defined here. The generic
+//! connection-topology vocabulary (`ConnectionType`) lives in
+//! `plana-protocol-core`.
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -142,25 +144,6 @@ str_enum!(GoalTaskStatus {
     Cancelled = "cancelled",
 });
 
-// How a peer reached this instance — the topology of the link, not the
-// physical medium (which is `evernight::link::LinkType`).
-//
-// `Local` covers both a Windows-native peer and a same-host WSL2 peer; the
-// two are distinguished by a shared-secret handshake (a key file under
-// `%LOCALAPPDATA%\celestia\local-secret`, readable from WSL2 via `/mnt/c/`),
-// not by IP alone. `RemoteLan` is an RFC1918 / link-local peer without that
-// secret; `RemoteInternet` is anything else.
-//
-// This enum is the canonical source of truth (defined here, consumed by
-// entelecheia and shittim-chest). evernight attaches it to its sessions as
-// a routing tag — any authorized session is stamped with how it connected —
-// but evernight itself does not branch on it for its own behaviour.
-str_enum!(ConnectionType {
-    Local = "local",
-    RemoteLan = "remote_lan",
-    RemoteInternet = "remote_internet",
-});
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -246,13 +229,6 @@ mod tests {
     }
 
     #[test]
-    fn connection_type_as_str_values() {
-        assert_eq!(ConnectionType::Local.as_str(), "local");
-        assert_eq!(ConnectionType::RemoteLan.as_str(), "remote_lan");
-        assert_eq!(ConnectionType::RemoteInternet.as_str(), "remote_internet");
-    }
-
-    #[test]
     fn annotation_type_as_str_values() {
         assert_eq!(AnnotationType::Note.as_str(), "note");
         assert_eq!(AnnotationType::Warning.as_str(), "warning");
@@ -282,8 +258,6 @@ mod tests {
         assert_eq!(s, "forked");
         let s: String = ConsultationStatus::Replied.into();
         assert_eq!(s, "replied");
-        let s: String = ConnectionType::RemoteInternet.into();
-        assert_eq!(s, "remote_internet");
     }
 
     // ── serde uses PascalCase variant name (NOT as_str value) ──────
