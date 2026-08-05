@@ -22,7 +22,7 @@ export interface AdminCrudApi<T, CreateT = Record<string, unknown>, UpdateT = Cr
  * their own fields (vendors, quotas, …).
  */
 export function createAdminCrudStore<
-  T extends { id: string },
+  T extends Record<string, unknown>,
   CreateT = Record<string, unknown>,
   UpdateT = CreateT,
 >(id: string, api: AdminCrudApi<T, CreateT, UpdateT>) {
