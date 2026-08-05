@@ -8,7 +8,7 @@
  * (override it to reuse your own catalog, e.g. "errors").
  */
 
-export type TranslateFn = (key: string, fallback?: string) => string;
+export type TranslateFn = (key: string, ...args: unknown[]) => string;
 
 const NETWORK_FAILURE_PATTERNS = [
   "failed to fetch",

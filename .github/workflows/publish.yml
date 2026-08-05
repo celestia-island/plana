@@ -16,16 +16,30 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      # Sequential publish order matters: plana-jsonrpc depends on
-      # plana-types, and the plana umbrella depends on both.
-      - name: Publish plana-types
+      # Sequential publish order matters: plana-celestia-types depends on
+      # plana-protocol-core, and the plana umbrella depends on all three.
+      # Cargo.lock is NOT committed (it is gitignored): a fresh checkout has
+      # no lockfile (so each publish would resolve independently), and a
+      # persistent runner may carry a stale untracked one from a previous
+      # run — `cargo publish --locked` then hard-fails with "cannot update
+      # the lock file because --locked was passed". The generate-lockfile
+      # step writes the CURRENT dependency graph into the checkout first,
+      # and `--locked` pins all four publish steps to exactly that graph, so
+      # the crates ship as one consistent snapshot of the same resolution.
+      - name: Regenerate lockfile
+        run: cargo generate-lockfile
+      - name: Publish plana-protocol-core
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
-        run: cargo publish -p plana-celestia-types --locked
+        run: cargo publish -p plana-protocol-core --locked
       - name: Publish plana-jsonrpc
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: cargo publish -p plana-jsonrpc --locked
+      - name: Publish plana-celestia-types
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
+        run: cargo publish -p plana-celestia-types --locked
       - name: Publish plana
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}

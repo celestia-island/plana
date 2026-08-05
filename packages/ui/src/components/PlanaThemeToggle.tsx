@@ -36,7 +36,7 @@ export const PThemeToggle = defineComponent({
   emits: {
     "update:scheme": (_theme: PCustomTheme) => true,
   },
-  setup(props, { emit, slots }) {
+  setup(props, { emit }) {
     const { t } = useI18n();
     const { currentTheme, currentMode, effectiveMode, setTheme, setMode, toggleMode, allThemeList, addCustomTheme, removeCustomTheme } = useTheme();
 
@@ -171,7 +171,6 @@ export const PThemeToggle = defineComponent({
               <span>{t("plana::theme.editScheme")}</span>
             </button>
           </div>
-          {slots["menu-extra"]?.()}
         </HPopover>
 
         <PColorSchemeDialog

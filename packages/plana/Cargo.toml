@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
-license.workspace = true
 license-file = "LICENSE"
 description = "PLANA (Protocol for Live Agent Network Automation) - a typed application-layer protocol for real-time state synchronization and control between a client shell and a backend service runtime, built on JSON-RPC 2.0. Not a general-purpose RPC framework."
 repository = "https://github.com/celestia-island/plana"
@@ -19,12 +18,21 @@ default = ["celestia"]
 # general protocol; the celestia platform is its primary consumer, so its domain
 # types ship by default and can be disabled for other uses.
 celestia = ["dep:plana-celestia-types"]
-rpc-server = ["celestia", "dep:axum", "dep:tokio", "dep:maxminddb", "dep:uuid", "dep:tracing"]
+# No-op compatibility feature: plana-jsonrpc is an always-on dependency, so the
+# former `jsonrpc` feature gate no longer controls anything. Kept so consumers
+# that declare `features = ["jsonrpc"]` (shittim-chest, evernight) keep
+# resolving after the re-pin.
+jsonrpc = []
+rpc-server = ["dep:axum", "dep:tokio", "dep:maxminddb", "dep:uuid", "dep:tracing"]
+# Forwards the plana-protocol-core tracing-helpers feature: exposes
+# `plana::tracing_helpers` (ShortTimer). Not enabled by default.
+tracing-helpers = ["plana-protocol-core/tracing-helpers"]
 
 [dependencies]
 
 plana-celestia-types = { version = "0.1.0", path = "../celestia-types", optional = true }
 plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
+plana-protocol-core = { version = "0.1.0", path = "../protocol-core" }
 
 # ── rpc-server module (rpc-server feature) ────────────────────
 axum = { workspace = true, optional = true }
@@ -37,7 +45,9 @@ uuid = { workspace = true, optional = true }
 
 anyhow.workspace = true
 criterion = "^0.5"
+futures.workspace = true
 serde_json.workspace = true
+strum.workspace = true
 
 [[bench]]
 name = "jsonrpc_bench"

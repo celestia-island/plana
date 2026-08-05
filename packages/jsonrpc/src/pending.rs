@@ -17,8 +17,12 @@ use uuid::Uuid;
 //   2.  wire()  —  "{Prefix}.{Variant}"  via concat!
 //   3.  kind() / is_one_way() / response()  for the inner enum
 //   4.  Paste-based flat aliases on Method  (Method::SyncServerVersion)
-// ══════════════════════════════════════════════════════════════
-
+//
+// `#[macro_export]` (plus the `$crate::`-qualified bodies below) makes the
+// macro usable from external crates: it resolves as `plana_jsonrpc::namespace`
+// (and `plana::jsonrpc::namespace` through the umbrella). Invokers only need
+// the `strum::{Display, EnumIter, EnumString}` derives in scope.
+#[macro_export]
 macro_rules! namespace {
     (
         $prefix:literal, $ns:ident, $inner:ident,
@@ -31,29 +35,44 @@ macro_rules! namespace {
             pub fn wire(self) -> &'static str {
                 match self { $(Self::$variant => concat!($prefix,".",stringify!($variant)),)* }
             }
-            pub fn kind(self) -> MessageKind {
+            pub fn kind(self) -> $crate::MessageKind {
                 match self {
-                    $( Self::$variant => { let _ = stringify!($($kind)?); namespace_kind!($($kind)?) }, )*
+                    // The `let _ = stringify!($($kind)?);` lines are no-op
+                    // disambiguators: they pin the optional `$kind`/`$response`
+                    // fragment as used inside the arm, so the `$($x)?` optional
+                    // repetition resolves deterministically at macro-expansion
+                    // time. The actual value comes from the helper macro
+                    // invocation on the next line.
+                    $( Self::$variant => { let _ = stringify!($($kind)?); $crate::namespace_kind!($($kind)?) }, )*
                 }
             }
-            pub fn is_one_way(self) -> bool { matches!(self.kind(), MessageKind::OneWay) }
+            pub fn is_one_way(self) -> bool { matches!(self.kind(), $crate::MessageKind::OneWay) }
             pub fn response(self) -> Option<Self> {
                 match self {
-                    $( Self::$variant => { let _ = stringify!($($response)?); namespace_resp!($($response)?) }, )*
+                    $( Self::$variant => { let _ = stringify!($($response)?); $crate::namespace_resp!($($response)?) }, )*
                 }
             }
         }
     };
 }
 
+// Helper macros for `namespace!` above. They are referenced through
+// `$crate::`-qualified paths inside `namespace!`'s expansion, so they must
+// stay `#[macro_export]`ed to be resolvable when the expansion runs in an
+// external crate; `#[doc(hidden)]` keeps them out of the public docs (they
+// are not part of the intended consumer surface).
+#[doc(hidden)]
+#[macro_export]
 macro_rules! namespace_kind {
     ($k:ident) => {
-        MessageKind::$k
+        $crate::MessageKind::$k
     };
     () => {
-        MessageKind::SyncReq
+        $crate::MessageKind::SyncReq
     };
 }
+#[doc(hidden)]
+#[macro_export]
 macro_rules! namespace_resp {
     ($r:ident) => {
         Some(Self::$r)

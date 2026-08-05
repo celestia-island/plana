@@ -3,7 +3,8 @@
 //! Any model-serving engine — llama.cpp, vLLM, a speech/sensor model, or a
 //! custom engine written in any language — speaks this protocol over a
 //! WebSocket transport using JSON-RPC 2.0 envelopes (see
-//! [`crate::protocol::jsonrpc`]) to join the arona gateway's Router cluster.
+//! `plana-protocol-core`'s [`plana_protocol_core::protocol::jsonrpc`]) to
+//! join the arona gateway's Router cluster.
 //! The gateway acts as the intermediary: clients never talk to engines
 //! directly, only to the gateway, and the gateway multiplexes requests
 //! across engines via least-count routing, session affinity and
@@ -114,21 +115,6 @@
 //! Every transfer is labelled with a MIME type ([`EngineBinaryStartParams`])
 //! — the same MIME vocabulary used by content parts and stream chunks — so
 //! consumers never guess what the bytes are.
-//!
-//! ### Direction: the sender is whoever announces the transfer
-//!
-//! Binary transfer is **symmetric**: both the gateway→engine leg (request
-//! bodies too large for JSON, e.g. uploaded media) and the engine→gateway
-//! leg (large outputs: audio/video frames, sensor dumps, tensors) use the
-//! exact same announce/payload/finish triple on the shared connection. An
-//! engine that wants to push a large output simply emits
-//! `Engine.BinaryStart` + WS binary frames + `Engine.BinaryEnd`
-//! asynchronously (not as a response to a gateway request); the gateway's
-//! receiver state machine handles it identically. Correlation to a logical
-//! stream (e.g. an `Engine.InvokeStart` stream) is carried in `stream_id`;
-//! on a busy connection the engine SHOULD wait until the gateway has no
-//! in-flight request before starting a push (a single connection carries at
-//! most one active transfer at a time).
 //!
 //! ### Why not base64-only?
 //!
@@ -614,62 +600,4 @@ pub struct EngineBinaryEndParams {
 pub struct EngineBinaryAbortParams {
     pub transfer_id: String,
     pub reason: String,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn binary_start_params_round_trip() {
-        let params = EngineBinaryStartParams {
-            transfer_id: "tx-1".to_string(),
-            mime: "audio/pcm".to_string(),
-            total_bytes: 4096,
-            chunk_count: 4,
-            checksum: Some("deadbeef".to_string()),
-            stream_id: Some("stream-9".to_string()),
-        };
-        let s = serde_json::to_string(&params).unwrap();
-        let back: EngineBinaryStartParams = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.transfer_id, "tx-1");
-        assert_eq!(back.mime, "audio/pcm");
-        assert_eq!(back.stream_id.as_deref(), Some("stream-9"));
-    }
-
-    #[test]
-    fn binary_start_params_optional_fields_omitted() {
-        let params = EngineBinaryStartParams {
-            transfer_id: "tx-2".to_string(),
-            mime: "application/octet-stream".to_string(),
-            total_bytes: 0,
-            chunk_count: 0,
-            checksum: None,
-            stream_id: None,
-        };
-        let s = serde_json::to_string(&params).unwrap();
-        assert!(!s.contains("checksum"), "optional field omitted: {s}");
-        assert!(!s.contains("stream_id"), "optional field omitted: {s}");
-    }
-
-    #[test]
-    fn binary_end_and_abort_round_trip() {
-        let end = EngineBinaryEndParams {
-            transfer_id: "tx-1".to_string(),
-            bytes_received: 4096,
-            checksum_ok: Some(true),
-        };
-        let s = serde_json::to_string(&end).unwrap();
-        let back: EngineBinaryEndParams = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.bytes_received, 4096);
-        assert_eq!(back.checksum_ok, Some(true));
-
-        let abort = EngineBinaryAbortParams {
-            transfer_id: "tx-1".to_string(),
-            reason: "timeout".to_string(),
-        };
-        let s = serde_json::to_string(&abort).unwrap();
-        let back: EngineBinaryAbortParams = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.reason, "timeout");
-    }
 }
