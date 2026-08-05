@@ -2,7 +2,7 @@ import { defineComponent, onBeforeUnmount, onMounted, ref } from "vue";
 import { Circle, Square, Triangle, X } from "lucide-vue-next";
 
 const CYCLE_MS = 1000;
-const TICK_MS = 30_000;
+const TICK_MS = 1000;
 
 const BUTTONS = [
   { component: Triangle, colorVar: "--color-success", name: "triangle" },
@@ -22,7 +22,7 @@ export const PSystemTray = defineComponent({
     onMounted(() => {
       const tick = () => {
         const d = new Date();
-        now.value = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+        now.value = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0");
       };
       tick();
       cycleHandle = setInterval(() => { activeIndex.value = (activeIndex.value + 1) % BUTTONS.length; }, CYCLE_MS);
