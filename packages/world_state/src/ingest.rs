@@ -1,9 +1,9 @@
-//! Telemetry ingestion: map `plana-types` industrial readings onto
+//! Telemetry ingestion: map `plana` industrial readings onto
 //! world-state entities.
 //!
 //! The first producer on the embodied-AI roadmap is industrial telemetry
 //! (`Sync.IndustrialTelemetryPush`, whose payload types live in
-//! `plana-types` and mirror the entelecheia wire protocol 1:1).
+//! `plana` and mirror the entelecheia wire protocol 1:1).
 //! [`apply_telemetry_batch`] turns one batch into:
 //!
 //! - one `station.<id>` entity ([`EntityKind::Station`]),

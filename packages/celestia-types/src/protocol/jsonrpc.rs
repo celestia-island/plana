@@ -1,9 +1,10 @@
-//! Platform-specific JSON-RPC error codes (TS-exporting copy).
+//! Platform-specific JSON-RPC error codes (Rust-only; no TypeScript export).
 //!
 //! NOTE: The canonical wire-layer copy of the shared error codes lives in
-//! `plana-jsonrpc` (`plana_jsonrpc::types::error_codes`), with a
-//! TS-bindings copy of the standard JSON-RPC 2.0 codes in the generic
-//! envelope copy in `plana-protocol-core` (`plana_protocol_core::protocol::jsonrpc`);
+//! `plana-jsonrpc` (`plana_jsonrpc::types::error_codes`); the standard
+//! JSON-RPC 2.0 codes are also duplicated in the generic envelope copy in
+//! `plana-protocol-core` (`plana_protocol_core::protocol::jsonrpc`); neither
+//! copy exports TypeScript bindings.
 //! the two generic copies are kept in sync manually. Unlike the base protocol
 //! messages (`protocol::base_messages`), which this crate re-exports from
 //! `plana-protocol-core` so there is a single canonical source, these codes

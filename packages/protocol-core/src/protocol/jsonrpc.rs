@@ -1,9 +1,8 @@
-//! JSON-RPC 2.0 envelope types (TS-exporting copy).
+//! JSON-RPC 2.0 envelope types (Rust-only; no TypeScript export).
 //!
-//! NOTE: This is the TS-bindings copy of the generic JSON-RPC 2.0 envelope.
-//! The canonical wire-layer copy lives in `plana-jsonrpc` (`plana_jsonrpc::types`).
-//! The two are kept in sync manually — they define the same types but this copy
-//! additionally exports TypeScript bindings.
+//! NOTE: The canonical wire-layer copy lives in `plana-jsonrpc`
+//! (`plana_jsonrpc::types`). The two are kept in sync manually — they define
+//! the same types; neither exports TypeScript bindings.
 
 use serde::{Deserialize, Serialize};
 

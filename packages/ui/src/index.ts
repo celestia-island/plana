@@ -44,10 +44,6 @@ export type { UploadedFile } from "./composables/useAttachments";
 export { createAuthGuard } from "./composables/createAuthGuard";
 export type { AuthGuardOptions } from "./composables/createAuthGuard";
 export { renderAvatarTemplate } from "./composables/useAvatarTemplate";
-export { createAdminCrudStore } from "./composables/createAdminCrudStore";
-export type { AdminCrudApi } from "./composables/createAdminCrudStore";
-export { PReadOnlyResourceView } from "./components/PlanaReadOnlyResourceView";
-export type { PReadOnlyResource } from "./components/PlanaReadOnlyResourceView";
 export { useSendShortcut } from "./composables/useSendShortcut";
 export type { SendShortcutMode } from "./composables/useSendShortcut";
 export { createLocaleOptions, loadLocaleMessages } from "./utils/localeOptions";
@@ -129,6 +125,3 @@ export type {
 export { default as PMinimap } from "./components/PlanaMinimap";
 export { default as PLocalizedInput } from "./components/PlanaLocalizedInput";
 export type { PLocalizedTitle, PLocaleOption } from "./components/PlanaLocalizedInput";
-export { LOCALE_FAMILY, resolveLocalizedTitle } from "./utils/localizedTitle";
-
-export { useAvatarUrl, type AvatarUrlUser } from "./composables/useAvatarUrl";

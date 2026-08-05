@@ -15,7 +15,7 @@
 //!   audit) and an optional monotonic capture timestamp (`updated_mono_ns`,
 //!   for ordering and sensor fusion).
 //! - The first producer is industrial telemetry: [`ingest::apply_telemetry_batch`]
-//!   maps `plana-types` industrial readings onto station/point entities.
+//!   maps `plana` industrial readings onto station/point entities.
 //! - [`WorldEventLog`] is the append-only persistence seam (PLAN §8.9); the
 //!   store itself is in-memory only.
 //!
