@@ -121,14 +121,14 @@
 //! bodies too large for JSON, e.g. uploaded media) and the engine→gateway
 //! leg (large outputs: audio/video frames, sensor dumps, tensors) use the
 //! exact same announce/payload/finish triple on the shared connection. An
-//! engine that wants to push a large output simply emits `Engine.BinaryStart`
-//! + WS binary frames + `Engine.BinaryEnd` asynchronously (not as a response
-//! to a gateway request); the gateway's receiver state machine handles it
-//! identically. Correlation to a logical stream (e.g. an
-//! `Engine.InvokeStart` stream) is carried in `stream_id`; on a busy
-//! connection the engine SHOULD wait until the gateway has no in-flight
-//! request before starting a push (a single connection carries at most one
-//! active transfer at a time).
+//! engine that wants to push a large output simply emits
+//! `Engine.BinaryStart` + WS binary frames + `Engine.BinaryEnd`
+//! asynchronously (not as a response to a gateway request); the gateway's
+//! receiver state machine handles it identically. Correlation to a logical
+//! stream (e.g. an `Engine.InvokeStart` stream) is carried in `stream_id`;
+//! on a busy connection the engine SHOULD wait until the gateway has no
+//! in-flight request before starting a push (a single connection carries at
+//! most one active transfer at a time).
 //!
 //! ### Why not base64-only?
 //!

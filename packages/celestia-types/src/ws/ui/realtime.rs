@@ -160,26 +160,16 @@ pub enum RealtimeClientEvent {
 #[ts(export, export_to = "ws/realtime.ts")]
 pub enum RealtimeServerEvent {
     #[serde(rename = "session.created")]
-    SessionCreated {
-        session: RealtimeSessionConfig,
-    },
+    SessionCreated { session: RealtimeSessionConfig },
     #[serde(rename = "session.configured")]
-    SessionUpdated {
-        session: RealtimeSessionConfig,
-    },
+    SessionUpdated { session: RealtimeSessionConfig },
     /// VAD detected speech onset — clients should stop playback (barge-in).
     #[serde(rename = "turn.speech_started")]
-    SpeechStarted {
-        audio_start_ms: u64,
-    },
+    SpeechStarted { audio_start_ms: u64 },
     #[serde(rename = "turn.speech_stopped")]
-    SpeechStopped {
-        audio_end_ms: u64,
-    },
+    SpeechStopped { audio_end_ms: u64 },
     #[serde(rename = "response.started")]
-    ResponseCreated {
-        response_id: String,
-    },
+    ResponseCreated { response_id: String },
     /// Streaming audio output block (base64 PCM16 24 kHz).
     #[serde(rename = "response.audio.delta")]
     ResponseAudioDelta {
@@ -187,21 +177,13 @@ pub enum RealtimeServerEvent {
         delta: RealtimeAudioChunk,
     },
     #[serde(rename = "response.audio.end")]
-    ResponseAudioDone {
-        response_id: String,
-    },
+    ResponseAudioDone { response_id: String },
     /// Streaming transcript of the audio output.
     #[serde(rename = "response.transcript.delta")]
-    ResponseAudioTranscriptDelta {
-        response_id: String,
-        delta: String,
-    },
+    ResponseAudioTranscriptDelta { response_id: String, delta: String },
     /// Text-only output delta (modalities `["text"]`).
     #[serde(rename = "response.text.delta")]
-    ResponseTextDelta {
-        response_id: String,
-        delta: String,
-    },
+    ResponseTextDelta { response_id: String, delta: String },
     /// Terminal event for one response — carries usage for billing.
     #[serde(rename = "response.done")]
     ResponseDone {
@@ -216,10 +198,7 @@ pub enum RealtimeServerEvent {
         frame: RealtimeVideoFrame,
     },
     #[serde(rename = "error")]
-    Error {
-        code: String,
-        message: String,
-    },
+    Error { code: String, message: String },
 }
 
 #[cfg(test)]
