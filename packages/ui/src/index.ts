@@ -46,6 +46,8 @@ export type { AuthGuardOptions } from "./composables/createAuthGuard";
 export { renderAvatarTemplate } from "./composables/useAvatarTemplate";
 export { createAdminCrudStore } from "./composables/createAdminCrudStore";
 export type { AdminCrudApi } from "./composables/createAdminCrudStore";
+export { PReadOnlyResourceView } from "./components/PlanaReadOnlyResourceView";
+export type { PReadOnlyResource } from "./components/PlanaReadOnlyResourceView";
 export { useSendShortcut } from "./composables/useSendShortcut";
 export type { SendShortcutMode } from "./composables/useSendShortcut";
 export { createLocaleOptions, loadLocaleMessages } from "./utils/localeOptions";
