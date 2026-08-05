@@ -40,9 +40,6 @@ export default defineComponent({
     onZoomOut: { type: Function as PropType<() => void>, default: undefined },
     onReset: { type: Function as PropType<() => void>, default: undefined },
     onPanDelta: { type: Function as PropType<(dx: number, dy: number) => void>, default: undefined },
-    zoomOutTitle: { type: String, default: "Zoom out" },
-    zoomInTitle: { type: String, default: "Zoom in" },
-    resetTitle: { type: String, default: "Fit" },
   },
   setup(props) {
     const mappedBoxes = computed(() =>
@@ -67,9 +64,6 @@ export default defineComponent({
         onZoomOut={props.onZoomOut}
         onReset={props.onReset}
         onPanDelta={props.onPanDelta}
-        zoomOutTitle={props.zoomOutTitle}
-        zoomInTitle={props.zoomInTitle}
-        resetTitle={props.resetTitle}
       />
     );
   },
