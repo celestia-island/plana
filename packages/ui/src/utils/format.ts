@@ -74,3 +74,17 @@ export function formatRelativeTime(
   return d.toLocaleDateString();
 }
 export { formatMediaTime } from "@celestia-island/hikari";
+
+/** Absolute timestamp formatting with a shared locale-aware renderer. */
+export function formatDateTime(
+  input: string | number | Date,
+  opts?: { dateStyle?: "short" | "medium"; timeStyle?: "short" | "medium" },
+): string {
+  if (!input) return "";
+  const d = input instanceof Date ? input : new Date(input);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, {
+    dateStyle: opts?.dateStyle ?? "medium",
+    timeStyle: opts?.timeStyle ?? "short",
+  });
+}
