@@ -11,6 +11,12 @@ pub enum StreamChunkKind {
     Text,
     Thinking,
     DeepThinking,
+    /// Raw PCM audio block (base64-encoded in the segment payload).
+    AudioPcm,
+    /// A video frame (base64-encoded image bytes).
+    VideoFrame,
+    /// A partial image generation pass (progressive quality).
+    ImagePartial,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -69,6 +75,40 @@ pub enum StreamSegment {
         #[serde(default)]
         message_id: Option<Uuid>,
     },
+    /// Raw audio block (PCM16 base64) — realtime/omni model output.
+    AudioPcm {
+        /// MIME type of the payload (e.g. "audio/pcm").
+        mime: String,
+        /// Sample rate in Hz when known.
+        #[serde(default)]
+        sample_rate: Option<u32>,
+        /// Base64-encoded audio bytes.
+        data_base64: String,
+        #[serde(default)]
+        message_id: Option<Uuid>,
+    },
+    /// A video frame (image bytes base64) — streamed model output.
+    VideoFrame {
+        /// MIME type of the image (e.g. "image/jpeg").
+        mime: String,
+        /// Monotonic frame sequence number.
+        frame_seq: u32,
+        /// Base64-encoded image bytes.
+        data_base64: String,
+        #[serde(default)]
+        message_id: Option<Uuid>,
+    },
+    /// A partial image generation pass (progressive quality).
+    ImagePartial {
+        /// MIME type of the image.
+        mime: String,
+        /// Quality pass index (0 = first draft).
+        quality_index: u32,
+        /// Base64-encoded image bytes.
+        data_base64: String,
+        #[serde(default)]
+        message_id: Option<Uuid>,
+    },
 }
 
 impl StreamSegment {
@@ -86,6 +126,7 @@ impl StreamSegment {
                 Value::Null => "",
                 _ => "",
             },
+            Self::AudioPcm { .. } | Self::VideoFrame { .. } | Self::ImagePartial { .. } => "",
         }
     }
 
@@ -99,11 +140,21 @@ impl StreamSegment {
                 Value::Null => String::new(),
                 other => other.to_string(),
             },
+            Self::AudioPcm { .. } | Self::VideoFrame { .. } | Self::ImagePartial { .. } => {
+                String::new()
+            }
         }
     }
 
     pub fn is_mcp(&self) -> bool {
         matches!(self, Self::McpCall { .. } | Self::McpResult { .. })
+    }
+
+    pub fn is_media(&self) -> bool {
+        matches!(
+            self,
+            Self::AudioPcm { .. } | Self::VideoFrame { .. } | Self::ImagePartial { .. }
+        )
     }
 
     pub fn is_thinking(&self) -> bool {
@@ -119,6 +170,9 @@ impl StreamSegment {
             Self::Text { .. } => Some(StreamChunkKind::Text),
             Self::Thinking { .. } => Some(StreamChunkKind::Thinking),
             Self::DeepThinking { .. } => Some(StreamChunkKind::DeepThinking),
+            Self::AudioPcm { .. } => Some(StreamChunkKind::AudioPcm),
+            Self::VideoFrame { .. } => Some(StreamChunkKind::VideoFrame),
+            Self::ImagePartial { .. } => Some(StreamChunkKind::ImagePartial),
             _ => None,
         }
     }
@@ -460,6 +514,59 @@ mod tests {
             2,
             "should have exactly call + result, no synthetic"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_media_segments_round_trip() -> Result<()> {
+        let mut builder = LlmStreamBuilder::new();
+        builder.push_chunk("hello ", StreamChunkKind::Text);
+        builder.push_audio("audio/pcm", Some(24_000), "QUJD".to_string());
+        builder.push_video_frame("image/jpeg", 1, "Zm9v".to_string());
+        builder.push_image_partial("image/png", 0, "YmFy".to_string());
+        builder.push_chunk("world", StreamChunkKind::Text);
+
+        let stream = builder.seal();
+        let segments = stream.segments();
+        assert_eq!(segments.len(), 5);
+        assert!(matches!(segments[1], StreamSegment::AudioPcm { .. }));
+        assert!(matches!(segments[2], StreamSegment::VideoFrame { .. }));
+        assert!(matches!(segments[3], StreamSegment::ImagePartial { .. }));
+        assert!(segments[1].is_media());
+        assert!(!segments[0].is_media());
+        assert_eq!(segments[1].text(), "");
+        assert_eq!(segments[1].chunk_kind(), Some(StreamChunkKind::AudioPcm));
+        assert_eq!(stream.raw_text(), "hello world");
+        Ok(())
+    }
+
+    #[test]
+    fn test_media_segments_coalesced_preserved() -> Result<()> {
+        let mut builder = LlmStreamBuilder::new();
+        builder.push_audio("audio/pcm", None, "ZGF0YQ==".to_string());
+        builder.push_audio("audio/pcm", None, "MDEyMw==".to_string());
+        let stream = builder.seal_coalesced();
+        let media: Vec<_> = stream.segments().iter().filter(|s| s.is_media()).collect();
+        assert_eq!(
+            media.len(),
+            2,
+            "media segments must not be text-coalesced together"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_media_payload_round_trip() -> Result<()> {
+        let seg = StreamSegment::AudioPcm {
+            mime: "audio/pcm".to_string(),
+            sample_rate: Some(24_000),
+            data_base64: "QUJD".to_string(),
+            message_id: None,
+        };
+        let s = serde_json::to_string(&seg)?;
+        let back: StreamSegment = serde_json::from_str(&s)?;
+        assert_eq!(back, seg);
+        assert!(s.contains("data_base64"));
         Ok(())
     }
 
