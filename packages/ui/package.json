@@ -33,6 +33,7 @@
     "md5": "^*"
   },
   "devDependencies": {
+    "@types/md5": "^*",
     "@types/node": "^*",
     "@vitejs/plugin-vue-jsx": "^*",
     "@vue/test-utils": "^*",
