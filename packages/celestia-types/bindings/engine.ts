@@ -137,7 +137,19 @@ data?: JsonValue,
  * Optional shape hint for tensor/sensor parts, e.g. [1, 16000]
  * (channels × samples) or the sensor schema id.
  */
-shape?: Array<number>, };
+shape?: Array<number>, 
+/**
+ * Optional positional marker (head/tail/frame index) for multimodal
+ * models whose input order carries semantics.
+ */
+position?: EngineContentPosition, };
+
+/**
+ * Positional constraint for a content part in multi-image/multi-frame
+ * modalities (e.g. text→video models that take a first-frame and a
+ * last-frame reference). `None` / absent means "any reference".
+ */
+export type EngineContentPosition = { "kind": "head" } | { "kind": "tail" } | { "kind": "frame", index: number, };
 
 export type EngineEmbeddingsParams = { model: string, input: Array<string>, };
 
