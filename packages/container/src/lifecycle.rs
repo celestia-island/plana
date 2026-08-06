@@ -25,9 +25,22 @@ fn emit_event(tx: &tokio::sync::broadcast::Sender<ContainerEvent>, event: Contai
     }
 }
 
+/// Default bridge network for containers created without an explicit one:
+/// the generic CONTAINER_NETWORK env override wins, then the legacy
+/// entelecheia-network default.
+fn default_network() -> String {
+    std::env::var("CONTAINER_NETWORK").unwrap_or_else(|_| DEFAULT_NETWORK.to_string())
+}
+
 impl ContainerManager {
     pub async fn create(&self, params: &ContainerCreateParams) -> ContainerResult<ContainerInfo> {
-        let network = params.network.as_deref().unwrap_or(DEFAULT_NETWORK);
+        // The default bridge network is deployment-specific; the generic
+        // CONTAINER_NETWORK env override wins, the legacy entelecheia-network
+        // default is kept for existing deployments.
+        let network: std::borrow::Cow<str> = match &params.network {
+            Some(network) => std::borrow::Cow::Borrowed(network),
+            None => std::borrow::Cow::Owned(default_network()),
+        };
 
         let env_vec: Vec<String> = params
             .env
@@ -192,7 +205,7 @@ impl ContainerManager {
                 );
             } else {
                 match tokio::process::Command::new("docker")
-                    .args(["network", "connect", network, &response.id])
+                    .args(["network", "connect", &network, &response.id])
                     .output()
                     .await
                 {
