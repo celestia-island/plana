@@ -263,6 +263,21 @@ pub struct EngineHandshakeResult {
 // Chat
 // ═══════════════════════════════════════════════════════════
 
+/// Positional constraint for a content part in multi-image/multi-frame
+/// modalities (e.g. text→video models that take a first-frame and a
+/// last-frame reference). `None` / absent means "any reference".
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(export, export_to = "engine.ts")]
+pub enum EngineContentPosition {
+    /// Leading / first-frame reference.
+    Head,
+    /// Trailing / last-frame reference.
+    Tail,
+    /// Explicit frame index in a sequence (0-based).
+    Frame { index: u32 },
+}
+
 /// One content unit inside a message. Text is a plain string; everything
 /// else is a data block described by mime + encoding so consumers can
 /// decode without prior agreement:
@@ -289,6 +304,11 @@ pub struct EngineContentPart {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub shape: Option<Vec<usize>>,
+    /// Optional positional marker (head/tail/frame index) for multimodal
+    /// models whose input order carries semantics.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub position: Option<EngineContentPosition>,
 }
 
 impl EngineContentPart {
@@ -298,6 +318,7 @@ impl EngineContentPart {
             encoding: "utf-8".into(),
             data: Some(serde_json::Value::String(content.to_string())),
             shape: None,
+            position: None,
         }
     }
 
@@ -307,6 +328,7 @@ impl EngineContentPart {
             encoding: "base64".into(),
             data: Some(serde_json::Value::String(bytes.to_string())),
             shape: None,
+            position: None,
         }
     }
 
@@ -316,6 +338,7 @@ impl EngineContentPart {
             encoding: "json".into(),
             data: Some(value),
             shape: None,
+            position: None,
         }
     }
 
@@ -325,7 +348,14 @@ impl EngineContentPart {
             encoding: "binary-frame".into(),
             data: None,
             shape: None,
+            position: None,
         }
+    }
+
+    /// Attach a positional marker (head/tail/frame index).
+    pub fn with_position(mut self, position: EngineContentPosition) -> Self {
+        self.position = Some(position);
+        self
     }
 }
 
