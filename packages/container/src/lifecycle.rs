@@ -28,8 +28,10 @@ fn emit_event(tx: &tokio::sync::broadcast::Sender<ContainerEvent>, event: Contai
 /// Default bridge network for containers created without an explicit one:
 /// the generic CONTAINER_NETWORK env override wins, then the legacy
 /// entelecheia-network default.
+const NETWORK_ENV: &str = "CONTAINER_NETWORK";
+
 fn default_network() -> String {
-    std::env::var("CONTAINER_NETWORK")
+    std::env::var(NETWORK_ENV)
         .ok()
         .filter(|value| !value.is_empty())
         .unwrap_or_else(|| DEFAULT_NETWORK.to_string())
@@ -633,17 +635,19 @@ mod network_default_tests {
 
     #[test]
     fn default_network_uses_generic_env_then_legacy_constant() {
-        let ambient = std::env::var("CONTAINER_NETWORK").ok();
+        let ambient = std::env::var(super::NETWORK_ENV).ok();
         // SAFETY: test-only env mutation; no other thread reads this var.
         unsafe {
-            std::env::set_var("CONTAINER_NETWORK", "custom-net");
+            std::env::set_var(super::NETWORK_ENV, "custom-net");
             assert_eq!(default_network(), "custom-net");
-            std::env::remove_var("CONTAINER_NETWORK");
+            std::env::set_var(super::NETWORK_ENV, "");
+            assert_eq!(default_network(), super::DEFAULT_NETWORK.to_string());
+            std::env::remove_var(super::NETWORK_ENV);
             assert_eq!(default_network(), super::DEFAULT_NETWORK.to_string());
         }
         match ambient {
-            Some(value) => unsafe { std::env::set_var("CONTAINER_NETWORK", value) },
-            None => unsafe { std::env::remove_var("CONTAINER_NETWORK") },
+            Some(value) => unsafe { std::env::set_var(super::NETWORK_ENV, value) },
+            None => unsafe { std::env::remove_var(super::NETWORK_ENV) },
         }
     }
 }

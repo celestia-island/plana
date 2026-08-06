@@ -2184,12 +2184,17 @@ mod env_config_tests {
         let legacy = std::env::var("ENTELECHEIA_ROOTFS_URL").ok();
         // SAFETY: test-only env mutation, single-threaded concern documented
         // in the module; no other thread reads these vars.
+        // SAFETY: this is the only test mutating these vars, and it runs in
+        // a single-threaded sequence below; see the module comment.
         unsafe {
             std::env::set_var("CONTAINER_ROOTFS_URL", "https://example.test/rootfs");
             std::env::set_var("ENTELECHEIA_ROOTFS_URL", "https://legacy.test/rootfs");
             assert_eq!(rootfs_base_url(), "https://example.test/rootfs");
-            std::env::remove_var("CONTAINER_ROOTFS_URL");
+            std::env::set_var("CONTAINER_ROOTFS_URL", "");
             assert_eq!(rootfs_base_url(), "https://legacy.test/rootfs");
+            std::env::remove_var("CONTAINER_ROOTFS_URL");
+            std::env::set_var("ENTELECHEIA_ROOTFS_URL", "");
+            assert_eq!(rootfs_base_url(), super::DEFAULT_ROOTFS_URL);
             std::env::remove_var("ENTELECHEIA_ROOTFS_URL");
             assert_eq!(rootfs_base_url(), super::DEFAULT_ROOTFS_URL);
         }
