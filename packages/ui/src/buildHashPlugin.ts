@@ -42,11 +42,23 @@ export function buildHashPlugin() {
       if (!panelHash || !outDir) return;
       const hash = toReadableHash(panelHash);
       const htmlPath = resolve(outDir, "index.html");
+      const scriptPath = resolve(outDir, "panel-build-hash.js");
       try {
+        // External script keeps CSP `script-src 'self'` intact: an inline
+        // script would need a per-build hash nonce and would be blocked.
+        writeFileSync(
+          scriptPath,
+          `window.__PANEL_BUILD_HASH__ = "${hash}";\n`,
+          "utf-8",
+        );
         let html = readFileSync(htmlPath, "utf-8");
         html = html.replace(
+          /<script>window\.__PANEL_BUILD_HASH__="[^"]*"<\/script>/,
+          "",
+        );
+        html = html.replace(
           "</head>",
-          `<script>window.__PANEL_BUILD_HASH__="${hash}"</script></head>`
+          `<script src="/panel-build-hash.js"></script></head>`
         );
         writeFileSync(htmlPath, html, "utf-8");
       } catch {}
