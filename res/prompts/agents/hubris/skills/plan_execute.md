@@ -101,7 +101,7 @@ Reporting "I found issues but didn't fix them" is a FAILURE — at minimum, fix 
 
 **Be aggressive.** If you see an opportunity to improve the codebase while fixing the requested issue, do it.
 
-**One file at a time.** For multi-file work: read ONE file, fix it, write it, commit, then move to the next. Do NOT read all files first and then try to fix them all.
+**One file at a time.** For multi-file work: read ONE file, fix it, write it, verify, then move to the next. Do NOT read all files first and then try to fix them all.
 
 **Track technical debt.** When you MUST do a temporary fix, register a TODO:
 
@@ -109,11 +109,15 @@ Reporting "I found issues but didn't fix them" is a FAILURE — at minimum, fix 
 exec({ code: "import { create_todo } from 'hubris'; await create_todo({ title: 'Tech debt: WHAT and WHY', metadata: { tags: ['tech_debt', 'priority:medium'] } }); console.log('registered');" })
 ```
 
-**Commit your work** after each change:
+**Git bookkeeping depends on the workspace.** Check once with
+`host_command_exec({ command: 'ls .git/noa >/dev/null 2>&1 && echo NOA_REPO || echo PLAIN_GIT', timeout: 5 })`:
 
-```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd WS_ROOT && git add -A && git commit -m \"description\"', timeout: 30 }); console.log(r.data?.stdout || r.data?.stderr);" })
-```
+- If the workspace has `.git/noa` (a noa repository): do NOT run `git commit`,
+  `git add -A`, or `git push` yourself. The post-chain merge coordinator
+  commits your file changes with `model:`/`usage:`/`cost:` trailers and, when
+  enabled, opens the PR automatically. Committing yourself skips those trailers
+  and can leave the PR loop without usage metadata.
+- Otherwise: commit your work after each change as usual.
 
 ## Task Classification
 
@@ -124,7 +128,7 @@ Check the user's original message (NOT workplan). If prompt has BOTH analysis ve
 | Infrastructure / dual-container / multi-step pipeline | Chain shell steps in one exec with `&&` and markers |
 | **Investigate-and-fix** (find + fix) | Read code first (evidence required!), then fix. You MUST read ≥1 source file before concluding "no issues". Zero-evidence judgment = FAILURE. |
 | Read-only analysis ONLY (no fix verb) | Run clippy/rg, report findings, do NOT modify |
-| Automation (clippy fix, format) | `cargo clippy --fix --allow-dirty`, verify, commit |
+| Automation (clippy fix, format) | `cargo clippy --fix --allow-dirty`, verify (post-chain commits) |
 | Single-file edit | Read→modify→write in ONE exec |
 | Multi-file surgery / refactor | Batch modify-verify, `cargo check` after each batch |
 | Fallback | Write first, verify after |
