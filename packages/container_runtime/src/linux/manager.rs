@@ -2175,7 +2175,10 @@ mod env_config_tests {
 
     #[test]
     fn rootfs_url_env_precedence() {
-        assert_eq!(rootfs_base_url(), "https://releases.entelecheia.dev/rootfs");
+        // Backup any pre-set values so the test never depends on (or poisons)
+        // the ambient environment.
+        let generic = std::env::var("CONTAINER_ROOTFS_URL").ok();
+        let legacy = std::env::var("ENTELECHEIA_ROOTFS_URL").ok();
         // SAFETY: test-only env mutation, single-threaded concern documented
         // in the module; no other thread reads these vars.
         unsafe {
@@ -2185,6 +2188,16 @@ mod env_config_tests {
             std::env::remove_var("CONTAINER_ROOTFS_URL");
             assert_eq!(rootfs_base_url(), "https://legacy.test/rootfs");
             std::env::remove_var("ENTELECHEIA_ROOTFS_URL");
+            assert_eq!(rootfs_base_url(), "https://releases.entelecheia.dev/rootfs");
+        }
+        // Restore the ambient environment afterwards.
+        match generic {
+            Some(value) => unsafe { std::env::set_var("CONTAINER_ROOTFS_URL", value) },
+            None => unsafe { std::env::remove_var("CONTAINER_ROOTFS_URL") },
+        }
+        match legacy {
+            Some(value) => unsafe { std::env::set_var("ENTELECHEIA_ROOTFS_URL", value) },
+            None => unsafe { std::env::remove_var("ENTELECHEIA_ROOTFS_URL") },
         }
     }
 }

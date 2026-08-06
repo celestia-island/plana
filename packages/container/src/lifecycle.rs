@@ -196,12 +196,13 @@ impl ContainerManager {
 
         if !network.is_empty() {
             // Validate network parameter to prevent Docker CLI injection
-            // (e.g. network="--help" would be interpreted as a Docker flag).
-            if network.starts_with("--") || network.contains(' ') {
+            // (e.g. network="--help" or "-x" would be interpreted as Docker
+            // flags).
+            if network.starts_with('-') || network.contains(' ') {
                 warn!(
                     container = %params.name,
                     network = %network,
-                    "invalid network name rejected (starts with '--' or contains space)"
+                    "invalid network name rejected (starts with '-' or contains space)"
                 );
             } else {
                 match tokio::process::Command::new("docker")
@@ -548,7 +549,7 @@ impl ContainerManager {
 
         let network = old_host
             .and_then(|h| h.network_mode.clone())
-            .unwrap_or_else(|| DEFAULT_NETWORK.to_string());
+            .unwrap_or_else(default_network);
 
         let memory_limit = old_host.and_then(|h| h.memory);
         let nano_cpus = old_host.and_then(|h| h.nano_cpus);
@@ -620,5 +621,26 @@ impl ContainerManager {
         );
 
         Ok(new_info)
+    }
+}
+
+#[cfg(test)]
+mod network_default_tests {
+    use super::default_network;
+
+    #[test]
+    fn default_network_uses_generic_env_then_legacy_constant() {
+        let ambient = std::env::var("CONTAINER_NETWORK").ok();
+        // SAFETY: test-only env mutation; no other thread reads this var.
+        unsafe {
+            std::env::set_var("CONTAINER_NETWORK", "custom-net");
+            assert_eq!(default_network(), "custom-net");
+            std::env::remove_var("CONTAINER_NETWORK");
+            assert_eq!(default_network(), "entelecheia-network");
+        }
+        match ambient {
+            Some(value) => unsafe { std::env::set_var("CONTAINER_NETWORK", value) },
+            None => unsafe { std::env::remove_var("CONTAINER_NETWORK") },
+        }
     }
 }
