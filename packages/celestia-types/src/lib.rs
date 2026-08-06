@@ -1090,6 +1090,26 @@ mod tests {
     }
 
     #[test]
+    fn engine_content_part_carries_position_marker() {
+        let tail = engine::EngineContentPart::base64("image/jpeg", "AQID")
+            .with_position(engine::EngineContentPosition::Tail);
+        let json = serde_json::to_value(&tail).unwrap();
+        assert_eq!(json["position"]["kind"], "tail");
+
+        let frame = engine::EngineContentPart::base64("image/jpeg", "AQID")
+            .with_position(engine::EngineContentPosition::Frame { index: 1 });
+        let json = serde_json::to_value(&frame).unwrap();
+        assert_eq!(json["position"]["kind"], "frame");
+        assert_eq!(json["position"]["index"], 1);
+
+        let back: engine::EngineContentPart = serde_json::from_value(json).unwrap();
+        assert_eq!(
+            back.position,
+            Some(engine::EngineContentPosition::Frame { index: 1 })
+        );
+    }
+
+    #[test]
     fn engine_handshake_result_optional_capabilities_round_trips() {
         let caps = engine::EngineCapabilities {
             streaming: true,
