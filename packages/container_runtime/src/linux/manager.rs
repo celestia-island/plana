@@ -1212,11 +1212,7 @@ impl ContainerOps for YoukiManager {
         if dest.is_dir() {
             return Ok(image.to_string());
         }
-        let url = format!(
-            "{}/{}.tar.gz",
-            rootfs_base_url(),
-            image
-        );
+        let url = format!("{}/{}.tar.gz", rootfs_base_url(), image);
         let resp = reqwest::get(&url)
             .await
             .map_err(|e| ContainerError::ImageFailed(format!("download: {}", e)))?;
@@ -2172,7 +2168,8 @@ mod env_config_tests {
 
     #[test]
     fn run_dir_uses_writable_primary() {
-        let primary = std::env::temp_dir().join(format!("fuuka-run-dir-test-{}", std::process::id()));
+        let primary =
+            std::env::temp_dir().join(format!("fuuka-run-dir-test-{}", std::process::id()));
         std::fs::create_dir_all(&primary).unwrap();
         let dir = pick_run_dir(None, None, primary.clone(), PathBuf::from("/fallback"));
         assert_eq!(dir, primary);
