@@ -2149,6 +2149,17 @@ mod env_config_tests {
     }
 
     #[test]
+    fn run_dir_empty_generic_env_defers_to_legacy() {
+        let dir = pick_run_dir(
+            Some(""),
+            Some("/tmp/legacy"),
+            PathBuf::from("/nonexistent-root"),
+            PathBuf::from("/fallback"),
+        );
+        assert_eq!(dir, PathBuf::from("/tmp/legacy"));
+    }
+
+    #[test]
     fn run_dir_falls_back_through_legacy_then_default() {
         let dir = pick_run_dir(
             None,
@@ -2180,32 +2191,32 @@ mod env_config_tests {
     fn rootfs_url_env_precedence() {
         // Backup any pre-set values so the test never depends on (or poisons)
         // the ambient environment.
-        let generic = std::env::var("CONTAINER_ROOTFS_URL").ok();
-        let legacy = std::env::var("ENTELECHEIA_ROOTFS_URL").ok();
+        let generic = std::env::var(super::ROOTFS_URL_ENV).ok();
+        let legacy = std::env::var(super::LEGACY_ROOTFS_URL_ENV).ok();
         // SAFETY: test-only env mutation, single-threaded concern documented
         // in the module; no other thread reads these vars.
         // SAFETY: this is the only test mutating these vars, and it runs in
         // a single-threaded sequence below; see the module comment.
         unsafe {
-            std::env::set_var("CONTAINER_ROOTFS_URL", "https://example.test/rootfs");
-            std::env::set_var("ENTELECHEIA_ROOTFS_URL", "https://legacy.test/rootfs");
+            std::env::set_var(super::ROOTFS_URL_ENV, "https://example.test/rootfs");
+            std::env::set_var(super::LEGACY_ROOTFS_URL_ENV, "https://legacy.test/rootfs");
             assert_eq!(rootfs_base_url(), "https://example.test/rootfs");
-            std::env::set_var("CONTAINER_ROOTFS_URL", "");
+            std::env::set_var(super::ROOTFS_URL_ENV, "");
             assert_eq!(rootfs_base_url(), "https://legacy.test/rootfs");
-            std::env::remove_var("CONTAINER_ROOTFS_URL");
-            std::env::set_var("ENTELECHEIA_ROOTFS_URL", "");
+            std::env::remove_var(super::ROOTFS_URL_ENV);
+            std::env::set_var(super::LEGACY_ROOTFS_URL_ENV, "");
             assert_eq!(rootfs_base_url(), super::DEFAULT_ROOTFS_URL);
-            std::env::remove_var("ENTELECHEIA_ROOTFS_URL");
+            std::env::remove_var(super::LEGACY_ROOTFS_URL_ENV);
             assert_eq!(rootfs_base_url(), super::DEFAULT_ROOTFS_URL);
         }
         // Restore the ambient environment afterwards.
         match generic {
-            Some(value) => unsafe { std::env::set_var("CONTAINER_ROOTFS_URL", value) },
-            None => unsafe { std::env::remove_var("CONTAINER_ROOTFS_URL") },
+            Some(value) => unsafe { std::env::set_var(super::ROOTFS_URL_ENV, value) },
+            None => unsafe { std::env::remove_var(super::ROOTFS_URL_ENV) },
         }
         match legacy {
-            Some(value) => unsafe { std::env::set_var("ENTELECHEIA_ROOTFS_URL", value) },
-            None => unsafe { std::env::remove_var("ENTELECHEIA_ROOTFS_URL") },
+            Some(value) => unsafe { std::env::set_var(super::LEGACY_ROOTFS_URL_ENV, value) },
+            None => unsafe { std::env::remove_var(super::LEGACY_ROOTFS_URL_ENV) },
         }
     }
 }
