@@ -29,7 +29,10 @@ fn emit_event(tx: &tokio::sync::broadcast::Sender<ContainerEvent>, event: Contai
 /// the generic CONTAINER_NETWORK env override wins, then the legacy
 /// entelecheia-network default.
 fn default_network() -> String {
-    std::env::var("CONTAINER_NETWORK").unwrap_or_else(|_| DEFAULT_NETWORK.to_string())
+    std::env::var("CONTAINER_NETWORK")
+        .ok()
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| DEFAULT_NETWORK.to_string())
 }
 
 impl ContainerManager {
@@ -636,7 +639,7 @@ mod network_default_tests {
             std::env::set_var("CONTAINER_NETWORK", "custom-net");
             assert_eq!(default_network(), "custom-net");
             std::env::remove_var("CONTAINER_NETWORK");
-            assert_eq!(default_network(), "entelecheia-network");
+            assert_eq!(default_network(), super::DEFAULT_NETWORK.to_string());
         }
         match ambient {
             Some(value) => unsafe { std::env::set_var("CONTAINER_NETWORK", value) },

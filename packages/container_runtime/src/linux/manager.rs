@@ -37,8 +37,14 @@ const DEFAULT_ROOTFS_URL: &str = "https://releases.entelecheia.dev/rootfs";
 /// Rootfs download base URL: generic env, then legacy env, then default.
 fn rootfs_base_url() -> String {
     std::env::var(ROOTFS_URL_ENV)
-        .or_else(|_| std::env::var(LEGACY_ROOTFS_URL_ENV))
-        .unwrap_or_else(|_| DEFAULT_ROOTFS_URL.into())
+        .ok()
+        .filter(|value| !value.is_empty())
+        .or_else(|| {
+            std::env::var(LEGACY_ROOTFS_URL_ENV)
+                .ok()
+                .filter(|value| !value.is_empty())
+        })
+        .unwrap_or_else(|| DEFAULT_ROOTFS_URL.into())
 }
 
 fn resolve_run_dir() -> PathBuf {
@@ -59,7 +65,7 @@ fn pick_run_dir(
     primary: PathBuf,
     fallback: PathBuf,
 ) -> PathBuf {
-    if let Some(run_dir) = generic_env {
+    if let Some(run_dir) = generic_env.filter(|value| !value.is_empty()) {
         warn!(run_dir = %run_dir, "using generic run dir env override");
         return PathBuf::from(run_dir);
     }
@@ -68,7 +74,7 @@ fn pick_run_dir(
         let _ = std::fs::remove_file(&probe);
         return primary;
     }
-    if let Some(run_dir) = legacy_env {
+    if let Some(run_dir) = legacy_env.filter(|value| !value.is_empty()) {
         warn!(
             primary = %primary.display(),
             fallback = %run_dir,
@@ -2188,7 +2194,7 @@ mod env_config_tests {
             std::env::remove_var("CONTAINER_ROOTFS_URL");
             assert_eq!(rootfs_base_url(), "https://legacy.test/rootfs");
             std::env::remove_var("ENTELECHEIA_ROOTFS_URL");
-            assert_eq!(rootfs_base_url(), "https://releases.entelecheia.dev/rootfs");
+            assert_eq!(rootfs_base_url(), super::DEFAULT_ROOTFS_URL);
         }
         // Restore the ambient environment afterwards.
         match generic {
