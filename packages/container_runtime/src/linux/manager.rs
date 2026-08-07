@@ -26,33 +26,68 @@ use _container::{
 
 const RUN_DIR: &str = "/run/entelecheia/youki";
 const FALLBACK_RUN_DIR: &str = "/tmp/entelecheia/youki";
+/// Generic env override for the youki run dir (the legacy
+/// `ENTELECHEIA_RUN_DIR` name is kept as a compat fallback).
+const RUN_DIR_ENV: &str = "CONTAINER_RUN_DIR";
+const LEGACY_RUN_DIR_ENV: &str = "ENTELECHEIA_RUN_DIR";
+const ROOTFS_URL_ENV: &str = "CONTAINER_ROOTFS_URL";
+const LEGACY_ROOTFS_URL_ENV: &str = "ENTELECHEIA_ROOTFS_URL";
+const DEFAULT_ROOTFS_URL: &str = "https://releases.entelecheia.dev/rootfs";
+
+/// Rootfs download base URL: generic env, then legacy env, then default.
+fn rootfs_base_url() -> String {
+    std::env::var(ROOTFS_URL_ENV)
+        .ok()
+        .filter(|value| !value.is_empty())
+        .or_else(|| {
+            std::env::var(LEGACY_ROOTFS_URL_ENV)
+                .ok()
+                .filter(|value| !value.is_empty())
+        })
+        .unwrap_or_else(|| DEFAULT_ROOTFS_URL.into())
+}
 
 fn resolve_run_dir() -> PathBuf {
-    let primary = PathBuf::from(RUN_DIR);
-    let probe = primary.join(".write_test");
-    match std::fs::write(&probe, b"x") {
-        Ok(_) => {
-            let _ = std::fs::remove_file(&probe);
-            primary
-        }
-        Err(_) => {
-            if let Ok(run_dir) = std::env::var("ENTELECHEIA_RUN_DIR") {
-                warn!(
-                    primary = %primary.display(),
-                    fallback = %run_dir,
-                    "run_dir not writable, using ENTELECHEIA_RUN_DIR env override"
-                );
-                PathBuf::from(run_dir)
-            } else {
-                warn!(
-                    primary = %primary.display(),
-                    fallback = FALLBACK_RUN_DIR,
-                    "run_dir not writable, falling back to /tmp"
-                );
-                PathBuf::from(FALLBACK_RUN_DIR)
-            }
-        }
+    pick_run_dir(
+        std::env::var(RUN_DIR_ENV).ok().as_deref(),
+        std::env::var(LEGACY_RUN_DIR_ENV).ok().as_deref(),
+        PathBuf::from(RUN_DIR),
+        PathBuf::from(FALLBACK_RUN_DIR),
+    )
+}
+
+/// Pure decision for the run-dir resolution, kept separate for tests:
+/// explicit generic env always wins; otherwise probe the primary dir and
+/// fall back to the legacy env override, then the fallback path.
+fn pick_run_dir(
+    generic_env: Option<&str>,
+    legacy_env: Option<&str>,
+    primary: PathBuf,
+    fallback: PathBuf,
+) -> PathBuf {
+    if let Some(run_dir) = generic_env.filter(|value| !value.is_empty()) {
+        warn!(run_dir = %run_dir, "using generic run dir env override");
+        return PathBuf::from(run_dir);
     }
+    let probe = primary.join(".write_test");
+    if std::fs::write(&probe, b"x").is_ok() {
+        let _ = std::fs::remove_file(&probe);
+        return primary;
+    }
+    if let Some(run_dir) = legacy_env.filter(|value| !value.is_empty()) {
+        warn!(
+            primary = %primary.display(),
+            fallback = %run_dir,
+            "run_dir not writable, using legacy env override"
+        );
+        return PathBuf::from(run_dir);
+    }
+    warn!(
+        primary = %primary.display(),
+        fallback = %fallback.display(),
+        "run_dir not writable, falling back"
+    );
+    fallback
 }
 
 #[derive(Debug, Clone)]
@@ -1177,12 +1212,7 @@ impl ContainerOps for YoukiManager {
         if dest.is_dir() {
             return Ok(image.to_string());
         }
-        let url = format!(
-            "{}/{}.tar.gz",
-            std::env::var("ENTELECHEIA_ROOTFS_URL")
-                .unwrap_or_else(|_| "https://releases.entelecheia.dev/rootfs".into()),
-            image
-        );
+        let url = format!("{}/{}.tar.gz", rootfs_base_url(), image);
         let resp = reqwest::get(&url)
             .await
             .map_err(|e| ContainerError::ImageFailed(format!("download: {}", e)))?;
@@ -2098,5 +2128,95 @@ mod tests {
             other => return Err(anyhow::anyhow!("Expected ExecFailed, got: {:?}", other)),
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod env_config_tests {
+    use std::path::PathBuf;
+
+    use super::{pick_run_dir, rootfs_base_url};
+
+    #[test]
+    fn run_dir_generic_env_wins_over_probing() {
+        let dir = pick_run_dir(
+            Some("/tmp/generic"),
+            Some("/tmp/legacy"),
+            PathBuf::from("/nonexistent-root"),
+            PathBuf::from("/fallback"),
+        );
+        assert_eq!(dir, PathBuf::from("/tmp/generic"));
+    }
+
+    #[test]
+    fn run_dir_empty_generic_env_defers_to_legacy() {
+        let dir = pick_run_dir(
+            Some(""),
+            Some("/tmp/legacy"),
+            PathBuf::from("/nonexistent-root"),
+            PathBuf::from("/fallback"),
+        );
+        assert_eq!(dir, PathBuf::from("/tmp/legacy"));
+    }
+
+    #[test]
+    fn run_dir_falls_back_through_legacy_then_default() {
+        let dir = pick_run_dir(
+            None,
+            Some("/tmp/legacy"),
+            PathBuf::from("/nonexistent-root"),
+            PathBuf::from("/fallback"),
+        );
+        assert_eq!(dir, PathBuf::from("/tmp/legacy"));
+        let dir = pick_run_dir(
+            None,
+            None,
+            PathBuf::from("/nonexistent-root"),
+            PathBuf::from("/fallback"),
+        );
+        assert_eq!(dir, PathBuf::from("/fallback"));
+    }
+
+    #[test]
+    fn run_dir_uses_writable_primary() {
+        let primary =
+            std::env::temp_dir().join(format!("fuuka-run-dir-test-{}", std::process::id()));
+        std::fs::create_dir_all(&primary).unwrap();
+        let dir = pick_run_dir(None, None, primary.clone(), PathBuf::from("/fallback"));
+        assert_eq!(dir, primary);
+        let _ = std::fs::remove_dir_all(&primary);
+    }
+
+    #[test]
+    fn rootfs_url_env_precedence() {
+        // Backup any pre-set values so the test never depends on (or poisons)
+        // the ambient environment.
+        let generic = std::env::var(super::ROOTFS_URL_ENV).ok();
+        let legacy = std::env::var(super::LEGACY_ROOTFS_URL_ENV).ok();
+        // SAFETY: test-only env mutation, single-threaded concern documented
+        // in the module; no other thread reads these vars.
+        // SAFETY: this is the only test mutating these vars, and it runs in
+        // a single-threaded sequence below; see the module comment.
+        unsafe {
+            std::env::set_var(super::ROOTFS_URL_ENV, "https://example.test/rootfs");
+            std::env::set_var(super::LEGACY_ROOTFS_URL_ENV, "https://legacy.test/rootfs");
+            assert_eq!(rootfs_base_url(), "https://example.test/rootfs");
+            std::env::set_var(super::ROOTFS_URL_ENV, "");
+            assert_eq!(rootfs_base_url(), "https://legacy.test/rootfs");
+            std::env::remove_var(super::ROOTFS_URL_ENV);
+            std::env::set_var(super::LEGACY_ROOTFS_URL_ENV, "");
+            assert_eq!(rootfs_base_url(), super::DEFAULT_ROOTFS_URL);
+            std::env::remove_var(super::LEGACY_ROOTFS_URL_ENV);
+            assert_eq!(rootfs_base_url(), super::DEFAULT_ROOTFS_URL);
+        }
+        // Restore the ambient environment afterwards.
+        match generic {
+            Some(value) => unsafe { std::env::set_var(super::ROOTFS_URL_ENV, value) },
+            None => unsafe { std::env::remove_var(super::ROOTFS_URL_ENV) },
+        }
+        match legacy {
+            Some(value) => unsafe { std::env::set_var(super::LEGACY_ROOTFS_URL_ENV, value) },
+            None => unsafe { std::env::remove_var(super::LEGACY_ROOTFS_URL_ENV) },
+        }
     }
 }
