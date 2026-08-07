@@ -25,9 +25,27 @@ fn emit_event(tx: &tokio::sync::broadcast::Sender<ContainerEvent>, event: Contai
     }
 }
 
+/// Default bridge network for containers created without an explicit one:
+/// the generic CONTAINER_NETWORK env override wins, then the legacy
+/// entelecheia-network default.
+const NETWORK_ENV: &str = "CONTAINER_NETWORK";
+
+fn default_network() -> String {
+    std::env::var(NETWORK_ENV)
+        .ok()
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| DEFAULT_NETWORK.to_string())
+}
+
 impl ContainerManager {
     pub async fn create(&self, params: &ContainerCreateParams) -> ContainerResult<ContainerInfo> {
-        let network = params.network.as_deref().unwrap_or(DEFAULT_NETWORK);
+        // The default bridge network is deployment-specific; the generic
+        // CONTAINER_NETWORK env override wins, the legacy entelecheia-network
+        // default is kept for existing deployments.
+        let network: std::borrow::Cow<str> = match &params.network {
+            Some(network) => std::borrow::Cow::Borrowed(network),
+            None => std::borrow::Cow::Owned(default_network()),
+        };
 
         let env_vec: Vec<String> = params
             .env
@@ -183,16 +201,17 @@ impl ContainerManager {
 
         if !network.is_empty() {
             // Validate network parameter to prevent Docker CLI injection
-            // (e.g. network="--help" would be interpreted as a Docker flag).
-            if network.starts_with("--") || network.contains(' ') {
+            // (e.g. network="--help" or "-x" would be interpreted as Docker
+            // flags).
+            if network.starts_with('-') || network.contains(' ') {
                 warn!(
                     container = %params.name,
                     network = %network,
-                    "invalid network name rejected (starts with '--' or contains space)"
+                    "invalid network name rejected (starts with '-' or contains space)"
                 );
             } else {
                 match tokio::process::Command::new("docker")
-                    .args(["network", "connect", network, &response.id])
+                    .args(["network", "connect", &network, &response.id])
                     .output()
                     .await
                 {
@@ -535,7 +554,7 @@ impl ContainerManager {
 
         let network = old_host
             .and_then(|h| h.network_mode.clone())
-            .unwrap_or_else(|| DEFAULT_NETWORK.to_string());
+            .unwrap_or_else(default_network);
 
         let memory_limit = old_host.and_then(|h| h.memory);
         let nano_cpus = old_host.and_then(|h| h.nano_cpus);
@@ -607,5 +626,28 @@ impl ContainerManager {
         );
 
         Ok(new_info)
+    }
+}
+
+#[cfg(test)]
+mod network_default_tests {
+    use super::default_network;
+
+    #[test]
+    fn default_network_uses_generic_env_then_legacy_constant() {
+        let ambient = std::env::var(super::NETWORK_ENV).ok();
+        // SAFETY: test-only env mutation; no other thread reads this var.
+        unsafe {
+            std::env::set_var(super::NETWORK_ENV, "custom-net");
+            assert_eq!(default_network(), "custom-net");
+            std::env::set_var(super::NETWORK_ENV, "");
+            assert_eq!(default_network(), super::DEFAULT_NETWORK.to_string());
+            std::env::remove_var(super::NETWORK_ENV);
+            assert_eq!(default_network(), super::DEFAULT_NETWORK.to_string());
+        }
+        match ambient {
+            Some(value) => unsafe { std::env::set_var(super::NETWORK_ENV, value) },
+            None => unsafe { std::env::remove_var(super::NETWORK_ENV) },
+        }
     }
 }
