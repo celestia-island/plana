@@ -26,7 +26,7 @@ the scene descriptor the frontend applies wholesale.
 {
   "layout_id": "holo-1",
   "layout": {
-    "title": "Hydrogen Corridor",
+    "title": "Demo Facility",
     "widgets": [{ "id": "w1", "type": "node-graph", "span": "full" }]
   }
 }
