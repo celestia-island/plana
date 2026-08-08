@@ -1,6 +1,7 @@
 mod events;
 mod manager;
 mod signature;
+pub(crate) use signature::{pubkey_for, subscription_owner, verify_agent_package};
 
 use serde::{Deserialize, Serialize};
 
