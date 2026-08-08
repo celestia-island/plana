@@ -31,9 +31,9 @@ polemos telemetry binding.
 ```json
 {
   "model_id": "a0000001-0000-4000-0000-000000000001",
-  "name": "RSOC Enclosure",
+  "name": "Compressor Enclosure",
   "position": { "x": 27.11, "y": 1.76, "z": 24.86 },
   "scale": 1.0,
-  "polemos_node_id": "rsoc-enc"
+  "polemos_node_id": "comp-enc"
 }
 ```

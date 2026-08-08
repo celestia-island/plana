@@ -6,7 +6,7 @@ kind = "plan"
 
 # Hardware Communication — Preliminary Work Plan
 
-> **Target**: an industrial hydrogen demonstration corridor (Phase II, 6-box containerized plant)
+> **Target**: a synthetic demo facility (Phase II, 6-box containerized plant)
 > **Date**: 2026-06-11
 > **Status**: Phase 0 — Preparatory Infrastructure
 
@@ -110,10 +110,10 @@ and methods: `evaluate_reading()`, `acknowledge_alarm()`, `add_rule()`, `remove_
 
 ```text
 modbus.{station}.{register}.{level}
-  e.g. modbus.19.h2_leak_conc.hh
+  e.g. modbus.19.discharge_pressure.hh
 
 sensor.{station}.{register}.change
-  e.g. sensor.21.h2_pressure.change
+  e.g. sensor.21.chill_return_temp.change
 
 device.{station}.status.{event}
   e.g. device.19.status.offline
@@ -221,11 +221,11 @@ Before executing `modbus_write`:
 
 | Device | Station | Baud | Registers | Format |
 | --- | --- | --- | --- | --- |
-| AEM Electrolyzer (2 Nm3/h) | 21 | 9600 | ~32 IR (0x04) | 32-bit float BE |
-| ALK Electrolyzer (3 Nm3/h) | 20 | 9600 | ~32 IR (0x04) | 32-bit float BE |
-| PEM Electrolyzer | 2 | 9600 | ~17 HR (0x03) | 16-bit signed |
-| Compressed H2 Tanks | 19 | 57600 | 33 HR + 1 coil | 11-valve bit field, 97 fault codes |
-| Solid-State H2 Storage | 25 | 9600 | ~12 HR (0x03) | 32-bit float BE |
-| Fuel Cell | 31 | 9600 | 6 coils + 11 HR | Start/stop, emergency stop, stack data |
-| RSOC (Box 1) | virtual | — | Virtual Modbus slave | — |
-| FC CAN bus | — | 9600 | CAN 2.0B | USB-CAN-A |
+| Chilled Water Loop | 21 | 9600 | ~32 IR (0x04) | 32-bit float BE |
+| AHU Unit | 20 | 9600 | ~32 IR (0x04) | 32-bit float BE |
+| Cooling Pump | 2 | 9600 | ~17 HR (0x03) | 16-bit signed |
+| Compressor Skid | 19 | 57600 | 24 HR + 8 coils | Discharge/suction pressure, temp, vibration |
+| Dosing Skid | 25 | 9600 | ~12 HR (0x03) | 32-bit float BE |
+| Generator | 31 | 9600 | 6 coils + 11 HR | Start/stop, emergency stop, load data |
+| Virtual Console (Box 1) | virtual | — | Virtual Modbus slave | — |
+| Field CAN bus | — | 9600 | CAN 2.0B | USB-CAN-A |

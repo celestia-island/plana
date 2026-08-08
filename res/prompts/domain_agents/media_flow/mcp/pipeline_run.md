@@ -35,7 +35,7 @@ pipeline through the `media.*` endpoints.
   "layout_id": "pipe-1",
   "pipeline": {
     "nodes": [{ "id": "n1", "type": "prompt", "label": "Prompt",
-                "x": 40, "y": 200, "params": { "text": "hydrogen pump" } }],
+                "x": 40, "y": 200, "params": { "text": "process pump" } }],
     "edges": []
   }
 }
