@@ -44,7 +44,7 @@ OFFLINE_DIR=""
 
 TARGET_IP=""
 DEPLOY_USER="lab"
-SSH_PASS="CHANGE_ME_SSH_PASSWORD"
+SSH_PASS="${SSH_PASS:-}"
 SKIP_DEPLOY=0
 
 SCEPTER_PORT=8424
@@ -114,7 +114,7 @@ Options:
   --quick              Non-interactive; auto-accept all prompts
   --target-ip          Remote node IP address for deployment
   --target-user        SSH user on target node (default: lab)
-  --target-pass        SSH password for target node (default: CHANGE_ME_SSH_PASSWORD)
+  --target-pass        SSH password for target node
   --offline DIR        Path to pre-downloaded offline bundle directory.
                           Uses local rootfs + images, skips all network.
                           The directory must contain:
