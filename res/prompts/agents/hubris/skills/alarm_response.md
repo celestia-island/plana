@@ -55,6 +55,14 @@ agent_name = "orexis"
 tool_name = "acknowledge_alarm"
 
 [[related_tools]]
+agent_name = "orexis"
+tool_name = "verify_write_safety"
+
+[[related_tools]]
+agent_name = "orexis"
+tool_name = "request_write_approval"
+
+[[related_tools]]
 agent_name = "industrial_iot"
 tool_name = "modbus_read"
 
@@ -139,14 +147,16 @@ Based on the escalation path:
 | **HumanNotify** | Suspend auto-response, call `epieikeia.deliver_message` to notify operator with alarm details and recommended action, wait for confirmation |
 | **EmergencyShutdown** | Suspend all auto-response, call `epieikeia.deliver_message` with EMERGENCY priority to notify operator immediately, call `orexis.acknowledge_alarm` to mark as handled, halt all pending Modbus write operations pending human confirmation |
 
-### Step 4: Safety-Critical Write Gate
+### Step 4: Operator Approval Gate (MANDATORY for every corrective write)
 
-For `AutoCorrect` escalation:
+For `AutoCorrect` and `HumanNotify` escalations that involve a write, run the approval gate BEFORE any `industrial_iot.modbus_write`:
 
-1. Verify the target register is NOT classified as `SafetyCritical`
-1. If `SafetyCritical`: upgrade escalation to `HumanNotify` instead
-1. If safe: execute the corrective write with readback verification
-1. After write: call `industrial_iot.modbus_read` to confirm the value changed
+1. Call `orexis.verify_write_safety({ station_id, protocol, address, value })` with the target register and proposed value
+2. If the result is `Allowed` → proceed to execute the corrective write with readback verification
+3. If the result is `Denied` (or the register is classified `SafetyCritical`) → call `orexis.request_write_approval({ station_id, protocol, address, field_name, current_value, proposed_value, unit, reason, timeout_secs })` — this tool BLOCKS until the operator responds in the web UI (default 120s timeout)
+4. Inspect the approval result:
+   - `approved: true` → execute `industrial_iot.modbus_write`, then `industrial_iot.modbus_read` to verify the value changed, then `orexis.acknowledge_alarm`
+   - `approved: false` or `timed_out: true` → do NOT write. Log the denial, call `epieikeia.deliver_message` to inform the operator, and do NOT retry the same write in this chain
 
 ### Step 5: Acknowledge and Record
 
@@ -163,8 +173,9 @@ If further investigation or follow-up is needed (e.g., recurring alarms, root ca
 
 ## Safety Rules
 
-1. **NEVER** execute `modbus_write` to safety-critical registers (emergency stop, safety valves) without human confirmation
-1. **NEVER** auto-correct HH (high-high) alarms on safety-critical gas sensors — always escalate to `HumanNotify`
+1. **NEVER** execute `modbus_write` to safety-critical registers (emergency stop, safety valves) without an `approved: true` response from `orexis.request_write_approval`
+1. **NEVER** auto-correct HH (high-high) alarms on safety-critical gas sensors — always escalate to `HumanNotify` with the approval gate
+1. **NEVER** retry a denied write in the same chain — a denial or timeout ends the corrective attempt; inform the operator instead
 1. **ALWAYS** verify with `modbus_read` after any corrective write
 1. **ALWAYS** respect station-level mutes and emergency mute — if muted, log but do not act
 1. **ALWAYS** check debounce count — if < debounce threshold, delay response
