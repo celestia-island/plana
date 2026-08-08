@@ -21,7 +21,7 @@
 #   CELESTIA_INSTANCE_ID=42 sh celestia-init.sh --offline-dir /tmp/offline
 #
 # Usage (from celestia-install.sh for remote target-init):
-#   sh celestia-init.sh --offline-dir /tmp/offline --target-ip 192.168.2.148 --target-pass hydroSinap2024
+#   sh celestia-init.sh --offline-dir /tmp/offline --target-ip 192.0.2.148 --target-pass <your-password>
 #
 
 set -eu
@@ -36,7 +36,7 @@ c_step()  { printf '\n\033[1;36m[INIT]  ==> %s\033[0m\n'  "$*"; }
 OFFLINE_DIR=""
 TARGET_IP=""
 DEPLOY_USER="lab"
-SSH_PASS="hydroSinap2024"
+SSH_PASS="${SSH_PASS:-}"
 SCEPTER_PORT=8424
 INSTALL_DIR="${HOME}/.local/share/celestia"
 LOG_DIR="${HOME}/.local/share/celestia/logs"
