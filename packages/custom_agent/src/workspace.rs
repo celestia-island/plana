@@ -18,7 +18,8 @@ use super::{
     subscription::{
         SubscribeConfig, SubscriptionEntry, SubscriptionSource, SubscriptionSyncReport, SyncAction,
         clone_repository, find_agent_root, install_subscription_agent, parse_check_interval,
-        subscription_repo_url, validate_subscription_entry,
+        pubkey_for, subscription_owner, subscription_repo_url, validate_subscription_entry,
+        verify_agent_package,
     },
 };
 
@@ -369,6 +370,26 @@ impl Layer3Workspace {
         &self,
         entry: &SubscriptionEntry,
     ) -> Result<SubscriptionSyncReport> {
+        // Same tiered policy as subscribe_agent (PLAN §11.3): trusted-source
+        // allow-list plus package signature verification on every sync —
+        // including auto-updates, which must not bypass the checks.
+        let settings = &self.subscriptions.settings;
+        let owner = subscription_owner(
+            entry
+                .repository
+                .as_deref()
+                .or(entry.url.as_deref())
+                .unwrap_or(""),
+        );
+        if !settings.trusted_sources.iter().any(|s| s == &owner) {
+            return Err(anyhow!(
+                "subscription '{}': source `{}` is not in trusted_sources: {:?}",
+                entry.name,
+                owner,
+                settings.trusted_sources
+            ));
+        }
+
         let repo_url = subscription_repo_url(entry)?;
         let tmp_dir = std::env::temp_dir().join(format!(
             "entelecheia-layer3-subscription-{}",
@@ -377,6 +398,23 @@ impl Layer3Workspace {
 
         clone_repository(&repo_url, &tmp_dir).await?;
         let agent_root = find_agent_root(&tmp_dir, &entry.name)?;
+
+        if settings.verify_signature {
+            let pubkey = pubkey_for(&owner).ok_or_else(|| {
+                anyhow!(
+                    "subscription '{}': no registered signing key for trusted source `{}`; cannot verify agent",
+                    entry.name,
+                    owner
+                )
+            })?;
+            verify_agent_package(&agent_root, &pubkey).with_context(|| {
+                format!(
+                    "subscription '{}': package signature verification failed for source `{}`",
+                    entry.name, owner
+                )
+            })?;
+        }
+
         let preflight = self.audit_layer3_agent_path(&entry.name, &agent_root)?;
         if preflight.decision != PreflightDecision::Allow {
             let _ = fs::remove_dir_all(&tmp_dir);
