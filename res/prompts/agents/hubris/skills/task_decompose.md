@@ -192,7 +192,7 @@ Do NOT call `list_todo()`. Do NOT call `llm_chat()`. Do NOT decompose. Just repo
 1. **Scope Probe** — For tasks involving specific patterns, identifiers, or file types, run a quick search to estimate actual scope before classifying:
 
    ```js
-   exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /mnt/sdb1/entelecheia && rg -c \"PATTERN\" --type rust --type md 2>/dev/null | wc -l', timeout: 10 }); console.log('match_count:', r.data?.stdout?.trim() || '0');" })
+   exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && rg -c \"PATTERN\" --type rust --type md 2>/dev/null | wc -l', timeout: 10 }); console.log('match_count:', r.data?.stdout?.trim() || '0');" })
    ```
 
    Use the probe to inform decomposition:

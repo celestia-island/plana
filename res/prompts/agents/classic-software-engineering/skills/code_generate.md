@@ -52,10 +52,10 @@ You are a code generation specialist. Given a workplan from HubRis, generate cor
 
 ## IMPORTANT: File Path Convention
 
-The **Workspace** in the environment section (e.g. `local:///mnt/sdb1/entelecheia`) is the HOST path — do NOT use it. Inside the container, the workspace is always at `/workspace`. All file paths MUST use `/workspace/` as prefix:
+The **Workspace** in the environment section (e.g. `local:///opt/entelecheia`) is the HOST path — do NOT use it. Inside the container, the workspace is always at `/workspace`. All file paths MUST use `/workspace/` as prefix:
 
 - `/workspace/src/main.rs` — CORRECT
-- `/mnt/sdb1/entelecheia/src/main.rs` — WRONG (host path, unreachable from container)
+- `/opt/entelecheia/src/main.rs` — WRONG (host path, unreachable from container)
 
 ## CRITICAL: WRITE BEFORE SCANNING
 
