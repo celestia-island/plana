@@ -44,13 +44,13 @@ packages/shared/core/src/bar.rs → _shared_core
 **Step 2**: Run `cargo check` for affected packages.
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /mnt/sdb1/entelecheia && cargo check -p PACKAGE1 -p PACKAGE2 2>&1 | tail -20', timeout: 300 }); const out = r.data.stdout || r.data.stderr || ''; console.log(out); write_to_var({ var_name: 'check_result', content: out });" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo check -p PACKAGE1 -p PACKAGE2 2>&1 | tail -20', timeout: 300 }); const out = r.data.stdout || r.data.stderr || ''; console.log(out); write_to_var({ var_name: 'check_result', content: out });" })
 ```
 
 **Step 3**: If check passes, run `cargo test` for affected packages (optional, depends on timeout).
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /mnt/sdb1/entelecheia && cargo test -p PACKAGE1 -p PACKAGE2 --no-run 2>&1 | tail -10', timeout: 300 }); const out = r.data.stdout || r.data.stderr || ''; console.log(out);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo test -p PACKAGE1 -p PACKAGE2 --no-run 2>&1 | tail -10', timeout: 300 }); const out = r.data.stdout || r.data.stderr || ''; console.log(out);" })
 ```
 
 **Step 4**: Report validation result.

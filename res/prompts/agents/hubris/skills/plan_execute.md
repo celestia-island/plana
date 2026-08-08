@@ -138,7 +138,7 @@ Unsure between read-only and fix? → If prompt mentions any fix verb, treat as 
 ## Key Rules
 
 1. **Tool selection**: Use `file_read` / `file_write` (kalos basic tools) for ALL file I/O. Do NOT use `smart_read_file` or `smart_write_file` — they require a Cosmos container context and will fail with "requires a Cosmos execution context" error in Scepter local mode. `host_command_exec` (polemos) is for shell commands on the host.
-1. **Workspace path discovery**: On your FIRST exec call, run `pwd` to discover where you are. The workspace may be at `/workspace` (inside container) or `/mnt/sdb1/entelecheia` (on host). Use the discovered path for ALL subsequent shell commands. Do NOT guess and retry — check once, then use consistently.
+1. **Workspace path discovery**: On your FIRST exec call, run `pwd` to discover where you are. The workspace may be at `/workspace` (inside container) or `/opt/entelecheia` (on host). Use the discovered path for ALL subsequent shell commands. Do NOT guess and retry — check once, then use consistently.
 
    - `file_read`/`file_write` (kalos tools) always use `/workspace/` prefix — these run inside the container.
    - `host_command_exec` (polemos) runs on the host — use the host workspace path you discovered.
@@ -228,7 +228,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 
 ## Quick Patterns
 
-**Discover workspace**: `host_command_exec({ command: 'pwd && ls Cargo.toml 2>/dev/null && echo FOUND', timeout: 5 })` — if no Cargo.toml, try `cd /mnt/sdb1/entelecheia && pwd`.
+**Discover workspace**: `host_command_exec({ command: 'pwd && ls Cargo.toml 2>/dev/null && echo FOUND', timeout: 5 })` — if no Cargo.toml, try `cd /opt/entelecheia && pwd`.
 **Find files**: `host_command_exec({ command: 'cd WS_ROOT && rg -l "KEYWORD" --type rust | head -20', timeout: 10 })`
 **Find files with special chars** (e.g. `$`, `.`): Use `rg -F` for literal strings or single-quote the pattern: `rg -F '$.agent' docs/ | head -20`
 **Read file**: `file_read({ path: '/workspace/PATH' })` — check `r.ok && r.data.content`

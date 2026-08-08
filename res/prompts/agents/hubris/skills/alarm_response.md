@@ -92,10 +92,10 @@ The trigger event payload contains:
 ```json
 {
   "source": "evernight",
-  "topic": "modbus.19.h2_leak_conc.hh",
+  "topic": "modbus.19.discharge_pressure.hh",
   "payload": {
     "station": 19,
-    "register": "h2_leak_conc",
+    "register": "discharge_pressure",
     "level": "hh",
     "value": 4.2,
     "threshold": 4.0,
@@ -112,7 +112,7 @@ The trigger event payload contains:
 Extract from the trigger event:
 
 - `station` — Modbus station number
-- `register` — Register name (e.g., `h2_leak_conc`, `pressure`, `temperature`)
+- `register` — Register name (e.g., `discharge_pressure`, `pressure`, `temperature`)
 - `level` — Alarm level (HH, H, L, LL, ROC)
 - `value` — Current reading
 - `threshold` — Configured threshold
@@ -164,7 +164,7 @@ If further investigation or follow-up is needed (e.g., recurring alarms, root ca
 ## Safety Rules
 
 1. **NEVER** execute `modbus_write` to safety-critical registers (emergency stop, safety valves) without human confirmation
-1. **NEVER** auto-correct HH (high-high) alarms on hydrogen leak sensors — always escalate to `HumanNotify`
+1. **NEVER** auto-correct HH (high-high) alarms on safety-critical gas sensors — always escalate to `HumanNotify`
 1. **ALWAYS** verify with `modbus_read` after any corrective write
 1. **ALWAYS** respect station-level mutes and emergency mute — if muted, log but do not act
 1. **ALWAYS** check debounce count — if < debounce threshold, delay response
@@ -173,26 +173,26 @@ If further investigation or follow-up is needed (e.g., recurring alarms, root ca
 
 | Station | Device | Critical Registers | Notes |
 | --- | --- | --- | --- |
-| 2 | PEM Electrolyzer | pressure, water_quality, leak, voltage | 16-bit signed |
-| 19 | Compressed H2 Tanks | valve_bitfield, fault_codes | 97 fault codes, known byte-order bug |
-| 20 | ALK Electrolyzer (3 Nm3/h) | temps, pressures, flows, voltages | 32-bit float BE |
-| 21 | AEM Electrolyzer (2 Nm3/h) | temps, pressures, flows, voltages | 32-bit float BE |
-| 25 | Solid-State H2 Storage | tank_a_pressure, tank_b_pressure, temps | 32-bit float BE |
-| 31 | Fuel Cell | start/stop, emergency_stop, stack_data | 6 coils + 11 HR |
+| 2 | Refrigerant Dryer | pressure, dew_point, flow, status | 16-bit signed |
+| 19 | Compressor Skid | discharge_pressure, bearing_temp, vibration | 24 HR |
+| 20 | AHU Unit | supply_temp, return_temp, humidity | 32-bit float BE |
+| 21 | Chilled Water Loop | chill_return_temp, flow_rate, valve_position | 32-bit float BE |
+| 25 | Dosing Skid | tank_level, dose_rate, pump_status | 32-bit float BE |
+| 31 | Generator | start/stop, emergency_stop, load_percent | 6 coils + 11 HR |
 
 ## Example Escalation Flows
 
-### Hydrogen Leak HH Alarm (Station 19)
+### Gas Leak HH Alarm (Station 19)
 
 ```text
-Trigger: modbus.19.h2_leak_conc.hh (value=4.2%, threshold=4.0%)
+Trigger: modbus.19.discharge_pressure.hh (value=13.5 bar, threshold=13.0 bar)
 → Escalation: EmergencyShutdown
 → Action: set_emergency_lockdown(true)
-→ Notify: deliver_message to operator "H2 LEAK DETECTED at Station 19 (4.2% LEL). Emergency lockdown activated."
-→ Acknowledge: acknowledge_alarm("19_h2_leak_conc_hh")
+→ Notify: deliver_message to operator "GAS LEAK DETECTED at Station 19 (13.5 bar). Emergency lockdown activated."
+→ Acknowledge: acknowledge_alarm("19_discharge_pressure_hh")
 ```
 
-### Pressure H Alarm (Station 2, PEM)
+### Pressure H Alarm (Station 2)
 
 ```text
 Trigger: modbus.2.pressure.h (value=6.5 bar, threshold=6.0 bar)
@@ -204,11 +204,11 @@ Trigger: modbus.2.pressure.h (value=6.5 bar, threshold=6.0 bar)
 → Acknowledge: acknowledge_alarm("2_pressure_h")
 ```
 
-### Temperature L Alarm (Station 21, AEM)
+### Temperature L Alarm (Station 21)
 
 ```text
 Trigger: modbus.21.coolant_temp.l (value=15.2°C, threshold=18.0°C)
 → Escalation: NotifyAgent
-→ Create TODO: "Investigate low coolant temperature at AEM electrolyzer (Station 21)"
+→ Create TODO: "Investigate low coolant temperature at chilled water loop (Station 21)"
 → Acknowledge: acknowledge_alarm("21_coolant_temp_l")
 ```
