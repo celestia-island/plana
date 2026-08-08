@@ -59,7 +59,7 @@ This skill is the **only gateway for writing and editing files** in the workspac
 
 ## PATH WARNING
 
-All file paths MUST use `/workspace/` prefix. Do NOT use the host path from the workspace URI (e.g. `/mnt/sdb1/...`). The container's workspace is at `/workspace`.
+All file paths MUST use `/workspace/` prefix. Do NOT use the host path from the workspace URI (e.g. `/opt/...`). The container's workspace is at `/workspace`.
 
 ## CRITICAL: ONE EXEC CALL PER FILE
 
