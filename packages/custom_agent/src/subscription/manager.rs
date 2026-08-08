@@ -18,6 +18,7 @@ use super::{
     },
     SubscriptionEntry, SubscriptionSource,
     events::{clone_repository, copy_dir_recursive, find_agent_root},
+    signature::{pubkey_for, verify_detached},
 };
 use _state_sync::gateway::tui_types::layer2::CustomAgentInfo;
 
@@ -247,6 +248,20 @@ impl CustomAgentManager {
             return Err(anyhow!("repository/url must not be empty"));
         }
 
+        // Tiered policy (PLAN §11.3): local agents are exempt; every public
+        // third-party subscription must come from a trusted source and, when
+        // `verify_signature` is enabled, carry a valid signature over its
+        // agent.toml.
+        let settings = Self::load_subscriptions()?.settings;
+        let owner = repo.split('/').next().unwrap_or("").to_string();
+        if !settings.trusted_sources.iter().any(|s| s == &owner) {
+            return Err(anyhow!(
+                "source `{}` is not in trusted_sources: {:?}",
+                owner,
+                settings.trusted_sources
+            ));
+        }
+
         let agent_name = repo.split('/').next_back().unwrap_or("unknown").to_string();
         Self::validate_agent_name(&agent_name)?;
         let repo_url = match subscription_source {
@@ -264,6 +279,31 @@ impl CustomAgentManager {
 
         let agent_root = find_agent_root(&tmp_dir, &agent_name)?;
         let manifest = load_manifest_from_dir(&agent_root)?;
+
+        if settings.verify_signature {
+            let pubkey = pubkey_for(&owner).ok_or_else(|| {
+                anyhow!(
+                    "no registered signing key for trusted source `{}`; cannot verify agent",
+                    owner
+                )
+            })?;
+            let sig_path = agent_root.join("agent.toml.sig");
+            let sig_b64 = fs::read_to_string(&sig_path).with_context(|| {
+                format!(
+                    "missing agent.toml.sig for source `{}` (required when verify_signature=true)",
+                    owner
+                )
+            })?;
+            let manifest_bytes = fs::read(agent_root.join("agent.toml"))
+                .context("failed to read agent.toml for signature check")?;
+            if let Err(e) = verify_detached(&manifest_bytes, sig_b64.trim(), &pubkey) {
+                let _ = fs::remove_dir_all(&tmp_dir);
+                return Err(e.context(format!(
+                    "signature verification failed for source `{}`",
+                    owner
+                )));
+            }
+        }
 
         if manifest.agent.layer != 3 {
             if let Err(e) = fs::remove_dir_all(&tmp_dir) {

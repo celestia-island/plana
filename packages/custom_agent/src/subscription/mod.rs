@@ -1,5 +1,6 @@
 mod events;
 mod manager;
+mod signature;
 
 use serde::{Deserialize, Serialize};
 
