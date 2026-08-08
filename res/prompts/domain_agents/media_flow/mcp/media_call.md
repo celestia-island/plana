@@ -28,6 +28,6 @@ Invokes one of the chest `media.*` RPCs directly:
 ```json
 {
   "method": "media.gen_image",
-  "payload": { "prompt": "high-pressure hydrogen pump, PBR", "model": "cogview" }
+  "payload": { "prompt": "high-pressure process pump, PBR", "model": "cogview" }
 }
 ```
