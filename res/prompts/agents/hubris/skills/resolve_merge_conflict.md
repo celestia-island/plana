@@ -49,7 +49,7 @@ You will receive a JSON object describing the conflicts:
     }
   ],
   "parent_session": "demiurge",
-  "workspace_uri": "local:///mnt/sdb1/project"
+  "workspace_uri": "local:///opt/project"
 }
 ```
 

@@ -282,8 +282,8 @@ mod tests {
     fn test_render_system_context_with_workspace() -> Result<()> {
         let svc = PromptTemplateService::new()?;
         let result =
-            svc.render_system_context("en", "alice", "UTC", Some("local:///mnt/sdb1/entelecheia"));
-        assert!(result.contains("local:///mnt/sdb1/entelecheia"));
+            svc.render_system_context("en", "alice", "UTC", Some("local:///opt/entelecheia"));
+        assert!(result.contains("local:///opt/entelecheia"));
         assert!(result.contains("Workspace"));
         Ok(())
     }
