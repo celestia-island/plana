@@ -18,7 +18,7 @@ use super::{
     },
     SubscriptionEntry, SubscriptionSource,
     events::{clone_repository, copy_dir_recursive, find_agent_root},
-    signature::{pubkey_for, verify_detached},
+    signature::{pubkey_for, subscription_owner, verify_agent_package},
 };
 use _state_sync::gateway::tui_types::layer2::CustomAgentInfo;
 
@@ -250,10 +250,10 @@ impl CustomAgentManager {
 
         // Tiered policy (PLAN §11.3): local agents are exempt; every public
         // third-party subscription must come from a trusted source and, when
-        // `verify_signature` is enabled, carry a valid signature over its
-        // agent.toml.
+        // `verify_signature` is enabled, carry a valid package signature
+        // (`agent.sig` over the whole file tree).
         let settings = Self::load_subscriptions()?.settings;
-        let owner = repo.split('/').next().unwrap_or("").to_string();
+        let owner = subscription_owner(&repo);
         if !settings.trusted_sources.iter().any(|s| s == &owner) {
             return Err(anyhow!(
                 "source `{}` is not in trusted_sources: {:?}",
@@ -287,19 +287,10 @@ impl CustomAgentManager {
                     owner
                 )
             })?;
-            let sig_path = agent_root.join("agent.toml.sig");
-            let sig_b64 = fs::read_to_string(&sig_path).with_context(|| {
-                format!(
-                    "missing agent.toml.sig for source `{}` (required when verify_signature=true)",
-                    owner
-                )
-            })?;
-            let manifest_bytes = fs::read(agent_root.join("agent.toml"))
-                .context("failed to read agent.toml for signature check")?;
-            if let Err(e) = verify_detached(&manifest_bytes, sig_b64.trim(), &pubkey) {
+            if let Err(e) = verify_agent_package(&agent_root, &pubkey) {
                 let _ = fs::remove_dir_all(&tmp_dir);
                 return Err(e.context(format!(
-                    "signature verification failed for source `{}`",
+                    "package signature verification failed for source `{}`",
                     owner
                 )));
             }
