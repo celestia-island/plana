@@ -33,7 +33,7 @@ Run a fully automated code review combining static analysis, error-handling audi
 
 ## IMPORTANT: Host Path Convention
 
-Use **host paths** (e.g. `/mnt/sdb1/entelecheia`), NOT container paths (`/workspace`).
+Use **host paths** (e.g. `/opt/entelecheia`), NOT container paths (`/workspace`).
 
 ## SoP
 
@@ -42,7 +42,7 @@ Use **host paths** (e.g. `/mnt/sdb1/entelecheia`), NOT container paths (`/worksp
 Run `cargo clippy` with all warnings:
 
 ```text
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /mnt/sdb1/entelecheia && cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -500', timeout: 180 }); const out = r.data.stdout || r.data.stderr || ''; const findings = []; for (const line of out.split('\\n')) { try { const m = JSON.parse(line); if (m.reason === 'compiler-message' && m.message && m.message.level !== 'note') { const rendered = m.message.rendered || ''; if (rendered.includes('missing documentation')) continue; findings.push({ level: m.message.level, code: m.message.code?.code || '', msg: rendered.split('\\n')[0], file: m.message.spans?.[0]?.file_name, line: m.message.spans?.[0]?.line_start }); } } catch {} } write_to_var({ var_name: 'clippy', content: JSON.stringify(findings) }); console.log('Clippy:', findings.length, 'findings');" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -500', timeout: 180 }); const out = r.data.stdout || r.data.stderr || ''; const findings = []; for (const line of out.split('\\n')) { try { const m = JSON.parse(line); if (m.reason === 'compiler-message' && m.message && m.message.level !== 'note') { const rendered = m.message.rendered || ''; if (rendered.includes('missing documentation')) continue; findings.push({ level: m.message.level, code: m.message.code?.code || '', msg: rendered.split('\\n')[0], file: m.message.spans?.[0]?.file_name, line: m.message.spans?.[0]?.line_start }); } } catch {} } write_to_var({ var_name: 'clippy', content: JSON.stringify(findings) }); console.log('Clippy:', findings.length, 'findings');" })
 ```
 
 ### Step 2: ERROR-HANDLING PASS
@@ -50,7 +50,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Audit `.unwrap()`, `.expect()`, `panic!()` in production code:
 
 ```text
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /mnt/sdb1/entelecheia && rg \"\\\\.unwrap\\\\(\\\\)|\\\\.expect\\\\(|panic!|todo!\" --type rust -c 2>/dev/null | grep -v \"/tests/\" | sort -t: -k2 -rn | head -20', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && rg \"\\\\.unwrap\\\\(\\\\)|\\\\.expect\\\\(|panic!|todo!\" --type rust -c 2>/dev/null | grep -v \"/tests/\" | sort -t: -k2 -rn | head -20', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 ### Step 3: FILE SIZE PASS
@@ -58,7 +58,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Find oversized files:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /mnt/sdb1/entelecheia && find packages -name \"*.rs\" -exec wc -l {} + 2>/dev/null | sort -rn | head -15', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && find packages -name \"*.rs\" -exec wc -l {} + 2>/dev/null | sort -rn | head -15', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 ### Step 4: CONSOLIDATE & REPORT

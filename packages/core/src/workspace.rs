@@ -496,8 +496,8 @@ mod tests {
 
     #[test]
     fn test_local_to_uri() -> Result<()> {
-        let id = WorkspaceIdentity::local("/mnt/sdb1/entelecheia");
-        assert_eq!(id.to_uri(), "local:///mnt/sdb1/entelecheia");
+        let id = WorkspaceIdentity::local("/opt/entelecheia");
+        assert_eq!(id.to_uri(), "local:///opt/entelecheia");
         Ok(())
     }
 
@@ -538,7 +538,7 @@ mod tests {
 
     #[test]
     fn test_roundtrip_local() -> Result<()> {
-        let original = WorkspaceIdentity::local("/mnt/sdb1/entelecheia");
+        let original = WorkspaceIdentity::local("/opt/entelecheia");
         let uri = original.to_uri();
         let parsed = WorkspaceIdentity::from_uri(&uri)?;
         assert_eq!(parsed.path, original.path);
