@@ -4,21 +4,21 @@ export type CustomAgentInfo = { name: string, display_name: string, description:
 
 export type CustomAgentListResponseParams = { agents: Array<CustomAgentInfo>, };
 
-export type Layer2AgentInfo = { name: string, description: string, mcp_count: number, skills_count: number, languages: Array<string>, enabled: boolean, };
+export type Layer2AgentInfo = { name: string, description: string, tool_count: number, skills_count: number, languages: Array<string>, enabled: boolean, };
 
 export type Layer2AgentListResponseParams = { agents: Array<Layer2AgentInfo>, };
 
-export type Layer2AgentMcpResponseParams = { agent_name: string, tools: Array<Layer2McpToolInfo>, };
-
 export type Layer2AgentSkillsResponseParams = { agent_name: string, skills: Array<Layer2SkillInfo>, };
 
-export type Layer2McpPromptResponseParams = { agent_name: string, tool: string, lang: string, content: string, name: string, };
-
-export type Layer2McpToolInfo = { name: string, description: string, languages: Array<string>, references_layer1: Array<string>, references_layer2: Array<string>, related_items: Array<string>, referenced_by_items: Array<string>, };
+export type Layer2AgentToolResponseParams = { agent_name: string, tools: Array<Layer2ToolInfo>, };
 
 export type Layer2SkillInfo = { name: string, description: string, languages: Array<string>, references_layer1: Array<string>, references_layer2: Array<string>, related_items: Array<string>, referenced_by_items: Array<string>, };
 
 export type Layer2SkillPromptResponseParams = { agent_name: string, skill: string, lang: string, content: string, name: string, };
+
+export type Layer2ToolInfo = { name: string, description: string, languages: Array<string>, references_layer1: Array<string>, references_layer2: Array<string>, related_items: Array<string>, referenced_by_items: Array<string>, };
+
+export type Layer2ToolPromptResponseParams = { agent_name: string, tool: string, lang: string, content: string, name: string, };
 
 export type SubscribeCustomAgentResponseParams = { success: boolean, error?: string, agent?: CustomAgentInfo, skills: Array<string>, permissions: Array<string>, };
 

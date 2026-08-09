@@ -5,7 +5,7 @@ import {
   registerModelCatalog,
   splitModelId,
 } from "../src/components/PlanaModelCatalog";
-import { parseMcpCallText } from "../src/components/PlanaMcpToolBlock";
+import { parseToolCallText } from "../src/components/PlanaToolBlock";
 
 describe("formatBytes", () => {
   it("formats bytes verbatim", () => {
@@ -84,20 +84,20 @@ describe("getModelMeta / registerModelCatalog", () => {
   });
 });
 
-describe("parseMcpCallText", () => {
+describe("parseToolCallText", () => {
   it("parses a quoted-name args call", () => {
-    const parsed = parseMcpCallText('"web_search", {"query": "celestia", "limit": 5}');
+    const parsed = parseToolCallText('"web_search", {"query": "celestia", "limit": 5}');
     expect(parsed).not.toBeNull();
     expect(parsed?.toolName).toBe("web_search");
     expect(parsed?.argsObj).toEqual({ query: "celestia", limit: 5 });
   });
   it("keeps unparseable args without throwing", () => {
-    const parsed = parseMcpCallText('"browse", {broken json}');
+    const parsed = parseToolCallText('"browse", {broken json}');
     expect(parsed?.toolName).toBe("browse");
     expect(parsed?.argsObj).toBeNull();
   });
   it("returns null for non-matching text", () => {
-    expect(parseMcpCallText("plain text")).toBeNull();
-    expect(parseMcpCallText("")).toBeNull();
+    expect(parseToolCallText("plain text")).toBeNull();
+    expect(parseToolCallText("")).toBeNull();
   });
 });

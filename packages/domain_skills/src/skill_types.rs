@@ -63,7 +63,7 @@ pub struct Skill {
     pub description: std::collections::HashMap<String, String>,
     /// Agent type
     pub agent_type: Agent,
-    /// List of required MCP tools
+    /// List of required tools
     pub required_tools: Vec<String>,
     /// Skill version
     pub version: String,

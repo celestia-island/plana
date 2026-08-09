@@ -60,14 +60,14 @@ impl TimelineGroupData {
     /// Pipeline:
     /// ```mermaid
     /// flowchart LR
-    ///   S["segments"] --> F["filter MCP-only"]
+    ///   S["segments"] --> F["filter tool-only"]
     ///   F --> P["pair Call+Result by (call_id, tool_name) at i+1"]
     ///   P --> D["dedup_tool_blocks_by_content()"]
     ///   D --> O["downgrade_orphaned_pending_tool()"]
     ///   O --> OUT["Vec&lt;ToolBlockData&gt;"]
     /// ```
     ///
-    /// Note: MCP-only filtering means non-adjacent synthetic results
+    /// Note: tool-only filtering means non-adjacent synthetic results
     /// (appended at end by `close_pending_tool_calls`) become adjacent
     /// here, so Call+Result pairing works correctly even when Text
     /// segments originally separated them in the full stream.

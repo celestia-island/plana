@@ -2,9 +2,9 @@ import { computed, defineComponent, onMounted, ref, watch, type PropType } from 
 import { ChevronDown, ChevronRight } from "lucide-vue-next";
 import { HDivider, mergeMessages, useClipboard, useI18n } from "@celestia-island/hikari";
 
-import type { PMcpToolCallStatus } from "./PlanaChatTypes";
+import type { PToolCallStatus } from "./PlanaChatTypes";
 import { formatTokenCount } from "../utils/format";
-import "./PlanaMcpToolBlock.scss";
+import "./PlanaToolBlock.scss";
 
 import enLocale from "../i18n/locales/en/chat.json";
 import zhsLocale from "../i18n/locales/zh-Hans/chat.json";
@@ -18,7 +18,7 @@ import esLocale from "../i18n/locales/es/chat.json";
 import frLocale from "../i18n/locales/fr/chat.json";
 import ptLocale from "../i18n/locales/pt/chat.json";
 
-export interface PParsedMcpCall {
+export interface PParsedToolCall {
   toolName: string;
   argsJson: string;
   argsObj: Record<string, unknown> | null;
@@ -28,7 +28,7 @@ export interface PParsedMcpCall {
  * Parse a chest-style tool call text of the form `"toolName", {...args}`
  * into its parts. Returns null when the text does not match that shape.
  */
-export function parseMcpCallText(callText: string): PParsedMcpCall | null {
+export function parseToolCallText(callText: string): PParsedToolCall | null {
   const m = callText.match(/^"(\w+)"\s*,\s*(\{[\s\S]*\})\s*$/);
   if (!m) return null;
   try {
@@ -41,7 +41,7 @@ export function parseMcpCallText(callText: string): PParsedMcpCall | null {
 }
 
 /** Block variant — mirrors chest's isExec / isWriteToVar toggles. */
-export type PMcpToolBlockVariant = "default" | "exec" | "write_to_var";
+export type PToolBlockVariant = "default" | "exec" | "write_to_var";
 
 function tryParseJson(text: string): unknown | null {
   try {
@@ -58,7 +58,7 @@ function tryParseJson(text: string): unknown | null {
  * `"toolName", {"code": "..."}` or a bare JSON object holding `code`.
  */
 export function extractExecCode(callText: string): string | null {
-  const parsed = parseMcpCallText(callText);
+  const parsed = parseToolCallText(callText);
   if (parsed?.argsObj && "code" in parsed.argsObj) {
     return String(parsed.argsObj.code);
   }
@@ -232,7 +232,7 @@ function initialExpandedSet(root: PJsonNode): Set<number> {
 }
 
 /**
- * PMcpToolBlock — collapsible tool call / result block.
+ * PToolBlock — collapsible tool call / result block.
  *
  * Renders a tool call header (title + status badge), the call arguments
  * and the result, plus an estimated token/duration footer. Ports chest's
@@ -245,18 +245,18 @@ function initialExpandedSet(root: PJsonNode): Set<number> {
  * - `jsonTree` — renders JSON results as an interactive expandable tree
  *   (default on, matching chest).
  */
-export const PMcpToolBlock = defineComponent({
-  name: "PlanaMcpToolBlock",
+export const PToolBlock = defineComponent({
+  name: "PlanaToolBlock",
   props: {
     toolName: { type: String, required: true },
     agentType: { type: String, default: "" },
-    status: { type: String as PropType<PMcpToolCallStatus>, required: true },
+    status: { type: String as PropType<PToolCallStatus>, required: true },
     callText: { type: String, default: "" },
     resultText: { type: String, default: "" },
     durationMs: { type: Number, default: undefined },
     defaultExpanded: { type: Boolean, default: true },
     collapsible: { type: Boolean, default: true },
-    variant: { type: String as PropType<PMcpToolBlockVariant>, default: "default" },
+    variant: { type: String as PropType<PToolBlockVariant>, default: "default" },
     varName: { type: String, default: "" },
     highlightCode: { type: Boolean, default: false },
     jsonTree: { type: Boolean, default: true },
@@ -286,9 +286,9 @@ export const PMcpToolBlock = defineComponent({
     });
 
     const displayTitle = computed(() => {
-      if (props.variant === "exec") return t("plana::mcp.exec", "Exec");
+      if (props.variant === "exec") return t("plana::tools.exec", "Exec");
       if (props.variant === "write_to_var") {
-        const base = t("plana::mcp.writeToVar", "Write to var");
+        const base = t("plana::tools.writeToVar", "Write to var");
         return props.varName ? `${base}: ${props.varName}` : base;
       }
       return props.agentType ? `${props.agentType} :: ${props.toolName}` : props.toolName;
@@ -296,10 +296,10 @@ export const PMcpToolBlock = defineComponent({
 
     const statusLabel = computed(() => {
       switch (props.status) {
-        case "pending": return t("plana::mcp.pending", "Pending");
-        case "running": return t("plana::mcp.running", "Running");
-        case "done": return t("plana::mcp.done", "Done");
-        case "error": return t("plana::mcp.error", "Error");
+        case "pending": return t("plana::tools.pending", "Pending");
+        case "running": return t("plana::tools.running", "Running");
+        case "done": return t("plana::tools.done", "Done");
+        case "error": return t("plana::tools.error", "Error");
       }
     });
 
@@ -307,7 +307,7 @@ export const PMcpToolBlock = defineComponent({
     const resultTokens = computed(() => Math.ceil((props.resultText?.length ?? 0) / 4));
 
     const blockClass = computed(() => [
-      "s-mcp-block",
+      "s-tool-block",
       props.status === "error" ? "is-error" : "",
       props.status === "running" ? "is-running" : "",
       props.status === "done" ? "is-success" : "",
@@ -342,7 +342,7 @@ export const PMcpToolBlock = defineComponent({
     const wtvResultText = computed(() => {
       if (props.variant !== "write_to_var" || !props.resultText) return null;
       const bytes = new TextEncoder().encode(props.resultText).length;
-      return t("plana::mcp.varWritten", "Variable written ({bytes} bytes)").replace("{bytes}", String(bytes));
+      return t("plana::tools.varWritten", "Variable written ({bytes} bytes)").replace("{bytes}", String(bytes));
     });
 
     /* ── highlighted plain call block ────────────────────────────── */
@@ -498,39 +498,39 @@ export const PMcpToolBlock = defineComponent({
 
     return () => (
       <div class={blockClass.value}>
-        <div class="s-mcp-header" onClick={toggleExpand}>
-          <span class="s-mcp-header-title" onClick={(e) => { e.stopPropagation(); copyTitle(); }}>{displayTitle.value}</span>
-          <span class={`s-mcp-header-badge is-${props.status}`}>{statusLabel.value}</span>
+        <div class="s-tool-header" onClick={toggleExpand}>
+          <span class="s-tool-header-title" onClick={(e) => { e.stopPropagation(); copyTitle(); }}>{displayTitle.value}</span>
+          <span class={`s-tool-header-badge is-${props.status}`}>{statusLabel.value}</span>
           {props.collapsible && (
-            <span class="s-mcp-header-expand">
+            <span class="s-tool-header-expand">
               {expanded.value ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             </span>
           )}
         </div>
 
         {expanded.value && (
-          <div class="s-mcp-body">
+          <div class="s-tool-body">
             {props.status === "pending" && (
-              <div class="s-mcp-params">
-                <div class="s-mcp-param-line is-muted-italic">{t("plana::mcp.waitingArgs", "Waiting for arguments…")}</div>
+              <div class="s-tool-params">
+                <div class="s-tool-param-line is-muted-italic">{t("plana::tools.waitingArgs", "Waiting for arguments…")}</div>
               </div>
             )}
 
             {props.status === "running" && !props.callText && (
-              <div class="s-mcp-params">
-                <div class="s-mcp-param-line is-muted-italic" style={{ color: "rgb(var(--color-primary))" }}>
-                  {t("plana::mcp.executing", "Executing…")}
+              <div class="s-tool-params">
+                <div class="s-tool-param-line is-muted-italic" style={{ color: "rgb(var(--color-primary))" }}>
+                  {t("plana::tools.executing", "Executing…")}
                 </div>
               </div>
             )}
 
             {execCodeLines.value && (
-              <div class="s-mcp-code-block hljs" onClick={copyExecCode}>
-                <table class="s-mcp-code-table">
+              <div class="s-tool-code-block hljs" onClick={copyExecCode}>
+                <table class="s-tool-code-table">
                   {execCodeLines.value.map((line, i) => (
                     <tr key={i}>
-                      <td class="s-mcp-code-num"><span>{line.num}</span></td>
-                      <td class="s-mcp-code-content" innerHTML={line.html} />
+                      <td class="s-tool-code-num"><span>{line.num}</span></td>
+                      <td class="s-tool-code-content" innerHTML={line.html} />
                     </tr>
                   ))}
                 </table>
@@ -538,31 +538,31 @@ export const PMcpToolBlock = defineComponent({
             )}
 
             {wtvContent.value && (
-              <div class="s-mcp-nested-block">
+              <div class="s-tool-nested-block">
                 {wtvContent.value.lines.map((line, i) => (
-                  <div key={i} class="s-mcp-param-line">{line}</div>
+                  <div key={i} class="s-tool-param-line">{line}</div>
                 ))}
                 {wtvContent.value.truncated && (
-                  <div class="s-mcp-truncation">... ({wtvContent.value.totalChars} chars)</div>
+                  <div class="s-tool-truncation">... ({wtvContent.value.totalChars} chars)</div>
                 )}
               </div>
             )}
 
             {props.variant === "default" && props.callText && (
               callHighlighted.value ? (
-                <div class="s-mcp-code-block hljs">
-                  <table class="s-mcp-code-table">
+                <div class="s-tool-code-block hljs">
+                  <table class="s-tool-code-table">
                     {callHighlighted.value.map((line, i) => (
                       <tr key={i}>
-                        <td class="s-mcp-code-num"><span>{line.num}</span></td>
-                        <td class="s-mcp-code-content" innerHTML={line.html} />
+                        <td class="s-tool-code-num"><span>{line.num}</span></td>
+                        <td class="s-tool-code-content" innerHTML={line.html} />
                       </tr>
                     ))}
                   </table>
                 </div>
               ) : (
-                <div class="s-mcp-call">
-                  <pre class="s-mcp-code" data-role="call">{props.callText}</pre>
+                <div class="s-tool-call">
+                  <pre class="s-tool-code" data-role="call">{props.callText}</pre>
                 </div>
               )
             )}
@@ -572,8 +572,8 @@ export const PMcpToolBlock = defineComponent({
             )}
 
             {resultJsonRoot.value && (
-              <div class={`s-mcp-result ${props.status === "error" ? "is-error" : ""}`}>
-                <div class="s-mcp-json-tree" onClick={(e) => {
+              <div class={`s-tool-result ${props.status === "error" ? "is-error" : ""}`}>
+                <div class="s-tool-json-tree" onClick={(e) => {
                   const target = e.target as HTMLElement;
                   if (target.closest(".s-jt-row[data-parent]")) return;
                   e.stopPropagation();
@@ -585,18 +585,18 @@ export const PMcpToolBlock = defineComponent({
             )}
 
             {wtvResultText.value && (
-              <div class="s-mcp-result">
-                <div class="s-mcp-result-line">{wtvResultText.value}</div>
+              <div class="s-tool-result">
+                <div class="s-tool-result-line">{wtvResultText.value}</div>
               </div>
             )}
 
             {!wtvResultText.value && resultPlain.value && (
-              <div class={`s-mcp-result ${props.status === "error" ? "is-error" : ""}`}>
+              <div class={`s-tool-result ${props.status === "error" ? "is-error" : ""}`}>
                 {resultPlain.value.lines.map((line, i) => (
-                  <div key={i} class="s-mcp-result-line">{line}</div>
+                  <div key={i} class="s-tool-result-line">{line}</div>
                 ))}
                 {resultPlain.value.truncated && (
-                  <div class="s-mcp-truncation">... ({resultPlain.value.totalChars} chars)</div>
+                  <div class="s-tool-truncation">... ({resultPlain.value.totalChars} chars)</div>
                 )}
               </div>
             )}
@@ -604,22 +604,22 @@ export const PMcpToolBlock = defineComponent({
         )}
 
         {expanded.value && (props.durationMs != null || callTokens.value > 0 || resultTokens.value > 0) && (
-          <div class="s-mcp-footer">
+          <div class="s-tool-footer">
             {callTokens.value > 0 && (
-              <span class="s-mcp-stat">
-                <span class="s-mcp-stat-arrow is-in">↑</span>
-                <span class="s-mcp-stat-value">{formatTokenCount(callTokens.value)}</span>
+              <span class="s-tool-stat">
+                <span class="s-tool-stat-arrow is-in">↑</span>
+                <span class="s-tool-stat-value">{formatTokenCount(callTokens.value)}</span>
               </span>
             )}
             {resultTokens.value > 0 && (
-              <span class="s-mcp-stat">
-                <span class="s-mcp-stat-arrow is-out">↓</span>
-                <span class="s-mcp-stat-value">{formatTokenCount(resultTokens.value)}</span>
+              <span class="s-tool-stat">
+                <span class="s-tool-stat-arrow is-out">↓</span>
+                <span class="s-tool-stat-value">{formatTokenCount(resultTokens.value)}</span>
               </span>
             )}
             {props.durationMs != null && (
-              <span class="s-mcp-stat">
-                <span class="s-mcp-stat-label">{props.durationMs}ms</span>
+              <span class="s-tool-stat">
+                <span class="s-tool-stat-label">{props.durationMs}ms</span>
               </span>
             )}
           </div>
