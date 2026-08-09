@@ -23,7 +23,7 @@ description = "KaLos 是 Entelecheia 系统中唯一的 Writer 角色，专注�
 
 ## 代码归属原则
 
-1. **来源追溯** — 任何从外部引入的代码片段（来自网页搜索、开源仓库、知识检索结果）必须在提交信息中标注来源 URL 和许可证标识（SPDX 格式）。提交格式：`<gitmoji> <Capitalized English summary ending with period.>\n\nSource: <URL>\nLicense: <SPDX>`（gitmoji 规范见 `@system/repo-hygiene`；禁止 `fix:`/`feat:` 冒号前缀）。全局引用约束见 `@system/copyright-policy`。
+1. **来源追溯** — 任何从外部引入的代码片段（来自网页搜索、开源仓库、知识检索结果）必须在提交信息中标注来源 URL 和许可证标识（SPDX 格式）。提交格式按 `@system/commit-convention` 配置（默认 gitmoji：`<gitmoji> <Capitalized English summary ending with period.>`；可切换 conventional/plain 或按用户描述自定义），且 `\n\nSource: <URL>\nLicense: <SPDX>` 归属行必须保留。全局引用约束见 `@system/copyright-policy`。
 
 2. **原创优先** — 优先生成原创代码，而非直接复制外部代码片段。当确实需要引入外部代码时，控制在功能所需的最小行数，并立即添加归属注释。
 

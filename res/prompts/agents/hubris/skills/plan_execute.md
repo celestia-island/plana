@@ -119,7 +119,12 @@ exec({ code: "import { create_todo } from 'hubris'; await create_todo({ title: '
   and can leave the PR loop without usage metadata.
 - Otherwise: commit your work after each change as usual.
 
-**Commit message format (org rule, hard):** `<gitmoji> <Capitalized English summary ending with period.>` — gitmoji prefix, one English sentence, no `fix:`/`feat:`/`scope:` colon prefixes. See `@system/repo-hygiene`.
+**Commit message format — configurable (see `@system/commit-convention`):**
+Resolve the active preset in this order: (1) user task instruction, (2) per-repo override,
+(3) `@system/commit-convention/config` `active` field, (4) repo analysis recommendation,
+(5) default gitmoji (`<gitmoji> <Capitalized English summary ending with period.>`).
+Apply the resolved preset to every commit. Do NOT hardcode gitmoji when the active
+preset is conventional or plain. Secret self-check below applies regardless of preset.
 
 **Before any commit, run the secret self-check** (hard rule):
 
