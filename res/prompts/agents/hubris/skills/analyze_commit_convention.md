@@ -2,6 +2,7 @@
 name = "analyze_commit_convention"
 agent = "hubris"
 kind = "skill"
+description = "Analyze git commit messages against the configured convention presets and suggest corrections."
 
 [[related_tools]]
 agent_name = "hubris"
