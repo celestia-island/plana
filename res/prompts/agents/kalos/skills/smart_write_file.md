@@ -91,5 +91,11 @@ console.log('VERIFIED:', verify?.content?.length, 'bytes');" })
 - **ONE exec call per file** — combine check, write, verify in one call.
 - **Never write** to `.git/`, system directories, or paths outside `/workspace`.
 - **Report actual results** using `__vars` syntax.
+- **SECRET HYGIENE — HARD RULE**: Before writing any file, scan the content for real
+  credentials (passwords, private keys, tokens, API keys), internal IPs (`192.168.x`,
+  `10.x`, `172.16-31.x`), and internal paths (`/mnt/...`). If found, **refuse to write**
+  and replace with environment variable references or placeholders (see
+  `@system/repo-hygiene`). Example IPs must use RFC 5737 documentation addresses.
 
 > IEPL-first execution rules: @system/iepl-first
+> Repository hygiene hard rules: @system/repo-hygiene

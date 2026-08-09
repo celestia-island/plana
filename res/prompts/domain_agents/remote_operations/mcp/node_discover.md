@@ -21,7 +21,7 @@ Scans the network to discover available nodes within a specified subnet or addre
 
 ## Parameters
 
-- **subnet** (string, optional): Network subnet to scan in CIDR notation (e.g. `"192.168.1.0/24"`). Default: local subnet of the host
+- **subnet** (string, optional): Network subnet to scan in CIDR notation (e.g. `"198.51.100.0/24"`). Default: local subnet of the host
 - **`port_range`** (string, optional): Range of ports to scan on each host. Format: `"start-end"` (e.g. `"22-80"`). Default: `"22"`
 - **timeout** (number, optional): Maximum time in seconds to wait for a response from each host before moving on. Default: `5`
 
@@ -38,17 +38,17 @@ Node discovery completed
 found: 3 nodes
 
 node_id: "node-001"
-address: "192.168.1.10"
+address: "198.51.100.10"
 open_ports: [22, 80, 443]
 status: "reachable"
 
 node_id: "node-002"
-address: "192.168.1.20"
+address: "198.51.100.20"
 open_ports: [22]
 status: "reachable"
 
 node_id: "node-003"
-address: "192.168.1.30"
+address: "198.51.100.30"
 open_ports: [22, 8080]
 status: "reachable"
 ```
@@ -59,7 +59,7 @@ status: "reachable"
 Node discovery failed
 
 Error: Invalid subnet format
-Message: Expected CIDR notation (e.g. "192.168.1.0/24"), got "192.168.1".
+Message: Expected CIDR notation (e.g. "198.51.100.0/24"), got "198.51.100".
 ```
 
 ## Examples
@@ -72,7 +72,7 @@ Message: Expected CIDR notation (e.g. "192.168.1.0/24"), got "192.168.1".
 ### Example 2: Targeted subnet with custom port range
 
 ```text
-subnet: "10.0.0.0/24"
+subnet: "192.0.2.0/24"
 port_range: "22-443"
 timeout: 10
 ```

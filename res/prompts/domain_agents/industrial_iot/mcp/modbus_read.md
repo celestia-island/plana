@@ -15,7 +15,7 @@ ru = "Считать удерживающие регистры из устрой
 
 # modbus_read
 
-Reads one or more holding registers from a Modbus RTU or TCP device. Specify the endpoint URL or serial port, the starting register address, and the number of consecutive registers to read. Returns the raw register values as an array of unsigned 16-bit integers. Supports both Modbus TCP (e.g., `tcp://192.168.1.100:502`) and RTU (e.g., `/dev/ttyUSB0`) endpoints.
+Reads one or more holding registers from a Modbus RTU or TCP device. Specify the endpoint URL or serial port, the starting register address, and the number of consecutive registers to read. Returns the raw register values as an array of unsigned 16-bit integers. Supports both Modbus TCP (e.g., `tcp://198.51.100.100:502`) and RTU (e.g., `/dev/ttyUSB0`) endpoints.
 
 ## Parameters
 
@@ -39,7 +39,7 @@ Returns `{ ok: false, data: null, error: string }`.
 ### Example 1: Read a single register from a TCP device
 
 ```text
-endpoint: "tcp://192.168.1.100:502"
+endpoint: "tcp://198.51.100.100:502"
 register: 100
 ```
 
@@ -47,7 +47,7 @@ Returns:
 
 ```json
 {
-  "endpoint": "tcp://192.168.1.100:502",
+  "endpoint": "tcp://198.51.100.100:502",
   "register": 100,
   "values": [4231],
   "count": 1,
@@ -79,7 +79,7 @@ Returns:
 ### Example 3: Device not reachable
 
 ```text
-endpoint: "tcp://192.168.1.200:502"
+endpoint: "tcp://198.51.100.200:502"
 register: 0
 ```
 
@@ -87,7 +87,7 @@ Returns:
 
 ```json
 {
-  "error": "Connection refused: tcp://192.168.1.200:502"
+  "error": "Connection refused: tcp://198.51.100.200:502"
 }
 ```
 

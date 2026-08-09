@@ -37,7 +37,7 @@ Establishes a connection to a remote node identified by its node ID and network 
 Connected to node successfully
 
 node_id: "node-001"
-address: "192.168.1.50"
+address: "198.51.100.50"
 port: 22
 status: "connected"
 os: "Ubuntu 22.04"
@@ -51,7 +51,7 @@ connected_at: "2024-01-15T10:30:00.000Z"
 Connection failed
 
 node_id: "node-001"
-address: "192.168.1.50"
+address: "198.51.100.50"
 port: 22
 Error: Connection refused
 Message: No service is listening on the specified address and port.
@@ -63,14 +63,14 @@ Message: No service is listening on the specified address and port.
 
 ```text
 node_id: "node-001"
-address: "192.168.1.50"
+address: "198.51.100.50"
 ```
 
 ### Example 2: Custom port with credentials
 
 ```text
 node_id: "node-002"
-address: "10.0.0.100"
+address: "192.0.2.100"
 port: 2222
 credentials: r#"{username: admin, key_path: /home/user/.ssh/id_rsa}"#
 ```

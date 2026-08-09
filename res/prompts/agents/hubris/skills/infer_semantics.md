@@ -87,7 +87,7 @@ For each inferred field, propose initial thresholds:
 ```json
 {
   "protocol": "s7comm",
-  "station_id": "192.168.1.10",
+  "station_id": "198.51.100.10",
   "fields": [
     {
       "address": "DB1.DBD0",
