@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct AgentRegistryEntry {
     pub agent_type: String,
     pub status: String,
@@ -12,13 +12,13 @@ pub struct AgentRegistryEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct AgentRegistryListResult {
     pub agents: Vec<AgentRegistryEntry>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct McpToolDetail {
     pub name: String,
     pub description: String,
@@ -27,7 +27,7 @@ pub struct McpToolDetail {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct SkillDetail {
     pub name: String,
     pub description: String,
@@ -35,7 +35,7 @@ pub struct SkillDetail {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct AgentRegistryGetResult {
     pub agent_type: String,
     pub mcp_tools: Vec<McpToolDetail>,
@@ -43,7 +43,7 @@ pub struct AgentRegistryGetResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct DataStoreSaveResult {
     pub key: String,
     pub namespace: String,
@@ -54,7 +54,7 @@ pub struct DataStoreSaveResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct DataStoreLoadResult {
     pub key: String,
     pub namespace: String,
@@ -65,7 +65,7 @@ pub struct DataStoreLoadResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct ContextPrepareResult {
     pub episode_count: usize,
     pub entity_count: usize,
@@ -74,7 +74,7 @@ pub struct ContextPrepareResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryStoreResult {
     pub node_id: String,
     pub node_type: String,
@@ -82,7 +82,7 @@ pub struct MemoryStoreResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryQueryItem {
     pub node_type: String,
     pub text: String,
@@ -90,7 +90,7 @@ pub struct MemoryQueryItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryQueryResult {
     pub query: String,
     pub total: usize,
@@ -98,14 +98,14 @@ pub struct MemoryQueryResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryConsolidateResult {
     pub episode_id: String,
     pub linked_count: usize,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemorySubgraphEdge {
     pub source_id: String,
     pub target_id: String,
@@ -116,7 +116,7 @@ pub struct MemorySubgraphEdge {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryNodeFull {
     pub id: String,
     pub node_type: String,
@@ -130,7 +130,7 @@ pub struct MemoryNodeFull {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemorySubgraphResult {
     pub query: String,
     pub total_nodes: usize,
@@ -142,7 +142,7 @@ pub struct MemorySubgraphResult {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryStoreParams {
     pub text: String,
     pub node_type: String,
@@ -153,7 +153,7 @@ pub struct MemoryStoreParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryQueryParams {
     pub query: String,
     pub limit: Option<u64>,
@@ -163,21 +163,21 @@ pub struct MemoryQueryParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct MemoryConsolidateParams {
     pub episode_focus: String,
     pub node_ids: Vec<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct ContextPrepareParams {
     pub query: String,
     pub max_nodes: Option<u64>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct TimeseriesQueryParams {
     pub metric: String,
     pub start_time: Option<i64>,
@@ -188,7 +188,7 @@ pub struct TimeseriesQueryParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct DataQualityCheckParams {
     pub metric: String,
     pub expected_interval_ms: Option<u64>,
@@ -197,7 +197,7 @@ pub struct DataQualityCheckParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct ToolSchemaGetParams {
     pub agent_type: String,
     pub tool_name: String,
@@ -206,7 +206,7 @@ pub struct ToolSchemaGetParams {
 // ── Tool result structs for timeseries / registry tools ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct ToolSchemaGetResult {
     pub agent_type: String,
     pub tool_name: String,
@@ -214,7 +214,7 @@ pub struct ToolSchemaGetResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct TimeseriesPointResult {
     pub timestamp: i64,
     pub value: f64,
@@ -222,7 +222,7 @@ pub struct TimeseriesPointResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct QueryStats {
     pub min: f64,
     pub max: f64,
@@ -234,7 +234,7 @@ pub struct QueryStats {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct TimeseriesQueryResult {
     pub metric: String,
     pub points: Vec<TimeseriesPointResult>,
@@ -243,7 +243,7 @@ pub struct TimeseriesQueryResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct GapInfo {
     pub start_time: i64,
     pub end_time: i64,
@@ -251,7 +251,7 @@ pub struct GapInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/philia.ts")]
+#[ts(export, export_to = "tools/philia.ts")]
 pub struct QualityReport {
     pub metric: String,
     pub total_points: usize,

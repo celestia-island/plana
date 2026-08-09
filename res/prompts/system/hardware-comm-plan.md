@@ -209,11 +209,11 @@ Before executing `modbus_write`:
 | **3** | Export from lib.rs | `security_policy/src/lib.rs` (edit) |
 | **4** | Hubris alarm_response skill | `hubris/skills/alarm_response.md` (new) |
 | **5** | OreXisState alarm store integration | `orexis/src/state.rs` (edit) |
-| **6** | OreXis alarm MCP tools | `orexis/src/mcp/tools/alarm_tools.rs` (new) |
+| **6** | OreXis alarm MCP tools | `orexis/src/tools/alarm_tools.rs` (new) |
 | **7** | TimeSeriesAdapter trait | `storage/src/timeseries.rs` (new) |
 | **8** | JSONL backend | `storage/src/jsonl_timeseries.rs` (new) |
 | **9** | Register safety classification | `skemma/src/register_safety.rs` (new) |
-| **10** | Write gate in modbus_write | `skemma/src/mcp/tools/modbus_write.rs` (edit) |
+| **10** | Write gate in modbus_write | `skemma/src/tools/modbus_write.rs` (edit) |
 
 ---
 

@@ -121,7 +121,7 @@ const placeholder = await secret_create({
 Per MCP tool, in the tool's TOML definition:
 
 ```toml
-[mcp.github_push]
+[tool.github_push]
 can_handle_secrets = true
 rbac_secret_level = "agent_review"
 allowed_secret_metadata = { provider = ["github", "gitlab"] }
@@ -169,8 +169,8 @@ When `rbac_secret_level = "agent_review"` and the caller passes scope check.
   "secret_metadata": { "provider": "github", "key_type": "deploy_key" },
   "requesting_agent": "hubris",
   "requesting_skill": "plan_execute",
-  "mcp_tool": "github_push",
-  "mcp_tool_description": "Push commits to a GitHub repository",
+  "tool": "github_push",
+  "tool_description": "Push commits to a GitHub repository",
   "context_snapshot": {
     "current_task": "Fix memory leak in worker pool",
     "current_phase": "Phase 3 — deploy fix to production",
@@ -219,8 +219,8 @@ Orexis evaluates:
 | Event | Fields |
 | --- | --- |
 | `secret.create` | timestamp, agent, skill, secret_id, summary, scope, ttl |
-| `secret.resolve` | timestamp, agent, skill, mcp_tool, secret_id, rbac_level, decision, reviewer (orexis/human) |
-| `secret.deny` | timestamp, agent, skill, mcp_tool, secret_id, deny_reason |
+| `secret.resolve` | timestamp, agent, skill, tool, secret_id, rbac_level, decision, reviewer (orexis/human) |
+| `secret.deny` | timestamp, agent, skill, tool, secret_id, deny_reason |
 | `secret.revoke` | timestamp, agent, reason |
 | `secret.expire` | timestamp, secret_id, reason (ttl/container_exit) |
 

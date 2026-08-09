@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeInfo {
     pub id: String,
     pub name: String,
@@ -8,7 +8,7 @@ pub struct NodeInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeDiscoverResult {
     pub host: String,
     pub port: u16,
@@ -19,7 +19,7 @@ pub struct NodeDiscoverResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeConnectResult {
     pub node_id: String,
     pub node_name: String,
@@ -29,7 +29,7 @@ pub struct NodeConnectResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeExecuteResult {
     pub node_id: String,
     pub node_name: String,
@@ -44,7 +44,7 @@ pub struct NodeExecuteResult {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeDiscoverParams {
     pub auto_register: Option<bool>,
     pub host: Option<String>,
@@ -52,20 +52,20 @@ pub struct NodeDiscoverParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeConnectParams {
     pub node_id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeExecuteParams {
     pub node_id: String,
     pub command: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct ProtocolProbeParams {
     pub host: String,
     pub ports: Option<Vec<u64>>,
@@ -73,7 +73,7 @@ pub struct ProtocolProbeParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct DeviceSelfTestParams {
     pub host: String,
     pub device_id: Option<String>,
@@ -85,11 +85,11 @@ pub struct DeviceSelfTestParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct EmptyParams {}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeTerminalOpenParams {
     pub node_id: String,
     pub cols: Option<u64>,
@@ -99,14 +99,14 @@ pub struct NodeTerminalOpenParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeTerminalWriteParams {
     pub session_id: String,
     pub data: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeTerminalResizeParams {
     pub session_id: String,
     pub cols: u64,
@@ -114,27 +114,27 @@ pub struct NodeTerminalResizeParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeTerminalCloseParams {
     pub session_id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeFileListParams {
     pub node_id: String,
     pub path: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeFileDownloadParams {
     pub node_id: String,
     pub remote_path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeFileUploadParams {
     pub node_id: String,
     pub remote_path: String,
@@ -143,7 +143,7 @@ pub struct NodeFileUploadParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct NodeScreenOfferParams {
     pub node_id: String,
 }
@@ -151,7 +151,7 @@ pub struct NodeScreenOfferParams {
 // ── Tool result structs (network tools) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct ProtocolProbeResult {
     pub host: String,
     pub port: u16,
@@ -162,7 +162,7 @@ pub struct ProtocolProbeResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct ProtocolProbeResponse {
     pub host: String,
     pub probes: Vec<ProtocolProbeResult>,
@@ -170,7 +170,7 @@ pub struct ProtocolProbeResponse {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct KneeJerkTest {
     pub test_name: String,
     pub protocol: String,
@@ -180,7 +180,7 @@ pub struct KneeJerkTest {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct DeviceRegisterRangeResult {
     pub start: u16,
     pub end: u16,
@@ -190,7 +190,7 @@ pub struct DeviceRegisterRangeResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct AdaptiveProbeResult {
     pub register_range: String,
     pub function_codes_tested: Vec<u8>,
@@ -200,7 +200,7 @@ pub struct AdaptiveProbeResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct DeviceCapability {
     pub protocols: Vec<String>,
     pub register_maps: Vec<DeviceRegisterRangeResult>,
@@ -210,7 +210,7 @@ pub struct DeviceCapability {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct Phase1Result {
     pub tests_run: usize,
     pub tests_passed: usize,
@@ -219,7 +219,7 @@ pub struct Phase1Result {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct Phase2Result {
     pub register_ranges_scanned: usize,
     pub function_codes_probed: Vec<u8>,
@@ -228,7 +228,7 @@ pub struct Phase2Result {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/polemos.ts")]
+#[ts(export, export_to = "tools/polemos.ts")]
 pub struct DeviceSelfTestResponse {
     pub device_id: String,
     pub host: String,

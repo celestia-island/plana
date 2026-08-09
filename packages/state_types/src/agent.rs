@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-use super::mcp::{McpToolInfo, SkillInfo};
+use super::tools::{SkillInfo, ToolInfo};
 use _core::{AgentBadge, AgentId};
 use _domain_agent::AgentKind;
 
@@ -262,7 +262,7 @@ pub struct AgentInfo {
     pub platform: Option<String>,
     #[serde(default)]
     pub platform_version: Option<String>,
-    pub mcp_tools: Vec<McpToolInfo>,
+    pub tools: Vec<ToolInfo>,
     pub skills: Vec<SkillInfo>,
     #[serde(default)]
     pub parent_agent_id: Option<AgentId>,
@@ -284,7 +284,7 @@ pub struct AgentRegisterRequest {
     pub platform: Option<String>,
     #[serde(default)]
     pub platform_version: Option<String>,
-    pub mcp_tools: Vec<McpToolInfo>,
+    pub tools: Vec<ToolInfo>,
     pub skills: Vec<SkillInfo>,
     #[serde(default)]
     pub parent_agent_id: Option<AgentId>,

@@ -92,6 +92,6 @@ pub struct GroupStats {
     pub input_tokens: Option<TokenSource>,
     pub output_tokens: Option<TokenSource>,
     pub duration_secs: Option<f64>,
-    pub mcp_count: usize,
+    pub tool_count: usize,
     pub exchange_count: Option<u32>,
 }

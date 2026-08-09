@@ -1,10 +1,10 @@
 +++
-id = "mcp"
-title = "MCP 工具调用约定"
+id = "tools"
+title = "工具调用约定"
 kind = "reference"
 +++
 
-# MCP Tool Calling Convention
+# Tool Calling Convention
 
 ## The Golden Pattern (MEMORIZE THIS)
 

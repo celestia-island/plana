@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::enums::ConsultationStatus;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct CheckResultItem {
     pub standard: String,
     pub status: String,
@@ -14,7 +14,7 @@ pub struct CheckResultItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct SensitivityRule {
     pub tool: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -25,7 +25,7 @@ pub struct SensitivityRule {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct AskResult {
     pub consultation_id: Uuid,
     pub question: String,
@@ -36,7 +36,7 @@ pub struct AskResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ReplyResult {
     pub consultation_id: Uuid,
     pub answer: String,
@@ -45,7 +45,7 @@ pub struct ReplyResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ReportHumanResult {
     pub report_id: Uuid,
     pub report_type: String,
@@ -57,7 +57,7 @@ pub struct ReportHumanResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct AuditAlignmentResult {
     pub audit_id: Uuid,
     pub target: String,
@@ -68,7 +68,7 @@ pub struct AuditAlignmentResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct AuditLegalityResult {
     pub audit_id: Uuid,
     pub target: String,
@@ -80,7 +80,7 @@ pub struct AuditLegalityResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct AuditFinding {
     pub rule_id: String,
     pub severity: String,
@@ -92,7 +92,7 @@ pub struct AuditFinding {
 // ── Tool parameter structs (for .d.ts API signature generation) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ReportHumanParams {
     pub summary: String,
     pub body: Option<String>,
@@ -101,7 +101,7 @@ pub struct ReportHumanParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct StandardCheckParams {
     pub standard_id: Uuid,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -109,7 +109,7 @@ pub struct StandardCheckParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ComplianceReportParams {
     pub standard_id: Uuid,
     pub check_results: Vec<CheckResultItem>,
@@ -119,7 +119,7 @@ pub struct ComplianceReportParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct AuditAlignmentParams {
     pub target: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -127,7 +127,7 @@ pub struct AuditAlignmentParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct AuditLegalityParams {
     pub target: String,
     pub jurisdiction: Option<String>,
@@ -136,19 +136,19 @@ pub struct AuditLegalityParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct AgentIntegrityParams {
     pub verbose: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct SecurityAuditParams {
     pub deep: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct BlockToolParams {
     pub agent: String,
     pub tool: String,
@@ -156,27 +156,27 @@ pub struct BlockToolParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct UnblockToolParams {
     pub agent: String,
     pub tool: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct SetSecurityPolicyParams {
     pub emergency_lockdown: Option<bool>,
     pub audit_only: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct SetRiskThresholdParams {
     pub level: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct InspectToolCallParams {
     pub agent: String,
     pub tool: String,
@@ -184,11 +184,11 @@ pub struct InspectToolCallParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct SecurityStatusParams {}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct SetNetworkPolicyParams {
     pub allow_hosts: Option<Vec<String>>,
     pub allow_cidrs: Option<Vec<String>>,
@@ -197,11 +197,11 @@ pub struct SetNetworkPolicyParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct SecuritySuggestionsParams {}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ManageSensitivityRulesParams {
     pub action: String,
     pub rules: Option<Vec<SensitivityRule>>,
@@ -210,7 +210,7 @@ pub struct ManageSensitivityRulesParams {
 // ── Tool result structs (compliance) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ComplianceRule {
     pub id: String,
     pub standard: String,
@@ -223,14 +223,14 @@ pub struct ComplianceRule {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct StandardRegisterResult {
     pub standard_id: Uuid,
     pub rules_registered: usize,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct RuleCheckResult {
     pub rule_id: String,
     pub clause: String,
@@ -245,7 +245,7 @@ pub struct RuleCheckResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct StandardCheckResult {
     pub standard_id: Uuid,
     pub total_rules: usize,
@@ -257,7 +257,7 @@ pub struct StandardCheckResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ComplianceSummary {
     pub total_rules: usize,
     pub passed: usize,
@@ -268,7 +268,7 @@ pub struct ComplianceSummary {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ReportDetail {
     pub rule_id: String,
     pub clause: String,
@@ -280,7 +280,7 @@ pub struct ReportDetail {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/orexis.ts")]
+#[ts(export, export_to = "tools/orexis.ts")]
 pub struct ComplianceReportToolResult {
     pub report_id: Uuid,
     pub standard_id: Uuid,

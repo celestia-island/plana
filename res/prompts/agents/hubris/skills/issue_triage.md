@@ -62,7 +62,7 @@ When a new Issue arrives via Webhook or manual search, this skill analyzes its c
 1. **Decision Making** — Assign priority (critical/high/medium/low). Determine affected components and required skill chain.
 1. **Operation Execution** — Create TODO item with `create_todo()`. Set metadata with `binding_id` reference for cross-restart traceability.
 1. **Result Verification** — Confirm TODO created with correct hierarchy and attributes via `list_todo()`.
-1. **Report Generation** — Report triage result via `report()`. Use `write_to_var` for multi-line content, then `exec` to call `report()`. See mcp.md Rule 1.
+1. **Report Generation** — Report triage result via `report()`. Use `write_to_var` for multi-line content, then `exec` to call `report()`. See tools.md Rule 1.
 1. **Knowledge Archiving** — Store triage pattern for future reference.
 
 ## Execution Flow

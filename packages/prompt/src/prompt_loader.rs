@@ -134,7 +134,7 @@ pub struct PromptMetadata {
 #[derive(Debug, Clone, Default, serde::Deserialize)]
 pub struct PromptFeatures {
     #[serde(default)]
-    pub location: Option<_state_sync::mcp::SkillLocation>,
+    pub location: Option<_state_sync::tools::SkillLocation>,
     #[serde(default)]
     pub config: Vec<String>,
     #[serde(default)]
