@@ -16,7 +16,7 @@ ru = "Оркестрация аудита безопасности : делег�
 [[related_tools]]
 name = "security_audit"
 agent = "orexis"
-description = "Core vulnerability scanning, secret detection, and dependency risk analysis"
+description = "Core vulnerability scanning, secret detection, and dependency risk analysis (see the orexis skill for the full 7-step SoP and governance checklist)"
 
 [[related_tools]]
 name = "static_analyze"
@@ -55,6 +55,8 @@ description = "Include security audit as part of full automated review pipeline"
 
 Orchestrates security auditing by delegating core vulnerability scanning to OreXis, then enriching the results with code-level context from static analysis and code review. Produces a consolidated security report with severity-ranked findings, attack vectors, and remediation guidance.
 
+**Vulnerability scanning is delegated to the OreXis `security_audit` skill** (`res/prompts/agents/orexis/skills/security_audit.md`), which defines the canonical 7-step SoP (authorization/scope → threat analysis → tool selection → scan execution → result verification → report generation → knowledge capture), the `deep` parameter convention, and the mandatory governance checklist (credential scan, internal IP check, gitmoji compliance, dead-code/unwired-module check, regression coverage, secret rotation, dependency advisories, least privilege, self-modification safety). This skill focuses on the orchestration layer only and does not duplicate that SoP.
+
 ## Preconditions
 
 - Target scope is defined (file, module, dependency list, or full repo)
@@ -69,11 +71,12 @@ Orchestrates security auditing by delegating core vulnerability scanning to OreX
 $ security_audit(scope=<scope>, check_dependencies=true, check_secrets=true, check_configs=true)
 ```
 
-- Delegate to OreXis for:
+- Delegate to OreXis (full 7-step SoP + governance checklist in the orexis skill):
   - **Dependency scanning**: CVE database lookup, known vulnerability patterns
   - **Secret detection**: API keys, tokens, passwords, private keys in source
   - **Configuration risks**: insecure defaults, exposed debug endpoints, missing HTTPS
-- **Gate**: If OreXis returns critical findings (exposed secrets, critical CVEs) → immediately `report_human` and set `severity = critical`
+  - **Governance checklist**: credential scan, internal IP check, gitmoji compliance, dead-code/unwired-module check, regression coverage
+- **Gate**: If OreXis returns critical findings (exposed secrets, critical CVEs, checklist failures) → immediately `report_human` and set `severity = critical`
 
 ### Step 2: Code-Level Context Analysis
 
