@@ -177,7 +177,7 @@ fn jsonrpc_method_sync_constructs_via_inner_and_flat_alias() {
 fn jsonrpc_flat_method_aliases_cover_the_consumer_namespaces() {
     // The paste-generated flat aliases are the ergonomic path shittim-chest
     // uses for ~70 built-in method families; assert a representative set
-    // covering every namespace (Sync, Cli, Mcp, Skill, Base, Device,
+    // covering every namespace (Sync, Cli, Tool, Skill, Base, Device,
     // Screen) keeps resolving, with the same wire names as the inner enums.
     let agent_chunk_count = plana::jsonrpc::Method::SyncAgentChunkCount;
     assert_eq!(agent_chunk_count.method_name(), "Sync.AgentChunkCount");
@@ -187,8 +187,8 @@ fn jsonrpc_flat_method_aliases_cover_the_consumer_namespaces() {
     assert_eq!(device_terminal_open.method_name(), "Device.TerminalOpen");
     let cli_status = plana::jsonrpc::Method::CliStatus;
     assert_eq!(cli_status.method_name(), "Cli.Status");
-    let mcp_list_tools = plana::jsonrpc::Method::McpListTools;
-    assert_eq!(mcp_list_tools.method_name(), "Mcp.ListTools");
+    let tool_list_tools = plana::jsonrpc::Method::ToolListTools;
+    assert_eq!(tool_list_tools.method_name(), "Tool.ListTools");
     let skill_call = plana::jsonrpc::Method::SkillCallSkill;
     assert_eq!(skill_call.method_name(), "Skill.CallSkill");
     let skill_chain_start = plana::jsonrpc::Method::SyncSkillChainStart;

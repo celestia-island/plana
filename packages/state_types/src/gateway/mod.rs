@@ -38,7 +38,7 @@ pub use tui_types::{
 pub enum Message {
     Base(BaseMessage),
     Agent(AgentMessage),
-    Mcp(ToolMessage),
+    Tool(ToolMessage),
     Skill(SkillMessage),
     Node(NodeMessage),
     Monitor(MonitorMessage),

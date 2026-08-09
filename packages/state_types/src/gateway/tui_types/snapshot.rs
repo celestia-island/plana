@@ -31,7 +31,7 @@ pub struct AgentPatch {
     #[serde(default)]
     pub request_state: Option<RequestState>,
     #[serde(default)]
-    pub mcp_tool_calls_delta: Option<u32>,
+    pub tool_calls_delta: Option<u32>,
     #[serde(default)]
     pub skill_calls_delta: Option<u32>,
     #[serde(default)]
