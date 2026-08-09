@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbWriteResult {
     pub doc_id: Uuid,
     pub embedding_dim: usize,
@@ -9,7 +9,7 @@ pub struct RagDbWriteResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDocResult {
     pub doc_id: Uuid,
     pub similarity: f64,
@@ -22,20 +22,20 @@ pub struct RagDocResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbReadResult {
     pub count: usize,
     pub results: Vec<RagDocResult>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbDeleteResult {
     pub doc_id: Uuid,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct LlmChatResult {
     pub model: String,
     pub tokens: String,
@@ -43,7 +43,7 @@ pub struct LlmChatResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct TranslateReportResult {
     pub target_language: String,
     pub original_length: usize,
@@ -52,7 +52,7 @@ pub struct TranslateReportResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct MediaAssetRegisterResult {
     pub asset_id: Uuid,
     pub asset_type: String,
@@ -61,7 +61,7 @@ pub struct MediaAssetRegisterResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct MediaAssetItem {
     pub asset_id: Uuid,
     pub asset_type: String,
@@ -73,14 +73,14 @@ pub struct MediaAssetItem {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct MediaAssetRetrieveResult {
     pub count: usize,
     pub assets: Vec<MediaAssetItem>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct WorkspaceIndexResult {
     pub total_files: usize,
     pub total_chunks: usize,
@@ -89,7 +89,7 @@ pub struct WorkspaceIndexResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct WorkspaceSearchDoc {
     pub doc_id: Uuid,
     pub file_path: String,
@@ -101,14 +101,14 @@ pub struct WorkspaceSearchDoc {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct WorkspaceSearchResult {
     pub count: usize,
     pub results: Vec<WorkspaceSearchDoc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct WorkspaceStatusResult {
     pub total_files: usize,
     pub total_chunks: usize,
@@ -118,7 +118,7 @@ pub struct WorkspaceStatusResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbStatsResult {
     pub total_documents: usize,
     pub total_media_assets: usize,
@@ -129,7 +129,7 @@ pub struct RagDbStatsResult {
 // ── Tool result structs (analysis) ──
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct CorrelationInfo {
     pub variable: String,
     pub correlation: f64,
@@ -138,7 +138,7 @@ pub struct CorrelationInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct Hypothesis {
     pub cause: String,
     pub effect: String,
@@ -147,7 +147,7 @@ pub struct Hypothesis {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct CausalReasonResult {
     pub correlations: Vec<CorrelationInfo>,
     pub hypotheses: Vec<Hypothesis>,
@@ -156,7 +156,7 @@ pub struct CausalReasonResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct AnomalyInfo {
     pub index: usize,
     pub value: f64,
@@ -167,7 +167,7 @@ pub struct AnomalyInfo {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct AnomalyResult {
     pub anomalies: Vec<AnomalyInfo>,
     pub total_points: usize,
@@ -178,7 +178,7 @@ pub struct AnomalyResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbWriteParams {
     pub content: String,
     #[serde(default)]
@@ -191,7 +191,7 @@ pub struct RagDbWriteParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbReadParams {
     pub query_embedding: Vec<f64>,
     #[serde(default)]
@@ -199,13 +199,13 @@ pub struct RagDbReadParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbDeleteParams {
     pub id: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct AnomalyDetectParams {
     pub values: Vec<f64>,
     #[serde(default)]
@@ -219,7 +219,7 @@ pub struct AnomalyDetectParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct CausalReasonParams {
     pub target: String,
     pub target_values: Vec<f64>,
@@ -230,7 +230,7 @@ pub struct CausalReasonParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct WorkspaceIndexParams {
     pub workspace_root: String,
     #[serde(default)]
@@ -238,7 +238,7 @@ pub struct WorkspaceIndexParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct WorkspaceSearchParams {
     pub query: String,
     #[serde(default)]
@@ -246,7 +246,7 @@ pub struct WorkspaceSearchParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct LlmChatParams {
     pub prompt: String,
     #[serde(default)]
@@ -256,7 +256,7 @@ pub struct LlmChatParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct TranslateReportParams {
     pub content: String,
     #[serde(default)]
@@ -264,9 +264,9 @@ pub struct TranslateReportParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbStatsParams {}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/aporia.ts")]
+#[ts(export, export_to = "tools/aporia.ts")]
 pub struct WorkspaceStatusParams {}

@@ -150,20 +150,20 @@ impl AgentAction {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum McpAction {
+pub enum ToolAction {
     CallTool,
     ToolResponse,
     ListTools,
     ToolsListResponse,
 }
 
-impl McpAction {
+impl ToolAction {
     pub fn as_str(&self) -> &'static str {
         match self {
-            McpAction::CallTool => "call_tool",
-            McpAction::ToolResponse => "tool_response",
-            McpAction::ListTools => "list_tools",
-            McpAction::ToolsListResponse => "tools_list_response",
+            ToolAction::CallTool => "call_tool",
+            ToolAction::ToolResponse => "tool_response",
+            ToolAction::ListTools => "list_tools",
+            ToolAction::ToolsListResponse => "tools_list_response",
         }
     }
 }

@@ -54,4 +54,4 @@ exec({ code: "import { report_human } from 'hubris'; import vars from 'vars'; re
 - NEVER write the report to the filesystem — always use `write_to_var` + `exec`
 - ALL user-facing text (`summary`, `body`) MUST be in the user's preferred language — do NOT default to English unless the system prompt explicitly sets it.
 
-This convention is now part of the mcp documentation. Do NOT invoke `submit_report` as a skill — just follow the pattern inline.
+This convention is now part of the tools documentation. Do NOT invoke `submit_report` as a skill — just follow the pattern inline.

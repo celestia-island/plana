@@ -7,10 +7,10 @@
 //! Key abstractions:
 //! - [`Skill`] / [`SkillRegistry`] — prompt-file-based skill definitions with
 //!   front-matter metadata parsing and required-tool validation.
-//! - [`McpTool`] / [`ToolRegistry<M>`] — per-agent (phantom-typed) tool registry;
+//! - [`Tool`] / [`ToolRegistry<M>`] — per-agent (phantom-typed) tool registry;
 //!   each tool has a name, schema, and async invoke method. The
 //!   [`GlobalToolRegistry`] aggregates across all agents.
-//! - [`McpToolResult`] / [`McpToolInvoker`] — standardized tool invocation result
+//! - [`ToolResult`] / [`ToolInvoker`] — standardized tool invocation result
 //!   and the invoker trait that bridges tools to the host runtime.
 //! - [`SOCSkillExecutor`] — wraps skill execution with SOC stage tracking
 //!   (prepare, verify, archive) for audit and compliance.
@@ -23,7 +23,6 @@
 #![allow(clippy::type_complexity)]
 
 pub mod llm_subcall;
-pub mod mcp_tools;
 pub mod skill_types;
 pub mod soc_executor;
 pub mod tool_macros;
@@ -31,12 +30,9 @@ pub mod tool_names;
 pub mod tool_permissions;
 pub mod tool_registry;
 pub mod tool_trait;
+pub mod tools;
 pub mod trigger_types;
 
-pub use mcp_tools::{
-    McpToolInvoker, McpToolRegistry, McpToolResult, NaturalLanguageFormatter, SnapshotPolicy,
-    validate_required_params,
-};
 pub use skill_types::{Skill, SkillInvoker, SkillRegistry, SkillResult};
 pub use tool_names::{
     ParsedToolCall, agent_allowed_tools, agent_tools, aporia, cosmos, eleos, epieikeia, haplotes,
@@ -44,7 +40,10 @@ pub use tool_names::{
 };
 pub use tool_permissions::{CommandSafety, TrustLevel, check_command_safety, classify_command};
 pub use tool_registry::{GlobalToolRegistry, ToolRegistry};
-pub use tool_trait::{ErasedTool, McpTool, ToolDescriptor, ToolSchema};
+pub use tool_trait::{ErasedTool, Tool, ToolDescriptor, ToolSchema};
+pub use tools::{
+    NaturalLanguageFormatter, SnapshotPolicy, ToolInvoker, ToolResult, validate_required_params,
+};
 
 #[macro_export]
 macro_rules! define_agent_skills {

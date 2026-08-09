@@ -6,15 +6,15 @@ use std::collections::HashMap;
 use tracing::{debug, error, info};
 
 use _domain_skills_permissions::ToolCapability;
-use _state_sync::{Agent, McpToolInfo};
+use _state_sync::{Agent, ToolInfo};
 
 /// Validate that all required parameters are present and non-empty.
-/// Returns `None` if valid, or a failure `McpToolResult` if any required param is missing/empty.
+/// Returns `None` if valid, or a failure `ToolResult` if any required param is missing/empty.
 pub fn validate_required_params(
     parameters: &Value,
     required: &[&str],
     tool_name: &str,
-) -> Option<McpToolResult> {
+) -> Option<ToolResult> {
     let empty_params: Vec<&str> = required
         .iter()
         .filter(|&&key| {
@@ -33,7 +33,7 @@ pub fn validate_required_params(
     if empty_params.is_empty() {
         None
     } else {
-        Some(McpToolResult::failure(format!(
+        Some(ToolResult::failure(format!(
             "Missing required parameter(s) for {}: {}",
             tool_name,
             empty_params.join(", ")
@@ -50,7 +50,7 @@ pub enum SnapshotPolicy {
 
 /// MCP tool invocation result
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct McpToolResult {
+pub struct ToolResult {
     pub success: bool,
     pub data: Value,
     pub error: Vec<String>,
@@ -60,7 +60,7 @@ pub struct McpToolResult {
     pub token_usage: Option<(u32, u32)>,
 }
 
-impl McpToolResult {
+impl ToolResult {
     pub fn success(data: Value) -> Self {
         Self {
             success: true,
@@ -203,10 +203,10 @@ impl NaturalLanguageFormatter {
 
 /// MCP tool invoker trait
 #[async_trait::async_trait]
-pub trait McpToolInvoker: Send + Sync {
-    async fn invoke(&self, tool_name: &str, parameters: Value) -> McpToolResult;
+pub trait ToolInvoker: Send + Sync {
+    async fn invoke(&self, tool_name: &str, parameters: Value) -> ToolResult;
 
-    async fn get_tools(&self) -> Vec<McpToolInfo>;
+    async fn get_tools(&self) -> Vec<ToolInfo>;
 
     fn get_tool_capabilities(&self) -> HashMap<String, ToolCapability> {
         HashMap::new()
@@ -226,14 +226,14 @@ pub trait McpToolInvoker: Send + Sync {
 }
 
 /// MCP tool registry
-pub struct McpToolRegistry {
+pub struct ToolRegistry {
     /// Agent type
     agent_type: Agent,
     /// Tool registry
-    tools: HashMap<String, Box<dyn McpToolInvoker + Send + Sync>>,
+    tools: HashMap<String, Box<dyn ToolInvoker + Send + Sync>>,
 }
 
-impl McpToolRegistry {
+impl ToolRegistry {
     /// Create a new MCP tool registry
     pub fn new(agent_type: Agent) -> Self {
         Self {
@@ -243,25 +243,25 @@ impl McpToolRegistry {
     }
 
     /// Register tool
-    pub fn register_tool<T: McpToolInvoker + 'static>(&mut self, tool_name: String, invoker: T) {
+    pub fn register_tool<T: ToolInvoker + 'static>(&mut self, tool_name: String, invoker: T) {
         info!("registered MCP tool: {} ({})", tool_name, self.agent_type);
         self.tools.insert(tool_name, Box::new(invoker));
     }
 
     /// Invoke tool
-    pub async fn invoke(&self, tool_name: &str, parameters: Value) -> McpToolResult {
+    pub async fn invoke(&self, tool_name: &str, parameters: Value) -> ToolResult {
         debug!("invoking MCP tool: {} ({})", tool_name, self.agent_type);
 
         if let Some(invoker) = self.tools.get(tool_name) {
             invoker.invoke(tool_name, parameters).await
         } else {
             error!("tool not found: {}", tool_name);
-            McpToolResult::failure(format!("Tool not found: {}", tool_name))
+            ToolResult::failure(format!("Tool not found: {}", tool_name))
         }
     }
 
     /// Get all tools
-    pub async fn get_tools(&self) -> Vec<McpToolInfo> {
+    pub async fn get_tools(&self) -> Vec<ToolInfo> {
         let mut all = Vec::new();
         for invoker in self.tools.values() {
             all.extend(invoker.get_tools().await);

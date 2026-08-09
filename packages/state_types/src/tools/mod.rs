@@ -21,7 +21,7 @@ pub enum ToolLocation {
 
 pub type SkillLocation = ToolLocation;
 
-pub use _core::McpToolCallMode;
+pub use _core::ToolCallMode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -58,17 +58,17 @@ pub enum ToolMaturity {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpToolInfo {
+pub struct ToolInfo {
     pub name: String,
     pub description: String,
     pub agent_type: super::agent::Agent,
-    pub parameters: McpToolParameters,
+    pub parameters: ToolParameters,
     #[serde(default)]
     pub tier: Option<ModelTier>,
     #[serde(default)]
     pub location: ToolLocation,
     #[serde(default)]
-    pub call_mode: McpToolCallMode,
+    pub call_mode: ToolCallMode,
     #[serde(default)]
     pub visibility: ToolVisibility,
     #[serde(default)]
@@ -78,7 +78,7 @@ pub struct McpToolInfo {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct McpToolParameters {
+pub struct ToolParameters {
     #[serde(rename = "type", default = "default_param_type")]
     pub param_type: String,
     #[serde(default)]
@@ -89,7 +89,7 @@ pub struct McpToolParameters {
     pub separate_call_keys: Vec<String>,
 }
 
-impl McpToolParameters {
+impl ToolParameters {
     pub fn new(
         param_type: &str,
         required: Vec<String>,
@@ -104,7 +104,7 @@ impl McpToolParameters {
     }
 }
 
-impl McpToolInfo {
+impl ToolInfo {
     pub fn simple(
         name: &str,
         description: &str,
@@ -115,7 +115,7 @@ impl McpToolInfo {
             name: name.to_string(),
             description: description.to_string(),
             agent_type,
-            parameters: McpToolParameters {
+            parameters: ToolParameters {
                 param_type: "object".to_string(),
                 required: required.iter().map(|s| s.to_string()).collect(),
                 properties: HashMap::new(),
@@ -123,14 +123,14 @@ impl McpToolInfo {
             },
             tier: None,
             location: ToolLocation::default(),
-            call_mode: McpToolCallMode::default(),
+            call_mode: ToolCallMode::default(),
             visibility: ToolVisibility::default(),
             is_async: false,
             maturity: ToolMaturity::default(),
         }
     }
 
-    pub fn with_params(mut self, parameters: McpToolParameters) -> Self {
+    pub fn with_params(mut self, parameters: ToolParameters) -> Self {
         self.parameters = parameters;
         self
     }
@@ -140,7 +140,7 @@ impl McpToolInfo {
         self
     }
 
-    pub fn with_call_mode(mut self, mode: McpToolCallMode) -> Self {
+    pub fn with_call_mode(mut self, mode: ToolCallMode) -> Self {
         self.call_mode = mode;
         self
     }
@@ -226,7 +226,7 @@ impl McpToolInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpToolCallRequest {
+pub struct ToolCallRequest {
     pub tool_name: String,
     pub agent_type: super::agent::Agent,
     pub parameters: serde_json::Value,
@@ -236,7 +236,7 @@ pub struct McpToolCallRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpToolCallResponse {
+pub struct ToolCallResponse {
     pub call_id: Uuid,
     pub result: serde_json::Value,
     pub success: bool,
@@ -289,7 +289,7 @@ pub enum PromptInjectionPolicy {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpToolConfig {
+pub struct ToolConfig {
     pub tool_name: String,
     pub description: String,
     pub mandatory_prompt: String,
@@ -297,14 +297,14 @@ pub struct McpToolConfig {
     pub injection_policy: PromptInjectionPolicy,
     pub agent_type: super::agent::Agent,
     #[serde(default)]
-    pub parameters: McpToolParameters,
+    pub parameters: ToolParameters,
     #[serde(default)]
     pub tier: Option<ModelTier>,
     #[serde(default)]
     pub location: ToolLocation,
 }
 
-impl McpToolConfig {
+impl ToolConfig {
     pub fn new(tool_name: &str, description: &str, mandatory_prompt: &str) -> Self {
         Self {
             tool_name: tool_name.to_string(),
@@ -312,7 +312,7 @@ impl McpToolConfig {
             mandatory_prompt: mandatory_prompt.to_string(),
             injection_policy: PromptInjectionPolicy::default(),
             agent_type: super::agent::Agent::ApoRia,
-            parameters: McpToolParameters {
+            parameters: ToolParameters {
                 param_type: "object".to_string(),
                 required: vec![],
                 properties: std::collections::HashMap::new(),
@@ -345,12 +345,12 @@ impl McpToolConfig {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct McpPromptInjector {
+pub struct ToolPromptInjector {
     used_tools: HashSet<String>,
     current_prompt_section: Option<String>,
 }
 
-impl McpPromptInjector {
+impl ToolPromptInjector {
     pub fn new() -> Self {
         Self {
             used_tools: HashSet::new(),
@@ -358,7 +358,7 @@ impl McpPromptInjector {
         }
     }
 
-    pub fn should_inject(&self, config: &McpToolConfig) -> bool {
+    pub fn should_inject(&self, config: &ToolConfig) -> bool {
         match config.injection_policy {
             PromptInjectionPolicy::Always => true,
             PromptInjectionPolicy::OnFirstUse => !self.used_tools.contains(&config.tool_name),
@@ -366,7 +366,7 @@ impl McpPromptInjector {
         }
     }
 
-    pub fn prepare_tool_context(&mut self, config: &McpToolConfig) -> Option<String> {
+    pub fn prepare_tool_context(&mut self, config: &ToolConfig) -> Option<String> {
         if self.should_inject(config) {
             self.mark_tool_used(&config.tool_name);
             Some(config.mandatory_prompt.clone())
@@ -389,7 +389,7 @@ impl McpPromptInjector {
     }
 
     pub fn inject_to_system_prompt(&self, system_prompt: &mut String, mandatory_prompt: &str) {
-        let section_name = "mcp_constraints";
+        let section_name = "tool_constraints";
         let section_marker_start = format!("<{}>", section_name);
         let section_marker_end = format!("</{}>", section_name);
 
@@ -407,8 +407,8 @@ impl McpPromptInjector {
         }
     }
 
-    pub fn replace_mcp_section(&self, system_prompt: &str, mandatory_prompt: &str) -> String {
-        let section_name = "mcp_constraints";
+    pub fn replace_tool_section(&self, system_prompt: &str, mandatory_prompt: &str) -> String {
+        let section_name = "tool_constraints";
         let section_marker_start = format!("<{}>", section_name);
         let section_marker_end = format!("</{}>", section_name);
 

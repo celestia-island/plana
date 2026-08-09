@@ -40,7 +40,7 @@ impl LlmStream {
         &mut self.segments
     }
 
-    pub fn patch_mcp_result_for_call(
+    pub fn patch_tool_result_for_call(
         &mut self,
         call_id: Uuid,
         result_data: serde_json::Value,
@@ -51,7 +51,7 @@ impl LlmStream {
         let sealed_value = serde_json::Value::String(sealed_marker.to_string());
 
         for seg in &mut self.segments {
-            if let StreamSegment::McpResult {
+            if let StreamSegment::ToolResult {
                 call_id: seg_call_id,
                 data,
                 success: seg_success,
@@ -71,13 +71,13 @@ impl LlmStream {
         let has_call = self
             .segments
             .iter()
-            .any(|s| matches!(s, StreamSegment::McpCall { call_id: cid, .. } if *cid == call_id));
+            .any(|s| matches!(s, StreamSegment::ToolCall { call_id: cid, .. } if *cid == call_id));
         if has_call {
             let tool_name = self
                 .segments
                 .iter()
                 .find_map(|s| match s {
-                    StreamSegment::McpCall {
+                    StreamSegment::ToolCall {
                         call_id: cid,
                         tool_name,
                         ..
@@ -89,7 +89,7 @@ impl LlmStream {
                 .segments
                 .iter()
                 .find_map(|s| match s {
-                    StreamSegment::McpCall {
+                    StreamSegment::ToolCall {
                         call_id: cid,
                         agent_type,
                         ..
@@ -102,13 +102,13 @@ impl LlmStream {
                 .segments
                 .iter()
                 .rposition(
-                    |s| matches!(s, StreamSegment::McpCall { call_id: cid, .. } if *cid == call_id),
+                    |s| matches!(s, StreamSegment::ToolCall { call_id: cid, .. } if *cid == call_id),
                 )
                 .map(|i| i + 1)
                 .unwrap_or(self.segments.len());
             self.segments.insert(
                 pos,
-                StreamSegment::McpResult {
+                StreamSegment::ToolResult {
                     tool_name,
                     call_id,
                     success,
@@ -124,10 +124,10 @@ impl LlmStream {
         false
     }
 
-    pub fn has_mcp_call_with_id(&self, call_id: Uuid) -> bool {
+    pub fn has_tool_call_with_id(&self, call_id: Uuid) -> bool {
         self.segments
             .iter()
-            .any(|s| matches!(s, StreamSegment::McpCall { call_id: cid, .. } if *cid == call_id))
+            .any(|s| matches!(s, StreamSegment::ToolCall { call_id: cid, .. } if *cid == call_id))
     }
 
     pub fn is_empty(&self) -> bool {
@@ -136,8 +136,8 @@ impl LlmStream {
                 StreamSegment::Text { text, .. }
                 | StreamSegment::Thinking { text, .. }
                 | StreamSegment::DeepThinking { text, .. } => text.is_empty(),
-                StreamSegment::McpCall { params, .. } => params.is_null(),
-                StreamSegment::McpResult { data, .. } => data.is_null(),
+                StreamSegment::ToolCall { params, .. } => params.is_null(),
+                StreamSegment::ToolResult { data, .. } => data.is_null(),
             })
     }
 
@@ -148,8 +148,8 @@ impl LlmStream {
         })
     }
 
-    pub fn mcp_segments(&self) -> impl Iterator<Item = &StreamSegment> {
-        self.segments.iter().filter(|s| s.is_mcp())
+    pub fn tool_segments(&self) -> impl Iterator<Item = &StreamSegment> {
+        self.segments.iter().filter(|s| s.is_tool())
     }
 
     pub fn thinking_text(&self) -> String {

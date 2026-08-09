@@ -141,7 +141,7 @@ pub struct RegisteredHttpHook {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TriggerMcpToolSchema {
+pub struct TriggerToolSchema {
     pub tool_name: String,
     pub trigger_source: String,
     pub topic_prefix: String,

@@ -1,6 +1,6 @@
 +++
-id = "mcp_brief"
-title = "MCP 工具调用速查"
+id = "tools_brief"
+title = "工具调用速查"
 kind = "reference"
 +++
 
@@ -28,7 +28,7 @@ Plain text output without `report()` is NOT captured by the pipeline.
    - `import { list_todo } from 'hubris';` ✓
    - `report(...)` — also works if imported, but explicit import is preferred
 
-1. **Parameters MUST be JS objects, NEVER raw JSON strings** — MCP tools accept structured JS objects, not serialized strings:
+1. **Parameters MUST be JS objects, NEVER raw JSON strings** — Tools accept structured JS objects, not serialized strings:
 
    - `report({ text: "result" })` ✓
    - `report('{"text":"result"}')` ✗ (raw JSON string — will fail)

@@ -47,8 +47,8 @@ impl LlmStreamBuilder {
                             *message_id = incoming_mid;
                         }
                     }
-                    StreamSegment::McpCall { .. } | StreamSegment::McpResult { .. } => {
-                        warn!("unexpected McpCall/McpResult segment in chunk push");
+                    StreamSegment::ToolCall { .. } | StreamSegment::ToolResult { .. } => {
+                        warn!("unexpected ToolCall/ToolResult segment in chunk push");
                     }
                 }
                 return;
@@ -71,7 +71,7 @@ impl LlmStreamBuilder {
         self.segments.push(seg);
     }
 
-    pub fn push_mcp_call(
+    pub fn push_tool_call(
         &mut self,
         tool_name: String,
         call_id: Uuid,
@@ -79,7 +79,7 @@ impl LlmStreamBuilder {
         agent_type: Option<String>,
     ) {
         self.strip_trailing_tool_text_for_call(&tool_name);
-        self.segments.push(StreamSegment::McpCall {
+        self.segments.push(StreamSegment::ToolCall {
             tool_name,
             call_id,
             params: params.unwrap_or(Value::Null),
@@ -123,7 +123,7 @@ impl LlmStreamBuilder {
         }
     }
 
-    pub fn push_mcp_result(
+    pub fn push_tool_result(
         &mut self,
         tool_name: String,
         call_id: Uuid,
@@ -132,7 +132,7 @@ impl LlmStreamBuilder {
         duration_ms: Option<u64>,
         agent_type: Option<String>,
     ) {
-        self.segments.push(StreamSegment::McpResult {
+        self.segments.push(StreamSegment::ToolResult {
             tool_name,
             call_id,
             success,
@@ -143,7 +143,7 @@ impl LlmStreamBuilder {
         });
     }
 
-    pub fn insert_mcp_result_after_call(
+    pub fn insert_tool_result_after_call(
         &mut self,
         call_id: Uuid,
         tool_name: String,
@@ -152,7 +152,7 @@ impl LlmStreamBuilder {
         duration_ms: Option<u64>,
         agent_type: Option<String>,
     ) {
-        let result = StreamSegment::McpResult {
+        let result = StreamSegment::ToolResult {
             tool_name,
             call_id,
             success,
@@ -165,7 +165,7 @@ impl LlmStreamBuilder {
             .segments
             .iter()
             .rposition(|s| {
-                matches!(s, StreamSegment::McpCall { .. }) && s.call_id() == Some(call_id)
+                matches!(s, StreamSegment::ToolCall { .. }) && s.call_id() == Some(call_id)
             })
             .map(|i| i + 1)
             .unwrap_or(self.segments.len());
@@ -228,10 +228,10 @@ impl LlmStreamBuilder {
                 | StreamSegment::DeepThinking { text, .. } => {
                     total += text.len();
                 }
-                StreamSegment::McpCall { params, .. } => {
+                StreamSegment::ToolCall { params, .. } => {
                     total += params.to_string().len();
                 }
-                StreamSegment::McpResult { data, .. } => {
+                StreamSegment::ToolResult { data, .. } => {
                     total += data.to_string().len();
                 }
             }
@@ -245,8 +245,8 @@ impl LlmStreamBuilder {
                 StreamSegment::Text { text, .. }
                 | StreamSegment::Thinking { text, .. }
                 | StreamSegment::DeepThinking { text, .. } => text.is_empty(),
-                StreamSegment::McpCall { params, .. } => params.is_null(),
-                StreamSegment::McpResult { data, .. } => data.is_null(),
+                StreamSegment::ToolCall { params, .. } => params.is_null(),
+                StreamSegment::ToolResult { data, .. } => data.is_null(),
             })
     }
 
@@ -266,7 +266,7 @@ impl LlmStreamBuilder {
 
     pub fn seal_coalesced(mut self) -> LlmStream {
         self.coalesce_last_text_segments();
-        self.close_pending_mcp_calls();
+        self.close_pending_tool_calls();
         if let Err(e) = self.strip_tool_call_text_from_text_segments() {
             warn!(error = %e, "failed to strip tool call text from text segments");
         }
@@ -281,16 +281,16 @@ impl LlmStreamBuilder {
         self.seal()
     }
 
-    fn close_pending_mcp_calls(&mut self) {
+    fn close_pending_tool_calls(&mut self) {
         let mut closed_ids: HashSet<Uuid> = HashSet::new();
         for seg in &self.segments {
-            if let StreamSegment::McpResult { call_id, .. } = seg {
+            if let StreamSegment::ToolResult { call_id, .. } = seg {
                 closed_ids.insert(*call_id);
             }
         }
         let mut synthetics: Vec<StreamSegment> = Vec::new();
         for seg in &self.segments {
-            if let StreamSegment::McpCall {
+            if let StreamSegment::ToolCall {
                 call_id,
                 tool_name,
                 agent_type,
@@ -298,7 +298,7 @@ impl LlmStreamBuilder {
             } = seg
                 && !closed_ids.contains(call_id)
             {
-                synthetics.push(StreamSegment::McpResult {
+                synthetics.push(StreamSegment::ToolResult {
                     tool_name: tool_name.clone(),
                     call_id: *call_id,
                     success: false,
@@ -319,7 +319,7 @@ impl LlmStreamBuilder {
                 .segments
                 .iter()
                 .filter_map(|seg| match seg {
-                    StreamSegment::McpCall { tool_name, .. } => Some(tool_name.clone()),
+                    StreamSegment::ToolCall { tool_name, .. } => Some(tool_name.clone()),
                     _ => None,
                 })
                 .collect();
@@ -362,14 +362,14 @@ impl LlmStreamBuilder {
         Ok(())
     }
 
-    pub fn has_pending_mcp_calls(&self) -> bool {
+    pub fn has_pending_tool_calls(&self) -> bool {
         let mut call_ids: HashSet<Uuid> = HashSet::new();
         for seg in &self.segments {
             match seg {
-                StreamSegment::McpCall { call_id, .. } => {
+                StreamSegment::ToolCall { call_id, .. } => {
                     call_ids.insert(*call_id);
                 }
-                StreamSegment::McpResult { call_id, .. } => {
+                StreamSegment::ToolResult { call_id, .. } => {
                     call_ids.remove(call_id);
                 }
                 _ => {}

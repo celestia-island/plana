@@ -18,14 +18,14 @@ macro_rules! define_tool {
             }
         }
 
-        impl $crate::tool_trait::McpTool for $name {
+        impl $crate::tool_trait::Tool for $name {
             type Agent = $agent;
             const NAME: &'static str = $tool_name;
 
             fn invoke(
                 &self,
                 $params: serde_json::Value,
-            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = $crate::mcp_tools::McpToolResult> + Send + '_>> {
+            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = $crate::tools::ToolResult> + Send + '_>> {
                 Box::pin(async move { $body })
             }
         }
@@ -39,14 +39,14 @@ macro_rules! define_tool {
         $(#[$meta])*
         pub struct $name;
 
-        impl $crate::tool_trait::McpTool for $name {
+        impl $crate::tool_trait::Tool for $name {
             type Agent = $agent;
             const NAME: &'static str = $tool_name;
 
             fn invoke(
                 &self,
                 $params: serde_json::Value,
-            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = $crate::mcp_tools::McpToolResult> + Send + '_>> {
+            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = $crate::tools::ToolResult> + Send + '_>> {
                 Box::pin(async move { $body })
             }
         }

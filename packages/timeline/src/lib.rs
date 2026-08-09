@@ -34,7 +34,8 @@ pub use cli_renderer::{
 };
 pub use renderer::{TimelineOutput, TimelineRenderer};
 pub use types::{
-    GroupState, GroupStats, McpBlockData, McpBlockState, McpCloseLabel, SkillBlockStatus,
-    TimelineAskHumanGroup, TimelineContentBlock, TimelineContentKind, TimelineGroup,
-    TimelineGroupData, TimelineHumanGroup, TimelineSegmentBlock, TokenSource, format_number,
+    GroupState, GroupStats, SkillBlockStatus, TimelineAskHumanGroup, TimelineContentBlock,
+    TimelineContentKind, TimelineGroup, TimelineGroupData, TimelineHumanGroup,
+    TimelineSegmentBlock, TokenSource, ToolBlockData, ToolBlockState, ToolCloseLabel,
+    format_number,
 };
