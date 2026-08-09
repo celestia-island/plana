@@ -19,7 +19,7 @@ allow_custom_reply?: boolean,
  * Subset of `preset_options` the agent suggests. Empty when no
  * recommendation is offered.
  */
-recommended_options: Array<string>, model_name?: string, token_usage?: [number, number], skill_count?: number, mcp_count?: number, next_route?: RouteInfo, stream?: LlmStream, error?: StructuredAgentError, };
+recommended_options: Array<string>, model_name?: string, token_usage?: [number, number], skill_count?: number, tool_count?: number, next_route?: RouteInfo, stream?: LlmStream, error?: StructuredAgentError, };
 
 /**
  * Reply payload for an inquiry (`report_type: "query"`) report.
@@ -34,8 +34,8 @@ export type AgentResponseParams = { agent_type: Agent, agent_id: string, agent_n
 
 export type AgentStreamingChunkParams = { agent_type: Agent, agent_id: string, agent_number?: string, chunk: string, is_done: boolean, timestamp: string, task_id?: string, chunk_kind?: StreamChunkKind, };
 
-export type McpToolResultParams = { tool_name: string, call_id: string, parameters_summary?: string, result: string, agent_type: Agent, agent_id: string, agent_number?: string, success: boolean, duration_ms?: bigint, };
-
 export type OrchestrationStatusParams = { stage: SkillStage, agent: string, agent_type?: Agent, tool_name?: string, call_id?: string, parent_agent?: string, parameters_summary?: string, };
 
-export type TuiAgentInfo = { agent_type: Agent, agent_number?: string, agent_uuid?: string, agent_id: string, status: AgentStatus, llm_working: boolean, cpu_usage: number, memory_mb: bigint, parent_id?: string, work_status?: WorkStatus, current_model?: string, model_tier?: ModelTier, llm_handle?: string, token_usage?: [number, number], mcp_tool_calls: number, request_state: RequestState, completion_outcome: CompletionOutcome, retry_count: number, max_retries: number, };
+export type ToolResultParams = { tool_name: string, call_id: string, parameters_summary?: string, result: string, agent_type: Agent, agent_id: string, agent_number?: string, success: boolean, duration_ms?: bigint, };
+
+export type TuiAgentInfo = { agent_type: Agent, agent_number?: string, agent_uuid?: string, agent_id: string, status: AgentStatus, llm_working: boolean, cpu_usage: number, memory_mb: bigint, parent_id?: string, work_status?: WorkStatus, current_model?: string, model_tier?: ModelTier, llm_handle?: string, token_usage?: [number, number], tool_calls: number, request_state: RequestState, completion_outcome: CompletionOutcome, retry_count: number, max_retries: number, };

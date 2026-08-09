@@ -3,8 +3,8 @@ import {
   buildHighlightedLines,
   buildJsonTree,
   extractExecCode,
-  parseMcpCallText,
-} from "../src/components/PlanaMcpToolBlock";
+  parseToolCallText,
+} from "../src/components/PlanaToolBlock";
 
 describe("extractExecCode", () => {
   it("extracts the code argument from a quoted-name exec call", () => {
@@ -89,19 +89,19 @@ describe("buildJsonTree", () => {
   });
 });
 
-describe("parseMcpCallText", () => {
+describe("parseToolCallText", () => {
   it("parses a quoted-name args call", () => {
-    const parsed = parseMcpCallText('"web_search", {"query": "celestia", "limit": 5}');
+    const parsed = parseToolCallText('"web_search", {"query": "celestia", "limit": 5}');
     expect(parsed?.toolName).toBe("web_search");
     expect(parsed?.argsObj).toEqual({ query: "celestia", limit: 5 });
   });
   it("keeps unparseable args without throwing", () => {
-    const parsed = parseMcpCallText('"browse", {broken json}');
+    const parsed = parseToolCallText('"browse", {broken json}');
     expect(parsed?.toolName).toBe("browse");
     expect(parsed?.argsObj).toBeNull();
   });
   it("returns null for non-matching text", () => {
-    expect(parseMcpCallText("plain text")).toBeNull();
-    expect(parseMcpCallText("")).toBeNull();
+    expect(parseToolCallText("plain text")).toBeNull();
+    expect(parseToolCallText("")).toBeNull();
   });
 });

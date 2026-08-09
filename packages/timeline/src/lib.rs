@@ -6,7 +6,7 @@
 //!
 //! Key abstractions:
 //! - [`TimelineGroup`] et al. — data model for human messages, skill invocations,
-//!   and ask-human prompts, with nested MCP tool-call blocks.
+//!   and ask-human prompts, with nested tool-call blocks.
 //! - [`TimelineRenderer`] / [`TimelineOutput`] — trait-based rendering pipeline
 //!   that decouples the data model from the output format.
 //! - [`CliTimelineRenderer`] — concrete ASCII renderer producing buffered line
@@ -27,7 +27,7 @@ pub mod types;
 pub use chars::{
     ARROW_DOWN, ARROW_SWAP, ARROW_UP, BD_DL, BD_DR, BD_H, BD_RND_BL, BD_RND_BR, BD_RND_TL,
     BD_RND_TR, BD_T_LEFT, BD_UL, BD_UR, BD_V, CHECK, CROSS, DOT_ALT, DOT_EMPTY, DOT_FILLED, HLINE,
-    TL_BODY, TL_CLOSE, TL_HEADER, TL_MCP_CLOSE, TL_MCP_INNER, TL_MCP_OPEN, TL_SEP, TL_SEP_CHAR,
+    TL_BODY, TL_CLOSE, TL_HEADER, TL_TOOL_CLOSE, TL_TOOL_INNER, TL_TOOL_OPEN, TL_SEP, TL_SEP_CHAR,
 };
 pub use cli_renderer::{
     CliTimelineBuffer, CliTimelineRenderer, fmt_cont_line, fmt_tool_line, fmt_truncate,

@@ -27,7 +27,7 @@ pub struct CustomAgentInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Layer2McpToolInfo {
+pub struct Layer2ToolInfo {
     pub name: String,
     pub description: String,
     pub languages: Vec<String>,

@@ -8,7 +8,7 @@ use ts_rs::TS;
 pub struct Layer2AgentInfo {
     pub name: String,
     pub description: String,
-    pub mcp_count: usize,
+    pub tool_count: usize,
     pub skills_count: usize,
     pub languages: Vec<String>,
     pub enabled: bool,
@@ -22,7 +22,7 @@ pub struct Layer2AgentListResponseParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/layer2.ts")]
-pub struct Layer2McpToolInfo {
+pub struct Layer2ToolInfo {
     pub name: String,
     pub description: String,
     pub languages: Vec<String>,
@@ -34,9 +34,9 @@ pub struct Layer2McpToolInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/layer2.ts")]
-pub struct Layer2AgentMcpResponseParams {
+pub struct Layer2AgentToolResponseParams {
     pub agent_name: String,
-    pub tools: Vec<Layer2McpToolInfo>,
+    pub tools: Vec<Layer2ToolInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -60,7 +60,7 @@ pub struct Layer2AgentSkillsResponseParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/layer2.ts")]
-pub struct Layer2McpPromptResponseParams {
+pub struct Layer2ToolPromptResponseParams {
     pub agent_name: String,
     pub tool: String,
     pub lang: String,

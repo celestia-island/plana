@@ -1,4 +1,4 @@
-// MCP tool implementation
+// Tool implementation
 
 use serde_json::Value;
 use std::collections::HashMap;
@@ -48,7 +48,7 @@ pub enum SnapshotPolicy {
     Conditional,
 }
 
-/// MCP tool invocation result
+/// Tool invocation result
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ToolResult {
     pub success: bool,
@@ -201,7 +201,7 @@ impl NaturalLanguageFormatter {
     }
 }
 
-/// MCP tool invoker trait
+/// Tool invoker trait
 #[async_trait::async_trait]
 pub trait ToolInvoker: Send + Sync {
     async fn invoke(&self, tool_name: &str, parameters: Value) -> ToolResult;
@@ -225,7 +225,7 @@ pub trait ToolInvoker: Send + Sync {
     }
 }
 
-/// MCP tool registry
+/// Tool registry
 pub struct ToolRegistry {
     /// Agent type
     agent_type: Agent,
@@ -234,7 +234,7 @@ pub struct ToolRegistry {
 }
 
 impl ToolRegistry {
-    /// Create a new MCP tool registry
+    /// Create a new tool registry
     pub fn new(agent_type: Agent) -> Self {
         Self {
             agent_type,
@@ -244,13 +244,13 @@ impl ToolRegistry {
 
     /// Register tool
     pub fn register_tool<T: ToolInvoker + 'static>(&mut self, tool_name: String, invoker: T) {
-        info!("registered MCP tool: {} ({})", tool_name, self.agent_type);
+        info!("registered tool: {} ({})", tool_name, self.agent_type);
         self.tools.insert(tool_name, Box::new(invoker));
     }
 
     /// Invoke tool
     pub async fn invoke(&self, tool_name: &str, parameters: Value) -> ToolResult {
-        debug!("invoking MCP tool: {} ({})", tool_name, self.agent_type);
+        debug!("invoking tool: {} ({})", tool_name, self.agent_type);
 
         if let Some(invoker) = self.tools.get(tool_name) {
             invoker.invoke(tool_name, parameters).await

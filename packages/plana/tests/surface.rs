@@ -284,8 +284,8 @@ mod celestia_surface {
     fn celestia_engine_mcp_and_external_mcp_resolve() {
         // Engine (CEP) domain protocol:
         resolves::<plana::engine::EngineHandshakeParams>();
-        // Per-tool MCP I/O vocabulary:
-        resolves::<plana::tools::philia::McpToolDetail>();
+        // Per-tool I/O vocabulary:
+        resolves::<plana::tools::philia::ToolDetail>();
         // External MCP server registry file:
         resolves::<plana::external_mcp::McpServersFile>();
     }

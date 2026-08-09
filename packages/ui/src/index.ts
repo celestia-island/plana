@@ -79,8 +79,8 @@ export { PVoiceInputPopup } from "./components/PlanaVoiceInputPopup";
 export { PAttachmentModal, previewKindFor } from "./components/PlanaAttachmentModal";
 export type { PAttachmentPreviewType } from "./components/PlanaAttachmentModal";
 export { PChatMessage } from "./components/PlanaChatMessage";
-export { PMcpToolBlock, parseMcpCallText, buildJsonTree, buildHighlightedLines, extractExecCode } from "./components/PlanaMcpToolBlock";
-export type { PHighlightedLine, PJsonNode, PMcpToolBlockVariant, PParsedMcpCall } from "./components/PlanaMcpToolBlock";
+export { PToolBlock, parseToolCallText, buildJsonTree, buildHighlightedLines, extractExecCode } from "./components/PlanaToolBlock";
+export type { PHighlightedLine, PJsonNode, PToolBlockVariant, PParsedToolCall } from "./components/PlanaToolBlock";
 export { PTokenUsageBadge } from "./components/PlanaTokenUsageBadge";
 export { PTokenUsagePanel } from "./components/PlanaTokenUsagePanel";
 export { PModelTag } from "./components/PlanaModelTag";
@@ -99,8 +99,8 @@ export type {
   PAttachmentDetail,
   PAttachmentItem,
   PChatRole,
-  PMcpToolCall,
-  PMcpToolCallStatus,
+  PToolCall,
+  PToolCallStatus,
   PModelCosts,
   PModelDownloadStatus,
   PModelUsageEntry,
