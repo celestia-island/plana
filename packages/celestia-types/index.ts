@@ -4,7 +4,7 @@
 // the flat-surface winner is resolved by named-export EXCLUSION LISTS, NOT
 // by TypeScript star-export precedence:
 //
-//   - The mcp namespace files below that collide with earlier star-exported
+//   - The tools namespace files below that collide with earlier star-exported
 //     files (aporia, kalos, neikos, orexis) are re-exported via an explicit
 //     `export { ... } from` list instead of `export *`. The list is a FULL
 //     enumeration of what that file contributes to the flat surface — a
@@ -14,16 +14,16 @@
 //     OTHER (star-exported) source the earlier line exports, so "first
 //     listed source wins" is the deliberate outcome, not an artifact.
 //   - Shadowed duplicates stay importable via deep imports
-//     (`import type { FileEntry } from "@celestia-island/plana-celestia-types/bindings/mcp/kalos"`).
+//     (`import type { FileEntry } from "@celestia-island/plana-celestia-types/bindings/tools/kalos"`).
 //
 // The 6 current collisions (flat winner -> shadowed source):
 //
-//   WorkspaceStatusParams    ws/workspace        wins vs mcp/aporia
-//   FileEntry                httpTypes           wins vs mcp/kalos
-//   FileReadParams           ws/fileBrowsing     wins vs mcp/kalos
-//   FileTreeEntry            ws/fileBrowsing     wins vs mcp/kalos
-//   ContainerSnapshotParams  ws/stateSync        wins vs mcp/neikos
-//   ReportHumanParams        mcp/hubris          wins vs mcp/orexis
+//   WorkspaceStatusParams    ws/workspace        wins vs tools/aporia
+//   FileEntry                httpTypes           wins vs tools/kalos
+//   FileReadParams           ws/fileBrowsing     wins vs tools/kalos
+//   FileTreeEntry            ws/fileBrowsing     wins vs tools/kalos
+//   ContainerSnapshotParams  ws/stateSync        wins vs tools/neikos
+//   ReportHumanParams        tools/hubris          wins vs tools/orexis
 //
 // MAINTENANCE WARNING: the four exclusion lists are hand-maintained here —
 // there is no generator script that rewrites this file. New types added to
@@ -56,18 +56,18 @@ export * from "./bindings/ws/tasks";
 export * from "./bindings/ws/views";
 export * from "./bindings/ws/workspace";
 export * from "./bindings/ws/yolo";
-export type { AnomalyDetectParams, AnomalyInfo, AnomalyResult, CausalReasonParams, CausalReasonResult, CorrelationInfo, Hypothesis, LlmChatParams, LlmChatResult, MediaAssetItem, MediaAssetRegisterResult, MediaAssetRetrieveResult, RagDbDeleteParams, RagDbDeleteResult, RagDbReadParams, RagDbReadResult, RagDbStatsParams, RagDbStatsResult, RagDbWriteParams, RagDbWriteResult, RagDocResult, TranslateReportParams, TranslateReportResult, WorkspaceIndexParams, WorkspaceIndexResult, WorkspaceSearchDoc, WorkspaceSearchParams, WorkspaceSearchResult, WorkspaceStatusResult } from "./bindings/mcp/aporia";
-export * from "./bindings/mcp/eleos";
-export * from "./bindings/mcp/epieikeia";
-export * from "./bindings/mcp/haplotes";
-export * from "./bindings/mcp/hubris";
-export type { Annotation, FileCreateDirParams, FileDeleteParams, FileDeleteResult, FileEditParams, FileEditResult, FileExistsParams, FileExistsResult, FileGetInfoParams, FileInfoResult, FileListParams, FileListResult, FileReadResult, FileTreeListResult, FileWriteParams, FileWriteResult, ListAnnotationsResult, MkDirResult, ResolveAnnotationResult } from "./bindings/mcp/kalos";
-export type { CheckWaitParams, ContainerCreateResult, ContainerFilterCriteria, ContainerForkParams, ContainerForkResult, ContainerInfoParams, ContainerInfoResult, ContainerListItem, ContainerListParams, ContainerListResult, ContainerRemoveParams, ContainerRemoveResult, ContainerSnapshotResult, ContainerStartParams, ContainerStartResult, ContainerStopParams, ContainerStopResult, ExecOnContainerParams, ExecResult, GitPushBranchParams, GitPushResult, NewContainerToolParams, NewContainerVolumeMount, SidecarDeliverResult, SidecarKillParams, SidecarSendParams, SidecarSendResult, SidecarSpawnParams, ToolchainEnsureParams, ToolchainEnsureResult, ToolchainListParams, ToolchainListResult, ToolchainProfileInfo, ToolchainVolumeSpec, VolumeInfo, WaitParams } from "./bindings/mcp/neikos";
-export type { AgentIntegrityParams, AskResult, AuditAlignmentParams, AuditAlignmentResult, AuditFinding, AuditLegalityParams, AuditLegalityResult, BlockToolParams, CheckResultItem, ComplianceReportParams, ComplianceReportToolResult, ComplianceRule, ComplianceSummary, InspectToolCallParams, ManageSensitivityRulesParams, ReplyResult, ReportDetail, ReportHumanResult, RuleCheckResult, SecurityAuditParams, SecurityStatusParams, SecuritySuggestionsParams, SensitivityRule, SetNetworkPolicyParams, SetRiskThresholdParams, SetSecurityPolicyParams, StandardCheckParams, StandardCheckResult, StandardRegisterResult, UnblockToolParams } from "./bindings/mcp/orexis";
+export type { AnomalyDetectParams, AnomalyInfo, AnomalyResult, CausalReasonParams, CausalReasonResult, CorrelationInfo, Hypothesis, LlmChatParams, LlmChatResult, MediaAssetItem, MediaAssetRegisterResult, MediaAssetRetrieveResult, RagDbDeleteParams, RagDbDeleteResult, RagDbReadParams, RagDbReadResult, RagDbStatsParams, RagDbStatsResult, RagDbWriteParams, RagDbWriteResult, RagDocResult, TranslateReportParams, TranslateReportResult, WorkspaceIndexParams, WorkspaceIndexResult, WorkspaceSearchDoc, WorkspaceSearchParams, WorkspaceSearchResult, WorkspaceStatusResult } from "./bindings/tools/aporia";
+export * from "./bindings/tools/eleos";
+export * from "./bindings/tools/epieikeia";
+export * from "./bindings/tools/haplotes";
+export * from "./bindings/tools/hubris";
+export type { Annotation, FileCreateDirParams, FileDeleteParams, FileDeleteResult, FileEditParams, FileEditResult, FileExistsParams, FileExistsResult, FileGetInfoParams, FileInfoResult, FileListParams, FileListResult, FileReadResult, FileTreeListResult, FileWriteParams, FileWriteResult, ListAnnotationsResult, MkDirResult, ResolveAnnotationResult } from "./bindings/tools/kalos";
+export type { CheckWaitParams, ContainerCreateResult, ContainerFilterCriteria, ContainerForkParams, ContainerForkResult, ContainerInfoParams, ContainerInfoResult, ContainerListItem, ContainerListParams, ContainerListResult, ContainerRemoveParams, ContainerRemoveResult, ContainerSnapshotResult, ContainerStartParams, ContainerStartResult, ContainerStopParams, ContainerStopResult, ExecOnContainerParams, ExecResult, GitPushBranchParams, GitPushResult, NewContainerToolParams, NewContainerVolumeMount, SidecarDeliverResult, SidecarKillParams, SidecarSendParams, SidecarSendResult, SidecarSpawnParams, ToolchainEnsureParams, ToolchainEnsureResult, ToolchainListParams, ToolchainListResult, ToolchainProfileInfo, ToolchainVolumeSpec, VolumeInfo, WaitParams } from "./bindings/tools/neikos";
+export type { AgentIntegrityParams, AskResult, AuditAlignmentParams, AuditAlignmentResult, AuditFinding, AuditLegalityParams, AuditLegalityResult, BlockToolParams, CheckResultItem, ComplianceReportParams, ComplianceReportToolResult, ComplianceRule, ComplianceSummary, InspectToolCallParams, ManageSensitivityRulesParams, ReplyResult, ReportDetail, ReportHumanResult, RuleCheckResult, SecurityAuditParams, SecurityStatusParams, SecuritySuggestionsParams, SensitivityRule, SetNetworkPolicyParams, SetRiskThresholdParams, SetSecurityPolicyParams, StandardCheckParams, StandardCheckResult, StandardRegisterResult, UnblockToolParams } from "./bindings/tools/orexis";
 export type { GrantItem, GrantListResponse, MyPermissions, OAuthProvider, RbacUser, RbacUsersResponse } from "../protocol-core/bindings/httpTypes";
-export * from "./bindings/mcp/philia";
-export * from "./bindings/mcp/polemos";
-export * from "./bindings/mcp/skemma";
-export * from "./bindings/mcp/skopeo";
-export * from "./bindings/mcp/webAutomation";
+export * from "./bindings/tools/philia";
+export * from "./bindings/tools/polemos";
+export * from "./bindings/tools/skemma";
+export * from "./bindings/tools/skopeo";
+export * from "./bindings/tools/web_automation";
 export * from "./bindings/serde_json/JsonValue";

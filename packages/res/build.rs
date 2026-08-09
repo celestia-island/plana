@@ -385,7 +385,7 @@ fn check_markdown_docs() -> Result<(), Vec<String>> {
                 .and_then(|n| n.to_str())
                 .unwrap_or("");
 
-            for section_name in ["skills", "mcp"] {
+            for section_name in ["skills", "tools"] {
                 let section_path = agent_path.join(section_name);
                 if !section_path.exists() {
                     continue;

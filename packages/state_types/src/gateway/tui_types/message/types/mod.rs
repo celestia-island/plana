@@ -896,7 +896,7 @@ pub enum SyncMessage {
     MemoryQueryResponse {
         query: String,
         total: usize,
-        results: Vec<plana::mcp::philia::MemoryQueryItem>,
+        results: Vec<plana::tools::philia::MemoryQueryItem>,
     },
     /// Delete a stored memory node by id.
     MemoryDeleteRequest {

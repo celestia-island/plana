@@ -285,7 +285,7 @@ mod celestia_surface {
         // Engine (CEP) domain protocol:
         resolves::<plana::engine::EngineHandshakeParams>();
         // Per-tool MCP I/O vocabulary:
-        resolves::<plana::mcp::philia::McpToolDetail>();
+        resolves::<plana::tools::philia::McpToolDetail>();
         // External MCP server registry file:
         resolves::<plana::external_mcp::McpServersFile>();
     }
@@ -306,11 +306,11 @@ mod celestia_surface {
         resolves::<plana::engine::EngineHandshakeResult>();
         let _ = plana::engine::ENGINE_PROTOCOL_VERSION;
         // philia (memory tool) per-tool I/O vocabulary:
-        resolves::<plana::mcp::philia::MemoryQueryItem>();
-        resolves::<plana::mcp::philia::MemoryQueryParams>();
-        resolves::<plana::mcp::philia::MemoryQueryResult>();
-        resolves::<plana::mcp::philia::MemoryStoreParams>();
-        resolves::<plana::mcp::philia::MemoryStoreResult>();
+        resolves::<plana::tools::philia::MemoryQueryItem>();
+        resolves::<plana::tools::philia::MemoryQueryParams>();
+        resolves::<plana::tools::philia::MemoryQueryResult>();
+        resolves::<plana::tools::philia::MemoryStoreParams>();
+        resolves::<plana::tools::philia::MemoryStoreResult>();
         // malkuth supervision gate: restart proposal payload.
         resolves::<plana::malkuth::RestartProposal>();
     }

@@ -2,20 +2,20 @@ use std::collections::HashMap;
 
 use tracing::debug;
 
-use crate::{Agent, McpToolInfo, McpToolParameters};
+use crate::{Agent, ToolInfo, ToolParameters};
 
 const MARKDOWN_SECTION_PARAMS: &str = "## Parameters";
 const MARKDOWN_SECTION_PREFIX: &str = "## ";
 const TYPE_ARRAY_PREFIX: &str = "array";
 
 #[derive(Debug, Clone)]
-pub struct McpToolDoc {
+pub struct ToolDoc {
     pub description: String,
-    pub parameters: McpToolParameters,
+    pub parameters: ToolParameters,
     pub body: String,
 }
 
-pub struct McpToolDocLoader;
+pub struct ToolDocLoader;
 
 struct ParsedParam {
     name: String,
@@ -56,11 +56,11 @@ fn make_array_prop_schema(desc: &str) -> serde_json::Value {
     serde_json::Value::Object(map)
 }
 
-impl McpToolDocLoader {
-    pub fn load(agent_name: &str, tool_name: &str, lang: &str) -> Option<McpToolDoc> {
-        let mcp_path = std::path::Path::new("res/prompts/agents")
+impl ToolDocLoader {
+    pub fn load(agent_name: &str, tool_name: &str, lang: &str) -> Option<ToolDoc> {
+        let tool_path = std::path::Path::new("res/prompts/agents")
             .join(agent_name)
-            .join("mcp")
+            .join("tools")
             .join(format!("{}.md", tool_name));
 
         let skills_path = std::path::Path::new("res/prompts/agents")
@@ -68,7 +68,7 @@ impl McpToolDocLoader {
             .join("skills")
             .join(format!("{}.md", tool_name));
 
-        let content = if let Ok(c) = std::fs::read_to_string(&mcp_path) {
+        let content = if let Ok(c) = std::fs::read_to_string(&tool_path) {
             c
         } else if let Ok(c) = std::fs::read_to_string(&skills_path) {
             debug!(
@@ -100,14 +100,14 @@ impl McpToolDocLoader {
 
         let parameters = Self::parse_parameters_from_body(&body);
 
-        Some(McpToolDoc {
+        Some(ToolDoc {
             description,
             parameters,
             body,
         })
     }
 
-    pub fn load_from_content(content: &str, lang: &str) -> Option<McpToolDoc> {
+    pub fn load_from_content(content: &str, lang: &str) -> Option<ToolDoc> {
         let (front_matter, body) = Self::split_front_matter(content)?;
         let toml_value: toml::Value = toml::from_str(&front_matter).ok()?;
 
@@ -122,7 +122,7 @@ impl McpToolDocLoader {
 
         let parameters = Self::parse_parameters_from_body(&body);
 
-        Some(McpToolDoc {
+        Some(ToolDoc {
             description,
             parameters,
             body,
@@ -162,7 +162,7 @@ impl McpToolDocLoader {
             })
     }
 
-    fn parse_parameters_from_body(body: &str) -> McpToolParameters {
+    fn parse_parameters_from_body(body: &str) -> ToolParameters {
         let mut required = Vec::new();
         let mut properties = HashMap::new();
         let mut separate_call_keys = Vec::new();
@@ -196,7 +196,7 @@ impl McpToolDocLoader {
 
         let _ = in_params;
 
-        McpToolParameters {
+        ToolParameters {
             param_type: "object".to_string(),
             required,
             properties,
@@ -234,7 +234,7 @@ impl McpToolDocLoader {
         })
     }
 
-    pub fn enrich_tool_info(info: &mut McpToolInfo, agent: &Agent, lang: &str) {
+    pub fn enrich_tool_info(info: &mut ToolInfo, agent: &Agent, lang: &str) {
         let agent_name = agent.folder_name();
         match Self::load(agent_name, &info.name, lang) {
             Some(doc) => {
@@ -249,7 +249,7 @@ impl McpToolDocLoader {
                 debug!(
                     agent = agent_name,
                     tool = %info.name,
-                    "McpToolDocLoader: no doc file found, using default parameters"
+                    "ToolDocLoader: no doc file found, using default parameters"
                 );
             }
         }

@@ -1,11 +1,11 @@
 use serde_json::Value;
 use std::{future::Future, pin::Pin};
 
-use super::mcp_tools::McpToolResult;
+use super::tools::ToolResult;
 use _domain_agent::AgentMarker;
 use _domain_skills_permissions::ToolCapability;
 
-pub trait McpTool: Send + Sync + 'static {
+pub trait Tool: Send + Sync + 'static {
     type Agent: AgentMarker;
 
     const NAME: &'static str;
@@ -16,7 +16,7 @@ pub trait McpTool: Send + Sync + 'static {
         scope: _domain_skills_permissions::ToolScope::Any,
     };
 
-    fn invoke(&self, params: Value) -> Pin<Box<dyn Future<Output = McpToolResult> + Send + '_>>;
+    fn invoke(&self, params: Value) -> Pin<Box<dyn Future<Output = ToolResult> + Send + '_>>;
 
     fn schema(&self) -> ToolSchema {
         ToolSchema::default()
@@ -33,14 +33,12 @@ pub trait ErasedTool: Send + Sync {
     fn name(&self) -> &'static str;
     fn agent_folder(&self) -> &'static str;
     fn capability(&self) -> ToolCapability;
-    fn invoke_erased(
-        &self,
-        params: Value,
-    ) -> Pin<Box<dyn Future<Output = McpToolResult> + Send + '_>>;
+    fn invoke_erased(&self, params: Value)
+    -> Pin<Box<dyn Future<Output = ToolResult> + Send + '_>>;
     fn schema(&self) -> ToolSchema;
 }
 
-impl<T: McpTool> ErasedTool for T {
+impl<T: Tool> ErasedTool for T {
     fn name(&self) -> &'static str {
         T::NAME
     }
@@ -56,12 +54,12 @@ impl<T: McpTool> ErasedTool for T {
     fn invoke_erased(
         &self,
         params: Value,
-    ) -> Pin<Box<dyn Future<Output = McpToolResult> + Send + '_>> {
+    ) -> Pin<Box<dyn Future<Output = ToolResult> + Send + '_>> {
         self.invoke(params)
     }
 
     fn schema(&self) -> ToolSchema {
-        <Self as McpTool>::schema(self)
+        <Self as Tool>::schema(self)
     }
 }
 
@@ -74,7 +72,7 @@ pub struct ToolDescriptor {
 }
 
 impl ToolDescriptor {
-    pub fn new<T: McpTool>(tool: T) -> Self {
+    pub fn new<T: Tool>(tool: T) -> Self {
         Self {
             name: T::NAME,
             agent_folder: <T::Agent as AgentMarker>::FOLDER_NAME,
@@ -96,7 +94,7 @@ impl ToolDescriptor {
         &self.capability
     }
 
-    pub async fn invoke(&self, params: Value) -> McpToolResult {
+    pub async fn invoke(&self, params: Value) -> ToolResult {
         self.tool.invoke_erased(params).await
     }
 
@@ -112,15 +110,12 @@ mod tests {
 
     struct DummyTool;
 
-    impl McpTool for DummyTool {
+    impl Tool for DummyTool {
         type Agent = HubRisMarker;
         const NAME: &'static str = "dummy_test_tool";
 
-        fn invoke(
-            &self,
-            _params: Value,
-        ) -> Pin<Box<dyn Future<Output = McpToolResult> + Send + '_>> {
-            Box::pin(async { McpToolResult::success_text("ok".into()) })
+        fn invoke(&self, _params: Value) -> Pin<Box<dyn Future<Output = ToolResult> + Send + '_>> {
+            Box::pin(async { ToolResult::success_text("ok".into()) })
         }
     }
 

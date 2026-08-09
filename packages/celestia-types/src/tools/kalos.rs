@@ -2,7 +2,7 @@ use super::haplotes::{AgentReference, ConflictInfo};
 use crate::enums::{AnnotationType, FileOpStatus, FileType};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileListResult {
     pub path: String,
     pub total_count: usize,
@@ -11,7 +11,7 @@ pub struct FileListResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileEntry {
     pub name: String,
     #[serde(rename = "type")]
@@ -19,14 +19,14 @@ pub struct FileEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct MkDirResult {
     pub path: String,
     pub status: FileOpStatus,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileDeleteResult {
     pub path: String,
     pub status: FileOpStatus,
@@ -35,7 +35,7 @@ pub struct FileDeleteResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileEditResult {
     pub path: String,
     pub status: FileOpStatus,
@@ -45,7 +45,7 @@ pub struct FileEditResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileReadResult {
     pub path: String,
     pub size_bytes: usize,
@@ -55,14 +55,14 @@ pub struct FileReadResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileExistsResult {
     pub path: String,
     pub exists: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileWriteResult {
     pub path: String,
     pub size_bytes: usize,
@@ -72,7 +72,7 @@ pub struct FileWriteResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileInfoResult {
     pub path: String,
     #[serde(rename = "type")]
@@ -82,7 +82,7 @@ pub struct FileInfoResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileTreeEntry {
     pub name: String,
     pub path: String,
@@ -92,7 +92,7 @@ pub struct FileTreeEntry {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileTreeListResult {
     pub path: String,
     pub total_count: usize,
@@ -100,7 +100,7 @@ pub struct FileTreeListResult {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct Annotation {
     pub id: String,
     pub file_path: String,
@@ -115,34 +115,34 @@ pub struct Annotation {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct ListAnnotationsResult {
     pub file_path: String,
     pub annotations: Vec<Annotation>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct ResolveAnnotationResult {
     pub annotation_id: String,
     pub resolved: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileReadParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileWriteParams {
     pub path: String,
     pub content: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileEditParams {
     pub path: String,
     pub old_content: String,
@@ -150,19 +150,19 @@ pub struct FileEditParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileDeleteParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileExistsParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileListParams {
     pub path: String,
     #[serde(default)]
@@ -170,13 +170,13 @@ pub struct FileListParams {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileGetInfoParams {
     pub path: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "mcp/kalos.ts")]
+#[ts(export, export_to = "tools/kalos.ts")]
 pub struct FileCreateDirParams {
     pub path: String,
 }

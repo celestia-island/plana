@@ -6,11 +6,11 @@
 //!   declarations from rust types via `ts_rs`, used by the IEPL codegen pipeline.
 //! - [`Getters`] — derive macro that generates `fn field_name(&self) -> &T` accessor
 //!   methods on structs, with `#[getter(skip)]` and `#[getter(rename = "…")]`.
-//! - [`define_typed_tools`] — declares typed MCP tool structs and `McpTool` impls
+//! - [`define_typed_tools`] — declares typed MCP tool structs and `Tool` impls
 //!   from a concise DSL.
-//! - [`agent_mcp_module!`] — the all-in-one macro for defining an agent's typed
+//! - [`agent_tool_module!`] — the all-in-one macro for defining an agent's typed
 //!   MCP tool set: struct state, constructors, accessors, tool groups, registry
-//!   builder, call dispatcher, and `McpToolInvoker` impl.
+//!   builder, call dispatcher, and `ToolInvoker` impl.
 #![allow(clippy::type_complexity)]
 
 use proc_macro::TokenStream;
@@ -619,7 +619,7 @@ pub fn define_typed_tools(input: TokenStream) -> TokenStream {
                         #(#struct_fields),*
                     }
 
-                    impl _domain_skills::tool_trait::McpTool for #struct_name {
+                    impl _domain_skills::tool_trait::Tool for #struct_name {
                         type Agent = #marker;
                         const NAME: &'static str = stringify!(#tool_name_lit);
                         #capability_impl
@@ -627,7 +627,7 @@ pub fn define_typed_tools(input: TokenStream) -> TokenStream {
                         fn invoke(
                             &self,
                             params: serde_json::Value,
-                        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = _domain_skills::mcp_tools::McpToolResult> + Send + '_>> {
+                        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = _domain_skills::tools::ToolResult> + Send + '_>> {
                             #(#clone_stmts)*
                             Box::pin(async move {
                                 #func_path(#(#field_refs,)* params).await
@@ -646,8 +646,8 @@ pub fn define_typed_tools(input: TokenStream) -> TokenStream {
 }
 
 // ---------------------------------------------------------------------------
-// agent_mcp_module! – single macro that replaces typed_tools, typed_registry,
-// registry, and the McpToolInvoker impl for each agent.
+// agent_tool_module! – single macro that replaces typed_tools, typed_registry,
+// registry, and the ToolInvoker impl for each agent.
 // ---------------------------------------------------------------------------
 
 struct AmmFieldDef {
@@ -1055,9 +1055,9 @@ impl syn::parse::Parse for AmmModule {
 fn amm_call_mode_expr(cm: &syn::Ident) -> proc_macro2::TokenStream {
     let s = cm.to_string();
     match s.as_str() {
-        "FireAndForget" => quote! { _state_sync::McpToolCallMode::FireAndForget },
-        "Blocking" => quote! { _state_sync::McpToolCallMode::Blocking },
-        "AsyncCallback" => quote! { _state_sync::McpToolCallMode::AsyncCallback },
+        "FireAndForget" => quote! { _state_sync::ToolCallMode::FireAndForget },
+        "Blocking" => quote! { _state_sync::ToolCallMode::Blocking },
+        "AsyncCallback" => quote! { _state_sync::ToolCallMode::AsyncCallback },
         _ => quote! { #cm },
     }
 }
@@ -1210,7 +1210,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
         })
         .collect();
 
-    // --- 3. Typed tool structs + McpTool impls ---
+    // --- 3. Typed tool structs + Tool impls ---
     let typed_tool_items: Vec<proc_macro2::TokenStream> = parsed
         .groups
         .iter()
@@ -1254,7 +1254,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                             #(#struct_field_defs),*
                         }
 
-                        impl _domain_skills::tool_trait::McpTool for #struct_name {
+                        impl _domain_skills::tool_trait::Tool for #struct_name {
                             type Agent = #marker;
                             const NAME: &'static str = stringify!(#tool_name_lit);
                             #capability_impl
@@ -1262,7 +1262,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                             fn invoke(
                                 &self,
                                 params: serde_json::Value,
-                            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = _domain_skills::mcp_tools::McpToolResult> + Send + '_>> {
+                            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = _domain_skills::tools::ToolResult> + Send + '_>> {
                                 #(#clone_stmts)*
                                 Box::pin(async move {
                                     #func_path(#(#field_refs,)* params).await
@@ -1322,8 +1322,8 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
         })
         .collect();
 
-    // --- 5. handle_mcp_call ---
-    let handle_mcp_call_params: Vec<proc_macro2::TokenStream> = all_group_field_names
+    // --- 5. handle_tool_call ---
+    let handle_tool_call_params: Vec<proc_macro2::TokenStream> = all_group_field_names
         .iter()
         .map(|fname| {
             let fty = resolve_struct_field_ty(fname, &state_field_ty, &custom_field_map);
@@ -1331,7 +1331,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
         })
         .collect();
 
-    let handle_mcp_call_arms: Vec<proc_macro2::TokenStream> = parsed
+    let handle_tool_call_arms: Vec<proc_macro2::TokenStream> = parsed
         .groups
         .iter()
         .flat_map(|group| {
@@ -1359,8 +1359,8 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
         })
         .collect();
 
-    // --- 6. McpToolInvoker impl ---
-    // invoke body: call handle_mcp_call
+    // --- 6. ToolInvoker impl ---
+    // invoke body: call handle_tool_call
     let invoke_field_refs: Vec<proc_macro2::TokenStream> = all_group_field_names
         .iter()
         .map(|fname| quote! { &self.#fname })
@@ -1383,15 +1383,15 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
             let desc = &tool.desc;
             let schema_expr = match &tool.schema {
                 Some(e) => quote! { #e },
-                None => quote! { _state_sync::McpToolParameters::default() },
+                None => quote! { _state_sync::ToolParameters::default() },
             };
             let call_mode_expr = match &tool.call_mode {
                 Some(cm) => amm_call_mode_expr(cm),
-                None => quote! { _state_sync::McpToolCallMode::default() },
+                None => quote! { _state_sync::ToolCallMode::default() },
             };
 
             let mut builder = quote! {
-                _state_sync::McpToolInfo::simple(
+                _state_sync::ToolInfo::simple(
                     #tool_names_path::#name_const,
                     #desc,
                     #agent,
@@ -1419,7 +1419,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
     let enrich_map = if enrich_docs {
         quote! {
             .map(|mut info| {
-                _state_sync::McpToolDocLoader::enrich_tool_info(
+                _state_sync::ToolDocLoader::enrich_tool_info(
                     &mut info,
                     &#agent,
                     &normalized,
@@ -1465,29 +1465,29 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
             match sp_str.as_str() {
                 "Always" => {
                     quote! {
-                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
-                            _domain_skills::mcp_tools::SnapshotPolicy::Always
+                        fn snapshot_policy(&self) -> _domain_skills::tools::SnapshotPolicy {
+                            _domain_skills::tools::SnapshotPolicy::Always
                         }
                     }
                 }
                 "Never" => {
                     quote! {
-                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
-                            _domain_skills::mcp_tools::SnapshotPolicy::Never
+                        fn snapshot_policy(&self) -> _domain_skills::tools::SnapshotPolicy {
+                            _domain_skills::tools::SnapshotPolicy::Never
                         }
                     }
                 }
                 "OnFailure" => {
                     quote! {
-                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
-                            _domain_skills::mcp_tools::SnapshotPolicy::OnFailure
+                        fn snapshot_policy(&self) -> _domain_skills::tools::SnapshotPolicy {
+                            _domain_skills::tools::SnapshotPolicy::OnFailure
                         }
                     }
                 }
                 _ => {
                     quote! {
-                        fn snapshot_policy(&self) -> _domain_skills::mcp_tools::SnapshotPolicy {
-                            _domain_skills::mcp_tools::SnapshotPolicy::#sp
+                        fn snapshot_policy(&self) -> _domain_skills::tools::SnapshotPolicy {
+                            _domain_skills::tools::SnapshotPolicy::#sp
                         }
                     }
                 }
@@ -1522,11 +1522,11 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
                                 parameters,
                             ).await;
                             return if result.success {
-                                _domain_skills::mcp_tools::McpToolResult::success_text(
+                                _domain_skills::tools::ToolResult::success_text(
                                     serde_json::to_string(&result.data).unwrap_or_default(),
                                 )
                             } else {
-                                _domain_skills::mcp_tools::McpToolResult::failure_text(
+                                _domain_skills::tools::ToolResult::failure_text(
                                     result.error.unwrap_or_default(),
                                 )
                             };
@@ -1577,37 +1577,37 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
             registry
         }
 
-        pub async fn handle_mcp_call(
-            #(#handle_mcp_call_params,)*
+        pub async fn handle_tool_call(
+            #(#handle_tool_call_params,)*
             tool_name: &str,
             parameters: serde_json::Value,
-        ) -> _domain_skills::mcp_tools::McpToolResult {
+        ) -> _domain_skills::tools::ToolResult {
             match tool_name {
-                #(#handle_mcp_call_arms)*
-                _ => _domain_skills::mcp_tools::McpToolResult::failure(
+                #(#handle_tool_call_arms)*
+                _ => _domain_skills::tools::ToolResult::failure(
                     format!("{} does not provide tool: {}", #agent, tool_name)
                 ),
             }
         }
 
         #[async_trait::async_trait]
-        impl _domain_skills::mcp_tools::McpToolInvoker for #name {
+        impl _domain_skills::tools::ToolInvoker for #name {
             async fn invoke(
                 &self,
                 tool_name: &str,
                 parameters: serde_json::Value,
-            ) -> _domain_skills::mcp_tools::McpToolResult {
+            ) -> _domain_skills::tools::ToolResult {
                 #skill_routing_pre_dispatch
-                handle_mcp_call(
+                handle_tool_call(
                     #(#invoke_field_refs,)*
                     tool_name,
                     parameters,
                 ).await
             }
 
-            async fn get_tools(&self) -> Vec<_state_sync::McpToolInfo> {
+            async fn get_tools(&self) -> Vec<_state_sync::ToolInfo> {
                 #enrich_prefix
-                let tool_infos: Vec<_state_sync::McpToolInfo> = vec![
+                let tool_infos: Vec<_state_sync::ToolInfo> = vec![
                     #(#tool_info_build,)*
                 ];
                 tool_infos
@@ -1635,7 +1635,7 @@ fn amm_generate(parsed: &AmmModule) -> proc_macro2::TokenStream {
 }
 
 #[proc_macro]
-pub fn agent_mcp_module(input: TokenStream) -> TokenStream {
+pub fn agent_tool_module(input: TokenStream) -> TokenStream {
     let parsed = syn::parse_macro_input!(input as AmmModule);
     amm_generate(&parsed).into()
 }

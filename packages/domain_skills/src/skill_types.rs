@@ -23,7 +23,7 @@ pub struct SkillResult {
     pub success: bool,
     pub data: serde_json::Value,
     pub error: Option<String>,
-    pub mcp_calls: Vec<serde_json::Value>,
+    pub tool_calls: Vec<serde_json::Value>,
 }
 
 impl SkillResult {
@@ -32,7 +32,7 @@ impl SkillResult {
             success: true,
             data,
             error: None,
-            mcp_calls: vec![],
+            tool_calls: vec![],
         }
     }
 
@@ -41,7 +41,7 @@ impl SkillResult {
             success: false,
             data: serde_json::Value::Null,
             error: Some(error),
-            mcp_calls: vec![],
+            tool_calls: vec![],
         }
     }
 }
@@ -220,7 +220,7 @@ impl Skill {
             .metadata
             .features
             .location
-            .unwrap_or(_state_sync::mcp::SkillLocation::Scepter);
+            .unwrap_or(_state_sync::tools::SkillLocation::Scepter);
         _state_sync::SkillInfo {
             name: self.name.clone(),
             description: self.description.clone(),

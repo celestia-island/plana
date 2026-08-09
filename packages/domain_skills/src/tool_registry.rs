@@ -1,7 +1,7 @@
 use serde_json::Value;
 use std::{collections::HashMap, marker::PhantomData};
 
-use super::{mcp_tools::McpToolResult, tool_trait::ToolDescriptor};
+use super::{tool_trait::ToolDescriptor, tools::ToolResult};
 use _domain_agent::AgentMarker;
 use _domain_skills_permissions::ToolCapability;
 
@@ -18,7 +18,7 @@ impl<M: AgentMarker> ToolRegistry<M> {
         }
     }
 
-    pub fn register<T: McpTool<Agent = M>>(&mut self, tool: T) {
+    pub fn register<T: Tool<Agent = M>>(&mut self, tool: T) {
         let name = T::NAME;
         self.tools.insert(name, ToolDescriptor::new(tool));
     }
@@ -27,12 +27,12 @@ impl<M: AgentMarker> ToolRegistry<M> {
         self.tools.insert(descriptor.name(), descriptor);
     }
 
-    pub async fn invoke(&self, tool_name: &str, params: Value) -> McpToolResult {
+    pub async fn invoke(&self, tool_name: &str, params: Value) -> ToolResult {
         match self.tools.get(tool_name) {
             Some(desc) => desc.invoke(params).await,
             None => {
                 let agent = M::FRIENDLY_NAME;
-                McpToolResult::failure(format!("{agent} does not provide tool: {tool_name}"))
+                ToolResult::failure(format!("{agent} does not provide tool: {tool_name}"))
             }
         }
     }
@@ -75,7 +75,7 @@ impl<M: AgentMarker> Default for ToolRegistry<M> {
     }
 }
 
-use super::tool_trait::McpTool;
+use super::tool_trait::Tool;
 
 pub struct GlobalToolRegistry {
     registries: HashMap<&'static str, ToolDescriptor>,
@@ -88,15 +88,15 @@ impl GlobalToolRegistry {
         }
     }
 
-    pub fn register<T: McpTool>(&mut self, tool: T) {
+    pub fn register<T: Tool>(&mut self, tool: T) {
         let name = T::NAME;
         self.registries.insert(name, ToolDescriptor::new(tool));
     }
 
-    pub async fn invoke(&self, tool_name: &str, params: Value) -> McpToolResult {
+    pub async fn invoke(&self, tool_name: &str, params: Value) -> ToolResult {
         match self.registries.get(tool_name) {
             Some(desc) => desc.invoke(params).await,
-            None => McpToolResult::failure(format!("Tool not found: {tool_name}")),
+            None => ToolResult::failure(format!("Tool not found: {tool_name}")),
         }
     }
 
@@ -139,26 +139,20 @@ mod tests {
     use std::pin::Pin;
 
     struct CreateTodo;
-    impl McpTool for CreateTodo {
+    impl Tool for CreateTodo {
         type Agent = HubRisMarker;
         const NAME: &'static str = "create_todo";
-        fn invoke(
-            &self,
-            _params: Value,
-        ) -> Pin<Box<dyn Future<Output = McpToolResult> + Send + '_>> {
-            Box::pin(async { McpToolResult::success_text("todo created".into()) })
+        fn invoke(&self, _params: Value) -> Pin<Box<dyn Future<Output = ToolResult> + Send + '_>> {
+            Box::pin(async { ToolResult::success_text("todo created".into()) })
         }
     }
 
     struct ListTodo;
-    impl McpTool for ListTodo {
+    impl Tool for ListTodo {
         type Agent = HubRisMarker;
         const NAME: &'static str = "list_todo";
-        fn invoke(
-            &self,
-            _params: Value,
-        ) -> Pin<Box<dyn Future<Output = McpToolResult> + Send + '_>> {
-            Box::pin(async { McpToolResult::success_text("[]".into()) })
+        fn invoke(&self, _params: Value) -> Pin<Box<dyn Future<Output = ToolResult> + Send + '_>> {
+            Box::pin(async { ToolResult::success_text("[]".into()) })
         }
     }
 

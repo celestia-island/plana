@@ -71,6 +71,6 @@ When inserting tasks into existing plans:
 
 1. **Validate** — Check for circular dependencies, resource feasibility.
 1. **Decide strategy** — Immediate / delayed / conditional insertion based on impact severity.
-1. **Report** — Call `report()` with the modified plan. Use `write_to_var` for multi-line content, then `exec` to call `report()`. See mcp.md Rule 1.
+1. **Report** — Call `report()` with the modified plan. Use `write_to_var` for multi-line content, then `exec` to call `report()`. See tools.md Rule 1.
 
 > Return type and IEPL enforcement: @system/return-type-convention

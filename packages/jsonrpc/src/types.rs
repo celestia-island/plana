@@ -7,7 +7,7 @@ use tracing::warn;
 pub const JSONRPC_VERSION: &str = "2.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpCallParams {
+pub struct ToolCallParams {
     pub tool_name: String,
     pub parameters: Value,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -238,7 +238,7 @@ impl JsonRpcRequest {
         Self::new(
             UnixMethod::McpCall,
             Some(
-                serde_json::to_value(McpCallParams {
+                serde_json::to_value(ToolCallParams {
                     tool_name: tool_name.into(),
                     parameters,
                     workspace_uri: None,
@@ -259,7 +259,7 @@ impl JsonRpcRequest {
         Self::new(
             UnixMethod::McpCall,
             Some(
-                serde_json::to_value(McpCallParams {
+                serde_json::to_value(ToolCallParams {
                     tool_name: tool_name.into(),
                     parameters,
                     workspace_uri: workspace_uri.map(|s| s.to_string()),

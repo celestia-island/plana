@@ -1,7 +1,7 @@
 mod buffer;
 mod column;
 #[cfg(test)]
-mod mcp_block;
+mod tool_block;
 
 pub use buffer::CliTimelineBuffer;
 pub use column::{COL_PAD, fmt_cont_line, fmt_tool_line, fmt_truncate};
@@ -25,8 +25,8 @@ impl TimelineRenderer for CliTimelineRenderer {
         if let Some(ref out) = stats.output_tokens {
             parts.push(format!("{} {}", ARROW_DOWN, out.format()));
         }
-        if stats.mcp_count > 0 {
-            parts.push(format!("{} {}", ARROW_SWAP, stats.mcp_count));
+        if stats.tool_count > 0 {
+            parts.push(format!("{} {}", ARROW_SWAP, stats.tool_count));
         }
         if let Some(dur) = stats.duration_secs {
             parts.push(format!("{:.1}s", dur));
@@ -100,8 +100,8 @@ impl TimelineRenderer for CliTimelineRenderer {
 mod tests {
     use super::*;
     use crate::types::{
-        GroupState, GroupStats, McpBlockData, McpBlockState, SkillBlockStatus, TimelineGroupData,
-        TimelineHumanGroup, TokenSource,
+        GroupState, GroupStats, SkillBlockStatus, TimelineGroupData, TimelineHumanGroup,
+        TokenSource, ToolBlockData, ToolBlockState,
     };
     use uuid::Uuid;
 
@@ -144,13 +144,13 @@ mod tests {
             inherited_tokens: None,
             inherited_label: None,
             content_blocks: vec![],
-            mcp_blocks: vec![],
+            tool_blocks: vec![],
             interleaved_blocks: vec![],
             stats: Some(GroupStats {
                 input_tokens: Some(TokenSource::CloudResponse(156)),
                 output_tokens: Some(TokenSource::CloudResponse(234)),
                 duration_secs: Some(23.5),
-                mcp_count: 1,
+                tool_count: 1,
                 exchange_count: Some(1),
             }),
             summary: None,
@@ -191,13 +191,13 @@ mod tests {
             inherited_tokens: Some(TokenSource::LocalStreamQuickAmount(512)),
             inherited_label: None,
             content_blocks: vec![],
-            mcp_blocks: vec![],
+            tool_blocks: vec![],
             interleaved_blocks: vec![],
             stats: Some(GroupStats {
                 input_tokens: Some(TokenSource::CloudResponse(1000)),
                 output_tokens: Some(TokenSource::CloudResponse(500)),
                 duration_secs: Some(15.0),
-                mcp_count: 1,
+                tool_count: 1,
                 exchange_count: Some(1),
             }),
             summary: Some("Task decomposition complete".to_string()),
@@ -241,8 +241,8 @@ mod tests {
     }
 
     #[test]
-    fn test_mcp_block_rendering() -> anyhow::Result<()> {
-        let mcp = McpBlockData {
+    fn test_tool_block_rendering() -> anyhow::Result<()> {
+        let tool = ToolBlockData {
             tool_name: "test_tool".to_string(),
             call_id: Uuid::now_v7(),
             agent_type: "haplotes".to_string(),
@@ -250,11 +250,11 @@ mod tests {
             result_text: "world".to_string(),
             success: true,
             duration_ms: Some(100),
-            state: McpBlockState::Done,
+            state: ToolBlockState::Done,
             separate_call_content: Vec::new(),
         };
 
-        let lines = mcp_block::render_cli_mcp_block(&mcp);
+        let lines = tool_block::render_cli_tool_block(&tool);
         assert!(!lines.is_empty());
         assert!(lines[0].contains("haplotes::test_tool"));
         Ok(())

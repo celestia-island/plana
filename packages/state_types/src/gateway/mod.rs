@@ -1,7 +1,7 @@
 pub mod agent_messages;
 pub mod conversation_messages;
-pub mod mcp_messages;
 pub mod monitor;
+pub mod tool_messages;
 pub mod tui_types;
 
 use serde::{Deserialize, Serialize};
@@ -9,8 +9,8 @@ use uuid::Uuid;
 
 pub use agent_messages::{AgentMessage, NodeInfo, NodeMessage};
 pub use conversation_messages::ConversationMessage;
-pub use mcp_messages::{McpMessage, SkillMessage};
 pub use monitor::{CosmosContainerInfo, CosmosOperationLogEntry, MetricsData, MonitorMessage};
+pub use tool_messages::{SkillMessage, ToolMessage};
 pub use tui_types::{
     AgentPatch, AgentSnapshot, AgentUpdateParams, AuthUserInfo, ClientCapability, ClientNodeInfo,
     CompletionOutcome, ConfiguredProvider, ContainerInfo, ContainerPatch, ContainerSnapshot,
@@ -38,7 +38,7 @@ pub use tui_types::{
 pub enum Message {
     Base(BaseMessage),
     Agent(AgentMessage),
-    Mcp(McpMessage),
+    Mcp(ToolMessage),
     Skill(SkillMessage),
     Node(NodeMessage),
     Monitor(MonitorMessage),
