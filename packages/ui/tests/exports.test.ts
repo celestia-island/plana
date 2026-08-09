@@ -14,7 +14,7 @@ import {
   PColorSchemeDialog,
   PConnectionStatus,
   PLogWindow,
-  PMcpToolBlock,
+  PToolBlock,
   PModelDownloadCard,
   PModelTag,
   PPageHeader,
@@ -34,7 +34,7 @@ import {
   formatTokenCount,
   formatUptime,
   getModelMeta,
-  parseMcpCallText,
+  parseToolCallText,
   registerModelCatalog,
   setProbeClient,
   splitModelId,
@@ -48,7 +48,7 @@ import {
   type PBreadcrumbItem,
   type PBreadcrumbParamChip,
   type PCaptchaProvider,
-  type PMcpToolCall,
+  type PToolCall,
   type PModelMeta,
   type PLogTab,
   type PTableColumn,
@@ -86,7 +86,7 @@ describe("package exports", () => {
     expect(PVoiceInputPopup).toBeDefined();
     expect(PAttachmentModal).toBeDefined();
     expect(PChatMessage).toBeDefined();
-    expect(PMcpToolBlock).toBeDefined();
+    expect(PToolBlock).toBeDefined();
     expect(PTokenUsageBadge).toBeDefined();
     expect(PTokenUsagePanel).toBeDefined();
     expect(PModelTag).toBeDefined();
@@ -94,11 +94,11 @@ describe("package exports", () => {
     expect(splitModelId).toBeTypeOf("function");
     expect(getModelMeta).toBeTypeOf("function");
     expect(registerModelCatalog).toBeTypeOf("function");
-    expect(parseMcpCallText).toBeTypeOf("function");
+    expect(parseToolCallText).toBeTypeOf("function");
   });
 
   it("exposes the chat/LLM kit public types", () => {
-    const tool: PMcpToolCall = { toolName: "web_search", status: "done", callText: "" };
+    const tool: PToolCall = { toolName: "web_search", status: "done", callText: "" };
     const att: PAttachmentItem = { id: "a", name: "x.txt", type: "text/plain", size: 1 };
     const voice: PVoiceState = { open: false, mode: "listening" };
     const meta: PModelMeta = { contextWindow: 8192 };
@@ -106,7 +106,7 @@ describe("package exports", () => {
     expect(att.name).toBe("x.txt");
     expect(voice.mode).toBe("listening");
     expect(meta.contextWindow).toBe(8192);
-    expectTypeOf<PMcpToolCall["status"]>().toEqualTypeOf<"pending" | "running" | "done" | "error">();
+    expectTypeOf<PToolCall["status"]>().toEqualTypeOf<"pending" | "running" | "done" | "error">();
   });
 
   it("exposes the platform/auth polish kit components and types", () => {

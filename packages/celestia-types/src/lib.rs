@@ -1,7 +1,7 @@
 //! Celestia platform domain profile for the PLANA protocol.
 //!
 //! `plana-celestia-types` is the celestia-island platform's domain profile:
-//! the agent, task, panel, industrial and MCP domain messages, plus the
+//! the agent, task, panel, industrial and tool domain messages, plus the
 //! scepter-flavored handshake and client-capability payloads. Every type is
 //! `Serialize`/`Deserialize` with JSON Schema and TypeScript bindings
 //! generation support.

@@ -13,7 +13,7 @@
 //!   (model selection, rate-limiting, chaining, skills) serializable across process boundaries.
 //! - **Execution mode** — `Read`/`Write`/`Edge` — controls the level of side-effect authority
 //!   granted to an agent run.
-//! - **Tool definition** — [`ToolDefinition`] — the canonical shape for MCP-style tool schemas.
+//! - **Tool definition** — [`ToolDefinition`] — the canonical shape for tool schemas.
 //! - **Safety & workspace** — shell-metacharacter detection, workspace identity/registry,
 //!   credential storage, model-tier gating.
 //!

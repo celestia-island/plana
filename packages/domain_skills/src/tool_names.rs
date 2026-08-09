@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-// MCP tool name constants
+// Tool name constants
 
 #[derive(Default)]
 pub struct ParsedToolCall {
@@ -279,11 +279,11 @@ pub mod remote_operations {
 /// Returns the LLM-visible tool surface for the given agent.
 ///
 /// Under the microkernel architecture, ALL agents expose exactly three tools:
-/// `exec`, `write_to_var`, and `write_to_var_json`. All other MCP tools are
+/// `exec`, `write_to_var`, and `write_to_var_json`. All other tools are
 /// accessed indirectly through ES-imported tool functions (e.g. `report()`,
 /// `file_read()`) inside JavaScript executed by Cosmos's `exec`. Per-skill
 /// permission enforcement is handled by the `[[related_tools]]` TOML frontmatter
-/// in each skill's markdown file and the Cosmos MCP router's `allowed_tools`
+/// in each skill markdown file and the Cosmos tool router`s `allowed_tools`
 /// allowlist.
 ///
 /// If the architecture ever needs to grant specific agents additional

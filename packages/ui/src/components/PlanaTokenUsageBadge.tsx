@@ -8,7 +8,7 @@ import "./PlanaTokenUsageBadge.scss";
 /**
  * PTokenUsageBadge — compact token metering pill.
  *
- * Shows input (↑) and output (↓) token counts, optionally mcpCount and
+ * Shows input (↑) and output (↓) token counts, optionally toolCount and
  * duration. Pure formatting — numbers are passed in by the parent.
  */
 export const PTokenUsageBadge = defineComponent({
@@ -16,7 +16,7 @@ export const PTokenUsageBadge = defineComponent({
   props: {
     input: { type: Number, default: 0 },
     output: { type: Number, default: 0 },
-    mcpCount: { type: Number as PropType<number | undefined>, default: undefined },
+    toolCount: { type: Number as PropType<number | undefined>, default: undefined },
     durationSec: { type: Number as PropType<number | undefined>, default: undefined },
     compact: { type: Boolean, default: false },
     fixed: { type: Boolean, default: false },
@@ -36,10 +36,10 @@ export const PTokenUsageBadge = defineComponent({
           <ArrowDown size={props.compact ? 9 : 10} class="s-token-usage-arrow" data-direction="out" />
           <span class="s-token-usage-val"><HRollingNumber value={formatTokenCount(props.output)} /></span>
         </span>
-        {props.mcpCount != null && (
+        {props.toolCount != null && (
           <span class="s-token-usage-stat">
-            <span class="s-token-usage-icon-mcp">⇄</span>
-            <span class="s-token-usage-val"><HRollingNumber value={props.mcpCount} /></span>
+            <span class="s-token-usage-icon-tool">⇄</span>
+            <span class="s-token-usage-val"><HRollingNumber value={props.toolCount} /></span>
           </span>
         )}
         {props.durationSec != null && (

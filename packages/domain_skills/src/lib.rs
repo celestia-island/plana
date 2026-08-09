@@ -1,7 +1,7 @@
-//! Agent skill framework — MCP tools, skill types, SOC executor, registry.
+//! Agent skill framework — tools, skill types, SOC executor, registry.
 //!
 //! This crate defines the runtime model for agent skills: what a skill is, how
-//! it is registered, how its MCP tools are invoked, and how execution is wrapped
+//! it is registered, how its tools are invoked, and how execution is wrapped
 //! in SOC (Security Operations Center) process management.
 //!
 //! Key abstractions:

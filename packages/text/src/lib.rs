@@ -6,7 +6,7 @@
 //!
 //! [`LlmStream`] models a streaming LLM response as a sequence of
 //! [`StreamSegment`]s, each tagged with a [`StreamChunkKind`] — plain text,
-//! code-fence blocks, MCP tool calls ([`StreamToolEvent`]), think blocks,
+//! code-fence blocks, tool calls ([`StreamToolEvent`]), think blocks,
 //! or agent handoff markers. The builder merges contiguous segments of the
 //! same kind for compact wire representation.
 #![allow(clippy::type_complexity)]

@@ -1000,7 +1000,7 @@ fn integration_non_adjacent_synthetic_result_orphan_handling() -> Result<()> {
         .iter()
         .filter(|b| matches!(b, TimelineSegmentBlock::Tool(_)))
         .count();
-    assert_eq!(tool_count, 2, "2 MCP blocks: paired Failed + real Done");
+    assert_eq!(tool_count, 2, "2 tool blocks: paired Failed + real Done");
 
     let pending_count = interleaved
         .iter()
@@ -1090,7 +1090,7 @@ fn cross_sub_duplicate_content_preserved_by_design() -> Result<()> {
         .iter()
         .filter(|b| matches!(b, TimelineSegmentBlock::Tool(_)))
         .count();
-    assert_eq!(tool_count, 1, "identical MCP blocks collapsed to 1");
+    assert_eq!(tool_count, 1, "identical tool blocks collapsed to 1");
     Ok(())
 }
 
@@ -1099,7 +1099,7 @@ fn cross_sub_duplicate_content_preserved_by_design() -> Result<()> {
 /// For non-adjacent synthetic results (seal_coalesced appends ToolResult at
 /// the END of segments, separated from their ToolCall by Content segments):
 ///
-/// - tool_blocks path: filters to MCP-only segments → Call+Result become
+/// - tool_blocks path: filters to tool-only segments → Call+Result become
 ///   adjacent → correctly paired → single ToolBlockData with both call_text
 ///   and result_text.
 ///
@@ -1123,7 +1123,7 @@ fn integration_tool_blocks_pairs_non_adjacent_synthetic_but_interleaved_does_not
     assert_eq!(
         tool_blocks.len(),
         1,
-        "tool_blocks: filters non-MCP → adjacent → 1 paired block"
+        "tool_blocks: filters non-tool → adjacent → 1 paired block"
     );
     assert_eq!(
         tool_blocks[0].call_text, call_code,

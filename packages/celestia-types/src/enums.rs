@@ -1,6 +1,6 @@
 //! Shared domain vocabulary enums.
 //!
-//! Platform-wide enumerations consumed by MCP tool types and protocol
+//! Platform-wide enumerations consumed by tool types and protocol
 //! messages. These are *vocabulary*, not tool I/O shapes, so they live at the
 //! crate root rather than under `tools/`. Per-agent tool request/result structs
 //! (see `tools/`) reference the types defined here. The generic

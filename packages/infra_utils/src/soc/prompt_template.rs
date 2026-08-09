@@ -147,11 +147,11 @@ impl PromptTemplateGenerator {
 
         output.push_str("## Dependencies\n\n");
 
-        output.push_str("### Required MCP Tools\n");
-        output.push_str("- [MCP Tool Name]: [Usage Description]\n\n");
+        output.push_str("### Required Tools\n");
+        output.push_str("- [Tool Name]: [Usage Description]\n\n");
 
-        output.push_str("### Optional MCP Tools\n");
-        output.push_str("- [MCP Tool Name]: [Usage Description]\n\n");
+        output.push_str("### Optional Tools\n");
+        output.push_str("- [Tool Name]: [Usage Description]\n\n");
 
         output.push_str("### Collaborating Skills\n");
         output.push_str("- [Skills Name]: [Collaboration Scenario]\n\n");
@@ -212,7 +212,7 @@ mod tests {
         let template = generator.generate_dependencies_template();
 
         assert!(template.contains("Dependencies"));
-        assert!(template.contains("Required MCP Tools"));
+        assert!(template.contains("Required Tools"));
         assert!(template.contains("Collaborating Skills"));
         Ok(())
     }

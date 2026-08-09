@@ -3,7 +3,7 @@
 /// All JS ref storage lives under `globalThis.__refs`.
 /// The `__refs` global is initialized as part of the namespace bootstrap and
 /// bound as `globalThis.refs` for `import refs from 'refs'`. The `ref_add` /
-/// `ref_remove` MCP tools that previously wrote to `__refs` have been removed
+/// `ref_remove` tools that previously wrote to `__refs` have been removed
 /// from the LLM-visible surface; the underlying `JsRuntime::write_to_ref` /
 /// `remove_ref` programmatic API remains available for internal Rust callers.
 ///

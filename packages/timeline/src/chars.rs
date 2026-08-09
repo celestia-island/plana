@@ -7,9 +7,9 @@ pub const TL_BODY: &str = "  ";
 pub const TL_CLOSE: &str = "--";
 pub const TL_SEP: &str = "------";
 pub const TL_SEP_CHAR: &str = "-";
-pub const TL_MCP_OPEN: &str = "  ";
-pub const TL_MCP_INNER: &str = "  ";
-pub const TL_MCP_CLOSE: &str = "  ";
+pub const TL_TOOL_OPEN: &str = "  ";
+pub const TL_TOOL_INNER: &str = "  ";
+pub const TL_TOOL_CLOSE: &str = "  ";
 
 pub const ARROW_UP: &str = "in";
 pub const ARROW_DOWN: &str = "out";
@@ -34,8 +34,8 @@ pub const BD_RND_TR: &str = "\u{256E}";
 pub const BD_RND_BL: &str = "\u{2570}";
 pub const BD_RND_BR: &str = "\u{256F}";
 
-// -- TUI MCP block borders --
-pub const TL_MCP_OPEN_TUI: &str = "\u{256D}"; // ╭
-pub const TL_MCP_INNER_TUI: &str = "\u{2502}"; // │
-pub const TL_MCP_CLOSE_TUI: &str = "\u{2570}"; // ╰
+// -- TUI tool block borders --
+pub const TL_TOOL_OPEN_TUI: &str = "\u{256D}"; // ╭
+pub const TL_TOOL_INNER_TUI: &str = "\u{2502}"; // │
+pub const TL_TOOL_CLOSE_TUI: &str = "\u{2570}"; // ╰
 pub const TL_SEP_TUI: &str = "\u{251C}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}\u{2500}"; // ├──────

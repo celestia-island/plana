@@ -1,4 +1,4 @@
-//! Core state types — Agent, AgentInfo, MCP, gateway messages.
+//! Core state types — Agent, AgentInfo, tools, gateway messages.
 //!
 //! This crate defines the shared data structures that flow between every layer
 //! of the Entelecheia platform: agent lifecycle, tool configuration, gateway
@@ -12,7 +12,7 @@
 //!   Tool, Skill, Node, Monitor, Sync, Conversation), forming the wire protocol
 //!   between agents and the control plane.
 //! - [`ToolInfo`] / [`ToolCallRequest`] / [`ToolCallResponse`] —
-//!   MCP tool metadata, invocation contracts, and response envelopes with
+//!   tool metadata, invocation contracts, and response envelopes with
 //!   visibility, maturity, and injection-policy settings.
 //! - TUI types (`tui_types` module) — comprehensive snapshot/patch model for
 //!   the admin dashboard: agents, containers, providers, knowledge bases,
@@ -50,7 +50,7 @@ pub use gateway::{
         ConfiguredProvider, ContainerInfo, ContainerPatch, ContainerSnapshot, CustomAgentInfo,
         EntrypointApiConfigInfo, EntrypointConfigInfo, EntrypointDefaultsInfo, GlobalSnapshot,
         HistoryMessage, KeyInfo, KeyMetadata, KnowledgeBaseFilters, KnowledgeBaseInfo,
-        KnowledgeBaseStatus, Layer2AgentInfo, Layer2McpToolInfo, Layer2SkillInfo, LogEntryData,
+        KnowledgeBaseStatus, Layer2AgentInfo, Layer2ToolInfo, Layer2SkillInfo, LogEntryData,
         MaxConcurrentInfo, MessagesPage, ModelFsInfo, ModelFsPricing, ModelInfo, NoaEvent,
         PeriodType, ProviderCapabilitiesInfo, ProviderFsInfo, ProviderInfo, ProviderLimitsInfo,
         QuotaInfo, RateRuleInfo, RequestState, SearchHit, SearchResponse, TaskInfo, TaskPatch,
