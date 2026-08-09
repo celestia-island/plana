@@ -108,8 +108,19 @@ impl WorkspaceIdentity {
     }
 
     pub fn default_workspace() -> Self {
+        // Resolve the deployment workspace root from the environment before
+        // falling back to the container-internal mount path. ENTELECHEIA_
+        // WORKSPACE_DIR is the deployment root (e.g. /mnt/codespace on the
+        // celestia nodes); HOST_WORKSPACE_PATH / COSMOS_HOST_WORKSPACE_PATH
+        // are the classic host-workspace envs. "/workspace" is the container
+        // mount path — only valid inside a cosmos container, never on the
+        // bare host (evernight exec would fail with ENOENT).
+        let path = std::env::var("ENTELECHEIA_WORKSPACE_DIR")
+            .or_else(|_| std::env::var("HOST_WORKSPACE_PATH"))
+            .or_else(|_| std::env::var("COSMOS_HOST_WORKSPACE_PATH"))
+            .unwrap_or_else(|_| "/workspace".to_string());
         Self {
-            path: "/workspace".to_string(),
+            path,
             connection_kind: WorkspaceConnectionKind::LocalFilesystem,
             host_id: None,
             remote_address: None,
@@ -469,7 +480,7 @@ mod tests {
         let b = WorkspaceIdentity::default_workspace();
         assert_eq!(a.compute_uuid(), b.compute_uuid());
 
-        let c = WorkspaceIdentity::local("/workspace");
+        let c = WorkspaceIdentity::local(&a.path);
         assert_eq!(a.compute_uuid(), c.compute_uuid());
         Ok(())
     }
@@ -609,7 +620,8 @@ mod tests {
     #[test]
     fn test_default_workspace_to_uri() -> Result<()> {
         let id = WorkspaceIdentity::default_workspace();
-        assert_eq!(id.to_uri(), "local:///workspace");
+        let expected = format!("local://{}", ensure_leading_slash(&id.path));
+        assert_eq!(id.to_uri(), expected);
         Ok(())
     }
 
