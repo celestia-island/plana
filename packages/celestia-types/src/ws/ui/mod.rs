@@ -6,6 +6,7 @@ pub mod bridge_network;
 pub mod file_browsing;
 pub mod logs;
 pub mod noa;
+pub mod realtime;
 pub mod system_ui;
 pub mod views;
 pub mod workspace;

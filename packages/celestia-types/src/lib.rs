@@ -538,7 +538,7 @@ pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
 pub use ws::agent::{agent_lifecycle::*, layer2::*, state_sync::*, tasks::*, yolo::*};
 pub use ws::services::{auth::*, industrial::*, knowledge_base::*, llm_provider::*};
 pub use ws::ui::{
-    bridge_network::*, file_browsing::*, logs::*, noa::*, system_ui::*, views::*, workspace::*,
+    bridge_network::*, file_browsing::*, logs::*, noa::*, realtime::*, system_ui::*, views::*, workspace::*,
 };
 
 #[cfg(test)]
