@@ -40,7 +40,7 @@ export type SkillStage = { "Started": string } | { "Done": string } | { "Complet
 
 export type StreamChunkKind = "Text" | "Thinking" | "DeepThinking";
 
-export type StreamSegment = { "Text": { text: string, message_id?: string, } } | { "Thinking": { text: string, message_id?: string, } } | { "DeepThinking": { text: string, message_id?: string, } } | { "McpCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, } } | { "McpResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, } };
+export type StreamSegment = { "Text": { text: string, message_id?: string, } } | { "Thinking": { text: string, message_id?: string, } } | { "DeepThinking": { text: string, message_id?: string, } } | { "ToolCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, } } | { "ToolResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, } };
 
 export type StructuredAgentError = { code: AgentErrorCode, detail?: string, context: { [key in string]: string }, };
 

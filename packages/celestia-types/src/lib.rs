@@ -283,7 +283,7 @@ pub enum StreamSegment {
         #[ts(type = "string")]
         message_id: Option<uuid::Uuid>,
     },
-    McpCall {
+    ToolCall {
         tool_name: String,
         call_id: String,
         #[ts(type = "unknown")]
@@ -296,7 +296,7 @@ pub enum StreamSegment {
         #[ts(type = "string")]
         message_id: Option<uuid::Uuid>,
     },
-    McpResult {
+    ToolResult {
         tool_name: String,
         call_id: String,
         success: bool,
@@ -830,8 +830,8 @@ mod tests {
     }
 
     #[test]
-    fn stream_segment_mcp_call_round_trip() {
-        let seg = StreamSegment::McpCall {
+    fn stream_segment_tool_call_round_trip() {
+        let seg = StreamSegment::ToolCall {
             tool_name: "kalos.file_read".into(),
             call_id: "call-1".into(),
             params: json!({"path": "/etc/hosts"}),
@@ -841,19 +841,19 @@ mod tests {
         let v = serde_json::to_value(&seg).unwrap();
         let back: StreamSegment = serde_json::from_value(v).unwrap();
         match back {
-            StreamSegment::McpCall {
+            StreamSegment::ToolCall {
                 tool_name, call_id, ..
             } => {
                 assert_eq!(tool_name, "kalos.file_read");
                 assert_eq!(call_id, "call-1");
             }
-            other => panic!("expected McpCall, got {other:?}"),
+            other => panic!("expected ToolCall, got {other:?}"),
         }
     }
 
     #[test]
-    fn stream_segment_mcp_result_round_trip() {
-        let seg = StreamSegment::McpResult {
+    fn stream_segment_tool_result_round_trip() {
+        let seg = StreamSegment::ToolResult {
             tool_name: "kalos.file_read".into(),
             call_id: "call-1".into(),
             success: true,
@@ -865,7 +865,7 @@ mod tests {
         let v = serde_json::to_value(&seg).unwrap();
         let back: StreamSegment = serde_json::from_value(v).unwrap();
         match back {
-            StreamSegment::McpResult {
+            StreamSegment::ToolResult {
                 success,
                 duration_ms,
                 ..
@@ -873,7 +873,7 @@ mod tests {
                 assert!(success);
                 assert_eq!(duration_ms, Some(42));
             }
-            other => panic!("expected McpResult, got {other:?}"),
+            other => panic!("expected ToolResult, got {other:?}"),
         }
     }
 

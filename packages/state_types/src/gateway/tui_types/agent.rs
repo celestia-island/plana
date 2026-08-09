@@ -156,7 +156,7 @@ pub struct TuiAgentInfo {
     #[serde(default)]
     pub token_usage: Option<(u32, u32)>,
     #[serde(default)]
-    pub mcp_tool_calls: u32,
+    pub tool_calls: u32,
     #[serde(default)]
     pub request_state: RequestState,
     #[serde(default)]

@@ -8,7 +8,7 @@ fn default_true() -> bool {
 pub struct Layer2AgentInfo {
     pub name: String,
     pub description: String,
-    pub mcp_count: usize,
+    pub tool_count: usize,
     pub skills_count: usize,
     pub languages: Vec<String>,
     #[serde(default = "default_true")]

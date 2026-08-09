@@ -234,9 +234,9 @@ impl JsonRpcRequest {
         UnixMethod::from_method_str(&self.method)
     }
 
-    pub fn mcp_call(tool_name: impl Into<String>, parameters: Value) -> Self {
+    pub fn tool_call(tool_name: impl Into<String>, parameters: Value) -> Self {
         Self::new(
-            UnixMethod::McpCall,
+            UnixMethod::ToolCall,
             Some(
                 serde_json::to_value(ToolCallParams {
                     tool_name: tool_name.into(),
@@ -251,13 +251,13 @@ impl JsonRpcRequest {
         )
     }
 
-    pub fn mcp_call_with_workspace(
+    pub fn tool_call_with_workspace(
         tool_name: impl Into<String>,
         parameters: Value,
         workspace_uri: Option<&str>,
     ) -> Self {
         Self::new(
-            UnixMethod::McpCall,
+            UnixMethod::ToolCall,
             Some(
                 serde_json::to_value(ToolCallParams {
                     tool_name: tool_name.into(),
@@ -272,8 +272,8 @@ impl JsonRpcRequest {
         )
     }
 
-    pub fn mcp_list_tools() -> Self {
-        Self::new(UnixMethod::McpListTools, None)
+    pub fn tool_list_tools() -> Self {
+        Self::new(UnixMethod::ToolListTools, None)
     }
 
     pub fn repl_exec(code: impl Into<String>) -> Self {
@@ -517,8 +517,8 @@ impl JsonRpcResponse {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum UnixMethod {
-    McpCall,
-    McpListTools,
+    ToolCall,
+    ToolListTools,
     ReplExec,
     ReplSnapshot,
     ReplSnapshotMemory,
@@ -540,8 +540,8 @@ pub enum UnixMethod {
 impl UnixMethod {
     pub const fn method_str(self) -> &'static str {
         match self {
-            Self::McpCall => "mcp.call",
-            Self::McpListTools => "mcp.list_tools",
+            Self::ToolCall => "tool.call",
+            Self::ToolListTools => "tool.list_tools",
             Self::ReplExec => "repl.exec",
             Self::ReplSnapshot => "repl.snapshot",
             Self::ReplSnapshotMemory => "repl.snapshot_memory",
@@ -563,8 +563,8 @@ impl UnixMethod {
 
     pub fn from_method_str(s: &str) -> Option<Self> {
         match s {
-            "mcp.call" => Some(Self::McpCall),
-            "mcp.list_tools" => Some(Self::McpListTools),
+            "tool.call" => Some(Self::ToolCall),
+            "tool.list_tools" => Some(Self::ToolListTools),
             "repl.exec" => Some(Self::ReplExec),
             "repl.snapshot" => Some(Self::ReplSnapshot),
             "repl.snapshot_memory" => Some(Self::ReplSnapshotMemory),
@@ -595,8 +595,8 @@ impl std::fmt::Display for UnixMethod {
 pub mod methods {
     use super::UnixMethod;
 
-    pub const MCP_CALL: UnixMethod = UnixMethod::McpCall;
-    pub const MCP_LIST_TOOLS: UnixMethod = UnixMethod::McpListTools;
+    pub const TOOL_CALL: UnixMethod = UnixMethod::ToolCall;
+    pub const TOOL_LIST_TOOLS: UnixMethod = UnixMethod::ToolListTools;
     pub const REPL_EXEC: UnixMethod = UnixMethod::ReplExec;
     pub const REPL_SNAPSHOT: UnixMethod = UnixMethod::ReplSnapshot;
     pub const REPL_SNAPSHOT_MEMORY: UnixMethod = UnixMethod::ReplSnapshotMemory;
@@ -668,10 +668,10 @@ mod tests {
 
     #[test]
     fn request_serializes_correctly() -> Result<()> {
-        let req = JsonRpcRequest::new_raw("mcp.call", Some(serde_json::json!({"tool": "test"})));
+        let req = JsonRpcRequest::new_raw("tool.call", Some(serde_json::json!({"tool": "test"})));
         let json = serde_json::to_string(&req)?;
         assert!(json.contains("\"jsonrpc\":\"2.0\""));
-        assert!(json.contains("\"method\":\"mcp.call\""));
+        assert!(json.contains("\"method\":\"tool.call\""));
         assert!(json.contains("\"tool\":\"test\""));
         Ok(())
     }
@@ -725,12 +725,12 @@ mod tests {
 
     #[test]
     fn typed_constructors_use_correct_methods() -> Result<()> {
-        let req = JsonRpcRequest::mcp_call("test_tool", serde_json::Value::Null);
-        assert_eq!(req.method, "mcp.call");
+        let req = JsonRpcRequest::tool_call("test_tool", serde_json::Value::Null);
+        assert_eq!(req.method, "tool.call");
         assert!(req.params.is_some());
 
-        let req = JsonRpcRequest::mcp_list_tools();
-        assert_eq!(req.method, "mcp.list_tools");
+        let req = JsonRpcRequest::tool_list_tools();
+        assert_eq!(req.method, "tool.list_tools");
         assert!(req.params.is_none());
 
         let req = JsonRpcRequest::bridge_call("my_tool", serde_json::json!({"x": 1}));
@@ -748,8 +748,8 @@ mod tests {
     #[test]
     fn unix_method_roundtrip() -> Result<()> {
         for method in [
-            UnixMethod::McpCall,
-            UnixMethod::McpListTools,
+            UnixMethod::ToolCall,
+            UnixMethod::ToolListTools,
             UnixMethod::ReplExec,
             UnixMethod::ReplSnapshot,
             UnixMethod::ReplSnapshotMemory,

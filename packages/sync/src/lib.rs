@@ -70,7 +70,7 @@ pub const ALL_TOPICS: &[(&str, &str)] = &[
     ("Sync.AgentStreamingChunk", "agent_streaming"),
     ("Sync.AgentThinkingStep", "agent_thinking"),
     ("Sync.AgentToolCall", "agent_tool_call"),
-    ("Sync.McpToolResult", "mcp_tool_result"),
+    ("Sync.ToolResult", "tool_result"),
     ("Sync.SkillChainStart", "skill_chain"),
     ("Sync.SkillChainStep", "skill_chain"),
     ("Sync.SkillChainComplete", "skill_chain"),
