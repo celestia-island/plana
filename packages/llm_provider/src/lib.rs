@@ -29,12 +29,18 @@ use futures::Stream;
 /// Install the ring-based rustls crypto provider exactly once. Required
 /// because reqwest is built with `rustls-no-provider` (pure-Rust TLS); any
 /// `reqwest::Client` construction panics without an installed provider.
+///
+/// Another crate in the process may already have installed a provider
+/// (e.g. scepter's russh/hyper-rustls path), in which case `install_default`
+/// returns `AlreadyInstalled` — tolerate that instead of panicking, since
+/// any installed provider satisfies reqwest's requirement.
 pub(crate) fn ensure_rustls_crypto_provider() {
     static ONCE: std::sync::Once = std::sync::Once::new();
     ONCE.call_once(|| {
-        rustls::crypto::ring::default_provider()
-            .install_default()
-            .expect("rustls crypto provider already installed");
+        if rustls::crypto::CryptoProvider::get_default().is_some() {
+            return;
+        }
+        let _ = rustls::crypto::ring::default_provider().install_default();
     });
 }
 use serde::{Deserialize, Serialize};
