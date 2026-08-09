@@ -21,7 +21,7 @@ Probes a remote node for supported network protocols and services by attempting 
 
 ## Parameters
 
-- **host** (string, required): Hostname or IP address of the remote node to probe (e.g. `"192.168.1.10"` or `"node-001.local"`).
+- **host** (string, required): Hostname or IP address of the remote node to probe (e.g. `"198.51.100.10"` or `"node-001.local"`).
 - **port** (number, optional): Specific port number to probe. When set to `0` (default), the tool probes a predefined set of common service ports (22, 80, 443, 21, 25, 53, 3306, 5432, 8080, 8443). Default: `0`
 
 > **Parameter Format**:
@@ -34,7 +34,7 @@ Probes a remote node for supported network protocols and services by attempting 
 ```text
 Protocol probe completed
 
-host: "192.168.1.10"
+host: "198.51.100.10"
 
 port: 22
 protocol: "SSH"
@@ -62,7 +62,7 @@ status: "closed"
 Protocol probe failed
 
 Error: Host unreachable
-Message: Unable to connect to "192.168.1.999". Verify the host address and network connectivity.
+Message: Unable to connect to "198.51.100.999". Verify the host address and network connectivity.
 ```
 
 ## Examples
@@ -70,7 +70,7 @@ Message: Unable to connect to "192.168.1.999". Verify the host address and netwo
 ### Example 1: Probe all common ports
 
 ```text
-host: "192.168.1.10"
+host: "198.51.100.10"
 ```
 
 ### Example 2: Probe a specific port
@@ -83,7 +83,7 @@ port: 22
 ### Example 3: Probe a web server
 
 ```text
-host: "10.0.0.50"
+host: "192.0.2.50"
 port: 443
 ```
 

@@ -115,6 +115,8 @@ exec({ code: "import { smart_read_file } from 'kalos'; const r = await smart_rea
 - **Imports**: Include ALL necessary imports. Do not assume imports from other files.
 - **One file per call**: Call `smart_write_file` once per file. Do not batch files.
 - **Language detection**: If the workplan doesn't specify a language, detect from existing workspace files (Cargo.toml → Rust, package.json → TypeScript/JavaScript, etc.).
+- **SECRET HYGIENE — HARD RULE**: Never put real credentials (passwords, private keys, tokens, API keys), internal IPs (`192.168.x` / `10.x`), or internal paths (`/mnt/...`) into generated code, configs, scripts, docs, or examples. Use environment variable references or placeholders; example values use RFC 5737 documentation addresses and fake values (`test-password`, `sk-xxx`). When generating install scripts or config templates, default secrets to empty and require explicit injection. See `@system/repo-hygiene`.
 
 > Return type and IEPL enforcement: @system/return-type-convention
 > IEPL-first: @system/iepl-first
+> Repository hygiene hard rules: @system/repo-hygiene

@@ -52,7 +52,7 @@ name = "Auto-Discovered Industrial Corridor"
 [[connections]]
 id = "conn-s7-1"
 kind = "s7comm"
-host = "192.168.1.10"
+host = "198.51.100.10"
 port = 102
 rack = 0
 slot = 0

@@ -120,7 +120,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 If there are staged changes:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: \"cd /workspace && git commit -m 'chore: auto-fix clippy warnings (self-iteration)'\", timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'Committed');" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: \"cd /workspace && git commit -m '🐛 Fix clippy warnings from the auto-fix cycle.'\", timeout: 30 }); console.log(r.data.stdout || r.data.stderr || 'Committed');" })
 ```
 
 ### Step 6: RE-SCAN (optional — for remaining issues)

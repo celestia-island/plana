@@ -39,7 +39,7 @@ Returns `{ ok: false, data: null, error: string }`.
 ### Example 1: Write a single register
 
 ```text
-endpoint: "tcp://192.168.1.100:502"
+endpoint: "tcp://198.51.100.100:502"
 register: 100
 values: [1]
 ```
@@ -48,7 +48,7 @@ Returns:
 
 ```json
 {
-  "endpoint": "tcp://192.168.1.100:502",
+  "endpoint": "tcp://198.51.100.100:502",
   "register": 100,
   "count": 1,
   "unit_id": 1,
@@ -59,7 +59,7 @@ Returns:
 ### Example 2: Write multiple registers
 
 ```text
-endpoint: "tcp://192.168.1.100:502"
+endpoint: "tcp://198.51.100.100:502"
 register: 200
 values: [100, 200, 300]
 unit_id: 5
@@ -69,7 +69,7 @@ Returns:
 
 ```json
 {
-  "endpoint": "tcp://192.168.1.100:502",
+  "endpoint": "tcp://198.51.100.100:502",
   "register": 200,
   "count": 3,
   "unit_id": 5,
@@ -80,7 +80,7 @@ Returns:
 ### Example 3: Write to unreachable device
 
 ```text
-endpoint: "tcp://192.168.1.200:502"
+endpoint: "tcp://198.51.100.200:502"
 register: 0
 values: [42]
 ```
@@ -89,7 +89,7 @@ Returns:
 
 ```json
 {
-  "error": "Connection refused: tcp://192.168.1.200:502"
+  "error": "Connection refused: tcp://198.51.100.200:502"
 }
 ```
 
