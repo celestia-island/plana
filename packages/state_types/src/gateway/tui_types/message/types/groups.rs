@@ -31,16 +31,16 @@ pub mod protocol {
 /// String constants for Layer-2 / custom-agent marketplace variants.
 ///
 /// These deal with discovering, subscribing to, and querying external
-/// (Layer-2) agents, their MCP tools, skills, and prompt templates.
+/// (Layer-2) agents, their tools, skills, and prompt templates.
 pub mod layer2 {
     pub const LAYER2_AGENT_LIST: &str = "Layer2AgentList";
     pub const LAYER2_AGENT_LIST_RESPONSE: &str = "Layer2AgentListResponse";
-    pub const LAYER2_AGENT_MCP_TOOLS: &str = "Layer2AgentMcpTools";
-    pub const LAYER2_AGENT_MCP_RESPONSE: &str = "Layer2AgentMcpResponse";
+    pub const LAYER2_AGENT_TOOL_TOOLS: &str = "Layer2AgentToolTools";
+    pub const LAYER2_AGENT_TOOL_RESPONSE: &str = "Layer2AgentToolResponse";
     pub const LAYER2_AGENT_SKILLS: &str = "Layer2AgentSkills";
     pub const LAYER2_AGENT_SKILLS_RESPONSE: &str = "Layer2AgentSkillsResponse";
-    pub const LAYER2_AGENT_MCP_PROMPT: &str = "Layer2AgentMcpPrompt";
-    pub const LAYER2_AGENT_MCP_PROMPT_RESPONSE: &str = "Layer2AgentMcpPromptResponse";
+    pub const LAYER2_AGENT_TOOL_PROMPT: &str = "Layer2AgentToolPrompt";
+    pub const LAYER2_AGENT_TOOL_PROMPT_RESPONSE: &str = "Layer2AgentToolPromptResponse";
     pub const LAYER2_AGENT_SKILL_PROMPT: &str = "Layer2AgentSkillPrompt";
     pub const LAYER2_AGENT_SKILL_PROMPT_RESPONSE: &str = "Layer2AgentSkillPromptResponse";
     pub const CUSTOM_AGENT_LIST: &str = "CustomAgentList";
@@ -53,12 +53,12 @@ pub mod layer2 {
     pub const VARIANTS: &[&str] = &[
         LAYER2_AGENT_LIST,
         LAYER2_AGENT_LIST_RESPONSE,
-        LAYER2_AGENT_MCP_TOOLS,
-        LAYER2_AGENT_MCP_RESPONSE,
+        LAYER2_AGENT_TOOL_TOOLS,
+        LAYER2_AGENT_TOOL_RESPONSE,
         LAYER2_AGENT_SKILLS,
         LAYER2_AGENT_SKILLS_RESPONSE,
-        LAYER2_AGENT_MCP_PROMPT,
-        LAYER2_AGENT_MCP_PROMPT_RESPONSE,
+        LAYER2_AGENT_TOOL_PROMPT,
+        LAYER2_AGENT_TOOL_PROMPT_RESPONSE,
         LAYER2_AGENT_SKILL_PROMPT,
         LAYER2_AGENT_SKILL_PROMPT_RESPONSE,
         CUSTOM_AGENT_LIST,
@@ -73,7 +73,7 @@ pub mod layer2 {
 /// String constants for core agent lifecycle variants.
 ///
 /// User ↔ agent messaging, streaming, reporting, orchestration status,
-/// MCP tool results, human-in-the-loop reviews/consultations, and
+/// tool results, human-in-the-loop reviews/consultations, and
 /// agent CRUD.
 pub mod agent {
     pub const USER_MESSAGE: &str = "UserMessage";
@@ -82,7 +82,7 @@ pub mod agent {
     pub const AGENT_REPORT: &str = "AgentReport";
     pub const AGENT_TRANSFER: &str = "AgentTransfer";
     pub const ORCHESTRATION_STATUS: &str = "OrchestrationStatus";
-    pub const MCP_TOOL_RESULT: &str = "McpToolResult";
+    pub const TOOL_RESULT: &str = "ToolResult";
     pub const STREAMING_TAIL: &str = "StreamingTail";
     pub const HUMAN_REVIEW_REQUEST: &str = "HumanReviewRequest";
     pub const HUMAN_REVIEW_RESPONSE: &str = "HumanReviewResponse";
@@ -108,7 +108,7 @@ pub mod agent {
         AGENT_REPORT,
         AGENT_TRANSFER,
         ORCHESTRATION_STATUS,
-        MCP_TOOL_RESULT,
+        TOOL_RESULT,
         STREAMING_TAIL,
         HUMAN_REVIEW_REQUEST,
         HUMAN_REVIEW_RESPONSE,

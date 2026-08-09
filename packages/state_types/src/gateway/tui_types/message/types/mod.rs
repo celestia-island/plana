@@ -362,10 +362,10 @@ pub enum SyncMessage {
     Layer2AgentListResponse {
         agents: Vec<super::super::layer2::Layer2AgentInfo>,
     },
-    Layer2AgentMcpTools {
+    Layer2AgentToolTools {
         agent_name: String,
     },
-    Layer2AgentMcpResponse {
+    Layer2AgentToolResponse {
         agent_name: String,
         tools: Vec<super::super::layer2::Layer2McpToolInfo>,
     },
@@ -376,12 +376,12 @@ pub enum SyncMessage {
         agent_name: String,
         skills: Vec<super::super::layer2::Layer2SkillInfo>,
     },
-    Layer2AgentMcpPrompt {
+    Layer2AgentToolPrompt {
         agent_name: String,
         tool: String,
         lang: Option<String>,
     },
-    Layer2AgentMcpPromptResponse {
+    Layer2AgentToolPromptResponse {
         agent_name: String,
         tool: String,
         lang: String,
@@ -526,7 +526,7 @@ pub enum SyncMessage {
         #[serde(default)]
         skill_count: Option<u32>,
         #[serde(default)]
-        mcp_count: Option<u32>,
+        tool_count: Option<u32>,
         #[serde(default)]
         next_route: Option<RouteInfo>,
         #[serde(default)]
@@ -574,7 +574,7 @@ pub enum SyncMessage {
         #[serde(default)]
         parameters_summary: Option<String>,
     },
-    McpToolResult {
+    ToolResult {
         tool_name: String,
         call_id: Uuid,
         #[serde(default)]

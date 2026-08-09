@@ -16,7 +16,7 @@
 //!   [`JsonRpcReceiver`] wrap the raw byte stream with newline-delimited JSON
 //!   framing and request/response correlation (using JSON-RPC `id` fields).
 //! - **`bridge`** — the [`GatewayMethod`] enum maps wire method strings into
-//!   typed variants (`Sync.Ping`, `Base.Heartbeat`, `Mcp.CallTool`, …) and
+//!   typed variants (`Sync.Ping`, `Base.Heartbeat`, `Tool.CallTool`, …) and
 //!   provides serialization/deserialization helpers that work with any
 //!   serde-serializable message type.
 //! - **`json_keys`** — typed parameter-key enums that replace raw `&str` key
@@ -50,7 +50,7 @@ pub use bridge::{
 };
 pub use json_keys::{
     AuthParamKey, BridgeKey, ContainerCreateParamKey, ContainerForkParamKey, ContainerVolumeKey,
-    McpCallParamKey, McpListToolsResultKey, ReplParamKey, ResponseKey,
+    ToolCallParamKey, ToolListToolsResultKey, ReplParamKey, ResponseKey,
 };
 pub use pending::{MessageKind, Method, PendingHandle, PendingRegistry};
 pub use rpc_router::{rpc_axum_router, RpcMethodMap};

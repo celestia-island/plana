@@ -88,7 +88,7 @@ use serde_json::{Value, json};
 
 fn main() -> Result<(), serde_json::Error> {
     // A typed method name from the declaration site of your domain profile:
-    let req = JsonRpcRequest::new(UnixMethod::McpListTools, None);
+    let req = JsonRpcRequest::new(UnixMethod::ToolListTools, None);
 
     // Serialize to the wire (JSON-RPC 2.0 envelope):
     let json = serialize_to_jsonrpc(&req, false)?;

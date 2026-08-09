@@ -90,7 +90,7 @@ macro_rules! namespace_resp {
 pub enum Method {
     Sync(SyncMethod),
     Cli(CliMethod),
-    Mcp(McpMethod),
+    Tool(ToolMethod),
     Skill(SkillMethod),
     Base(BaseMethod),
     Device(DeviceMethod),
@@ -146,7 +146,7 @@ namespace!("Sync", Sync, SyncMethod,
     AgentListResponse          as OneWay,
     AgentSnapshot              as OneWay,
     OrchestrationStatus        as OneWay,
-    McpToolResult              as OneWay,
+    ToolResult                 as OneWay,
     TaskCreated                as OneWay,
     TaskStatusUpdate           as OneWay,
     TaskPatch                  as OneWay,
@@ -208,8 +208,8 @@ namespace!("Sync", Sync, SyncMethod,
     UsagePeriodResponse        as OneWay,
     Layer2AgentList            as AsyncReq  => Layer2AgentListResponse,
     Layer2AgentListResponse    as OneWay,
-    Layer2AgentMcpTools        as AsyncReq  => Layer2AgentMcpResponse,
-    Layer2AgentMcpResponse     as OneWay,
+    Layer2AgentToolTools       as AsyncReq  => Layer2AgentToolResponse,
+    Layer2AgentToolResponse    as OneWay,
     Layer2AgentSkills          as AsyncReq  => Layer2AgentSkillsResponse,
     Layer2AgentSkillsResponse  as OneWay,
     GetUserPreferences         as SyncReq,
@@ -259,7 +259,7 @@ namespace!(
     SwitchWorkspace,
 );
 
-namespace!("Mcp", Mcp, McpMethod,
+namespace!("Tool", Tool, ToolMethod,
     CallTool         as AsyncReq => ToolCallResult,
     ToolCallResult   as OneWay,
     ListTools        as SyncReq  => ToolsListResponse,
@@ -376,7 +376,7 @@ flat_aliases!(
     AgentListResponse,
     AgentSnapshot,
     OrchestrationStatus,
-    McpToolResult,
+    ToolResult,
     TaskCreated,
     TaskStatusUpdate,
     TaskPatch,
@@ -438,8 +438,8 @@ flat_aliases!(
     UsagePeriodResponse,
     Layer2AgentList,
     Layer2AgentListResponse,
-    Layer2AgentMcpTools,
-    Layer2AgentMcpResponse,
+    Layer2AgentToolTools,
+    Layer2AgentToolResponse,
     Layer2AgentSkills,
     Layer2AgentSkillsResponse,
     GetUserPreferences,
@@ -487,8 +487,8 @@ flat_aliases!(
     SwitchWorkspace
 );
 flat_aliases!(
-    Mcp,
-    McpMethod,
+    Tool,
+    ToolMethod,
     CallTool,
     ToolCallResult,
     ListTools,
@@ -545,7 +545,7 @@ impl Method {
         match self {
             Method::Sync(m) => m.wire(),
             Method::Cli(m) => m.wire(),
-            Method::Mcp(m) => m.wire(),
+            Method::Tool(m) => m.wire(),
             Method::Skill(m) => m.wire(),
             Method::Base(m) => m.wire(),
             Method::Device(m) => m.wire(),
@@ -556,7 +556,7 @@ impl Method {
         match self {
             Method::Sync(m) => m.kind(),
             Method::Cli(m) => m.kind(),
-            Method::Mcp(m) => m.kind(),
+            Method::Tool(m) => m.kind(),
             Method::Skill(m) => m.kind(),
             Method::Base(m) => m.kind(),
             Method::Device(m) => m.kind(),
@@ -570,7 +570,7 @@ impl Method {
         match self {
             Method::Sync(m) => m.response().map(Method::Sync),
             Method::Cli(m) => m.response().map(Method::Cli),
-            Method::Mcp(m) => m.response().map(Method::Mcp),
+            Method::Tool(m) => m.response().map(Method::Tool),
             Method::Skill(m) => m.response().map(Method::Skill),
             Method::Base(m) => m.response().map(Method::Base),
             Method::Device(m) => m.response().map(Method::Device),
@@ -588,7 +588,7 @@ impl std::str::FromStr for Method {
         Ok(match ns {
             "Tui" | "Sync" => Method::Sync(action.parse()?),
             "Cli" => Method::Cli(action.parse()?),
-            "Mcp" => Method::Mcp(action.parse()?),
+            "Tool" => Method::Tool(action.parse()?),
             "Skill" => Method::Skill(action.parse()?),
             "Base" => Method::Base(action.parse()?),
             "Device" => Method::Device(action.parse()?),
@@ -686,8 +686,8 @@ mod tests {
         assert_eq!(Method::Cli(CliMethod::Status).method_name(), "Cli.Status");
         assert_eq!(Method::CliStatus.method_name(), "Cli.Status");
         assert_eq!(
-            Method::Mcp(McpMethod::CallTool).method_name(),
-            "Mcp.CallTool"
+            Method::Tool(ToolMethod::CallTool).method_name(),
+            "Tool.CallTool"
         );
     }
     #[test]

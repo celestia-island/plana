@@ -103,7 +103,7 @@ impl HttpMethod {
 pub enum MessageType {
     Base,
     Agent,
-    Mcp,
+    Tool,
     Skill,
     Node,
     Monitor,
