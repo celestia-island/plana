@@ -281,12 +281,16 @@ impl CustomAgentManager {
         let manifest = load_manifest_from_dir(&agent_root)?;
 
         if settings.verify_signature {
-            let pubkey = pubkey_for(&owner).ok_or_else(|| {
-                anyhow!(
-                    "no registered signing key for trusted source `{}`; cannot verify agent",
-                    owner
-                )
-            })?;
+            let pubkey = match pubkey_for(&owner) {
+                Some(k) => k,
+                None => {
+                    let _ = fs::remove_dir_all(&tmp_dir);
+                    return Err(anyhow!(
+                        "no registered signing key for trusted source `{}`; cannot verify agent",
+                        owner
+                    ));
+                }
+            };
             if let Err(e) = verify_agent_package(&agent_root, &pubkey) {
                 let _ = fs::remove_dir_all(&tmp_dir);
                 return Err(e.context(format!(
@@ -376,88 +380,8 @@ impl CustomAgentManager {
     }
 
     pub async fn subscribe_agent_by_url(git_url: &str) -> Result<CustomAgentInfo> {
-        let url = git_url.trim().to_string();
-        if url.is_empty() {
-            return Err(anyhow!("Git URL must not be empty"));
-        }
-
-        let agent_name = url
-            .trim_end_matches(".git")
-            .trim_end_matches('/')
-            .split('/')
-            .next_back()
-            .unwrap_or("unknown")
-            .to_string();
-        Self::validate_agent_name(&agent_name)?;
-
-        let tmp_dir =
-            std::env::temp_dir().join(format!("entelecheia-custom-agent-sub-{}", Uuid::now_v7()));
-
-        clone_repository(&url, &tmp_dir).await?;
-
-        let agent_root = find_agent_root(&tmp_dir, &agent_name)?;
-        let manifest = load_manifest_from_dir(&agent_root)?;
-
-        if manifest.agent.layer != 3 {
-            if let Err(e) = fs::remove_dir_all(&tmp_dir) {
-                warn!(path = %tmp_dir.display(), error = %e, "failed to clean up temp directory");
-            }
-            return Err(anyhow!(
-                "agent.toml layer={} is not Layer 3",
-                manifest.agent.layer
-            ));
-        }
-
-        let preflight = run_preflight_audit(&agent_name, &agent_root)?;
-        if preflight.decision != PreflightDecision::Allow {
-            if let Err(e) = fs::remove_dir_all(&tmp_dir) {
-                warn!(path = %tmp_dir.display(), error = %e, "failed to clean up temp directory");
-            }
-            return Err(anyhow!(
-                "preflight audit blocked: {} (decision={})",
-                preflight.summary,
-                preflight.decision.as_str()
-            ));
-        }
-
-        Self::ensure_dirs()?;
-        let target_dir = Self::git_dir().join(&agent_name);
-        if target_dir.exists()
-            && let Err(e) = fs::remove_dir_all(&target_dir)
-        {
-            warn!(path = %target_dir.display(), error = %e, "failed to clean up target directory");
-        }
-        copy_dir_recursive(&agent_root, &target_dir)?;
-        if let Err(e) = fs::remove_dir_all(&tmp_dir) {
-            warn!(path = %tmp_dir.display(), error = %e, "failed to clean up temp directory");
-        }
-
-        let entry = SubscriptionEntry {
-            name: agent_name.clone(),
-            source: SubscriptionSource::Url,
-            repository: None,
-            url: Some(url.clone()),
-            version: Some(manifest.agent.version.clone()),
-            enabled: true,
-            auto_update: false,
-            enabled_tools: None,
-            enabled_skills: None,
-            granted_permissions: None,
-        };
-        Self::add_subscription(entry)?;
-
-        let skills_count = Self::load_custom_agent_skills(&target_dir)
-            .map(|s| s.len())
-            .unwrap_or(0);
-
-        Ok(CustomAgentInfo {
-            name: agent_name.clone(),
-            display_name: manifest.agent.name.clone(),
-            description: manifest.agent.description.clone().unwrap_or_default(),
-            skills_count,
-            source: url.clone(),
-            version: Some(manifest.agent.version.clone()),
-            last_updated: Some(Utc::now().to_rfc3339()),
-        })
+        // Full policy reuse: trusted-source allow-list, package signature
+        // verification, layer check and preflight audit.
+        Self::subscribe_agent("url", None, Some(git_url)).await
     }
 }

@@ -400,19 +400,24 @@ impl Layer3Workspace {
         let agent_root = find_agent_root(&tmp_dir, &entry.name)?;
 
         if settings.verify_signature {
-            let pubkey = pubkey_for(&owner).ok_or_else(|| {
-                anyhow!(
-                    "subscription '{}': no registered signing key for trusted source `{}`; cannot verify agent",
-                    entry.name,
-                    owner
-                )
-            })?;
-            verify_agent_package(&agent_root, &pubkey).with_context(|| {
-                format!(
+            let pubkey = match pubkey_for(&owner) {
+                Some(k) => k,
+                None => {
+                    let _ = fs::remove_dir_all(&tmp_dir);
+                    return Err(anyhow!(
+                        "subscription '{}': no registered signing key for trusted source `{}`; cannot verify agent",
+                        entry.name,
+                        owner
+                    ));
+                }
+            };
+            if let Err(e) = verify_agent_package(&agent_root, &pubkey) {
+                let _ = fs::remove_dir_all(&tmp_dir);
+                return Err(e.context(format!(
                     "subscription '{}': package signature verification failed for source `{}`",
                     entry.name, owner
-                )
-            })?;
+                )));
+            }
         }
 
         let preflight = self.audit_layer3_agent_path(&entry.name, &agent_root)?;

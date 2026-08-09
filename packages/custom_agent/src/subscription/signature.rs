@@ -68,14 +68,22 @@ pub fn build_manifest(agent_root: &Path) -> Result<Vec<u8>> {
                 .unwrap_or(&path)
                 .to_string_lossy()
                 .replace('\\', "/");
-            if path.is_dir() {
-                if rel == ".git" || rel.ends_with("/.git") {
-                    continue;
-                }
-                stack.push(path);
+            // Any path component named .git is excluded (covers both the
+            // .git directory and .git file forms of submodules/worktrees).
+            let is_git = rel.split('/').any(|c| c == ".git");
+            let is_sig = rel == SIGNATURE_FILE;
+            if is_git || is_sig {
                 continue;
             }
-            if rel == SIGNATURE_FILE {
+            // Symlinks are never followed: they can escape the package root
+            // and Python's rglob does not traverse them either.
+            let meta = std::fs::symlink_metadata(&path)
+                .with_context(|| format!("failed to stat file: {}", path.display()))?;
+            if meta.file_type().is_symlink() {
+                continue;
+            }
+            if meta.is_dir() {
+                stack.push(path);
                 continue;
             }
             let bytes = std::fs::read(&path)
@@ -286,5 +294,63 @@ mod tests {
         sign_package(&root, &sk);
         assert!(verify_agent_package(&root, &b64(&other_pk)).is_err());
         let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn manifest_supports_non_ascii_paths() -> Result<()> {
+        let (sk, pk) = keypair(7);
+        let root = std::env::temp_dir().join(format!("sigtest-utf8-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("子目录")).unwrap();
+        fs::write(
+            root.join("agent.toml"),
+            b"[agent]\nid = \"demo\"\nlayer = 3\n",
+        )
+        .unwrap();
+        fs::write(root.join("子目录/说明.txt"), "你好\n".as_bytes()).unwrap();
+        sign_package(&root, &sk);
+        // Round-trip must survive raw UTF-8 paths (sign-agent uses
+        // ensure_ascii=False to match serde_json's raw UTF-8 output).
+        verify_agent_package(&root, &b64(&pk))?;
+        let _ = fs::remove_dir_all(&root);
+        Ok(())
+    }
+
+    #[test]
+    fn manifest_excludes_git_file_entries() -> Result<()> {
+        let root = std::env::temp_dir().join(format!("sigtest-gitfile-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        sample_package(&root);
+        // .git as a FILE (submodule/worktree form) must be excluded too.
+        fs::write(root.join(".git"), b"gitdir: ../foo\n").unwrap();
+        fs::create_dir_all(root.join("sub/.git")).unwrap();
+        fs::write(root.join("sub/.git/config"), b"[core]\n").unwrap();
+        let manifest = build_manifest(&root)?;
+        let text = String::from_utf8(manifest)?;
+        assert!(
+            !text.contains(".git"),
+            "manifest must exclude .git entries: {text}"
+        );
+        let _ = fs::remove_dir_all(&root);
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn manifest_skips_symlinks() -> Result<()> {
+        use std::os::unix::fs::symlink;
+        let root = std::env::temp_dir().join(format!("sigtest-symlink-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        sample_package(&root);
+        let outside = std::env::temp_dir().join(format!("sigtest-outside-{}", std::process::id()));
+        fs::write(&outside, b"secret").unwrap();
+        symlink(&outside, root.join("leak.txt")).unwrap();
+        symlink(&outside, root.join("leakdir")).unwrap();
+        let manifest = build_manifest(&root)?;
+        let text = String::from_utf8(manifest)?;
+        assert!(!text.contains("leak"), "symlinks must be skipped: {text}");
+        let _ = fs::remove_dir_all(&root);
+        let _ = fs::remove_file(&outside);
+        Ok(())
     }
 }
