@@ -37,7 +37,7 @@ Monitor the codebase for regression and degradation signals over time. This skil
 
 ## IMPORTANT: Host Path Convention
 
-Use **host paths** (e.g. `/opt/entelecheia`, `/opt/shittim-chest`), NOT container paths (`/workspace`).
+Use **host paths** (resolve from the environment section's `Workspace:` line, or discover with `pwd` via `host_command_exec`), NOT container paths (`/workspace`).
 
 ## Step 0: DETECT PROJECT AND TOOLCHAIN
 

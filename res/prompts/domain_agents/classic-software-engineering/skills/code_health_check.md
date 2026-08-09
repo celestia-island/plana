@@ -33,7 +33,7 @@ Assess codebase health across four dimensions: file sizes, error-handling shortc
 
 ## IMPORTANT: Host Path Convention
 
-Use **host paths** (e.g. `/opt/entelecheia`), NOT container paths (`/workspace`).
+Use **host paths** (resolve from the environment section's `Workspace:` line, or discover with `pwd`), NOT container paths (`/workspace`).
 
 ## SoP
 
@@ -42,7 +42,7 @@ Use **host paths** (e.g. `/opt/entelecheia`), NOT container paths (`/workspace`)
 Find oversized source files (>500 lines for Rust, >400 for TS/JS):
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && find packages -name \"*.rs\" -exec wc -l {} + 2>/dev/null | sort -rn | head -20', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && find packages -name \"*.rs\" -exec wc -l {} + 2>/dev/null | sort -rn | head -20', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 **Gate**: Flag files >500 lines. If none, report "No oversized files."
@@ -52,7 +52,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Count `.unwrap()`, `.expect()`, `panic!()`, `todo!()` in non-test code:
 
 ```text
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && rg \"\\\\.unwrap\\\\(\\\\)|\\\\.expect\\\\(|panic!|todo!\" --type rust -c 2>/dev/null | sort -t: -k2 -rn | head -20', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && rg \"\\\\.unwrap\\\\(\\\\)|\\\\.expect\\\\(|panic!|todo!\" --type rust -c 2>/dev/null | sort -t: -k2 -rn | head -20', timeout: 30 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 **Classification**:
@@ -67,7 +67,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Run clippy to find dead code and unused imports:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo clippy -- -W clippy::all 2>&1 | grep -E \"dead_code|unused_imports|unused_variables\" | sort -u | head -30', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo clippy -- -W clippy::all 2>&1 | grep -E \"dead_code|unused_imports|unused_variables\" | sort -u | head -30', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 **Gate**: Count unique files with dead code. If > 10 files → severity = medium.
@@ -77,7 +77,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Check for outdated or unused dependencies:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo clippy -- -W clippy::all 2>&1 | grep \"patch.*was not used\" | head -10', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo clippy -- -W clippy::all 2>&1 | grep \"patch.*was not used\" | head -10', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 ### Step 5: RANK & REPORT
