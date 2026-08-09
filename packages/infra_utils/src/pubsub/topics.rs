@@ -31,7 +31,7 @@ pub mod tui {
         pub const AGENT_STREAMING_DONE: &str = "tui.ws.agent_streaming_done";
         pub const STREAMING_TAIL: &str = "tui.ws.streaming_tail";
         pub const ORCHESTRATION_STATUS: &str = "tui.ws.orchestration_status";
-        pub const TOOL_RESULT: &str = "tui.ws.mcp_tool_result";
+        pub const TOOL_RESULT: &str = "tui.ws.tool_result";
         pub const ASK_HUMAN_REQUEST: &str = "tui.ws.ask_human_request";
         pub const ASK_HUMAN_REPLY: &str = "tui.ws.ask_human_reply";
         pub const SYSTEM_MESSAGE: &str = "tui.ws.system_message";

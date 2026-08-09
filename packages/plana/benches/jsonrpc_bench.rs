@@ -66,7 +66,7 @@ fn bench_from_jsonrpc_method(c: &mut Criterion) {
 }
 
 fn bench_request_serialize(c: &mut Criterion) {
-    let req = JsonRpcRequest::mcp_call("file_read", serde_json::json!({"path": "/tmp/test.txt"}));
+    let req = JsonRpcRequest::tool_call("file_read", serde_json::json!({"path": "/tmp/test.txt"}));
     c.bench_function("request_serialize", |b| {
         b.iter(|| serde_json::to_string(black_box(&req)))
     });

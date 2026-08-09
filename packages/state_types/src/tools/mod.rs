@@ -29,7 +29,7 @@ pub enum ToolVisibility {
     #[default]
     Always,
     SkillWhitelist,
-    McpExplore,
+    ToolExplore,
 }
 
 impl ToolVisibility {
@@ -37,12 +37,12 @@ impl ToolVisibility {
         &self,
         allow_always: bool,
         allow_skill_whitelist: bool,
-        allow_mcp_explore: bool,
+        allow_tool_explore: bool,
     ) -> bool {
         match self {
             Self::Always => allow_always,
             Self::SkillWhitelist => allow_skill_whitelist,
-            Self::McpExplore => allow_mcp_explore,
+            Self::ToolExplore => allow_tool_explore,
         }
     }
 }

@@ -9,7 +9,7 @@ pub enum ReplParamKey {
 
 #[derive(Debug, Clone, Copy, AsRefStr)]
 #[strum(serialize_all = "snake_case")]
-pub enum McpCallParamKey {
+pub enum ToolCallParamKey {
     ToolName,
     Parameters,
 }
@@ -26,7 +26,7 @@ pub enum ResponseKey {
 
 #[derive(Debug, Clone, Copy, AsRefStr)]
 #[strum(serialize_all = "snake_case")]
-pub enum McpListToolsResultKey {
+pub enum ToolListToolsResultKey {
     Tools,
     Count,
 }
@@ -89,9 +89,9 @@ mod tests {
     }
 
     #[test]
-    fn mcp_call_param_keys() -> Result<()> {
-        assert_eq!(McpCallParamKey::ToolName.as_ref(), "tool_name");
-        assert_eq!(McpCallParamKey::Parameters.as_ref(), "parameters");
+    fn tool_call_param_keys() -> Result<()> {
+        assert_eq!(ToolCallParamKey::ToolName.as_ref(), "tool_name");
+        assert_eq!(ToolCallParamKey::Parameters.as_ref(), "parameters");
         Ok(())
     }
 
@@ -106,9 +106,9 @@ mod tests {
     }
 
     #[test]
-    fn mcp_list_tools_result_keys() -> Result<()> {
-        assert_eq!(McpListToolsResultKey::Tools.as_ref(), "tools");
-        assert_eq!(McpListToolsResultKey::Count.as_ref(), "count");
+    fn tool_list_tools_result_keys() -> Result<()> {
+        assert_eq!(ToolListToolsResultKey::Tools.as_ref(), "tools");
+        assert_eq!(ToolListToolsResultKey::Count.as_ref(), "count");
         Ok(())
     }
 

@@ -10,7 +10,7 @@ pub enum GatewayMethod {
     Sync(&'static str),
     Base(&'static str),
     Agent(&'static str),
-    Mcp(&'static str),
+    Tool(&'static str),
     Skill(&'static str),
     Node(&'static str),
     Monitor(&'static str),
@@ -31,7 +31,7 @@ impl GatewayMethod {
     pub const SYNC_PING: Self = Self::Sync("Ping");
     pub const SYNC_AGENT_PATCH: Self = Self::Sync("AgentPatch");
     pub const SYNC_ORCHESTRATION_STATUS: Self = Self::Sync("OrchestrationStatus");
-    pub const SYNC_MCP_TOOL_RESULT: Self = Self::Sync("McpToolResult");
+    pub const SYNC_TOOL_RESULT: Self = Self::Sync("ToolResult");
     pub const SYNC_AGENT_STREAMING_CHUNK: Self = Self::Sync("AgentStreamingChunk");
     pub const SYNC_AGENT_REPORT: Self = Self::Sync("AgentReport");
     pub const SYNC_AGENT_TRANSFER: Self = Self::Sync("AgentTransfer");
@@ -75,9 +75,9 @@ impl GatewayMethod {
     pub const BASE_ERROR: Self = Self::Base("Error");
     pub const BASE_ACK: Self = Self::Base("Ack");
 
-    pub const MCP_CALL: Self = Self::Mcp("CallTool");
-    pub const MCP_LIST_TOOLS: Self = Self::Mcp("ListTools");
-    pub const MCP_TOOLS_LIST_RESPONSE: Self = Self::Mcp("ToolsListResponse");
+    pub const TOOL_CALL: Self = Self::Tool("CallTool");
+    pub const TOOL_LIST_TOOLS: Self = Self::Tool("ListTools");
+    pub const TOOL_TOOLS_LIST_RESPONSE: Self = Self::Tool("ToolsListResponse");
 
     pub const SKILL_CALL: Self = Self::Skill("CallSkill");
     pub const SKILL_LIST_SKILLS: Self = Self::Skill("ListSkills");
@@ -88,7 +88,7 @@ impl GatewayMethod {
             Self::Sync(action) => format!("Sync.{}", action),
             Self::Base(action) => format!("Base.{}", action),
             Self::Agent(action) => format!("Agent.{}", action),
-            Self::Mcp(action) => format!("Mcp.{}", action),
+            Self::Tool(action) => format!("Tool.{}", action),
             Self::Skill(action) => format!("Skill.{}", action),
             Self::Node(action) => format!("Node.{}", action),
             Self::Monitor(action) => format!("Monitor.{}", action),
@@ -109,7 +109,7 @@ impl GatewayMethod {
             Self::Sync(_) => "Sync",
             Self::Base(_) => "Base",
             Self::Agent(_) => "Agent",
-            Self::Mcp(_) => "Mcp",
+            Self::Tool(_) => "Tool",
             Self::Skill(_) => "Skill",
             Self::Node(_) => "Node",
             Self::Monitor(_) => "Monitor",
@@ -130,7 +130,7 @@ impl GatewayMethod {
             Self::Sync(a)
             | Self::Base(a)
             | Self::Agent(a)
-            | Self::Mcp(a)
+            | Self::Tool(a)
             | Self::Skill(a)
             | Self::Node(a)
             | Self::Monitor(a)
@@ -165,7 +165,7 @@ impl std::str::FromStr for GatewayMethod {
             "Sync.Ping" => Ok(Self::SYNC_PING),
             "Sync.AgentPatch" => Ok(Self::SYNC_AGENT_PATCH),
             "Sync.OrchestrationStatus" => Ok(Self::SYNC_ORCHESTRATION_STATUS),
-            "Sync.McpToolResult" => Ok(Self::SYNC_MCP_TOOL_RESULT),
+            "Sync.ToolResult" => Ok(Self::SYNC_TOOL_RESULT),
             "Sync.AgentStreamingChunk" => Ok(Self::SYNC_AGENT_STREAMING_CHUNK),
             "Sync.AgentReport" => Ok(Self::SYNC_AGENT_REPORT),
             "Sync.AskHumanRequest" => Ok(Self::SYNC_ASK_HUMAN_REQUEST),
@@ -205,9 +205,9 @@ impl std::str::FromStr for GatewayMethod {
             "Base.Heartbeat" => Ok(Self::BASE_HEARTBEAT),
             "Base.Error" => Ok(Self::BASE_ERROR),
             "Base.Ack" => Ok(Self::BASE_ACK),
-            "Mcp.CallTool" => Ok(Self::MCP_CALL),
-            "Mcp.ListTools" => Ok(Self::MCP_LIST_TOOLS),
-            "Mcp.ToolsListResponse" => Ok(Self::MCP_TOOLS_LIST_RESPONSE),
+            "Tool.CallTool" => Ok(Self::TOOL_CALL),
+            "Tool.ListTools" => Ok(Self::TOOL_LIST_TOOLS),
+            "Tool.ToolsListResponse" => Ok(Self::TOOL_TOOLS_LIST_RESPONSE),
             "Skill.CallSkill" => Ok(Self::SKILL_CALL),
             "Skill.ListSkills" => Ok(Self::SKILL_LIST_SKILLS),
             "Skill.SkillsListResponse" => Ok(Self::SKILL_LIST_SKILLS_RESPONSE),
@@ -321,8 +321,8 @@ pub fn from_jsonrpc_method<T: DeserializeOwned>(method: &str, params: Option<Val
         Value::String(action.to_string()),
     );
 
-    // Ensure required fields for Mcp/Skill messages are present
-    if type_name == "Mcp" {
+    // Ensure required fields for Tool/Skill messages are present
+    if type_name == "Tool" {
         if !data.contains_key("agent_type") {
             data.insert("agent_type".into(), Value::String("SkoPeo".into()));
         }

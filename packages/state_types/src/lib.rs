@@ -9,7 +9,7 @@
 //!   [`AgentCategory`] distinguishes simple tools from complex multi-instance
 //!   agents with badge assignment.
 //! - [`Message`] — tagged union of all gateway message variants (Base, Agent,
-//!   Mcp, Skill, Node, Monitor, Sync, Conversation), forming the wire protocol
+//!   Tool, Skill, Node, Monitor, Sync, Conversation), forming the wire protocol
 //!   between agents and the control plane.
 //! - [`ToolInfo`] / [`ToolCallRequest`] / [`ToolCallResponse`] —
 //!   MCP tool metadata, invocation contracts, and response envelopes with
