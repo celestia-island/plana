@@ -65,3 +65,6 @@ Creates or overwrites the file with empty content. Returns size of 0 bytes.
 - This tool overwrites the entire file. Use `file_edit` for partial replacements.
 - Parent directories must exist; the tool does not create intermediate directories.
 - Ensure you have write permissions for the target path.
+- When writing content that includes commit-related artifacts (e.g. scripts that
+  generate commit messages, hooks, CI lint configs), respect the active commit
+  convention: @system/commit-convention/config (+ active preset).

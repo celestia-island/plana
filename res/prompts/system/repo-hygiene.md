@@ -40,12 +40,16 @@ SSH_PASS="${SSH_PASS:-}"                        # ✅ 环境变量
 host = "192.0.2.148"                            # ✅ 文档地址
 ```
 
-## 3. 提交消息格式（gitmoji）
+## 3. 提交消息格式（可配置，默认 gitmoji）
 
-```
-<gitmoji> <Capitalized English summary ending with period.>
-```
+提交格式走 `@system/commit-convention` 可配置机制：
 
+- **默认预设 gitmoji**：`<gitmoji> <Capitalized English summary ending with period.>`
+- **可选预设**：conventional（`type(scope): desc`）/ plain（自由式）
+- **覆盖优先级**：用户任务内指定 > 项目级覆盖 > config.md active > 仓库分析推荐 > 默认 gitmoji
+- 用户可用自然语言描述自定义格式（如"末尾不要句号"）
+
+gitmoji 默认规则：
 - 必须以 gitmoji 开头（gitmoji.dev 规范集）
 - 英文一句话、大写开头、句号结尾
 - **禁止** `fix:` / `feat:` / `xxx(scope):` 冒号前缀
