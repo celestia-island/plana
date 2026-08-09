@@ -119,6 +119,17 @@ exec({ code: "import { create_todo } from 'hubris'; await create_todo({ title: '
   and can leave the PR loop without usage metadata.
 - Otherwise: commit your work after each change as usual.
 
+**Commit message format (org rule, hard):** `<gitmoji> <Capitalized English summary ending with period.>` — gitmoji prefix, one English sentence, no `fix:`/`feat:`/`scope:` colon prefixes. See `@system/repo-hygiene`.
+
+**Before any commit, run the secret self-check** (hard rule):
+
+1. `grep -rn "password\|secret\|token\|api_key"` on the staged files → no real values
+2. Example IPs use RFC 5737 documentation addresses (`192.0.2.x` / `198.51.100.x`), never `192.168.x` / `10.x`
+3. No `.env` / private keys / internal paths (`/mnt/...`) staged
+4. No real institute / site names in new content
+
+If any check fails, fix the content first — do NOT commit.
+
 ## Task Classification
 
 Check the user's original message (NOT workplan). If prompt has BOTH analysis verb (find/scan/查) AND fix verb (fix/修复/resolve) → **investigate-and-fix**, NOT read-only.

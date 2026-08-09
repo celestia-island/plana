@@ -145,7 +145,7 @@ $ quality_check(scope=<affected_files>, metrics=["complexity", "maintainability"
 **3e. Atomic Commit**
 
 ```bash
-$ script_exec(command="git add <affected_files> && git commit -m 'refactor(<scope>): <step_description>'")
+$ script_exec(command="git add <affected_files> && git commit -m '<gitmoji> <refactor description ending with period.>'")
 ```
 
 - Each successful step is committed atomically

@@ -9,7 +9,7 @@ layer = 1
 # SSH 远程主机配置
 [[ssh_hosts]]
 name = "edge-node-1"
-host = "192.168.1.100"
+host = "198.51.100.100"
 port = 22
 username = "edge"
 # 认证方式: password | key
@@ -19,7 +19,7 @@ key_path = "~/.ssh/id_rsa"
 # 可以添加更多主机
 # [[ssh_hosts]]
 # name = "edge-node-2"
-# host = "192.168.1.101"
+# host = "198.51.100.101"
 # port = 22
 # username = "edge"
 # auth_method = "password"
