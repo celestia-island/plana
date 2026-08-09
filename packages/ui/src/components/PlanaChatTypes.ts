@@ -10,14 +10,14 @@
 export type PChatRole = "user" | "assistant";
 
 /** Lifecycle of a tool call block. */
-export type PMcpToolCallStatus = "pending" | "running" | "done" | "error";
+export type PToolCallStatus = "pending" | "running" | "done" | "error";
 
-/** Tool call payload rendered by PMcpToolBlock (also nested in PChatMessage). */
-export interface PMcpToolCall {
+/** Tool call payload rendered by PToolBlock (also nested in PChatMessage). */
+export interface PToolCall {
   id?: string;
   toolName: string;
   agentType?: string;
-  status: PMcpToolCallStatus;
+  status: PToolCallStatus;
   callText?: string;
   resultText?: string;
   durationMs?: number;

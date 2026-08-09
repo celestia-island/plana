@@ -367,7 +367,7 @@ pub enum SyncMessage {
     },
     Layer2AgentToolResponse {
         agent_name: String,
-        tools: Vec<super::super::layer2::Layer2McpToolInfo>,
+        tools: Vec<super::super::layer2::Layer2ToolInfo>,
     },
     Layer2AgentSkills {
         agent_name: String,

@@ -29,7 +29,7 @@ pub enum VerificationStatus {
     Failed,
 }
 
-pub const VERIFICATION_REJECT_MESSAGE: &str = "MCP tool call rejected: content integrity verification failed — \
+pub const VERIFICATION_REJECT_MESSAGE: &str = "Tool call rejected: content integrity verification failed — \
      the response may have been tampered with in transit. \
      Refusing to execute tool to protect system integrity.";
 

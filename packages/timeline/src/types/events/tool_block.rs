@@ -2,10 +2,10 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
 
-const MCP_HUBRIS_REPORT: &str = "import { report } from 'hubris'";
-const MCP_HUBRIS_REPORT_HUMAN: &str = "import { report_human } from 'hubris'";
-const MCP_OREXIS_REPORT_HUMAN: &str = "import { report_human } from 'orexis'";
-const MCP_OREXIS_ASK_HUMAN: &str = "import { ask_human } from 'orexis'";
+const TOOL_HUBRIS_REPORT: &str = "import { report } from 'hubris'";
+const TOOL_HUBRIS_REPORT_HUMAN: &str = "import { report_human } from 'hubris'";
+const TOOL_OREXIS_REPORT_HUMAN: &str = "import { report_human } from 'orexis'";
+const TOOL_OREXIS_ASK_HUMAN: &str = "import { ask_human } from 'orexis'";
 
 pub fn is_wtv_or_wtvj(tool_name: &str) -> bool {
     tool_name == "write_to_var" || tool_name == "write_to_var_json"
@@ -75,9 +75,9 @@ impl ToolBlockData {
             return false;
         }
         let text = &self.call_text;
-        text.contains(MCP_HUBRIS_REPORT)
-            || text.contains(MCP_OREXIS_REPORT_HUMAN)
-            || text.contains(MCP_HUBRIS_REPORT_HUMAN)
+        text.contains(TOOL_HUBRIS_REPORT)
+            || text.contains(TOOL_OREXIS_REPORT_HUMAN)
+            || text.contains(TOOL_HUBRIS_REPORT_HUMAN)
     }
 
     fn is_ask_invocation(&self) -> bool {
@@ -88,7 +88,7 @@ impl ToolBlockData {
         if tool != "exec" {
             return false;
         }
-        self.call_text.contains(MCP_OREXIS_ASK_HUMAN)
+        self.call_text.contains(TOOL_OREXIS_ASK_HUMAN)
     }
 
     pub fn close_label(&self) -> ToolCloseLabel {

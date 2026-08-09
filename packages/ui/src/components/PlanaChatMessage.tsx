@@ -2,8 +2,8 @@ import { computed, defineComponent, onMounted, type PropType } from "vue";
 import { Bot, Copy, User } from "lucide-vue-next";
 import { HMarkdownRenderer, mergeMessages, useI18n } from "@celestia-island/hikari";
 
-import type { PChatRole, PMcpToolCall } from "./PlanaChatTypes";
-import { PMcpToolBlock } from "./PlanaMcpToolBlock";
+import type { PChatRole, PToolCall } from "./PlanaChatTypes";
+import { PToolBlock } from "./PlanaToolBlock";
 import "./PlanaChatMessage.scss";
 
 import enLocale from "../i18n/locales/en/chat.json";
@@ -54,7 +54,7 @@ export const PChatMessage = defineComponent({
     timestamp: { type: [String, Number] as PropType<string | number | undefined>, default: undefined },
     /** Tool call blocks rendered above the content. */
     tools: {
-      type: Array as PropType<PMcpToolCall[]>,
+      type: Array as PropType<PToolCall[]>,
       default: () => [],
     },
     /** Hide the copy action. */
@@ -133,7 +133,7 @@ export const PChatMessage = defineComponent({
           {props.tools.length > 0 && (
             <div class="s-chat-message-tools">
               {props.tools.map((tool, i) => (
-                <PMcpToolBlock
+                <PToolBlock
                   key={tool.id ?? `${tool.toolName}-${i}`}
                   toolName={tool.toolName}
                   agentType={tool.agentType}

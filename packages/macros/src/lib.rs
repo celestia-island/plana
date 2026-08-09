@@ -6,10 +6,10 @@
 //!   declarations from rust types via `ts_rs`, used by the IEPL codegen pipeline.
 //! - [`Getters`] — derive macro that generates `fn field_name(&self) -> &T` accessor
 //!   methods on structs, with `#[getter(skip)]` and `#[getter(rename = "…")]`.
-//! - [`define_typed_tools`] — declares typed MCP tool structs and `Tool` impls
+//! - [`define_typed_tools`] — declares typed tool structs and `Tool` impls
 //!   from a concise DSL.
 //! - [`agent_tool_module!`] — the all-in-one macro for defining an agent's typed
-//!   MCP tool set: struct state, constructors, accessors, tool groups, registry
+//!   tool set: struct state, constructors, accessors, tool groups, registry
 //!   builder, call dispatcher, and `ToolInvoker` impl.
 #![allow(clippy::type_complexity)]
 

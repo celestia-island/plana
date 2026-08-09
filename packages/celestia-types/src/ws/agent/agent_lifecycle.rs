@@ -94,7 +94,7 @@ pub struct AgentReportParams {
     pub skill_count: Option<u32>,
     #[serde(default)]
     #[ts(optional)]
-    pub mcp_count: Option<u32>,
+    pub tool_count: Option<u32>,
     #[serde(default)]
     #[ts(optional)]
     pub next_route: Option<RouteInfo>,
@@ -149,7 +149,7 @@ pub struct OrchestrationStatusParams {
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/agentLifecycle.ts")]
-pub struct McpToolResultParams {
+pub struct ToolResultParams {
     pub tool_name: String,
     #[ts(type = "string")]
     pub call_id: uuid::Uuid,
@@ -207,7 +207,7 @@ pub struct TuiAgentInfo {
     #[serde(default)]
     #[ts(optional)]
     pub token_usage: Option<(u32, u32)>,
-    pub mcp_tool_calls: u32,
+    pub tool_calls: u32,
     pub request_state: RequestState,
     pub completion_outcome: CompletionOutcome,
     pub retry_count: u32,

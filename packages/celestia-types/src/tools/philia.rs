@@ -5,9 +5,9 @@ use serde_json::Value;
 pub struct AgentRegistryEntry {
     pub agent_type: String,
     pub status: String,
-    pub mcp_tool_count: usize,
+    pub tool_count: usize,
     pub skill_count: usize,
-    pub mcp_tools: Vec<String>,
+    pub tools: Vec<String>,
     pub skills: Vec<String>,
 }
 
@@ -19,7 +19,7 @@ pub struct AgentRegistryListResult {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "tools/philia.ts")]
-pub struct McpToolDetail {
+pub struct ToolDetail {
     pub name: String,
     pub description: String,
     #[ts(type = "Record<string, unknown>")]
@@ -38,7 +38,7 @@ pub struct SkillDetail {
 #[ts(export, export_to = "tools/philia.ts")]
 pub struct AgentRegistryGetResult {
     pub agent_type: String,
-    pub mcp_tools: Vec<McpToolDetail>,
+    pub tools: Vec<ToolDetail>,
     pub skills: Vec<SkillDetail>,
 }
 

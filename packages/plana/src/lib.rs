@@ -11,7 +11,7 @@
 //!   envelope, base messages, handshake primitives), re-exported at the crate
 //!   root and always available.
 //! - `plana-celestia-types` — the celestia platform domain profile (agent,
-//!   task, panel, industrial and MCP domain messages), re-exported at the
+//!   task, panel, industrial and tool domain messages), re-exported at the
 //!   crate root behind the `celestia` feature (default on).
 //! - `plana-jsonrpc` — the JSON-RPC 2.0 framing layer, re-exported as the
 //!   `jsonrpc` module.

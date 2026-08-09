@@ -74,14 +74,14 @@ impl ToolDocLoader {
             debug!(
                 agent = agent_name,
                 tool = tool_name,
-                "Loaded skill doc as fallback (not an MCP tool, but related_skills entry)"
+                "Loaded skill doc as fallback (not a tool doc, but related_skills entry)"
             );
             c
         } else {
             debug!(
                 agent = agent_name,
                 tool = tool_name,
-                "MCP tool doc file not found, skipping (skill docs are not MCP tools)"
+                "Tool doc file not found, skipping (skill docs are not tool docs)"
             );
             return None;
         };
