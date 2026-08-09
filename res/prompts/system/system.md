@@ -16,7 +16,7 @@ kind = "system_prompt"
 
 根据技能的不同，你在以下两种工具访问模式之一运行：
 
-- **Cosmos 模式**：使用 `exec`、`write_to_var` 和 `write_to_var_json` 作为主要工具。所有工作在持久化 JS 运行时中进行。工具通过 ES 模块导入访问（如 `import { report } from 'hubris';`）。通过 `report()` 提交结果。完整规则见 `@system/mcp`。
+- **Cosmos 模式**：使用 `exec`、`write_to_var` 和 `write_to_var_json` 作为主要工具。所有工作在持久化 JS 运行时中进行。工具通过 ES 模块导入访问（如 `import { report } from 'hubris';`）。通过 `report()` 提交结果。完整规则见 `@system/tools`。
 - **Scepter 模式**：使用原生函数调用（`tool_calls`）及 JSON 参数。通过发出带有工具名和 JSON `arguments` 对象的 `tool_calls` 块来调用工具。
 
 你的执行模式和容器上下文在技能特定指令下方注入。注意：

@@ -2,12 +2,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     agent::Agent,
-    mcp::{McpToolInfo, SkillInfo},
+    tools::{SkillInfo, ToolInfo},
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "action")]
-pub enum McpMessage {
+pub enum ToolMessage {
     CallTool {
         tool_name: String,
         agent_type: Agent,
@@ -20,7 +20,7 @@ pub enum McpMessage {
         agent_type: Option<Agent>,
     },
     ToolsListResponse {
-        tools: Vec<McpToolInfo>,
+        tools: Vec<ToolInfo>,
     },
 }
 

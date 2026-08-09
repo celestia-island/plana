@@ -12,7 +12,7 @@ pub fn is_wtv_or_wtvj(tool_name: &str) -> bool {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum McpBlockState {
+pub enum ToolBlockState {
     Pending,
     Running,
     Done,
@@ -21,7 +21,7 @@ pub enum McpBlockState {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum McpCloseLabel {
+pub enum ToolCloseLabel {
     Pending,
     Running,
     ReportOnly,
@@ -30,21 +30,21 @@ pub enum McpCloseLabel {
     Error,
 }
 
-impl fmt::Display for McpCloseLabel {
+impl fmt::Display for ToolCloseLabel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            McpCloseLabel::Pending => write!(f, "Waiting for params..."),
-            McpCloseLabel::Running => write!(f, "Running..."),
-            McpCloseLabel::ReportOnly => write!(f, "Report only"),
-            McpCloseLabel::AskOnly => write!(f, "Waiting for reply"),
-            McpCloseLabel::Executed => write!(f, "Execution complete"),
-            McpCloseLabel::Error => write!(f, "Error"),
+            ToolCloseLabel::Pending => write!(f, "Waiting for params..."),
+            ToolCloseLabel::Running => write!(f, "Running..."),
+            ToolCloseLabel::ReportOnly => write!(f, "Report only"),
+            ToolCloseLabel::AskOnly => write!(f, "Waiting for reply"),
+            ToolCloseLabel::Executed => write!(f, "Execution complete"),
+            ToolCloseLabel::Error => write!(f, "Error"),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct McpBlockData {
+pub struct ToolBlockData {
     pub tool_name: String,
     pub call_id: Uuid,
     pub agent_type: String,
@@ -52,11 +52,11 @@ pub struct McpBlockData {
     pub result_text: String,
     pub success: bool,
     pub duration_ms: Option<u64>,
-    pub state: McpBlockState,
+    pub state: ToolBlockState,
     pub separate_call_content: Vec<(String, String)>,
 }
 
-impl McpBlockData {
+impl ToolBlockData {
     pub fn extract_wtv_content(call_text: &str) -> Vec<(String, String)> {
         if let Ok(v) = serde_json::from_str::<serde_json::Value>(call_text)
             && let Some(content) = v.get("content").and_then(|c| c.as_str())
@@ -91,21 +91,21 @@ impl McpBlockData {
         self.call_text.contains(MCP_OREXIS_ASK_HUMAN)
     }
 
-    pub fn close_label(&self) -> McpCloseLabel {
+    pub fn close_label(&self) -> ToolCloseLabel {
         match self.state {
-            McpBlockState::Pending => McpCloseLabel::Pending,
-            McpBlockState::Running => McpCloseLabel::Running,
-            McpBlockState::Done => {
+            ToolBlockState::Pending => ToolCloseLabel::Pending,
+            ToolBlockState::Running => ToolCloseLabel::Running,
+            ToolBlockState::Done => {
                 if self.is_report_invocation() {
-                    McpCloseLabel::ReportOnly
+                    ToolCloseLabel::ReportOnly
                 } else if self.is_ask_invocation() {
-                    McpCloseLabel::AskOnly
+                    ToolCloseLabel::AskOnly
                 } else {
-                    McpCloseLabel::Executed
+                    ToolCloseLabel::Executed
                 }
             }
-            McpBlockState::Failed => McpCloseLabel::Error,
-            McpBlockState::HistoryLost => McpCloseLabel::Error,
+            ToolBlockState::Failed => ToolCloseLabel::Error,
+            ToolBlockState::HistoryLost => ToolCloseLabel::Error,
         }
     }
 }

@@ -57,7 +57,7 @@ If `can_handle_secrets` is `false` (default), the tool receives the literal plac
 Each MCP tool definition in TOML:
 
 ```toml
-[mcp.github_push]
+[tool.github_push]
 can_handle_secrets = true
 rbac_secret_level = "agent_review"
 allowed_secret_metadata = { provider = ["github"] }

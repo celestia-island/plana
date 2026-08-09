@@ -3,23 +3,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AgentMetadata {
     #[serde(default)]
-    pub mcp_tools: Vec<_state_sync::McpToolInfo>,
+    pub tools: Vec<_state_sync::ToolInfo>,
     #[serde(default)]
     pub skills: Vec<_state_sync::SkillInfo>,
 }
 
 impl AgentMetadata {
-    pub fn new(
-        mcp_tools: Vec<_state_sync::McpToolInfo>,
-        skills: Vec<_state_sync::SkillInfo>,
-    ) -> Self {
-        Self { mcp_tools, skills }
+    pub fn new(tools: Vec<_state_sync::ToolInfo>, skills: Vec<_state_sync::SkillInfo>) -> Self {
+        Self { tools, skills }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LogContext {
-    pub mcp_tools: Option<Vec<_state_sync::McpToolInfo>>,
+    pub tools: Option<Vec<_state_sync::ToolInfo>>,
     pub skills: Option<Vec<_state_sync::SkillInfo>>,
 }
 
@@ -28,8 +25,8 @@ impl LogContext {
         Self::default()
     }
 
-    pub fn with_mcp_tools(mut self, tools: Vec<_state_sync::McpToolInfo>) -> Self {
-        self.mcp_tools = Some(tools);
+    pub fn with_tools(mut self, tools: Vec<_state_sync::ToolInfo>) -> Self {
+        self.tools = Some(tools);
         self
     }
 

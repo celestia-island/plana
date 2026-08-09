@@ -32,12 +32,12 @@ pub mod execution_mode;
 pub mod identity;
 pub mod llm_image_content;
 pub mod logger;
-pub mod mcp_call_mode;
 pub mod model_tier;
 pub mod ref_namespace;
 pub mod shell_safety;
 pub mod state_tree;
 pub mod thread_types;
+pub mod tool_call_mode;
 pub mod tool_definition;
 pub mod usage_aggregation;
 pub mod utils;
@@ -48,8 +48,9 @@ pub mod workspace_ref;
 
 pub use agent_badge::AgentBadge;
 pub use constants::{
-    AgentAction, BaseAction, CONFIG, DEFAULT_NETWORK, HttpMethod, LlmProvider, LogLevel, McpAction,
-    MessageType, MonitorAction, NodeAction, SkillAction, UnknownLogLevelError, is_invalid_api_key,
+    AgentAction, BaseAction, CONFIG, DEFAULT_NETWORK, HttpMethod, LlmProvider, LogLevel,
+    MessageType, MonitorAction, NodeAction, SkillAction, ToolAction, UnknownLogLevelError,
+    is_invalid_api_key,
 };
 pub use credentials::CredentialStorage;
 pub use enums::{
@@ -61,9 +62,9 @@ pub use execution_mode::{ExecutionMode, UnknownExecutionModeError};
 pub use identity::{AgentId, AgentIdentity, ContainerId, LlmSessionId};
 pub use llm_image_content::LlmImageContent;
 pub use logger::{init_logger, init_logger_text, init_logger_tui};
-pub use mcp_call_mode::McpToolCallMode;
 pub use model_tier::ModelTier;
 pub use shell_safety::contains_shell_metacharacters;
+pub use tool_call_mode::ToolCallMode;
 pub use tool_definition::ToolDefinition;
 pub use utils::{
     bytes_base64, detect_platform_metadata, detect_wsl, format_timestamp, generate_id, is_blank,

@@ -14,14 +14,14 @@ pub enum StreamChunkKind {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum StreamMcpEvent {
-    McpCall {
+pub enum StreamToolEvent {
+    ToolCall {
         tool_name: String,
         call_id: Uuid,
         params_summary: Option<String>,
         agent_type: Option<String>,
     },
-    McpResult {
+    ToolResult {
         tool_name: String,
         call_id: Uuid,
         result: String,
@@ -48,7 +48,7 @@ pub enum StreamSegment {
         #[serde(default)]
         message_id: Option<Uuid>,
     },
-    McpCall {
+    ToolCall {
         tool_name: String,
         call_id: Uuid,
         params: Value,
@@ -57,7 +57,7 @@ pub enum StreamSegment {
         #[serde(default)]
         message_id: Option<Uuid>,
     },
-    McpResult {
+    ToolResult {
         tool_name: String,
         call_id: Uuid,
         success: bool,
@@ -77,11 +77,11 @@ impl StreamSegment {
             Self::Text { text, .. }
             | Self::Thinking { text, .. }
             | Self::DeepThinking { text, .. } => text,
-            Self::McpCall { params, .. } => match params {
+            Self::ToolCall { params, .. } => match params {
                 Value::String(s) => s,
                 _ => "",
             },
-            Self::McpResult { data, .. } => match data {
+            Self::ToolResult { data, .. } => match data {
                 Value::String(s) => s,
                 Value::Null => "",
                 _ => "",
@@ -94,7 +94,7 @@ impl StreamSegment {
             Self::Text { text, .. }
             | Self::Thinking { text, .. }
             | Self::DeepThinking { text, .. } => text.clone(),
-            Self::McpCall { params, .. } | Self::McpResult { data: params, .. } => match params {
+            Self::ToolCall { params, .. } | Self::ToolResult { data: params, .. } => match params {
                 Value::String(s) => s.clone(),
                 Value::Null => String::new(),
                 other => other.to_string(),
@@ -102,8 +102,8 @@ impl StreamSegment {
         }
     }
 
-    pub fn is_mcp(&self) -> bool {
-        matches!(self, Self::McpCall { .. } | Self::McpResult { .. })
+    pub fn is_tool(&self) -> bool {
+        matches!(self, Self::ToolCall { .. } | Self::ToolResult { .. })
     }
 
     pub fn is_thinking(&self) -> bool {
@@ -125,45 +125,45 @@ impl StreamSegment {
 
     pub fn tool_name(&self) -> Option<&str> {
         match self {
-            Self::McpCall { tool_name, .. } => Some(tool_name),
-            Self::McpResult { tool_name, .. } => Some(tool_name),
+            Self::ToolCall { tool_name, .. } => Some(tool_name),
+            Self::ToolResult { tool_name, .. } => Some(tool_name),
             _ => None,
         }
     }
 
     pub fn call_id(&self) -> Option<Uuid> {
         match self {
-            Self::McpCall { call_id, .. } => Some(*call_id),
-            Self::McpResult { call_id, .. } => Some(*call_id),
+            Self::ToolCall { call_id, .. } => Some(*call_id),
+            Self::ToolResult { call_id, .. } => Some(*call_id),
             _ => None,
         }
     }
 
     pub fn agent_type(&self) -> Option<&str> {
         match self {
-            Self::McpCall { agent_type, .. } => agent_type.as_deref(),
-            Self::McpResult { agent_type, .. } => agent_type.as_deref(),
+            Self::ToolCall { agent_type, .. } => agent_type.as_deref(),
+            Self::ToolResult { agent_type, .. } => agent_type.as_deref(),
             _ => None,
         }
     }
 
-    pub fn mcp_params(&self) -> Option<&Value> {
+    pub fn tool_params(&self) -> Option<&Value> {
         match self {
-            Self::McpCall { params, .. } => Some(params),
+            Self::ToolCall { params, .. } => Some(params),
             _ => None,
         }
     }
 
-    pub fn mcp_result_data(&self) -> Option<&Value> {
+    pub fn tool_result_data(&self) -> Option<&Value> {
         match self {
-            Self::McpResult { data, .. } => Some(data),
+            Self::ToolResult { data, .. } => Some(data),
             _ => None,
         }
     }
 
-    pub fn mcp_result_success(&self) -> Option<bool> {
+    pub fn tool_result_success(&self) -> Option<bool> {
         match self {
-            Self::McpResult { success, .. } => Some(*success),
+            Self::ToolResult { success, .. } => Some(*success),
             _ => None,
         }
     }
@@ -205,13 +205,13 @@ mod tests {
         let mut builder = LlmStreamBuilder::new();
         builder.push_chunk("thinking...", StreamChunkKind::Thinking);
         let call_id = Uuid::now_v7();
-        builder.push_mcp_call(
+        builder.push_tool_call(
             "read_file".to_string(),
             call_id,
             Some(serde_json::to_value(PathParam { path: "/test" }).unwrap_or_default()),
             None,
         );
-        builder.push_mcp_result(
+        builder.push_tool_result(
             "read_file".to_string(),
             call_id,
             Value::String("file contents".to_string()),
@@ -225,14 +225,14 @@ mod tests {
         assert_eq!(builder.as_str(), "Here is the file:");
 
         let stream = builder.seal();
-        let mcp: Vec<_> = stream.mcp_segments().collect();
-        assert_eq!(mcp.len(), 2);
-        assert!(matches!(mcp[0], StreamSegment::McpCall { .. }));
-        assert!(matches!(mcp[1], StreamSegment::McpResult { .. }));
-        assert_eq!(mcp[0].text(), "");
-        assert_eq!(mcp[1].text(), "file contents");
-        assert_eq!(mcp[0].call_id(), Some(call_id));
-        assert_eq!(mcp[1].call_id(), Some(call_id));
+        let tools: Vec<_> = stream.tool_segments().collect();
+        assert_eq!(tools.len(), 2);
+        assert!(matches!(tools[0], StreamSegment::ToolCall { .. }));
+        assert!(matches!(tools[1], StreamSegment::ToolResult { .. }));
+        assert_eq!(tools[0].text(), "");
+        assert_eq!(tools[1].text(), "file contents");
+        assert_eq!(tools[0].call_id(), Some(call_id));
+        assert_eq!(tools[1].call_id(), Some(call_id));
         Ok(())
     }
 
@@ -261,8 +261,8 @@ mod tests {
         let mut builder = LlmStreamBuilder::new();
         builder.push_chunk("report intro", StreamChunkKind::Text);
         let call_id = Uuid::now_v7();
-        builder.push_mcp_call("report".to_string(), call_id, Some(empty()), None);
-        builder.push_mcp_result(
+        builder.push_tool_call("report".to_string(), call_id, Some(empty()), None);
+        builder.push_tool_result(
             "report".to_string(),
             call_id,
             Value::String("This is the actual report content".to_string()),
@@ -288,13 +288,13 @@ mod tests {
             StreamChunkKind::Text,
         );
         let call_id = Uuid::now_v7();
-        builder.push_mcp_call(
+        builder.push_tool_call(
             "report".to_string(),
             call_id,
             Some(serde_json::json!({"key": "value"})),
             None,
         );
-        builder.push_mcp_result(
+        builder.push_tool_result(
             "report".to_string(),
             call_id,
             Value::String("result".to_string()),
@@ -347,7 +347,7 @@ mod tests {
         let stream = builder.seal_coalesced();
         assert!(
             !stream.display_text().contains("exec("),
-            "fallback should strip exec(...) even without MCP call segments"
+            "fallback should strip exec(...) even without tool call segments"
         );
         Ok(())
     }
@@ -382,18 +382,18 @@ mod tests {
     }
 
     #[test]
-    fn test_seal_coalesced_closes_pending_mcp_calls() -> Result<()> {
+    fn test_seal_coalesced_closes_pending_tool_calls() -> Result<()> {
         let mut builder = LlmStreamBuilder::new();
         let call_id_1 = Uuid::now_v7();
         let call_id_2 = Uuid::now_v7();
 
-        builder.push_mcp_call(
+        builder.push_tool_call(
             "read_file".to_string(),
             call_id_1,
             Some(serde_json::to_value(PathParam { path: "/a" }).unwrap_or_default()),
             None,
         );
-        builder.push_mcp_result(
+        builder.push_tool_result(
             "read_file".to_string(),
             call_id_1,
             Value::String("content A".to_string()),
@@ -401,26 +401,26 @@ mod tests {
             None,
             None,
         );
-        builder.push_mcp_call(
+        builder.push_tool_call(
             "write_file".to_string(),
             call_id_2,
             Some(serde_json::to_value(PathParam { path: "/b" }).unwrap_or_default()),
             None,
         );
 
-        assert!(builder.has_pending_mcp_calls());
+        assert!(builder.has_pending_tool_calls());
 
         let stream = builder.seal_coalesced();
 
-        let mcp: Vec<_> = stream.mcp_segments().collect();
+        let tools: Vec<_> = stream.tool_segments().collect();
         assert_eq!(
-            mcp.len(),
+            tools.len(),
             4,
             "should have 2 calls + 1 real result + 1 synthetic result"
         );
 
-        let synthetic = mcp.iter().find(|s| {
-            matches!(s, StreamSegment::McpResult { call_id, success, .. } if *call_id == call_id_2 && !success)
+        let synthetic = tools.iter().find(|s| {
+            matches!(s, StreamSegment::ToolResult { call_id, success, .. } if *call_id == call_id_2 && !success)
         });
         assert!(
             synthetic.is_some(),
@@ -428,7 +428,7 @@ mod tests {
         );
         let synth_data = synthetic
             .context("missing synthetic result")?
-            .mcp_result_data()
+            .tool_result_data()
             .context("test precondition")?;
         assert_eq!(
             synth_data,
@@ -441,8 +441,8 @@ mod tests {
     fn test_seal_coalesced_no_synthetic_when_all_resolved() -> Result<()> {
         let mut builder = LlmStreamBuilder::new();
         let call_id = Uuid::now_v7();
-        builder.push_mcp_call("exec".to_string(), call_id, Some(empty()), None);
-        builder.push_mcp_result(
+        builder.push_tool_call("exec".to_string(), call_id, Some(empty()), None);
+        builder.push_tool_result(
             "exec".to_string(),
             call_id,
             Value::String("ok".to_string()),
@@ -451,12 +451,12 @@ mod tests {
             None,
         );
 
-        assert!(!builder.has_pending_mcp_calls());
+        assert!(!builder.has_pending_tool_calls());
 
         let stream = builder.seal_coalesced();
-        let mcp: Vec<_> = stream.mcp_segments().collect();
+        let tools: Vec<_> = stream.tool_segments().collect();
         assert_eq!(
-            mcp.len(),
+            tools.len(),
             2,
             "should have exactly call + result, no synthetic"
         );
@@ -474,15 +474,15 @@ mod tests {
     }
 
     #[test]
-    fn test_mcp_call_params_structured() -> Result<()> {
-        let seg = StreamSegment::McpCall {
+    fn test_tool_call_params_structured() -> Result<()> {
+        let seg = StreamSegment::ToolCall {
             tool_name: "exec".to_string(),
             call_id: Uuid::now_v7(),
             params: serde_json::json!({"code": "import { report } from 'hubris'; report({text: 'hi'})"}),
             agent_type: None,
             message_id: None,
         };
-        let params = seg.mcp_params().context("expected mcp params")?;
+        let params = seg.tool_params().context("expected tool params")?;
         assert_eq!(
             params["code"],
             "import { report } from 'hubris'; report({text: 'hi'})"
@@ -491,8 +491,8 @@ mod tests {
     }
 
     #[test]
-    fn test_mcp_result_data_structured() -> Result<()> {
-        let seg = StreamSegment::McpResult {
+    fn test_tool_result_data_structured() -> Result<()> {
+        let seg = StreamSegment::ToolResult {
             tool_name: "report_human".to_string(),
             call_id: Uuid::now_v7(),
             success: true,
@@ -501,7 +501,9 @@ mod tests {
             agent_type: None,
             message_id: None,
         };
-        let data = seg.mcp_result_data().context("expected mcp result data")?;
+        let data = seg
+            .tool_result_data()
+            .context("expected tool result data")?;
         assert_eq!(data["ok"], true);
         assert_eq!(data["data"], "Hello!");
         Ok(())

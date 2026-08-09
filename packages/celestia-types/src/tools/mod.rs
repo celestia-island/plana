@@ -1,6 +1,6 @@
-//! MCP tool type definitions.
+//! Per-agent tool type definitions.
 //!
-//! Per-agent MCP tool result/request types. These are the structured data
+//! Per-agent tool result/request types. These are the structured data
 //! contracts for every tool exposed by the multi-agent platform's exec-only
 //! microkernel architecture. Both entelecheia (Rust) and shittim-chest (TS)
 //! consume these types via ts-rs code generation.

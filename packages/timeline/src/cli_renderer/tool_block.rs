@@ -1,6 +1,6 @@
 use super::super::{
     chars::*,
-    types::{McpBlockData, McpBlockState},
+    types::{ToolBlockData, ToolBlockState},
 };
 
 const EXEC: &str = "exec";
@@ -50,16 +50,16 @@ fn truncate_text_preview(
     (preview, true, char_count)
 }
 
-pub(super) fn render_cli_mcp_block(mcp: &McpBlockData) -> Vec<String> {
-    let is_exec = mcp.tool_name == EXEC;
-    let is_wtv = mcp.tool_name == WRITE_TO_VAR || mcp.tool_name == WRITE_TO_VAR_JSON;
+pub(super) fn render_cli_tool_block(tool: &ToolBlockData) -> Vec<String> {
+    let is_exec = tool.tool_name == EXEC;
+    let is_wtv = tool.tool_name == WRITE_TO_VAR || tool.tool_name == WRITE_TO_VAR_JSON;
     let mut lines = Vec::new();
     if is_exec {
         lines.push("  Execute Script".to_string());
-    } else if mcp.state == McpBlockState::HistoryLost {
+    } else if tool.state == ToolBlockState::HistoryLost {
         lines.push("  History Lost".to_string());
     } else if is_wtv {
-        let var_name = mcp
+        let var_name = tool
             .call_text
             .lines()
             .next()
@@ -70,26 +70,26 @@ pub(super) fn render_cli_mcp_block(mcp: &McpBlockData) -> Vec<String> {
                     .map(|s| s.to_string())
             })
             .unwrap_or_else(|| "?".to_string());
-        let label = if mcp.tool_name == WRITE_TO_VAR_JSON {
+        let label = if tool.tool_name == WRITE_TO_VAR_JSON {
             "Write JSON to variable"
         } else {
             "Write text to variable"
         };
         lines.push(format!("  {}：{}", label, var_name));
     } else {
-        lines.push(format!("  {}::{}", mcp.agent_type, mcp.tool_name));
+        lines.push(format!("  {}::{}", tool.agent_type, tool.tool_name));
     }
-    if mcp.state == McpBlockState::Pending {
+    if tool.state == ToolBlockState::Pending {
         lines.push("    ⠋ Waiting for parameters...".to_string());
-    } else if !mcp.call_text.is_empty() {
+    } else if !tool.call_text.is_empty() {
         if is_exec {
-            let display_text = extract_cli_exec_code(&mcp.call_text);
+            let display_text = extract_cli_exec_code(&tool.call_text);
             for param_line in display_text.lines() {
                 lines.push(format!("    {}", param_line));
             }
         } else if is_wtv {
-            if !mcp.separate_call_content.is_empty() {
-                for (_label, content) in &mcp.separate_call_content {
+            if !tool.separate_call_content.is_empty() {
+                for (_label, content) in &tool.separate_call_content {
                     let (preview, needs_truncation, char_count) =
                         truncate_text_preview(content, WTV_MAX_LINES, WTV_MAX_CHARS);
                     for content_line in preview.lines() {
@@ -101,38 +101,38 @@ pub(super) fn render_cli_mcp_block(mcp: &McpBlockData) -> Vec<String> {
                 }
             }
         } else {
-            for param_line in mcp.call_text.lines() {
+            for param_line in tool.call_text.lines() {
                 lines.push(format!("    {}", param_line));
             }
         }
     }
-    let has_call = !mcp.call_text.is_empty() || mcp.state == McpBlockState::Pending;
-    let has_result = !mcp.result_text.is_empty() && mcp.state != McpBlockState::HistoryLost;
+    let has_call = !tool.call_text.is_empty() || tool.state == ToolBlockState::Pending;
+    let has_result = !tool.result_text.is_empty() && tool.state != ToolBlockState::HistoryLost;
     if has_call && has_result {
         lines.push("  --".to_string());
     }
     if has_result {
         let remaining = MAX_BLOCK_LINES.saturating_sub(lines.len());
         let remaining = remaining.max(3);
-        let total_chars = mcp.result_text.chars().count();
-        let total_lines = mcp.result_text.lines().count();
+        let total_chars = tool.result_text.chars().count();
+        let total_lines = tool.result_text.lines().count();
         let needs_trunc = total_lines > remaining || total_chars > 2000;
 
         let display_text = if needs_trunc {
-            let (preview, _, _) = truncate_text_preview(&mcp.result_text, remaining, 2000);
+            let (preview, _, _) = truncate_text_preview(&tool.result_text, remaining, 2000);
             preview
-        } else if mcp.state == McpBlockState::Failed {
-            mcp.result_text.clone()
-        } else if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&mcp.result_text) {
+        } else if tool.state == ToolBlockState::Failed {
+            tool.result_text.clone()
+        } else if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&tool.result_text) {
             if parsed.is_string() {
-                parsed.as_str().unwrap_or(&mcp.result_text).to_string()
+                parsed.as_str().unwrap_or(&tool.result_text).to_string()
             } else if parsed.is_null() {
                 String::new()
             } else {
                 serde_json::to_string_pretty(&parsed).unwrap_or_default()
             }
         } else {
-            mcp.result_text.clone()
+            tool.result_text.clone()
         };
 
         for line in display_text.lines() {
@@ -143,10 +143,10 @@ pub(super) fn render_cli_mcp_block(mcp: &McpBlockData) -> Vec<String> {
             lines.push(format!("    ... ({} chars)", total_chars));
         }
     }
-    let label = mcp.close_label();
-    let call_tokens = (mcp.call_text.len() as u64).div_ceil(4);
-    let result_tokens = (mcp.result_text.len() as u64).div_ceil(4);
-    let char_info = match mcp.duration_ms {
+    let label = tool.close_label();
+    let call_tokens = (tool.call_text.len() as u64).div_ceil(4);
+    let result_tokens = (tool.result_text.len() as u64).div_ceil(4);
+    let char_info = match tool.duration_ms {
         Some(d) => {
             let mut parts = Vec::new();
             if call_tokens > 0 || result_tokens > 0 {

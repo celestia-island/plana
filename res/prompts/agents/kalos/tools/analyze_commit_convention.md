@@ -1,6 +1,6 @@
 +++
 name = "analyze_commit_convention"
-agent = "hubris"
+agent = "kalos"
 kind = "skill"
 description = "Analyze git commit messages against the configured convention presets and suggest corrections."
 

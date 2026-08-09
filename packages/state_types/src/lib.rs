@@ -11,7 +11,7 @@
 //! - [`Message`] — tagged union of all gateway message variants (Base, Agent,
 //!   Mcp, Skill, Node, Monitor, Sync, Conversation), forming the wire protocol
 //!   between agents and the control plane.
-//! - [`McpToolInfo`] / [`McpToolCallRequest`] / [`McpToolCallResponse`] —
+//! - [`ToolInfo`] / [`ToolCallRequest`] / [`ToolCallResponse`] —
 //!   MCP tool metadata, invocation contracts, and response envelopes with
 //!   visibility, maturity, and injection-policy settings.
 //! - TUI types (`tui_types` module) — comprehensive snapshot/patch model for
@@ -29,7 +29,7 @@ pub mod agent_context;
 pub mod agent_error;
 pub mod doc_loader;
 pub mod gateway;
-pub mod mcp;
+pub mod tools;
 pub mod types;
 
 pub use agent::{
@@ -38,13 +38,13 @@ pub use agent::{
 };
 pub use agent_context::AgentContext;
 pub use agent_error::{AgentErrorCode, StructuredAgentError};
-pub use doc_loader::{McpToolDoc, McpToolDocLoader};
+pub use doc_loader::{ToolDoc, ToolDocLoader};
 pub use gateway::{
     AgentMessage, AskAnswerSource, BaseMessage, ClientCapability, ClientNodeInfo,
-    ConversationMessage, CosmosContainerInfo, CosmosOperationLogEntry, FilePayload, McpMessage,
-    Message, MetricsData, MonitorMessage, NodeInfo, NodeMessage, PolemosDeviceInfo,
-    ReportSelection, ReportType, RetryReason, RouteInfo, SkillMessage, SkillStage, SyncMessage,
-    SystemNotification,
+    ConversationMessage, CosmosContainerInfo, CosmosOperationLogEntry, FilePayload, Message,
+    MetricsData, MonitorMessage, NodeInfo, NodeMessage, PolemosDeviceInfo, ReportSelection,
+    ReportType, RetryReason, RouteInfo, SkillMessage, SkillStage, SyncMessage, SystemNotification,
+    ToolMessage,
     tui_types::{
         AgentPatch, AgentSnapshot, AgentUpdateParams, AuthUserInfo, CompletionOutcome,
         ConfiguredProvider, ContainerInfo, ContainerPatch, ContainerSnapshot, CustomAgentInfo,
@@ -70,11 +70,11 @@ pub use gateway::{
         },
     },
 };
-pub use mcp::{
-    CompressedContext, MarkedTodoItem, MarkerStrategy, McpPromptInjector, McpToolCallMode,
-    McpToolCallRequest, McpToolCallResponse, McpToolConfig, McpToolInfo, McpToolParameters,
-    PreserveState, PromptInjectionPolicy, SkillInfo, SkillLocation, TodoMarker, ToolLocation,
-    ToolMaturity, ToolVisibility,
-};
 pub use plana;
+pub use tools::{
+    CompressedContext, MarkedTodoItem, MarkerStrategy, PreserveState, PromptInjectionPolicy,
+    SkillInfo, SkillLocation, TodoMarker, ToolCallMode, ToolCallRequest, ToolCallResponse,
+    ToolConfig, ToolInfo, ToolLocation, ToolMaturity, ToolParameters, ToolPromptInjector,
+    ToolVisibility,
+};
 pub use types::{ModelTier, TaskStatus, UnknownTaskStatusError};

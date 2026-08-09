@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use super::mcp_block::McpBlockData;
+use super::tool_block::ToolBlockData;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GroupState {
@@ -47,7 +47,7 @@ pub struct TimelineContentBlock {
 #[derive(Debug, Clone)]
 pub enum TimelineSegmentBlock {
     Content(TimelineContentBlock),
-    Mcp(McpBlockData),
+    Tool(ToolBlockData),
 }
 
 #[derive(Debug, Clone)]

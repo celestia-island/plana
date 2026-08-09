@@ -26,7 +26,7 @@
 // Foundational shared enums are defined directly in this file (below). The
 // other type groups live under a small set of domain folders:
 //   ws/       — SyncMessage variant params (agent / ui / services sub-groups)
-//   mcp/      — per-tool MCP I/O structs
+//   tools/    — per-tool I/O structs
 // and a few single-file modules at the root (enums, engine, http, model,
 // external_mcp, malkuth). The glob re-exports at the bottom keep every type
 // reachable at the crate root (`plana_celestia_types::TypeName`).
@@ -35,9 +35,9 @@ pub mod enums;
 pub mod external_mcp;
 pub mod http;
 pub mod malkuth;
-pub mod mcp;
 pub mod model;
 pub mod protocol;
+pub mod tools;
 pub mod ws;
 
 use schemars::JsonSchema;

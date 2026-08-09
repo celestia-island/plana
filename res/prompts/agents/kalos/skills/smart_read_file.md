@@ -121,7 +121,7 @@ Caller: "Zoom into the kalos agent structure"
 smart_read_file:
   1. file_list({ path: 'packages/agents/kalos/', recursive: true })
   2. file_read({ path: 'packages/agents/kalos/Cargo.toml' })
-  3. Reports: "kalos provides file_ops tools (file_read, file_write, file_edit, file_delete, file_exists, file_list, file_get_info) and dir_ops (file_create_dir). Skills: smart_read_file, smart_write_file. Source: packages/agents/kalos/src/mcp/tools/"
+  3. Reports: "kalos provides file_ops tools (file_read, file_write, file_edit, file_delete, file_exists, file_list, file_get_info) and dir_ops (file_create_dir). Skills: smart_read_file, smart_write_file. Source: packages/agents/kalos/src/tools/"
 ```
 
 Caller continues iterating — each call gets more specific as understanding grows.
