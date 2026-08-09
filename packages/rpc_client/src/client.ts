@@ -56,6 +56,14 @@ export interface RpcClientOpts {
   sseMaxRetries?: number;
   pollIntervalMs?: number;
   local?: boolean;
+  /**
+   * Probe-only mode: without a token the client performs a single anonymous
+   * `/api/health` handshake, reports `connected` once it succeeds, then
+   * immediately tears the connection down. Used by status bars to show
+   * backend health for anonymous visitors without holding a long-lived
+   * connection (abuse prevention).
+   */
+  probeOnly?: boolean;
 }
 
 type NotificationHandler = (n: RpcNotification) => void;
@@ -125,6 +133,7 @@ export class RpcClient {
 
   #state: ConnectionState = "disconnected";
   #retryCount = 0;
+  #probeOnly = false;
 
   get state(): ConnectionState { return this.#state; }
   get connected(): boolean { return this.#ws?.readyState === WebSocket.OPEN; }
@@ -145,6 +154,7 @@ export class RpcClient {
     this.#pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL;
     this.#sessionId = randomSessionId();
     this.#local = opts.local ?? isLocalhost(this.#baseUrl);
+    this.#probeOnly = opts.probeOnly ?? false;
   }
 
   // ── main API ────────────────────────────────────────────
@@ -174,7 +184,9 @@ export class RpcClient {
   connect(): void {
     this.#disposed = false;
     this.#retryCount = 0;
-    if (this.#local) {
+    if (this.#probeOnly) {
+      this.#probeHealthOnce();
+    } else if (this.#local) {
       this.#tier = "local";
       console.info("[RpcClient:local] detected localhost, using direct HTTP");
       this.#setState("connected");
@@ -526,6 +538,35 @@ export class RpcClient {
     this.#tier = "ws";
     this.#teardownAll();
     this.#progressiveConnect();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Anonymous health probe (probeOnly)
+  // ═══════════════════════════════════════════════════════════
+
+  async #probeHealthOnce(): Promise<void> {
+    try {
+      const url = this.#baseUrl + "/api/health";
+      const resp = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!resp.ok) {
+        this.#setState("failed");
+        return;
+      }
+      this.#tier = "poll";
+      this.#setState("connected");
+      // Handshake succeeded — tear down immediately. The status bar only
+      // needs to know the backend is reachable; keeping a connection open
+      // for anonymous visitors would invite abuse.
+      this.#disposed = true;
+      this.#teardownAll();
+      this.#setState("disconnected");
+    } catch {
+      this.#setState("failed");
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
