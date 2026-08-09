@@ -33,7 +33,7 @@ Scan the codebase for standards compliance: naming conventions, import ordering,
 
 ## IMPORTANT: Host Path Convention
 
-Use **host paths** (e.g. `/opt/entelecheia`), NOT container paths (`/workspace`).
+Use **host paths** (resolve from the environment section's `Workspace:` line, or discover with `pwd`), NOT container paths (`/workspace`).
 
 ## SoP
 
@@ -42,7 +42,7 @@ Use **host paths** (e.g. `/opt/entelecheia`), NOT container paths (`/workspace`)
 Read project configuration files:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cat .clippy.toml 2>/dev/null; echo \"---\"; cat rustfmt.toml 2>/dev/null; echo \"---\"; head -50 Cargo.toml 2>/dev/null', timeout: 15 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cat .clippy.toml 2>/dev/null; echo \"---\"; cat rustfmt.toml 2>/dev/null; echo \"---\"; head -50 Cargo.toml 2>/dev/null', timeout: 15 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 **Gate**: If no config files found → use sensible defaults, note "Using default standards."
@@ -52,7 +52,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Run clippy with strict standards:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo clippy -- -W clippy::all -D clippy::enum_glob_use -D clippy::unwrap_used 2>&1 | grep -v \"missing documentation\" | grep \"warning\\|error\" | sort -u | head -40', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo clippy -- -W clippy::all -D clippy::enum_glob_use -D clippy::unwrap_used 2>&1 | grep -v \"missing documentation\" | grep \"warning\\|error\" | sort -u | head -40', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 ### Step 3: IMPORT ORDERING CHECK (Rust)
@@ -60,7 +60,7 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 Verify import grouping follows std → external → crate → super → self:
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo clippy -- -W clippy::wildcard_imports -W clippy::useless_import 2>&1 | grep \"wildcard_import\\|useless_import\" | head -20', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo clippy -- -W clippy::wildcard_imports -W clippy::useless_import 2>&1 | grep \"wildcard_import\\|useless_import\" | head -20', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 ### Step 4: DEPENDENCY CONVENTION CHECK
@@ -72,7 +72,7 @@ For Rust projects, check Cargo.toml for:
 - Unused patches
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd /opt/entelecheia && cargo clippy 2>&1 | grep \"patch.*was not used\" | head -10', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo clippy 2>&1 | grep \"patch.*was not used\" | head -10', timeout: 180 }); console.log(r.data.stdout || r.data.stderr);" })
 ```
 
 ### Step 5: REPORT
