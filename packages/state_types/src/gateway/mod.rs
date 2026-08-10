@@ -18,7 +18,7 @@ pub use tui_types::{
     FilePayload, GlobalSnapshot, HistoryMessage, IndustrialAlarmEvent, IndustrialAlarmHistory,
     IndustrialAlarmHistoryEntry, IndustrialAlarmLevel, IndustrialDiscoveryPhase,
     IndustrialSensorReading, KeyInfo, KeyMetadata, KnowledgeBaseFilters, KnowledgeBaseInfo,
-    KnowledgeBaseStatus, Layer2AgentInfo, Layer2ToolInfo, Layer2SkillInfo, LogEntryData,
+    KnowledgeBaseStatus, Layer2AgentInfo, Layer2SkillInfo, Layer2ToolInfo, LogEntryData,
     MaxConcurrentInfo, MessagesPage, ModelFsInfo, ModelFsPricing, ModelInfo, NoaEvent, PeriodType,
     PolemosDeviceInfo, ProviderCapabilitiesInfo, ProviderFsInfo, ProviderInfo, ProviderLimitsInfo,
     QuotaInfo, RateRuleInfo, RequestState, SearchHit, SearchResponse, SyncMessage, TaskInfo,
