@@ -1,5 +1,6 @@
 import { computed, defineComponent, onMounted, ref, watch, type PropType } from "vue";
-import { ChevronDown, ChevronRight } from "lucide-vue-next";
+import ChevronDown from "lucide-vue-next/dist/esm/icons/chevron-down";
+import ChevronRight from "lucide-vue-next/dist/esm/icons/chevron-right";
 import { HDivider, mergeMessages, useClipboard, useI18n } from "@celestia-island/hikari";
 
 import type { PToolCallStatus } from "./PlanaChatTypes";

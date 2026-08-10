@@ -1,5 +1,7 @@
 import { computed, defineComponent, onMounted, ref, type PropType } from "vue";
-import { Brain, Eye, Wrench } from "lucide-vue-next";
+import Brain from "lucide-vue-next/dist/esm/icons/brain";
+import Eye from "lucide-vue-next/dist/esm/icons/eye";
+import Wrench from "lucide-vue-next/dist/esm/icons/wrench";
 import { HBadge, HPopover, mergeMessages, useI18n } from "@celestia-island/hikari";
 
 import { getModelMeta, splitModelId, type PModelCatalog, type PModelMeta } from "./PlanaModelCatalog";
