@@ -242,6 +242,8 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 2. Verify the file changed (via `host_command_exec` reading the file)
 3. Call `report()` with a summary of what was actually written
 
+**REPORT TIMING (critical):** Call `report()` as soon as a unit of work is done — do NOT keep calling tools in a loop and defer `report()` to the very end. The chain gate requires `hubris::report` to have been called; running many tool calls without any `report()` will trigger retry nudges and waste tokens. After EACH meaningful action (a file written, a command executed, a sub-task completed), call `report()` to submit the current result — the orchestrator will route to the next step. A long tool-call sequence that ends with a single `report()` is acceptable only if every step genuinely depends on the previous one; otherwise report incrementally.
+
 ## Quick Patterns
 
 **Discover workspace**: `host_command_exec({ command: 'pwd && ls Cargo.toml 2>/dev/null && echo FOUND', cwd: '<host-workspace>', timeout: 5 })` — replace `<host-workspace>` with the path from the environment `Workspace:` line (strip `local://`).
