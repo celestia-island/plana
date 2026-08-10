@@ -18,12 +18,12 @@ kind = "system"
 - 内网 IP（`192.168.x` / `10.x` / `172.16-31.x`）
 - 真实机构名 / 站点名 / 内部文档路径（如 `/mnt/...`）
 
-反例（全部真实发生过）：
+反例（真实形态，值已脱敏）：
 
 ```bash
-SSH_PASS="hydroSinap2024"          # ❌ 真实密码
---target-pass hydroSinap2024       # ❌ 真实密码
-host = "192.168.2.148"             # ❌ 内网 IP
+SSH_PASS="<real-password>"         # ❌ 真实密码
+--target-pass <real-password>      # ❌ 真实密码
+host = "192.168.x.x"               # ❌ 内网 IP
 # Source: /mnt/sdb1/internal-doc.md  # ❌ 内部路径
 ```
 
