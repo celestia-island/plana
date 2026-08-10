@@ -37,7 +37,7 @@ Monitor the codebase for regression and degradation signals over time. This skil
 
 ## IMPORTANT: Host Path Convention
 
-Use **host paths** (resolve from the environment section's `Workspace:` line, or discover with `pwd` via `host_command_exec`), NOT container paths (`/workspace`).
+Use **host paths** (take the path from the environment section's `Workspace:` line, strip `local://`, and pass it as the `cwd` parameter of `host_command_exec`), NOT container paths (`/workspace`).
 
 ## Step 0: DETECT PROJECT AND TOOLCHAIN
 
