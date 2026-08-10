@@ -545,6 +545,19 @@ export class RpcClient {
   // ═══════════════════════════════════════════════════════════
 
   async #probeHealthOnce(): Promise<void> {
+    // Preferred: one long-connection attempt over the real transport path.
+    // The server replies with a success ack and actively closes the socket,
+    // so the probe validates the WS upgrade + roundtrip without holding an
+    // anonymous connection open (no connection storm on login pages).
+    if (await this.#probeWsOnce(5000)) {
+      this.#tier = "ws";
+      this.#setState("connected");
+      this.#disposed = true;
+      this.#teardownAll();
+      this.#setState("disconnected");
+      return;
+    }
+    // Fallback: plain HTTP GET on the health endpoint.
     try {
       const url = this.#baseUrl + "/api/health";
       const resp = await fetch(url, {
@@ -567,6 +580,52 @@ export class RpcClient {
     } catch {
       this.#setState("failed");
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Anonymous WS probe (single long-connection attempt)
+  // ═══════════════════════════════════════════════════════════
+
+  async #probeWsOnce(timeoutMs: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      let ws: WebSocket | null = null;
+      try {
+        ws = new WebSocket(this.#baseUrl.replace(/^http/, "ws") + this.#rpcPath);
+      } catch {
+        resolve(false);
+        return;
+      }
+      let settled = false;
+      const finish = (ok: boolean): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        try { ws?.close(); } catch { /* ignore */ }
+        resolve(ok);
+      };
+      const timer = setTimeout(() => finish(false), timeoutMs);
+
+      ws.onopen = () => {
+        try {
+          ws?.send(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: "probe",
+              method: "system.probe",
+              params: {},
+            }),
+          );
+        } catch {
+          finish(false);
+        }
+      };
+      ws.onmessage = () => finish(true);
+      ws.onerror = () => finish(false);
+      ws.onclose = () => {
+        clearTimeout(timer);
+        if (!settled) resolve(false);
+      };
+    });
   }
 
   // ═══════════════════════════════════════════════════════════
