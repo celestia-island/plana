@@ -24,7 +24,7 @@ pub use knowledge_base::{
     QueryKnowledgeBaseResponse, QueryResultChunk, SubscriptionStatus, SubscriptionType,
     SyncSubscriptionRequest, SyncSubscriptionResponse,
 };
-pub use layer2::{CustomAgentInfo, Layer2AgentInfo, Layer2ToolInfo, Layer2SkillInfo};
+pub use layer2::{CustomAgentInfo, Layer2AgentInfo, Layer2SkillInfo, Layer2ToolInfo};
 pub use message::{
     AuthUserInfo, ClientCapability, ClientNodeInfo, FilePayload, NoaEvent, PolemosDeviceInfo,
     SyncMessage,

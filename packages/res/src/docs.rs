@@ -127,5 +127,4 @@ invalid toml
         assert_eq!(result, "Badge: #123, Unknown: {{unknown_var}}");
         Ok(())
     }
-
 }
