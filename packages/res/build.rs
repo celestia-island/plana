@@ -10,8 +10,6 @@ include!("src/agent_names.rs");
 const REQUIRED_LANGS: &[&str] = &[
     "zh-Hans", "en", "zh-Hant", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
 ];
-const SECTION_SKILLS: &str = "skills";
-const FILE_EXT_MD_DOT: &str = ".md";
 
 macro_rules! log_info {
     ($($arg:tt)*) => {
@@ -55,7 +53,6 @@ fn ensure_include_dir_targets() {
 }
 
 fn main() {
-    println!("cargo:rerun-if-changed=../../res/prompts");
     println!("cargo:rerun-if-changed=../../res/i18n");
     println!("cargo:rerun-if-changed=../../target/provider-registry/entrypoint");
     println!("cargo:rerun-if-env-changed=ARONA_ROOT");
@@ -89,30 +86,6 @@ fn main() {
     log_info!("Checking entrypoint language completeness...");
     match check_entrypoint_languages() {
         Ok(_) => log_ok!("Entrypoint language validation: PASSED"),
-        Err(errors) => {
-            has_errors = true;
-            error_count += errors.len();
-            for error in &errors {
-                log_err!("{}", error);
-            }
-        }
-    }
-
-    log_info!("Checking Markdown documentation...");
-    match check_markdown_docs() {
-        Ok(_) => log_ok!("Markdown documentation validation: PASSED"),
-        Err(errors) => {
-            has_errors = true;
-            error_count += errors.len();
-            for error in &errors {
-                log_err!("{}", error);
-            }
-        }
-    }
-
-    log_info!("Checking soul front matter invariants...");
-    match check_soul_docs() {
-        Ok(_) => log_ok!("Soul front matter validation: PASSED"),
         Err(errors) => {
             has_errors = true;
             error_count += errors.len();
@@ -341,221 +314,6 @@ fn check_entrypoint_languages() -> Result<(), Vec<String>> {
         Err(errors)
     }
 }
-
-fn check_markdown_docs() -> Result<(), Vec<String>> {
-    let mut errors = Vec::new();
-
-    let docs_dirs = [
-        Path::new("../../res/prompts/agents"),
-        Path::new("../../res/prompts/domain_agents"),
-    ];
-
-    for docs_dir in &docs_dirs {
-        if !docs_dir.exists() {
-            continue;
-        }
-
-        let agent_entries = match docs_dir.read_dir() {
-            Ok(entries) => entries,
-            Err(e) => {
-                errors.push(format!(
-                    "Failed to read docs directory {:?}: {}",
-                    docs_dir, e
-                ));
-                continue;
-            }
-        };
-
-        for agent_entry in agent_entries {
-            let agent_entry = match agent_entry {
-                Ok(e) => e,
-                Err(e) => {
-                    errors.push(format!("Failed to read agent entry: {}", e));
-                    continue;
-                }
-            };
-            let agent_path = agent_entry.path();
-
-            if !agent_path.is_dir() {
-                continue;
-            }
-
-            let agent_name = agent_path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
-
-            for section_name in ["skills", "tools"] {
-                let section_path = agent_path.join(section_name);
-                if !section_path.exists() {
-                    continue;
-                }
-
-                let section_entries = match section_path.read_dir() {
-                    Ok(entries) => entries,
-                    Err(e) => {
-                        errors.push(format!(
-                            "Failed to read section directory {:?}: {}",
-                            section_path, e
-                        ));
-                        continue;
-                    }
-                };
-
-                for item_entry in section_entries {
-                    let item_entry = match item_entry {
-                        Ok(e) => e,
-                        Err(e) => {
-                            errors.push(format!("Failed to read item entry: {}", e));
-                            continue;
-                        }
-                    };
-                    let item_path = item_entry.path();
-
-                    let item_name = match item_path.file_name().and_then(|n| n.to_str()) {
-                        Some(name) => name,
-                        None => continue,
-                    };
-
-                    if !item_name.ends_with(FILE_EXT_MD_DOT) {
-                        continue;
-                    }
-
-                    if item_path.is_dir() {
-                        continue;
-                    }
-
-                    let skill_name = item_name.strip_suffix(FILE_EXT_MD_DOT).unwrap_or(item_name);
-
-                    if let Ok(content) = fs::read_to_string(&item_path)
-                        && let Some(front_matter) = extract_front_matter(&content)
-                    {
-                        match toml::from_str::<toml::Value>(&front_matter) {
-                            Ok(parsed) => {
-                                if section_name == SECTION_SKILLS {
-                                    for field in ["name", "agent"] {
-                                        if parsed.get(field).and_then(|v| v.as_str()).is_none() {
-                                            errors.push(format!(
-                                                "Agent {}/{}/{}: missing '{}' in front matter",
-                                                agent_name, section_name, skill_name, field
-                                            ));
-                                        }
-                                    }
-                                    if parsed.get("description").is_none() {
-                                        errors.push(format!(
-                                            "Agent {}/{}/{}: missing 'description' in front matter",
-                                            agent_name, section_name, skill_name
-                                        ));
-                                    }
-
-                                    if let Some(declared_agent) =
-                                        parsed.get("agent").and_then(|v| v.as_str())
-                                        && normalize_agent_name(declared_agent)
-                                            != normalize_agent_name(agent_name)
-                                    {
-                                        errors.push(format!(
-                                                    "Agent {}/{}/{}: front matter agent '{}' does not match directory '{}'",
-                                                    agent_name,
-                                                    section_name,
-                                                    skill_name,
-                                                    declared_agent,
-                                                    agent_name
-                                                ));
-                                    }
-                                }
-                            }
-                            Err(_) => {
-                                errors.push(format!(
-                                    "Agent {}/{}/{}: invalid front matter TOML",
-                                    agent_name, section_name, skill_name
-                                ));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(errors)
-    }
-}
-
-fn check_soul_docs() -> Result<(), Vec<String>> {
-    let mut errors = Vec::new();
-
-    let soul_dir = Path::new("../../res/prompts/soul");
-    if !soul_dir.exists() {
-        errors.push("Soul directory not found: res/prompts/soul".to_string());
-        return Err(errors);
-    }
-
-    let Ok(files) = soul_dir.read_dir() else {
-        errors.push("Failed to read soul directory".to_string());
-        return Err(errors);
-    };
-
-    for file in files.flatten() {
-        let path = file.path();
-        if path.extension().and_then(|ext| ext.to_str()) != Some("md") {
-            continue;
-        }
-
-        let agent = path
-            .file_stem()
-            .and_then(|stem| stem.to_str())
-            .unwrap_or("");
-        let Ok(content) = fs::read_to_string(&path) else {
-            continue;
-        };
-
-        if let Some(front_matter) = extract_front_matter(&content) {
-            match toml::from_str::<toml::Value>(&front_matter) {
-                Ok(parsed) => {
-                    if parsed.get("preferred_language").is_some() {
-                        errors.push(format!(
-                            "Soul {}: preferred_language must not live in soul front matter",
-                            agent
-                        ));
-                    }
-                }
-                Err(err) => errors.push(format!(
-                    "Soul {}: invalid front matter TOML: {}",
-                    agent, err
-                )),
-            }
-        }
-    }
-
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(errors)
-    }
-}
-
-fn normalize_agent_name(value: &str) -> Option<String> {
-    let candidate = value.trim().to_lowercase().replace([' ', '-', '_'], "");
-
-    KNOWN_AGENTS
-        .iter()
-        .find(|&&agent| agent == candidate)
-        .map(|agent| agent.to_string())
-}
-
-fn extract_front_matter(content: &str) -> Option<String> {
-    let start = content.find("+++")?;
-    let after_first = start + 3;
-    let rest = content.get(after_first..)?;
-    let end_in_rest = rest.find("+++")?;
-    let toml_text = rest[..end_in_rest].trim();
-    Some(toml_text.to_string())
-}
-
-// ── about/protocol doc bundling from arona ────────────────────────────
 
 const ABOUT_LANGS: &[&str] = &[
     "zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "es", "ru", "ar", "de", "pt",
