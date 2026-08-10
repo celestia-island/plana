@@ -33,7 +33,7 @@ Run language-specific static analysis tools on the workspace and return categori
 
 ## IMPORTANT: Host Path Convention
 
-This skill runs on the **host** via `host_command_exec`. Use **host paths** (resolve from the environment section's `Workspace:` line, or discover with `pwd`), NOT container paths (`/workspace`).
+This skill runs on the **host** via `host_command_exec`. Use **host paths** (take the path from the environment section's `Workspace:` line, strip `local://`, and pass it as the `cwd` parameter of `host_command_exec`), NOT container paths (`/workspace`).
 
 ## Analysis Commands by Language
 
@@ -56,7 +56,7 @@ You MUST run the scan command in a **single** `host_command_exec` call. Do NOT s
 Run the appropriate scan command. Use the workspace path from the environment:
 
 ```typescript
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -200', timeout: 180 }); const out = r.data.stdout || r.data.stderr || JSON.stringify(r.data); const lines = out.split('\\n'); const findings = []; for (const line of lines) { try { const msg = JSON.parse(line); if (msg.reason === 'compiler-message' && msg.message) { findings.push({ level: msg.message.level, code: msg.message.code?.code || 'unknown', message: msg.message.rendered?.trim(), spans: (msg.message.spans || []).map(s => ({ file: s.file_name, line_start: s.line_start, line_end: s.line_end })) }); } } catch {} } write_to_var({ var_name: 'dag', content: JSON.stringify(findings) }); console.log('Findings:', findings.length, 'Errors:', findings.filter(f => f.level === 'error').length, 'Warnings:', findings.filter(f => f.level === 'warning').length);" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -200', cwd: '<host-workspace>', timeout: 180 }); const out = r.data.stdout || r.data.stderr || JSON.stringify(r.data); const lines = out.split('\\n'); const findings = []; for (const line of lines) { try { const msg = JSON.parse(line); if (msg.reason === 'compiler-message' && msg.message) { findings.push({ level: msg.message.level, code: msg.message.code?.code || 'unknown', message: msg.message.rendered?.trim(), spans: (msg.message.spans || []).map(s => ({ file: s.file_name, line_start: s.line_start, line_end: s.line_end })) }); } } catch {} } write_to_var({ var_name: 'dag', content: JSON.stringify(findings) }); console.log('Findings:', findings.length, 'Errors:', findings.filter(f => f.level === 'error').length, 'Warnings:', findings.filter(f => f.level === 'warning').length);" })
 ```
 
 **Language-specific templates (copy-paste the one you need):**
@@ -64,31 +64,31 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 #### Rust — cargo clippy (structured JSON)
 
 ```typescript
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -500', timeout: 180 }); const out = r.data.stdout || r.data.stderr || ''; const findings = []; for (const line of out.split('\\n')) { try { const m = JSON.parse(line); if (m.reason === 'compiler-message' && m.message && m.message.level !== 'note') { findings.push({ level: m.message.level, code: m.message.code?.code || '', msg: m.message.rendered?.split('\\n')[0], file: m.message.spans?.[0]?.file_name, line: m.message.spans?.[0]?.line_start }); } } catch {} } write_to_var({ var_name: 'dag', content: JSON.stringify(findings) }); console.log(JSON.stringify({ total: findings.length, errors: findings.filter(f=>f.level==='error').length, warnings: findings.filter(f=>f.level==='warning').length }, null, 1));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cargo clippy --message-format=json -- -W clippy::all 2>&1 | head -500', cwd: '<host-workspace>', timeout: 180 }); const out = r.data.stdout || r.data.stderr || ''; const findings = []; for (const line of out.split('\\n')) { try { const m = JSON.parse(line); if (m.reason === 'compiler-message' && m.message && m.message.level !== 'note') { findings.push({ level: m.message.level, code: m.message.code?.code || '', msg: m.message.rendered?.split('\\n')[0], file: m.message.spans?.[0]?.file_name, line: m.message.spans?.[0]?.line_start }); } } catch {} } write_to_var({ var_name: 'dag', content: JSON.stringify(findings) }); console.log(JSON.stringify({ total: findings.length, errors: findings.filter(f=>f.level==='error').length, warnings: findings.filter(f=>f.level==='warning').length }, null, 1));" })
 ```
 
 #### Rust — cargo check (compilation errors only)
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && cargo check 2>&1 | tail -50', timeout: 180 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cargo check 2>&1 | tail -50', cwd: '<host-workspace>', timeout: 180 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
 ```
 
 #### TypeScript/JavaScript — eslint
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && npx eslint --format json --no-color . 2>&1 | head -200', timeout: 120 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'npx eslint --format json --no-color . 2>&1 | head -200', cwd: '<host-workspace>', timeout: 120 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
 ```
 
 #### Python — pylint
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && python -m pylint --output-format=json . 2>&1 | head -200', timeout: 120 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'python -m pylint --output-format=json . 2>&1 | head -200', cwd: '<host-workspace>', timeout: 120 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
 ```
 
 #### Go — go vet
 
 ```json
-exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && go vet ./... 2>&1', timeout: 120 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
+exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'go vet ./... 2>&1', cwd: '<host-workspace>', timeout: 120 }); console.log(r.data.stdout || r.data.stderr || JSON.stringify(r.data));" })
 ```
 
 ### Step 2: FILTER (mandatory)

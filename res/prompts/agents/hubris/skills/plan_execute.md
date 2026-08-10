@@ -154,10 +154,10 @@ Unsure between read-only and fix? → If prompt mentions any fix verb, treat as 
 ## Key Rules
 
 1. **Tool selection**: Use `file_read` / `file_write` (kalos basic tools) for ALL file I/O. Do NOT use `smart_read_file` or `smart_write_file` — they require a Cosmos container context and will fail with "requires a Cosmos execution context" error in Scepter local mode. `host_command_exec` (polemos) is for shell commands on the host.
-1. **Workspace path discovery**: On your FIRST exec call, run `pwd` to discover where you are. The workspace is at the path from the environment section's `Workspace:` line (e.g. `local:///mnt/codespace`), or at `/workspace` inside a container. Use the discovered path for ALL subsequent shell commands. Do NOT guess and retry — check once, then use consistently.
+1. **Workspace path discovery**: The host workspace is the path from the environment section's `Workspace:` line (strip `local://`, e.g. `local:///mnt/codespace` → `/mnt/codespace`). For `host_command_exec`, ALWAYS pass it as the `cwd` parameter — the shell's working directory is NOT the workspace, so do NOT `cd` inside the command string. For container file tools, use `/workspace/` prefix. Check once, then use consistently — do NOT guess and retry.
 
    - `file_read`/`file_write` (kalos tools) always use `/workspace/` prefix — these run inside the container.
-   - `host_command_exec` (polemos) runs on the host — use the host workspace path you discovered.
+   - `host_command_exec` (polemos) runs on the host — pass the host workspace path as `cwd`.
 
 1. **Null-safe**: Always check `r.ok && r.data` before accessing fields. Tool results use `{ ok: boolean, data: T, error: string|null }` format — NOT `success`.
 1. **ONE exec per operation**: Chain read→modify→write in a single exec.
@@ -244,8 +244,8 @@ exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_
 
 ## Quick Patterns
 
-**Discover workspace**: `host_command_exec({ command: 'pwd && ls Cargo.toml 2>/dev/null && echo FOUND', timeout: 5 })` — if no Cargo.toml, try `cd "${WORKSPACE_ROOT:-$(pwd)}" && pwd`.
-**Find files**: `host_command_exec({ command: 'cd WS_ROOT && rg -l "KEYWORD" --type rust | head -20', timeout: 10 })`
+**Discover workspace**: `host_command_exec({ command: 'pwd && ls Cargo.toml 2>/dev/null && echo FOUND', cwd: '<host-workspace>', timeout: 5 })` — replace `<host-workspace>` with the path from the environment `Workspace:` line (strip `local://`).
+**Find files**: `host_command_exec({ command: 'rg -l "KEYWORD" --type rust | head -20', cwd: '<host-workspace>', timeout: 10 })`
 **Find files with special chars** (e.g. `$`, `.`): Use `rg -F` for literal strings or single-quote the pattern: `rg -F '$.agent' docs/ | head -20`
 **Read file**: `file_read({ path: '/workspace/PATH' })` — check `r.ok && r.data.content`
 **Write file**: `file_write({ path: '/workspace/PATH', content: MODIFIED })`
