@@ -4,7 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Set the risk threshold for automated actions"
-zh-Hans = "设置自动化操作的风险阈值"
 +++
 
 ## Parameters

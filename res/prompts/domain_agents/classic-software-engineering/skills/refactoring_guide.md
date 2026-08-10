@@ -5,13 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Generate refactoring guidance: identify code smells, propose mechanical transformations, and validate safety via LSP."
-zh-Hans = "重构指南：识别代码异味 → 提出机械转换 → LSP验证安全性"
-zh-Hant = "重構指南：識別程式碼異味 → 提出機械轉換 → LSP驗證安全性"
-ja = "リファクタリングガイド：コードスメルを特定 → 機械的変換を提案 → LSPで安全性を検証"
-ko = "리팩토링 가이드: 코드 스멜 식별 → 기계적 변환 제안 → LSP로 안전성 검증"
-fr = "Guide de refactorisation : identifier les code smells → proposer des transformations mécaniques → valider la sécurité via LSP"
-es = "Guía de refactorización : identificar code smells → proponer transformaciones mecánicas → validar seguridad vía LSP"
-ru = "Руководство по рефакторингу : выявление code smells → предложение механических преобразований → проверка безопасности через LSP"
 
 [[related_tools]]
 name = "refactor_suggest"

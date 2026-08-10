@@ -4,7 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Create a new browser instance"
-zh-Hans = "创建新的浏览器实例"
 +++
 
 ## Parameters

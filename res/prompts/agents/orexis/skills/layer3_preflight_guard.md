@@ -4,13 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Activation and first-run safety audit for newly introduced Layer3 agents. This skill checks for skill poisoning, platform or advertisement bias prompts, goal-irrelevant malicious behaviors, and REPL variable injection attacks before activation."
-zh-Hans = "针对新引入的Layer3智能体的激活前与首次运行安全审计。该技能在激活前检查技能投毒、平台或广告偏见提示、与目标无关的恶意行为以及REPL变量注入攻击。"
-zh-Hant = "針對新引入的Layer3智能體的啟動前與首次執行安全審計。該技能在啟動前檢查技能投毒、平台或廣告偏見提示、與目標無關的惡意行為以及 REPL 變數注入攻擊。"
-ja = "新しく導入されたLayer3エージェントの有効化前および初回実行時のセキュリティ監査。このスキルは、起動前にスキルポイズニング、プラットフォームや広告バイアスプロンプト、目標無関係の悪意ある動作、REPL変数インジェクション攻撃をチェックします。"
-ko = "새로 도입된 Layer3 에이전트의 활성화 전 및 첫 실행 보안 감사. 이 스킬은 활성화 전에 스킬 중독, 플랫폼 또는 광고 편향 프롬프트, 목표와 무관한 악의적 행동 및 REPL 변수 인젝션 공격을 검사합니다."
-fr = "Audit de sécurité avant activation et au premier lancement pour les nouveaux agents Layer3. Cette compétence vérifie l'empoisonnement des compétences, les prompts biaisés par la plateforme ou la publicité, les comportements malveillants non liés aux objectifs et les attaques par injection de variables REPL avant l'activation."
-es = "Auditoría de seguridad antes de la activación y en la primera ejecución para agentes Layer3 recién introducidos. Esta habilidad verifica envenenamiento de habilidades, prompts con sesgo de plataforma o publicidad, comportamientos maliciosos irrelevantes al objetivo y ataques de inyección de variables REPL antes de la activación."
-ru = "Аудит безопасности перед активацией и при первом запуске для новых агентов Layer3. Этот навык перед активацией проверяет отравление навыков, промпты с платформенным или рекламным уклоном, злонамеренные действия, не связанные с целью, и атаки путём внедрения переменных REPL."
 
 [[related_tools]]
 agent_name = "aporia"

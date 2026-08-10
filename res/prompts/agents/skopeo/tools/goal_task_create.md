@@ -4,7 +4,6 @@ agent = "skopeo"
 
 [description]
 en = "Create a task for a goal"
-zh-Hans = "为目标创建任务"
 +++
 
 ## Parameters

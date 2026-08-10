@@ -4,13 +4,6 @@ agent = "neikos"
 
 [description]
 en = "Check if a wait timer has elapsed"
-zh-Hans = "检查等待计时器是否已结束"
-zh-Hant = "檢查等待計時器是否已結束"
-ja = "待機タイマーが経過したかを確認"
-ko = "대기 타이머가 경과했는지 확인"
-fr = "Vérifier si un minuteur d'attente est écoulé"
-es = "Verificar si un temporizador de espera ha finalizado"
-ru = "Проверить, истёк ли таймер ожидания"
 +++
 
 # check_wait

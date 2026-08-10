@@ -4,13 +4,6 @@ agent = "remote_operations"
 
 [description]
 en = "Connect to a specified node."
-zh-Hans = "连接到指定节点。"
-zh-Hant = "連線到指定節點。"
-ja = "指定されたノードに接続する。"
-ko = "지정된 노드에 연결합니다."
-fr = "Se connecter à un nœud spécifié."
-es = "Conectarse a un nodo especificado."
-ru = "Подключение к указанному узлу."
 +++
 
 # node_connect

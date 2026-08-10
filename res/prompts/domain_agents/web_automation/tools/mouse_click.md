@@ -4,13 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Simulate mouse click operations within a browser page"
-zh-Hans = "在浏览器页面中模拟鼠标点击操作"
-zh-Hant = "在瀏覽器頁面中模擬滑鼠點擊操作"
-ja = "ブラウザページ内でマウスクリック操作をシミュレートする"
-ko = "브라우저 페이지 내에서 마우스 클릭 작업 시뮬레이션"
-fr = "Simuler les opérations de clic de souris dans une page de navigateur"
-es = "Simular operaciones de clic del ratón dentro de una página del navegador"
-ru = "Имитировать операции щелчка мыши на странице браузера"
 +++
 
 # mouse_click

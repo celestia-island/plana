@@ -4,13 +4,6 @@ agent = "neikos"
 
 [description]
 en = "Push a git branch from within a container using libgit2"
-zh-Hans = "使用 libgit2 从容器内推送 Git 分支"
-zh-Hant = "使用 libgit2 從容器內推送 Git 分支"
-ja = "libgit2 を使用してコンテナ内から Git ブランチをプッシュする"
-ko = "libgit2를 사용하여 컨테이너 내에서 Git 브랜치 푸시"
-fr = "Pousser une branche git depuis un conteneur via libgit2"
-es = "Empujar una rama git desde un contenedor usando libgit2"
-ru = "Отправить ветку git из контейнера с использованием libgit2"
 +++
 
 # git_push_branch

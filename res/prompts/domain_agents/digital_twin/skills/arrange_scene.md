@@ -5,7 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Lay out or reposition models in the 3D twin scene"
-zh-Hans = "在 3D 孪生场景中布置或重排模型"
 +++
 
 # Arrange Scene

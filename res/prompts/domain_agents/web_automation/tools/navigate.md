@@ -4,13 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Navigate the browser to a specified URL"
-zh-Hans = "将浏览器导航到指定URL"
-zh-Hant = "將瀏覽器導航至指定URL"
-ja = "ブラウザを指定したURLにナビゲートする"
-ko = "브라우저를 지정된 URL로 이동"
-fr = "Naviguer le navigateur vers une URL spécifiée"
-es = "Navegar el navegador a una URL especificada"
-ru = "Перейти в браузере по указанному URL"
 +++
 
 # navigate

@@ -11,13 +11,6 @@ name = "workplan_generate"
 
 [description]
 en = "Unified Requirement Parsing + Recursive Task Decomposition + DAG Construction — the single entry point from natural language to structured task plan."
-zh-Hans = "统一的需求解析 + 递归任务分解 + DAG 构建 —— 从自然语言到结构化任务计划的唯一入口。"
-zh-Hant = "統一的需求解析 + 遞迴任務分解 + DAG 建構 —— 從自然語言到結構化任務計劃的唯一入口。"
-ja = "統合要件解析 + 再帰的タスク分解 + DAG 構築 —— 自然言語から構造化タスク計画への単一エントリポイント。"
-ko = "통합 요구사항 분석 + 재귀적 작업 분해 + DAG 구성 —— 자연어에서 구조화된 작업 계획으로의 단일 진입점."
-fr = "Analyse unifiée des exigences + décomposition récursive + construction DAG — le point d'entrée unique du langage naturel au plan de tâches structuré."
-es = "Análisis unificado de requisitos + descomposición recursiva + construcción DAG — el punto de entrada único del lenguaje natural al plan de tareas estructurado."
-ru = "Единый анализ требований + рекурсивная декомпозиция + построение DAG — единая точка входа от естественного языка к структурированному плану задач."
 
 [[related_tools]]
 agent_name = "hubris"

@@ -5,7 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Create a multidimensional table from a natural-language request"
-zh-Hans = "根据自然语言需求创建多维表"
 +++
 
 # Build Table

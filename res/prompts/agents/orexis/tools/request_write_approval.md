@@ -4,7 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Request operator approval for a safety-critical industrial write. Suspends until the operator responds (default 120s timeout)."
-zh = "为安全关键的工业写入请求操作员批准。挂起直到操作员响应（默认 120 秒超时）。"
 +++
 
 # request_write_approval

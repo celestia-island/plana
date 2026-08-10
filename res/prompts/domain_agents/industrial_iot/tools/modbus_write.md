@@ -4,13 +4,6 @@ agent = "industrial_iot"
 
 [description]
 en = "Write values to Modbus holding registers"
-zh-Hans = "向 Modbus 保持寄存器写入值"
-zh-Hant = "向 Modbus 保持暫存器寫入值"
-ja = "Modbus 保持レジスタに値を書き込む"
-ko = "Modbus 홀딩 레지스터에 값 쓰기"
-fr = "Écrire des valeurs dans les registres de maintien Modbus"
-es = "Escribir valores en los registros de retención de Modbus"
-ru = "Записать значения в удерживающие регистры Modbus"
 +++
 
 # modbus_write

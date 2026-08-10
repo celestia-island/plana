@@ -14,7 +14,6 @@ name = "code_verify"
 
 [description]
 en = "Generate IEC 61131-3 Structured Text (SCL) source code for a Siemens S7 PLC based on the discovered process model. Produces safety interlocks, alarm logic, and data acquisition blocks."
-zh-Hans = "根据发现的工艺模型，为西门子 S7 PLC 生成 IEC 61131-3 结构化文本 (SCL) 源代码。生成安全联锁、报警逻辑和数据采集块。"
 
 [[related_tools]]
 agent_name = "kalos"

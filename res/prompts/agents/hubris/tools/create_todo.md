@@ -5,13 +5,6 @@ agent = "hubris"
 
 [description]
 en = "Create TODO task items with hierarchical relationships."
-zh-Hans = "创建具有层级关系的待办任务项。"
-zh-Hant = "建立具有階層關係的待辦任務項。"
-ja = "階層関係を持つTODOタスクアイテムを作成します。"
-ko = "계층적 관계를 가진 TODO 작업 항목을 생성합니다."
-fr = "Créer des éléments de tâche TODO avec des relations hiérarchiques."
-es = "Crear elementos de tarea TODO con relaciones jerárquicas."
-ru = "Создать элементы задач TODO с иерархическими связями."
 [[related_tools]]
 name = "update_todo"
 description = "Update TODO status/attributes"

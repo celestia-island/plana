@@ -4,13 +4,6 @@ agent = "aporia"
 
 [description]
 en = "Write text blocks and their vector embeddings to the RAG database"
-zh-Hans = "将文本块及其向量嵌入写入RAG数据库"
-zh-Hant = "將文字區塊及其向量嵌入寫入RAG資料庫"
-ja = "テキストブロックとそのベクトル埋め込みをRAGデータベースに書き込む"
-ko = "텍스트 블록과 벡터 임베딩을 RAG 데이터베이스에 저장"
-fr = "Écrire des blocs de texte et leurs plongements vectoriels dans la base de données RAG"
-es = "Escribir bloques de texto y sus incrustaciones vectoriales en la base de datos RAG"
-ru = "Записать текстовые блоки и их векторные вложения в базу данных RAG"
 +++
 
 # rag_db_write

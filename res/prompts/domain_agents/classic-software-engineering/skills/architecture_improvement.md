@@ -5,13 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Orchestrate architecture improvement by combining code review, static analysis, and quality metrics into a prioritized improvement plan."
-zh-Hans = "架构改进：代码审查 + 静态分析 + 质量指标 → 优先改进计划"
-zh-Hant = "架構改進：程式碼審查 + 靜態分析 + 品質指標 → 優先改進計畫"
-ja = "アーキテクチャ改善：コードレビュー + 静的解析 + 品質メトリクス → 優先改善計画"
-ko = "아키텍처 개선: 코드 리뷰 + 정적 분석 + 품질 메트릭 → 우선 개선 계획"
-fr = "Amélioration d'architecture : revue de code + analyse statique + métriques qualité → plan d'amélioration priorisé"
-es = "Mejora de arquitectura : revisión de código + análisis estático + métricas de calidad → plan de mejora priorizado"
-ru = "Улучшение архитектуры : ревью кода + статический анализ + метрики качества → приоритизированный план улучшений"
 
 [[related_tools]]
 name = "code_review"

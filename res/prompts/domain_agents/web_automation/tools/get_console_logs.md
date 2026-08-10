@@ -4,13 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Retrieve browser console logs"
-zh-Hans = "检索浏览器控制台日志"
-zh-Hant = "檢索瀏覽器主控台日誌"
-ja = "ブラウザのコンソールログを取得する"
-ko = "브라우저 콘솔 로그 조회"
-fr = "Récupérer les journaux de la console du navigateur"
-es = "Recuperar los registros de la consola del navegador"
-ru = "Получить журналы консоли браузера"
 +++
 
 # get_console_logs

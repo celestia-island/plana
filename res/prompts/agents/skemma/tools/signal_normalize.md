@@ -4,13 +4,6 @@ agent = "skemma"
 
 [description]
 en = "Apply normalization transforms to signal data"
-zh-Hans = "对信号数据应用归一化变换"
-zh-Hant = "對訊號資料應用歸一化變換"
-ja = "信号データに正規化変換を適用"
-ko = "신호 데이터에 정규화 변환 적용"
-fr = "Appliquer des transforms de normalisation aux données de signal"
-es = "Aplicar transformaciones de normalización a datos de señal"
-ru = "Применить преобразования нормализации к данным сигнала"
 +++
 
 # signal_normalize

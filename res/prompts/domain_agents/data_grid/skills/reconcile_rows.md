@@ -5,7 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Synchronise table rows with a data source (sensors, alarms, project board)"
-zh-Hans = "将表格行与数据源同步（传感器/告警/项目看板）"
 +++
 
 # Reconcile Rows

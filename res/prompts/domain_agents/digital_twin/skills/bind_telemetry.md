@@ -5,7 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Bind polemos telemetry stations to twin models"
-zh-Hans = "将 polemos 遥测站点绑定到孪生模型"
 +++
 
 # Bind Telemetry

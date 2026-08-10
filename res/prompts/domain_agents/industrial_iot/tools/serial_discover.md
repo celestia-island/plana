@@ -4,7 +4,6 @@ agent = "industrial_iot"
 
 [description]
 en = "Enumerate serial ports and discover Modbus RTU devices (baud sweep + station scan)."
-zh-Hans = "枚举串口并发现 Modbus RTU 设备（波特率扫描 + 站号扫描）。"
 +++
 
 # serial_discover

@@ -3,13 +3,6 @@ name = "container_info"
 
 [description]
 en = "Get container information and status"
-zh-Hans = "获取容器信息和状态"
-zh-Hant = "獲取容器資訊和狀態"
-ja = "コンテナの情報とステータスを取得"
-ko = "컨테이너 정보 및 상태 조회"
-fr = "Obtenir les informations et le statut du conteneur"
-es = "Obtener información y estado del contenedor"
-ru = "Получить информацию и статус контейнера"
 +++
 
 # container_info

@@ -4,13 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Simulate keyboard key press operations within a browser page"
-zh-Hans = "在浏览器页面中模拟键盘按键操作"
-zh-Hant = "在瀏覽器頁面中模擬鍵盤按鍵操作"
-ja = "ブラウザページ内でキーボードキー操作をシミュレートする"
-ko = "브라우저 페이지 내에서 키보드 키 입력 작업 시뮬레이션"
-fr = "Simuler les opérations de pression de touches dans une page de navigateur"
-es = "Simular operaciones de pulsación de teclas dentro de la página del navegador"
-ru = "Имитировать операции нажатия клавиш на странице браузера"
 +++
 
 # keypress

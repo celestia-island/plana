@@ -4,7 +4,6 @@ agent = "remote_operations"
 
 [description]
 en = "Upload a file to a remote node"
-zh-Hans = "向远程节点上传文件"
 +++
 
 ## Parameters
