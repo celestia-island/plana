@@ -4,13 +4,6 @@ agent = "skemma"
 
 [description]
 en = "Execute scripts in an isolated environment"
-zh-Hans = "在隔离环境中执行脚本"
-zh-Hant = "在隔離環境中執行腳本"
-ja = "分離された環境でスクリプトを実行する"
-ko = "격리된 환경에서 스크립트 실행"
-fr = "Exécuter des scripts dans un environnement isolé"
-es = "Ejecutar scripts en un entorno aislado"
-ru = "Выполнить скрипты в изолированной среде"
 +++
 
 # script_exec

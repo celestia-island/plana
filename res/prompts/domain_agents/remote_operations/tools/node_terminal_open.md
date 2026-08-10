@@ -4,7 +4,6 @@ agent = "remote_operations"
 
 [description]
 en = "Open a terminal session on a remote node"
-zh-Hans = "在远程节点上打开终端会话"
 +++
 
 ## Parameters

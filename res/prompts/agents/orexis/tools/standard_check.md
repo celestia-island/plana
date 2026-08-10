@@ -4,13 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Check data against registered compliance standard rules"
-zh-Hans = "根据已注册的合规标准规则检查数据"
-zh-Hant = "根據已註冊的合規標準規則檢查資料"
-ja = "登録済みのコンプライアンス標準ルールに対してデータをチェックする"
-ko = "등록된 컴플라이언스 표준 규칙에 대해 데이터 검사"
-fr = "Vérifier les données par rapport aux règles de norme de conformité enregistrées"
-es = "Verificar datos contra las reglas de norma de cumplimiento registradas"
-ru = "Проверить данные на соответствие зарегистрированным правилам стандарта"
 +++
 
 # standard_check

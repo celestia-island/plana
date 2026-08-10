@@ -4,13 +4,6 @@ agent = "remote_operations"
 
 [description]
 en = "Execute commands on a specified node."
-zh-Hans = "在指定节点上执行命令。"
-zh-Hant = "在指定節點上執行命令。"
-ja = "指定されたノード上でコマンドを実行する。"
-ko = "지정된 노드에서 명령어를 실행합니다."
-fr = "Exécuter des commandes sur un nœud spécifié."
-es = "Ejecutar comandos en un nodo especificado."
-ru = "Выполнение команд на указанном узле."
 +++
 
 # node_execute

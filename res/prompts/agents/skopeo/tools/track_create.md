@@ -4,7 +4,6 @@ agent = "skopeo"
 
 [description]
 en = "Create a new track for goal tracking"
-zh-Hans = "为目标追踪创建新的跟踪"
 +++
 
 ## Parameters

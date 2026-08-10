@@ -4,7 +4,6 @@ agent = "media_flow"
 
 [description]
 en = "Run or update a media generation pipeline (image/3D/audio/video)"
-zh-Hans = "运行或更新媒体生成管线（图像/3D/音频/视频）"
 +++
 
 # pipeline_run

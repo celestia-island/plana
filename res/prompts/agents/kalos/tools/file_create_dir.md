@@ -3,13 +3,6 @@ name = "file_create_dir"
 
 [description]
 en = "Create new directories with recursive support"
-zh-Hans = "递归创建新目录"
-zh-Hant = "遞迴建立新目錄"
-ja = "再帰的に新しいディレクトリを作成"
-ko = "재귀적으로 새 디렉토리 생성"
-fr = "Créer de nouveaux répertoires avec support récursif"
-es = "Crear nuevos directorios con soporte recursivo"
-ru = "Создавать новые каталоги с рекурсивной поддержкой"
 +++
 
 # file_create_dir

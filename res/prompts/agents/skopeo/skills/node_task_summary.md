@@ -4,13 +4,6 @@ agent = "skopeo"
 
 [description]
 en = "This skill generates structured summary reports after node tasks are completed, recording key information, results, and lessons learned."
-zh-Hans = "此技能在节点任务完成后生成结构化总结报告，记录关键信息、结果和经验教训。"
-zh-Hant = "此技能在節點任務完成後生成結構化總結報告，記錄關鍵資訊、結果和經驗教訓。"
-ja = "このスキルはノードタスクの完了後に構造化されたサマリーレポートを生成し、重要な情報、結果、教訓を記録します。"
-ko = "이 스킬은 노드 작업 완료 후 구조화된 요약 보고서를 생성하여 핵심 정보, 결과, 교훈을 기록합니다."
-fr = "Cette compétence génère des rapports de synthèse structurés après l'achèvement des tâches de nœud, enregistrant les informations clés, les résultats et les leçons apprises."
-es = "Esta habilidad genera informes resumidos estructurados después de completar las tareas de nodo, registrando información clave, resultados y lecciones aprendidas."
-ru = "Этот навык создает структурированные итоговые отчеты после завершения задач узла, фиксируя ключевую информацию, результаты и извлеченные уроки."
 
 [[related_tools]]
 agent_name = "hubris"

@@ -4,13 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Simulate mouse movement operations within a browser page"
-zh-Hans = "在浏览器页面中模拟鼠标移动操作"
-zh-Hant = "在瀏覽器頁面中模擬滑鼠移動操作"
-ja = "ブラウザページ内でマウス移動操作をシミュレートする"
-ko = "브라우저 페이지 내에서 마우스 이동 작업 시뮬레이션"
-fr = "Simuler les opérations de mouvement de souris dans une page de navigateur"
-es = "Simular operaciones de movimiento del ratón dentro de una página del navegador"
-ru = "Имитировать операции перемещения мыши на странице браузера"
 +++
 
 # mouse_move

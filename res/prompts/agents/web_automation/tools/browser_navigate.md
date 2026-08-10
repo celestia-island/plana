@@ -4,7 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Navigate the browser to a URL"
-zh-Hans = "导航浏览器到指定 URL"
 +++
 
 ## Parameters

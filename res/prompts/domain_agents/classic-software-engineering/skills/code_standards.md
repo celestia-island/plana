@@ -6,13 +6,6 @@ location = "cosmos"
 
 [description]
 en = "Unified code quality enforcement: scan for naming violations, import ordering, dependency conventions, and structural consistency via host_command_exec."
-zh-Hans = "统一代码质量管控：通过 host_command_exec 扫描命名违规、导入排序、依赖规范和结构一致性。"
-zh-Hant = "統一程式碼品質管控：通過 host_command_exec 掃描命名違規、導入排序、依賴規範和結構一致性。"
-ja = "統合コード品質管理：host_command_exec経由で命名違反、インポート順序、依存関係規約、構造的一貫性をスキャン。"
-ko = "통합 코드 품질 관리: host_command_exec를 통해 명명 위반, 임포트 순서, 종속성 규칙, 구조적 일관성을 스캔."
-fr = "Application unifiée de la qualité du code : scanner les violations de nommage, l'ordre des imports, les conventions de dépendances et la cohérence structurelle via host_command_exec."
-es = "Aplicación unificada de calidad de código : escanear violaciones de nombres, orden de imports, convenciones de dependencias y consistencia estructural vía host_command_exec."
-ru = "Единый контроль качества кода : сканировать нарушения именования, порядок импортов, соглашения о зависимостях и структурную согласованность через host_command_exec."
 
 [[related_tools]]
 agent_name = "polemos"

@@ -4,7 +4,6 @@ agent = "polemos"
 
 [description]
 en = "Edit a file on the host machine via evernight IPC (find and replace)"
-zh-Hans = "通过 evernight IPC 编辑宿主机文件（查找替换）"
 +++
 
 ## Parameters

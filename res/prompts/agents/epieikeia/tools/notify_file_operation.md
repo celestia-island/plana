@@ -4,7 +4,6 @@ agent = "epieikeia"
 
 [description]
 en = "Notify observers of a file operation"
-zh-Hans = "通知观察者文件操作"
 +++
 
 ## Parameters

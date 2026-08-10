@@ -4,7 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Set network access policy"
-zh-Hans = "设置网络访问策略"
 +++
 
 ## Parameters

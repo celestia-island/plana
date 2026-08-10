@@ -3,13 +3,6 @@ name = "file_list"
 
 [description]
 en = "List files and subdirectories in a directory"
-zh-Hans = "列出目录中的文件和子目录"
-zh-Hant = "列出目錄中的檔案和子目錄"
-ja = "ディレクトリ内のファイルとサブディレクトリを一覧表示"
-ko = "디렉토리의 파일 및 하위 디렉토리 나열"
-fr = "Lister les fichiers et sous-répertoires d'un répertoire"
-es = "Listar archivos y subdirectorios de un directorio"
-ru = "Список файлов и подкаталогов в каталоге"
 +++
 
 # file_list

@@ -4,13 +4,6 @@ agent = "industrial_iot"
 
 [description]
 en = "Read holding registers from a Modbus RTU/TCP device"
-zh-Hans = "从 Modbus RTU/TCP 设备读取保持寄存器"
-zh-Hant = "從 Modbus RTU/TCP 裝置讀取保持暫存器"
-ja = "Modbus RTU/TCP デバイスから保持レジスタを読み取る"
-ko = "Modbus RTU/TCP 장치에서 홀딩 레지스터 읽기"
-fr = "Lire les registres de maintien d'un appareil Modbus RTU/TCP"
-es = "Leer registros de retención de un dispositivo Modbus RTU/TCP"
-ru = "Считать удерживающие регистры из устройства Modbus RTU/TCP"
 +++
 
 # modbus_read

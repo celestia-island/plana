@@ -4,7 +4,6 @@ agent = "haplotes"
 
 [description]
 en = "Subscribe to a trigger event"
-zh-Hans = "订阅触发事件"
 +++
 
 ## Parameters

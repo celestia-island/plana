@@ -4,7 +4,6 @@ agent = "digital_twin"
 
 [description]
 en = "Read the twin scene configuration (background, ground, lighting, camera)"
-zh-Hans = "读取孪生场景配置（背景/地面/光照/相机）"
 +++
 
 # scene_config_get

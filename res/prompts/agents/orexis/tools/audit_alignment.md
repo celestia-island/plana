@@ -4,13 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Audit alignment of operations against registered standards"
-zh-Hans = "审计操作与注册标准的对齐情况"
-zh-Hant = "審計操作與註冊標準的對齊情況"
-ja = "登録基準に対する運用の整合性を監査"
-ko = "등록된 표준에 대한 운영 정렬 감사"
-fr = "Auditer l'alignement des opérations par rapport aux normes enregistrées"
-es = "Auditar la alineación de operaciones con los estándares registrados"
-ru = "Аудит соответствия операций зарегистрированным стандартам"
 +++
 
 # audit_alignment

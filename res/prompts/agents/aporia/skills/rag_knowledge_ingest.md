@@ -4,13 +4,6 @@ agent = "aporia"
 
 [description]
 en = "End-to-end knowledge ingestion workflow: chunking → embedding → storage."
-zh-Hans = "端到端知识摄取工作流：分块 → 嵌入 → 存储。"
-zh-Hant = "端到端知識攝取工作流程：分塊 → 嵌入 → 儲存。"
-ja = "エンドツーエンドのナレッジ取り込みワークフロー：チャンキング → 埋め込み → 保存。"
-ko = "엔드투엔드 지식 수집 워크플로우: 청킹 → 임베딩 → 저장."
-fr = "Flux de travail d'ingestion de connaissances de bout en bout : découpage → plongement → stockage."
-es = "Flujo de trabajo de ingesta de conocimientos de extremo a extremo: segmentación → incrustación → almacenamiento."
-ru = "Сквозной рабочий процесс загрузки знаний: разбиение → вложение → хранение."
 
 [[related_tools]]
 agent_name = "aporia"

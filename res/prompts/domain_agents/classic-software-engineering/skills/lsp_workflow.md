@@ -5,13 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Orchestrate LSP-based diagnostics, symbol navigation, and refactoring via NeiKos sidecar processes running language servers."
-zh-Hans = "LSP工作流：通过NeiKos sidecar编排语言服务器的诊断、符号导航和重构"
-zh-Hant = "LSP工作流：透過NeiKos sidecar編排語言伺服器的診斷、符號導航和重構"
-ja = "LSPワークフロー：NeiKosサイドカーで言語サーバーの診断、シンボルナビゲーション、リファクタリングをオーケストレーション"
-ko = "LSP 워크플로우: NeiKos 사이드카를 통해 언어 서버의 진단, 심볼 내비게이션 및 리팩토링 오케스트레이션"
-fr = "Workflow LSP : orchestration des diagnostics, navigation de symboles et refactoring via les processus sidecar NeiKos"
-es = "Flujo de trabajo LSP : orquestación de diagnósticos, navegación de símbolos y refactoring a través de procesos sidecar NeiKos"
-ru = "Рабочий процесс LSP : оркестрация диагностики, навигации по символам и рефакторинга через сайдкар-процессы NeiKos"
 
 [[related_tools]]
 name = "lsp_diagnose"

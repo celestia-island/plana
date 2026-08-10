@@ -8,7 +8,6 @@ name = "node_task_summary"
 
 [description]
 en = "Remote deployment gateway with host preparation, service lifecycle, and health verification"
-zh-Hans = "远程部署网关：主机准备、服务生命周期、健康验证"
 
 [[related_tools]]
 agent_name = "haplotes"

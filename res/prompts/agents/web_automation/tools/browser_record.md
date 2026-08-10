@@ -4,7 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Record browser interactions"
-zh-Hans = "录制浏览器交互"
 +++
 
 ## Parameters

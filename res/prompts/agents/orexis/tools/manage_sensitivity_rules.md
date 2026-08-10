@@ -4,13 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Get or update sensitivity redaction rules"
-zh-Hans = "获取或更新敏感数据脱敏规则"
-zh-Hant = "獲取或更新敏感數據脫敏規則"
-ja = "機密データのマスキングルールを取得または更新"
-ko = "민감 데이터 마스킹 규칙 조회 또는 업데이트"
-fr = "Obtenir ou mettre à jour les règles de masquage de données sensibles"
-es = "Obtener o actualizar reglas de redacción de datos sensibles"
-ru = "Получить или обновить правила маскирования конфиденциальных данных"
 +++
 
 # manage_sensitivity_rules

@@ -4,7 +4,6 @@ agent = "data_grid"
 
 [description]
 en = "Push row data into a table widget (full or incremental)"
-zh-Hans = "向表格控件推送行数据（全量或增量）"
 +++
 
 # table_push_data

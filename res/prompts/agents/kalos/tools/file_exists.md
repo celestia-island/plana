@@ -3,13 +3,6 @@ name = "file_exists"
 
 [description]
 en = "Check whether a specified path exists"
-zh-Hans = "检查指定路径是否存在"
-zh-Hant = "檢查指定路徑是否存在"
-ja = "指定されたパスが存在するかどうかを確認"
-ko = "지정된 경로가 존재하는지 확인"
-fr = "Vérifier si un chemin spécifié existe"
-es = "Comprobar si existe una ruta especificada"
-ru = "Проверить существование указанного пути"
 +++
 
 # file_exists

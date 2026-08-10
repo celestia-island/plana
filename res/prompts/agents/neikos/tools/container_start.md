@@ -3,13 +3,6 @@ name = "container_start"
 
 [description]
 en = "Start a stopped container."
-zh-Hans = "启动已停止的容器。"
-zh-Hant = "啟動已停止的容器。"
-ja = "停止したコンテナを起動する。"
-ko = "중지된 컨테이너를 시작합니다."
-fr = "Démarrer un conteneur arrêté."
-es = "Iniciar un contenedor detenido."
-ru = "Запуск остановленного контейнера."
 +++
 
 # container_start

@@ -8,13 +8,6 @@ name = "plan_execute"
 
 [description]
 en = "Dynamic Task Insertion"
-zh-Hans = "动态任务插入"
-zh-Hant = "動態任務插入"
-ja = "動的タスク挿入"
-ko = "동적 작업 삽입"
-fr = "Insertion dynamique de tâches"
-es = "Inserción dinámica de tareas"
-ru = "Динамическая вставка задач"
 
 [[related_tools]]
 agent_name = "hubris"
