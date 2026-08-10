@@ -5,13 +5,6 @@ execution_mode = "write"
 
 [description]
 en = "Clean obsolete files safely in versioned repositories and escalate sensitive file exposure."
-zh-Hans = "安全清理版本库中的过时文件，升级处理敏感文件暴露"
-zh-Hant = "安全清理版本庫中的過時檔案，升級處理敏感檔案暴露"
-ja = "バージョン管理リポジトリ内の古いファイルを安全にクリーンアップし、機密ファイルの露出をエスカレーション"
-ko = "버전 관리 저장소에서 오래된 파일을 안전하게 정리하고 민감 파일 노출을 에스컬레이션"
-fr = "Nettoyer en toute sécurité les fichiers obsolètes dans les dépôts versionnés et signaler l'exposition de fichiers sensibles"
-es = "Limpiar archivos obsoletos de forma segura en repositorios versionados y escalar la exposición de archivos sensibles"
-ru = "Безопасная очистка устаревших файлов в версионируемых репозиториях и эскалация случаев утечки конфиденциальных файлов"
 
 [[related_tools]]
 name = "lsp_symbols"

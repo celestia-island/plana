@@ -5,13 +5,6 @@ execution_mode = "write"
 
 [description]
 en = "Execute a refactoring plan: apply mechanical transforms, validate with LSP and tests, and commit in atomic steps."
-zh-Hans = "重构工作流：应用机械转换 → LSP和测试验证 → 原子化提交"
-zh-Hant = "重構工作流：應用機械轉換 → LSP和測試驗證 → 原子化提交"
-ja = "リファクタリングワークフロー：機械的変換を適用 → LSPとテストで検証 → アトミックコミット"
-ko = "리팩토링 워크플로우: 기계적 변환 적용 → LSP 및 테스트 검증 → 원자적 커밋"
-fr = "Workflow de refactoring : appliquer les transformations mécaniques → valider avec LSP et tests → commits atomiques"
-es = "Flujo de trabajo de refactoring : aplicar transformaciones mecánicas → validar con LSP y tests → commits atómicos"
-ru = "Рабочий процесс рефакторинга : применить механические преобразования → проверить через LSP и тесты → атомарные коммиты"
 
 [[related_tools]]
 name = "refactor_suggest"

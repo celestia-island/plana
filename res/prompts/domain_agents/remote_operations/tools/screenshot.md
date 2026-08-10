@@ -4,13 +4,6 @@ agent = "remote_operations"
 
 [description]
 en = "Capture a screenshot from a remote device display (HMI)"
-zh-Hans = "截取远程设备屏幕（HMI）"
-zh-Hant = "截取遠程設備螢幕（HMI）"
-ja = "リモートデバイスの画面（HMI）をキャプチャ"
-ko = "원격 장치 화면(HMI) 캡처"
-fr = "Capturer une capture d'écran d'un appareil distant (HMI)"
-es = "Capturar pantalla de un dispositivo remoto (HMI)"
-ru = "Захват экрана удалённого устройства (HMI)"
 +++
 
 # screenshot

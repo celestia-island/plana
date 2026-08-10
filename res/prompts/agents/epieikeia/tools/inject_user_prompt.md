@@ -4,7 +4,6 @@ agent = "epieikeia"
 
 [description]
 en = "Inject a user prompt into an agent"
-zh-Hans = "向代理注入用户提示"
 +++
 
 ## Parameters

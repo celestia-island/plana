@@ -4,7 +4,6 @@ agent = "digital_twin"
 
 [description]
 en = "Push a full 3D scene/layout update to the holographic panel"
-zh-Hans = "将完整 3D 场景/布局推送到全息面板"
 +++
 
 # scene_push

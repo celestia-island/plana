@@ -4,7 +4,6 @@ agent = "hubris"
 
 [description]
 en = "Send a direct reply to the user and TERMINATE the skill chain — no further skills run. Use for conversational responses, opinions, chitchat, or any reply that doesn't need downstream processing."
-zh-Hans = "直接回复用户并终止技能链——后续技能不再执行。用于对话回复、观点、闲聊等不需要后续处理的场景。"
 +++
 
 ## Parameters

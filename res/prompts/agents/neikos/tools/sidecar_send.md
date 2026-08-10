@@ -4,7 +4,6 @@ agent = "neikos"
 
 [description]
 en = "Send data to a sidecar process"
-zh-Hans = "向边车进程发送数据"
 +++
 
 ## Parameters

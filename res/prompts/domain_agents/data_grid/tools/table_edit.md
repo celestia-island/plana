@@ -4,7 +4,6 @@ agent = "data_grid"
 
 [description]
 en = "Mutate a multidimensional table (add/update/delete rows, update fields)"
-zh-Hans = "修改多维表（增删行、更新单元格与字段）"
 +++
 
 # table_edit

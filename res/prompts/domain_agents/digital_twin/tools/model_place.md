@@ -4,7 +4,6 @@ agent = "digital_twin"
 
 [description]
 en = "Place or move a 3D model in the twin scene (world coordinates)"
-zh-Hans = "在孪生场景中放置或移动 3D 模型（世界坐标）"
 +++
 
 # model_place

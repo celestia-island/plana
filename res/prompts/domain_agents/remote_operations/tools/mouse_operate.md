@@ -4,13 +4,6 @@ agent = "remote_operations"
 
 [description]
 en = "Perform mouse operations on a remote device (HMI interaction)"
-zh-Hans = "在远程设备上执行鼠标操作（HMI交互）"
-zh-Hant = "在遠程設備上執行滑鼠操作（HMI交互）"
-ja = "リモートデバイスでマウス操作（HMIインタラクション）"
-ko = "원격 장치에서 마우스 조작(HMI 상호작용)"
-fr = "Effectuer des opérations de souris sur un appareil distant (interaction HMI)"
-es = "Realizar operaciones de ratón en un dispositivo remoto (interacción HMI)"
-ru = "Операции мышью на удалённом устройстве (взаимодействие с HMI)"
 +++
 
 # mouse_operate

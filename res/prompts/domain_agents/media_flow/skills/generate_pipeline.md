@@ -5,7 +5,6 @@ execution_mode = "read"
 
 [description]
 en = "Generate a media pipeline graph from a natural-language request"
-zh-Hans = "根据自然语言需求生成媒体管线图"
 +++
 
 # Generate Pipeline

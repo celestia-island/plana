@@ -4,7 +4,6 @@ agent = "media_flow"
 
 [description]
 en = "Call a media generation endpoint directly (chat, image, 3D, register)"
-zh-Hans = "直接调用媒体生成端点（对话/图像/3D/注册）"
 +++
 
 # media_call

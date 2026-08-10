@@ -36,33 +36,12 @@ import vars from 'vars';                   // persistent variable store
 +++
 [tool_desc.exec]
 en = "Execute JavaScript code in the persistent Cosmos runtime"
-zh-Hans = "在持久化 Cosmos 运行时中执行 JavaScript 代码"
-zh-Hant = "在持久化 Cosmos 運行時中執行 JavaScript 代碼"
-ja = "永続的なCosmosランタイムでJavaScriptコードを実行"
-ko = "영구 Cosmos 런타임에서 JavaScript 코드 실행"
-fr = "Exécuter du code JavaScript dans le runtime Cosmos persistant"
-es = "Ejecutar código JavaScript en el runtime Cosmos persistente"
-ru = "Выполнить код JavaScript в постоянной среде Cosmos"
 
 [tool_desc.write_to_var]
 en = "Write a string value into a JS variable in the Cosmos runtime"
-zh-Hans = "将字符串写入 Cosmos 运行时中的 JS 变量"
-zh-Hant = "將字符串寫入 Cosmos 運行時中的 JS 變量"
-ja = "CosmosランタイムのJS変数に文字列を書き込む"
-ko = "Cosmos 런타임의 JS 변수에 문자열을 씁니다"
-fr = "Écrire une chaîne dans une variable JS du runtime Cosmos"
-es = "Escribir una cadena en una variable JS del runtime Cosmos"
-ru = "Записать строку в JS-переменную среды Cosmos"
 
 [tool_desc.write_to_var_json]
 en = "Write a validated JSON value as a parsed JS object into vars['`var_name`']"
-zh-Hans = "将验证后的 JSON 写入 vars['`var_name`'] 为解析后的 JS 对象"
-zh-Hant = "將驗證後的 JSON 寫入 vars['`var_name`'] 為解析後的 JS 物件"
-ja = "検証済みJSONを解析済みJSオブジェクトとしてvars['`var_name`']に書き込む"
-ko = "검증된 JSON을 파싱된 JS 객체로 vars['`var_name`']에 씁니다"
-fr = "Écrire un JSON validé comme objet JS analysé dans vars['`var_name`']"
-es = "Escribir un JSON validado como objeto JS analizado en vars['`var_name`']"
-ru = "Записать проверенный JSON как разобранный JS-объект в vars['`var_name`']"
 +++
 
 ## Critical: Understand Your Execution Boundary

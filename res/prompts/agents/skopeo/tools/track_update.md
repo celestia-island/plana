@@ -4,7 +4,6 @@ agent = "skopeo"
 
 [description]
 en = "Update an existing track"
-zh-Hans = "更新现有的跟踪"
 +++
 
 ## Parameters

@@ -4,13 +4,6 @@ agent = "classic_software_engineering"
 
 [description]
 en = "Build and test generated code in a sandboxed container. Runs compilation, executes tests, and feeds errors back to code_generate if needed."
-zh-Hans = "在沙箱容器中构建和测试生成的代码。运行编译、执行测试，并在需要时将错误反馈给 code_generate。"
-zh-Hant = "在沙箱容器中構建和測試生成的程式碼。運行編譯、執行測試，並在需要時將錯誤反饋給 code_generate。"
-ja = "サンドボックスコンテナで生成されたコードをビルドしてテストします。コンパイルを実行し、テストを実行し、必要に応じてエラーを code_generate にフィードバックします。"
-ko = "샌드박스 컨테이너에서 생성된 코드를 빌드하고 테스트합니다. 컴파일을 실행하고, 테스트를 실행하며, 필요한 경우 오류를 code_generate에 피드백합니다."
-fr = "Construire et tester le code généré dans un conteneur sandboxé. Exécute la compilation, lance les tests et renvoie les erreurs à code_generate si nécessaire."
-es = "Construir y probar el código generado en un contenedor aislado. Ejecuta la compilación, ejecuta pruebas y retroalimenta errores a code_generate si es necesario."
-ru = "Собрать и протестировать сгенерированный код в изолированном контейнере. Выполняет компиляцию, запускает тесты и передаёт ошибки обратно в code_generate при необходимости."
 
 [[related_tools]]
 agent_name = "hubris"

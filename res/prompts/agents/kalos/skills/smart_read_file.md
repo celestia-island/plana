@@ -4,13 +4,6 @@ agent = "kalos"
 
 [description]
 en = "Intelligent file reading with context awareness, auto-truncation, and encoding safety"
-zh-Hans = "智能文件读取：上下文感知、自动截断、编码安全"
-zh-Hant = "智慧檔案讀取：上下文感知、自動截斷、編碼安全"
-ja = "コンテキスト認識、自動切り詰め、エンコーディング安全性を備えたインテリジェントファイル読み取り"
-ko = "컨텍스트 인식, 자동 잘라내기, 인코딩 안전성을 갖춘 지능형 파일 읽기"
-fr = "Lecture de fichier intelligente avec conscience du contexte, troncature automatique et sécurité d'encodage"
-es = "Lectura de archivo inteligente con conciencia de contexto, truncamiento automático y seguridad de codificación"
-ru = "Интеллектуальное чтение файлов с учетом контекста, автоусечением и безопасностью кодировки"
 
 [[related_tools]]
 agent_name = "kalos"

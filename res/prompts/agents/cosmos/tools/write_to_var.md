@@ -4,7 +4,6 @@ agent = "cosmos"
 
 [description]
 en = "Write a value to the persistent vars store"
-zh-Hans = "Write a value to the persistent vars store"
 +++
 
 ## Parameters

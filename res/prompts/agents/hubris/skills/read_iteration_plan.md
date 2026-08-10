@@ -8,13 +8,6 @@ name = "task_decompose"
 
 [description]
 en = "Read the architecture truth table and parse the Iteration Backlog into a structured task list — the internal entry point for the pure self-bootstrap loop."
-zh-Hans = "读取架构真值表并把迭代 Backlog 解析为结构化任务列表 — 纯自举循环的内部入口。"
-zh-Hant = "讀取架構真值表並把迭代 Backlog 解析為結構化任務列表 — 純自舉迴圈的內部入口。"
-ja = "アーキテクチャ真値表を読み、Iteration Backlog を構造化タスクリストに解析する — 純粋な自己ブートストラップループの内部エントリポイント。"
-ko = "아키텍처 진실 표를 읽고 Iteration Backlog를 구조화된 작업 목록으로 구문 분석 — 순수 자체 부트스트랩 루프의 내부 진입점."
-fr = "Lire la table de vérité de l'architecture et analyser l'Iteration Backlog en liste de tâches structurée — le point d'entrée interne de la boucle d'auto-amorçage pur."
-es = "Leer la tabla de verdad de la arquitectura y analizar el Iteration Backlog en una lista de tareas estructurada — el punto de entrada interno del bucle de autoarranque puro."
-ru = "Прочитать таблицу истины архитектуры и разобрать Iteration Backlog в структурированный список задач — внутренняя точка входа для цикла чистого саморазвёртывания."
 
 [[related_tools]]
 agent_name = "hubris"

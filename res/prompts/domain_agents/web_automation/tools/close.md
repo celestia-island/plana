@@ -4,13 +4,6 @@ agent = "web_automation"
 
 [description]
 en = "Close a specified browser instance and release resources"
-zh-Hans = "关闭指定浏览器实例并释放资源"
-zh-Hant = "關閉指定瀏覽器實例並釋放資源"
-ja = "指定したブラウザインスタンスを閉じてリソースを解放する"
-ko = "지정된 브라우저 인스턴스를 닫고 리소스 해제"
-fr = "Fermer une instance de navigateur spécifiée et libérer les ressources"
-es = "Cerrar una instancia de navegador especificada y liberar recursos"
-ru = "Закрыть указанный экземпляр браузера и освободить ресурсы"
 +++
 
 # close

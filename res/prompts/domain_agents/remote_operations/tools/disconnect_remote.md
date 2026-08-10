@@ -4,13 +4,6 @@ agent = "remote_operations"
 
 [description]
 en = "Disconnect from a remote device"
-zh-Hans = "断开与远程设备的连接"
-zh-Hant = "斷開與遠程設備的連接"
-ja = "リモートデバイスから切断"
-ko = "원격 장치에서 연결 해제"
-fr = "Se déconnecter d'un appareil distant"
-es = "Desconectar de un dispositivo remoto"
-ru = "Отключиться от удалённого устройства"
 +++
 
 # disconnect_remote

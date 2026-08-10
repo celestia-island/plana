@@ -4,13 +4,6 @@ agent = "hubris"
 
 [description]
 en = "Update the Status column of a specific Iteration Backlog row in the architecture truth table — the write-back half of the self-bootstrap loop (IB-04)."
-zh-Hans = "更新架构真值表中某个 Iteration Backlog 行的 Status 列 — 自举循环的写回半部分（IB-04）。"
-zh-Hant = "更新架構真值表中某個 Iteration Backlog 行的 Status 欄位 — 自舉迴圈的寫回半部分（IB-04）。"
-ja = "アーキテクチャ真値表の特定の Iteration Backlog 行の Status 列を更新 — 自己ブートストラップループの書き戻し半分（IB-04）。"
-ko = "아키텍처 진실 표의 특정 Iteration Backlog 행의 Status 열을 업데이트 — 자체 부트스트랩 루프의 쓰기 반쪽（IB-04）."
-fr = "Mettre à jour la colonne Status d'une ligne spécifique de l'Iteration Backlog dans la table de vérité de l'architecture — la moitié écriture du cycle d'auto-amorçage (IB-04)."
-es = "Actualizar la columna Status de una fila específica del Iteration Backlog en la tabla de verdad de la arquitectura — la mitad de escritura del bucle de autoarranque (IB-04)."
-ru = "Обновить колонку Status конкретной строки Iteration Backlog в таблице истины архитектуры — возвратная половина цикла саморазвёртывания (IB-04)."
 
 [[related_tools]]
 agent_name = "hubris"

@@ -4,13 +4,6 @@ agent = "industrial_iot"
 
 [description]
 en = "Probe a remote node for supported network protocols and services."
-zh-Hans = "探测远程节点支持的网络协议和服务。"
-zh-Hant = "探測遠端節點支援的網路協定和服務。"
-ja = "リモートノードでサポートされているネットワークプロトコルとサービスをプローブする。"
-ko = "원격 노드에서 지원되는 네트워크 프로토콜 및 서비스를 탐색합니다."
-fr = "Sonder un nœud distant pour les protocoles réseau et services pris en charge."
-es = "Sondear un nodo remoto en busca de protocolos de red y servicios compatibles."
-ru = "Зондирование удалённого узла на предмет поддерживаемых сетевых протоколов и служб."
 +++
 
 # protocol_probe

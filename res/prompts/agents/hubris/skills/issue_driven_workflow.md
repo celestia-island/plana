@@ -4,13 +4,6 @@ agent = "hubris"
 
 [description]
 en = "Execute Issue-driven workflow from triage through planning, execution, and issue status update"
-zh-Hans = "执行 Issue 驱动的工作流：从分诊到计划、执行、并更新 Issue 状态"
-zh-Hant = "執行 Issue 驅動的工作流程：從分類到計畫、執行、並更新 Issue 狀態"
-ja = "Issue 駆動ワークフローを実行：トリアージから計画、実行、Issue ステータス更新まで"
-ko = "이슈 기반 워크플로우 실행: 분류부터 계획, 실행, 이슈 상태 업데이트까지"
-fr = "Exécuter le flux Issue-driven du triage à la planification, l'exécution et la mise à jour du statut"
-es = "Ejecutar flujo Issue-driven desde triaje hasta planificación, ejecución y actualización del estado"
-ru = "Выполнение рабочего процесса Issue-driven: от сортировки до планирования, выполнения и обновления статуса"
 
 [[related_tools]]
 agent_name = "hubris"

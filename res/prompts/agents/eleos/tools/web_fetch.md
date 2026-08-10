@@ -4,13 +4,6 @@ agent = "eleos"
 
 [description]
 en = "Fetch web page content from a specified URL"
-zh-Hans = "从指定URL获取网页内容"
-zh-Hant = "從指定URL擷取網頁內容"
-ja = "指定したURLからWebページのコンテンツを取得"
-ko = "지정된 URL에서 웹 페이지 콘텐츠 가져오기"
-fr = "Récupérer le contenu d'une page web à partir d'une URL spécifiée"
-es = "Obtener el contenido de una página web desde una URL especificada"
-ru = "Получение содержимого веб-страницы по указанному URL"
 +++
 
 # web_fetch

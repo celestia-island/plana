@@ -3,13 +3,6 @@ name = "container_remove"
 
 [description]
 en = "Remove a container."
-zh-Hans = "删除容器。"
-zh-Hant = "刪除容器。"
-ja = "コンテナを削除する。"
-ko = "컨테이너를 제거합니다."
-fr = "Supprimer un conteneur."
-es = "Eliminar un contenedor."
-ru = "Удаление контейнера."
 +++
 
 # container_remove

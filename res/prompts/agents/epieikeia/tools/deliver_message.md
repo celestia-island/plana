@@ -4,7 +4,6 @@ agent = "epieikeia"
 
 [description]
 en = "Deliver a message to another agent or container"
-zh-Hans = "向其他代理或容器传递消息"
 +++
 
 ## Parameters

@@ -4,13 +4,6 @@ agent = "philia"
 
 [description]
 en = "Unified inter-agent messaging: send inquiries to other agents for decision guidance and information sync, and route incoming cross-container messages. Combines former agent_inquiry (SkoPeo) and route_incoming_message (Philia)."
-zh-Hans = "统一的跨 Agent 消息协议：向其他 Agent 发送查询以获取决策指导和信息同步，并路由传入的跨容器消息。合并了原 agent_inquiry（SkoPeo）和 route_incoming_message（Philia）。"
-zh-Hant = "統一的跨 Agent 訊息協議：向其他 Agent 發送查詢以獲取決策指導和資訊同步，並路由傳入的跨容器訊息。合併了原 agent_inquiry（SkoPeo）和 route_incoming_message（Philia）。"
-ja = "統合されたエージェント間メッセージング：他のエージェントに問い合わせを送信して意思決定ガイダンスと情報同期を行い、受信したクロスコンテナメッセージをルーティングします。"
-ko = "통합된 에이전트 간 메시징: 다른 에이전트에게 문의를 보내 의사결정 지침과 정보 동기화를 수행하고, 수신된 크로스 컨테이너 메시지를 라우팅합니다."
-fr = "Messagerie inter-agents unifiée : envoyer des demandes à d'autres agents pour obtenir des conseils de décision et synchroniser les informations, et router les messages inter-conteneurs entrants."
-es = "Mensajería entre agentes unificada: enviar consultas a otros agentes para orientación de decisiones y sincronización de información, y enrutar mensajes entrantes entre contenedores."
-ru = "Единый обмен сообщениями между агентами: отправка запросов другим агентам для руководства по принятию решений и синхронизации информации, а также маршрутизация входящих межконтейнерных сообщений."
 
 [[related_tools]]
 agent_name = "skopeo"

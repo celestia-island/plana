@@ -4,7 +4,6 @@ agent = "skopeo"
 
 [description]
 en = "Close or complete a goal"
-zh-Hans = "关闭或完成一个目标"
 +++
 
 ## Parameters

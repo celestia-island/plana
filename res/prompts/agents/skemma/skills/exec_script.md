@@ -8,7 +8,6 @@ name = "plan_execute"
 
 [description]
 en = "Intelligent script execution gateway with language detection, sandboxing, and structured output"
-zh-Hans = "智能脚本执行网关：语言检测、沙箱隔离、结构化输出"
 
 [[related_tools]]
 agent_name = "skemma"

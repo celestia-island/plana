@@ -4,7 +4,6 @@ agent = "orexis"
 
 [description]
 en = "Block a tool from being used"
-zh-Hans = "阻止某个工具被使用"
 +++
 
 ## Parameters

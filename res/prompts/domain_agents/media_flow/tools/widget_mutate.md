@@ -4,7 +4,6 @@ agent = "media_flow"
 
 [description]
 en = "Create/update/delete a widget on a media-flow panel"
-zh-Hans = "在媒体流面板上增删改控件"
 +++
 
 # widget_mutate
