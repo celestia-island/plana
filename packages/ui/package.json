@@ -42,5 +42,9 @@
     "typescript": "^*",
     "vite": "^*",
     "vitest": "^*"
-  }
+  },
+  "sideEffects": [
+    "**/*.scss",
+    "**/*.css"
+  ]
 }
