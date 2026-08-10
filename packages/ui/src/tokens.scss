@@ -227,15 +227,20 @@
   }
 
   .s-status-bar-left {
-    display: none;
+    flex: 1;
+    min-width: 0;
   }
 
   .s-status-bar-center {
-    flex: 1;
-    min-width: 0;
+    flex-shrink: 0;
+    max-width: 45%;
     overflow-x: auto;
     scrollbar-width: none;
     &::-webkit-scrollbar { display: none; }
+  }
+
+  .s-status-bar-right {
+    flex-shrink: 0;
   }
 
   .s-status-bar-gamepad {
@@ -371,9 +376,8 @@
 .s-auth-card {
   max-width: 28rem;
   width: 100%;
-  background: rgb(var(--color-surface, 255 255 255) / var(--opacity-half, 0.5));
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--hi-color-border, rgba(0, 0, 0, 0.08));
+  background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 70%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text, 30 30 30)) 12%, transparent);
   border-radius: var(--hi-radius-sm, 4px);
   box-shadow: 0 2px 16px rgb(0 0 0 / 8%);
   animation: s-auth-card-in 0.45s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)) both;
@@ -386,6 +390,9 @@
 
 .s-auth-card input {
   transition: color calc(infinity * 1s) step-end, background-color calc(infinity * 1s) step-end;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
 }
 
 .s-auth-card input:-webkit-autofill,
