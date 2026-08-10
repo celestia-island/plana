@@ -192,8 +192,10 @@ Do NOT call `list_todo()`. Do NOT call `llm_chat()`. Do NOT decompose. Just repo
 1. **Scope Probe** — For tasks involving specific patterns, identifiers, or file types, run a quick search to estimate actual scope before classifying:
 
    ```js
-   exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'cd "${WORKSPACE_ROOT:-$(pwd)}" && rg -c \"PATTERN\" --type rust --type md 2>/dev/null | wc -l', timeout: 10 }); console.log('match_count:', r.data?.stdout?.trim() || '0');" })
+   exec({ code: "import { host_command_exec } from 'polemos'; const r = await host_command_exec({ command: 'rg -c \"PATTERN\" --type rust --type md 2>/dev/null | wc -l', cwd: '<host-workspace>', timeout: 10 }); console.log('match_count:', r.data?.stdout?.trim() || '0');" })
    ```
+
+   Replace `<host-workspace>` with the host path from the environment section's `Workspace:` line (strip the `local://` prefix, e.g. `local:///mnt/codespace` → `/mnt/codespace`). Pass it as the `cwd` parameter — never hardcode a path and never `cd` inside the command string (the shell's working directory is not the workspace).
 
    Use the probe to inform decomposition:
 
