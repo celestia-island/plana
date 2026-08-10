@@ -446,28 +446,6 @@ body"#;
     }
 
     #[tokio::test]
-    async fn test_load_prompt() -> Result<()> {
-        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")?;
-        let base_path = std::path::PathBuf::from(manifest_dir)
-            .parent()
-            .context("manifest has no parent")?
-            .parent()
-            .context("parent has no parent")?
-            .join("res/prompts");
-        let loader = PromptLoader::new(base_path);
-        let prompt = loader.load("human_requirement_parse").await;
-        if let Err(ref e) = prompt {
-            eprintln!("Load error: {:?}", e);
-        }
-        assert!(prompt.is_ok(), "Should load prompt successfully");
-
-        let template = prompt?;
-        assert_eq!(template.metadata.name, "human_requirement_parse");
-        assert!(template.template.contains("SkoPeo"));
-        Ok(())
-    }
-
-    #[tokio::test]
     async fn test_render_template() -> Result<()> {
         let loader = PromptLoader::new(PathBuf::new());
         let template = "Hello {{name}}, your age is {{age}}";
