@@ -184,7 +184,6 @@ impl SoulLoader {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anyhow::Context;
 
     #[test]
     fn test_is_valid_lang() -> Result<()> {

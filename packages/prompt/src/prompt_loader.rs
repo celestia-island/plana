@@ -372,7 +372,6 @@ Version: {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anyhow::Context;
 
     #[test]
     fn test_parse_from_string() -> Result<()> {
