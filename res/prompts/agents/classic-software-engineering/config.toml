@@ -1,6 +1,0 @@
-# Classic Software Engineering Agent Configuration
-
-[agent]
-namespace = "layer2::classic_software_engineering"
-name = "Classic Software Engineering"
-layer = 2
