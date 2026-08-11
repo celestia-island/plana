@@ -2,6 +2,14 @@ export interface AuthGuardOptions {
   loginRoute: string;
   homeRoute: string;
   setupRoute: string;
+  /**
+   * Optional distinct wizard route that actually performs initial setup.
+   * Some apps split the flow into a redirect/landing page (`setupRoute`,
+   * e.g. locale detection) and the wizard itself (`setupWizardRoute`). When
+   * `needs_setup` is true the guard must allow BOTH, otherwise the landing
+   * page can never navigate into the wizard (infinite redirect loop).
+   */
+  setupWizardRoute?: string;
   registerRoute?: string;
   useAuthStore: () => {
     isAuthenticated: boolean;
@@ -53,7 +61,8 @@ export function createAuthGuard(router: GuardRouter, opts: AuthGuardOptions) {
       setupChecked = true;
       try {
         const result = await auth.checkSetup();
-        if (result.needs_setup && to.name !== opts.setupRoute) {
+        const setupAllowed = [opts.setupRoute, opts.setupWizardRoute].filter(Boolean);
+        if (result.needs_setup && !setupAllowed.includes(to.name as string)) {
           return { name: opts.setupRoute };
         }
         if (!result.needs_setup && to.name === opts.setupRoute) {
