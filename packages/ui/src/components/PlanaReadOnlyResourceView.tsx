@@ -1,6 +1,7 @@
 import { computed, defineComponent, onMounted, ref, type PropType } from "vue";
 import { HAlert, HBadge, HButton, HCard, HEmptyState, HInput, HSpinner, HTable, useI18n } from "@celestia-island/hikari";
-import { RefreshCw, Search } from "lucide-vue-next";
+import RefreshCw from "lucide-vue-next/dist/esm/icons/refresh-cw";
+import Search from "lucide-vue-next/dist/esm/icons/search";
 
 export interface PReadOnlyResource {
   name: string;

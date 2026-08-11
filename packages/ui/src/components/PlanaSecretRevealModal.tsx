@@ -1,5 +1,7 @@
 import { defineComponent, onMounted, ref, watch } from "vue";
-import { AlertTriangle, Check, Copy } from "lucide-vue-next";
+import AlertTriangle from "lucide-vue-next/dist/esm/icons/triangle-alert";
+import Check from "lucide-vue-next/dist/esm/icons/check";
+import Copy from "lucide-vue-next/dist/esm/icons/copy";
 import { HModal, mergeMessages, useClipboard, useI18n } from "@celestia-island/hikari";
 
 import "./PlanaSecretRevealModal.scss";

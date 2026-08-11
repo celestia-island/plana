@@ -1,5 +1,9 @@
 import { computed, defineComponent, onMounted, ref, watch, type PropType } from "vue";
-import { Copy, Eraser, Pause, Play, ScrollText } from "lucide-vue-next";
+import Copy from "lucide-vue-next/dist/esm/icons/copy";
+import Eraser from "lucide-vue-next/dist/esm/icons/eraser";
+import Pause from "lucide-vue-next/dist/esm/icons/pause";
+import Play from "lucide-vue-next/dist/esm/icons/play";
+import ScrollText from "lucide-vue-next/dist/esm/icons/scroll-text";
 import { HModal, HScrollContainer, mergeMessages, useClipboard, useI18n } from "@celestia-island/hikari";
 
 import "./PlanaLogWindow.scss";
