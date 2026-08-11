@@ -30,6 +30,18 @@
     }
   };
   var FALLBACK_THEME = THEMES.synthwave84;
+  // Page-declared brand themes (optional): a site may declare
+  // window.__celestiaThemes (extra presets keyed by theme id) and
+  // window.__celestiaDefaultTheme in its index.html before this script runs.
+  // Merge the presets so the loading screen knows them, and let the declared
+  // default stand in for the hard-coded fallback. Both are no-ops when the
+  // globals are absent, so every site keeps its current behavior.
+  if (window.__celestiaThemes) {
+    for (var _k in window.__celestiaThemes) THEMES[_k] = window.__celestiaThemes[_k];
+  }
+  if (window.__celestiaDefaultTheme && THEMES[window.__celestiaDefaultTheme]) {
+    FALLBACK_THEME = THEMES[window.__celestiaDefaultTheme];
+  }
   var GEO_KEY = storagePrefix() + "geolocation";
 
   // --- Solar position (vanilla port of composables/useSolarTime.ts) ---
@@ -105,7 +117,7 @@
     return isDaytimeFallback() ? "light" : "dark";
   }
 
-  var tid = localStorage.getItem(storagePrefix() + "theme") || "synthwave84";
+  var tid = localStorage.getItem(storagePrefix() + "theme") || window.__celestiaDefaultTheme || "synthwave84";
   var mode = resolveMode(localStorage.getItem(storagePrefix() + "theme-mode") || "system");
   var theme = THEMES[tid] || FALLBACK_THEME;
   var scheme = theme[mode] || theme.dark;
