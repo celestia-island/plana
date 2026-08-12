@@ -152,7 +152,9 @@
 
 .s-status-bar-tag-label {
   font-family: var(--font-mono);
-  opacity: 0.6;
+  /* Match the value's opacity: a faded label next to the version value
+     reads as a different typeface/weight, especially with CJK fallback. */
+  opacity: 0.85;
 }
 
 .s-status-bar-tag-value {
