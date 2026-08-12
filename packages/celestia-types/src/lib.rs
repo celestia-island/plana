@@ -28,13 +28,14 @@
 //   ws/       — SyncMessage variant params (agent / ui / services sub-groups)
 //   tools/    — per-tool I/O structs
 // and a few single-file modules at the root (enums, engine, http, model,
-// external_mcp, malkuth). The glob re-exports at the bottom keep every type
-// reachable at the crate root (`plana_celestia_types::TypeName`).
+// external_mcp, malkuth, mdd). The glob re-exports at the bottom keep every
+// type reachable at the crate root (`plana_celestia_types::TypeName`).
 pub mod engine;
 pub mod enums;
 pub mod external_mcp;
 pub mod http;
 pub mod malkuth;
+pub mod mdd;
 pub mod model;
 pub mod protocol;
 pub mod tools;
@@ -533,6 +534,9 @@ pub use malkuth::*;
 // model/ — unified model management (re-export key types to crate root
 // for ergonomic access: `arona::ModelCapability` not `arona::model::…`)
 pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
+
+// mdd/ — model deployment descriptor schema v1
+pub use mdd::*;
 
 // ws/ — SyncMessage variant params (types at crate root)
 pub use ws::agent::{agent_lifecycle::*, layer2::*, state_sync::*, tasks::*, yolo::*};

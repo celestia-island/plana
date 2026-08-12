@@ -36,6 +36,7 @@
 export * from "./bindings/engine";
 export * from "./bindings/enums";
 export * from "./bindings/httpTypes";
+export * from "./bindings/mdd";
 export * from "./bindings/model";
 export * from "./bindings/ws/agentLifecycle";
 export * from "./bindings/ws/auth";
