@@ -1,6 +1,5 @@
 import { defineComponent, type PropType } from "vue";
-import ArrowDown from "lucide-vue-next/dist/esm/icons/arrow-down";
-import ArrowUp from "lucide-vue-next/dist/esm/icons/arrow-up";
+import { ArrowDown, ArrowUp } from "lucide-vue-next";
 import { HRollingNumber } from "@celestia-island/hikari";
 
 import { formatTokenCount } from "../utils/format";

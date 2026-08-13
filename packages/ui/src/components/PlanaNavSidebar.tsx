@@ -1,26 +1,7 @@
 import { defineComponent, h, type Component, type PropType } from "vue";
 
 import { HNavItem, HSidebar } from "@celestia-island/hikari";
-import BarChart3 from "lucide-vue-next/dist/esm/icons/chart-bar-big";
-import Bell from "lucide-vue-next/dist/esm/icons/bell";
-import Bot from "lucide-vue-next/dist/esm/icons/bot";
-import Box from "lucide-vue-next/dist/esm/icons/box";
-import Cable from "lucide-vue-next/dist/esm/icons/cable";
-import Cpu from "lucide-vue-next/dist/esm/icons/cpu";
-import FileText from "lucide-vue-next/dist/esm/icons/file-text";
-import FolderOpen from "lucide-vue-next/dist/esm/icons/folder-open";
-import Gauge from "lucide-vue-next/dist/esm/icons/gauge";
-import Key from "lucide-vue-next/dist/esm/icons/key";
-import Layers from "lucide-vue-next/dist/esm/icons/layers";
-import LayoutDashboard from "lucide-vue-next/dist/esm/icons/layout-dashboard";
-import Mic from "lucide-vue-next/dist/esm/icons/mic";
-import Monitor from "lucide-vue-next/dist/esm/icons/monitor";
-import Send from "lucide-vue-next/dist/esm/icons/send";
-import Settings from "lucide-vue-next/dist/esm/icons/settings";
-import Share2 from "lucide-vue-next/dist/esm/icons/share-2";
-import Shield from "lucide-vue-next/dist/esm/icons/shield";
-import Webhook from "lucide-vue-next/dist/esm/icons/webhook";
-import Zap from "lucide-vue-next/dist/esm/icons/zap";
+import { ChartBarBig as BarChart3, Bell, Bot, Box, Cable, Cpu, FileText, FolderOpen, Gauge, Key, Layers, LayoutDashboard, Mic, Monitor, Send, Settings, Share2, Shield, Webhook, Zap } from "lucide-vue-next";
 
 interface NavItem {
   key: string;
