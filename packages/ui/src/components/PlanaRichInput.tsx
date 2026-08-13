@@ -1,10 +1,5 @@
 import { computed, defineComponent, onMounted, ref, watch, type PropType } from "vue";
-import Mic from "lucide-vue-next/dist/esm/icons/mic";
-import MicOff from "lucide-vue-next/dist/esm/icons/mic-off";
-import Paperclip from "lucide-vue-next/dist/esm/icons/paperclip";
-import Play from "lucide-vue-next/dist/esm/icons/play";
-import Send from "lucide-vue-next/dist/esm/icons/send";
-import X from "lucide-vue-next/dist/esm/icons/x";
+import { Mic, MicOff, Paperclip, Play, Send, X } from "lucide-vue-next";
 import {
   HButton,
   HInput,

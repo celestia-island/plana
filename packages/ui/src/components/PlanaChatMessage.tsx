@@ -1,7 +1,5 @@
 import { computed, defineComponent, onMounted, type PropType } from "vue";
-import Bot from "lucide-vue-next/dist/esm/icons/bot";
-import Copy from "lucide-vue-next/dist/esm/icons/copy";
-import User from "lucide-vue-next/dist/esm/icons/user";
+import { Bot, Copy, User } from "lucide-vue-next";
 import { HMarkdownRenderer, mergeMessages, useI18n } from "@celestia-island/hikari";
 
 import type { PChatRole, PToolCall } from "./PlanaChatTypes";

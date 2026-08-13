@@ -1,8 +1,5 @@
 import { defineComponent, ref, type PropType, type VNode } from "vue";
-import Camera from "lucide-vue-next/dist/esm/icons/camera";
-import Languages from "lucide-vue-next/dist/esm/icons/languages";
-import LogOut from "lucide-vue-next/dist/esm/icons/log-out";
-import Menu from "lucide-vue-next/dist/esm/icons/menu";
+import { Camera, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HDivider, HPopover } from "@celestia-island/hikari";
 
 export interface LocaleOption {

@@ -1,11 +1,5 @@
 import { computed, defineComponent, onMounted, ref, type PropType } from "vue";
-import Check from "lucide-vue-next/dist/esm/icons/check";
-import ChevronDown from "lucide-vue-next/dist/esm/icons/chevron-down";
-import Monitor from "lucide-vue-next/dist/esm/icons/monitor";
-import Moon from "lucide-vue-next/dist/esm/icons/moon";
-import Palette from "lucide-vue-next/dist/esm/icons/palette";
-import Sun from "lucide-vue-next/dist/esm/icons/sun";
-import Trash2 from "lucide-vue-next/dist/esm/icons/trash";
+import { Check, ChevronDown, Monitor, Moon, Palette, Sun, Trash as Trash2 } from "lucide-vue-next";
 import { HDivider, HPopover, mergeMessages, useI18n, useTheme, type PopupPlacement, type ThemeId } from "@celestia-island/hikari";
 
 import { PColorSchemeDialog, type PCustomTheme } from "./PlanaColorSchemeDialog";

@@ -1,5 +1,5 @@
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, type PropType } from "vue";
-import ShieldAlert from "lucide-vue-next/dist/esm/icons/shield-alert";
+import { ShieldAlert } from "lucide-vue-next";
 import { mergeMessages, useI18n } from "@celestia-island/hikari";
 
 import "./PlanaCaptchaWidget.scss";
