@@ -90,6 +90,41 @@ fn pick_run_dir(
     fallback
 }
 
+/// Build the `ContainerCreateParams` used to recreate a container, carrying the
+/// original non-root `user` forward.
+///
+/// Kept as a pure function so the user-preservation behavior is unit-testable
+/// without actually spawning a container. The original `user` ("uid[:gid]") is
+/// preserved; a recreated container must never silently fall back to uid 0.
+fn recreate_params(old: &YoukiContainerRecord, new_image: &str) -> ContainerCreateParams {
+    ContainerCreateParams {
+        name: old.info.name.clone(),
+        image: new_image.to_string(),
+        network: None,
+        env: old.info.env.clone(),
+        ports: old.info.ports.clone(),
+        volumes: old.info.volumes.clone(),
+        labels: old.info.labels.clone(),
+        working_dir: None,
+        log_driver: None,
+        log_opts: HashMap::new(),
+        healthcheck: None,
+        user: old.user.clone(),
+        memory_limit: None,
+        nano_cpus: None,
+        pids_limit: None,
+        cap_drop: None,
+        cap_add: None,
+        security_opt: None,
+        read_only_rootfs: None,
+        egress_policy: None,
+        group_add: None,
+        devices: Vec::new(),
+        compile_mode: false,
+        egress_domain_allowlist_extra: Vec::new(),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct YoukiManager {
     state: YoukiState,
@@ -210,6 +245,7 @@ impl YoukiManager {
                     started_at: None,
                     finished_at: None,
                     error: None,
+                    user: None,
                 };
 
                 records.push(record);
@@ -288,6 +324,7 @@ impl YoukiManager {
                 started_at: Some(Utc::now().to_rfc3339()),
                 finished_at: None,
                 error: None,
+                user: None,
             })
             .await;
     }
@@ -687,6 +724,7 @@ impl ContainerOps for YoukiManager {
                 started_at: Some(Utc::now().to_rfc3339()),
                 finished_at: None,
                 error: None,
+                user: params.user.clone(),
             })
             .await;
 
@@ -949,11 +987,19 @@ impl ContainerOps for YoukiManager {
                 pid,
                 "Entering container namespaces via nsenter for exec"
             );
+            // Enter mount/uts/ipc/pid, plus user and network namespaces. The
+            // network namespace is always created (spec::build_namespaces), so
+            // `-n` is always valid. `-U` enters the user namespace that exists
+            // in the rootless path; in the (rare) root path the target sits in
+            // the initial user namespace and entering it is a no-op, so `-U`
+            // is safe in both modes.
             let mut args = vec![
                 "-m".to_string(),
                 "-u".to_string(),
                 "-i".to_string(),
                 "-p".to_string(),
+                "-n".to_string(),
+                "-U".to_string(),
                 "-t".to_string(),
                 pid.to_string(),
                 "--".to_string(),
@@ -972,23 +1018,15 @@ impl ContainerOps for YoukiManager {
                     message: format!("nsenter exec spawn: {}", e),
                 })?
         } else {
-            warn!(
-                container_id = %resolved_id,
-                "No PID recorded for container — executing on host filesystem only (no namespace isolation). \
-                 This is a security limitation of the current youki runtime backend."
-            );
-            tokio::process::Command::new(command[0])
-                .args(&command[1..])
-                .current_dir(&workdir)
-                .env("PATH", "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin")
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::piped())
-                .output()
-                .await
-                .map_err(|e| ContainerError::ExecFailed {
-                    container_id: resolved_id.clone(),
-                    message: format!("exec spawn: {}", e),
-                })?
+            // Fail closed: without a recorded PID we cannot enter the container
+            // namespaces, so running the command on the host would silently
+            // execute with full host filesystem access. Refuse instead.
+            return Err(ContainerError::ExecFailed {
+                container_id: resolved_id.clone(),
+                message: "container not running or PID unknown; refusing to execute on the host \
+                     filesystem without namespace isolation"
+                    .to_string(),
+            });
         };
 
         Ok(ExecOutput {
@@ -1121,32 +1159,7 @@ impl ContainerOps for YoukiManager {
         let old = self.state.get_by_name(container_name).await;
         let old = old.ok_or_else(|| ContainerError::NotFound(container_name.to_string()))?;
         let old_image = old.info.image.clone();
-        let cp = ContainerCreateParams {
-            name: old.info.name.clone(),
-            image: new_image.to_string(),
-            network: None,
-            env: old.info.env.clone(),
-            ports: old.info.ports.clone(),
-            volumes: old.info.volumes.clone(),
-            labels: old.info.labels.clone(),
-            working_dir: None,
-            log_driver: None,
-            log_opts: HashMap::new(),
-            healthcheck: None,
-            user: None,
-            memory_limit: None,
-            nano_cpus: None,
-            pids_limit: None,
-            cap_drop: None,
-            cap_add: None,
-            security_opt: None,
-            read_only_rootfs: None,
-            egress_policy: None,
-            group_add: None,
-            devices: Vec::new(),
-            compile_mode: false,
-            egress_domain_allowlist_extra: Vec::new(),
-        };
+        let cp = recreate_params(&old, new_image);
         self.remove(&old.info.id, true).await?;
         let new_info = self.create(&cp).await?;
         if let Err(e) = self.event_tx.send(ContainerEvent::Updated {
@@ -1541,6 +1554,54 @@ mod tests {
 
     fn make_mgr(tmp: &TempDir) -> YoukiManager {
         YoukiManager::new_for_test(tmp.path(), tmp.path())
+    }
+
+    fn make_record(user: Option<String>) -> YoukiContainerRecord {
+        YoukiContainerRecord {
+            info: ContainerInfo {
+                id: "c1".to_string(),
+                name: "c1".to_string(),
+                image: "old:latest".to_string(),
+                status: ContainerStatus::Running,
+                created_at: None,
+                ports: Vec::new(),
+                env: HashMap::new(),
+                volumes: Vec::new(),
+                ip_address: None,
+                labels: HashMap::new(),
+            },
+            bundle_path: PathBuf::new(),
+            rootfs_path: PathBuf::new(),
+            pid: None,
+            exit_code: None,
+            started_at: None,
+            finished_at: None,
+            error: None,
+            user,
+        }
+    }
+
+    #[test]
+    fn recreate_params_preserves_non_root_user() -> Result<()> {
+        let cp = recreate_params(&make_record(Some("1000:1000".to_string())), "new:latest");
+        assert_eq!(
+            cp.user.as_deref(),
+            Some("1000:1000"),
+            "recreate must preserve the original non-root user"
+        );
+        assert_eq!(cp.name, "c1");
+        assert_eq!(cp.image, "new:latest");
+        Ok(())
+    }
+
+    #[test]
+    fn recreate_params_keeps_unknown_user_none() -> Result<()> {
+        let cp = recreate_params(&make_record(None), "new:latest");
+        assert!(
+            cp.user.is_none(),
+            "recreate of an unknown-user record must stay None (not fabricate uid 0)"
+        );
+        Ok(())
     }
 
     #[tokio::test]
@@ -2000,17 +2061,36 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn exec_without_pid_falls_back_to_host() -> Result<()> {
+    async fn exec_without_pid_fails_closed() -> Result<()> {
         let tmp = TempDir::new().context("test precondition")?;
         let rootfs_path = setup_mock_rootfs(tmp.path(), "c-exec-nopid")?;
         let mgr = make_mgr(&tmp);
         mgr.insert_test_record("c-exec-nopid", rootfs_path.clone())
             .await;
 
+        // With no recorded PID, exec must refuse to run on the host rather than
+        // silently executing outside the container namespaces.
         let result = mgr.exec("c-exec-nopid", &["echo", "hello"]).await;
-        if let Ok(output) = result {
-            assert_eq!(output.exit_code, Some(0));
-            assert!(output.stdout.contains("hello"));
+        match result {
+            Err(ContainerError::ExecFailed { message, .. }) => {
+                assert!(
+                    message.contains("PID") || message.contains("pid"),
+                    "error must mention the missing PID, got: {message}"
+                );
+                assert!(
+                    message.contains("host"),
+                    "error must explain the host-fallback refusal, got: {message}"
+                );
+            }
+            Ok(output) => {
+                return Err(anyhow::anyhow!(
+                    "exec without a PID must fail closed, got Ok: {:?}",
+                    output
+                ));
+            }
+            Err(other) => {
+                return Err(anyhow::anyhow!("unexpected error type: {:?}", other));
+            }
         }
         Ok(())
     }

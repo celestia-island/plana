@@ -12,6 +12,24 @@ const ROOTFS_CACHE_DIR: &str = "rootfs";
 
 const HOST_EXCLUDED_DIRS: &[&str] = &["proc", "sys", "dev", "run", "tmp"];
 
+/// Environment opt-in for the host-rootfs (`lowerdir=/`) overlay mode.
+///
+/// Mounting the container rootfs as an overlay over the host `/` would let the
+/// container read the entire host filesystem (a read escape), so this mode is
+/// fail-closed by default. It only runs when this flag is explicitly set — a
+/// local-development escape hatch, never for production.
+const HOST_ROOTFS_ALLOW_ENV: &str = "ENTELECHEIA_ALLOW_HOST_ROOTFS";
+
+/// Return true when the host-rootfs overlay escape hatch is explicitly enabled.
+///
+/// Defaults to `false` (fail-closed) so a container can never silently read the
+/// host filesystem via `lowerdir=/`.
+fn host_rootfs_allowed() -> bool {
+    std::env::var(HOST_ROOTFS_ALLOW_ENV)
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
 #[derive(Debug, Clone)]
 pub struct RootfsManager {
     base_dir: PathBuf,
@@ -173,6 +191,22 @@ impl RootfsManager {
     }
 
     async fn prepare_overlay_rootfs(&self, container_id: &str) -> ContainerResult<PathBuf> {
+        // Fail-closed: an overlay with `lowerdir=/` exposes the entire host
+        // filesystem to the container (a read escape). Refuse to build such a
+        // rootfs unless the operator explicitly opts in via the escape-hatch
+        // flag (local development only).
+        if !host_rootfs_allowed() {
+            return Err(ContainerError::OperationFailed {
+                container_id: container_id.to_string(),
+                message: format!(
+                    "host rootfs overlay (lowerdir=/) is disabled: it would expose the entire \
+                     host filesystem to the container. Set {}=1 to opt in for local \
+                     development only.",
+                    HOST_ROOTFS_ALLOW_ENV
+                ),
+            });
+        }
+
         let container_path = self.container_rootfs_path(container_id);
         let upperdir = container_path.join("upper");
         let workdir = container_path.join("work");
@@ -523,5 +557,87 @@ impl RootfsManager {
         } else {
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Restore `HOST_ROOTFS_ALLOW_ENV` to its prior value on drop, mirroring
+    /// the env-guard pattern used elsewhere in this crate.
+    struct EnvGuard {
+        prev: Option<String>,
+    }
+
+    impl EnvGuard {
+        fn clear() -> Self {
+            let prev = std::env::var(HOST_ROOTFS_ALLOW_ENV).ok();
+            unsafe { std::env::remove_var(HOST_ROOTFS_ALLOW_ENV) };
+            Self { prev }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            match &self.prev {
+                Some(v) => unsafe { std::env::set_var(HOST_ROOTFS_ALLOW_ENV, v) },
+                None => unsafe { std::env::remove_var(HOST_ROOTFS_ALLOW_ENV) },
+            }
+        }
+    }
+
+    #[test]
+    fn host_rootfs_opt_in_flag_is_fail_closed_by_default() {
+        let _guard = EnvGuard::clear();
+        assert!(!host_rootfs_allowed(), "default must be fail-closed");
+        unsafe { std::env::set_var(HOST_ROOTFS_ALLOW_ENV, "1") };
+        assert!(host_rootfs_allowed(), "=1 must enable the escape hatch");
+        unsafe { std::env::set_var(HOST_ROOTFS_ALLOW_ENV, "true") };
+        assert!(host_rootfs_allowed(), "=true must enable the escape hatch");
+        unsafe { std::env::set_var(HOST_ROOTFS_ALLOW_ENV, "0") };
+        assert!(!host_rootfs_allowed(), "=0 must stay disabled");
+        unsafe { std::env::set_var(HOST_ROOTFS_ALLOW_ENV, "no") };
+        assert!(!host_rootfs_allowed(), "garbage must stay disabled");
+    }
+
+    #[tokio::test]
+    async fn host_rootfs_overlay_fails_closed_by_default() {
+        let _guard = EnvGuard::clear();
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let mgr = RootfsManager::new(tmp.path());
+
+        let result = mgr
+            .prepare_container_rootfs("host", "fail-closed-test")
+            .await;
+
+        let err = result.expect_err("host rootfs overlay must fail closed by default");
+        let msg = format!("{err}");
+        assert!(
+            msg.contains(HOST_ROOTFS_ALLOW_ENV),
+            "error must document the opt-in flag, got: {msg}"
+        );
+        assert!(
+            msg.contains("host filesystem"),
+            "error must explain the read-escape risk, got: {msg}"
+        );
+    }
+
+    #[tokio::test]
+    async fn non_host_image_without_cache_also_fails_closed() {
+        // The fallback path (image not pulled -> overlay) also uses the host `/`
+        // lowerdir and must fail closed rather than silently exposing the host.
+        let _guard = EnvGuard::clear();
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let mgr = RootfsManager::new(tmp.path());
+
+        let result = mgr
+            .prepare_container_rootfs("some-image:latest", "fallback-test")
+            .await;
+
+        assert!(
+            result.is_err(),
+            "unpulled-image overlay fallback must fail closed by default"
+        );
     }
 }

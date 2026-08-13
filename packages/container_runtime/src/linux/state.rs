@@ -13,6 +13,9 @@ pub struct YoukiContainerRecord {
     pub started_at: Option<String>,
     pub finished_at: Option<String>,
     pub error: Option<String>,
+    /// Non-root user ("uid[:gid]") the container was created with, carried so
+    /// `recreate` can preserve it instead of silently falling back to uid 0.
+    pub user: Option<String>,
 }
 
 #[derive(Debug, Clone)]
