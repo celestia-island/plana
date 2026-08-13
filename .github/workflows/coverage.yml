@@ -1,0 +1,23 @@
+name: Coverage
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    types: [opened, reopened, ready_for_review]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  coverage:
+    runs-on: [self-hosted, linux, x64, local]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install tarpaulin
+        run: cargo install cargo-tarpaulin --version 0.37.0
+      - name: Generate coverage for plana-jsonrpc
+        run: cargo tarpaulin -p plana-jsonrpc --out Xml --output-dir coverage --timeout 120 --fail-under 50
