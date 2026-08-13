@@ -82,3 +82,7 @@ jobs:
         run: python3 scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
+
+  verify-versions:
+    name: Verify version consistency
+    uses: celestia-island/celestia-devtools/.github/workflows/verify-versions.yml@master
