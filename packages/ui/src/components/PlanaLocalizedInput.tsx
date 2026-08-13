@@ -31,9 +31,7 @@
 import { computed, defineComponent, nextTick, ref, type PropType } from "vue";
 import { useI18n } from "@celestia-island/hikari";
 
-import Globe from "lucide-vue-next/dist/esm/icons/globe";
-import Plus from "lucide-vue-next/dist/esm/icons/plus";
-import X from "lucide-vue-next/dist/esm/icons/x";
+import { Globe, Plus, X } from "lucide-vue-next";
 import { HSpinner } from "@celestia-island/hikari";
 import { HPopover } from "@celestia-island/hikari";
 import { HBadge } from "@celestia-island/hikari";

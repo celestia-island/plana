@@ -1,8 +1,5 @@
 import { computed, defineComponent, onMounted, ref, watch, type PropType } from "vue";
-import Film from "lucide-vue-next/dist/esm/icons/film";
-import FileIcon from "lucide-vue-next/dist/esm/icons/file";
-import ImageIcon from "lucide-vue-next/dist/esm/icons/image";
-import Music from "lucide-vue-next/dist/esm/icons/music";
+import { Film, File as FileIcon, Image as ImageIcon, Music } from "lucide-vue-next";
 import {
   HBadge,
   HImageViewer,
