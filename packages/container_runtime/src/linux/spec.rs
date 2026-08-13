@@ -2,10 +2,11 @@ use std::{collections::HashSet, path::Path};
 
 use oci_spec::runtime::{
     Arch, Capability, LinuxBuilder, LinuxCapabilities, LinuxCapabilitiesBuilder, LinuxCpuBuilder,
-    LinuxMemoryBuilder, LinuxNamespace, LinuxNamespaceBuilder, LinuxPidsBuilder, LinuxResources,
-    LinuxResourcesBuilder, LinuxSeccomp, LinuxSeccompAction, LinuxSeccompBuilder, LinuxSyscall,
-    LinuxSyscallBuilder, Mount, MountBuilder, PosixRlimit, PosixRlimitBuilder, PosixRlimitType,
-    ProcessBuilder, RootBuilder, Spec, SpecBuilder, UserBuilder,
+    LinuxDeviceCgroup, LinuxDeviceCgroupBuilder, LinuxDeviceType, LinuxMemoryBuilder,
+    LinuxNamespace, LinuxNamespaceBuilder, LinuxPidsBuilder, LinuxResources, LinuxResourcesBuilder,
+    LinuxSeccomp, LinuxSeccompAction, LinuxSeccompBuilder, LinuxSyscall, LinuxSyscallBuilder,
+    Mount, MountBuilder, PosixRlimit, PosixRlimitBuilder, PosixRlimitType, ProcessBuilder,
+    RootBuilder, Spec, SpecBuilder, UserBuilder,
 };
 use tracing::info;
 
@@ -97,6 +98,8 @@ pub fn generate_oci_spec(
             .no_new_privileges(true)
             .capabilities(build_capabilities(
                 params.cap_drop.as_deref(),
+                params.cap_add.as_deref(),
+                !params.devices.is_empty(),
                 container_id
             )?)
             .rlimits(build_rlimits(container_id)?),
@@ -181,8 +184,14 @@ pub fn generate_oci_spec(
 
 fn build_capabilities(
     cap_drop: Option<&[String]>,
+    cap_add: Option<&[String]>,
+    devices_requested: bool,
     container_id: &str,
 ) -> ContainerResult<LinuxCapabilities> {
+    // Default container capability set. `MKNOD` is deliberately absent: it lets
+    // a container create device nodes (/dev/mem, /dev/sda, ...) and, combined
+    // with the absence of a device allowlist, would grant unmediated device
+    // access. It is re-granted only when the caller explicitly requests devices.
     let mut caps: HashSet<Capability> = [
         Capability::AuditWrite,
         Capability::Kill,
@@ -192,10 +201,22 @@ fn build_capabilities(
         Capability::Chown,
         Capability::Fowner,
         Capability::DacOverride,
-        Capability::Mknod,
     ]
     .into_iter()
     .collect();
+
+    // Re-grant MKNOD only on an explicit device request: either a non-empty
+    // `devices` passthrough list or `cap_add` naming MKNOD.
+    let mknod_requested = devices_requested
+        || cap_add
+            .map(|caps| {
+                caps.iter()
+                    .any(|c| c.trim_start_matches("CAP_").eq_ignore_ascii_case("MKNOD"))
+            })
+            .unwrap_or(false);
+    if mknod_requested {
+        caps.insert(Capability::Mknod);
+    }
 
     if let Some(dropped) = cap_drop {
         for d in dropped {
@@ -363,12 +384,38 @@ fn build_resources(
         container_id
     );
 
+    // Default-deny device cgroup: deny all device access by default so a
+    // container cannot create (`mknod`) or read/write host device nodes.
+    let devices = vec![build_device_cgroup(container_id)?];
+
     Ok(oci_bail!(
         LinuxResourcesBuilder::default()
+            .devices(devices)
             .memory(memory)
             .cpu(cpu)
             .pids(pids),
         "failed to build linux resources",
+        container_id
+    ))
+}
+
+/// Build a default-deny device cgroup rule (equivalent to `a *:* rwm` written
+/// to the cgroup v1 `devices.deny` file).
+///
+/// Combined with dropping `CAP_MKNOD` from the default capability set, this
+/// blocks both creating and accessing host device nodes. On cgroup v1 the rule
+/// is applied directly by libcgroups. On cgroup v2 the OCI `devices` list maps
+/// to the eBPF device controller, which libcgroups only applies when
+/// libcontainer's `cgroupsv2_devices` feature is enabled (not enabled here to
+/// avoid pulling in a libbpf build dependency) — that residual v2 gap is
+/// covered by the dropped `CAP_MKNOD` and documented in the PR notes.
+fn build_device_cgroup(container_id: &str) -> ContainerResult<LinuxDeviceCgroup> {
+    Ok(oci_bail!(
+        LinuxDeviceCgroupBuilder::default()
+            .allow(false)
+            .typ(LinuxDeviceType::A)
+            .access("rwm"),
+        "failed to build default-deny device cgroup",
         container_id
     ))
 }
@@ -707,6 +754,132 @@ mod tests {
         assert!(
             linux.seccomp().is_some(),
             "seccomp should be present in OCI spec"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn default_capabilities_omit_mknod() -> Result<()> {
+        let caps = build_capabilities(None, None, false, "test").context("test precondition")?;
+        for set in [
+            caps.bounding(),
+            caps.effective(),
+            caps.inheritable(),
+            caps.permitted(),
+            caps.ambient(),
+        ] {
+            let set = set.as_ref().context("test precondition")?;
+            assert!(
+                !set.contains(&Capability::Mknod),
+                "MKNOD must be absent from the default capability set"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn mknod_regranted_only_on_explicit_device_request() -> Result<()> {
+        // cap_add: MKNOD re-grants the capability.
+        let caps = build_capabilities(None, Some(&["MKNOD".to_string()]), false, "test")
+            .context("test precondition")?;
+        assert!(
+            caps.permitted()
+                .as_ref()
+                .context("test precondition")?
+                .contains(&Capability::Mknod),
+            "cap_add MKNOD must re-grant the capability"
+        );
+
+        // An empty cap_add list does not.
+        let caps =
+            build_capabilities(None, Some(&[]), false, "test").context("test precondition")?;
+        assert!(
+            !caps
+                .permitted()
+                .as_ref()
+                .context("test precondition")?
+                .contains(&Capability::Mknod),
+            "empty cap_add must not grant MKNOD"
+        );
+
+        // A non-empty devices passthrough list re-grants it.
+        let caps = build_capabilities(None, None, true, "test").context("test precondition")?;
+        assert!(
+            caps.permitted()
+                .as_ref()
+                .context("test precondition")?
+                .contains(&Capability::Mknod),
+            "requesting devices must re-grant MKNOD"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn default_cap_drop_still_removes_mknod() -> Result<()> {
+        // Even when MKNOD is requested via devices, an explicit cap_drop wins.
+        let caps = build_capabilities(Some(&["MKNOD".to_string()]), None, true, "test")
+            .context("test precondition")?;
+        assert!(
+            !caps
+                .permitted()
+                .as_ref()
+                .context("test precondition")?
+                .contains(&Capability::Mknod),
+            "cap_drop MKNOD must override the device request"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn resources_include_default_deny_device_cgroup() -> Result<()> {
+        let resources = build_resources(None, None, None, "test").context("test precondition")?;
+        let devices = resources.devices().as_ref().context("test precondition")?;
+        assert!(
+            !devices.is_empty(),
+            "device cgroup rules must be present by default"
+        );
+        let deny_all = devices
+            .iter()
+            .find(|d| !d.allow())
+            .context("test precondition")?;
+        assert_eq!(
+            deny_all.typ(),
+            Some(LinuxDeviceType::A),
+            "default-deny rule must target all device types"
+        );
+        assert_eq!(
+            deny_all.access().as_deref(),
+            Some("rwm"),
+            "default-deny rule must deny read/write/mknod"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn oci_spec_process_omits_mknod() -> Result<()> {
+        let params = default_params();
+        let spec = generate_oci_spec(
+            &params,
+            std::path::Path::new("/tmp/test-rootfs"),
+            "test-id",
+            std::path::Path::new("/tmp/test-run"),
+        )
+        .context("generate_oci_spec should succeed")?;
+        let process = spec
+            .process()
+            .as_ref()
+            .context("process section should exist")?;
+        let caps = process
+            .capabilities()
+            .as_ref()
+            .context("capabilities should exist")?;
+        assert!(
+            !caps
+                .permitted()
+                .as_ref()
+                .context("test precondition")?
+                .contains(&Capability::Mknod),
+            "generated spec must omit MKNOD by default"
         );
         Ok(())
     }
