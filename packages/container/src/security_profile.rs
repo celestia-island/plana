@@ -1,4 +1,4 @@
-use crate::{egress::EgressPolicy, seccomp};
+use crate::{apparmor, egress::EgressPolicy, seccomp};
 
 pub struct ContainerSecurity {
     pub cap_drop: Option<Vec<String>>,
@@ -23,9 +23,11 @@ pub fn scepter() -> ContainerSecurity {
             "NET_BIND_SERVICE".to_string(),
             "SYS_ADMIN".to_string(),
         ]),
-        // AppArmor blocks FUSE mounts (fuse-overlayfs) inside the container.
-        // Without this, cosmos sub-container rootfs isolation fails.
-        security_opt: Some(vec!["apparmor=unconfined".to_string()]),
+        // docker-default's AppArmor profile denies FUSE mounts (fuse-overlayfs)
+        // inside the container, which cosmos sub-container rootfs isolation
+        // needs. Use the named FUSE-capable profile (not apparmor=unconfined),
+        // with a DEV-ONLY unconfined fallback via PLANA_APPARMOR_UNCONFINED.
+        security_opt: Some(apparmor::fuse_security_opts()),
         egress_policy: Some(EgressPolicy::entelecheia_default()),
     }
 }
@@ -56,9 +58,9 @@ pub fn cosmos() -> ContainerSecurity {
             "DAC_OVERRIDE".to_string(),
         ]),
         // Relax seccomp — the EntelecheiaDefault whitelist blocks `mount` which
-        // scepter may probe during startup. AppArmor=unconfined matches the
-        // scepter orchestrator's own profile.
-        security_opt: Some(vec!["apparmor=unconfined".to_string()]),
+        // scepter may probe during startup. Use the same named FUSE-capable
+        // AppArmor profile as the scepter orchestrator (not unconfined).
+        security_opt: Some(apparmor::fuse_security_opts()),
         egress_policy: Some(EgressPolicy::entelecheia_default()),
     }
 }
@@ -152,7 +154,7 @@ mod tests {
         );
         assert!(added.contains(&"NET_BIND_SERVICE".to_string()));
         assert!(!added.contains(&"ALL".to_string()), "must not wildcard-add");
-        // scepter uses apparmor=unconfined (needed for fuse-overlayfs)
+        // scepter uses the named FUSE AppArmor profile (needed for fuse-overlayfs)
         assert!(sec.security_opt.is_some());
         assert!(
             sec.egress_policy
@@ -250,8 +252,14 @@ mod tests {
         );
         let sec_opt = hc.security_opt.context("security_opt expected")?;
         assert!(
-            sec_opt.iter().any(|o| o == "apparmor=unconfined"),
-            "scepter uses apparmor=unconfined for fuse-overlayfs"
+            sec_opt
+                .iter()
+                .any(|o| o == &format!("apparmor={}", apparmor::FUSE_PROFILE_NAME)),
+            "scepter uses the named FUSE AppArmor profile for fuse-overlayfs"
+        );
+        assert!(
+            sec_opt.iter().any(|o| o == "no-new-privileges:true"),
+            "scepter must keep no-new-privileges"
         );
         assert!(hc.dns.is_some());
         Ok(())
@@ -266,7 +274,12 @@ mod tests {
         let added = hc.cap_add.as_ref().context("cap_add expected")?;
         assert!(added.contains(&"SYS_ADMIN".to_string()));
         let sec_opt = hc.security_opt.context("security_opt expected")?;
-        assert!(sec_opt.iter().any(|o| o == "apparmor=unconfined"));
+        assert!(
+            sec_opt
+                .iter()
+                .any(|o| o == &format!("apparmor={}", apparmor::FUSE_PROFILE_NAME)),
+            "cosmos uses the named FUSE AppArmor profile"
+        );
         assert!(hc.dns.is_some());
         Ok(())
     }
