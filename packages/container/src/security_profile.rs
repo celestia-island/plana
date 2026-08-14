@@ -65,11 +65,33 @@ pub fn cosmos() -> ContainerSecurity {
 
 pub fn compile() -> ContainerSecurity {
     ContainerSecurity {
-        cap_drop: None,
-        cap_add: None,
+        // Drop ALL then add back the minimal set the compile container needs.
+        // The compile container runs build toolchains (rustc/cargo, npm, go,
+        // …) as uid 1000:1000 writing to shared cache/workspace volumes, so it
+        // needs the same file-ownership capabilities cosmos uses — but NOT
+        // SYS_ADMIN (it does not orchestrate sub-containers, so there is no
+        // fuse-overlayfs mount) and NOT NET_BIND_SERVICE (build servers bind
+        // high ports, never below 1024).
+        // - CHOWN / FOWNER / SETGID / SETUID / DAC_OVERRIDE: ownership and
+        //   permissions on shared volumes owned by the host/root.
+        cap_drop: Some(vec!["ALL".to_string()]),
+        cap_add: Some(vec![
+            "CHOWN".to_string(),
+            "FOWNER".to_string(),
+            "SETGID".to_string(),
+            "SETUID".to_string(),
+            "DAC_OVERRIDE".to_string(),
+        ]),
         security_opt: Some(seccomp::build_security_opts(Some(
             seccomp::SeccompProfile::Compile,
         ))),
+        // Compile containers legitimately need open network: they fetch
+        // dependencies from arbitrary package registries (crates.io, npm, pypi,
+        // Maven Central, …) and clone git dependencies, which cannot be
+        // enumerated ahead of time. Leaving this `None` defers to the caller
+        // (snowflake_manager layers its own egress policy plus per-workspace
+        // registry domains on top), and the Docker path falls back to the
+        // `entelecheia_default` DNS-only soft egress.
         egress_policy: None,
     }
 }
@@ -165,11 +187,42 @@ mod tests {
     }
 
     #[test]
-    fn compile_has_relaxed_seccomp() -> Result<()> {
+    fn compile_drops_all_caps_and_keeps_only_file_ownership() -> Result<()> {
         let sec = compile();
-        assert_eq!(sec.cap_drop, None);
+        // Must drop ALL then add back the minimal file-ownership set.
+        assert_eq!(sec.cap_drop, Some(vec!["ALL".to_string()]));
+        let added = sec.cap_add.as_ref().context("cap_add expected")?;
+        assert!(added.contains(&"CHOWN".to_string()));
+        assert!(added.contains(&"FOWNER".to_string()));
+        assert!(added.contains(&"SETGID".to_string()));
+        assert!(added.contains(&"SETUID".to_string()));
+        assert!(added.contains(&"DAC_OVERRIDE".to_string()));
+        // Must never re-add the privileged caps reserved for orchestration.
+        assert!(!added.contains(&"SYS_ADMIN".to_string()));
+        assert!(!added.contains(&"NET_BIND_SERVICE".to_string()));
+        assert!(!added.contains(&"ALL".to_string()), "must not wildcard-add");
         assert!(sec.security_opt.is_some());
+        // Compile containers need open network for package registries; the
+        // caller layers registry domains on top.
         assert!(sec.egress_policy.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn apply_compile_to_host_config_drops_all_and_adds_file_caps() -> Result<()> {
+        let sec = compile();
+        let mut hc = bollard::service::HostConfig::default();
+        apply_to_host_config(&sec, &mut hc);
+        assert_eq!(hc.cap_drop, Some(vec!["ALL".to_string()]));
+        let added = hc.cap_add.as_ref().context("cap_add expected")?;
+        assert!(added.contains(&"CHOWN".to_string()));
+        assert!(added.contains(&"DAC_OVERRIDE".to_string()));
+        assert!(!added.contains(&"SYS_ADMIN".to_string()));
+        let sec_opt = hc.security_opt.context("security_opt expected")?;
+        assert!(
+            sec_opt.iter().any(|o| o.starts_with("seccomp=")),
+            "compile profile must embed a seccomp profile"
+        );
         Ok(())
     }
 
