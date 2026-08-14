@@ -17,8 +17,16 @@ plana carries two independent version lines:
   remains `0.1.15`.
 - **npm packages** — independently versioned, not a single line:
   `@celestia-island/plana-celestia-types` 0.1.0,
-  `@celestia-island/plana-rpc-client` 0.1.3,
-  `@celestia-island/plana-ui` 0.1.6.
+  `@celestia-island/plana-rpc-client` 0.1.3.
+
+## [Unreleased]
+
+### Removed
+
+- `packages/ui` (`@celestia-island/plana-ui`) is retired. All components moved
+  to hikari (generic admin shell, auth card, theme/locale pickers, status bar,
+  admin table, vite plugins, pow utils) and shittim-chest (business-coupled
+  components). erp.celestia.world and e.celestia.world now consume hikari only.
 
 ## [0.1.15] - 2026-08-14
 
