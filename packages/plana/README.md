@@ -149,7 +149,7 @@ let response = transport.send(&JsonRpcRequest::new_raw("ping", None), TimeoutPol
 | Feature | Default | What it enables |
 |---------|---------|-----------------|
 | `celestia` | yes | `plana-celestia-types` re-exported at the crate root and at `plana::celestia`; `plana-protocol-core` is always re-exported at the root. |
-| `rpc-server` | no | Server-side session management (`rpc_server::SessionManager`), SSE event streaming, request network/geo detection (`rpc_server::detect_network`). |
+| `rpc-server` | no | Server-side SSE event streaming and request network/geo detection (`rpc_server::detect_network`). Transport sessions for SSE live in `plana::jsonrpc::session`. |
 | `jsonrpc` | no | No-op compatibility feature — `plana-jsonrpc` is an always-on dependency now, so there is nothing to gate. Kept so consumers that declare it keep resolving. |
 | `tracing-helpers` | no | Forwards `plana-protocol-core/tracing-helpers`: `plana::tracing_helpers` module with a `ShortTimer` formatting type. |
 

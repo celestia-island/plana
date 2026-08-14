@@ -212,8 +212,8 @@ fn jsonrpc_flat_method_aliases_cover_the_consumer_namespaces() {
 fn rpc_server_module_surface_resolves() {
     // Consumer pattern (arona gateway): `plana` with the `rpc-server`
     // feature, using `rpc_server::detect_network` for request
-    // transport/geo metadata and `SessionManager` for per-client sessions.
-    resolves::<plana::rpc_server::SessionManager>();
+    // transport/geo metadata. Per-client SSE transport sessions live in
+    // `plana::jsonrpc::session` (see the session semantic boundary note).
     let _ = plana::rpc_server::detect_network;
     // `sse` module: keep-alive heartbeat constants for SSE event streams.
     let _ = plana::rpc_server::sse::SSE_HEARTBEAT_INTERVAL_SECS;

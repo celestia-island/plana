@@ -1,3 +1,11 @@
+//! Transport sessions for JSON-RPC SSE streaming.
+//!
+//! Semantic boundary: a session here is a *transport channel* — an id mapped
+//! to an SSE sender for pushing serialized notifications to one client
+//! connection. It intentionally carries no identity or authentication
+//! state. Identity sessions (who is logged in, token lifecycle, revocation)
+//! belong to `kirino-session` in the kirino L0 auth layer; do not conflate
+//! the two concepts.
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
