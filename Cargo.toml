@@ -72,7 +72,7 @@ kirino = { version = "^0.6" }
 anyhow = "^1"
 append-only-bytes = "^0.1"
 async-trait = "^0.1"
-ed25519-dalek = "^2"
+ed25519-dalek = "^3"
 # Container / infrastructure
 axum = { version = "^0.8", features = ["ws"] }
 base64 = "^0.23"
