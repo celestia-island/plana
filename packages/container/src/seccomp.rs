@@ -1,21 +1,63 @@
+//! Seccomp syscall-filter profile construction for container sandboxes.
+//!
+//! [`SeccompProfile`] describes a deny-by-default syscall filter (default
+//! action `SCMP_ACT_ERRNO`) with an explicit allow-list of the syscalls a
+//! sandboxed container legitimately needs. The filter is embedded as a
+//! `seccomp=...` Docker `security_opt`, or converted to the OCI `LinuxSeccomp`
+//! spec by the `container_runtime` crate.
+//!
+//! # DEV-ONLY escape hatch
+//!
+//! The `DISABLE_SECCOMP` environment variable (see [`is_seccomp_disabled`])
+//! disables the filter entirely and MUST NEVER be set in production.
+
 use serde::{Deserialize, Serialize};
 
 pub fn default_seccomp_security_opt() -> String {
     "no-new-privileges:true".to_string()
 }
 
+/// Returns true when the `DISABLE_SECCOMP` escape hatch is enabled.
+///
+/// # DEV-ONLY escape hatch — never set in production
+///
+/// `DISABLE_SECCOMP=true` (or `1`) makes [`build_security_opts`] omit the
+/// seccomp syscall filter entirely, leaving the container protected only by the
+/// runtime's default policy (if any). The deny-by-default filter is what blocks
+/// `ptrace`, `mount`, `bpf`, `kexec_load`, `unshare`, and other escape vectors,
+/// so this variable MUST NEVER be set in production. It exists only to unblock
+/// local development when a container image needs a syscall the profile does not
+/// yet allow.
 pub fn is_seccomp_disabled() -> bool {
-    std::env::var("DISABLE_SECCOMP")
-        .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
-        .unwrap_or(false)
+    let disabled = seccomp_disabled_from_value(std::env::var("DISABLE_SECCOMP").ok().as_deref());
+
+    if disabled {
+        tracing::warn!(
+            "DISABLE_SECCOMP is set: the seccomp syscall filter is DISABLED. \
+             This is a DEV-ONLY escape hatch and must never be enabled in production."
+        );
+    }
+
+    disabled
+}
+
+fn seccomp_disabled_from_value(value: Option<&str>) -> bool {
+    matches!(value, Some(v) if v.eq_ignore_ascii_case("true") || v == "1")
 }
 
 pub fn build_security_opts(profile: Option<SeccompProfile>) -> Vec<String> {
+    build_security_opts_with_disabled(profile, is_seccomp_disabled())
+}
+
+fn build_security_opts_with_disabled(
+    profile: Option<SeccompProfile>,
+    seccomp_disabled: bool,
+) -> Vec<String> {
     let mut opts = Vec::new();
 
     opts.push("no-new-privileges:true".to_string());
 
-    if !is_seccomp_disabled() {
+    if !seccomp_disabled {
         let profile = profile.unwrap_or_default();
         if let Ok(json) = profile.to_json_string() {
             opts.push(format!("seccomp={}", json));
@@ -332,11 +374,13 @@ impl SeccompProfileData {
                         "uname".into(),
                         "unlink".into(),
                         "unlinkat".into(),
-                        // NOTE: unshare can create new namespaces (escape vector),
-                        // but is safe when cap_drop=ALL (no CAP_SYS_ADMIN).
-                        // Infra containers (postgres/registry) with cap_drop=[]
-                        // don't execute user code, so the risk is contained.
-                        "unshare".into(),
+                        // `unshare` is intentionally NOT allow-listed: it creates
+                        // new namespaces and becomes an escape vector when combined
+                        // with SYS_ADMIN (which cosmos/scepter re-add). No
+                        // in-container code demonstrably needs it — namespace
+                        // creation for sub-containers is performed by the container
+                        // runtime on the host, outside the sandbox — so it falls
+                        // through to the deny-by-default action instead.
                         "utime".into(),
                         "utimensat".into(),
                         "utimes".into(),
@@ -409,7 +453,7 @@ impl SeccompProfileData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anyhow::{Result, ensure};
+    use anyhow::{Context, Result, ensure};
 
     #[test]
     fn seccomp_profile_generates_valid_json() -> Result<()> {
@@ -494,6 +538,75 @@ mod tests {
             .filter(|o| **o == "no-new-privileges:true")
             .count();
         assert_eq!(count, 1);
+        Ok(())
+    }
+
+    #[test]
+    fn seccomp_profile_present_by_default() -> Result<()> {
+        let opts = build_security_opts_with_disabled(None, false);
+        ensure!(
+            opts.iter().any(|o| o.starts_with("seccomp=")),
+            "seccomp profile must be present when not disabled: {:?}",
+            opts
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn seccomp_profile_absent_only_when_explicitly_disabled() -> Result<()> {
+        let opts = build_security_opts_with_disabled(None, true);
+        ensure!(
+            !opts.iter().any(|o| o.starts_with("seccomp=")),
+            "seccomp profile must be absent only when DISABLE_SECCOMP is enabled: {:?}",
+            opts
+        );
+        ensure!(
+            opts.contains(&"no-new-privileges:true".to_string()),
+            "no-new-privileges must remain even when seccomp is disabled"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn seccomp_disabled_parses_only_truthy_values() -> Result<()> {
+        assert!(seccomp_disabled_from_value(Some("true")));
+        assert!(seccomp_disabled_from_value(Some("TRUE")));
+        assert!(seccomp_disabled_from_value(Some("1")));
+        assert!(!seccomp_disabled_from_value(Some("false")));
+        assert!(!seccomp_disabled_from_value(Some("0")));
+        assert!(!seccomp_disabled_from_value(Some("")));
+        assert!(!seccomp_disabled_from_value(None));
+        Ok(())
+    }
+
+    #[test]
+    fn unshare_not_allow_or_deny_listed() -> Result<()> {
+        // `unshare` is an escape vector: it must appear in NEITHER the
+        // allow-list NOR the explicit deny-list of any profile, relying on the
+        // deny-by-default action (SCMP_ACT_ERRNO) to block it.
+        for profile in [
+            SeccompProfile::EntelecheiaDefault.to_profile_data(),
+            SeccompProfile::Compile.to_profile_data(),
+        ] {
+            let allow_rule = profile
+                .syscalls
+                .iter()
+                .find(|r| r.action == "SCMP_ACT_ALLOW")
+                .context("allow rule expected")?;
+            let deny_rule = profile
+                .syscalls
+                .iter()
+                .find(|r| r.action == "SCMP_ACT_ERRNO")
+                .context("deny rule expected")?;
+            ensure!(
+                !allow_rule.names.contains(&"unshare".to_string()),
+                "unshare must not be allow-listed"
+            );
+            ensure!(
+                !deny_rule.names.contains(&"unshare".to_string()),
+                "unshare must not be explicitly deny-listed (rely on default deny)"
+            );
+        }
         Ok(())
     }
 }
