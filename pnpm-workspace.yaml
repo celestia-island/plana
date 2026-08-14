@@ -1,5 +1,4 @@
 packages:
-  - 'packages/ui'
   - 'packages/rpc_client'
 allowBuilds:
   '@parcel/watcher': true
