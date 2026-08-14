@@ -166,10 +166,10 @@ export const PStatusBar = defineComponent({
             <span class="s-status-bar-tag-value">
               <span class="s-status-bar-version">{pv}</span>
               {enginePart && (
-                <>
-                  <span class="s-status-bar-version-sep" aria-hidden="true">|</span>
-                  <span class="s-status-bar-version">{enginePart}</span>
-                </>
+                <span class="s-status-bar-version">
+                  <span class="s-status-bar-version-sep" aria-hidden="true">| </span>
+                  {enginePart}
+                </span>
               )}
             </span>
           </span>
