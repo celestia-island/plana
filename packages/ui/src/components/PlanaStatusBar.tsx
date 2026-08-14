@@ -130,9 +130,13 @@ export const PStatusBar = defineComponent({
 
       const pv = fmtVer(props.version, props.panelBuildHash);
       const ev = props.engineVersion;
-      const versionParts = ev
-        ? `${pv} | ${t("plana::statusBar.engine", "Engine")} ${fmtVer(ev, props.engineBuildHash)}`
-        : pv;
+      // Two nowrap version parts inside a flex-wrap container: on wide
+      // screens they sit side by side ("pv | Engine ev"), and when the
+      // width runs out the engine part wraps to its own line instead of
+      // breaking mid-token (mobile footer vertical-fragmentation fix).
+      const enginePart = ev
+        ? `${t("plana::statusBar.engine", "Engine")} ${fmtVer(ev, props.engineBuildHash)}`
+        : null;
 
       const tagClass = connecting
         ? "s-status-bar-tag s-status-bar-tag-reconnecting"
@@ -160,7 +164,13 @@ export const PStatusBar = defineComponent({
             }} />
             <span class="s-status-bar-tag-label">{t("plana::statusBar.panel", "Panel")}</span>
             <span class="s-status-bar-tag-value">
-              {versionParts}
+              <span class="s-status-bar-version">{pv}</span>
+              {enginePart && (
+                <span class="s-status-bar-version">
+                  <span class="s-status-bar-version-sep" aria-hidden="true">| </span>
+                  {enginePart}
+                </span>
+              )}
             </span>
           </span>
 

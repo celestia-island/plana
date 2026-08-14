@@ -137,9 +137,12 @@
 .s-status-bar-tag {
   display: inline-flex;
   align-items: center;
-  height: 24px;
+  /* min-height + auto so the pill can grow a second line when the version
+     pair wraps on narrow screens instead of clipping/overlapping text. */
+  min-height: 24px;
+  height: auto;
   gap: 5px;
-  padding: 0 8px;
+  padding: 3px 8px;
   border-radius: var(--radius-md);
   font-size: var(--text-2xs);
   line-height: 1;
@@ -165,6 +168,21 @@
   font-family: var(--font-mono);
   color: rgb(var(--color-text));
   opacity: 0.85;
+  /* Version parts wrap as whole tokens: wide = one line, narrow = the
+     engine version moves to its own line. */
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-4);
+}
+
+.s-status-bar-version,
+.s-status-bar-version-sep {
+  white-space: nowrap;
+}
+
+.s-status-bar-version-sep {
+  opacity: 0.5;
 }
 
 .s-status-bar-tag-reconnecting {
