@@ -52,6 +52,7 @@
 //! translates that into its native mechanism (Docker host configs / OCI spec hooks).
 #![allow(clippy::type_complexity)]
 
+pub mod apparmor;
 pub mod binding;
 pub mod cli_backend;
 pub mod conversion;
@@ -73,6 +74,9 @@ pub mod toolchain;
 pub mod types;
 pub mod volume_ops;
 
+pub use apparmor::{
+    FUSE_PROFILE, FUSE_PROFILE_NAME, UNCONFINED_ENV, fuse_security_opts, is_apparmor_unconfined,
+};
 pub use binding::{BindingId, ContainerBindResult, ContainerBinding};
 pub use cli_backend::CliContainerBackend;
 pub use copy_ops::{
