@@ -8,7 +8,7 @@ use oci_spec::runtime::{
     Mount, MountBuilder, PosixRlimit, PosixRlimitBuilder, PosixRlimitType, ProcessBuilder,
     RootBuilder, Spec, SpecBuilder, UserBuilder,
 };
-use tracing::info;
+use tracing::{info, warn};
 
 use _container::{
     errors::{ContainerError, ContainerResult},
@@ -191,7 +191,8 @@ fn build_capabilities(
     // Default container capability set. `MKNOD` is deliberately absent: it lets
     // a container create device nodes (/dev/mem, /dev/sda, ...) and, combined
     // with the absence of a device allowlist, would grant unmediated device
-    // access. It is re-granted only when the caller explicitly requests devices.
+    // access. It is re-granted only when the caller explicitly requests devices
+    // (via a non-empty `devices` passthrough list or an explicit `cap_add`).
     let mut caps: HashSet<Capability> = [
         Capability::AuditWrite,
         Capability::Kill,
@@ -205,25 +206,45 @@ fn build_capabilities(
     .into_iter()
     .collect();
 
-    // Re-grant MKNOD only on an explicit device request: either a non-empty
-    // `devices` passthrough list or `cap_add` naming MKNOD.
-    let mknod_requested = devices_requested
-        || cap_add
-            .map(|caps| {
-                caps.iter()
-                    .any(|c| c.trim_start_matches("CAP_").eq_ignore_ascii_case("MKNOD"))
-            })
-            .unwrap_or(false);
-    if mknod_requested {
+    // Re-grant MKNOD before the drop loop when the caller requests device
+    // passthrough; an explicit `cap_drop` entry (including `MKNOD` or `ALL`)
+    // can still override this.
+    if devices_requested {
         caps.insert(Capability::Mknod);
     }
 
+    // Apply drops. `ALL` clears the entire set; otherwise each named
+    // capability is removed (unknown names are ignored).
     if let Some(dropped) = cap_drop {
         for d in dropped {
             let upper = d.to_uppercase();
             let c = upper.trim_start_matches("CAP_");
-            if let Some(cap) = parse_capability(c) {
+            if c == "ALL" {
+                caps.clear();
+            } else if let Some(cap) = parse_capability(c) {
                 caps.remove(&cap);
+            }
+        }
+    }
+
+    // Re-add explicitly requested capabilities after the drop so re-grants
+    // (e.g. `cap_drop: ["ALL"]` + `cap_add: ["SYS_ADMIN"]`) take effect.
+    // Unknown names are ignored with a warning.
+    if let Some(added) = cap_add {
+        for a in added {
+            let upper = a.to_uppercase();
+            let c = upper.trim_start_matches("CAP_");
+            match parse_capability(c) {
+                Some(cap) => {
+                    caps.insert(cap);
+                }
+                None => {
+                    warn!(
+                        container_id,
+                        capability = c,
+                        "ignoring unknown capability in cap_add"
+                    );
+                }
             }
         }
     }
@@ -827,6 +848,63 @@ mod tests {
                 .contains(&Capability::Mknod),
             "cap_drop MKNOD must override the device request"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn cap_drop_all_yields_empty_set() -> Result<()> {
+        let caps = build_capabilities(Some(&["ALL".to_string()]), None, false, "test")
+            .context("test precondition")?;
+        for set in [
+            caps.bounding(),
+            caps.effective(),
+            caps.inheritable(),
+            caps.permitted(),
+            caps.ambient(),
+        ] {
+            let set = set.as_ref().context("test precondition")?;
+            assert!(
+                set.is_empty(),
+                "cap_drop ALL must clear every capability set"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn cap_add_readds_after_all_drop() -> Result<()> {
+        let caps = build_capabilities(
+            Some(&["ALL".to_string()]),
+            Some(&["SYS_ADMIN".to_string(), "NET_BIND_SERVICE".to_string()]),
+            false,
+            "test",
+        )
+        .context("test precondition")?;
+        let permitted = caps.permitted().as_ref().context("test precondition")?;
+        assert_eq!(
+            permitted.len(),
+            2,
+            "only re-added capabilities should remain after an ALL drop"
+        );
+        assert!(permitted.contains(&Capability::SysAdmin));
+        assert!(permitted.contains(&Capability::NetBindService));
+        Ok(())
+    }
+
+    #[test]
+    fn unknown_cap_add_is_ignored() -> Result<()> {
+        // Unknown names are skipped (with a warning) rather than failing the
+        // build; only the recognized re-grant survives the ALL drop.
+        let caps = build_capabilities(
+            Some(&["ALL".to_string()]),
+            Some(&["SYS_ADMIN".to_string(), "NOT_A_REAL_CAP".to_string()]),
+            false,
+            "test",
+        )
+        .context("test precondition")?;
+        let permitted = caps.permitted().as_ref().context("test precondition")?;
+        assert_eq!(permitted.len(), 1, "unknown cap_add must be ignored");
+        assert!(permitted.contains(&Capability::SysAdmin));
         Ok(())
     }
 
