@@ -319,10 +319,17 @@ export class RpcClient {
       const token = this.#getToken();
       if (!token) { resolve(false); return; }
 
+      // Join the query correctly: rpcPath may already carry a query
+      // string (e.g. "?workspace=<id>" — every webui consumer passes
+      // one). Appending "?token=" to such a path produced
+      // "/api/rpc?workspace=X?token=Y": the server read the token as
+      // part of the workspace value, the upgrade failed with 401, and
+      // the WS tier never connected at all.
+      const tokenJoin = this.#rpcPath.includes("?") ? "&token=" : "?token=";
       const wsUrl =
         this.#baseUrl.replace(/^http/, "ws") +
         this.#rpcPath +
-        "?token=" +
+        tokenJoin +
         encodeURIComponent(token);
       const gen = ++this.#wsGen;
       const ws = new WebSocket(wsUrl);
