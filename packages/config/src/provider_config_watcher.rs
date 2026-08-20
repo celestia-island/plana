@@ -142,12 +142,16 @@ impl ProviderConfigWatcher {
         let mut watcher = RecommendedWatcher::new(
             move |res: Result<Event, notify::Error>| {
                 if let Ok(event) = res {
-                    debug!("[ProviderConfigWatcher] File event: {:?}", event.kind);
-
+                    // Filter FIRST, log later: the watched directories also
+                    // contain high-churn siblings (e.g. scepter's
+                    // event-journal.jsonl is appended every second), and a
+                    // debug line per unrelated event floods the log without
+                    // any diagnostic value.
                     if event.kind.is_modify() || event.kind.is_create() {
                         // Check if this is our config file
                         for path in &event.paths {
                             if path.ends_with(PROVIDER_CONFIG_FILENAME) {
+                                debug!("[ProviderConfigWatcher] File event: {:?}", event.kind);
                                 debug!("[ProviderConfigWatcher] Config file changed: {:?}", path);
 
                                 // Reload config
