@@ -37,6 +37,15 @@ pub struct RuntimeTuningConfig {
     pub max_context_tokens: usize,
 
     pub skill_chain_temperature: f32,
+
+    /// Whether the skill-chain loop pins `tool_choice=required` on LLM calls
+    /// that carry tool definitions. Reasoning ("thinking") model backends —
+    /// e.g. DeepSeek V4 thinking mode — reject a forced tool_choice with
+    /// HTTP 400 (`Thinking mode does not support this tool_choice`), so
+    /// deployments routing skill chains through such models must set
+    /// `SKILL_CHAIN_FORCE_TOOL_CHOICE=false` to let the model pick tools
+    /// freely. Defaults to `true` (the historical behavior).
+    pub skill_chain_force_tool_choice: bool,
 }
 
 fn parse_u64_list(s: &str) -> Vec<u64> {
@@ -166,6 +175,11 @@ impl RuntimeTuningConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(0.0),
+
+            skill_chain_force_tool_choice: std::env::var("SKILL_CHAIN_FORCE_TOOL_CHOICE")
+                .ok()
+                .map(|v| !matches!(v.trim().to_ascii_lowercase().as_str(), "0" | "false" | "no" | "off"))
+                .unwrap_or(true),
         }
     }
 }
