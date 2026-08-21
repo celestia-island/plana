@@ -328,7 +328,7 @@ impl ServerManager {
                 env_var: "DEEPSEEK_API_KEY",
                 name: "deepseek",
                 provider_type: "openai",
-                model: "deepseek-chat",
+                model: "deepseek-v4-flash",
             },
             EnvMapping {
                 env_var: "QWEN_API_KEY",
