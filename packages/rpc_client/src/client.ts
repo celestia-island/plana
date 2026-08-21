@@ -39,11 +39,38 @@ export interface RpcNotification {
   params: unknown;
 }
 
+/**
+ * Heartbeat wire protocol (P59-W4). The default preserves shittim-chest's
+ * shape; alternative backends (e.g. erp.celestia.world) speak a different
+ * one and can now adopt the shared client without forking it.
+ */
+export interface HeartbeatProtocol {
+  /**
+   * - "notify" (default): fire-and-forget notification `method`; the server
+   *   answers with an `ackMethod` notification.
+   * - "request": JSON-RPC request `method` (default "ping"); the beat
+   *   completes when the matching id-response arrives.
+   */
+  mode?: "notify" | "request";
+  /** Notify mode: method to send (default "Base.Heartbeat"). */
+  method?: string;
+  /** Notify mode: ack method to listen for (default "Base.HeartbeatAck"). */
+  ackMethod?: string;
+  /**
+   * Server-initiated pings to echo: when a notification named `on`
+   * arrives, reply with a notification named `reply` (e.g. erp's
+   * server "server.ping" → reply "client.pong" to satisfy its idle
+   * timer). Echoes are fire-and-forget.
+   */
+  serverPings?: Array<{ on: string; reply: string }>;
+}
+
 export interface RpcClientOpts {
   baseUrl: string;
   rpcPath?: string;
   getToken: () => string | null;
   onAuthLost?: () => void;
+  heartbeatProtocol?: HeartbeatProtocol;
   /**
    * Called when a request is rejected with 401: return a fresh access token
    * to retry the request once (the callback owns persisting it), or null to
@@ -124,6 +151,10 @@ export class RpcClient {
   #hbAckTimer: ReturnType<typeof setTimeout> | null = null;
   #hbSentAt: number | null = null;
   #latencyMs: number | null = null;
+  /** Resolved heartbeat protocol (defaults preserve the chest shape). */
+  readonly #hbProtocol: Required<Pick<HeartbeatProtocol, "mode" | "method" | "ackMethod">> & { serverPings: Map<string, string> };
+  /** Pending request-mode heartbeat ids → completion callbacks. */
+  #hbRequests = new Map<string, () => void>();
 
   #notifHandlers = new Set<NotificationHandler>();
   #binaryHandlers = new Set<BinaryHandler>();
@@ -149,6 +180,13 @@ export class RpcClient {
     this.#onAuthLost = opts.onAuthLost;
     this.#refreshToken = opts.refreshToken;
     this.#heartbeatInterval = opts.heartbeatInterval ?? HB_INTERVAL;
+    const proto = opts.heartbeatProtocol ?? {};
+    this.#hbProtocol = {
+      mode: proto.mode ?? "notify",
+      method: proto.method ?? (proto.mode === "request" ? "ping" : "Base.Heartbeat"),
+      ackMethod: proto.ackMethod ?? "Base.HeartbeatAck",
+      serverPings: new Map((proto.serverPings ?? []).map(({ on, reply }) => [on, reply])),
+    };
     this.#heartbeatTimeout = opts.heartbeatTimeout ?? HB_TIMEOUT;
     this.#callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT;
     this.#pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL;
@@ -386,20 +424,31 @@ export class RpcClient {
         let data: any;
         try { data = JSON.parse(event.data); } catch { return; }
 
-        if (data.method === "Base.HeartbeatAck") {
-          this.#resetHeartbeatTimeout();
-          if (this.#hbSentAt !== null) {
-            this.#latencyMs = Math.max(0, Math.round(performance.now() - this.#hbSentAt));
-            this.#hbSentAt = null;
-            this.#emitLatency();
-          }
-          this.#heartbeatHandlers.forEach((h) => h());
+        if (data.method === this.#hbProtocol.ackMethod) {
+          this.#completeHeartbeat();
           return;
         }
 
         if (data.method && data.id === undefined) {
+          // Server-initiated ping → echo the configured reply (if any)
+          // BEFORE fanning the notification out, so idle timers on the
+          // server side are satisfied even if a consumer throws.
+          const echo = this.#hbProtocol.serverPings.get(data.method);
+          if (echo !== undefined) {
+            try { ws.send(JSON.stringify({ jsonrpc: "2.0", method: echo })); } catch { /* closing */ }
+          }
           this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
           return;
+        }
+
+        if (data.id !== undefined) {
+          // Request-mode heartbeat completion (id-correlated response).
+          const hbDone = this.#hbRequests.get(String(data.id));
+          if (hbDone) {
+            this.#hbRequests.delete(String(data.id));
+            hbDone();
+            return;
+          }
         }
 
         if (data.id !== undefined) {
@@ -503,7 +552,7 @@ export class RpcClient {
           if (data.method && data.params !== undefined) {
             this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
           }
-          if (data.method === "Base.HeartbeatAck") {
+          if (data.method === this.#hbProtocol.ackMethod) {
             this.#heartbeatHandlers.forEach((h) => h());
           }
         } catch { /* ignore */ }
@@ -696,6 +745,17 @@ export class RpcClient {
   // Heartbeat (WS only)
   // ═══════════════════════════════════════════════════════════
 
+  /** Shared beat completion: latency bookkeeping + fan-out. */
+  #completeHeartbeat(): void {
+    this.#resetHeartbeatTimeout();
+    if (this.#hbSentAt !== null) {
+      this.#latencyMs = Math.max(0, Math.round(performance.now() - this.#hbSentAt));
+      this.#hbSentAt = null;
+      this.#emitLatency();
+    }
+    this.#heartbeatHandlers.forEach((h) => h());
+  }
+
   #startHeartbeat(): void {
     this.#clearHeartbeat();
     this.#hbTimer = setInterval(() => {
@@ -703,10 +763,19 @@ export class RpcClient {
       if (this.#hbAckTimer) return;
       try {
         this.#hbSentAt = performance.now();
-        this.#ws.send(JSON.stringify({ jsonrpc: "2.0", method: "Base.Heartbeat" }));
+        if (this.#hbProtocol.mode === "request") {
+          // Request mode: a JSON-RPC request whose id-correlated response
+          // completes the beat (matched in the WS onmessage handler).
+          const id = `hb-${(++this.#idCounter).toString(36)}`;
+          this.#hbRequests.set(id, () => this.#completeHeartbeat());
+          this.#ws.send(JSON.stringify({ jsonrpc: "2.0", method: this.#hbProtocol.method, id }));
+        } else {
+          this.#ws.send(JSON.stringify({ jsonrpc: "2.0", method: this.#hbProtocol.method }));
+        }
         this.#hbAckTimer = setTimeout(() => {
           this.#hbAckTimer = null;
           this.#hbSentAt = null;
+          this.#hbRequests.clear();
           if (this.#ws && this.#ws.readyState === WebSocket.OPEN) {
             this.#ws.close(4000, "heartbeat timeout");
           }
@@ -733,6 +802,7 @@ export class RpcClient {
   #clearHeartbeat(): void {
     if (this.#hbTimer) { clearInterval(this.#hbTimer); this.#hbTimer = null; }
     this.#resetHeartbeatTimeout();
+    this.#hbRequests.clear();
   }
 
   // ═══════════════════════════════════════════════════════════
