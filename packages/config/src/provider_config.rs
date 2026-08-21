@@ -1135,7 +1135,7 @@ mod tests {
 
     /// Real registry scores (design_arena-mapped) at time of writing:
     ///   glm-5.2=67.89  glm-5.2=67.89  glm-5-turbo=65.73
-    ///   deepseek-v4-pro=50.82  deepseek-v4-flash=55.63  deepseek-reasoner=none
+    ///   deepseek-v4-pro=50.82  deepseek-v4-flash=55.63
     #[test]
     fn test_merge_priority_orders_score_driven() -> Result<()> {
         let glm_uuid = Uuid::now_v7();
@@ -1147,7 +1147,7 @@ mod tests {
             mk_provider("zhipu_glm_coding_max_domestic", glm_uuid),
         ];
         let models = vec![
-            mk_model("deepseek_default", "deep", "deepseek-reasoner"),
+            mk_model("deepseek_default", "deep", "deepseek-v4-pro"),
             mk_model("deepseek_default", "normal", "deepseek-v4-pro"),
             mk_model("deepseek_default", "basic", "deepseek-v4-flash"),
             mk_model("zhipu_glm_coding_max_domestic", "deep", "glm-5.2"),
@@ -1197,7 +1197,7 @@ mod tests {
             .map(|e| (e.tier.clone(), e.provider_uuids.clone()))
             .collect();
 
-        // deep: glm-5.2 (67.89) > deepseek-reasoner (none) -> glm first
+        // deep: glm-5.2 (67.89) > deepseek-v4-pro (50.82) -> glm first
         assert_eq!(
             by_tier["deep"][0], glm_uuid,
             "deep tier should prefer glm-5.2"
@@ -1228,10 +1228,10 @@ mod tests {
             mk_provider("env_derived", a_uuid),
             mk_provider("deepseek_default", b_uuid),
         ];
-        // env_derived has no registry provider -> no score; deepseek-reasoner has no score either.
+        // env_derived has no registry provider -> no score either.
         let models = vec![
             mk_model("env_derived", "deep", "some-model"),
-            mk_model("deepseek_default", "deep", "deepseek-reasoner"),
+            mk_model("deepseek_default", "deep", "deepseek-v4-pro"),
         ];
         let mut orders = vec![
             PriorityOrderEntry {
@@ -1309,8 +1309,8 @@ mod tests {
             .ok_or_else(|| anyhow::anyhow!("deepseek-v4-pro score missing"))?;
         // glm-5.2 must beat deepseek-v4-pro so the normal tier prefers glm.
         assert!(glm52 > dspro, "glm-5.2 score should exceed deepseek-v4-pro");
-        // deepseek-reasoner is absent from OpenRouter -> no card score.
-        assert!(read_model_card_score("deepseek", "deepseek-reasoner").is_none());
+        // (fixture models absent from OpenRouter -> no card score.)
+        assert!(read_model_card_score("deepseek", "deepseek-v4-ultra").is_none());
         Ok(())
     }
 
