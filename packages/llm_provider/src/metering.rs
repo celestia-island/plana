@@ -475,9 +475,9 @@ mod tests {
         assert_eq!(lookup_pricing("claude-3-5-haiku"), Some((0.80, 4.00)));
         assert_eq!(lookup_pricing("gemini-2.5-flash"), Some((0.075, 0.30)));
         assert_eq!(lookup_pricing("gemini-2.5-pro"), Some((1.25, 5.00)));
-        assert_eq!(lookup_pricing("deepseek-chat"), Some((0.14, 0.28)));
+        assert_eq!(lookup_pricing("deepseek-v4-flash"), Some((0.14, 0.28)));
         assert_eq!(
-            lookup_pricing("deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"),
+            lookup_pricing("deepseek-ai/deepseek-v4-pro"),
             Some((0.14, 0.28))
         );
         assert_eq!(lookup_pricing("Qwen/Qwen3-1.7B"), Some((0.50, 2.00)));
