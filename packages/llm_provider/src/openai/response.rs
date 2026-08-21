@@ -78,7 +78,7 @@ pub struct OpenAiStreamChoiceRaw {
 #[derive(Deserialize, Debug)]
 pub struct OpenAiStreamDeltaRaw {
     pub content: Option<String>,
-    /// Reasoning model output (e.g. GLM-4.7-Flash, DeepSeek-R1).
+    /// Reasoning model output (e.g. GLM-4.7-Flash, DeepSeek V4 thinking mode).
     /// Forwarded as regular content so the skill chain can process it.
     #[serde(default)]
     pub reasoning_content: Option<String>,
