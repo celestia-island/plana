@@ -39,11 +39,38 @@ export interface RpcNotification {
   params: unknown;
 }
 
+/**
+ * Heartbeat wire protocol (P59-W4). The default preserves shittim-chest's
+ * shape; alternative backends (e.g. erp.celestia.world) speak a different
+ * one and can now adopt the shared client without forking it.
+ */
+export interface HeartbeatProtocol {
+  /**
+   * - "notify" (default): fire-and-forget notification `method`; the server
+   *   answers with an `ackMethod` notification.
+   * - "request": JSON-RPC request `method` (default "ping"); the beat
+   *   completes when the matching id-response arrives.
+   */
+  mode?: "notify" | "request";
+  /** Notify mode: method to send (default "Base.Heartbeat"). */
+  method?: string;
+  /** Notify mode: ack method to listen for (default "Base.HeartbeatAck"). */
+  ackMethod?: string;
+  /**
+   * Server-initiated pings to echo: when a notification named `on`
+   * arrives, reply with a notification named `reply` (e.g. erp's
+   * server "server.ping" → reply "client.pong" to satisfy its idle
+   * timer). Echoes are fire-and-forget.
+   */
+  serverPings?: Array<{ on: string; reply: string }>;
+}
+
 export interface RpcClientOpts {
   baseUrl: string;
   rpcPath?: string;
   getToken: () => string | null;
   onAuthLost?: () => void;
+  heartbeatProtocol?: HeartbeatProtocol;
   /**
    * Called when a request is rejected with 401: return a fresh access token
    * to retry the request once (the callback owns persisting it), or null to
@@ -124,6 +151,20 @@ export class RpcClient {
   #hbAckTimer: ReturnType<typeof setTimeout> | null = null;
   #hbSentAt: number | null = null;
   #latencyMs: number | null = null;
+  /** Resolved heartbeat protocol (defaults preserve the chest shape). */
+  readonly #hbProtocol: Required<Pick<HeartbeatProtocol, "mode" | "method" | "ackMethod">> & { serverPings: Map<string, string> };
+  /** Pending request-mode heartbeat ids → completion callbacks. */
+  #hbRequests = new Map<string, () => void>();
+  /** Established-connection loss recovery: delayed re-entry into the
+   *  progressive rounds (exponential backoff, 1.5× → 30s cap + jitter).
+   *  `connect()`/`forceReconnect()` reset it so manual retries are fresh. */
+  #reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  #reconnectDelay = 1_000;
+  #reconnectArmed = false;
+  /** True while a progressive session was entered by the recovery loop —
+   *  exhausting its rounds re-arms recovery instead of parking on
+   *  "failed" (only FIRST-EVER connection attempts park on failed). */
+  #fromRecovery = false;
 
   #notifHandlers = new Set<NotificationHandler>();
   #binaryHandlers = new Set<BinaryHandler>();
@@ -149,6 +190,13 @@ export class RpcClient {
     this.#onAuthLost = opts.onAuthLost;
     this.#refreshToken = opts.refreshToken;
     this.#heartbeatInterval = opts.heartbeatInterval ?? HB_INTERVAL;
+    const proto = opts.heartbeatProtocol ?? {};
+    this.#hbProtocol = {
+      mode: proto.mode ?? "notify",
+      method: proto.method ?? (proto.mode === "request" ? "ping" : "Base.Heartbeat"),
+      ackMethod: proto.ackMethod ?? "Base.HeartbeatAck",
+      serverPings: new Map((proto.serverPings ?? []).map(({ on, reply }) => [on, reply])),
+    };
     this.#heartbeatTimeout = opts.heartbeatTimeout ?? HB_TIMEOUT;
     this.#callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT;
     this.#pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL;
@@ -184,6 +232,8 @@ export class RpcClient {
   connect(): void {
     this.#disposed = false;
     this.#retryCount = 0;
+    this.#cancelRecovery();
+    this.#fromRecovery = false;
     if (this.#probeOnly) {
       this.#probeHealthOnce();
     } else if (this.#local) {
@@ -197,6 +247,7 @@ export class RpcClient {
 
   async disconnect(): Promise<void> {
     this.#disposed = true;
+    this.#cancelRecovery();
     this.#teardownAll();
     this.#setState("disconnected");
   }
@@ -204,6 +255,8 @@ export class RpcClient {
   forceReconnect(): void {
     if (this.#disposed) return;
     this.#retryCount = 0;
+    this.#cancelRecovery();
+    this.#fromRecovery = false;
     this.#teardownAll();
     if (this.#local) {
       this.#tier = "local";
@@ -270,12 +323,21 @@ export class RpcClient {
         this.#tier = tier;
         if (tier === "ws") this.#startHeartbeat();
         else { this.#eventSource?.close(); this.#eventSource = null; if (this.#ws) { this.#cleanupWs(this.#ws, this.#wsGen); } }
-        this.#setState("connected");
+        // A fresh success also ends any recovery cycle with a clean
+        // backoff for the next drop.
+        if (this.#reconnectArmed || this.#reconnectDelay !== 1_000) this.#cancelRecovery();
+        this.#setState("connected", undefined, this.#tier);
         return;
       }
     }
 
     this.#tier = "poll";
+    if (this.#fromRecovery && !this.#disposed) {
+      // Recovery session exhausted its rounds — keep the loop alive.
+      this.#fromRecovery = false;
+      this.#scheduleRecovery();
+      return;
+    }
     this.#setState("failed", undefined, "poll", undefined, undefined);
   }
 
@@ -360,14 +422,21 @@ export class RpcClient {
       };
 
       ws.onclose = () => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        this.#cleanupWs(ws, gen);
-        if (this.#tier === "ws" && !this.#disposed) {
-          this.#setState("disconnected");
+        if (!settled) {
+          // Attempt-phase close (never opened / failed mid-handshake).
+          settled = true;
+          clearTimeout(timer);
+          this.#cleanupWs(ws, gen);
+          resolve(false);
+          return;
         }
-        resolve(false);
+        // Established connection lost (server idle-close, heartbeat
+        // timeout's close(4000), network drop): the progressive rounds
+        // only retry before the FIRST success, so without this a single
+        // dropped socket left consumers on a stale green light forever.
+        if (this.#ws === ws && this.#tier === "ws" && !this.#disposed) {
+          this.#scheduleRecovery();
+        }
       };
 
       ws.onmessage = (event) => {
@@ -386,20 +455,31 @@ export class RpcClient {
         let data: any;
         try { data = JSON.parse(event.data); } catch { return; }
 
-        if (data.method === "Base.HeartbeatAck") {
-          this.#resetHeartbeatTimeout();
-          if (this.#hbSentAt !== null) {
-            this.#latencyMs = Math.max(0, Math.round(performance.now() - this.#hbSentAt));
-            this.#hbSentAt = null;
-            this.#emitLatency();
-          }
-          this.#heartbeatHandlers.forEach((h) => h());
+        if (data.method === this.#hbProtocol.ackMethod) {
+          this.#completeHeartbeat();
           return;
         }
 
         if (data.method && data.id === undefined) {
+          // Server-initiated ping → echo the configured reply (if any)
+          // BEFORE fanning the notification out, so idle timers on the
+          // server side are satisfied even if a consumer throws.
+          const echo = this.#hbProtocol.serverPings.get(data.method);
+          if (echo !== undefined) {
+            try { ws.send(JSON.stringify({ jsonrpc: "2.0", method: echo })); } catch { /* closing */ }
+          }
           this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
           return;
+        }
+
+        if (data.id !== undefined) {
+          // Request-mode heartbeat completion (id-correlated response).
+          const hbDone = this.#hbRequests.get(String(data.id));
+          if (hbDone) {
+            this.#hbRequests.delete(String(data.id));
+            hbDone();
+            return;
+          }
         }
 
         if (data.id !== undefined) {
@@ -503,7 +583,7 @@ export class RpcClient {
           if (data.method && data.params !== undefined) {
             this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
           }
-          if (data.method === "Base.HeartbeatAck") {
+          if (data.method === this.#hbProtocol.ackMethod) {
             this.#heartbeatHandlers.forEach((h) => h());
           }
         } catch { /* ignore */ }
@@ -696,6 +776,17 @@ export class RpcClient {
   // Heartbeat (WS only)
   // ═══════════════════════════════════════════════════════════
 
+  /** Shared beat completion: latency bookkeeping + fan-out. */
+  #completeHeartbeat(): void {
+    this.#resetHeartbeatTimeout();
+    if (this.#hbSentAt !== null) {
+      this.#latencyMs = Math.max(0, Math.round(performance.now() - this.#hbSentAt));
+      this.#hbSentAt = null;
+      this.#emitLatency();
+    }
+    this.#heartbeatHandlers.forEach((h) => h());
+  }
+
   #startHeartbeat(): void {
     this.#clearHeartbeat();
     this.#hbTimer = setInterval(() => {
@@ -703,10 +794,19 @@ export class RpcClient {
       if (this.#hbAckTimer) return;
       try {
         this.#hbSentAt = performance.now();
-        this.#ws.send(JSON.stringify({ jsonrpc: "2.0", method: "Base.Heartbeat" }));
+        if (this.#hbProtocol.mode === "request") {
+          // Request mode: a JSON-RPC request whose id-correlated response
+          // completes the beat (matched in the WS onmessage handler).
+          const id = `hb-${(++this.#idCounter).toString(36)}`;
+          this.#hbRequests.set(id, () => this.#completeHeartbeat());
+          this.#ws.send(JSON.stringify({ jsonrpc: "2.0", method: this.#hbProtocol.method, id }));
+        } else {
+          this.#ws.send(JSON.stringify({ jsonrpc: "2.0", method: this.#hbProtocol.method }));
+        }
         this.#hbAckTimer = setTimeout(() => {
           this.#hbAckTimer = null;
           this.#hbSentAt = null;
+          this.#hbRequests.clear();
           if (this.#ws && this.#ws.readyState === WebSocket.OPEN) {
             this.#ws.close(4000, "heartbeat timeout");
           }
@@ -733,6 +833,7 @@ export class RpcClient {
   #clearHeartbeat(): void {
     if (this.#hbTimer) { clearInterval(this.#hbTimer); this.#hbTimer = null; }
     this.#resetHeartbeatTimeout();
+    this.#hbRequests.clear();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -740,6 +841,7 @@ export class RpcClient {
   // ═══════════════════════════════════════════════════════════
 
   #teardownAll(): void {
+    this.#cancelRecovery();
     this.#eventSource?.close();
     this.#eventSource = null;
     if (this.#pollTimer) { clearInterval(this.#pollTimer); this.#pollTimer = null; }
@@ -757,6 +859,46 @@ export class RpcClient {
     }
     this.#wsGen++;
     this.#rejectAllPending("disconnected");
+  }
+
+  /** Recovery loop for an established connection that dropped: surface
+   *  `reconnecting` with a countdown, then re-enter the progressive
+   *  rounds after an exponential backoff. Backoff resets on a successful
+   *  reconnect (see the connected branch of #progressiveConnect). */
+  #scheduleRecovery(): void {
+    if (this.#disposed || this.#reconnectArmed) return;
+    this.#reconnectArmed = true;
+    this.#clearHeartbeat();
+    this.#retryCount = MAX_RETRIES; // exhaust the "rounds" so a failure re-arms recovery, not the loop
+    const jitter = Math.random() * this.#reconnectDelay * 0.5;
+    const delay = this.#reconnectDelay + jitter;
+    this.#reconnectDelay = Math.min(this.#reconnectDelay * 1.5, 30_000);
+    let remaining = Math.ceil(delay / 1000);
+    this.#setState("reconnecting", remaining);
+    const tick = setInterval(() => {
+      remaining -= 1;
+      if (remaining >= 0 && !this.#disposed) {
+        this.#setState("reconnecting", remaining);
+      }
+    }, 1_000);
+    this.#reconnectTimer = setTimeout(() => {
+      clearInterval(tick);
+      this.#reconnectTimer = null;
+      this.#reconnectArmed = false;
+      if (!this.#disposed) {
+        this.#fromRecovery = true;
+        this.#progressiveConnect();
+      }
+    }, delay);
+  }
+
+  #cancelRecovery(): void {
+    this.#reconnectArmed = false;
+    this.#reconnectDelay = 1_000;
+    if (this.#reconnectTimer !== null) {
+      clearTimeout(this.#reconnectTimer);
+      this.#reconnectTimer = null;
+    }
   }
 
   #setState(state: ConnectionState, retryIn?: number, transportTier?: string, attemptNumber?: number, countdown?: number): void {
