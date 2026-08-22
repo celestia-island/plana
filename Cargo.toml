@@ -72,7 +72,13 @@ kirino = { version = "^0.6" }
 anyhow = "^1"
 append-only-bytes = "^0.1"
 async-trait = "^0.1"
-ed25519-dalek = "^3"
+# Signature checks (custom_agent). The floor includes 3.0.0-rc.0 on purpose:
+# entelecheia's russh 0.61.x pins ed25519-dalek =3.0.0-rc.0 exactly, and a
+# bare ^3 range cannot unify with that pin — so consumers whose graph carries
+# russh 0.61 resolve to rc.0 while everyone else (no russh) keeps the 3.0.0
+# final. Re-tighten to ^3 once the family moves to russh >=0.62.3 (which
+# relaxed its pin to ^3).
+ed25519-dalek = "^3.0.0-rc.0"
 # Container / infrastructure
 axum = { version = "^0.8", features = ["ws"] }
 base64 = "^0.23"
