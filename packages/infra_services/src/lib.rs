@@ -49,13 +49,13 @@ pub use ws_transport::{
     Message as WsTransportMessage, WsReceiver, WsSender, WsTransport, WsTransportConfig,
 };
 
-// Re-export the real Linux implementation. `_container_runtime` is a
+// Re-export the real Linux implementation. `cherino-runtime` is a
 // platform-gated optional dependency (see Cargo.toml) — it is only present in
 // the dependency graph on Linux.
 #[cfg(target_os = "linux")]
-pub use _container_runtime::{RootfsCapability, detect_rootfs_capability};
+pub use cherino_runtime::{RootfsCapability, detect_rootfs_capability};
 
-// Windows / non-Linux fallback. The `_container_runtime` crate is not compiled
+// Windows / non-Linux fallback. The `cherino-runtime` crate is not compiled
 // here, so we expose API-compatible stubs. `RootfsCapability::None` is the
 // correct value on platforms that have no Linux rootfs-isolation primitives,
 // and `detect_rootfs_capability` is async to match the Linux signature.

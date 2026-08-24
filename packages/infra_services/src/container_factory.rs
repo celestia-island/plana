@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use tracing::{info, warn};
 
-use _container::{
+use cherino::{
     cli_backend::CliContainerBackend, errors::ContainerResult, ops::ContainerOps,
     types::ContainerRuntimeType,
 };
@@ -100,12 +100,12 @@ pub fn cosmos_runtime_type() -> ContainerRuntimeType {
         return ContainerRuntimeType::from_str_lossy(&val);
     }
 
-    // `_container_runtime` is a Linux-only dependency (see Cargo.toml). On
+    // `cherino-runtime` is a Linux-only dependency (see Cargo.toml). On
     // non-Linux targets the whole detection block below is meaningless
     // (`/var/run/docker.sock` and `/dev/fuse` are Linux-only concepts), so we
     // treat ourselves as "not inside a container" and fall through.
     #[cfg(target_os = "linux")]
-    let inside = _container_runtime::detect_inside_container();
+    let inside = cherino_runtime::detect_inside_container();
     #[cfg(not(target_os = "linux"))]
     let inside = false;
 
@@ -179,7 +179,7 @@ pub fn cosmos_runtime_type() -> ContainerRuntimeType {
 /// Return true if the `fuse-overlayfs` binary responds to `--version`.
 ///
 /// Honors `FUSE_OVERLAYFS_BIN` (consistent with the mount code in
-/// `container_runtime::rootfs` and `capability`). This is a fast, one-shot
+/// `cherino_runtime::rootfs` and `capability`). This is a fast, one-shot
 /// probe — safe to call from the synchronous `cosmos_runtime_type()`.
 fn fuse_overlayfs_available() -> bool {
     use std::process::Stdio;
@@ -273,11 +273,11 @@ pub async fn create_container_backend(
 ) -> ContainerResult<Box<dyn ContainerOps>> {
     match runtime {
         ContainerRuntimeType::Youki => {
-            // Youki (libcontainer) is Linux-only; `_container_runtime` is not
+            // Youki (libcontainer) is Linux-only; `cherino-runtime` is not
             // part of the dependency graph on other platforms.
             #[cfg(target_os = "linux")]
             {
-                let mgr = _container_runtime::YoukiManager::new(data_dir)?;
+                let mgr = cherino_runtime::YoukiManager::new(data_dir)?;
                 mgr.initialize().await?;
                 if let Err(e) = mgr.reconcile().await {
                     warn!(
@@ -289,13 +289,13 @@ pub async fn create_container_backend(
             }
             #[cfg(not(target_os = "linux"))]
             {
-                Err(_container::errors::ContainerError::UnsupportedBackend(
+                Err(cherino::errors::ContainerError::UnsupportedBackend(
                     "youki container runtime is only supported on Linux".to_string(),
                 ))
             }
         }
         ContainerRuntimeType::Docker => {
-            let mgr = _container::ContainerManager::new()?;
+            let mgr = cherino::ContainerManager::new()?;
             Ok(Box::new(mgr))
         }
         ContainerRuntimeType::Wslc | ContainerRuntimeType::AppleContainer => {

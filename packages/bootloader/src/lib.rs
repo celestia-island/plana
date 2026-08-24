@@ -18,7 +18,7 @@
 //!   systemd user unit on Linux, Windows SCM service via `sc.exe`, and a
 //!   launchd `LaunchDaemon` plist on macOS.
 //!
-//! The crate depends only on the arona shared layer (`_container`,
+//! The crate depends only on the arona shared layer (`cherino`,
 //! `_infra_services`, `_config`, `_infra_utils`) — never on entelecheia or
 //! evernight — to avoid any circular dependency.
 
