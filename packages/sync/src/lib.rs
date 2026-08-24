@@ -12,7 +12,11 @@
 //! ## 结构
 //!
 //! - [`patch`] —— JSON-Merge-Patch 合并 + diff 生成（RFC 7396 变体）。
-//! - [`snapshot`] —— 视口路径前缀匹配 + 子树裁剪。
+//!   **实现已迁 yuuka**（`yuuka::patch` / `yuuka::merge` / `yuuka::diff`
+//!   / `yuuka::path`），本模块为兼容重导出层，pub 表面与使用路径不变。
+//! - [`snapshot`] —— 视口路径前缀匹配 + 子树裁剪。**实现已迁 yuuka**
+//!   （`yuuka::viewport`），本模块为兼容重导出层，pub 表面与使用路径
+//!   不变。
 //! - [`tree`] —— 单个隔离树实例（scope = workspace 全局 / user 私有）。
 //! - [`registry`] —— 树实例表，懒加载 + 空闲回收 reaper。
 //! - [`store`] —— 叶子持久化 trait（NoopStore / MemoryStore / 消费方自定义）。

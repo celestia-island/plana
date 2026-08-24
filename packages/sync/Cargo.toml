@@ -11,8 +11,11 @@ description = "State tree sync engine — online-game-style client/server state 
 
 async-trait.workspace = true
 dashmap.workspace = true
-serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 tokio = { workspace = true }
 tracing.workspace = true
 uuid = { workspace = true }
+
+# State-patch runtime (the patch / snapshot modules are thin compat
+# re-export layers over this crate).
+yuuka = { git = "https://github.com/celestia-island/yuuka.git", branch = "master" }
