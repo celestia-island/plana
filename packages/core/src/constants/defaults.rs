@@ -178,7 +178,12 @@ impl RuntimeTuningConfig {
 
             skill_chain_force_tool_choice: std::env::var("SKILL_CHAIN_FORCE_TOOL_CHOICE")
                 .ok()
-                .map(|v| !matches!(v.trim().to_ascii_lowercase().as_str(), "0" | "false" | "no" | "off"))
+                .map(|v| {
+                    !matches!(
+                        v.trim().to_ascii_lowercase().as_str(),
+                        "0" | "false" | "no" | "off"
+                    )
+                })
                 .unwrap_or(true),
         }
     }
