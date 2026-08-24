@@ -7,9 +7,10 @@
 //! crates and adds one optional server-side module:
 //!
 //! - [`plana_protocol_core`](plana-protocol-core) — the generic protocol core
-//!   (health/network descriptors, RBAC, region policy, identity, JSON-RPC
-//!   envelope, base messages, handshake primitives), re-exported at the crate
-//!   root and always available.
+//!   (health/network descriptors, RBAC, region policy, identity, base
+//!   messages, handshake primitives), re-exported at the crate root and
+//!   always available. The JSON-RPC envelope lives in the framing crate
+//!   (`plana-jsonrpc`), re-exported as the `plana::jsonrpc` module.
 //! - `plana-celestia-types` — the celestia platform domain profile (agent,
 //!   task, panel, industrial and tool domain messages), re-exported at the
 //!   crate root behind the `celestia` feature (default on).
@@ -33,8 +34,8 @@ pub mod celestia {
     pub use plana_celestia_types::*;
 }
 
-// The generic protocol module (envelope, base messages, handshake
-// primitives). The domain profile's protocol module stays reachable at
+// The generic protocol module (base messages, handshake primitives). The
+// domain profile's protocol module stays reachable at
 // `plana::celestia::protocol`.
 pub use plana_protocol_core::protocol;
 

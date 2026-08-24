@@ -14,3 +14,6 @@ dist/
 /celestia-devtools.just
 .cargo/config.toml
 node_modules/
+# Bare form too: worktree node_modules may be a symlink (AGENTS.md §9.6),
+# which the directory-only pattern above does not match.
+node_modules

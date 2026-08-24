@@ -98,7 +98,10 @@ fn tracing_helpers_forwarded_through_umbrella() {
 
 #[test]
 fn protocol_module_resolves() {
-    resolves::<plana::protocol::jsonrpc::JsonRpcError>();
+    // The generic JSON-RPC envelope has a single canonical definition in
+    // plana-jsonrpc (re-exported as `plana::jsonrpc`); `plana::protocol`
+    // carries only base messages and handshake primitives.
+    resolves::<plana::jsonrpc::JsonRpcError>();
     resolves::<plana::protocol::base_messages::BaseHeartbeatParams>();
     resolves::<plana::protocol::handshake::HandshakeAckParams>();
 }

@@ -1,23 +1,16 @@
-//! Platform-specific JSON-RPC error codes (TS-exporting copy).
+//! Platform-specific JSON-RPC error codes.
 //!
-//! NOTE: The canonical wire-layer copy of the shared error codes lives in
-//! `plana-jsonrpc` (`plana_jsonrpc::types::error_codes`), with a
-//! TS-bindings copy of the standard JSON-RPC 2.0 codes in the generic
-//! envelope copy in `plana-protocol-core` (`plana_protocol_core::protocol::jsonrpc`);
-//! the two generic copies are kept in sync manually. Unlike the base protocol
-//! messages (`protocol::base_messages`), which this crate re-exports from
-//! `plana-protocol-core` so there is a single canonical source, these codes
-//! stay defined here because the domain error space (-32000 range) is
-//! platform-specific. The celestia platform's custom codes are also
-//! duplicated in `plana_jsonrpc::types::error_codes` (the canonical wire
-//! copy) and kept in sync manually.
+//! The single canonical definition of these codes lives in `plana-jsonrpc`
+//! (`plana_jsonrpc::types::error_codes`, the wire crate); this module simply
+//! re-exports the platform-specific (-32000 range) subset so the domain
+//! profile never duplicates them. The generic JSON-RPC 2.0 envelope and the
+//! standard error codes also live in `plana-jsonrpc` — a former second copy
+//! in `plana-protocol-core` was removed after the copies drifted apart.
 
 pub mod error_codes {
-    pub const SNAPSHOT_FAILED: i64 = -32001;
-    pub const AGENT_UNAVAILABLE: i64 = -32002;
-    pub const CONTAINER_ERROR: i64 = -32003;
-    pub const REPL_ERROR: i64 = -32004;
-    pub const AUTH_ERROR: i64 = -32005;
+    pub use plana_jsonrpc::types::error_codes::{
+        AGENT_UNAVAILABLE, AUTH_ERROR, CONTAINER_ERROR, REPL_ERROR, SNAPSHOT_FAILED,
+    };
 }
 
 #[cfg(test)]
