@@ -10,6 +10,7 @@
 | `celestia-install.ps1` | Windows (PowerShell 5.1+) | Full install: creates isolated `celestia-XXX` WSL2 instance, builds all 4 projects, adds Start Menu shortcuts |
 | `celestia-install.sh` | Linux / macOS (bash) | Full install: Docker + Rust + builds all 4 projects + desktop entries / .app bundles |
 | `celestia-init.sh` | Inside WSL2 instance (bash, root) | WSL2 first-boot init: apt mirrors, Docker Engine, fuse-overlayfs, pull pgvector image, prepare workspace |
+| `celestia-server-bootstrap.sh` | Linux server (bash, root) | Server profile: pulls sha256-verified artifacts from the e.celestia.world downloads channel, bootstraps secrets (`/etc/celestia/server.env`), PostgreSQL (entelecheia/chest/arona), and systemd units for scepter · chest · arona · evernight-server |
 
 ## Quick start
 
