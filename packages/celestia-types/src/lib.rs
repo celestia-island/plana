@@ -6,10 +6,10 @@
 //! `Serialize`/`Deserialize` with JSON Schema and TypeScript bindings
 //! generation support.
 //!
-//! The generic protocol core (JSON-RPC envelope, base messages, handshake
-//! primitives, health/network descriptors, RBAC, region policy, identity)
-//! lives in the separate `plana-protocol-core` crate, and the JSON-RPC 2.0
-//! machinery lives in `plana-jsonrpc`. The `plana` umbrella crate re-exports
+//! The generic protocol core (base messages, handshake primitives,
+//! health/network descriptors, RBAC, region policy, identity) lives in the
+//! separate `plana-protocol-core` crate, and the JSON-RPC 2.0 envelope and
+//! machinery live in `plana-jsonrpc`. The `plana` umbrella crate re-exports
 //! all three.
 //!
 //! A type belongs here only when it is defined in this crate as the
@@ -520,9 +520,9 @@ pub enum YoloTaskTier {
 pub use protocol::base_messages::*;
 pub use protocol::handshake::*;
 // The platform-specific JSON-RPC error codes stay reachable at the crate
-// root (`plana_celestia_types::jsonrpc::error_codes`); the generic envelope
-// copy lives in plana-protocol-core, and the canonical wire layer lives in
-// plana-jsonrpc (re-exported by the umbrella as `plana::jsonrpc`).
+// root (`plana_celestia_types::jsonrpc::error_codes`) as a re-export of the
+// single canonical definition in plana-jsonrpc (`plana_jsonrpc::types`),
+// which the umbrella re-exports as `plana::jsonrpc`.
 pub use protocol::jsonrpc;
 
 // enums/ — foundational shared enums (Agent, WorkStatus, etc.)

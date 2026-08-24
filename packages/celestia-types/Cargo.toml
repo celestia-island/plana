@@ -23,7 +23,8 @@ default = []
 [dependencies]
 
 kirino = { workspace = true }
-plana-protocol-core = { version = "0.1.0", path = "../protocol-core" }
+plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
+plana-protocol-core = { version = "0.2.0", path = "../protocol-core" }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json.workspace = true

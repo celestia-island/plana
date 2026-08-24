@@ -4,8 +4,7 @@
 //! `plana-protocol-core` owns the platform-independent message set of the
 //! PLANA protocol:
 //!
-//! - the JSON-RPC 2.0 envelope ([`protocol::jsonrpc`]) and the base protocol
-//!   messages ([`protocol::base_messages`]),
+//! - the base protocol messages ([`protocol::base_messages`]),
 //! - connection handshake / version / identity negotiation primitives
 //!   ([`protocol::handshake`]),
 //! - health and network descriptors ([`http`]),
@@ -13,6 +12,11 @@
 //! - regional compliance policy ([`region`]),
 //! - cross-platform identity (machine fingerprint, [`identity`]),
 //! - generic connection-topology vocabulary ([`enums`]).
+//!
+//! The generic JSON-RPC 2.0 envelope intentionally does NOT live here: its
+//! single canonical definition is `plana_jsonrpc::types` in the framing
+//! crate, re-exported by the `plana` umbrella as `plana::jsonrpc`. A former
+//! copy in this crate was removed after the two drifted apart.
 //!
 //! Types carry serde (Serialize and/or Deserialize) and, where applicable,
 //! JSON-Schema (`schemars::JsonSchema`) and TypeScript-bindings (`ts-rs`)
@@ -26,7 +30,7 @@
 
 // ── Module tree ─────────────────────────────────────────────
 // The generic wire vocabulary lives under a small set of folders:
-//   protocol/ — JSON-RPC envelope, base messages, handshake (WS transport)
+//   protocol/ — base messages, handshake (WS transport)
 //   http/     — health/network/status descriptors and generic REST DTOs
 // and a few single-file modules at the root (enums, identity, rbac, region).
 // The glob re-exports at the bottom keep every type reachable at the crate
@@ -46,10 +50,6 @@ pub use http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
 // protocol/ — transport core
 pub use protocol::base_messages::*;
 pub use protocol::handshake::*;
-// The generic JSON-RPC envelope stays reachable at the crate root
-// (`plana_protocol_core::jsonrpc`); the `plana` umbrella crate shadows that
-// path with its own `plana::jsonrpc` module re-exporting `plana-jsonrpc`.
-pub use protocol::jsonrpc;
 
 // enums/ — generic vocabulary enums (ConnectionType, …)
 pub use enums::*;

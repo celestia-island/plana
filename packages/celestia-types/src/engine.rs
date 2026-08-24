@@ -3,7 +3,7 @@
 //! Any model-serving engine — llama.cpp, vLLM, a speech/sensor model, or a
 //! custom engine written in any language — speaks this protocol over a
 //! WebSocket transport using JSON-RPC 2.0 envelopes (see
-//! `plana-protocol-core`'s [`plana_protocol_core::protocol::jsonrpc`]) to
+//! `plana-jsonrpc`'s [`plana_jsonrpc::types`]) to
 //! join the arona gateway's Router cluster.
 //! The gateway acts as the intermediary: clients never talk to engines
 //! directly, only to the gateway, and the gateway multiplexes requests

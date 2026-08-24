@@ -1,4 +1,7 @@
-#![macro_use]
+// NOTE (celestia patch): the upstream crate-root `#![macro_use]` was removed —
+// it is a no-op on a proc-macro crate root and rustc >= 1.98 rejects it under
+// this crate's own `#![deny(unused)]`. The real `#[macro_use] mod utils;`
+// below is unaffected.
 #![deny(unused)]
 
 use std::collections::{HashMap, HashSet};
