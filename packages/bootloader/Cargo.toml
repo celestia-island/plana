@@ -8,7 +8,7 @@ license-file.workspace = true
 
 [dependencies]
 
-_container = { workspace = true }
+cherino.workspace = true
 _infra_services = { workspace = true }
 _infra_utils = { workspace = true }
 anyhow.workspace = true

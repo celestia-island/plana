@@ -9,7 +9,9 @@ license-file.workspace = true
 [dependencies]
 
 _config = { workspace = true }
-_container = { workspace = true }
+# cli-backend enables the WSL Containers / Apple Container CLI adapters
+# (cherino's Docker backend is on by default).
+cherino = { workspace = true, features = ["cli-backend"] }
 _core = { workspace = true }
 _infra_utils = { workspace = true }
 plana = { workspace = true }
@@ -31,7 +33,7 @@ tracing-subscriber = { workspace = true, features = ["registry"] }
 tracing.workspace = true
 uuid.workspace = true
 [target.'cfg(target_os = "linux")'.dependencies]
-_container_runtime = { workspace = true }
+cherino-runtime.workspace = true
 
 [dev-dependencies]
 

@@ -10,7 +10,7 @@ description = "Wire protocol and state types for the entelecheia platform"
 [dependencies]
 
 _config = { workspace = true }
-_container = { workspace = true }
+cherino.workspace = true
 _core = { workspace = true }
 _domain_agent = { workspace = true }
 _text = { workspace = true }

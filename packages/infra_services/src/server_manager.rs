@@ -8,8 +8,8 @@ use tracing::{debug, error, info};
 
 use _config::UserConfig;
 use _config::ensure_provider_config_from_env;
-use _container::{ServerStatus as DomainServerStatus, ops::ContainerOps};
 use _infra_utils::async_bridge;
+use cherino::{ServerStatus as DomainServerStatus, ops::ContainerOps};
 
 const SERVER_CONTAINER_SUFFIX: &str = "scepter";
 const SERVER_PORT: u16 = 8424;
@@ -33,7 +33,7 @@ fn server_container_name() -> String {
     }
 }
 
-pub use _container::types::ServerStatus;
+pub use cherino::types::ServerStatus;
 
 pub fn inject_docker_client(_docker: bollard::Docker) {
     debug!("[ServerManager] inject_docker_client called (no-op, using factory)");

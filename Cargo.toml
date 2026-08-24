@@ -10,8 +10,6 @@ members = [
     "packages/config",
     "packages/text",
     "packages/macros",
-    "packages/container",
-    "packages/container_runtime",
     "packages/domain_agent",
     "packages/domain_skills",
     "packages/domain_skills_permissions",
@@ -45,8 +43,6 @@ categories = ["data-structures", "development-tools"]
 
 _bootloader = { package = "plana_bootloader", path = "packages/bootloader" }
 _config = { package = "plana_config", path = "packages/config" }
-_container = { package = "plana_container", path = "packages/container" }
-_container_runtime = { package = "plana_container_runtime", path = "packages/container_runtime" }
 _core = { package = "plana_core", path = "packages/core" }
 _custom_agent = { package = "plana_custom_agent", path = "packages/custom_agent" }
 _domain_agent = { package = "plana_domain_agent", path = "packages/domain_agent" }
@@ -67,6 +63,13 @@ _world_state = { package = "plana_world_state", path = "packages/world_state" }
 plana = { package = "plana", path = "packages/plana" }
 
 kirino = { version = "^0.6" }
+
+# Container toolkit extracted to the cherino repo (P1 atomic switch):
+# the former packages/container and packages/container_runtime now live at
+# https://github.com/celestia-island/cherino as `cherino` / `cherino-runtime`.
+# Re-point to a crates.io version once cherino is published (P3).
+cherino = { git = "https://github.com/celestia-island/cherino.git", branch = "master" }
+cherino-runtime = { git = "https://github.com/celestia-island/cherino.git", branch = "master" }
 
 # External dependency versions (carried from entelecheia workspace)
 anyhow = "^1"
