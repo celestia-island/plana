@@ -197,7 +197,8 @@ if [[ "$SKIP_DB" != true ]]; then
     log "installing postgresql"
     if command -v apt-get >/dev/null 2>&1; then
       DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null
-      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql postgresql-contrib >/dev/null
+      # pgvector is REQUIRED: scepter's init migration does CREATE EXTENSION vector.
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql postgresql-contrib "$(apt list 2>/dev/null | grep -oE 'postgresql-[0-9]+-pgvector' | sort -V | tail -1 || echo postgresql-16-pgvector)" >/dev/null
     elif command -v dnf >/dev/null 2>&1; then
       dnf install -y -q postgresql-server postgresql-contrib >/dev/null
       postgresql-setup --initdb >/dev/null 2>&1 || true
@@ -215,8 +216,10 @@ if [[ "$SKIP_DB" != true ]]; then
       || runuser -u postgres -- createdb -O celestia "$db"
   done
   # pgvector extension when available (optional — scepter falls back to in-memory)
-  runuser -u postgres -- psql -d entelecheia -qc "CREATE EXTENSION IF NOT EXISTS vector" 2>/dev/null \
-    || warn "pgvector not available — scepter will use the in-memory vector fallback"
+  for db in "${DB_NAMES[@]}"; do
+    runuser -u postgres -- psql -d "$db" -qc "CREATE EXTENSION IF NOT EXISTS vector" \
+      || die "pgvector extension unavailable in $db — install postgresql-<ver>-pgvector and re-run"
+  done
   log "databases ready: ${DB_NAMES[*]}"
 fi
 
