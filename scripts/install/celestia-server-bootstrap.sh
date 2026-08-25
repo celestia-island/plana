@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────────────────
+# Port/topology layout matches server-topology.md (same repo, same dir).
+# ──────────────────────────────────────────────────────────────────────────────
 # celestia-server-bootstrap.sh — one-command SERVER profile bootstrap.
 #
 # Pulls prebuilt artifacts from the public e.celestia.world downloads channel

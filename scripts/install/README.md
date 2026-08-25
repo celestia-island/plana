@@ -5,6 +5,8 @@
 
 ## Scripts
 
+Topology reference: [`server-topology.md`](server-topology.md) — the declarative service/port/front-door layout that both the production fleet and `celestia-server-bootstrap.sh` follow.
+
 | Script | Platform | Purpose |
 |--------|----------|---------|
 | `celestia-install.ps1` | Windows (PowerShell 5.1+) | Full install: creates isolated `celestia-XXX` WSL2 instance, builds all 4 projects, adds Start Menu shortcuts |
