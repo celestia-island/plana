@@ -1228,10 +1228,14 @@ mod tests {
             mk_provider("env_derived", a_uuid),
             mk_provider("deepseek_default", b_uuid),
         ];
-        // env_derived has no registry provider -> no score either.
+        // Both tier models lack a registry card score: env_derived has no
+        // registry provider, and "uncarded-model" is absent from the deepseek
+        // card set, so the merge must preserve their original order (stable).
+        // (deepseek-v4-pro now carries a real card score, so it can no longer
+        // stand in as the "no score" fixture here.)
         let models = vec![
-            mk_model("env_derived", "deep", "some-model"),
-            mk_model("deepseek_default", "deep", "deepseek-v4-pro"),
+            mk_model("env_derived", "deep", "uncarded-model"),
+            mk_model("deepseek_default", "deep", "uncarded-model"),
         ];
         let mut orders = vec![
             PriorityOrderEntry {
