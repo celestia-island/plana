@@ -7,7 +7,7 @@
 //!
 //! Key responsibilities:
 //! - **`container_factory`** — the single decision point that picks Docker or Youki based
-//!   on user config; returns a `Box<dyn ContainerOps>` so callers are runtime-agnostic.
+//!   on environment detection; returns a `Box<dyn ContainerOps>` so callers are runtime-agnostic.
 //! - **`server_manager`** — manages the lifecycle of the long-running "scepter" server
 //!   container (health checks, startup, teardown).
 //! - **`connection_token`** — generates and verifies shared-secret tokens that gate
@@ -35,15 +35,12 @@ pub use connection_token::{
     connection_token_path, generate_token, read_token, remove_token_file, socket_token_path,
     write_token_to_file,
 };
-pub use container_factory::{
-    cosmos_runtime_type, create_container_backend, create_container_backend_from_config,
-    outer_runtime_type,
-};
+pub use container_factory::{cosmos_runtime_type, create_container_backend, outer_runtime_type};
 pub use file_credential_storage::{CredentialFile, CredentialRecord, FileCredentialStorage};
 pub use persistence::{OnlineAgentInfo, Persistence};
 pub use pg_log_layer::PgLogLayer;
 pub use pg_log_writer::{LogEntry, PgLogWriter, cleanup_old_logs};
-pub use server_manager::{ServerManager, ServerStatus, inject_docker_client, set_cluster_prefix};
+pub use server_manager::{ServerManager, ServerStatus, set_cluster_prefix};
 pub use types::{AgentMetadata, LogContext};
 pub use ws_transport::{
     Message as WsTransportMessage, WsReceiver, WsSender, WsTransport, WsTransportConfig,

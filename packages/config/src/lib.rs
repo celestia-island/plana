@@ -13,7 +13,6 @@ mod app_config;
 pub mod async_protocol;
 pub mod context_config;
 pub mod dangerous_flags;
-pub mod egress;
 pub mod embedding_models;
 pub mod errors;
 mod event_bus;
@@ -36,7 +35,6 @@ pub use async_protocol::{
     ReferenceInput, ReferenceKind,
 };
 pub use context_config::{ConnectionContext, ContextStore, ContextType};
-pub use egress::{EgressHostConfig, EgressModeConfig, EgressPolicyConfig};
 pub use event_bus::{
     ConfigChangeAudit, ConfigEvent, ConfigEventBus, ConfigEventListener, ConfigHotReloadManager,
     add_global_listener, get_global_audit_log, publish_global_event, subscribe_global_events,
