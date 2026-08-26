@@ -234,6 +234,7 @@ export class RpcClient {
     this.#retryCount = 0;
     this.#cancelRecovery();
     this.#fromRecovery = false;
+    this.#bindResumeTriggers();
     if (this.#probeOnly) {
       this.#probeHealthOnce();
     } else if (this.#local) {
@@ -249,21 +250,86 @@ export class RpcClient {
     this.#disposed = true;
     this.#cancelRecovery();
     this.#teardownAll();
+    this.#unbindResumeTriggers();
     this.#setState("disconnected");
   }
 
   forceReconnect(): void {
-    if (this.#disposed) return;
+    if (!this.#revivable) return;
     this.#retryCount = 0;
     this.#cancelRecovery();
     this.#fromRecovery = false;
     this.#teardownAll();
+    if (this.#probeOnly) {
+      // Anonymous clients park `disposed` right after their one-shot
+      // health probe succeeds; without this revive the status-bar tap
+      // on a red light was a permanent no-op (nothing ever re-probed).
+      this.#disposed = false;
+      this.#probeHealthOnce();
+      return;
+    }
     if (this.#local) {
       this.#tier = "local";
       this.#setState("connected");
     } else {
       this.#progressiveConnect();
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Resume triggers: phones suspend timers in the background, so the
+  // recovery loop (exponential backoff up to 30s + jitter) can sit
+  // frozen while the page is hidden and the light stays red long after
+  // connectivity returned. Re-entering the foreground or the network
+  // coming back online forces a prompt reconnect instead of waiting
+  // out a stale countdown.
+  // ═══════════════════════════════════════════════════════════
+
+  #resumeBound = false;
+  #lastResumeAttemptAt = 0;
+
+  /** A host-killed client (logout disconnect()) must never revive;
+   *  a disposed probeOnly client (its one-shot probe parked it) may. */
+  get #revivable(): boolean {
+    return !this.#disposed || this.#probeOnly;
+  }
+
+  readonly #onVisibilityChange = (): void => {
+    if (typeof document === "undefined" || document.visibilityState !== "visible") return;
+    this.#onResumeTrigger();
+  };
+
+  readonly #onOnline = (): void => {
+    // `online` can fire while the page is still hidden (network restored
+    // in the background); leave that resume to visibilitychange so a
+    // foreground return within the debounce window still gets its own
+    // fresh attempt.
+    if (typeof document === "undefined" || document.visibilityState !== "visible") return;
+    this.#onResumeTrigger();
+  };
+
+  #onResumeTrigger(): void {
+    if (!this.#revivable) return;
+    if (this.#state === "connected" || this.#state === "connecting") return;
+    const now = Date.now();
+    // Debounce: visibility flips and online events can burst together.
+    if (now - this.#lastResumeAttemptAt < 5_000) return;
+    this.#lastResumeAttemptAt = now;
+    this.forceReconnect();
+  }
+
+  #bindResumeTriggers(): void {
+    if (this.#resumeBound || typeof window === "undefined" || typeof document === "undefined") return;
+    this.#resumeBound = true;
+    document.addEventListener("visibilitychange", this.#onVisibilityChange);
+    window.addEventListener("online", this.#onOnline);
+  }
+
+  #unbindResumeTriggers(): void {
+    if (!this.#resumeBound) return;
+    this.#resumeBound = false;
+    document.removeEventListener("visibilitychange", this.#onVisibilityChange);
+    window.removeEventListener("online", this.#onOnline);
   }
 
   on(event: "notification", handler: NotificationHandler): () => void;
