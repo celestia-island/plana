@@ -66,8 +66,6 @@ pub struct UserConfig {
     pub ui: UiConfig,
     #[serde(default)]
     pub database: DatabaseConfig,
-    #[serde(default)]
-    pub container_backend: ContainerBackendConfig,
 }
 
 fn default_username() -> String {
@@ -381,54 +379,6 @@ impl UserConfig {
     }
 }
 
-/// Container backend connection config (persisted, cross-platform)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct ContainerBackendConfig {
-    #[serde(default)]
-    pub scheme: String,
-    #[serde(default)]
-    pub target: String,
-    #[serde(default)]
-    pub label: String,
-    #[serde(default = "default_runtime")]
-    pub runtime: String,
-}
-
-fn default_runtime() -> String {
-    "youki".to_string()
-}
-
-impl Default for ContainerBackendConfig {
-    fn default() -> Self {
-        Self {
-            scheme: String::new(),
-            target: String::new(),
-            label: String::new(),
-            runtime: default_runtime(),
-        }
-    }
-}
-
-impl ContainerBackendConfig {
-    pub fn is_configured(&self) -> bool {
-        !self.scheme.is_empty() && !self.target.is_empty()
-    }
-
-    pub fn set(&mut self, scheme: &str, target: &str, label: &str) {
-        self.scheme = scheme.to_string();
-        self.target = target.to_string();
-        self.label = label.to_string();
-    }
-
-    pub fn clear(&mut self) {
-        self.scheme.clear();
-        self.target.clear();
-        self.label.clear();
-        self.runtime = default_runtime();
-    }
-}
-
 impl Default for UserConfig {
     fn default() -> Self {
         Self {
@@ -436,7 +386,6 @@ impl Default for UserConfig {
             user_id: default_user_id(),
             ui: UiConfig::default(),
             database: DatabaseConfig::from_env(),
-            container_backend: ContainerBackendConfig::default(),
         }
     }
 }

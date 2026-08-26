@@ -4,7 +4,7 @@ use std::{
     net::{Ipv4Addr, SocketAddrV4},
 };
 
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 use _config::UserConfig;
 use _config::ensure_provider_config_from_env;
@@ -34,10 +34,6 @@ fn server_container_name() -> String {
 }
 
 pub use cherino::types::ServerStatus;
-
-pub fn inject_docker_client(_docker: bollard::Docker) {
-    debug!("[ServerManager] inject_docker_client called (no-op, using factory)");
-}
 
 fn container_ops() -> Option<&'static dyn ContainerOps> {
     static CM: std::sync::LazyLock<Option<Box<dyn ContainerOps>>> =

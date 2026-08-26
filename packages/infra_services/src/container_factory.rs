@@ -309,14 +309,6 @@ pub async fn create_container_backend(
     }
 }
 
-pub async fn create_container_backend_from_config(
-    config: &_config::UserConfig,
-    data_dir: &Path,
-) -> ContainerResult<Box<dyn ContainerOps>> {
-    let runtime = ContainerRuntimeType::from_str_lossy(&config.container_backend.runtime);
-    create_container_backend(runtime, data_dir).await
-}
-
 pub async fn create_container_backend_from_str(
     runtime_str: &str,
 ) -> ContainerResult<Box<dyn ContainerOps>> {
