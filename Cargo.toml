@@ -62,7 +62,7 @@ _world_state = { package = "plana_world_state", path = "packages/world_state" }
 # ── Internal crate aliases ──────────────────────────────────
 plana = { package = "plana", path = "packages/plana" }
 
-kirino = { version = "^0.6" }
+kirino = { version = "^0.6.5" }
 
 # Container toolkit extracted to the cherino repo (P1 atomic switch):
 # the former packages/container and packages/container_runtime now live at
