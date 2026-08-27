@@ -77,7 +77,8 @@ pub enum Agent {
     SkeMma,
     ApoRia,
     EleOs,
-    EpieiKeia,
+    #[serde(alias = "EpieiKeia")]
+    Epieikeia,
     OreXis,
     PhiLia,
     PoleMos,
@@ -95,7 +96,7 @@ impl Agent {
             Agent::SkeMma,
             Agent::ApoRia,
             Agent::EleOs,
-            Agent::EpieiKeia,
+            Agent::Epieikeia,
             Agent::OreXis,
             Agent::PhiLia,
             Agent::PoleMos,

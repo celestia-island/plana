@@ -27,7 +27,7 @@ pub mod markers;
 pub use badge::AgentBadge;
 pub use kind::{AgentKind, UnknownAgentError};
 pub use markers::{
-    AgentMarker, ApoRiaMarker, ClassicSoftwareEngineeringMarker, EleOsMarker, EpieiKeiaMarker,
+    AgentMarker, ApoRiaMarker, ClassicSoftwareEngineeringMarker, EleOsMarker, EpieikeiaMarker,
     HapLotesMarker, HubRisMarker, IndustrialIoTMarker, KaLosMarker, NeiKosMarker, OreXisMarker,
     PhantomAgent, PhiLiaMarker, PoleMosMarker, RemoteOperationsMarker, SkeMmaMarker, SkoPeoMarker,
     WebAutomationMarker,

@@ -190,7 +190,7 @@ pub mod haplotes {
     pub const SUBSCRIBE_TRIGGER: &str = "subscribe_trigger";
 }
 
-/// EpieiKeia tool names — event/message dispatch and async operations
+/// Epieikeia tool names — event/message dispatch and async operations
 pub mod epieikeia {
     pub const DELIVER_MESSAGE: &str = "deliver_message";
     pub const INJECT_USER_PROMPT: &str = "inject_user_prompt";
