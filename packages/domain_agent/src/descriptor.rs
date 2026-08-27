@@ -91,7 +91,7 @@ fn register_builtins(registry: &AgentMetadataRegistry) {
         "SkeMma"     / "skemma"      / "Script execution"                         / 1 / true,
         "ApoRia"     / "aporia"      / "Knowledge management"                     / 1 / false,
         "EleOs"      / "eleos"       / "Web search"                               / 1 / true,
-        "EpieiKeia"  / "epieikeia"   / "Diagnostics"                              / 1 / true,
+        "Epieikeia"  / "epieikeia"   / "Diagnostics"                              / 1 / true,
         "OreXis"     / "orexis"      / "Security"                                 / 1 / true,
         "PhiLia"     / "philia"      / "Data storage"                             / 1 / true,
         "PoleMos"    / "polemos"     / "Hardware & vision"                        / 1 / true,

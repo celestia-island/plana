@@ -39,7 +39,7 @@ define_marker! {
     SkeMmaMarker => SkeMma / "skemma" / "SkeMma",
     ApoRiaMarker => ApoRia / "aporia" / "ApoRia",
     EleOsMarker => EleOs / "eleos" / "EleOs",
-    EpieiKeiaMarker => EpieiKeia / "epieikeia" / "EpieiKeia",
+    EpieikeiaMarker => Epieikeia / "epieikeia" / "Epieikeia",
     OreXisMarker => OreXis / "orexis" / "OreXis",
     PhiLiaMarker => PhiLia / "philia" / "PhiLia",
     PoleMosMarker => PoleMos / "polemos" / "PoleMos",

@@ -143,7 +143,7 @@ agent_variants!(
     SkeMma,
     ApoRia,
     EleOs,
-    EpieiKeia,
+    Epieikeia,
     OreXis,
     PhiLia,
     PoleMos,

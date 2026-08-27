@@ -1,6 +1,6 @@
 //! Unified Agent kind enum.
 //!
-//! [`AgentKind`] covers all 17 agents (Layer1 + Layer2),
+//! [`AgentKind`] covers all 19 agents (Layer1 × 12 + Layer2 × 7),
 //! The single source for agent names, doc paths, UI display, and other strings.
 //! The `AgentType` in TUI is a re-export (type alias) of this type.
 
@@ -11,7 +11,7 @@ use std::{fmt, str::FromStr};
 #[error("unknown agent: {0}")]
 pub struct UnknownAgentError(pub String);
 
-/// Unified Agent kind (Layer1 × 12 + Layer2 × 4)
+/// Unified Agent kind (Layer1 × 12 + Layer2 × 7)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 pub enum AgentKind {
     // ── Layer 1 ──────────────────────────────────────────────────────────────
@@ -32,7 +32,12 @@ pub enum AgentKind {
     /// Security and information gathering
     EleOs,
     /// Backup and scheduling
-    EpieiKeia,
+    ///
+    /// Historical payloads may carry the former variant spelling; the alias
+    /// keeps old serialized inputs deserializable while new output writes
+    /// the canonical form.
+    #[serde(alias = "EpieiKeia")]
+    Epieikeia,
     /// Security audit and external integration
     OreXis,
     /// System integration
@@ -102,7 +107,7 @@ impl AgentKind {
             AgentKind::SkeMma => "SkeMma",
             AgentKind::ApoRia => "ApoRia",
             AgentKind::EleOs => "EleOs",
-            AgentKind::EpieiKeia => "EpieiKeia",
+            AgentKind::Epieikeia => "Epieikeia",
             AgentKind::OreXis => "OreXis",
             AgentKind::PhiLia => "PhiLia",
             AgentKind::PoleMos => "PoleMos",
@@ -134,7 +139,7 @@ impl AgentKind {
             AgentKind::SkeMma => "skemma",
             AgentKind::ApoRia => "aporia",
             AgentKind::EleOs => "eleos",
-            AgentKind::EpieiKeia => "epieikeia",
+            AgentKind::Epieikeia => "epieikeia",
             AgentKind::OreXis => "orexis",
             AgentKind::PhiLia => "philia",
             AgentKind::PoleMos => "polemos",
@@ -160,7 +165,7 @@ impl AgentKind {
             "skemma" => Some(AgentKind::SkeMma),
             "aporia" => Some(AgentKind::ApoRia),
             "eleos" => Some(AgentKind::EleOs),
-            "epieikeia" => Some(AgentKind::EpieiKeia),
+            "epieikeia" => Some(AgentKind::Epieikeia),
             "orexis" => Some(AgentKind::OreXis),
             "philia" => Some(AgentKind::PhiLia),
             "polemos" => Some(AgentKind::PoleMos),
@@ -235,7 +240,7 @@ impl AgentKind {
             AgentKind::SkeMma => "Script execution and microservice runtime",
             AgentKind::ApoRia => "Storage and LLM hub",
             AgentKind::EleOs => "Security and information acquisition",
-            AgentKind::EpieiKeia => "Backup and scheduling",
+            AgentKind::Epieikeia => "Backup and scheduling",
             AgentKind::OreXis => "Security audit and external integration",
             AgentKind::PhiLia => "System integration",
             AgentKind::PoleMos => "Edge computing and device management",
@@ -285,7 +290,7 @@ impl AgentKind {
             AgentKind::SkeMma,
             AgentKind::ApoRia,
             AgentKind::EleOs,
-            AgentKind::EpieiKeia,
+            AgentKind::Epieikeia,
             AgentKind::OreXis,
             AgentKind::PhiLia,
             AgentKind::PoleMos,
