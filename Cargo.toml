@@ -5,6 +5,7 @@ members = [
     "packages/plana",
     "packages/celestia-types",
     "packages/jsonrpc",
+    "packages/evernight-client",
     "packages/protocol-core",
     "packages/core",
     "packages/config",
