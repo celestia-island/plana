@@ -31,6 +31,7 @@ tracing-helpers = ["plana-protocol-core/tracing-helpers"]
 [dependencies]
 
 plana-celestia-types = { version = "0.1.0", path = "../celestia-types", optional = true }
+plana-evernight-client = { version = "0.1.0", path = "../evernight-client" }
 plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
 plana-protocol-core = { version = "0.2.0", path = "../protocol-core" }
 

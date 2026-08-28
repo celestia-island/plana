@@ -16,6 +16,8 @@
 //!   crate root behind the `celestia` feature (default on).
 //! - `plana-jsonrpc` — the JSON-RPC 2.0 framing layer, re-exported as the
 //!   `jsonrpc` module.
+//! - `plana-evernight-client` — the evernight terminal-route dispatch client
+//!   (P83/M1 routing contract), re-exported as the `evernight_client` module.
 //! - `plana-protocol-core`'s `tracing_helpers` (behind the `tracing-helpers`
 //!   feature) — `ShortTimer` formatting for `tracing-subscriber`.
 //!
@@ -56,6 +58,13 @@ pub mod enums {
 
 pub mod jsonrpc {
     pub use plana_jsonrpc::*;
+}
+
+// The evernight terminal-route dispatch client (P83/M1 routing contract;
+// consumed by entelecheia's PoleMos adapter). Follows the same re-export
+// pattern as the `jsonrpc` module above.
+pub mod evernight_client {
+    pub use plana_evernight_client::*;
 }
 
 #[cfg(feature = "rpc-server")]

@@ -1,0 +1,39 @@
+[package]
+name = "plana-evernight-client"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license-file = "LICENSE"
+description = "Shared evernight broker dispatch client for the PoleMos terminal command routing contract (P83/M1): request envelope, idempotency window, Unix-socket transport, error classification and target-scope guarding."
+repository = "https://github.com/celestia-island/plana"
+keywords = ["evernight", "json-rpc", "terminal", "ipc"]
+categories = ["api-bindings", "network-programming"]
+
+[features]
+default = []
+# Documented skeleton for the deferred remote form (spec §5.1: the wss
+# transport is explicitly postponed until the broker-side dispatch-layer
+# authentication gap is closed). `WsTransport` compiles behind this flag but
+# every call fails fast; the real tokio-tungstenite wiring is a follow-up.
+ws = ["dep:tokio-tungstenite"]
+
+[dependencies]
+
+async-trait = { workspace = true }
+hex = { workspace = true }
+plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true, optional = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+
+tempfile = { workspace = true }
+
+[package.metadata.docs.rs]
+all-features = true
