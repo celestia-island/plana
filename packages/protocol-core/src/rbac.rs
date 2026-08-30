@@ -8,7 +8,7 @@
 //! `GrantItem::validate_permission`) already accept and validate arbitrary
 //! dotted paths against the closed vocabulary. The typed enum stays closed
 //! until the opaque string-permission mechanism lands; profiles must use the
-//! 31 built-in leaves (or their domain prefixes) today.
+//! 33 built-in leaves (or their domain prefixes) today.
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -119,6 +119,11 @@ pub enum Permission {
     SystemMetrics,
     #[serde(rename = "system.admin")]
     SystemAdmin,
+    // ── Quota & Credits ──────────────────────────────────────────
+    #[serde(rename = "quota.read")]
+    QuotaRead,
+    #[serde(rename = "quota.manage")]
+    QuotaManage,
 }
 
 impl Permission {
@@ -156,6 +161,8 @@ impl Permission {
             Self::SystemSettings => "Read/update system settings",
             Self::SystemMetrics => "View metrics and logs",
             Self::SystemAdmin => "Full admin access (god mode)",
+            Self::QuotaRead => "View quota and points balances",
+            Self::QuotaManage => "Top up, allocate and adjust points",
         }
     }
 
@@ -199,7 +206,9 @@ impl Permission {
             | Self::GroupManage
             | Self::SystemSettings
             | Self::SystemMetrics
-            | Self::SystemAdmin => PermissionScope::Global,
+            | Self::SystemAdmin
+            | Self::QuotaRead
+            | Self::QuotaManage => PermissionScope::Global,
         }
     }
 
@@ -237,6 +246,8 @@ impl Permission {
             Self::SystemSettings => "system.settings",
             Self::SystemMetrics => "system.metrics",
             Self::SystemAdmin => "system.admin",
+            Self::QuotaRead => "quota.read",
+            Self::QuotaManage => "quota.manage",
         }
     }
 
@@ -274,6 +285,8 @@ impl Permission {
             "system.settings" => Some(Self::SystemSettings),
             "system.metrics" => Some(Self::SystemMetrics),
             "system.admin" => Some(Self::SystemAdmin),
+            "quota.read" => Some(Self::QuotaRead),
+            "quota.manage" => Some(Self::QuotaManage),
             _ => None,
         }
     }
@@ -312,6 +325,8 @@ impl Permission {
             Self::SystemSettings,
             Self::SystemMetrics,
             Self::SystemAdmin,
+            Self::QuotaRead,
+            Self::QuotaManage,
         ]
     }
 
@@ -327,6 +342,7 @@ impl Permission {
             "user",
             "group",
             "system",
+            "quota",
         ]
     }
 
@@ -402,6 +418,10 @@ impl Permission {
             (
                 "system".into(),
                 vec![Self::SystemSettings, Self::SystemMetrics, Self::SystemAdmin],
+            ),
+            (
+                "quota".into(),
+                vec![Self::QuotaRead, Self::QuotaManage],
             ),
         ]
     }
@@ -600,13 +620,13 @@ mod tests {
     #[test]
     fn all_permissions_count() {
         let names = list_all_permission_names();
-        assert_eq!(names.len(), 31, "expected 31 leaf permissions");
+        assert_eq!(names.len(), 33, "expected 33 leaf permissions");
     }
 
     #[test]
     fn all_domains_count() {
         let domains = list_all_domain_names();
-        assert_eq!(domains.len(), 9);
+        assert_eq!(domains.len(), 10);
     }
 
     // ── Permission::expand_domain ───────────────────────────────
@@ -768,7 +788,7 @@ mod tests {
     #[test]
     fn categories_count() {
         let cats = Permission::categories();
-        assert_eq!(cats.len(), 9);
+        assert_eq!(cats.len(), 10);
     }
 
     #[test]
