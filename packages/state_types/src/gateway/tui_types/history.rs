@@ -7,6 +7,11 @@ pub struct HistoryMessage {
     pub role: String,
     pub content: String,
     pub created_at: String,
+    /// Topic grouping: the conversation this row belongs to (one
+    /// conversation per user turn). Optional so legacy rows/payloads
+    /// without the column still deserialize.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conversation_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

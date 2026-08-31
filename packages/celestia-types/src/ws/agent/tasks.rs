@@ -31,6 +31,12 @@ pub struct TaskCreatedParams {
     #[serde(default)]
     #[ts(optional)]
     pub tags: Option<Vec<String>>,
+    /// Topic correlation: the conversation this task was spawned for,
+    /// when the spawning chain knows one.
+    #[serde(default)]
+    #[ts(type = "string")]
+    #[ts(optional)]
+    pub conversation_id: Option<uuid::Uuid>,
 }
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
