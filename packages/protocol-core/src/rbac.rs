@@ -419,10 +419,7 @@ impl Permission {
                 "system".into(),
                 vec![Self::SystemSettings, Self::SystemMetrics, Self::SystemAdmin],
             ),
-            (
-                "quota".into(),
-                vec![Self::QuotaRead, Self::QuotaManage],
-            ),
+            ("quota".into(), vec![Self::QuotaRead, Self::QuotaManage]),
         ]
     }
 }
