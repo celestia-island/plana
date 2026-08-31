@@ -19,7 +19,20 @@ allow_custom_reply?: boolean,
  * Subset of `preset_options` the agent suggests. Empty when no
  * recommendation is offered.
  */
-recommended_options: Array<string>, model_name?: string, token_usage?: [number, number], skill_count?: number, tool_count?: number, next_route?: RouteInfo, stream?: LlmStream, error?: StructuredAgentError, };
+recommended_options: Array<string>, model_name?: string, token_usage?: [number, number], skill_count?: number, tool_count?: number, next_route?: RouteInfo, stream?: LlmStream, error?: StructuredAgentError, 
+/**
+ * Topic correlation: the conversation this report belongs to (one
+ * conversation per user turn). Absent on legacy senders.
+ */
+conversation_id?: string, 
+/**
+ * The task (skill-chain run) that produced this report.
+ */
+task_id?: string, 
+/**
+ * Workspace scope of the originating chain, when known.
+ */
+workspace_id?: string, };
 
 /**
  * Reply payload for an inquiry (`report_type: "query"`) report.

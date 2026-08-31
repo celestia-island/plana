@@ -468,6 +468,12 @@ pub enum SyncMessage {
         images: Option<Vec<_core::LlmImageContent>>,
         #[serde(default)]
         workspace_id: Option<Uuid>,
+        /// Client-supplied topic correlation id (e.g. the shittim-chest
+        /// conversation id). When present the server reuses that
+        /// conversation instead of minting a fresh one, so follow-up
+        /// replies chain into the same topic thread.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        conversation_id: Option<Uuid>,
     },
     AgentResponse {
         agent_type: Agent,
@@ -533,6 +539,18 @@ pub enum SyncMessage {
         stream: Option<LlmStream>,
         #[serde(default)]
         error: Option<StructuredAgentError>,
+        /// Topic correlation: the conversation this report belongs to
+        /// (one conversation per user turn). Client-supplied via
+        /// `UserMessage.conversation_id` when present, else minted by
+        /// the server at skill-chain pre-init.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        conversation_id: Option<Uuid>,
+        /// The task (skill-chain run) that produced this report.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        task_id: Option<Uuid>,
+        /// Workspace scope of the originating chain, when known.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        workspace_id: Option<Uuid>,
     },
     /// Server-bound reply to an inquiry (`AgentReport { report_type: Query }`)
     /// sent earlier. `report_id` mirrors the original `agent_id`.
@@ -661,6 +679,10 @@ pub enum SyncMessage {
         parent_task_id: Option<Uuid>,
         #[serde(default)]
         badge: Option<AgentBadge>,
+        /// Topic correlation: the conversation this task was spawned
+        /// for, when the spawning chain knows one.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        conversation_id: Option<Uuid>,
     },
     TaskStatusUpdate {
         task_id: Uuid,

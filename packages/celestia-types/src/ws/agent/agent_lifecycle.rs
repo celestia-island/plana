@@ -104,6 +104,22 @@ pub struct AgentReportParams {
     #[serde(default)]
     #[ts(optional)]
     pub error: Option<StructuredAgentError>,
+    /// Topic correlation: the conversation this report belongs to (one
+    /// conversation per user turn). Absent on legacy senders.
+    #[serde(default)]
+    #[ts(type = "string")]
+    #[ts(optional)]
+    pub conversation_id: Option<uuid::Uuid>,
+    /// The task (skill-chain run) that produced this report.
+    #[serde(default)]
+    #[ts(type = "string")]
+    #[ts(optional)]
+    pub task_id: Option<uuid::Uuid>,
+    /// Workspace scope of the originating chain, when known.
+    #[serde(default)]
+    #[ts(type = "string")]
+    #[ts(optional)]
+    pub workspace_id: Option<uuid::Uuid>,
 }
 
 /// Reply payload for an inquiry (`report_type: "query"`) report.
