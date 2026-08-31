@@ -521,6 +521,15 @@ export class RpcClient {
         let data: any;
         try { data = JSON.parse(event.data); } catch { return; }
 
+        // Upstreams may answer unknown methods with a literal `null`
+        // body (JSON.parse("null") → null). Reading `.method` off it
+        // throws, and the uncaught TypeError is treated as a boot
+        // failure by the shell's fatal-fallback, freezing the whole
+        // page behind a full-screen overlay. Only JSON objects carry
+        // JSON-RPC semantics — drop everything else (null, scalars,
+        // arrays) without touching `.method`/`.id`.
+        if (typeof data !== "object" || data === null) return;
+
         if (data.method === this.#hbProtocol.ackMethod) {
           this.#completeHeartbeat();
           return;

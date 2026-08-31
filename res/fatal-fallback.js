@@ -83,6 +83,13 @@
   applyLocale(detectLocale());
   window.__appReady = function() {
     dismissed = true;
+    // The overlay may have been raised before the app finished booting
+    // (slow first paint past TIMEOUT, or a pre-mount runtime error such
+    // as a WebSocket frame crash). Nothing ever removed it, so a
+    // successfully-mounted app stayed frozen behind a full-screen,
+    // z-100000 blocker and every click landed on the overlay. Ready
+    // means ready: pull the overlay back down.
+    document.getElementById("fatal-fallback")?.classList.remove("visible");
   };
   window.__appFatal = function(msg) {
     dismissed = true;
@@ -139,12 +146,20 @@
     }
   }, TIMEOUT);
   window.onerror = function(msg) {
+    // The overlay is a BOOT-failure surface. Once the app has rendered,
+    // a stray runtime error (e.g. a WebSocket frame that crashes a
+    // transport handler) must not freeze the whole page behind the
+    // blocker — the app is alive and can keep serving the operator.
+    const app = document.getElementById("app");
+    if (app && app.children && app.children.length) return;
     if (!dismissed && msg && typeof msg === "string" && !msg.includes("ChunkLoadError")) {
       window.__appFatal?.(msg);
     }
   };
   window.addEventListener("unhandledrejection", (e) => {
     if (dismissed) return;
+    const app = document.getElementById("app");
+    if (app && app.children && app.children.length) return;
     const reason = e.reason;
     const msg = reason && reason.message ? reason.message : String(reason);
     if (!msg.includes("ChunkLoadError")) window.__appFatal?.(msg);
