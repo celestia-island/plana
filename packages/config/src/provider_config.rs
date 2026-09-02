@@ -342,6 +342,8 @@ pub struct ModelEntry {
     #[serde(default)]
     pub supports_image: bool,
     #[serde(default)]
+    pub supports_vision: bool,
+    #[serde(default)]
     pub supports_audio: bool,
     #[serde(default)]
     pub supports_video: bool,
@@ -689,6 +691,7 @@ fn push_tier_models_from_toml(
             price_output: None,
             rate_multiplier: 1.0,
             supports_image: false,
+            supports_vision: false,
             supports_audio: false,
             supports_video: false,
             can_reason: false,
@@ -853,6 +856,7 @@ fn push_tier_models(
         price_output: None,
         rate_multiplier: 1.0,
         supports_image: false,
+        supports_vision: false,
         supports_audio: false,
         supports_video: false,
         can_reason: false,
@@ -1123,6 +1127,7 @@ mod tests {
             price_output: None,
             rate_multiplier: 1.0,
             supports_image: false,
+            supports_vision: false,
             supports_audio: false,
             supports_video: false,
             can_reason: false,
@@ -1415,6 +1420,63 @@ workspace_model_prefix = "ft-ws"
         assert!(am.skip_aporia());
         assert_eq!(am.user_model_prefix.as_deref(), Some("ft-user"));
         assert_eq!(am.workspace_model_prefix.as_deref(), Some("ft-ws"));
+        Ok(())
+    }
+
+    /// Legacy TOML without the field must deserialize with `supports_vision = false`.
+    #[test]
+    fn test_model_entry_supports_vision_defaults_false() -> Result<()> {
+        let toml_str = r#"
+id = "legacy-model"
+name = "Legacy"
+provider_id = "p1"
+api_model = "legacy"
+tier = "normal"
+"#;
+        let entry: ModelEntry = toml::from_str(toml_str)?;
+        assert!(!entry.supports_vision);
+        assert!(!entry.supports_image);
+        Ok(())
+    }
+
+    /// Explicit `supports_vision` in TOML must parse through and round-trip.
+    #[test]
+    fn test_model_entry_supports_vision_round_trip() -> Result<()> {
+        let toml_str = r#"
+id = "vision-model"
+name = "Vision"
+provider_id = "p1"
+api_model = "vision"
+tier = "deep"
+supports_vision = true
+supports_image = true
+"#;
+        let entry: ModelEntry = toml::from_str(toml_str)?;
+        assert!(entry.supports_vision);
+        assert!(entry.supports_image);
+
+        let serialized = toml::to_string(&entry)?;
+        let back: ModelEntry = toml::from_str(&serialized)?;
+        assert!(back.supports_vision);
+        assert_eq!(back.id, "vision-model");
+        Ok(())
+    }
+
+    /// Unknown fields in the TOML (e.g. newer registry keys) must be ignored.
+    #[test]
+    fn test_model_entry_ignores_unknown_fields() -> Result<()> {
+        let toml_str = r#"
+id = "future-model"
+name = "Future"
+provider_id = "p1"
+api_model = "future"
+tier = "normal"
+supports_vision = true
+supports_hologram = true
+"#;
+        let entry: ModelEntry = toml::from_str(toml_str)?;
+        assert!(entry.supports_vision);
+        assert_eq!(entry.id, "future-model");
         Ok(())
     }
 
