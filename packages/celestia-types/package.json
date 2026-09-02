@@ -1,9 +1,16 @@
 {
   "name": "@celestia-island/plana-types",
   "version": "0.1.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/celestia-island/plana"
+  },
   "description": "TypeScript bindings for the celestia platform domain profile of the PLANA protocol.",
   "main": "index.ts",
   "types": "index.ts",
-  "files": ["index.ts", "bindings"],
+  "files": [
+    "index.ts",
+    "bindings"
+  ],
   "packageManager": "pnpm@11.18.0"
 }
