@@ -29,13 +29,17 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - name: Install workspace deps
         run: pnpm install --no-frozen-lockfile
+      # Idempotent: a package already at its manifest version on npm is
+      # skipped, so a wave republishing one package does not fail on the other.
       - name: Publish plana-rpc-client
         run: |
           cd packages/rpc_client
           if [ -n "${{ github.event.inputs.version }}" ]; then npm version "${{ github.event.inputs.version }}" --no-git-tag-version --allow-same-version; fi
-          npm publish --access public --provenance
+          NAME=$(node -p "require('./package.json').name"); VERSION=$(node -p "require('./package.json').version")
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then echo "$NAME@$VERSION already published — skipping"; else npm publish --access public --provenance; fi
       - name: Publish plana-types (dir packages/celestia-types)
         run: |
           cd packages/celestia-types
           if [ -n "${{ github.event.inputs.version }}" ]; then npm version "${{ github.event.inputs.version }}" --no-git-tag-version --allow-same-version; fi
-          npm publish --access public --provenance
+          NAME=$(node -p "require('./package.json').name"); VERSION=$(node -p "require('./package.json').version")
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then echo "$NAME@$VERSION already published — skipping"; else npm publish --access public --provenance; fi
