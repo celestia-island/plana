@@ -352,6 +352,8 @@ pub enum AgentErrorCode {
     ModelEnvIncomplete,
     #[error("model selection retry exhausted")]
     ModelSelectionRetryExhausted,
+    #[error("no model with the required capability is available in the tier")]
+    ModelNoCapableModel,
     #[error("LLM call failed")]
     LlmCallFailed,
     #[error("LLM empty response")]
@@ -424,6 +426,7 @@ impl AgentErrorCode {
                 | Self::ModelAllExcluded
                 | Self::ModelEnvIncomplete
                 | Self::ModelSelectionRetryExhausted
+                | Self::ModelNoCapableModel
         )
     }
 }
@@ -1250,5 +1253,34 @@ mod tests {
             serde_json::to_string(&engine::EngineModality::Tensor).unwrap(),
             r#""Tensor""#
         );
+    }
+
+    // ── AgentErrorCode ─────────────────────────────────────────────
+
+    #[test]
+    fn agent_error_code_no_capable_model_serializes_snake_case() {
+        assert_eq!(
+            serde_json::to_string(&AgentErrorCode::ModelNoCapableModel).unwrap(),
+            r#""model_no_capable_model""#
+        );
+        let back: AgentErrorCode = serde_json::from_str(r#""model_no_capable_model""#).unwrap();
+        assert_eq!(back, AgentErrorCode::ModelNoCapableModel);
+    }
+
+    #[test]
+    fn agent_error_code_no_capable_model_displays_capability_and_tier() {
+        let msg = AgentErrorCode::ModelNoCapableModel.to_string();
+        assert_eq!(
+            msg,
+            "no model with the required capability is available in the tier"
+        );
+        assert!(msg.contains("capability"));
+        assert!(msg.contains("tier"));
+    }
+
+    #[test]
+    fn agent_error_code_no_capable_model_is_model_selection_error() {
+        assert!(AgentErrorCode::ModelNoCapableModel.is_model_selection_error());
+        assert!(!AgentErrorCode::ModelNoCapableModel.is_llm_error());
     }
 }
