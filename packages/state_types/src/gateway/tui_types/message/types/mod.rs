@@ -21,6 +21,43 @@ fn default_history_limit() -> u64 {
     50
 }
 
+/// Deserialize a wire value that may arrive either as a JSON string or as a
+/// JSON number into its string form.
+///
+/// Wire-compat shim for `Sync.UserMessage`: shittim-chest has always
+/// serialized `timestamp` as epoch-millis (i64) while this enum declared the
+/// field as `String`. A strict serde parse rejects the integer and the whole
+/// message is then silently dropped downstream, so the receiver now accepts
+/// both shapes. Serialization still emits a `String`, keeping the existing
+/// TS bindings and legacy peers unchanged.
+fn deserialize_string_or_number<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> Result<String, D::Error> {
+    struct StringOrNumberVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for StringOrNumberVisitor {
+        type Value = String;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            formatter.write_str("a string or a number")
+        }
+
+        fn visit_str<E: serde::de::Error>(self, value: &str) -> Result<String, E> {
+            Ok(value.to_owned())
+        }
+
+        fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<String, E> {
+            Ok(value.to_string())
+        }
+
+        fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<String, E> {
+            Ok(value.to_string())
+        }
+    }
+
+    d.deserialize_any(StringOrNumberVisitor)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolemosDeviceInfo {
     pub node_id: Uuid,
@@ -461,6 +498,7 @@ pub enum SyncMessage {
     UserMessage {
         sender_id: String,
         content: String,
+        #[serde(deserialize_with = "deserialize_string_or_number")]
         timestamp: String,
         #[serde(default)]
         language: Option<String>,
@@ -1481,4 +1519,98 @@ pub enum SyncMessage {
         ok: bool,
         error: Option<String>,
     },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SyncMessage;
+    use crate::gateway::Message;
+
+    /// shittim-chest serializes `Sync.UserMessage.timestamp` as epoch-millis
+    /// (i64); the reconstructed bridge shape must parse with the numeric
+    /// form and normalize it into the declared `String` field.
+    #[test]
+    fn user_message_accepts_numeric_timestamp() {
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "UserMessage",
+                "sender_id": "u",
+                "content": "c",
+                "timestamp": 1770000000000_i64
+            }
+        }))
+        .expect("integer timestamp must deserialize");
+
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::UserMessage { timestamp, .. } = &*sync else {
+            panic!("expected UserMessage variant");
+        };
+        assert_eq!(timestamp, "1770000000000");
+    }
+
+    /// Legacy senders already emit the string form; it must keep parsing.
+    #[test]
+    fn user_message_accepts_string_timestamp() {
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "UserMessage",
+                "sender_id": "u",
+                "content": "c",
+                "timestamp": "1770000000000"
+            }
+        }))
+        .expect("string timestamp must deserialize");
+
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::UserMessage { timestamp, .. } = &*sync else {
+            panic!("expected UserMessage variant");
+        };
+        assert_eq!(timestamp, "1770000000000");
+    }
+
+    /// The real production path: scepter parses inbound JSON-RPC via
+    /// `plana::jsonrpc::deserialize_from_jsonrpc`, which rebuilds the
+    /// tagged `{"type":..,"data":..}` shape and feeds it to serde. An
+    /// integer timestamp used to fail here and silently drop the message.
+    #[test]
+    fn jsonrpc_path_accepts_numeric_timestamp() {
+        let parsed = plana::jsonrpc::deserialize_from_jsonrpc::<Message>(
+            r#"{"jsonrpc":"2.0","method":"Sync.UserMessage","params":{"sender_id":"u","content":"c","timestamp":1770000000000}}"#,
+        )
+        .expect("jsonrpc parse must succeed");
+
+        let Some(Message::Sync(sync)) = parsed else {
+            panic!("expected Some(Sync) from the jsonrpc bridge");
+        };
+        let SyncMessage::UserMessage { timestamp, .. } = &*sync else {
+            panic!("expected UserMessage from the jsonrpc bridge");
+        };
+        assert_eq!(timestamp, "1770000000000");
+    }
+
+    /// Serialization must stay unchanged (timestamp as a JSON string) so the
+    /// TS bindings and legacy peers see the exact same wire shape as before.
+    #[test]
+    fn user_message_serializes_timestamp_as_string() {
+        let msg = SyncMessage::UserMessage {
+            sender_id: "u".to_string(),
+            content: "c".to_string(),
+            timestamp: "1770000000000".to_string(),
+            language: None,
+            images: None,
+            workspace_id: None,
+            conversation_id: None,
+        };
+
+        let json = serde_json::to_value(&msg).expect("serialize UserMessage");
+        assert_eq!(json["action"], "UserMessage");
+        assert!(json["timestamp"].is_string());
+        assert_eq!(json["timestamp"], "1770000000000");
+    }
 }
