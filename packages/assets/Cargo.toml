@@ -7,6 +7,9 @@ license-file.workspace = true
 repository.workspace = true
 description = "Compile-time static asset embedding and axum serving with SPA fallback"
 
+[lints]
+workspace = true
+
 [dependencies]
 axum.workspace = true
 include_dir.workspace = true

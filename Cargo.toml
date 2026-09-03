@@ -40,6 +40,12 @@ repository = "https://github.com/celestia-island/plana"
 keywords = ["json-rpc", "protocol", "ai-agent", "infrastructure", "shared-types"]
 categories = ["data-structures", "development-tools"]
 
+[workspace.lints.rust]
+warnings = "deny"
+
+[workspace.lints.clippy]
+all = "deny"
+
 [workspace.dependencies]
 
 _bootloader = { package = "plana_bootloader", path = "packages/bootloader" }

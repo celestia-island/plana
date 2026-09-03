@@ -33,6 +33,9 @@ pub use tui_types::{
     message::SyncMessage as SyncGatewayMessage,
 };
 
+/// Gateway message envelope. The `Sync` payload is boxed because
+/// `SyncMessage` is by far the largest variant (>= 488 bytes inline), which
+/// would otherwise inflate every `Message` value on the hot dispatch path.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum Message {
@@ -42,7 +45,7 @@ pub enum Message {
     Skill(SkillMessage),
     Node(NodeMessage),
     Monitor(MonitorMessage),
-    Sync(SyncMessage),
+    Sync(Box<SyncMessage>),
     Conversation(ConversationMessage),
 }
 
