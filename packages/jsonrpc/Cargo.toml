@@ -10,6 +10,9 @@ repository = "https://github.com/celestia-island/plana"
 keywords = ["json-rpc", "protocol", "websocket", "unix-socket"]
 categories = ["api-bindings", "web-programming::websocket", "network-programming"]
 
+[lints]
+workspace = true
+
 [features]
 default = []
 

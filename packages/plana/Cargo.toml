@@ -12,6 +12,9 @@ categories = ["api-bindings", "data-structures", "web-programming::websocket", "
 # Keep generated TS bindings out of the published crate.
 exclude = ["bindings"]
 
+[lints]
+workspace = true
+
 [features]
 default = ["celestia"]
 # The celestia-island platform domain profile (plana-celestia-types). PLANA is a

@@ -7,6 +7,9 @@ publish = false
 license-file.workspace = true
 description = "Wire protocol and state types for the entelecheia platform"
 
+[lints]
+workspace = true
+
 [dependencies]
 
 _config = { workspace = true }

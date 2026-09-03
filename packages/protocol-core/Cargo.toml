@@ -12,6 +12,9 @@ categories = ["api-bindings", "data-structures"]
 # Keep generated TS bindings out of the published crate.
 exclude = ["bindings"]
 
+[lints]
+workspace = true
+
 [features]
 default = []
 tracing-helpers = ["dep:chrono", "dep:tracing-subscriber"]

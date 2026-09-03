@@ -7,6 +7,9 @@ publish = false
 license-file.workspace = true
 description = "State tree sync engine — online-game-style client/server state synchronization"
 
+[lints]
+workspace = true
+
 [dependencies]
 
 async-trait.workspace = true

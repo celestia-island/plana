@@ -17,6 +17,9 @@ exclude = ["bindings"]
 # (`plana_protocol_core::tracing_helpers`, feature `tracing-helpers`), which
 # the `plana` umbrella crate forwards. Enable it there instead.
 
+[lints]
+workspace = true
+
 [features]
 default = []
 
