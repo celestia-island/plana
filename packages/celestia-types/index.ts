@@ -14,7 +14,7 @@
 //     OTHER (star-exported) source the earlier line exports, so "first
 //     listed source wins" is the deliberate outcome, not an artifact.
 //   - Shadowed duplicates stay importable via deep imports
-//     (`import type { FileEntry } from "@celestia-island/plana-celestia-types/bindings/tools/kalos"`).
+//     (`import type { FileEntry } from "@celestia-island/plana-types/bindings/tools/kalos"`).
 //
 // The 6 current collisions (flat winner -> shadowed source):
 //
@@ -65,7 +65,7 @@ export * from "./bindings/tools/hubris";
 export type { Annotation, FileCreateDirParams, FileDeleteParams, FileDeleteResult, FileEditParams, FileEditResult, FileExistsParams, FileExistsResult, FileGetInfoParams, FileInfoResult, FileListParams, FileListResult, FileReadResult, FileTreeListResult, FileWriteParams, FileWriteResult, ListAnnotationsResult, MkDirResult, ResolveAnnotationResult } from "./bindings/tools/kalos";
 export type { CheckWaitParams, ContainerCreateResult, ContainerFilterCriteria, ContainerForkParams, ContainerForkResult, ContainerInfoParams, ContainerInfoResult, ContainerListItem, ContainerListParams, ContainerListResult, ContainerRemoveParams, ContainerRemoveResult, ContainerSnapshotResult, ContainerStartParams, ContainerStartResult, ContainerStopParams, ContainerStopResult, ExecOnContainerParams, ExecResult, GitPushBranchParams, GitPushResult, NewContainerToolParams, NewContainerVolumeMount, SidecarDeliverResult, SidecarKillParams, SidecarSendParams, SidecarSendResult, SidecarSpawnParams, ToolchainEnsureParams, ToolchainEnsureResult, ToolchainListParams, ToolchainListResult, ToolchainProfileInfo, ToolchainVolumeSpec, VolumeInfo, WaitParams } from "./bindings/tools/neikos";
 export type { AgentIntegrityParams, AskResult, AuditAlignmentParams, AuditAlignmentResult, AuditFinding, AuditLegalityParams, AuditLegalityResult, BlockToolParams, CheckResultItem, ComplianceReportParams, ComplianceReportToolResult, ComplianceRule, ComplianceSummary, InspectToolCallParams, ManageSensitivityRulesParams, ReplyResult, ReportDetail, ReportHumanResult, RuleCheckResult, SecurityAuditParams, SecurityStatusParams, SecuritySuggestionsParams, SensitivityRule, SetNetworkPolicyParams, SetRiskThresholdParams, SetSecurityPolicyParams, StandardCheckParams, StandardCheckResult, StandardRegisterResult, UnblockToolParams } from "./bindings/tools/orexis";
-export type { GrantItem, GrantListResponse, MyPermissions, OAuthProvider, RbacUser, RbacUsersResponse } from "./bindings/protocol-core-httpTypes";
+export type { GrantItem, GrantListResponse, MyPermissions, OAuthProvider, RbacGroupsResponse, RbacUser, RbacUsersResponse } from "./bindings/protocol-core-httpTypes";
 export * from "./bindings/tools/philia";
 export * from "./bindings/tools/polemos";
 export * from "./bindings/tools/skemma";
