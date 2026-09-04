@@ -1,0 +1,20 @@
+[package]
+name = "plana-celestia-config"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license-file = "LICENSE"
+description = "Canonical schema for the family-shared ~/.celestia/celestia.toml config file."
+repository = "https://github.com/celestia-island/plana"
+keywords = ["config", "toml", "celestia"]
+categories = ["config"]
+
+[lints]
+workspace = true
+
+[dependencies]
+
+serde = { workspace = true }
+thiserror.workspace = true
+toml.workspace = true
