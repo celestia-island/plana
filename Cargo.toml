@@ -4,6 +4,7 @@ resolver = "2"
 members = [
     "packages/plana",
     "packages/celestia-types",
+    "packages/celestia-config",
     "packages/jsonrpc",
     "packages/evernight-client",
     "packages/protocol-core",
