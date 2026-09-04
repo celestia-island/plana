@@ -76,6 +76,11 @@ pub struct FlasherConfig {
     /// (for example `"zh-Hans"`, `"en"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locale: Option<String>,
+    /// Keys the schema does not model yet, preserved verbatim on round trip
+    /// so the flasher never loses a setting it stored before this crate
+    /// learned about it.
+    #[serde(flatten)]
+    pub other: BTreeMap<String, toml::Value>,
 }
 
 /// Platform default path: `%USERPROFILE%\.celestia\celestia.toml` on Windows
@@ -159,6 +164,18 @@ mod tests {
         cfg.save(&path).unwrap();
         assert_eq!(CelestiaConfig::load(&path).unwrap(), cfg);
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn flasher_section_preserves_unmodeled_keys() {
+        let raw = "[flasher]\nlocale = \"en\"\nlast_device = \"sdA\"\n";
+        let cfg = CelestiaConfig::parse(raw).unwrap();
+        assert_eq!(
+            cfg.flasher.other.get("last_device"),
+            Some(&toml::Value::String("sdA".to_string()))
+        );
+        let out = cfg.to_toml().unwrap();
+        assert!(out.contains("last_device"), "unmodeled key dropped: {out}");
     }
 
     #[test]
