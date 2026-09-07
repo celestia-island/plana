@@ -45,6 +45,7 @@
 | arcaea | `/usr/local/bin/arcaea` | 3004 | 3090 | 8408 | arcaea.celestia.world |
 | erp-celestia | `/srv/celestia/erp-celestia/erp` | 3006 | — | 8414 | erp.celestia.world |
 | demo-mock | `/srv/celestia/demo-mock/chest-mock` | 3009 | 3097 | 8415 | demo.dev.celestia.world |
+| demo enrollment gateway | `/srv/celestia/demo-mock/evernight-gateway-demo` | 3013 | — | — | (LAN direct; nginx `demo.dev.cw/evernight/` internal-only) |
 | evernight-server | `/usr/local/bin/evernight-server` | 3008 | — | 8412 | api.evernight.celestia.world |
 | evernight host-agent | `/usr/local/bin/evernight` (host-serve) | 3007 | — | — | — |
 | facility_sim ×3 | `facility_sim` | 1502–1504 | — | — | — |
@@ -83,6 +84,26 @@ Public TLS terminates at the frp endpoint (LE cert `CN=e.celestia.world`); the
 tunnel forwards cleartext to node-2 nginx:80. Internal nginx certs only cover
 `dev.celestia.world` — test public paths with `--resolve <host>:443:<public-ip>`
 and `--noproxy '*'`.
+
+
+### 2026-09-07 delta (gateway RPC wave, zcode)
+
+- `evernight-gateway-demo.service` on node-2: plain systemd unit (not yet
+  malkuth-supervised), pod `0.0.0.0:3013`, env
+  `/etc/celestia/evernight-gateway-demo.env` — `GATEWAY_CHEST_JWT_SECRET`
+  aligned with the demo chest (`chest-demo-mock.env` JWT_SECRET), so demo
+  flasher logins verify on it. Binary from evernight master #150 (the
+  strict WS JSON-RPC `/api/rpc` surface). LAN clients reach it directly.
+- nginx `demo-dev` site gained `location /evernight/` → `3013` (prefix
+  stripped, WS-capable) — verified internally via SNI/Host; **the public
+  frp entry for `demo.dev.celestia.world` bypasses node-2 nginx entirely**
+  (it lands on malkuth 8415 → the chest pod, which 405s unknown POST
+  paths). Public demo-gateway routing needs an frp mapping change by the
+  frp owner; until then the LAN pod address is the documented entry.
+- Observed drift vs the table above (2026-09-07 live check): pods
+  3000–3012 are all in use; the production enrollment gateway
+  (`evernight-gateway-malkuth.service`) actually serves pod **3011**
+  (info 8417), not 3007 — 3007 belongs to the evernight host-agent line.
 
 ## PostgreSQL
 
