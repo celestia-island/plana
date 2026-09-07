@@ -1,0 +1,36 @@
+[package]
+name = "plana-rpc-client"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license-file = "LICENSE"
+description = "Rust client for the PLANA service profile: persistent WebSocket JSON-RPC 2.0 with id correlation, call timeouts, heartbeat keepalive, exponential-backoff reconnect, and a minimal HTTP POST fallback transport."
+repository = "https://github.com/celestia-island/plana"
+keywords = ["json-rpc", "websocket", "rpc", "client", "protocol"]
+categories = ["api-bindings", "web-programming::websocket", "network-programming"]
+
+[lints]
+workspace = true
+
+[features]
+default = []
+
+[dependencies]
+
+futures = { workspace = true }
+plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+
+axum = { workspace = true }
+plana-rpc-server = { path = "../rpc-server" }
+
+[package.metadata.docs.rs]
+all-features = true

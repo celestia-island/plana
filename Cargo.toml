@@ -6,6 +6,8 @@ members = [
     "packages/celestia-types",
     "packages/celestia-config",
     "packages/jsonrpc",
+    "packages/rpc-server",
+    "packages/rpc-client",
     "packages/evernight-client",
     "packages/protocol-core",
     "packages/core",
