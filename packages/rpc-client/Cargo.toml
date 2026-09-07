@@ -15,11 +15,15 @@ workspace = true
 
 [features]
 default = []
+# wss:// support: rustls with webpki roots. The process must install a
+# CryptoProvider first (see RpcClientBuilder::install_ring_tls_provider).
+tls = ["dep:rustls", "tokio-tungstenite/rustls-tls-webpki-roots"]
 
 [dependencies]
 
 futures = { workspace = true }
 plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
+rustls = { workspace = true, optional = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }

@@ -90,11 +90,21 @@ pub struct RpcClientBuilder {
 }
 
 impl RpcClientBuilder {
-    /// Endpoint URL, e.g. `ws://127.0.0.1:8092/api/ws` (plaintext `ws://`
-    /// in this release).
+    /// Endpoint URL, e.g. `ws://127.0.0.1:8092/api/ws` (or `wss://` under
+    /// the `tls` feature). Credentials may ride the fleet-canonical
+    /// `?token=` query parameter.
     pub fn url(mut self, url: impl Into<String>) -> Self {
         self.url = url.into();
         self
+    }
+
+    /// Install the ring CryptoProvider as the process-wide rustls default
+    /// (`tls` feature). Idempotent; call once before the first `wss://`
+    /// connection — rustls refuses to build a ClientConfig without a
+    /// provider.
+    #[cfg(feature = "tls")]
+    pub fn install_ring_tls_provider() {
+        let _ = rustls::crypto::ring::default_provider().install_default();
     }
 
     pub fn config(mut self, config: RpcClientConfig) -> Self {
