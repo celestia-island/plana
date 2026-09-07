@@ -45,6 +45,7 @@
 | arcaea | `/usr/local/bin/arcaea` | 3004 | 3090 | 8408 | arcaea.celestia.world |
 | erp-celestia | `/srv/celestia/erp-celestia/erp` | 3006 | — | 8414 | erp.celestia.world |
 | demo-mock | `/srv/celestia/demo-mock/chest-mock` | 3009 | 3097 | 8415 | demo.dev.celestia.world |
+| gateway rescue (RPC) | \ | 3014 | — | — | gateway.celestia.world/rescue/ (daemon nginx lane) |
 | demo enrollment gateway | `/srv/celestia/demo-mock/evernight-gateway-demo` | 3013 | — | — | (LAN direct; nginx `demo.dev.cw/evernight/` internal-only) |
 | evernight-server | `/usr/local/bin/evernight-server` | 3008 | — | 8412 | api.evernight.celestia.world |
 | evernight host-agent | `/usr/local/bin/evernight` (host-serve) | 3007 | — | — | — |
