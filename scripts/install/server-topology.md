@@ -94,12 +94,18 @@ and `--noproxy '*'`.
   aligned with the demo chest (`chest-demo-mock.env` JWT_SECRET), so demo
   flasher logins verify on it. Binary from evernight master #150 (the
   strict WS JSON-RPC `/api/rpc` surface). LAN clients reach it directly.
-- nginx `demo-dev` site gained `location /evernight/` → `3013` (prefix
-  stripped, WS-capable) — verified internally via SNI/Host; **the public
-  frp entry for `demo.dev.celestia.world` bypasses node-2 nginx entirely**
-  (it lands on malkuth 8415 → the chest pod, which 405s unknown POST
-  paths). Public demo-gateway routing needs an frp mapping change by the
-  frp owner; until then the LAN pod address is the documented entry.
+- **Public routing correction (same day, user-spotted):** the real public
+  path for `demo.dev.celestia.world` is SakuraFrp → **the daemon nginx on
+  :3000**, which Host-splits vhosts (`/etc/nginx/sites-enabled/chest` on
+  the daemon: demo.dev.cw → node-2:8415, gateway.cw → 3011/3012, …) — the
+  earlier note about the frp owner changing a mapping was a misdiagnosis.
+  A `/evernight/` lane on that daemon vhost (→ node-2:3013, prefix
+  stripped, WS-capable, backup `chest.bak.evernight-lane`) opens the
+  public entry; verified end-to-end from the public HTTPS origin
+  (gateway.info 200, WS upgrade 101 — WS needs HTTP/1.1; the earlier 400
+  came from curl negotiating h2 by default, not a config fault). The
+  node-2 `demo-dev` site keeps the same lane for LAN/origin-direct
+  traffic.
 - Observed drift vs the table above (2026-09-07 live check): pods
   3000–3012 are all in use; the production enrollment gateway
   (`evernight-gateway-malkuth.service`) actually serves pod **3011**
