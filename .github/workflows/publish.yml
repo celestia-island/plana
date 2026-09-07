@@ -36,6 +36,10 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: cargo publish -p plana-jsonrpc --locked
+      - name: Publish plana-rpc-server
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
+        run: cargo publish -p plana-rpc-server --locked
       - name: Publish plana-celestia-types
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
