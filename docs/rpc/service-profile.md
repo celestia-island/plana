@@ -143,10 +143,16 @@ overtake of a busy data lane), stall cancellation, idle close `4000`,
 upgrade refusal 401, guard denial `-32005` without dispatch, HTTP POST
 fallback on the same method map, and handler-pushed notifications.
 
-## 11. Reference client
+## 11. Reference implementations
 
-`@celestia-island/plana-rpc-client` (npm) speaks this profile out of the
-box: layered transport with WS + HTTP fallback, pluggable heartbeat
-(default `Base.Heartbeat` notify mode), token refresh on 401, exponential
-backoff reconnect. A Rust client is planned on `plana-jsonrpc` for
-native consumers (flasher, device agents).
+- **TypeScript client** — `@celestia-island/plana-rpc-client` (npm): layered
+  transport with WS + HTTP fallback, pluggable heartbeat (default
+  `Base.Heartbeat` notify mode), token refresh on 401, exponential backoff
+  reconnect.
+- **Rust client** — `plana-rpc-client` (this workspace): persistent WS
+  connection with id correlation (UUIDv7), per-call timeouts, heartbeat
+  watchdog, exponential-backoff reconnect with a fail-fast `Failed` state,
+  notification subscriptions, and a one-shot HTTP POST fallback
+  (`http::post_rpc`).
+- **Rust server** — `plana-rpc-server` (this workspace): the framework and
+  conformance suite backing §10.
