@@ -33,6 +33,7 @@
 pub mod engine;
 pub mod enums;
 pub mod external_mcp;
+pub mod gateway;
 pub mod http;
 pub mod malkuth;
 pub mod mdd;
