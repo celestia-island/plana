@@ -156,3 +156,26 @@ fallback on the same method map, and handler-pushed notifications.
   (`http::post_rpc`).
 - **Rust server** — `plana-rpc-server` (this workspace): the framework and
   conformance suite backing §10.
+
+## 12. Private deployment (supported capability)
+
+The profile is deliberately endpoint-agnostic: **no implementation may
+hardwire an official host**. Every reference service derives its
+endpoints from configuration, so a fully private fleet (intranet-only
+factory, air-gapped lab, on-prem servers) composes its own stack:
+
+- an identity source of its choosing behind the connection-auth hook
+  (bearer token, one-shot ticket, mTLS — §9);
+- `plana-rpc-server` (or any conformant third-party server) at any
+  internal address, fronted by plain TCP or an internal reverse proxy;
+- `plana-rpc-client` / `@celestia-island/plana-rpc-client` pointed at it
+  by URL — ws://, wss://, http(s)://, raw pod addresses all conform.
+
+Living reference: the celestia demo enrollment gateway — an
+`evernight-gateway` instance on an intranet pod, whose chest-token
+verifier secret is aligned with the demo chest, fronted by an nginx path
+lane; the flasher reaches it via `?token=` carriage with no code
+differences from the hosted configuration. See
+`evernight/packages/gateway` and
+`evernight-appliance/packages/flasher/README.md` for the full
+self-hosting configuration surface.
