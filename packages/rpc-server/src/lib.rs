@@ -8,7 +8,7 @@
 //! - **Strict request/response semantics** — one JSON-RPC object per text
 //!   frame, `id` correlated by the caller. Notifications are honored for the
 //!   heartbeat service only; client-initiated notification handlers and
-//!   batch inputs are rejected by the profile (see `docs/rpc/service-profile.md`).
+//!   batch inputs are rejected by the profile (see `docs/en/rpc/service-profile.md`).
 //! - **Control-lane writer** — responses ride a bounded data lane while
 //!   heartbeat acks ride an unbounded control lane drained with a biased
 //!   `select!`, so a saturated data lane can never stall keepalive traffic.

@@ -1,0 +1,28 @@
+[package]
+name = "plana-tauri"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license-file.workspace = true
+authors.workspace = true
+description = "Tauri adapter and standard command battery for the PLANA relay extension: the two fixed bridge functions (bridge_call + event lane) and ready-mounted relay.* system handlers — proxy, entrypoint, connections, forwarding edits, and host window controls — so any Tauri app adopts the relay profile by adding one dependency."
+repository.workspace = true
+keywords = ["json-rpc", "relay", "tauri", "proxy"]
+categories = ["gui", "network-programming"]
+
+[dependencies]
+plana-rpc-client = { version = "^0.2.0", path = "../rpc-client" }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tauri = { version = "^2", optional = true }
+
+[features]
+default = ["bridge"]
+# The tauri command/event adapter + window controls. Off = pure battery
+# (tests, non-Tauri hosts reusing the handler set).
+bridge = ["dep:tauri"]
+
+[dev-dependencies]
+tokio = { workspace = true }

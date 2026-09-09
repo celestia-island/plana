@@ -8,6 +8,7 @@ members = [
     "packages/jsonrpc",
     "packages/rpc-server",
     "packages/rpc-client",
+    "packages/tauri",
     "packages/evernight-client",
     "packages/protocol-core",
     "packages/core",
@@ -33,7 +34,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.19"
+version = "0.1.20"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
@@ -69,6 +70,8 @@ _sync = { package = "plana_sync", path = "packages/sync" }
 _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
 _world_state = { package = "plana_world_state", path = "packages/world_state" }
+plana-rpc-client = { version = "0.2.0", path = "packages/rpc-client" }
+
 # ── Internal crate aliases ──────────────────────────────────
 plana = { package = "plana", path = "packages/plana" }
 

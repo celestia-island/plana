@@ -1,7 +1,7 @@
 //! Gateway service-profile wire types.
 //!
 //! Request/response payloads for the two gateway services that speak the
-//! PLANA service profile (`docs/rpc/service-profile.md`):
+//! PLANA service profile (`docs/en/rpc/service-profile.md`):
 //!
 //! - **rescue** — gateway.celestia.world identity federation + emergency
 //!   rescue channel (strict WS JSON-RPC; sessions are connection-bound,
