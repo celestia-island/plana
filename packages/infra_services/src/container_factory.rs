@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use tracing::{info, warn};
+use tracing::info;
 
 use cherino::{
     cli_backend::CliContainerBackend, errors::ContainerResult, ops::ContainerOps,
@@ -269,7 +269,7 @@ fn find_in_path(binary: &str) -> Option<PathBuf> {
 
 pub async fn create_container_backend(
     runtime: ContainerRuntimeType,
-    data_dir: &Path,
+    _data_dir: &Path,
 ) -> ContainerResult<Box<dyn ContainerOps>> {
     match runtime {
         ContainerRuntimeType::Youki => {
@@ -277,7 +277,7 @@ pub async fn create_container_backend(
             // part of the dependency graph on other platforms.
             #[cfg(target_os = "linux")]
             {
-                let mgr = cherino_runtime::YoukiManager::new(data_dir)?;
+                let mgr = cherino_runtime::YoukiManager::new(_data_dir)?;
                 mgr.initialize().await?;
                 if let Err(e) = mgr.reconcile().await {
                     warn!(

@@ -13,10 +13,14 @@
 //! without entelecheia-specific assumptions baked in.
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+#[cfg(unix)]
+use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 
-use anyhow::{Context, Result, anyhow};
+#[cfg(unix)]
+use anyhow::Context;
+use anyhow::{Result, anyhow};
 use bollard::config::NetworkCreateRequest;
 use tracing::{info, warn};
 

@@ -1,6 +1,6 @@
 //! Conformance suite for the PLANA service profile.
 //!
-//! These tests are the executable form of `docs/rpc/service-profile.md`.
+//! These tests are the executable form of `docs/en/rpc/service-profile.md`.
 //! Any server claiming conformance — including third-party
 //! implementations built on this crate — must pass an equivalent suite.
 

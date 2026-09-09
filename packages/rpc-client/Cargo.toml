@@ -1,6 +1,6 @@
 [package]
 name = "plana-rpc-client"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
@@ -24,6 +24,7 @@ tls = ["dep:rustls", "tokio-tungstenite/rustls-tls-webpki-roots"]
 futures = { workspace = true }
 plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
 rustls = { workspace = true, optional = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }

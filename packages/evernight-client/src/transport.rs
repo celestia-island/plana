@@ -12,9 +12,11 @@
 //! `timeout` param (see [`IpcSocketTransport::effective_io_timeout_secs`])
 //! instead of a fixed 30 seconds.
 
+#[cfg(unix)]
 use std::time::Duration;
 
 use plana_jsonrpc::{JsonRpcRequest, JsonRpcResponse};
+#[cfg(unix)]
 use serde_json::Value;
 
 /// Evernight's documented default execution timeout for `Command.Exec`
@@ -129,6 +131,7 @@ impl IpcSocketTransport {
     }
 
     /// Extracts the `timeout` param from a `Command.Exec` request.
+    #[cfg(unix)]
     fn wire_timeout(req: &JsonRpcRequest) -> Option<u64> {
         req.params
             .as_ref()

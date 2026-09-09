@@ -27,6 +27,7 @@
 
 pub mod client;
 pub mod http;
+pub mod relay;
 
 pub use client::{RpcClient, RpcClientBuilder, RpcClientConfig};
 pub use http::post_rpc;
