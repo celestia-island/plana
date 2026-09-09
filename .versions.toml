@@ -1,7 +1,7 @@
 # Version drift gate configuration for `celestia-devtools verify-versions`.
 #
 # plana carries two independent release lines that intentionally diverge from
-# the cargo workspace baseline (0.1.18): the published protocol crates are
+# the cargo workspace baseline (0.1.20): the published protocol crates are
 # versioned on their own publish line, and the npm packages follow their own
 # per-package line. Exemptions below record those deliberate divergences so the
 # gate still fails on accidental drift.
@@ -12,8 +12,8 @@
 # the "majority among publishable packages" fallback would tie and resolve by
 # filesystem walk order, which is not stable across machines. Track the
 # rpc-client line as the baseline: it advances with the registry publish wave
-# (currently 0.1.5), while celestia-types is exempted below as its own line.
-npm = "0.1.5"
+# (currently 0.1.6), while celestia-types is exempted below as its own line.
+npm = "0.1.6"
 
 [exempt.cargo]
 "packages/celestia-types" = "independently published line"
