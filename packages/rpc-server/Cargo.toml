@@ -20,7 +20,7 @@ default = []
 
 axum = { workspace = true }
 futures = { workspace = true }
-plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
+plana = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

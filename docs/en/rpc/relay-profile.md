@@ -31,7 +31,7 @@ A chain A₀ → A₁ → … → Aₙ (n ≥ 2). Roles are positional:
 **Edge channel** (any adjacent pair): exactly two transport functions —
 `bridge_call(method, params, id?, relay?)` for request/response and one
 notification lane `bridge_event {method, params}`. Frames are canonical
-JSON-RPC 2.0 (`plana-jsonrpc`), identical in shape on edge and upstream
+JSON-RPC 2.0 (`plana::jsonrpc`), identical in shape on edge and upstream
 hops, so a frame stays inspectable end to end. The channel is
 deliberately transport-agnostic: Tauri invoke/events, egui channels,
 stdio and in-process connections are interchangeable adapters over one

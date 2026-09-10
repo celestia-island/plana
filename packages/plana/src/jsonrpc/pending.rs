@@ -35,7 +35,7 @@ macro_rules! namespace {
             pub fn wire(self) -> &'static str {
                 match self { $(Self::$variant => concat!($prefix,".",stringify!($variant)),)* }
             }
-            pub fn kind(self) -> $crate::MessageKind {
+            pub fn kind(self) -> $crate::jsonrpc::pending::MessageKind {
                 match self {
                     // The `let _ = stringify!($($kind)?);` lines are no-op
                     // disambiguators: they pin the optional `$kind`/`$response`
@@ -46,7 +46,7 @@ macro_rules! namespace {
                     $( Self::$variant => { let _ = stringify!($($kind)?); $crate::namespace_kind!($($kind)?) }, )*
                 }
             }
-            pub fn is_one_way(self) -> bool { matches!(self.kind(), $crate::MessageKind::OneWay) }
+            pub fn is_one_way(self) -> bool { matches!(self.kind(), $crate::jsonrpc::pending::MessageKind::OneWay) }
             pub fn response(self) -> Option<Self> {
                 match self {
                     $( Self::$variant => { let _ = stringify!($($response)?); $crate::namespace_resp!($($response)?) }, )*
@@ -65,10 +65,10 @@ macro_rules! namespace {
 #[macro_export]
 macro_rules! namespace_kind {
     ($k:ident) => {
-        $crate::MessageKind::$k
+        $crate::jsonrpc::pending::MessageKind::$k
     };
     () => {
-        $crate::MessageKind::SyncReq
+        $crate::jsonrpc::pending::MessageKind::SyncReq
     };
 }
 #[doc(hidden)]

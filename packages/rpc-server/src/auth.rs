@@ -8,7 +8,7 @@ use std::sync::Arc;
 use axum::http::{HeaderMap, Uri};
 use serde_json::Value;
 
-use plana_jsonrpc::JsonRpcError;
+use plana::jsonrpc::JsonRpcError;
 
 /// Opaque per-connection identity established by the auth hook. Handlers
 /// downcast it via [`crate::RpcRequestCtx::auth`].

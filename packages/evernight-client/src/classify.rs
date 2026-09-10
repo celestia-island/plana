@@ -6,7 +6,7 @@
 
 use std::fmt;
 
-use plana_jsonrpc::{error_codes, JsonRpcError};
+use plana::jsonrpc::{error_codes, JsonRpcError};
 use serde_json::Value;
 
 use crate::transport::TransportError;

@@ -9,7 +9,7 @@
 use std::fmt;
 use std::sync::Mutex;
 
-use plana_jsonrpc::{error_codes, Id, JsonRpcRequest};
+use plana::jsonrpc::{error_codes, Id, JsonRpcRequest};
 use serde::Deserialize;
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -269,7 +269,7 @@ mod tests {
     use crate::classify::ErrorKind;
     use crate::envelope::TargetScope;
     use crate::transport::TransportError;
-    use plana_jsonrpc::JsonRpcResponse;
+    use plana::jsonrpc::JsonRpcResponse;
     use serde_json::json;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -530,7 +530,7 @@ mod tests {
             async fn call(&self, _req: JsonRpcRequest) -> Result<JsonRpcResponse, TransportError> {
                 Ok(JsonRpcResponse::error(
                     Id::String("x".to_string()),
-                    plana_jsonrpc::JsonRpcError::internal_error("Command timed out after 60s")
+                    plana::jsonrpc::JsonRpcError::internal_error("Command timed out after 60s")
                         .with_data(json!({"timeout": true})),
                 ))
             }

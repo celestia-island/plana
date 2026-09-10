@@ -31,7 +31,7 @@ pub mod relay;
 
 pub use client::{RpcClient, RpcClientBuilder, RpcClientConfig};
 pub use http::post_rpc;
-pub use plana_jsonrpc::{Id, JsonRpcError};
+pub use plana::jsonrpc::{Id, JsonRpcError};
 
 /// Connection lifecycle states surfaced by [`RpcClient::state`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

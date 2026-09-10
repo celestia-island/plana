@@ -25,7 +25,7 @@
 **边缘通道**（任意相邻两方）：恰有两个传输函数——
 `bridge_call(method, params, id?, relay?)`（请求-响应）与唯一的通知
 通道 `bridge_event {method, params}`。帧为规范 JSON-RPC 2.0
-（`plana-jsonrpc`），边缘与上游形状一致，一帧从头到尾可检查。通道刻意
+（`plana::jsonrpc`），边缘与上游形状一致，一帧从头到尾可检查。通道刻意
 与传输无关：Tauri invoke/事件、egui 通道、stdio、进程内直连都只是同
 一契约的适配器（Rust 核心 `EdgeTransport`，JS 侧同名接口）。
 

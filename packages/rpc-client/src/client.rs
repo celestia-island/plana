@@ -9,7 +9,7 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::{broadcast, mpsc, oneshot, watch};
 use tokio_tungstenite::tungstenite::Message;
 
-use plana_jsonrpc::{
+use plana::jsonrpc::{
     Id, JsonRpcError, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest, JSONRPC_VERSION,
 };
 

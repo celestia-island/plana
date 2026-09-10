@@ -15,7 +15,7 @@
 #[cfg(unix)]
 use std::time::Duration;
 
-use plana_jsonrpc::{JsonRpcRequest, JsonRpcResponse};
+use plana::jsonrpc::{JsonRpcRequest, JsonRpcResponse};
 #[cfg(unix)]
 use serde_json::Value;
 

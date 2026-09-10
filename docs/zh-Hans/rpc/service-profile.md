@@ -14,7 +14,7 @@
 
 ## 1. 信封
 
-- 信封为 `plana-jsonrpc`（`packages/jsonrpc/src/types.rs`）规范定义的
+- 信封为 `plana::jsonrpc`（`packages/jsonrpc/src/types.rs`）规范定义的
   JSON-RPC 2.0——全舰队唯一的规范定义。每帧必须携带
   `"jsonrpc": "2.0"`。
 - 每个 WebSocket **text** 帧一个 JSON 对象。二进制帧是协议违规（关闭码
@@ -80,7 +80,7 @@ POST 回退的 HTTP 状态映射：一切已派发结果（含 JSON-RPC 应用�
 ## 7. 错误码
 
 标准 JSON-RPC（`-32700/-32600/-32601/-32602/-32603`）与 plana 舰队扩
-展码（`plana-jsonrpc::error_codes`，特别是 `-32005` AUTH_ERROR）。本档
+展码（`plana::jsonrpc::error_codes`，特别是 `-32005` AUTH_ERROR）。本档
 案新增：
 
 | 码 | 含义 |

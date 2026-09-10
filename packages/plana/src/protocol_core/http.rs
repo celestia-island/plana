@@ -213,8 +213,8 @@ impl GrantItem {
     /// Returns `None` when valid; otherwise returns the invalid path.
     #[must_use]
     pub fn validate_permission(&self) -> Option<&str> {
-        let valid = crate::rbac::Permission::from_path(&self.permission).is_some()
-            || !crate::rbac::Permission::expand_domain(&self.permission).is_empty();
+        let valid = crate::protocol_core::rbac::Permission::from_path(&self.permission).is_some()
+            || !crate::protocol_core::rbac::Permission::expand_domain(&self.permission).is_empty();
         if valid {
             None
         } else {
