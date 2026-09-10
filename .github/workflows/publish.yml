@@ -33,7 +33,7 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana" | grep -q '"max_version": "0.2.0"'; then
+          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana" | grep -q '"max_version":"0.2.0"'; then
             echo "plana@0.2.0 already published — skipping"
           else
             cargo publish -p plana --locked
@@ -42,7 +42,7 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-rpc-server" | grep -q '"max_version": "0.1.0"'; then
+          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-rpc-server" | grep -q '"max_version":"0.1.0"'; then
             echo "plana-rpc-server@0.1.0 already published — skipping"
           else
             cargo publish -p plana-rpc-server --locked
@@ -51,7 +51,7 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-rpc-client" | grep -q '"max_version": "0.2.0"'; then
+          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-rpc-client" | grep -q '"max_version":"0.2.0"'; then
             echo "plana-rpc-client@0.2.0 already published — skipping"
           else
             cargo publish -p plana-rpc-client --locked
@@ -60,7 +60,7 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-tauri" | grep -q '"max_version": "0.1.20"'; then
+          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-tauri" | grep -q '"max_version":"0.1.20"'; then
             echo "plana-tauri@0.1.20 already published — skipping"
           else
             # --no-verify: the default bridge feature pulls the GTK/WebKit
@@ -74,7 +74,7 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-celestia-types" | grep -q '"max_version": "0.1.0"'; then
+          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-celestia-types" | grep -q '"max_version":"0.1.0"'; then
             echo "plana-celestia-types@0.1.0 already published — skipping"
           else
             cargo publish -p plana-celestia-types --locked
