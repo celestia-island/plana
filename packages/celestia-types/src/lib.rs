@@ -17,7 +17,7 @@
 //! Anything else stays out.
 //!
 //! > **Migration note:** the `tracing-helpers` feature that previously lived
-//! > in this crate has moved to `plana-protocol-core` (`plana_protocol_core::tracing_helpers`,
+//! > in this crate has moved to `plana-protocol-core` (`plana::protocol_core::tracing_helpers`,
 //! > feature `tracing-helpers`), forwarded by the `plana` umbrella as
 //! > `plana::tracing_helpers`. Consumers enabling `tracing-helpers` on this
 //! > crate's old versions should enable it on `plana` or `plana-protocol-core`.
@@ -56,7 +56,7 @@ pub const DEFAULT_REPORT_TYPE: &str = "general";
 /// root to the generic HTTP type, shadowing the unrelated supervision
 /// `malkuth::HealthResponse` (reachable at
 /// `plana::celestia::malkuth::HealthResponse`).
-pub use plana_protocol_core::http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
+pub use plana::protocol_core::http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
 
 /// Serde default helper for `bool` fields that default to `true`.
 pub(crate) fn default_true() -> bool {
@@ -526,7 +526,7 @@ pub use protocol::base_messages::*;
 pub use protocol::handshake::*;
 // The platform-specific JSON-RPC error codes stay reachable at the crate
 // root (`plana_celestia_types::jsonrpc::error_codes`) as a re-export of the
-// single canonical definition in plana-jsonrpc (`plana_jsonrpc::types`),
+// single canonical definition in plana-jsonrpc (`plana::jsonrpc::types`),
 // which the umbrella re-exports as `plana::jsonrpc`.
 pub use protocol::jsonrpc;
 

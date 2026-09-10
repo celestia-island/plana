@@ -13,7 +13,9 @@
 //! - a `has_point` relation from the station to each point.
 
 use chrono::{DateTime, Utc};
-use plana::ws::services::industrial::{IndustrialSensorReading, IndustrialTelemetryBatch};
+use plana_celestia_types::ws::services::industrial::{
+    IndustrialSensorReading, IndustrialTelemetryBatch,
+};
 
 use crate::store::WorldStateStore;
 use crate::types::{AttributeValue, EntityId, EntityKind, Quality, WorldEntity, WorldRelation};
@@ -141,7 +143,7 @@ pub fn apply_telemetry_batch(store: &WorldStateStore, batch: &IndustrialTelemetr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use plana::ws::services::industrial::IndustrialSensorReading;
+    use plana_celestia_types::ws::services::industrial::IndustrialSensorReading;
 
     fn reading(name: &str, value: f64, quality: &str, ts: &str) -> IndustrialSensorReading {
         IndustrialSensorReading {

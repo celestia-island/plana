@@ -1,11 +1,11 @@
 [package]
 name = "plana"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
 license-file = "LICENSE"
-description = "PLANA (Protocol for Live Agent Network Automation) - a typed application-layer protocol for real-time state synchronization and control between a client shell and a backend service runtime, built on JSON-RPC 2.0. Not a general-purpose RPC framework."
+description = "PLANA protocol foundation: the canonical JSON-RPC 2.0 wire layer (unix-socket / HTTP / WS bindings, typed method routing) merged with the generic protocol core (handshake, identity, RBAC, regions, health descriptors) — the base every plana-rpc-* and domain-profile crate builds on."
 repository = "https://github.com/celestia-island/plana"
 keywords = ["json-rpc", "protocol", "websocket", "unix-socket", "typescript"]
 categories = ["api-bindings", "data-structures", "web-programming::websocket", "network-programming"]
@@ -16,42 +16,50 @@ exclude = ["bindings"]
 workspace = true
 
 [features]
-default = ["celestia"]
-# The celestia-island platform domain profile (plana-celestia-types). PLANA is a
-# general protocol; the celestia platform is its primary consumer, so its domain
-# types ship by default and can be disabled for other uses.
-celestia = ["dep:plana-celestia-types"]
-# No-op compatibility feature: plana-jsonrpc is an always-on dependency, so the
-# former `jsonrpc` feature gate no longer controls anything. Kept so consumers
-# that declare `features = ["jsonrpc"]` (shittim-chest, evernight) keep
-# resolving after the re-pin.
+default = []
+# No-op compatibility features from the umbrella era: pins declaring
+# `features = ["jsonrpc"]` / `["celestia"]` keep resolving. The celestia
+# domain types are a direct `plana-celestia-types` dependency now.
 jsonrpc = []
-rpc-server = ["dep:axum", "dep:tokio", "dep:maxminddb", "dep:uuid", "dep:tracing"]
-# Forwards the plana-protocol-core tracing-helpers feature: exposes
-# `plana::tracing_helpers` (ShortTimer). Not enabled by default.
-tracing-helpers = ["plana-protocol-core/tracing-helpers"]
+celestia = []
+# The umbrella's own axum mounting module (geo descriptors + SSE lanes).
+rpc-server = ["dep:maxminddb"]
+# ShortTimer formatting for `tracing-subscriber` (`plana::tracing_helpers`).
+tracing-helpers = ["dep:chrono", "dep:tracing-subscriber"]
 
 [dependencies]
-
-plana-celestia-types = { version = "0.1.0", path = "../celestia-types", optional = true }
-plana-evernight-client = { version = "0.1.0", path = "../evernight-client" }
-plana-jsonrpc = { version = "0.1.0", path = "../jsonrpc" }
-plana-protocol-core = { version = "0.2.0", path = "../protocol-core" }
-
-# ── rpc-server module (rpc-server feature) ────────────────────
-axum = { workspace = true, optional = true }
+# ── absorbed from plana-jsonrpc ─────────────────────────────────
+anyhow = { workspace = true }
+axum = { workspace = true }
+futures = { workspace = true }
+interprocess = { workspace = true }
+paste = { version = "1" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+# ── absorbed from plana-protocol-core ───────────────────────────
+hex = { workspace = true }
+schemars = { workspace = true }
+sha2 = { workspace = true }
+ts-rs = { workspace = true }
+# tracing-helpers feature
+chrono = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+# ── rpc-server module (rpc-server feature) ─────────────────────
 maxminddb = { version = "^0", optional = true }
-tokio = { workspace = true, optional = true }
-tracing = { workspace = true, optional = true }
-uuid = { workspace = true, optional = true }
 
 [dev-dependencies]
-
 anyhow.workspace = true
 criterion = "^0.5"
 futures.workspace = true
 serde_json.workspace = true
 strum.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
 
 [[bench]]
 name = "jsonrpc_bench"

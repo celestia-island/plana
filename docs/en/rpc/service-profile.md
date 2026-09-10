@@ -17,7 +17,7 @@ connection.
 ## 1. Envelope
 
 - The envelope is JSON-RPC 2.0 as canonically defined in
-  `plana-jsonrpc` (`packages/jsonrpc/src/types.rs`) — the single canonical
+  `plana::jsonrpc` (`packages/plana/src/jsonrpc/types.rs`) — the single canonical
   definition across the fleet. `"jsonrpc": "2.0"` is required on every
   frame.
 - One JSON object per WebSocket **text** frame. Binary frames are a
@@ -93,7 +93,7 @@ for new service surfaces. The only reserved notification names are
 ## 7. Error codes
 
 Standard JSON-RPC (`-32700/-32600/-32601/-32602/-32603`) and the plana
-fleet extension codes (`plana-jsonrpc::error_codes`, notably `-32005`
+fleet extension codes (`plana::jsonrpc::error_codes`, notably `-32005`
 AUTH_ERROR). This profile adds:
 
 | Code | Meaning |

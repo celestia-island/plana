@@ -7,7 +7,7 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::{mpsc, oneshot};
 
 use axum::extract::ws::{CloseFrame, Message, WebSocket};
-use plana_jsonrpc::{Id, JsonRpcError, JsonRpcNotification, JsonRpcResponse, JSONRPC_VERSION};
+use plana::jsonrpc::{Id, JsonRpcError, JsonRpcNotification, JsonRpcResponse, JSONRPC_VERSION};
 
 use crate::auth::AuthContext;
 use crate::close_codes;
@@ -174,11 +174,11 @@ async fn handle_text(
         return;
     }
 
-    match serde_json::from_value::<plana_jsonrpc::JsonRpcMessage>(value) {
-        Ok(plana_jsonrpc::JsonRpcMessage::Request(req)) => {
+    match serde_json::from_value::<plana::jsonrpc::JsonRpcMessage>(value) {
+        Ok(plana::jsonrpc::JsonRpcMessage::Request(req)) => {
             dispatch_request(req, server, conn_auth, outbound, data_tx).await;
         }
-        Ok(plana_jsonrpc::JsonRpcMessage::Notification(notif)) => {
+        Ok(plana::jsonrpc::JsonRpcMessage::Notification(notif)) => {
             if server.config.heartbeat && notif.method == close_codes::HEARTBEAT_METHOD {
                 let ack = JsonRpcNotification {
                     jsonrpc: JSONRPC_VERSION.to_string(),
@@ -193,7 +193,7 @@ async fn handle_text(
                 tracing::debug!(method = %notif.method, "dropping client notification");
             }
         }
-        Ok(plana_jsonrpc::JsonRpcMessage::Response(_)) => {
+        Ok(plana::jsonrpc::JsonRpcMessage::Response(_)) => {
             tracing::warn!("client sent a JSON-RPC response frame; ignored");
         }
         Err(_) => {
@@ -207,7 +207,7 @@ async fn handle_text(
 }
 
 async fn dispatch_request(
-    req: plana_jsonrpc::JsonRpcRequest,
+    req: plana::jsonrpc::JsonRpcRequest,
     server: &Arc<RpcServer>,
     conn_auth: &AuthContext,
     outbound: &OutboundHandle,

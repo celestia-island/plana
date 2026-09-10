@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use tokio::net::TcpListener;
 use tokio_tungstenite::tungstenite::Message;
 
-use plana_jsonrpc::error_codes;
+use plana::jsonrpc::error_codes;
 use plana_rpc_client::{post_rpc, ConnectionState, RpcClient, RpcClientConfig, RpcError};
 use plana_rpc_server::{RpcServer, RpcServerConfig};
 
@@ -120,7 +120,7 @@ async fn server_notifications_reach_subscribers() {
             ctx.outbound
                 .notify("watch.event", json!({"tick": 7}))
                 .await
-                .map_err(|_| plana_jsonrpc::JsonRpcError::internal_error("client gone"))?;
+                .map_err(|_| plana::jsonrpc::JsonRpcError::internal_error("client gone"))?;
             Ok(json!({"ok": true}))
         })
         .build();

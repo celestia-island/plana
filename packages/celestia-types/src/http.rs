@@ -1,4 +1,4 @@
-use plana_protocol_core::http::RbacGroup;
+use plana::protocol_core::http::RbacGroup;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

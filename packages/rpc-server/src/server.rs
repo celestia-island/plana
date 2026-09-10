@@ -14,14 +14,14 @@ use axum::{Json, Router};
 use serde_json::Value;
 use tokio::sync::Semaphore;
 
-use plana_jsonrpc::{Id, JsonRpcError, JsonRpcMessage, JsonRpcResponse};
+use plana::jsonrpc::{Id, JsonRpcError, JsonRpcMessage, JsonRpcResponse};
 
 use crate::auth::{AuthContext, ConnectionAuthFn, RequestGuardFn};
 use crate::config::RpcServerConfig;
 use crate::connection::{self, OutboundHandle};
 
 /// Extension error codes of the service profile (beyond JSON-RPC standard
-/// and the plana fleet codes in `plana_jsonrpc::error_codes`).
+/// and the plana fleet codes in `plana::jsonrpc::error_codes`).
 pub mod ext_error_codes {
     /// Admission refused: connection cap reached (HTTP 429 body).
     pub const SERVICE_BUSY: i64 = -32050;
@@ -211,7 +211,7 @@ async fn ws_endpoint(
 }
 
 /// HTTP POST fallback on the same method map. Parity with
-/// `plana_jsonrpc::rpc_router`: app-level failures are HTTP 200 with a
+/// `plana::jsonrpc::rpc_router`: app-level failures are HTTP 200 with a
 /// JSON-RPC error body; only unparseable bodies yield HTTP 400.
 async fn post_endpoint(
     State(server): State<Arc<RpcServer>>,

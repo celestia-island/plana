@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use plana_jsonrpc::{Id, JsonRpcRequest, JsonRpcResponse, JSONRPC_VERSION};
+use plana::jsonrpc::{Id, JsonRpcRequest, JsonRpcResponse, JSONRPC_VERSION};
 
 use crate::RpcError;
 

@@ -19,6 +19,7 @@ _domain_agent = { workspace = true }
 _text = { workspace = true }
 chrono.workspace = true
 plana.workspace = true
+plana-celestia-types.workspace = true
 regex.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

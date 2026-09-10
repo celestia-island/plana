@@ -40,10 +40,7 @@ pub type EdgeListener = Arc<dyn Fn(&str, Option<&Value>) + Send + Sync>;
 pub trait EdgeTransport: Send + Sync {
     fn call(&self, frame: EdgeFrame) -> BoxFuture<'_, Result<Value, BridgeError>>;
     /// Subscribe to notifications; returns an unsubscribe.
-    fn listen(
-        &self,
-        handler: EdgeListener,
-    ) -> BoxFuture<'_, Box<dyn FnOnce() + Send>>;
+    fn listen(&self, handler: EdgeListener) -> BoxFuture<'_, Box<dyn FnOnce() + Send>>;
 }
 
 /// In-process edge channel: the far end is dispatched inline. The test

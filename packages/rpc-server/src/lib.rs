@@ -1,7 +1,7 @@
 //! Production-grade strict WebSocket JSON-RPC 2.0 server for the PLANA
 //! service profile.
 //!
-//! This crate turns the minimal [`plana_jsonrpc::rpc_router`] skeleton into
+//! This crate turns the minimal [`plana::jsonrpc::rpc_router`] skeleton into
 //! the server shape the celestia fleet has converged on (evernight host
 //! agent `/ws`, shittim-chest WS bridge hardening):
 //!

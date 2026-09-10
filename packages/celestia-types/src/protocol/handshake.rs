@@ -5,7 +5,7 @@
 //! in `plana-protocol-core`; this module carries the client-capability
 //! vocabulary and the concrete connection payload that references it.
 
-use plana_protocol_core::protocol::handshake::HANDSHAKE_VERSION;
+use plana::protocol_core::protocol::handshake::HANDSHAKE_VERSION;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;

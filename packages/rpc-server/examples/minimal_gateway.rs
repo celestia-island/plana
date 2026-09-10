@@ -14,7 +14,7 @@ use std::time::Duration;
 use serde_json::{json, Value};
 use tokio::sync::Mutex;
 
-use plana_jsonrpc::JsonRpcError;
+use plana::jsonrpc::JsonRpcError;
 use plana_rpc_server::{RpcServer, RpcServerConfig};
 
 /// Per-connection identity produced by the auth hook.

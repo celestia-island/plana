@@ -7,7 +7,7 @@
 //! and the structured `target_out_of_scope` reason, before any transport
 //! call and without emitting broker traffic (spec §4.2).
 
-use plana_jsonrpc::error_codes;
+use plana::jsonrpc::error_codes;
 use serde::{Deserialize, Serialize};
 
 use crate::classify::{ClassifiedError, ErrorKind};

@@ -10,7 +10,7 @@ use futures::{SinkExt, StreamExt};
 use tokio::net::TcpListener;
 use tokio_tungstenite::tungstenite::Message;
 
-use plana_jsonrpc::error_codes;
+use plana::jsonrpc::error_codes;
 use plana_rpc_server::{RpcServer, RpcServerConfig};
 
 use serde_json::{json, Value};
@@ -68,7 +68,7 @@ fn base_server() -> RpcServer {
         })
         .method("echo", |params: Value| async move { Ok(params) })
         .method("fail.invalid_params", |_params: Value| async move {
-            Err(plana_jsonrpc::JsonRpcError::invalid_params("bad input"))
+            Err(plana::jsonrpc::JsonRpcError::invalid_params("bad input"))
         })
         .build()
 }
@@ -299,7 +299,7 @@ async fn auth_denial_refuses_the_upgrade_with_http_401() {
     let server = RpcServer::builder()
         .auth(
             |_headers: &axum::http::HeaderMap, _uri: &axum::http::Uri| async move {
-                Err(plana_jsonrpc::JsonRpcError::new(
+                Err(plana::jsonrpc::JsonRpcError::new(
                     error_codes::AUTH_ERROR,
                     "invalid connection token",
                 ))
@@ -325,7 +325,7 @@ async fn request_guard_denial_answers_32005_without_dispatch() {
             let method = method.to_string();
             async move {
                 if method == "privileged.op" {
-                    Err(plana_jsonrpc::JsonRpcError::new(
+                    Err(plana::jsonrpc::JsonRpcError::new(
                         error_codes::AUTH_ERROR,
                         "guard denied",
                     ))
@@ -384,7 +384,7 @@ async fn handler_notifications_reach_the_client() {
             ctx.outbound
                 .notify("watch.event", json!({"tick": 1}))
                 .await
-                .map_err(|_| plana_jsonrpc::JsonRpcError::internal_error("client gone"))?;
+                .map_err(|_| plana::jsonrpc::JsonRpcError::internal_error("client gone"))?;
             Ok(json!({"watching": true}))
         })
         .build();
