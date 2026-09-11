@@ -9,12 +9,17 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::{broadcast, mpsc, oneshot, watch};
 use tokio_tungstenite::tungstenite::Message;
 
+use plana::jsonrpc::deferred::{
+    DeferredOpOutcome, DeferredOpRef, DeferredOpSettledParams, OpsResultParams, OPS_RESULT_METHOD,
+    OPS_SETTLED_METHOD,
+};
 use plana::jsonrpc::{
-    Id, JsonRpcError, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest, JSONRPC_VERSION,
+    error_codes, Id, JsonRpcError, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest,
+    JSONRPC_VERSION,
 };
 
 use crate::close_codes::HEARTBEAT_METHOD;
-use crate::{ConnectionState, RpcError};
+use crate::{ConnectionState, DeferredOpError, RpcError};
 
 /// Tuning knobs; defaults mirror the TS client (15s heartbeat, 30s call
 /// timeout, 1.5x reconnect backoff capped at 30s).
@@ -39,6 +44,16 @@ pub struct RpcClientConfig {
     /// attempts the client enters [`ConnectionState::Failed`] and calls
     /// fail fast until a new client is built.
     pub max_reconnect_attempts: Option<u32>,
+    /// First delay between `ops.result` polls in [`RpcClient::await_op`]
+    /// (default 500ms); grows by `op_poll_factor` up to `op_poll_max`.
+    ///
+    /// The cadence only bounds the **fallback** path: the helper wakes
+    /// immediately on the advisory `ops.settled` notification, so polling is
+    /// what happens when a notification was missed (connection cycled,
+    /// op begun on another connection, HTTP transport).
+    pub op_poll_initial: Duration,
+    pub op_poll_factor: f64,
+    pub op_poll_max: Duration,
 }
 
 impl Default for RpcClientConfig {
@@ -53,6 +68,9 @@ impl Default for RpcClientConfig {
             reconnect_factor: 1.5,
             reconnect_max: Duration::from_secs(30),
             max_reconnect_attempts: None,
+            op_poll_initial: Duration::from_millis(500),
+            op_poll_factor: 1.5,
+            op_poll_max: Duration::from_secs(5),
         }
     }
 }
@@ -214,6 +232,113 @@ impl RpcClient {
     /// observes the reconnect cycle).
     pub fn force_reconnect(&self) {
         let _ = self.inner.cmd_tx.try_send(Cmd::ForceReconnect);
+    }
+
+    /// Await the outcome of a deferred operation (`op_id` from a
+    /// deferred-capable handler's immediate answer).
+    ///
+    /// Collection is notification-first with a polling fallback: the helper
+    /// subscribes to `ops.settled` and wakes as soon as the server announces
+    /// this id, and otherwise polls `ops.result` on the configured cadence
+    /// (never a busy loop). Every poll is the **authoritative** read — the
+    /// notification only says an operation settled, never what it produced.
+    ///
+    /// - `deadline` bounds the whole wait; exceeding it answers
+    ///   [`DeferredOpError::Deadline`]. A poll that would overrun the
+    ///   deadline is cut short (its late response, if any, is discarded by
+    ///   the client), so the caller is never kept waiting past it.
+    /// - Transport failures (a reconnect cycling the connection, a dropped
+    ///   call) are retried until the deadline: a client that reconnects
+    ///   inside the op's validity window still collects the outcome, which is
+    ///   the whole point of a deferred operation.
+    /// - `-32052`/`-32053` (unknown / expired id) are terminal and answer
+    ///   [`DeferredOpError::Unknown`] / [`DeferredOpError::Expired`].
+    /// - A pending operation is never returned: the call resolves only with
+    ///   an outcome that has settled (or fails).
+    pub async fn await_op(
+        &self,
+        op_id: &DeferredOpRef,
+        deadline: Duration,
+    ) -> Result<DeferredOpOutcome, DeferredOpError> {
+        let end = tokio::time::Instant::now() + deadline;
+        let mut notifications = self.subscribe();
+        let mut delay = self.inner.config.op_poll_initial;
+
+        loop {
+            let remaining = end.saturating_duration_since(tokio::time::Instant::now());
+            if remaining.is_zero() {
+                return Err(DeferredOpError::Deadline(deadline));
+            }
+
+            match tokio::time::timeout(remaining, self.collect_op(op_id)).await {
+                // The deadline elapsed while the call was in flight.
+                Err(_) => return Err(DeferredOpError::Deadline(deadline)),
+                Ok(Ok(outcome)) if outcome.is_settled() => return Ok(outcome),
+                // Still pending: wait out the poll cadence (or wake on the
+                // advisory notification for this id).
+                Ok(Ok(_pending)) => {}
+                Ok(Err(err)) => match err {
+                    DeferredOpError::Unknown | DeferredOpError::Expired => return Err(err),
+                    // Transport trouble: keep trying until the deadline, the
+                    // op itself is still alive on the server.
+                    DeferredOpError::Rpc(RpcError::Closed)
+                    | DeferredOpError::Rpc(RpcError::Timeout(_))
+                    | DeferredOpError::Rpc(RpcError::Transport(_)) => {}
+                    // The server answered a real error (guard denial, method
+                    // gone, …): retrying cannot help.
+                    other => return Err(other),
+                },
+            }
+
+            let remaining = end.saturating_duration_since(tokio::time::Instant::now());
+            if remaining.is_zero() {
+                return Err(DeferredOpError::Deadline(deadline));
+            }
+            let wait = delay.min(remaining);
+            let _ = tokio::time::timeout(wait, async {
+                loop {
+                    match notifications.recv().await {
+                        Ok(value) if announces_settlement(&value, op_id) => break,
+                        Ok(_) => continue,
+                        Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                        Err(broadcast::error::RecvError::Closed) => break,
+                    }
+                }
+            })
+            .await;
+
+            delay = scale_backoff(
+                delay,
+                self.inner.config.op_poll_factor,
+                self.inner.config.op_poll_max,
+            );
+        }
+    }
+
+    /// One authoritative `ops.result` read.
+    async fn collect_op(
+        &self,
+        op_id: &DeferredOpRef,
+    ) -> Result<DeferredOpOutcome, DeferredOpError> {
+        let params = serde_json::to_value(OpsResultParams {
+            op_id: op_id.clone(),
+        })
+        .map_err(|e| DeferredOpError::Rpc(RpcError::Transport(e.to_string())))?;
+
+        match self.call(OPS_RESULT_METHOD, params).await {
+            Ok(value) => serde_json::from_value(value).map_err(|e| {
+                DeferredOpError::Rpc(RpcError::Transport(format!(
+                    "ops.result answered an unparseable outcome: {e}"
+                )))
+            }),
+            Err(RpcError::Rpc { code, .. }) if code == error_codes::OPS_UNKNOWN => {
+                Err(DeferredOpError::Unknown)
+            }
+            Err(RpcError::Rpc { code, .. }) if code == error_codes::OPS_EXPIRED => {
+                Err(DeferredOpError::Expired)
+            }
+            Err(err) => Err(DeferredOpError::Rpc(err)),
+        }
     }
 
     async fn send_and_wait(&self, frame: String, id: Id) -> Result<serde_json::Value, RpcError> {
@@ -496,4 +621,19 @@ fn scale_backoff(current: Duration, factor: f64, max: Duration) -> Duration {
     } else {
         next
     }
+}
+
+/// Whether a server-initiated notification is the advisory `ops.settled`
+/// announcement for `op_id`.
+fn announces_settlement(value: &serde_json::Value, op_id: &DeferredOpRef) -> bool {
+    let Ok(notification) = serde_json::from_value::<JsonRpcNotification>(value.clone()) else {
+        return false;
+    };
+    if notification.method != OPS_SETTLED_METHOD {
+        return false;
+    }
+    notification
+        .params
+        .and_then(|params| serde_json::from_value::<DeferredOpSettledParams>(params).ok())
+        .is_some_and(|params| params.op_id == *op_id)
 }

@@ -6,6 +6,8 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use futures::FutureExt;
+
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode, Uri};
 use axum::response::{IntoResponse, Response};
@@ -14,11 +16,15 @@ use axum::{Json, Router};
 use serde_json::Value;
 use tokio::sync::Semaphore;
 
+use plana::jsonrpc::deferred::{
+    DeferredOpCreated, OpsCancelParams, OpsResultParams, OPS_CANCEL_METHOD, OPS_RESULT_METHOD,
+};
 use plana::jsonrpc::{Id, JsonRpcError, JsonRpcMessage, JsonRpcResponse};
 
 use crate::auth::{AuthContext, ConnectionAuthFn, RequestGuardFn};
 use crate::config::RpcServerConfig;
 use crate::connection::{self, OutboundHandle};
+use crate::deferred::{DeferredOps, DeferredOpsError, OpHandle};
 
 /// Extension error codes of the service profile (beyond JSON-RPC standard
 /// and the plana fleet codes in `plana::jsonrpc::error_codes`).
@@ -48,6 +54,11 @@ pub struct RpcRequestCtx {
     /// Push notifications to this client on the data lane. Always fails on
     /// the HTTP POST fallback transport.
     pub outbound: OutboundHandle,
+    /// The server-global deferred-operation registry. Use
+    /// [`RpcRequestCtx::defer`] (or [`RpcRequestCtx::begin_deferred`]) when
+    /// this method's upstream can outlive the dispatch stall limit; collect
+    /// paths are served by the built-in `ops.result` / `ops.cancel` methods.
+    pub deferred: DeferredOps,
 }
 
 impl RpcRequestCtx {
@@ -55,6 +66,88 @@ impl RpcRequestCtx {
     /// server's auth hook produced.
     pub fn auth<T: Send + Sync + 'static>(&self) -> Option<&T> {
         self.auth.downcast_ref::<T>()
+    }
+
+    /// Adopt a deferred operation for this request, bound to this
+    /// connection for the best-effort settlement notification.
+    ///
+    /// Returns the immediate answer (op id + remaining validity) together
+    /// with the worker's settle handle. Prefer [`RpcRequestCtx::defer`] when
+    /// the work is a single future: it enforces that every started
+    /// operation is settled.
+    pub fn begin_deferred(&self) -> Result<(DeferredOpCreated, OpHandle), DeferredOpsError> {
+        self.deferred.begin(&self.method, self.outbound.clone())
+    }
+
+    /// Run `work` off the dispatch path and answer this request immediately
+    /// with the deferred op reference.
+    ///
+    /// The dispatch returns as soon as the operation is registered — the
+    /// stall watchdog can no longer cancel the upstream call, so a
+    /// state-changing operation cannot complete after its caller was told
+    /// the request stalled. When `work` resolves, the framework settles the
+    /// operation with its `Ok`/`Err` and notifies the originating connection
+    /// best-effort.
+    ///
+    /// Requires a tokio runtime (dispatch always runs inside one).
+    ///
+    /// ```
+    /// # use plana_rpc_server::{RpcRequestCtx, RpcServer};
+    /// # use serde_json::json;
+    /// let server = RpcServer::builder()
+    ///     .method_ctx("payment.submit", |ctx: RpcRequestCtx| async move {
+    ///         ctx.defer(|handle| async move {
+    ///             // Minutes of upstream work, including cancellations the
+    ///             // caller may request through `ops.cancel`.
+    ///             assert!(!handle.cancel_requested());
+    ///             Ok(json!({"settled": true}))
+    ///         })
+    ///     })
+    ///     .build();
+    /// # let _ = server;
+    /// ```
+    pub fn defer<F, Fut>(&self, work: F) -> Result<Value, JsonRpcError>
+    where
+        F: FnOnce(OpHandle) -> Fut + Send + 'static,
+        Fut: Future<Output = Result<Value, JsonRpcError>> + Send + 'static,
+    {
+        let (created, handle) = self.begin_deferred()?;
+        let settle = handle.clone();
+        tokio::spawn(async move {
+            // A panicking worker must still leave the client an answer to
+            // collect: without this, a deferred operation whose upstream
+            // panicked would sit pending until its window elapsed and the
+            // caller would never learn why (the upstream may already have
+            // been paid for). The panic is caught, reported as the op's
+            // error, and never propagates into the runtime's task failure.
+            let outcome = std::panic::AssertUnwindSafe(work(handle))
+                .catch_unwind()
+                .await;
+            let settled = match outcome {
+                Ok(Ok(value)) => settle.complete(value).await,
+                Ok(Err(err)) => settle.fail(err).await,
+                Err(_panic) => {
+                    settle
+                        .fail(JsonRpcError::internal_error(
+                            "deferred worker panicked; the operation was abandoned",
+                        ))
+                        .await
+                }
+            };
+            if let Err(err) = settled {
+                // The window elapsed, or the op was already settled; either
+                // way the client has an authoritative answer to collect (or
+                // none, because the window is over). Never a panic, never a
+                // blocked dispatch.
+                tracing::debug!(
+                    op_id = settle.op_id(),
+                    error = %err,
+                    "deferred settlement was not retained"
+                );
+            }
+        });
+        serde_json::to_value(created)
+            .map_err(|e| JsonRpcError::internal_error(&format!("deferred op answer: {e}")))
     }
 }
 
@@ -123,6 +216,10 @@ impl RpcServerBuilder {
     }
 
     /// Register a full-context handler.
+    ///
+    /// A handler registered under [`OPS_RESULT_METHOD`] or
+    /// [`OPS_CANCEL_METHOD`] replaces the framework's built-in collection
+    /// handler of that name (the deferred registry itself is unaffected).
     pub fn method_ctx<F, Fut>(mut self, name: &str, handler: F) -> Self
     where
         F: Fn(RpcRequestCtx) -> Fut + Send + Sync + 'static,
@@ -137,14 +234,63 @@ impl RpcServerBuilder {
 
     pub fn build(self) -> RpcServer {
         let max = self.config.max_connections.max(1);
+        let deferred = DeferredOps::new(self.config.deferred_ops.clone());
+        let mut methods = self.methods;
+        // Built-in collection surface: every server speaks it, so no service
+        // hand-rolls its own collection method (a service may still override
+        // either name with `method_ctx`, or deny it in the request guard).
+        methods
+            .entry(OPS_RESULT_METHOD.to_string())
+            .or_insert_with(|| {
+                let handler: ServerHandlerFn = Arc::new(ops_result_handler);
+                handler
+            });
+        methods
+            .entry(OPS_CANCEL_METHOD.to_string())
+            .or_insert_with(|| {
+                let handler: ServerHandlerFn = Arc::new(ops_cancel_handler);
+                handler
+            });
         RpcServer {
-            methods: Arc::new(self.methods),
+            methods: Arc::new(methods),
             auth: self.auth,
             guard: self.guard,
             config: self.config,
+            deferred,
             conn_permits: Arc::new(Semaphore::new(max)),
         }
     }
+}
+
+/// Parse a built-in ops method's params, answering `-32602` on a bad shape.
+fn parse_ops_params<T: serde::de::DeserializeOwned>(params: &Value) -> Result<T, JsonRpcError> {
+    serde_json::from_value(params.clone())
+        .map_err(|e| JsonRpcError::invalid_params(&format!("ops params: {e}")))
+}
+
+/// `ops.result {op_id}` — collect a deferred outcome (non-destructively: the
+/// entry stays collectable until its window elapses).
+fn ops_result_handler(
+    ctx: RpcRequestCtx,
+) -> Pin<Box<dyn Future<Output = Result<Value, JsonRpcError>> + Send>> {
+    Box::pin(async move {
+        let params: OpsResultParams = parse_ops_params(&ctx.params)?;
+        let outcome = ctx.deferred.status(&params.op_id)?;
+        serde_json::to_value(outcome)
+            .map_err(|e| JsonRpcError::internal_error(&format!("deferred outcome: {e}")))
+    })
+}
+
+/// `ops.cancel {op_id}` — record a best-effort cancellation request.
+fn ops_cancel_handler(
+    ctx: RpcRequestCtx,
+) -> Pin<Box<dyn Future<Output = Result<Value, JsonRpcError>> + Send>> {
+    Box::pin(async move {
+        let params: OpsCancelParams = parse_ops_params(&ctx.params)?;
+        let result = ctx.deferred.cancel(&params.op_id)?;
+        serde_json::to_value(result)
+            .map_err(|e| JsonRpcError::internal_error(&format!("deferred cancel: {e}")))
+    })
 }
 
 /// A configured strict WS JSON-RPC server. Cheap to clone behind an `Arc`;
@@ -154,12 +300,23 @@ pub struct RpcServer {
     pub(crate) auth: Option<ConnectionAuthFn>,
     pub(crate) guard: Option<RequestGuardFn>,
     pub(crate) config: RpcServerConfig,
+    /// Server-global: shared by every connection, which is what lets a
+    /// client collect an outcome from a different connection than the one
+    /// that began it.
+    pub(crate) deferred: DeferredOps,
     pub(crate) conn_permits: Arc<Semaphore>,
 }
 
 impl RpcServer {
     pub fn builder() -> RpcServerBuilder {
         RpcServerBuilder::new()
+    }
+
+    /// The server-global deferred-operation registry, for instrumentation or
+    /// for settling operations begun outside a dispatch (a supervisor task,
+    /// a provider webhook).
+    pub fn deferred_ops(&self) -> &DeferredOps {
+        &self.deferred
     }
 
     /// Mount the WS upgrade and HTTP POST fallback at `path` (e.g.
@@ -286,6 +443,9 @@ async fn dispatch_http(
         auth: conn_auth,
         // No server-initiated direction on this transport.
         outbound: OutboundHandle::closed(),
+        // The registry is server-global: an op begun over WS is collectable
+        // here, and vice versa.
+        deferred: server.deferred.clone(),
     };
 
     match tokio::time::timeout(server.config.dispatch_stall_limit, handler(ctx)).await {

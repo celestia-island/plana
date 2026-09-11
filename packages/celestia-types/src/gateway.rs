@@ -18,7 +18,7 @@
 //! |---|---|
 //! | [`RescueOpenSessionParams`] / [`RescueSessionOpened`] | `rescue.open_session` |
 //! | [`QuotaState`] | `rescue.quota` (result) |
-//! | [`RescueDiagnoseParams`] / [`RescueDiagnoseResult`] | `rescue.diagnose` |
+//! | [`RescueDiagnoseParams`] / [`RescueDiagnoseResult`] or [`RescueDiagnoseStarted`] | `rescue.diagnose` |
 //! | [`RescueDiagnoseProgressParams`] | `rescue.diagnose.progress` (notification) |
 //! | [`GatewayServiceInfo`] | `gateway.info` |
 //! | [`EnrollmentMintParams`] / [`EnrollmentMinted`] or [`EnrollmentMintParentChained`] | `enrollment.mint` |
@@ -26,6 +26,7 @@
 //! | [`EnrollmentStatus`] | `enrollment.status` (result) |
 //! | [`DeviceBootstrap`] | `device.bootstrap` |
 
+use plana::jsonrpc::deferred::DeferredOpCreated;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -69,9 +70,30 @@ pub struct QuotaState {
 #[ts(export, export_to = "gateway.ts")]
 pub struct RescueDiagnoseParams {
     pub bundle: serde_json::Value,
+    /// Ask for deferred mode (default false = the blocking behaviour).
+    ///
+    /// The diagnostic LLM call has a budget of minutes, which far exceeds
+    /// the service profile's dispatch stall limit (a liveness guard measured
+    /// in seconds — see `plana-rpc-server`'s crate docs). With
+    /// `deferred: true` the call answers immediately with
+    /// [`RescueDiagnoseStarted`] instead of holding the dispatch, and the
+    /// caller collects the [`RescueDiagnoseResult`] through the built-in
+    /// deferred-op methods (`ops.result {op_id}` / the advisory
+    /// `ops.settled` notification).
+    #[serde(default, skip_serializing_if = "crate::is_false")]
+    pub deferred: bool,
 }
 
-/// `rescue.diagnose` result.
+/// `rescue.diagnose` result. Exactly one of the two shapes is returned,
+/// selected by [`RescueDiagnoseParams::deferred`]:
+///
+/// - `deferred: false` (default) → a completed diagnosis.
+/// - `deferred: true` → [`RescueDiagnoseStarted`]: the op reference and its
+///   validity window.
+///
+/// A client tells them apart by the presence of `op_id` (the deferred start)
+/// versus `diagnosis` (the completed result); the two shapes share no field
+/// name, so the discrimination is unambiguous.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "gateway.ts")]
 pub struct RescueDiagnoseResult {
@@ -81,6 +103,36 @@ pub struct RescueDiagnoseResult {
     pub model: String,
     /// RFC 3339 timestamp.
     pub generated_at: String,
+}
+
+/// `rescue.diagnose` result when [`RescueDiagnoseParams::deferred`] is set:
+/// the work was handed off, this is what to collect it with.
+///
+/// The shape is the generic deferred-op answer
+/// (`plana::jsonrpc::deferred::DeferredOpCreated`) — declared here as well so
+/// the gateway's published TypeScript bindings carry it without depending on
+/// a generated file outside this package. [`DeferredOpCreated`] remains the
+/// canonical definition; a parity test pins the two to the same wire shape.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "gateway.ts")]
+pub struct RescueDiagnoseStarted {
+    /// Opaque, unguessable deferred-operation reference.
+    pub op_id: String,
+    /// Remaining validity of `op_id` in seconds, measured from creation
+    /// (the 10–30 minute band; the collect call still works after a
+    /// reconnect inside the window).
+    pub expires_in: u64,
+}
+
+impl RescueDiagnoseStarted {
+    /// Adopt the framework's canonical answer, so a gateway handler never
+    /// hand-assembles the two fields.
+    pub fn from_created(created: DeferredOpCreated) -> Self {
+        Self {
+            op_id: created.op_id.to_string(),
+            expires_in: created.expires_in,
+        }
+    }
 }
 
 /// `rescue.diagnose.progress` notification params.
@@ -278,6 +330,81 @@ mod tests {
         assert!(wire.get("session_token").is_none());
         let back: RescueSessionOpened = serde_json::from_value(wire).unwrap();
         assert_eq!(back, opened);
+    }
+
+    #[test]
+    fn diagnose_params_default_to_blocking_and_omit_the_flag() {
+        // Legacy clients keep sending the bare bundle and keep the blocking
+        // behaviour: the flag is additive and off by default.
+        let params: RescueDiagnoseParams = serde_json::from_value(json!({"bundle": {}})).unwrap();
+        assert!(!params.deferred);
+
+        let wire = serde_json::to_value(&params).unwrap();
+        assert_eq!(wire, json!({"bundle": {}}));
+        assert!(wire.get("deferred").is_none());
+    }
+
+    #[test]
+    fn diagnose_deferred_mode_round_trips() {
+        let params: RescueDiagnoseParams =
+            serde_json::from_value(json!({"bundle": {"dmesg": "..."}, "deferred": true})).unwrap();
+        assert!(params.deferred);
+        let wire = serde_json::to_value(&params).unwrap();
+        assert_eq!(wire["deferred"], true);
+
+        let started = RescueDiagnoseStarted {
+            op_id: "01912345-6789-7abc-8def-0123456789ab".into(),
+            expires_in: 1800,
+        };
+        let wire = serde_json::to_value(&started).unwrap();
+        assert_eq!(
+            wire,
+            json!({"op_id": "01912345-6789-7abc-8def-0123456789ab", "expires_in": 1800})
+        );
+        let back: RescueDiagnoseStarted = serde_json::from_value(wire).unwrap();
+        assert_eq!(back, started);
+    }
+
+    #[test]
+    fn diagnose_modes_are_unambiguous_on_the_wire() {
+        // The two result shapes share no field name, so a client can tell a
+        // deferred start from a completed diagnosis without a discriminator.
+        let started = serde_json::to_value(RescueDiagnoseStarted {
+            op_id: "op-1".into(),
+            expires_in: 1800,
+        })
+        .unwrap();
+        let completed = serde_json::to_value(RescueDiagnoseResult {
+            diagnosis: json!({"root_cause": "psu undervoltage"}),
+            model: "deepseek-flash".into(),
+            generated_at: "2026-09-07T10:00:00Z".into(),
+        })
+        .unwrap();
+
+        assert!(started.get("op_id").is_some() && started.get("diagnosis").is_none());
+        assert!(completed.get("diagnosis").is_some() && completed.get("op_id").is_none());
+        assert!(
+            serde_json::from_value::<RescueDiagnoseStarted>(completed).is_err(),
+            "a completed diagnosis is not a deferred start"
+        );
+    }
+
+    #[test]
+    fn diagnose_started_matches_the_generic_deferred_answer() {
+        // Wire-shape parity with the canonical framework type: the gateway
+        // shape must never drift from `plana::jsonrpc::deferred`.
+        let created = DeferredOpCreated {
+            op_id: plana::jsonrpc::deferred::DeferredOpRef::from_wire("op-42"),
+            expires_in: 1800,
+        };
+        let started = RescueDiagnoseStarted::from_created(created.clone());
+        assert_eq!(
+            serde_json::to_value(&started).unwrap(),
+            serde_json::to_value(&created).unwrap(),
+            "RescueDiagnoseStarted must stay shape-identical to DeferredOpCreated"
+        );
+        assert_eq!(started.op_id, created.op_id.as_str());
+        assert_eq!(started.expires_in, created.expires_in);
     }
 
     #[test]

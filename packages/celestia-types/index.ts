@@ -39,6 +39,9 @@ export * from "./bindings/gateway";
 export * from "./bindings/httpTypes";
 export * from "./bindings/mdd";
 export * from "./bindings/model";
+// Deferred-operation wire shapes (vendored snapshot of plana's generated
+// bindings): no name on this file's surface collides with the exports above.
+export * from "./bindings/ops";
 export * from "./bindings/ws/agentLifecycle";
 export * from "./bindings/ws/auth";
 export * from "./bindings/ws/bridgeNetwork";
