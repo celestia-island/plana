@@ -83,6 +83,11 @@ pub struct DeferredOpsConfig {
     /// (default 1024). A `begin` beyond this is refused with `-32054` so
     /// callers see backpressure instead of an op that can never be
     /// collected.
+    ///
+    /// The cap is server-global, with no per-connection accounting: one caller
+    /// can fill it for the length of a window. Per-caller fairness belongs in
+    /// the per-request guard (`RpcServerBuilder::guard`), which sees the
+    /// method being dispatched.
     pub max_pending: usize,
 
     /// Maximum number of **retained** entries, pending plus settled-but-
@@ -90,6 +95,14 @@ pub struct DeferredOpsConfig {
     /// settled entries are evicted first — pending work is never evicted —
     /// so a client that has not collected yet cannot starve the service.
     /// Clamped up to `max_pending`.
+    ///
+    /// This bounds the **entry count**, not the bytes: a settled entry keeps
+    /// whatever `Value` the worker produced until it is collected or the
+    /// window elapses, so the payload size is the service's responsibility.
+    /// Eviction is the one case where a settled outcome can disappear
+    /// **before** its window elapses (the id then answers `-32052`), which is
+    /// the price of a hard bound; raise `max_retained` for services whose
+    /// results are large or whose clients collect slowly.
     pub max_retained: usize,
 }
 
@@ -104,12 +117,28 @@ impl Default for DeferredOpsConfig {
 }
 
 impl DeferredOpsConfig {
-    /// Keep the knobs in a state the registry can honour: a non-zero pending
-    /// cap, and room for every pending op inside the retention cap.
+    /// Lower bound of a usable window: short enough for tests and local
+    /// tuning, long enough that an id is never born dead. A zero window would
+    /// advertise `expires_in = 0` and drop every worker result on arrival.
+    pub const MIN_TTL: Duration = Duration::from_millis(1);
+
+    /// Upper bound of a usable window. The published client-facing band is
+    /// 10–30 minutes; the ceiling exists so a misconfigured "effectively
+    /// infinite" window can neither overflow the deadline computation (which
+    /// runs on the dispatch path) nor lie to clients about validity.
+    pub const MAX_TTL: Duration = Duration::from_secs(24 * 60 * 60);
+
+    /// Keep the knobs in a state the registry can honour: a usable window, a
+    /// non-zero pending cap, and room for every pending op inside the
+    /// retention cap.
+    ///
+    /// A window below the published 10-minute client-facing minimum is a
+    /// deliberate local choice (tests, local tuning), never a client-facing
+    /// contract.
     fn normalized(&self) -> Self {
         let max_pending = self.max_pending.max(1);
         Self {
-            ttl: self.ttl,
+            ttl: self.ttl.clamp(Self::MIN_TTL, Self::MAX_TTL),
             max_pending,
             max_retained: self.max_retained.max(max_pending),
         }
@@ -241,7 +270,9 @@ impl Entry {
 struct Inner {
     config: DeferredOpsConfig,
     entries: Mutex<HashMap<DeferredOpRef, Entry>>,
-    /// Bumped under the entries lock on every settlement.
+    /// Bumped on every settlement before the entries lock is taken; the
+    /// value is stored under that lock, so "oldest settled first" follows the
+    /// order settlements were admitted even when two of them race.
     seq: std::sync::atomic::AtomicU64,
 }
 
@@ -308,7 +339,13 @@ impl DeferredOps {
 
         let now = Instant::now();
         let op_id = DeferredOpRef::new_random();
-        let deadline = now + self.inner.config.ttl;
+        // `checked_add`, not `+`: `begin` runs on the dispatch path, outside
+        // the worker's panic guard, so a misconfigured window must never panic
+        // the dispatch. The fallback is the clamped ceiling rather than "now",
+        // because "now" would hand the caller an id that is already expired.
+        let deadline = now
+            .checked_add(self.inner.config.ttl)
+            .unwrap_or(now + DeferredOpsConfig::MAX_TTL);
 
         {
             let mut entries = self.inner.entries.lock().unwrap();
@@ -632,6 +669,23 @@ mod tests {
 
     #[test]
     fn config_is_normalized_to_what_the_registry_can_honour() {
+        // A zero window would mint ids that are already expired, and an
+        // "infinite" one cannot be turned into a deadline at all.
+        let degenerate = registry(Duration::ZERO, 4, 4);
+        assert_eq!(degenerate.config().ttl, DeferredOpsConfig::MIN_TTL);
+        let absurd = registry(Duration::MAX, 4, 4);
+        assert_eq!(absurd.config().ttl, DeferredOpsConfig::MAX_TTL);
+        let (created, _handle) = begin(&absurd, "payment.submit");
+        assert_eq!(
+            created.expires_in,
+            DeferredOpsConfig::MAX_TTL.as_secs(),
+            "an absurd TTL is clamped, not turned into an already-expired id"
+        );
+        assert_eq!(
+            absurd.status(&created.op_id).unwrap().status,
+            DeferredOpStatus::Pending
+        );
+
         let ops = registry(Duration::from_secs(60), 0, 0);
         assert_eq!(ops.config().max_pending, 1, "a zero pending cap is useless");
         assert_eq!(

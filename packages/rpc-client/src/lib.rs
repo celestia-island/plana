@@ -20,7 +20,8 @@
 //!   any number of subscribers;
 //! - **deferred operations** — [`RpcClient::await_op`] collects the outcome of
 //!   a deferred operation (notification-first, `ops.result` polling as the
-//!   fallback) towards a caller-supplied deadline.
+//!   fallback) towards a caller-supplied deadline. This half is Rust-only for
+//!   now: the published TypeScript client has no equivalent helper yet.
 //!
 //! Transport scope of this first release: plaintext `ws://`. TLS (`wss://`)
 //! and the degraded-transport racing of the TS client are deliberately
@@ -95,8 +96,11 @@ impl From<JsonRpcError> for RpcError {
 /// **same** `op_id` can be collected again later.
 #[derive(Debug, thiserror::Error)]
 pub enum DeferredOpError {
-    /// The server does not know this id: never issued, or evicted after its
-    /// window elapsed (`-32052`).
+    /// The server does not know this id: never issued, or evicted **before**
+    /// its window elapsed by the server's retention cap (`-32052`). Eviction
+    /// is the one case where a settled outcome can vanish early, so a caller
+    /// that receives this after an `ops.settled` announcement should treat the
+    /// payload as lost rather than retry forever.
     #[error("unknown deferred operation")]
     Unknown,
     /// The id was issued and its validity window elapsed before collection
@@ -107,6 +111,11 @@ pub enum DeferredOpError {
     /// collect again with the same id while it is valid.
     #[error("deferred operation not settled within {0:?}")]
     Deadline(std::time::Duration),
+    /// The server answered `ops.result` with a payload this client cannot
+    /// read (version skew, or a service that overrode the method). Permanent:
+    /// retrying the same call cannot help.
+    #[error("ops.result answered an unreadable outcome: {0}")]
+    Protocol(String),
     /// Transport or protocol failure while collecting.
     #[error(transparent)]
     Rpc(#[from] RpcError),

@@ -99,8 +99,8 @@ AUTH_ERROR). This profile adds:
 | Code | Meaning |
 |---|---|
 | `-32050` | connection cap reached (HTTP 429 body) |
-| `-32051` | dispatch exceeded the stall limit and was cancelled |
-| `-32052` | deferred op id is unknown (never issued, or evicted after its window) |
+| `-32051` | reserved: a dedicated code for a cancelled dispatch. The current implementation answers the stall as `-32603` + `data.stalled=true` (see §8), so clients must detect stalls by `data.stalled`, not by this code |
+| `-32052` | deferred op id is unknown: never issued, or evicted by the server's retention cap (`-32052` can therefore arrive **before** the id's window elapses) |
 | `-32053` | deferred op id was issued and its validity window has elapsed |
 | `-32054` | deferred-op registry at capacity (pending cap reached) |
 | `-32055` | a worker honoured `ops.cancel` and abandoned the operation (deferred outcome error) |
@@ -114,8 +114,10 @@ Application errors SHOULD carry a stable machine-readable string in
   upgrades refused with HTTP 429 + `-32050` before the handshake.
 - Frame/message budgets: 1 MiB / 4 MiB by default.
 - A handler running longer than the stall limit (default 8s, below the
-  client's 10s ack window) is **cancelled** and answered with
-  `-32051` + `data.stalled=true`. The late result never reaches the wire.
+  client's 10s ack window) is **cancelled** and answered with a structured
+  stall error — `-32603` + `data.stalled=true` today (`-32051` in the table
+  above is reserved for a dedicated code that no branch emits yet, so detect
+  stalls by `data.stalled`). The late result never reaches the wire.
   ⇒ **Handlers must be cancellation-safe.**
 - **The stall limit is a liveness guard measured in seconds, never an
   upstream budget.** It kills a wedged or runaway dispatch; it does not
@@ -168,7 +170,13 @@ The profile's answer to upstream latency it does not own: a handler answers
   worker died.
 - **Boundness.** A server caps pending operations (`-32054` when the cap is
   reached) and prunes expired entries, so neither the registry nor a
-  disconnected client can grow without limit.
+  disconnected client can grow without limit. Two caveats belong to the
+  contract: the bound is on **entries**, not bytes (a settled outcome keeps its
+  payload until collected or expired), and the cap is **server-global** — a
+  caller that wants per-caller fairness uses the request guard. When the
+  retention cap is reached the oldest settled entries are evicted, which is the
+  one case where an uncollected outcome can vanish before its window elapses
+  (the id then answers `-32052`).
 
 Both methods are served by the framework itself
 (`plana-rpc-server`'s built-in method map) and are available on the WS and
@@ -206,13 +214,17 @@ upgrade refusal 401, guard denial `-32005` without dispatch, HTTP POST
 fallback on the same method map, and handler-pushed notifications.
 
 The deferred-operation contract (§8.1) is covered by
-`packages/rpc-server/tests/deferred.rs` (11 cases: immediate answer under a
-stall limit far below the upstream's duration, collection after settlement and
-after a reconnect, collection from a second connection and over the HTTP
-transport, structured `-32052`/`-32053`, the advisory `ops.settled`
-notification, expiry pruning, `-32054` capacity refusal, and the
-`ops.cancel` flag) plus `RpcClient::await_op`'s own suite in
-`packages/rpc-client/tests/deferred.rs`.
+`packages/rpc-server/tests/deferred.rs` (12 cases: immediate answer under a
+stall limit far below the upstream's duration, repeated collection after
+settlement, collection from a second connection and over the HTTP transport,
+structured `-32052`/`-32053` and `-32602`, the advisory `ops.settled`
+notification, expiry pruning, `-32054` capacity refusal, the `ops.cancel` flag,
+a service overriding the built-in collection method, a panicking worker, and the
+stall guard itself as a negative control) plus `RpcClient::await_op`'s own suite
+in `packages/rpc-client/tests/deferred.rs` (9 cases, including collection
+across a reconnect, a settled failure returned as a value, an unreadable
+`ops.result` reported as a protocol error, an absurd deadline, and a
+degenerate poll cadence that must not become a busy loop).
 
 ## 11. Reference implementations
 

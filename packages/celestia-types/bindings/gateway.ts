@@ -137,16 +137,24 @@ export type QuotaState = { remaining: bigint, limit: bigint, allowed: boolean, }
  */
 export type RescueDiagnoseParams = { bundle: JsonValue, 
 /**
- * Ask for deferred mode (default false = the blocking behaviour).
+ * Ask for deferred mode (default false = the blocking behaviour that
+ * every current deployment serves).
  *
  * The diagnostic LLM call has a budget of minutes, which far exceeds
  * the service profile's dispatch stall limit (a liveness guard measured
- * in seconds — see `plana-rpc-server`'s crate docs). With
- * `deferred: true` the call answers immediately with
+ * in seconds — see `plana-rpc-server`'s crate docs). A server that
+ * implements deferred mode answers `deferred: true` immediately with
  * [`RescueDiagnoseStarted`] instead of holding the dispatch, and the
  * caller collects the [`RescueDiagnoseResult`] through the built-in
  * deferred-op methods (`ops.result {op_id}` / the advisory
  * `ops.settled` notification).
+ *
+ * **Adoption is a follow-up**: the reference gateway still drops this
+ * flag and blocks until the model returns, so a client must not send
+ * `deferred: true` until its target deployment has adopted it (it will
+ * otherwise block, and answer the stall error past the limit). The flag
+ * is defined here so the adoption is mechanical, and it is additive: a
+ * server that ignores it keeps behaving exactly as before.
  */
 deferred?: boolean, };
 

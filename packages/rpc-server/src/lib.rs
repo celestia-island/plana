@@ -45,9 +45,12 @@
 //! - **Any handler whose upstream can exceed the stall limit must answer with
 //!   a deferred operation** — an op ref plus `expires_in`, returned
 //!   immediately — and settle the real outcome later through [`DeferredOps`]
-//!   (`RpcRequestCtx::defer` for the whole pattern in one call). Answering
-//!   `-32051 dispatch stalled` to a caller whose request was actually in
-//!   flight is a protocol failure, not backpressure.
+//!   (`RpcRequestCtx::defer` for the whole pattern in one call). Answering a
+//!   caller with a stall error while its request was actually in flight is a
+//!   protocol failure, not backpressure. (The stall branch currently answers
+//!   `-32603` + `data.stalled=true`; `ext_error_codes::DISPATCH_STALLED`
+//!   reserves a dedicated code that the profile documents but no branch emits
+//!   yet.)
 //! - **Canonical cases**: payment / settlement requests, provider callbacks,
 //!   and LLM calls. Anything metered, billed or otherwise state-changing on
 //!   the upstream is a canonical case *even if it usually returns fast* —

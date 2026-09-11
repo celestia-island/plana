@@ -8,11 +8,15 @@
 
 use std::time::{Duration, Instant};
 
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
 use serde_json::{json, Value};
 use tokio::net::TcpListener;
 use tokio::sync::watch;
 
-use plana::jsonrpc::deferred::DeferredOpRef;
+use plana::jsonrpc::deferred::{DeferredOpRef, OpsResultParams, OPS_RESULT_METHOD};
+use plana::jsonrpc::{error_codes, JsonRpcError};
 use plana_rpc_client::{
     post_rpc, ConnectionState, DeferredOpError, DeferredOpStatus, RpcClient, RpcClientConfig,
 };
@@ -36,9 +40,15 @@ async fn spawn(server: RpcServer) -> (String, String) {
 
 /// A server whose `slow.upstream` defers every call and settles only when the
 /// test releases it. The worker reports the cancellation flag it observed.
-fn deferred_server(ttl: Duration) -> (RpcServer, watch::Sender<bool>) {
+///
+/// `count_collections` swaps in an instrumented `ops.result` that counts the
+/// authoritative reads, which is how the "never a busy loop" claim is tested.
+fn deferred_server(
+    ttl: Duration,
+    count_collections: Option<Arc<AtomicUsize>>,
+) -> (RpcServer, watch::Sender<bool>) {
     let (release, release_rx) = watch::channel(false);
-    let server = RpcServer::builder()
+    let mut builder = RpcServer::builder()
         .config(RpcServerConfig {
             deferred_ops: DeferredOpsConfig {
                 ttl,
@@ -63,8 +73,28 @@ fn deferred_server(ttl: Duration) -> (RpcServer, watch::Sender<bool>) {
                 })
             }
         })
-        .build();
-    (server, release)
+        .method_ctx("failing.upstream", |ctx: RpcRequestCtx| async move {
+            ctx.defer(|_handle| async move {
+                Err(JsonRpcError::new(
+                    error_codes::OPS_CANCELLED,
+                    "upstream refused the request",
+                ))
+            })
+        });
+    if let Some(calls) = count_collections {
+        builder = builder.method_ctx(OPS_RESULT_METHOD, move |ctx: RpcRequestCtx| {
+            let calls = calls.clone();
+            async move {
+                calls.fetch_add(1, Ordering::SeqCst);
+                let params: OpsResultParams = serde_json::from_value(ctx.params)
+                    .map_err(|e| JsonRpcError::invalid_params(&format!("ops params: {e}")))?;
+                let outcome = ctx.deferred.status(&params.op_id)?;
+                serde_json::to_value(outcome)
+                    .map_err(|e| JsonRpcError::internal_error(&e.to_string()))
+            }
+        });
+    }
+    (builder.build(), release)
 }
 
 async fn wait_for_state(client: &RpcClient, want: ConnectionState, within: Duration) {
@@ -98,7 +128,7 @@ fn release_after(release: watch::Sender<bool>, delay: Duration) {
 
 #[tokio::test]
 async fn await_op_resolves_by_the_settle_notification_not_by_polling() {
-    let (server, release) = deferred_server(Duration::from_secs(1800));
+    let (server, release) = deferred_server(Duration::from_secs(1800), None);
     let (url, _http) = spawn(server).await;
 
     // Poll cadence far longer than the deadline: only the advisory
@@ -114,16 +144,29 @@ async fn await_op_resolves_by_the_settle_notification_not_by_polling() {
 
     let answer = client.call(SLOW_METHOD, json!({})).await.unwrap();
     let op = op_from(&answer);
-    release_after(release, Duration::from_millis(250));
+
+    // Drive `await_op` on its own task and release the worker only after the
+    // first (immediate) `ops.result` read has certainly happened — otherwise a
+    // slow start could observe `completed` on that first read and the test
+    // would pass without ever exercising the notification path it names.
+    let awaiting = {
+        let client = client.clone();
+        let op = op.clone();
+        tokio::spawn(async move { client.await_op(&op, Duration::from_secs(3)).await })
+    };
+    tokio::time::sleep(Duration::from_millis(150)).await;
+    assert!(
+        !awaiting.is_finished(),
+        "the operation must still be pending while the worker is held"
+    );
+    release.send_replace(true);
 
     let started = Instant::now();
-    let outcome = tokio::time::timeout(
-        Duration::from_secs(5),
-        client.await_op(&op, Duration::from_secs(3)),
-    )
-    .await
-    .expect("await_op must return before the outer guard")
-    .expect("the operation settles");
+    let outcome = tokio::time::timeout(Duration::from_secs(5), awaiting)
+        .await
+        .expect("await_op must return before the outer guard")
+        .expect("the awaiting task must not panic")
+        .expect("the operation settles");
     let elapsed = started.elapsed();
 
     assert_eq!(outcome.status, DeferredOpStatus::Completed);
@@ -137,7 +180,7 @@ async fn await_op_resolves_by_the_settle_notification_not_by_polling() {
 
 #[tokio::test]
 async fn await_op_polls_when_no_notification_can_arrive_and_survives_a_reconnect() {
-    let (server, release) = deferred_server(Duration::from_secs(1800));
+    let (server, release) = deferred_server(Duration::from_secs(1800), None);
     let (url, http) = spawn(server).await;
 
     let client = RpcClient::builder()
@@ -158,20 +201,29 @@ async fn await_op_polls_when_no_notification_can_arrive_and_survives_a_reconnect
         .unwrap();
     let op = op_from(&answer);
 
-    // Cycle the connection in the middle: the op is server-side state, so it
-    // survives; only the (advisory) notification is lost.
+    // The wait is already in flight when the connection cycles: the operation
+    // is server-side state, so it survives, and the client must keep
+    // collecting across the reconnect (the advisory notification dies with the
+    // old connection).
+    let awaiting = {
+        let client = client.clone();
+        let op = op.clone();
+        tokio::spawn(async move { client.await_op(&op, Duration::from_secs(6)).await })
+    };
+    tokio::time::sleep(Duration::from_millis(100)).await;
     client.force_reconnect();
     wait_for_state(&client, ConnectionState::Connected, Duration::from_secs(5)).await;
+    assert!(
+        !awaiting.is_finished(),
+        "the operation must still be pending across the reconnect"
+    );
+    release.send_replace(true);
 
-    release_after(release, Duration::from_millis(300));
-
-    let outcome = tokio::time::timeout(
-        Duration::from_secs(8),
-        client.await_op(&op, Duration::from_secs(6)),
-    )
-    .await
-    .expect("await_op must return before the outer guard")
-    .expect("polling collects the outcome");
+    let outcome = tokio::time::timeout(Duration::from_secs(8), awaiting)
+        .await
+        .expect("await_op must return before the outer guard")
+        .expect("the awaiting task must not panic")
+        .expect("polling collects the outcome across a reconnect");
 
     assert_eq!(outcome.status, DeferredOpStatus::Completed);
     assert_eq!(outcome.result.unwrap()["completed"], true);
@@ -179,7 +231,7 @@ async fn await_op_polls_when_no_notification_can_arrive_and_survives_a_reconnect
 
 #[tokio::test]
 async fn await_op_honours_the_deadline_without_losing_the_operation() {
-    let (server, release) = deferred_server(Duration::from_secs(1800));
+    let (server, release) = deferred_server(Duration::from_secs(1800), None);
     let (url, _http) = spawn(server).await;
 
     let client = RpcClient::builder()
@@ -227,7 +279,7 @@ async fn await_op_honours_the_deadline_without_losing_the_operation() {
 
 #[tokio::test]
 async fn await_op_reports_unknown_and_expired_ids_terminally() {
-    let (server, _release) = deferred_server(Duration::from_millis(300));
+    let (server, _release) = deferred_server(Duration::from_millis(300), None);
     let (url, _http) = spawn(server).await;
 
     let client = RpcClient::builder()
@@ -263,4 +315,195 @@ async fn await_op_reports_unknown_and_expired_ids_terminally() {
     .expect("await_op must return before the outer guard")
     .expect_err("an expired id has no outcome");
     assert!(matches!(err, DeferredOpError::Expired), "got {err:?}");
+}
+
+/// The "no busy loop" promise must not rest on the caller configuring the
+/// knobs sensibly: a zero initial delay, a zero ceiling and a shrinking factor
+/// are all normalized to a one-millisecond floor.
+#[tokio::test]
+async fn a_degenerate_poll_cadence_still_does_not_busy_loop() {
+    let collected = Arc::new(AtomicUsize::new(0));
+    let (server, _release) = deferred_server(Duration::from_secs(1800), Some(collected.clone()));
+    let (url, _http) = spawn(server).await;
+
+    let client = RpcClient::builder()
+        .url(&url)
+        .config(RpcClientConfig {
+            // Every knob at its most degenerate value.
+            op_poll_initial: Duration::ZERO,
+            op_poll_factor: 0.0,
+            op_poll_max: Duration::ZERO,
+            ..RpcClientConfig::default()
+        })
+        .build();
+
+    let answer = client.call(SLOW_METHOD, json!({})).await.unwrap();
+    let op = op_from(&answer);
+
+    let started = Instant::now();
+    let err = tokio::time::timeout(
+        Duration::from_secs(5),
+        client.await_op(&op, Duration::from_millis(200)),
+    )
+    .await
+    .expect("await_op must honour its own deadline")
+    .expect_err("the never-released operation cannot settle");
+    assert!(matches!(err, DeferredOpError::Deadline(_)), "got {err:?}");
+
+    // With the 10ms floor this is ~20 polls; a scheduler-free spin over the
+    // same 200ms is hundreds (a loopback round trip is well under a
+    // millisecond).
+    let calls = collected.load(Ordering::SeqCst);
+    assert!(
+        calls >= 2,
+        "the fallback path must actually poll, saw {calls}"
+    );
+    assert!(
+        calls <= 60,
+        "polled ops.result {calls} times in {:?}: the cadence must be floored, not a busy loop",
+        started.elapsed()
+    );
+}
+
+/// A NaN growth factor would panic inside `Duration::mul_f64`; normalizing the
+/// knobs must make it harmless.
+#[tokio::test]
+async fn a_nan_poll_factor_does_not_panic() {
+    let (server, _release) = deferred_server(Duration::from_secs(1800), None);
+    let (url, _http) = spawn(server).await;
+
+    let client = RpcClient::builder()
+        .url(&url)
+        .config(RpcClientConfig {
+            op_poll_initial: Duration::from_millis(10),
+            op_poll_factor: f64::NAN,
+            op_poll_max: Duration::from_millis(20),
+            ..RpcClientConfig::default()
+        })
+        .build();
+
+    let answer = client.call(SLOW_METHOD, json!({})).await.unwrap();
+    let op = op_from(&answer);
+
+    let err = tokio::time::timeout(
+        Duration::from_secs(5),
+        client.await_op(&op, Duration::from_millis(120)),
+    )
+    .await
+    .expect("await_op must honour its own deadline")
+    .expect_err("the never-released operation cannot settle");
+    assert!(matches!(err, DeferredOpError::Deadline(_)), "got {err:?}");
+}
+
+/// A settled failure is a value, not a collection error: the caller gets the
+/// worker's error inside the outcome.
+#[tokio::test]
+async fn await_op_returns_a_failed_outcome_as_a_value() {
+    let (server, _release) = deferred_server(Duration::from_secs(1800), None);
+    let (url, _http) = spawn(server).await;
+
+    let client = RpcClient::builder()
+        .url(&url)
+        .config(RpcClientConfig {
+            op_poll_initial: Duration::from_millis(30),
+            op_poll_max: Duration::from_millis(60),
+            ..RpcClientConfig::default()
+        })
+        .build();
+
+    let answer = client.call("failing.upstream", json!({})).await.unwrap();
+    let op = op_from(&answer);
+
+    let outcome = tokio::time::timeout(
+        Duration::from_secs(5),
+        client.await_op(&op, Duration::from_secs(3)),
+    )
+    .await
+    .expect("await_op must return before the outer guard")
+    .expect("a failed operation is still a collected outcome");
+
+    assert_eq!(outcome.status, DeferredOpStatus::Failed);
+    assert!(outcome.result.is_none());
+    let error = outcome.error.expect("the worker's error is carried");
+    assert_eq!(error.code, error_codes::OPS_CANCELLED);
+    assert_eq!(error.message, "upstream refused the request");
+}
+
+/// A deadline that the platform cannot represent (`Duration::MAX` is the
+/// idiomatic "no timeout") must not panic the caller's task.
+#[tokio::test]
+async fn an_absurd_deadline_is_clamped_instead_of_panicking() {
+    let (server, release) = deferred_server(Duration::from_secs(1800), None);
+    let (url, _http) = spawn(server).await;
+
+    let client = RpcClient::builder()
+        .url(&url)
+        .config(RpcClientConfig {
+            op_poll_initial: Duration::from_millis(30),
+            op_poll_max: Duration::from_millis(60),
+            ..RpcClientConfig::default()
+        })
+        .build();
+
+    let answer = client.call(SLOW_METHOD, json!({})).await.unwrap();
+    let op = op_from(&answer);
+    release_after(release, Duration::from_millis(120));
+
+    let outcome = tokio::time::timeout(Duration::from_secs(5), client.await_op(&op, Duration::MAX))
+        .await
+        .expect("await_op must return before the outer guard")
+        .expect("the operation settles");
+    assert_eq!(outcome.status, DeferredOpStatus::Completed);
+}
+
+/// A payload the client cannot read is permanent: it must be reported, not
+/// retried until the caller's deadline and then blamed on the deadline.
+#[tokio::test]
+async fn an_unreadable_ops_result_is_reported_as_a_protocol_error() {
+    // A service that overrides the framework's collection method with an
+    // incompatible shape (the profile allows the override).
+    let server = RpcServer::builder()
+        .config(RpcServerConfig::default())
+        .method_ctx("slow.upstream", |ctx: RpcRequestCtx| async move {
+            ctx.defer(|_handle| async {
+                // Never settles: collection is what is under test here.
+                std::future::pending::<()>().await;
+                Ok(json!(null))
+            })
+        })
+        .method_ctx(OPS_RESULT_METHOD, |_ctx: RpcRequestCtx| async move {
+            Ok(json!({"status": "completed", "unexpected": true}))
+        })
+        .build();
+    let (url, _http) = spawn(server).await;
+
+    let client = RpcClient::builder()
+        .url(&url)
+        .config(RpcClientConfig {
+            op_poll_initial: Duration::from_millis(30),
+            op_poll_max: Duration::from_millis(60),
+            ..RpcClientConfig::default()
+        })
+        .build();
+
+    let answer = client.call("slow.upstream", json!({})).await.unwrap();
+    let op = op_from(&answer);
+
+    let started = Instant::now();
+    let err = tokio::time::timeout(
+        Duration::from_secs(5),
+        client.await_op(&op, Duration::from_secs(30)),
+    )
+    .await
+    .expect("a permanent protocol error must not wait for the deadline")
+    .expect_err("an unreadable shape has no outcome");
+    assert!(
+        matches!(err, DeferredOpError::Protocol(_)),
+        "expected a protocol error, got {err:?}"
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(2),
+        "the caller must hear about version skew immediately, waited {:?}",
+        started.elapsed()
+    );
 }

@@ -13,7 +13,8 @@
 //! settle the real result later. Blocking the dispatch instead has two
 //! failure modes the fleet has actually hit:
 //!
-//! 1. the client is answered `-32051 dispatch stalled`, and
+//! 1. the client is answered a structured stall error (`-32603` with
+//!    `data.stalled=true` today), and
 //! 2. worse, a cancelled *state-changing* dispatch can complete upstream
 //!    after cancellation — money or credits spent with nothing returned.
 //!
@@ -29,8 +30,12 @@
 //!   minutes because the slowest canonical case (a diagnostic LLM call) is
 //!   bounded by minutes, not seconds.
 //! - Collection is **non-destructive**: a settled outcome stays collectable
-//!   until its TTL elapses, because a lost answer frame must never cost the
-//!   caller the work that was already paid for.
+//!   until its TTL elapses — repeatedly — because a lost answer frame must
+//!   never cost the caller the work that was already paid for. The one
+//!   exception is a server under retention pressure: when its entry cap is
+//!   reached it evicts the oldest settled entries, so an uncollected outcome
+//!   can disappear *before* its window elapses and the id then answers
+//!   `-32052` (bounded memory is the trade-off, and the cap is configurable).
 //! - Three methods carry the whole surface, served by the framework so no
 //!   service hand-rolls them: [`OPS_RESULT_METHOD`] (`ops.result`, collect),
 //!   [`OPS_CANCEL_METHOD`] (`ops.cancel`, best-effort cancellation request)
@@ -183,9 +188,11 @@ pub struct DeferredOpOutcome {
     pub cancel_requested: bool,
     /// Present iff `status == completed`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub result: Option<Value>,
     /// Present iff `status == failed`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub error: Option<JsonRpcError>,
 }
 
@@ -265,12 +272,21 @@ mod tests {
         let back: DeferredOpRef = serde_json::from_value(json!(op.as_str())).unwrap();
         assert_eq!(back, op);
 
-        // Random, not sequential: 32 UUID-v4 strings are all distinct.
+        // Random, not sequential: 32 ids are all distinct and every one is a
+        // hyphenated UUID v4 (a counter, a constant or a v7 timestamp would
+        // fail one of these three assertions).
         let ids: std::collections::HashSet<String> = (0..32)
             .map(|_| DeferredOpRef::new_random().to_string())
             .collect();
         assert_eq!(ids.len(), 32);
-        assert_eq!(op.as_str().len(), 36, "uuid v4 hyphenated form");
+        for id in &ids {
+            assert_eq!(id.len(), 36, "uuid v4 hyphenated form: {id}");
+            assert_eq!(
+                id.chars().nth(14),
+                Some('4'),
+                "uuid v4 sets the version nibble: {id}"
+            );
+        }
     }
 
     #[test]

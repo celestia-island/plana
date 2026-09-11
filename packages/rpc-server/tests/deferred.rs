@@ -177,17 +177,14 @@ async fn deferred_handler_answers_immediately_with_an_id() {
     let url = spawn(server, "/api/ws").await;
     let mut ws = connect(&url).await;
 
-    let started = Instant::now();
     let answer = call(&mut ws, "d1", SLOW_METHOD, json!({})).await;
-    let elapsed = started.elapsed();
 
+    // The worker is still held and the stall limit (200ms) is far below how
+    // long a blocking handler would have held the dispatch, so a successful
+    // answer here can only come from having handed the work off.
     assert!(
         answer.get("error").is_none(),
         "a deferred handler must not stall: {answer}"
-    );
-    assert!(
-        elapsed < Duration::from_millis(150),
-        "answer took {elapsed:?}, the dispatch was not handed off"
     );
     let op_id = answer["result"]["op_id"]
         .as_str()
@@ -345,7 +342,10 @@ async fn expiry_prunes_retained_entries() {
         release,
     } = Fixture::new(RpcServerConfig {
         deferred_ops: DeferredOpsConfig {
-            ttl: Duration::from_millis(150),
+            // A one-second window keeps the setup clear of the wall clock: two
+            // round trips cannot expire an entry before the sleep below, on
+            // any machine.
+            ttl: Duration::from_secs(1),
             ..DeferredOpsConfig::default()
         },
         ..test_config()
@@ -357,7 +357,7 @@ async fn expiry_prunes_retained_entries() {
     call(&mut ws, "d7", SLOW_METHOD, json!({})).await;
     assert_eq!(ops.retained_len(), 2);
 
-    tokio::time::sleep(Duration::from_millis(260)).await;
+    tokio::time::sleep(Duration::from_millis(1100)).await;
     // Memory cannot grow without limit: the next begin sweeps what expired.
     call(&mut ws, "d8", SLOW_METHOD, json!({})).await;
     assert_eq!(

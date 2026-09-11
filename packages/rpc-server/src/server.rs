@@ -89,6 +89,13 @@ impl RpcRequestCtx {
     /// operation with its `Ok`/`Err` and notifies the originating connection
     /// best-effort.
     ///
+    /// A worker that returns `Err` settles the operation as `failed` (the
+    /// error is carried in the outcome), and a worker that panics settles it
+    /// as a `-32603` naming the panic — an operation never lingers `pending`
+    /// because its worker died. A worker that *hangs* does hold its registry
+    /// slot until the window elapses (there is no scheduler to kill it),
+    /// which is why the pending cap exists.
+    ///
     /// Requires a tokio runtime (dispatch always runs inside one).
     ///
     /// ```
