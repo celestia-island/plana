@@ -12,8 +12,8 @@
 # the "majority among publishable packages" fallback would tie and resolve by
 # filesystem walk order, which is not stable across machines. Track the
 # rpc-client line as the baseline: it advances with the registry publish wave
-# (currently 0.1.6), while celestia-types is exempted below as its own line.
-npm = "0.1.6"
+# (currently 0.1.7), while celestia-types is exempted below as its own line.
+npm = "0.1.7"
 
 [exempt.cargo]
 "packages/celestia-types" = "independently published line"
