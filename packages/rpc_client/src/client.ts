@@ -565,7 +565,14 @@ export class RpcClient {
             clearTimeout(entry.timer);
             if (data.error) {
               const msg: string = data.error.message || "unknown rpc error";
-              const kind: RpcErrorKind = data.error.code === -32003 ? "forbidden" : "rpc";
+              // Authorization denials only: -32002 is chest's dedicated
+              // admin/workspace-role gate code, -32005 its platform-proxy
+              // grant gate. -32003 is chest's GENERIC internal/upstream
+              // error code — classifying it as "forbidden" (the old
+              // mapping) made upstream faults render as permission
+              // problems in every consumer webui.
+              const kind: RpcErrorKind =
+                data.error.code === -32002 || data.error.code === -32005 ? "forbidden" : "rpc";
               entry.reject(new RpcError(kind, entry.method, msg));
             } else {
               entry.resolve(data.result);
@@ -832,7 +839,10 @@ export class RpcClient {
       const body = await resp.json() as any;
       if (body.error) {
         const msg: string = body.error.message || "unknown rpc error";
-        const kind: RpcErrorKind = body.error.code === -32003 ? "forbidden" : "rpc";
+        // Same classification as the WS path: -32002/-32005 are chest's
+        // authorization-denial codes; -32003 is generic upstream/internal.
+        const kind: RpcErrorKind =
+          body.error.code === -32002 || body.error.code === -32005 ? "forbidden" : "rpc";
         throw new RpcError(kind, method, msg);
       }
       return body.result as T;
