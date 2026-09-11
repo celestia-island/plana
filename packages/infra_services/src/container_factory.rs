@@ -280,7 +280,10 @@ pub async fn create_container_backend(
                 let mgr = cherino_runtime::YoukiManager::new(_data_dir)?;
                 mgr.initialize().await?;
                 if let Err(e) = mgr.reconcile().await {
-                    warn!(
+                    // Fully qualified: `warn` is only used inside this
+                    // `target_os = "linux"` block, so a file-level import
+                    // would be unused elsewhere.
+                    tracing::warn!(
                         "Youki reconcile failed (continuing with empty state): {}",
                         e
                     );

@@ -8,7 +8,13 @@
 //! Mostly compile-only (empty `resolves::<T>()` calls); the small runtime
 //! assertions guard the macro-expansion semantics of a local namespace.
 
-use plana::jsonrpc::{namespace, MessageKind};
+// `namespace!` is `#[macro_export]`ed at the crate root; after the JSON-RPC
+// layer was absorbed into this crate the umbrella path
+// `plana::jsonrpc::namespace` no longer exists (the doc comment in
+// `jsonrpc::pending` predates the absorb), so this external consumer — the
+// exact case that doc comment is about — resolves it from the root.
+use plana::jsonrpc::MessageKind;
+use plana::namespace;
 use strum::{Display, EnumIter, EnumString};
 
 namespace!(
