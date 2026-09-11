@@ -94,8 +94,9 @@ impl RpcRequestCtx {
     ///
     /// A worker that returns `Err` settles the operation as `failed` (the
     /// error is carried in the outcome), and a worker that panics settles it
-    /// as a `-32603` naming the panic — an operation never lingers `pending`
-    /// because its worker died. **The first settlement wins**: a worker that
+    /// as a `-32603` whose fixed message states that the worker panicked (the
+    /// panic payload is deliberately not echoed to the caller) — an operation
+    /// never lingers `pending` because its worker died. **The first settlement wins**: a worker that
     /// settles its own handle has already answered the caller, so the
     /// framework's returned value is discarded (logged at debug level). A worker that *hangs* does hold its registry
     /// slot until the window elapses (there is no scheduler to kill it),

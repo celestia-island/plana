@@ -67,9 +67,11 @@ error?: JsonRpcError, };
 /**
  * Client-facing reference to a deferred operation.
  *
- * Opaque, unguessable and stable for the whole validity window: a client
- * that reconnects (or that hands the id to a different client, e.g. a
- * browser tab resuming a rescue session) can collect with it. Treat it as a
+ * Opaque, unguessable and stable for the whole validity window: the id is
+ * the same string before and after a reconnect, so a client (or a different
+ * client, e.g. a browser tab resuming a rescue session) can collect with it
+ * while the entry is retained — the registry's retention cap can evict a
+ * settled outcome early, the id string itself never changes. Treat it as a
  * bearer value — whoever holds it can read the outcome.
  */
 export type DeferredOpRef = string;

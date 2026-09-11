@@ -168,9 +168,9 @@ The profile's answer to upstream latency it does not own: a handler answers
   that carries the `op_id` (an immediately-settling worker can overtake it), so
   a client must ignore announcements for ids it does not know.
 - **Worker failure is still an answer.** A worker that returns an error or
-  panics settles the operation as `failed` (`-32603` with a message naming
-  the panic); a deferred operation never lingers in `pending` because its
-  worker died.
+  panics settles the operation as `failed` (`-32603`, with a fixed message
+  stating that the worker panicked); a deferred operation never lingers in
+  `pending` because its worker died.
 - **Boundness.** A server caps pending operations (`-32054` when the cap is
   reached) and prunes expired entries, so neither the registry nor a
   disconnected client can grow without limit. Two caveats belong to the
