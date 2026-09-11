@@ -35,6 +35,7 @@
 //! add a third process (e.g. a web frontend) that speaks the same well-typed
 //! JSON-RPC dialect.
 pub mod bridge;
+pub mod deferred;
 pub mod json_keys;
 pub mod pending;
 pub mod rpc_router;
@@ -46,6 +47,12 @@ pub mod unix_transport;
 pub use bridge::{
     core_message_to_method_and_params, deserialize_from_jsonrpc, from_jsonrpc_method,
     serialize_to_jsonrpc, GatewayMethod, UnknownGatewayMethodError,
+};
+pub use deferred::{
+    DeferredOpCreated, DeferredOpOutcome, DeferredOpRef, DeferredOpSettledParams, DeferredOpStatus,
+    OpsCancelParams, OpsCancelResult, OpsResultParams, DEFAULT_CLIENT_TTL_SECS,
+    MAX_CLIENT_TTL_SECS, MIN_CLIENT_TTL_SECS, OPS_CANCEL_METHOD, OPS_RESULT_METHOD,
+    OPS_SETTLED_METHOD,
 };
 pub use json_keys::{
     AuthParamKey, BridgeKey, ContainerCreateParamKey, ContainerForkParamKey, ContainerVolumeKey,

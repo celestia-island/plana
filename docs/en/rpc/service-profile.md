@@ -99,7 +99,11 @@ AUTH_ERROR). This profile adds:
 | Code | Meaning |
 |---|---|
 | `-32050` | connection cap reached (HTTP 429 body) |
-| `-32051` | dispatch exceeded the stall limit and was cancelled |
+| `-32051` | reserved: a dedicated code for a cancelled dispatch. The current implementation answers the stall as `-32603` + `data.stalled=true` (see §8), so clients must detect stalls by `data.stalled`, not by this code |
+| `-32052` | deferred op id is unknown: never issued, or evicted by the server's retention cap (`-32052` can therefore arrive **before** the id's window elapses) |
+| `-32053` | deferred op id was issued and its validity window has elapsed |
+| `-32054` | deferred-op registry at capacity (pending cap reached) |
+| `-32055` | a worker honoured `ops.cancel` and abandoned the operation (deferred outcome error) |
 
 Application errors SHOULD carry a stable machine-readable string in
 `error.data.code` (e.g. `"quota_exhausted"`) alongside the human message.
@@ -110,11 +114,80 @@ Application errors SHOULD carry a stable machine-readable string in
   upgrades refused with HTTP 429 + `-32050` before the handshake.
 - Frame/message budgets: 1 MiB / 4 MiB by default.
 - A handler running longer than the stall limit (default 8s, below the
-  client's 10s ack window) is **cancelled** and answered with
-  `-32051` + `data.stalled=true`. The late result never reaches the wire.
+  client's 10s ack window) is **cancelled** and answered with a structured
+  stall error — `-32603` + `data.stalled=true` today (`-32051` in the table
+  above is reserved for a dedicated code that no branch emits yet, so detect
+  stalls by `data.stalled`). The late result never reaches the wire.
   ⇒ **Handlers must be cancellation-safe.**
+- **The stall limit is a liveness guard measured in seconds, never an
+  upstream budget.** It kills a wedged or runaway dispatch; it does not
+  bound how long an upstream may take, and raising it is not the fix for a
+  slow upstream. Any handler whose upstream can outlive it — payment and
+  settlement requests, provider callbacks, LLM calls, anything metered or
+  state-changing — MUST answer immediately with a deferred op reference
+  (§8.1). A stall during a state-changing dispatch is the worst case of
+  all: the upstream can complete **after** the dispatch was cancelled, so
+  money or quota is spent with nothing returned to the caller.
 - Batch input (JSON arrays) is rejected with `-32600` +
   `data.reason="batch_not_supported"` (v1).
+
+### 8.1 Deferred operations
+
+The profile's answer to upstream latency it does not own: a handler answers
+**now** and the caller collects later.
+
+- **Immediate answer.** A deferred-capable handler answers
+  `{"op_id": "<opaque random id>", "expires_in": <seconds>}`. `op_id` is a
+  random UUID — unguessable, never a counter — because anyone holding it can
+  collect the outcome.
+- **Validity window.** `expires_in` is the **remaining** validity measured
+  from creation, and the intended band for client-facing ids is **10–30
+  minutes** (default 30). The window is anchored at creation, not at
+  settlement, so a client that reconnects inside the window still collects.
+- **Collection.** `ops.result {op_id}` → the outcome
+  `{"op_id", "status", "method", "expires_in", "cancel_requested", "result"?,
+  "error"?}` with `status` one of `pending` / `completed` / `failed`; exactly
+  one of `result` / `error` is present once terminal. Collection is
+  **non-destructive**: a settled outcome stays collectable until the window
+  elapses, so a lost response frame cannot cost the caller the outcome. An id
+  that was never issued answers `-32052`, as does one evicted early by the
+  server's retention cap; an id whose window elapsed answers `-32053` (and is
+  then gone).
+- **Cancellation.** `ops.cancel {op_id}` → `{"op_id", "status",
+  "cancel_requested"}`. Best-effort by design: it records a flag the worker
+  may observe (it needs no scheduler), and a worker that honours it settles
+  the operation with `-32055`. Cancelling an already settled operation is a
+  valid answer with `cancel_requested: false`.
+- **Settlement notification.** `ops.settled {op_id, status}` is pushed on the
+  data lane when the originating connection is still open. It is
+  **advisory — never the authoritative path**: it carries no payload, is
+  enqueued without waiting, and is dropped silently when the connection is
+  gone or its data lane is saturated (a slow client must never be able to
+  stall the worker that settled the operation). Clients therefore always
+  fall back to `ops.result`. It is also unordered with respect to the response
+  that carries the `op_id` (an immediately-settling worker can overtake it), so
+  a client must ignore announcements for ids it does not know.
+- **Worker failure is still an answer.** A worker that returns an error or
+  panics settles the operation as `failed` (`-32603`, with a fixed message
+  stating that the worker panicked); a deferred operation never lingers in
+  `pending` because its worker died.
+- **Boundness.** A server caps pending operations (`-32054` when the cap is
+  reached) and prunes expired entries, so neither the registry nor a
+  disconnected client can grow without limit. Two caveats belong to the
+  contract: the bound is on **entries**, not bytes (a settled outcome keeps its
+  payload until collected or expired), and the cap is **server-global** — a
+  caller that wants per-caller fairness uses the request guard. When the
+  retention cap is reached the oldest settled entries are evicted, which is the
+  one case where an uncollected outcome can vanish before its window elapses
+  (the id then answers `-32052`).
+
+Both methods are served by the framework itself
+(`plana-rpc-server`'s built-in method map) and are available on the WS and
+HTTP POST transports alike; a service may override either name in its own
+method map or deny it through the request guard. The wire shapes are the
+`plana::jsonrpc::deferred` types; `plana-rpc-client`'s `RpcClient::await_op`
+collects by the `ops.settled` notification when it arrives and by polling
+`ops.result` otherwise, towards a caller-supplied deadline.
 - Client-sent `Response` frames are ignored with a warning.
 
 ## 9. Authentication model
@@ -142,6 +215,20 @@ UUIDv7, `-32601`/`-32602` mapping, parse error keeps the connection with
 overtake of a busy data lane), stall cancellation, idle close `4000`,
 upgrade refusal 401, guard denial `-32005` without dispatch, HTTP POST
 fallback on the same method map, and handler-pushed notifications.
+
+The deferred-operation contract (§8.1) is covered by
+`packages/rpc-server/tests/deferred.rs` (12 cases: immediate answer under a
+stall limit far below the upstream's duration, repeated collection after
+settlement, collection from a second connection and over the HTTP transport,
+structured `-32052`/`-32053` and `-32602`, the advisory `ops.settled`
+notification, expiry pruning, `-32054` capacity refusal, the `ops.cancel` flag,
+a service overriding the built-in collection method, a panicking worker, and the
+stall guard itself as a negative control) plus `RpcClient::await_op`'s own suite
+in `packages/rpc-client/tests/deferred.rs` (12 cases, including collection
+across a reconnect, a settled failure returned as a value, an unreadable
+`ops.result` reported as a protocol error, both absurd deadline extremes, a
+zero deadline that issues no read, a dead client that fails fast, and a
+degenerate poll cadence that must not become a busy loop).
 
 ## 11. Reference implementations
 

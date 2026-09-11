@@ -9,8 +9,10 @@
 //! into this file. Platform-specific domain params and the `UnixMethod`
 //! vocabulary live alongside the envelope below.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use ts_rs::TS;
 use uuid::Uuid;
 
 use tracing::warn;
@@ -87,13 +89,34 @@ pub mod error_codes {
     pub const CONTAINER_ERROR: i64 = -32003;
     pub const REPL_ERROR: i64 = -32004;
     pub const AUTH_ERROR: i64 = -32005;
+    /// Deferred-op id is not known to the server: never issued, or evicted by
+    /// the server's retention cap — which can happen **before** its window
+    /// elapses. See [`super::deferred`].
+    pub const OPS_UNKNOWN: i64 = -32052;
+    /// Deferred-op id was issued and its validity window has elapsed.
+    pub const OPS_EXPIRED: i64 = -32053;
+    /// The server's deferred-op registry is at capacity; retry once the
+    /// oldest windows elapse or collect the settled outcomes.
+    pub const OPS_CAPACITY: i64 = -32054;
+    /// A worker observed an `ops.cancel` request and abandoned the
+    /// operation; used as the deferred outcome's own error code.
+    pub const OPS_CANCELLED: i64 = -32055;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// The JSON-RPC 2.0 error object. Also generated into the TypeScript
+/// bindings, because it is the payload a client must parse out of a
+/// deferred outcome (`plana::jsonrpc::deferred`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
+// Exported into the deferred-op binding file on purpose: the error object is
+// part of the deferred outcome shape, and keeping the two in one generated
+// file is what lets the published TypeScript package carry both without a
+// dependency on a binding file outside its own directory.
+#[ts(export, export_to = "ops.ts")]
 pub struct JsonRpcError {
     pub code: i64,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub data: Option<Value>,
 }
 

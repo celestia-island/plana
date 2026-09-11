@@ -135,7 +135,28 @@ export type QuotaState = { remaining: bigint, limit: bigint, allowed: boolean, }
  * `rescue.diagnose` params. The diagnostics bundle is opaque to the
  * protocol (the model defines its shape).
  */
-export type RescueDiagnoseParams = { bundle: JsonValue, };
+export type RescueDiagnoseParams = { bundle: JsonValue, 
+/**
+ * Ask for deferred mode (default false = the blocking behaviour that
+ * every current deployment serves).
+ *
+ * The diagnostic LLM call has a budget of minutes, which far exceeds
+ * the service profile's dispatch stall limit (a liveness guard measured
+ * in seconds — see `plana-rpc-server`'s crate docs). A server that
+ * implements deferred mode answers `deferred: true` immediately with
+ * [`RescueDiagnoseStarted`] instead of holding the dispatch, and the
+ * caller collects the [`RescueDiagnoseResult`] through the built-in
+ * deferred-op methods (`ops.result {op_id}` / the advisory
+ * `ops.settled` notification).
+ *
+ * **Adoption is a follow-up**: the reference gateway still drops this
+ * flag and blocks until the model returns, so a client must not send
+ * `deferred: true` until its target deployment has adopted it (it will
+ * otherwise block, and answer the stall error past the limit). The flag
+ * is defined here so the adoption is mechanical, and it is additive: a
+ * server that ignores it keeps behaving exactly as before.
+ */
+deferred?: boolean, };
 
 /**
  * `rescue.diagnose.progress` notification params.
@@ -147,7 +168,16 @@ export type RescueDiagnoseProgressParams = {
 step: number, };
 
 /**
- * `rescue.diagnose` result.
+ * `rescue.diagnose` result. Exactly one of the two shapes is returned,
+ * selected by [`RescueDiagnoseParams::deferred`]:
+ *
+ * - `deferred: false` (default) → a completed diagnosis.
+ * - `deferred: true` → [`RescueDiagnoseStarted`]: the op reference and its
+ *   validity window.
+ *
+ * A client tells them apart by the presence of `op_id` (the deferred start)
+ * versus `diagnosis` (the completed result); the two shapes share no field
+ * name, so the discrimination is unambiguous.
  */
 export type RescueDiagnoseResult = { 
 /**
@@ -162,6 +192,28 @@ model: string,
  * RFC 3339 timestamp.
  */
 generated_at: string, };
+
+/**
+ * `rescue.diagnose` result when [`RescueDiagnoseParams::deferred`] is set:
+ * the work was handed off, this is what to collect it with.
+ *
+ * The shape is the generic deferred-op answer
+ * (`plana::jsonrpc::deferred::DeferredOpCreated`) — declared here as well so
+ * the gateway's published TypeScript bindings carry it without depending on
+ * a generated file outside this package. [`DeferredOpCreated`] remains the
+ * canonical definition; a parity test pins the two to the same wire shape.
+ */
+export type RescueDiagnoseStarted = { 
+/**
+ * Opaque, unguessable deferred-operation reference.
+ */
+op_id: string, 
+/**
+ * Remaining validity of `op_id` in seconds, measured from creation
+ * (the 10–30 minute band; the collect call still works after a
+ * reconnect inside the window).
+ */
+expires_in: bigint, };
 
 /**
  * `rescue.open_session` params. The ticket is the one-shot opaque

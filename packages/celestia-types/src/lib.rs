@@ -63,6 +63,13 @@ pub(crate) fn default_true() -> bool {
     true
 }
 
+/// Serde `skip_serializing_if` helper for `bool` fields that default to
+/// `false`: an absent flag and an explicit `false` mean the same thing, so
+/// the flag stays off the wire unless it is set.
+pub(crate) fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Core enums
 // ═══════════════════════════════════════════════════════════════

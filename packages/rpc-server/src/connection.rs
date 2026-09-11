@@ -42,16 +42,32 @@ impl OutboundHandle {
 
     /// Enqueue a notification frame for this client.
     pub async fn notify(&self, method: &str, params: serde_json::Value) -> Result<(), LaneClosed> {
+        let text = Self::encode(method, params)?;
+        self.data
+            .send(Wire::Text(text))
+            .await
+            .map_err(|_| LaneClosed)
+    }
+
+    /// Best-effort, never-blocking variant of [`OutboundHandle::notify`]:
+    /// the frame is dropped when the data lane is saturated or the writer is
+    /// gone.
+    ///
+    /// Used for advisory traffic — the deferred-operation settlement
+    /// announcement — where the authoritative path is a request/response
+    /// call and a slow client must never be able to stall a worker task.
+    pub fn try_notify(&self, method: &str, params: serde_json::Value) -> Result<(), LaneClosed> {
+        let text = Self::encode(method, params)?;
+        self.data.try_send(Wire::Text(text)).map_err(|_| LaneClosed)
+    }
+
+    fn encode(method: &str, params: serde_json::Value) -> Result<String, LaneClosed> {
         let frame = JsonRpcNotification {
             jsonrpc: JSONRPC_VERSION.to_string(),
             method: method.to_string(),
             params: Some(params),
         };
-        let text = serde_json::to_string(&frame).map_err(|_| LaneClosed)?;
-        self.data
-            .send(Wire::Text(text))
-            .await
-            .map_err(|_| LaneClosed)
+        serde_json::to_string(&frame).map_err(|_| LaneClosed)
     }
 }
 
@@ -237,6 +253,7 @@ async fn dispatch_request(
         params,
         auth: conn_auth.clone(),
         outbound: outbound.clone(),
+        deferred: server.deferred.clone(),
     };
 
     match tokio::time::timeout(server.config.dispatch_stall_limit, handler(ctx)).await {
@@ -313,5 +330,56 @@ async fn run_writer<S>(
                 break;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    /// The deferred-op settlement announcement rides `try_notify`: advisory
+    /// traffic must never let a slow (or vanished) client stall the worker
+    /// that just settled an operation, while `notify` keeps its blocking
+    /// contract for response-path traffic.
+    #[tokio::test]
+    async fn try_notify_drops_when_the_lane_is_full_while_notify_waits() {
+        // A live receiver that is never drained: the lane fills on the first
+        // frame and stays full.
+        let (tx, _rx) = mpsc::channel::<Wire>(1);
+        let handle = OutboundHandle { data: tx };
+
+        assert!(handle
+            .try_notify("ops.settled", serde_json::json!({}))
+            .is_ok());
+
+        // The blocking variant genuinely waits for room …
+        let waited = tokio::time::timeout(
+            Duration::from_millis(80),
+            handle.notify("ops.settled", serde_json::json!({})),
+        )
+        .await;
+        assert!(
+            waited.is_err(),
+            "the blocking notify must still wait for lane room"
+        );
+
+        // … while the advisory path reports the drop immediately.
+        let started = Instant::now();
+        assert!(
+            handle
+                .try_notify("ops.settled", serde_json::json!({}))
+                .is_err(),
+            "a full lane must be reported, not silently swallowed"
+        );
+        assert!(
+            started.elapsed() < Duration::from_millis(50),
+            "try_notify must never block"
+        );
+
+        // A closed lane is a drop as well, never a panic.
+        assert!(OutboundHandle::closed()
+            .try_notify("ops.settled", serde_json::json!({}))
+            .is_err());
     }
 }

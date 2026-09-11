@@ -9,12 +9,17 @@ use futures::{SinkExt, StreamExt};
 use tokio::sync::{broadcast, mpsc, oneshot, watch};
 use tokio_tungstenite::tungstenite::Message;
 
+use plana::jsonrpc::deferred::{
+    DeferredOpOutcome, DeferredOpRef, DeferredOpSettledParams, OpsResultParams, OPS_RESULT_METHOD,
+    OPS_SETTLED_METHOD,
+};
 use plana::jsonrpc::{
-    Id, JsonRpcError, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest, JSONRPC_VERSION,
+    error_codes, Id, JsonRpcError, JsonRpcMessage, JsonRpcNotification, JsonRpcRequest,
+    JSONRPC_VERSION,
 };
 
 use crate::close_codes::HEARTBEAT_METHOD;
-use crate::{ConnectionState, RpcError};
+use crate::{ConnectionState, DeferredOpError, RpcError};
 
 /// Tuning knobs; defaults mirror the TS client (15s heartbeat, 30s call
 /// timeout, 1.5x reconnect backoff capped at 30s).
@@ -39,6 +44,23 @@ pub struct RpcClientConfig {
     /// attempts the client enters [`ConnectionState::Failed`] and calls
     /// fail fast until a new client is built.
     pub max_reconnect_attempts: Option<u32>,
+    /// First delay between `ops.result` polls in [`RpcClient::await_op`]
+    /// (default 500ms); grows by `op_poll_factor` up to `op_poll_max`.
+    ///
+    /// The cadence only bounds the **fallback** path: the helper wakes
+    /// immediately on the advisory `ops.settled` notification, so polling is
+    /// what happens when a notification was missed (connection cycled,
+    /// op begun on another connection, HTTP transport).
+    ///
+    /// [`RpcClient::await_op`] normalizes these knobs before use: the delays
+    /// are floored at 10ms **and capped at one hour** (a larger value is
+    /// ignored, not honoured), the factor is clamped into `[1, 100]`, and the
+    /// ceiling is raised to at least the initial delay — so a degenerate
+    /// configuration can neither turn collection into a busy loop nor make the
+    /// cadence arithmetic overflow.
+    pub op_poll_initial: Duration,
+    pub op_poll_factor: f64,
+    pub op_poll_max: Duration,
 }
 
 impl Default for RpcClientConfig {
@@ -53,6 +75,9 @@ impl Default for RpcClientConfig {
             reconnect_factor: 1.5,
             reconnect_max: Duration::from_secs(30),
             max_reconnect_attempts: None,
+            op_poll_initial: Duration::from_millis(500),
+            op_poll_factor: 1.5,
+            op_poll_max: Duration::from_secs(5),
         }
     }
 }
@@ -216,31 +241,163 @@ impl RpcClient {
         let _ = self.inner.cmd_tx.try_send(Cmd::ForceReconnect);
     }
 
+    /// Await the outcome of a deferred operation (`op_id` from a
+    /// deferred-capable handler's immediate answer).
+    ///
+    /// Collection is notification-first with a polling fallback: the helper
+    /// subscribes to `ops.settled` and wakes as soon as the server announces
+    /// this id, and otherwise polls `ops.result` on the configured cadence
+    /// (never a busy loop). Every poll is the **authoritative** read — the
+    /// notification only says an operation settled, never what it produced.
+    ///
+    /// - `deadline` bounds the whole wait; exceeding it answers
+    ///   [`DeferredOpError::Deadline`]. A poll that would overrun the
+    ///   deadline is cut short (its late response, if any, is discarded by
+    ///   the client), so the caller is never kept waiting past it.
+    /// - Transport failures (a reconnect cycling the connection, a dropped
+    ///   call) are retried until the deadline: a client that reconnects
+    ///   inside the op's validity window still collects the outcome, which is
+    ///   the whole point of a deferred operation.
+    /// - `-32052`/`-32053` (unknown / expired id) are terminal and answer
+    ///   [`DeferredOpError::Unknown`] / [`DeferredOpError::Expired`].
+    /// - A pending operation is never returned: the call resolves only with
+    ///   an outcome that has settled (or fails). A **settled failure is a
+    ///   value, not an error**: `Ok(outcome)` with
+    ///   [`DeferredOpStatus::Failed`] carries the worker's error, while `Err`
+    ///   means collection itself failed.
+    /// - `Duration::ZERO` answers [`DeferredOpError::Deadline`] without
+    ///   issuing a read; an absurdly large deadline is clamped instead of
+    ///   panicking. A client that has exhausted its reconnect budget
+    ///   ([`ConnectionState::Failed`]) fails immediately instead of polling
+    ///   until the deadline.
+    pub async fn await_op(
+        &self,
+        op_id: &DeferredOpRef,
+        deadline: Duration,
+    ) -> Result<DeferredOpOutcome, DeferredOpError> {
+        // `checked_add`, not `+`: `Duration::MAX` (the idiomatic "no timeout")
+        // or any deadline past the platform instant bound must not panic the
+        // caller's task.
+        let cadence = PollCadence::from_config(&self.inner.config);
+        let end = tokio::time::Instant::now()
+            .checked_add(deadline)
+            .unwrap_or_else(|| tokio::time::Instant::now() + Duration::from_secs(86_400));
+        let mut notifications = self.subscribe();
+        let mut delay = cadence.initial;
+
+        loop {
+            let remaining = end.saturating_duration_since(tokio::time::Instant::now());
+            if remaining.is_zero() {
+                return Err(DeferredOpError::Deadline(deadline));
+            }
+
+            match tokio::time::timeout(remaining, self.collect_op(op_id)).await {
+                // The deadline elapsed while the call was in flight.
+                Err(_) => return Err(DeferredOpError::Deadline(deadline)),
+                Ok(Ok(outcome)) if outcome.is_settled() => return Ok(outcome),
+                // Still pending: wait out the poll cadence (or wake on the
+                // advisory notification for this id).
+                Ok(Ok(_pending)) => {}
+                Ok(Err(err)) => match err {
+                    DeferredOpError::Unknown | DeferredOpError::Expired => return Err(err),
+                    // A client that has given up reconnecting will not answer
+                    // this id, so waiting out a 30-minute deadline only delays
+                    // the news.
+                    DeferredOpError::Rpc(RpcError::Closed)
+                        if self.state() == ConnectionState::Failed =>
+                    {
+                        return Err(err);
+                    }
+                    // Transport trouble: keep trying until the deadline, the
+                    // op itself is still alive on the server.
+                    DeferredOpError::Rpc(RpcError::Closed)
+                    | DeferredOpError::Rpc(RpcError::Timeout(_))
+                    | DeferredOpError::Rpc(RpcError::Transport(_)) => {}
+                    // The server answered a real error (guard denial, method
+                    // gone, …) or answered a shape this client cannot read
+                    // (version skew, an overridden `ops.result`): retrying the
+                    // same call cannot help.
+                    other => return Err(other),
+                },
+            }
+
+            let remaining = end.saturating_duration_since(tokio::time::Instant::now());
+            if remaining.is_zero() {
+                return Err(DeferredOpError::Deadline(deadline));
+            }
+            let wait = delay.min(remaining);
+            let _ = tokio::time::timeout(wait, async {
+                loop {
+                    match notifications.recv().await {
+                        Ok(value) if announces_settlement(&value, op_id) => break,
+                        Ok(_) => continue,
+                        Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                        Err(broadcast::error::RecvError::Closed) => {
+                            // Every sender is gone (the client itself is being
+                            // torn down). Sleep out the cadence instead of
+                            // spinning on an instantly-closed channel: the
+                            // "no busy loop" promise must not rest on the
+                            // sender's ownership.
+                            tokio::time::sleep(wait).await;
+                            break;
+                        }
+                    }
+                }
+            })
+            .await;
+
+            delay = cadence.grow(delay);
+        }
+    }
+
+    /// One authoritative `ops.result` read.
+    async fn collect_op(
+        &self,
+        op_id: &DeferredOpRef,
+    ) -> Result<DeferredOpOutcome, DeferredOpError> {
+        let params = serde_json::to_value(OpsResultParams {
+            op_id: op_id.clone(),
+        })
+        .map_err(|e| DeferredOpError::Rpc(RpcError::Transport(e.to_string())))?;
+
+        match self.call(OPS_RESULT_METHOD, params).await {
+            // A payload this client cannot read is permanent: version skew, or
+            // a service that overrode `ops.result`. Retrying would burn the
+            // caller's whole deadline and then report the wrong reason.
+            Ok(value) => serde_json::from_value(value).map_err(|e| {
+                DeferredOpError::Protocol(format!("ops.result answered an unreadable outcome: {e}"))
+            }),
+            Err(RpcError::Rpc { code, .. }) if code == error_codes::OPS_UNKNOWN => {
+                Err(DeferredOpError::Unknown)
+            }
+            Err(RpcError::Rpc { code, .. }) if code == error_codes::OPS_EXPIRED => {
+                Err(DeferredOpError::Expired)
+            }
+            Err(err) => Err(DeferredOpError::Rpc(err)),
+        }
+    }
+
     async fn send_and_wait(&self, frame: String, id: Id) -> Result<serde_json::Value, RpcError> {
         let (tx, rx) = oneshot::channel::<PendingResult>();
         self.inner.pending.lock().unwrap().insert(id.clone(), tx);
+        // Every exit path — including a dropped future — releases the slot.
+        let _guard = PendingGuard {
+            inner: &self.inner,
+            id: id.clone(),
+        };
 
-        if let Err(err) = self.admit(frame).await {
-            self.inner.pending.lock().unwrap().remove(&id);
-            return Err(err);
-        }
+        self.admit(frame).await?;
 
         let timeout = self.inner.config.call_timeout;
         match tokio::time::timeout(timeout, rx).await {
-            Err(_) => {
-                self.inner.pending.lock().unwrap().remove(&id);
-                Err(RpcError::Timeout(timeout))
-            }
+            Err(_) => Err(RpcError::Timeout(timeout)),
             Ok(Ok(result)) => result.map_err(|fail| match fail {
                 PendingFail::Closed => RpcError::Closed,
                 PendingFail::Rpc(err) => err.into(),
             }),
-            Ok(Err(_cancelled)) => {
-                // Supervisor dropped the completer without answering
-                // (teardown raced us); treat as a dead connection.
-                self.inner.pending.lock().unwrap().remove(&id);
-                Err(RpcError::Closed)
-            }
+            // The supervisor dropped the completer without answering
+            // (teardown raced us); treat as a dead connection.
+            Ok(Err(_cancelled)) => Err(RpcError::Closed),
         }
     }
 
@@ -495,5 +652,130 @@ fn scale_backoff(current: Duration, factor: f64, max: Duration) -> Duration {
         max
     } else {
         next
+    }
+}
+
+/// The poll cadence [`RpcClient::await_op`] actually uses.
+///
+/// The public knobs are caller-supplied, so they are normalized once: a zero
+/// initial/max delay or a shrinking/NaN factor would otherwise collapse the
+/// wait to nothing and turn the helper into the busy loop its contract
+/// forbids. The floor is ten milliseconds (two orders below the 500ms default,
+/// yet far above any transport round trip) and the factor is clamped into
+/// `[1.0, 100.0]`, so the cadence can only ever grow.
+struct PollCadence {
+    initial: Duration,
+    factor: f64,
+    max: Duration,
+}
+
+impl PollCadence {
+    const FLOOR: Duration = Duration::from_millis(10);
+    /// Ceiling on any delay, so `Duration::mul_f64` in [`scale_backoff`]
+    /// cannot overflow however absurd the caller's knobs are (an hour is
+    /// already three orders of magnitude past the 5s default).
+    const CEILING: Duration = Duration::from_secs(60 * 60);
+    const DEFAULT_FACTOR: f64 = 1.5;
+    const MAX_FACTOR: f64 = 100.0;
+
+    fn from_config(config: &RpcClientConfig) -> Self {
+        let initial = config.op_poll_initial.clamp(Self::FLOOR, Self::CEILING);
+        Self {
+            initial,
+            factor: if config.op_poll_factor.is_finite() && config.op_poll_factor >= 1.0 {
+                config.op_poll_factor.min(Self::MAX_FACTOR)
+            } else {
+                Self::DEFAULT_FACTOR
+            },
+            max: config.op_poll_max.clamp(initial, Self::CEILING),
+        }
+    }
+
+    fn grow(&self, current: Duration) -> Duration {
+        scale_backoff(current, self.factor, self.max).max(Self::FLOOR)
+    }
+}
+
+/// Removes a pending-call slot when the awaiting future is dropped.
+///
+/// A call that is cut short — the deadline in [`RpcClient::await_op`], a
+/// cancelled caller — must not leave its entry in the pending map until a
+/// response that may never come. The response handler removes the entry too;
+/// both removals are idempotent.
+struct PendingGuard<'a> {
+    inner: &'a Arc<Inner>,
+    id: Id,
+}
+
+impl Drop for PendingGuard<'_> {
+    fn drop(&mut self) {
+        // Poison-tolerant: a panic while the lock was held must not turn into a
+        // panic inside `drop` (double panic ⇒ abort).
+        self.inner
+            .pending
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .remove(&self.id);
+    }
+}
+
+/// Whether a server-initiated notification is the advisory `ops.settled`
+/// announcement for `op_id`.
+fn announces_settlement(value: &serde_json::Value, op_id: &DeferredOpRef) -> bool {
+    let Ok(notification) = serde_json::from_value::<JsonRpcNotification>(value.clone()) else {
+        return false;
+    };
+    if notification.method != OPS_SETTLED_METHOD {
+        return false;
+    }
+    notification
+        .params
+        .and_then(|params| serde_json::from_value::<DeferredOpSettledParams>(params).ok())
+        .is_some_and(|params| params.op_id == *op_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A call cut short by a deadline must release its pending slot: otherwise
+    /// every abandoned poll would leave an entry in the map until a response
+    /// that may never arrive.
+    #[tokio::test]
+    async fn a_dropped_call_releases_its_pending_slot() {
+        let (cmd_tx, mut cmd_rx) = mpsc::channel::<Cmd>(8);
+        let (state, _state_rx) = watch::channel(ConnectionState::Connected);
+        let (notifications, _notify_rx) = broadcast::channel::<serde_json::Value>(4);
+        // The supervisor admits frames and never answers them: exactly the
+        // "server never answers" case a deadline must cut short.
+        tokio::spawn(async move {
+            while let Some(Cmd::SendFrame { ack, .. }) = cmd_rx.recv().await {
+                let _ = ack.send(Ok(()));
+            }
+        });
+
+        let inner = Arc::new(Inner {
+            config: RpcClientConfig::default(),
+            cmd_tx,
+            state,
+            notifications,
+            pending: StdMutex::new(HashMap::new()),
+        });
+        let client = RpcClient {
+            inner: inner.clone(),
+        };
+
+        for _ in 0..2 {
+            let cut = tokio::time::timeout(
+                Duration::from_millis(40),
+                client.call("never.answers", serde_json::json!({})),
+            )
+            .await;
+            assert!(cut.is_err(), "the call must still be in flight when cut");
+            assert!(
+                inner.pending.lock().unwrap().is_empty(),
+                "a cancelled call must not leave a pending entry behind"
+            );
+        }
     }
 }
