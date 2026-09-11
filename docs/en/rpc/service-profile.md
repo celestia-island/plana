@@ -150,8 +150,9 @@ The profile's answer to upstream latency it does not own: a handler answers
   one of `result` / `error` is present once terminal. Collection is
   **non-destructive**: a settled outcome stays collectable until the window
   elapses, so a lost response frame cannot cost the caller the outcome. An id
-  that was never issued answers `-32052`; one whose window elapsed answers
-  `-32053` (and is then gone).
+  that was never issued answers `-32052`, as does one evicted early by the
+  server's retention cap; an id whose window elapsed answers `-32053` (and is
+  then gone).
 - **Cancellation.** `ops.cancel {op_id}` → `{"op_id", "status",
   "cancel_requested"}`. Best-effort by design: it records a flag the worker
   may observe (it needs no scheduler), and a worker that honours it settles

@@ -51,6 +51,11 @@ pub struct RpcClientConfig {
     /// immediately on the advisory `ops.settled` notification, so polling is
     /// what happens when a notification was missed (connection cycled,
     /// op begun on another connection, HTTP transport).
+    ///
+    /// [`RpcClient::await_op`] normalizes these knobs before use — a floor of
+    /// 10ms on the delays, the factor clamped into `[1, 100]` and the ceiling
+    /// raised to at least the initial delay — so a degenerate configuration
+    /// cannot turn collection into a busy loop.
     pub op_poll_initial: Duration,
     pub op_poll_factor: f64,
     pub op_poll_max: Duration,

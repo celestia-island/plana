@@ -162,8 +162,8 @@ fn test_config() -> RpcServerConfig {
     RpcServerConfig {
         idle_timeout: Duration::from_secs(5),
         // Deliberately far below the upstream's real duration: a handler that
-        // blocked on the upstream instead of deferring would be answered
-        // `-32051` here.
+        // blocked on the upstream instead of deferring would be answered the
+        // structured stall error (`-32603` + `data.stalled=true`) here.
         dispatch_stall_limit: Duration::from_millis(200),
         ..RpcServerConfig::default()
     }
