@@ -188,7 +188,9 @@ async fn await_op_polls_when_no_notification_can_arrive_and_survives_a_reconnect
         .config(RpcClientConfig {
             op_poll_initial: Duration::from_millis(50),
             op_poll_max: Duration::from_millis(150),
-            reconnect_initial: Duration::from_millis(40),
+            // Wide enough that 20ms state sampling cannot miss the
+            // `Reconnecting` window on a loaded machine.
+            reconnect_initial: Duration::from_millis(250),
             ..RpcClientConfig::default()
         })
         .build();
@@ -212,6 +214,15 @@ async fn await_op_polls_when_no_notification_can_arrive_and_survives_a_reconnect
     };
     tokio::time::sleep(Duration::from_millis(100)).await;
     client.force_reconnect();
+    // Wait for the cycle to actually happen: `Connected` can still be the
+    // pre-reconnect state, so observing it alone would not prove the wait
+    // spanned a reconnect.
+    wait_for_state(
+        &client,
+        ConnectionState::Reconnecting,
+        Duration::from_secs(5),
+    )
+    .await;
     wait_for_state(&client, ConnectionState::Connected, Duration::from_secs(5)).await;
     assert!(
         !awaiting.is_finished(),
@@ -319,7 +330,8 @@ async fn await_op_reports_unknown_and_expired_ids_terminally() {
 
 /// The "no busy loop" promise must not rest on the caller configuring the
 /// knobs sensibly: a zero initial delay, a zero ceiling and a shrinking factor
-/// are all normalized to a one-millisecond floor.
+/// are all normalized — the delays to a ten-millisecond floor, the factor to
+/// at least 1.0.
 #[tokio::test]
 async fn a_degenerate_poll_cadence_still_does_not_busy_loop() {
     let collected = Arc::new(AtomicUsize::new(0));
@@ -504,6 +516,101 @@ async fn an_unreadable_ops_result_is_reported_as_a_protocol_error() {
     assert!(
         started.elapsed() < Duration::from_secs(2),
         "the caller must hear about version skew immediately, waited {:?}",
+        started.elapsed()
+    );
+}
+
+/// The other absurd end of the scale: a delay so large that growing it would
+/// overflow `Duration::mul_f64`. The cadence is capped, so it is harmless.
+#[tokio::test]
+async fn an_absurd_poll_delay_does_not_panic() {
+    let (server, _release) = deferred_server(Duration::from_secs(1800), None);
+    let (url, _http) = spawn(server).await;
+
+    let client = RpcClient::builder()
+        .url(&url)
+        .config(RpcClientConfig {
+            op_poll_initial: Duration::MAX,
+            op_poll_max: Duration::MAX,
+            ..RpcClientConfig::default()
+        })
+        .build();
+
+    let answer = client.call(SLOW_METHOD, json!({})).await.unwrap();
+    let op = op_from(&answer);
+
+    let err = tokio::time::timeout(
+        Duration::from_secs(5),
+        client.await_op(&op, Duration::from_millis(120)),
+    )
+    .await
+    .expect("await_op must honour its own deadline")
+    .expect_err("the never-released operation cannot settle");
+    assert!(matches!(err, DeferredOpError::Deadline(_)), "got {err:?}");
+}
+
+/// A zero deadline means "do not wait": it answers immediately and does not
+/// even issue a read.
+#[tokio::test]
+async fn a_zero_deadline_answers_without_reading() {
+    let collected = Arc::new(AtomicUsize::new(0));
+    let (server, _release) = deferred_server(Duration::from_secs(1800), Some(collected.clone()));
+    let (url, _http) = spawn(server).await;
+
+    let client = RpcClient::builder().url(&url).build();
+    let answer = client.call(SLOW_METHOD, json!({})).await.unwrap();
+    let op = op_from(&answer);
+
+    let err = client
+        .await_op(&op, Duration::ZERO)
+        .await
+        .expect_err("a zero deadline cannot collect anything");
+    assert!(matches!(err, DeferredOpError::Deadline(_)), "got {err:?}");
+    assert_eq!(
+        collected.load(Ordering::SeqCst),
+        0,
+        "a zero deadline must not issue a read"
+    );
+}
+
+/// A client that has exhausted its reconnect budget says so immediately
+/// instead of waiting out a long deadline it can never satisfy.
+#[tokio::test]
+async fn a_dead_client_fails_fast_instead_of_waiting_out_the_deadline() {
+    // Reserve an ephemeral port and never serve on it, so the client ends up
+    // in `ConnectionState::Failed`.
+    let probe = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = probe.local_addr().unwrap().port();
+    drop(probe);
+
+    let client = RpcClient::builder()
+        .url(format!("ws://127.0.0.1:{port}/api/ws"))
+        .config(RpcClientConfig {
+            connect_timeout: Duration::from_millis(80),
+            reconnect_initial: Duration::from_millis(20),
+            max_reconnect_attempts: Some(2),
+            op_poll_initial: Duration::from_millis(20),
+            op_poll_max: Duration::from_millis(40),
+            ..RpcClientConfig::default()
+        })
+        .build();
+    wait_for_state(&client, ConnectionState::Failed, Duration::from_secs(5)).await;
+
+    let started = Instant::now();
+    let err = tokio::time::timeout(
+        Duration::from_secs(5),
+        client.await_op(&DeferredOpRef::new_random(), Duration::from_secs(300)),
+    )
+    .await
+    .expect("a dead client must not wait out the deadline")
+    .expect_err("a dead client cannot collect anything");
+    assert!(
+        matches!(err, DeferredOpError::Rpc(_)),
+        "expected the transport error, got {err:?}"
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(3),
+        "took {:?} to report a dead client",
         started.elapsed()
     );
 }

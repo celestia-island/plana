@@ -89,8 +89,9 @@ pub mod error_codes {
     pub const CONTAINER_ERROR: i64 = -32003;
     pub const REPL_ERROR: i64 = -32004;
     pub const AUTH_ERROR: i64 = -32005;
-    /// Deferred-op id is not known to the server (never issued, or evicted
-    /// once its window elapsed). See [`super::deferred`].
+    /// Deferred-op id is not known to the server: never issued, or evicted by
+    /// the server's retention cap — which can happen **before** its window
+    /// elapses. See [`super::deferred`].
     pub const OPS_UNKNOWN: i64 = -32052;
     /// Deferred-op id was issued and its validity window has elapsed.
     pub const OPS_EXPIRED: i64 = -32053;

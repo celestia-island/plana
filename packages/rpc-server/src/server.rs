@@ -31,7 +31,10 @@ use crate::deferred::{DeferredOps, DeferredOpsError, OpHandle};
 pub mod ext_error_codes {
     /// Admission refused: connection cap reached (HTTP 429 body).
     pub const SERVICE_BUSY: i64 = -32050;
-    /// Dispatch exceeded the stall limit and was cancelled.
+    /// **Reserved**: a dedicated code for a dispatch that exceeded the stall
+    /// limit. No branch emits it yet — the stall path answers `-32603` +
+    /// `data.stalled=true` — so clients must detect a stall by `data.stalled`
+    /// (the profile table carries the same footnote).
     pub const DISPATCH_STALLED: i64 = -32051;
 }
 
@@ -276,7 +279,8 @@ fn parse_ops_params<T: serde::de::DeserializeOwned>(params: &Value) -> Result<T,
 }
 
 /// `ops.result {op_id}` — collect a deferred outcome (non-destructively: the
-/// entry stays collectable until its window elapses).
+/// entry stays collectable until its window elapses, or until the retention
+/// cap evicts it — the id then answers `-32052`).
 fn ops_result_handler(
     ctx: RpcRequestCtx,
 ) -> Pin<Box<dyn Future<Output = Result<Value, JsonRpcError>> + Send>> {

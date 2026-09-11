@@ -62,8 +62,13 @@ pub const OPS_RESULT_METHOD: &str = "ops.result";
 pub const OPS_CANCEL_METHOD: &str = "ops.cancel";
 
 /// Advisory settlement notification: `ops.settled {op_id, status}`.
+///
 /// Best-effort — it is dropped when the originating connection is gone, so
-/// clients must always be able to fall back to polling `ops.result`.
+/// clients must always be able to fall back to polling `ops.result`. It is
+/// also **unordered** with respect to the response that carries the `op_id`:
+/// a worker that settles immediately can have its announcement overtake that
+/// response on the data lane, so a client must ignore announcements for ids it
+/// does not know rather than treating one as the arrival of an id.
 pub const OPS_SETTLED_METHOD: &str = "ops.settled";
 
 /// Lower bound of the intended client-facing validity window (10 minutes).

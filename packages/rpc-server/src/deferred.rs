@@ -39,10 +39,11 @@
 //!   window a reconnecting client gets. The intended band for client-facing
 //!   ids is 10–30 minutes; the default is 30.
 //! - **Collection is non-destructive.** A settled outcome stays collectable —
-//!   repeatedly — until the TTL elapses. A destructive read would make a
-//!   single lost response frame lose an outcome the caller already paid for,
-//!   and would make retrying a collection unsafe. The price is retention
-//!   bounded by the caps below.
+//!   repeatedly — until the TTL elapses, *or until the retention cap below
+//!   evicts it* (the id then answers `-32052` even though its window is still
+//!   open). A destructive read would make a single lost response frame lose an
+//!   outcome the caller already paid for, and would make retrying a collection
+//!   unsafe. The price is retention bounded by the caps below.
 //! - **Settlement notification is advisory.** When the originating
 //!   connection is still open the registry pushes `ops.settled {op_id,
 //!   status}` on the data lane, best-effort and payload-free. It is never the
@@ -270,9 +271,11 @@ impl Entry {
 struct Inner {
     config: DeferredOpsConfig,
     entries: Mutex<HashMap<DeferredOpRef, Entry>>,
-    /// Bumped on every settlement before the entries lock is taken; the
-    /// value is stored under that lock, so "oldest settled first" follows the
-    /// order settlements were admitted even when two of them race.
+    /// Bumped on every settlement before the entries lock is taken. The total
+    /// order is therefore the fetch order, which two racing settlers can
+    /// invert relative to the order they actually take the lock in — an
+    /// arbitrary but harmless tie-break, since concurrent settlements have no
+    /// meaningful "older" one.
     seq: std::sync::atomic::AtomicU64,
 }
 
@@ -343,9 +346,14 @@ impl DeferredOps {
         // the worker's panic guard, so a misconfigured window must never panic
         // the dispatch. The fallback is the clamped ceiling rather than "now",
         // because "now" would hand the caller an id that is already expired.
+        // The fallback must itself be checked: `ttl` is already clamped to
+        // MAX_TTL, so the only way to get here is `now` being within a window
+        // of the platform's instant bound — where `now + MAX_TTL` would panic
+        // with the very overflow this guards against.
         let deadline = now
             .checked_add(self.inner.config.ttl)
-            .unwrap_or(now + DeferredOpsConfig::MAX_TTL);
+            .or_else(|| now.checked_add(DeferredOpsConfig::MIN_TTL))
+            .unwrap_or(now);
 
         {
             let mut entries = self.inner.entries.lock().unwrap();
@@ -574,9 +582,9 @@ impl OpHandle {
     }
 
     /// Settle with a result: the outcome becomes collectable (non-
-    /// destructively, until the window elapses) and the originating
-    /// connection — if it is still open and draining — is notified
-    /// best-effort.
+    /// destructively, until the window elapses or the retention cap evicts it)
+    /// and the originating connection — if it is still open and draining — is
+    /// notified best-effort.
     ///
     /// Retention is synchronous: the announcement is fire-and-forget, so a
     /// slow or vanished client cannot make a worker wait (the client falls

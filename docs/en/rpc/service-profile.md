@@ -164,7 +164,9 @@ The profile's answer to upstream latency it does not own: a handler answers
   enqueued without waiting, and is dropped silently when the connection is
   gone or its data lane is saturated (a slow client must never be able to
   stall the worker that settled the operation). Clients therefore always
-  fall back to `ops.result`.
+  fall back to `ops.result`. It is also unordered with respect to the response
+  that carries the `op_id` (an immediately-settling worker can overtake it), so
+  a client must ignore announcements for ids it does not know.
 - **Worker failure is still an answer.** A worker that returns an error or
   panics settles the operation as `failed` (`-32603` with a message naming
   the panic); a deferred operation never lingers in `pending` because its
@@ -222,9 +224,10 @@ structured `-32052`/`-32053` and `-32602`, the advisory `ops.settled`
 notification, expiry pruning, `-32054` capacity refusal, the `ops.cancel` flag,
 a service overriding the built-in collection method, a panicking worker, and the
 stall guard itself as a negative control) plus `RpcClient::await_op`'s own suite
-in `packages/rpc-client/tests/deferred.rs` (9 cases, including collection
+in `packages/rpc-client/tests/deferred.rs` (12 cases, including collection
 across a reconnect, a settled failure returned as a value, an unreadable
-`ops.result` reported as a protocol error, an absurd deadline, and a
+`ops.result` reported as a protocol error, both absurd deadline extremes, a
+zero deadline that issues no read, a dead client that fails fast, and a
 degenerate poll cadence that must not become a busy loop).
 
 ## 11. Reference implementations

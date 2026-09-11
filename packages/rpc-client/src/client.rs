@@ -52,10 +52,12 @@ pub struct RpcClientConfig {
     /// what happens when a notification was missed (connection cycled,
     /// op begun on another connection, HTTP transport).
     ///
-    /// [`RpcClient::await_op`] normalizes these knobs before use — a floor of
-    /// 10ms on the delays, the factor clamped into `[1, 100]` and the ceiling
-    /// raised to at least the initial delay — so a degenerate configuration
-    /// cannot turn collection into a busy loop.
+    /// [`RpcClient::await_op`] normalizes these knobs before use: the delays
+    /// are floored at 10ms **and capped at one hour** (a larger value is
+    /// ignored, not honoured), the factor is clamped into `[1, 100]`, and the
+    /// ceiling is raised to at least the initial delay — so a degenerate
+    /// configuration can neither turn collection into a busy loop nor make the
+    /// cadence arithmetic overflow.
     pub op_poll_initial: Duration,
     pub op_poll_factor: f64,
     pub op_poll_max: Duration,
@@ -265,7 +267,9 @@ impl RpcClient {
     ///   means collection itself failed.
     /// - `Duration::ZERO` answers [`DeferredOpError::Deadline`] without
     ///   issuing a read; an absurdly large deadline is clamped instead of
-    ///   panicking.
+    ///   panicking. A client that has exhausted its reconnect budget
+    ///   ([`ConnectionState::Failed`]) fails immediately instead of polling
+    ///   until the deadline.
     pub async fn await_op(
         &self,
         op_id: &DeferredOpRef,
@@ -296,6 +300,14 @@ impl RpcClient {
                 Ok(Ok(_pending)) => {}
                 Ok(Err(err)) => match err {
                     DeferredOpError::Unknown | DeferredOpError::Expired => return Err(err),
+                    // A client that has given up reconnecting will not answer
+                    // this id, so waiting out a 30-minute deadline only delays
+                    // the news.
+                    DeferredOpError::Rpc(RpcError::Closed)
+                        if self.state() == ConnectionState::Failed =>
+                    {
+                        return Err(err);
+                    }
                     // Transport trouble: keep trying until the deadline, the
                     // op itself is still alive on the server.
                     DeferredOpError::Rpc(RpcError::Closed)
@@ -659,11 +671,15 @@ struct PollCadence {
 
 impl PollCadence {
     const FLOOR: Duration = Duration::from_millis(10);
+    /// Ceiling on any delay, so `Duration::mul_f64` in [`scale_backoff`]
+    /// cannot overflow however absurd the caller's knobs are (an hour is
+    /// already three orders of magnitude past the 5s default).
+    const CEILING: Duration = Duration::from_secs(60 * 60);
     const DEFAULT_FACTOR: f64 = 1.5;
     const MAX_FACTOR: f64 = 100.0;
 
     fn from_config(config: &RpcClientConfig) -> Self {
-        let initial = config.op_poll_initial.max(Self::FLOOR);
+        let initial = config.op_poll_initial.clamp(Self::FLOOR, Self::CEILING);
         Self {
             initial,
             factor: if config.op_poll_factor.is_finite() && config.op_poll_factor >= 1.0 {
@@ -671,7 +687,7 @@ impl PollCadence {
             } else {
                 Self::DEFAULT_FACTOR
             },
-            max: config.op_poll_max.max(initial),
+            max: config.op_poll_max.clamp(initial, Self::CEILING),
         }
     }
 
@@ -693,7 +709,13 @@ struct PendingGuard<'a> {
 
 impl Drop for PendingGuard<'_> {
     fn drop(&mut self) {
-        self.inner.pending.lock().unwrap().remove(&self.id);
+        // Poison-tolerant: a panic while the lock was held must not turn into a
+        // panic inside `drop` (double panic ⇒ abort).
+        self.inner
+            .pending
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .remove(&self.id);
     }
 }
 

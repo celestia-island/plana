@@ -361,13 +361,13 @@ mod tests {
         assert_eq!(wire["deferred"], true);
 
         let started = RescueDiagnoseStarted {
-            op_id: "01912345-6789-7abc-8def-0123456789ab".into(),
+            op_id: "9f1c2b7a-4d6e-4f0a-9c3b-2e8d5a1f7b64".into(),
             expires_in: 1800,
         };
         let wire = serde_json::to_value(&started).unwrap();
         assert_eq!(
             wire,
-            json!({"op_id": "01912345-6789-7abc-8def-0123456789ab", "expires_in": 1800})
+            json!({"op_id": "9f1c2b7a-4d6e-4f0a-9c3b-2e8d5a1f7b64", "expires_in": 1800})
         );
         let back: RescueDiagnoseStarted = serde_json::from_value(wire).unwrap();
         assert_eq!(back, started);
