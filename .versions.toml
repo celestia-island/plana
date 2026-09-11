@@ -8,7 +8,7 @@
 
 [track]
 # The npm baseline is pinned explicitly: the two publishable packages are
-# versioned on independent lines (celestia-types 0.1.0, rpc-client 0.1.5), so
+# versioned on independent lines (celestia-types 0.1.5, rpc-client 0.1.7), so
 # the "majority among publishable packages" fallback would tie and resolve by
 # filesystem walk order, which is not stable across machines. Track the
 # rpc-client line as the baseline: it advances with the registry publish wave

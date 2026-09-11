@@ -204,8 +204,8 @@ async fn deferred_handler_answers_immediately_with_an_id() {
     let outcome = call(&mut ws, "c1", OPS_RESULT_METHOD, json!({"op_id": op_id})).await;
     assert_eq!(outcome["result"]["status"], "pending");
     assert_eq!(outcome["result"]["method"], SLOW_METHOD);
-    assert!(outcome["result"]["result"].is_null());
-    assert!(outcome["result"]["error"].is_null());
+    assert!(outcome["result"].get("result").is_none());
+    assert!(outcome["result"].get("error").is_none());
     assert!(outcome["result"]["expires_in"].as_u64().unwrap() <= 1800);
 
     release.send_replace(true);

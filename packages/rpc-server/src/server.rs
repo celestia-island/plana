@@ -95,7 +95,9 @@ impl RpcRequestCtx {
     /// A worker that returns `Err` settles the operation as `failed` (the
     /// error is carried in the outcome), and a worker that panics settles it
     /// as a `-32603` naming the panic — an operation never lingers `pending`
-    /// because its worker died. A worker that *hangs* does hold its registry
+    /// because its worker died. **The first settlement wins**: a worker that
+    /// settles its own handle has already answered the caller, so the
+    /// framework's returned value is discarded (logged at debug level). A worker that *hangs* does hold its registry
     /// slot until the window elapses (there is no scheduler to kill it),
     /// which is why the pending cap exists.
     ///
@@ -251,16 +253,10 @@ impl RpcServerBuilder {
         // either name with `method_ctx`, or deny it in the request guard).
         methods
             .entry(OPS_RESULT_METHOD.to_string())
-            .or_insert_with(|| {
-                let handler: ServerHandlerFn = Arc::new(ops_result_handler);
-                handler
-            });
+            .or_insert_with(|| -> ServerHandlerFn { Arc::new(ops_result_handler) });
         methods
             .entry(OPS_CANCEL_METHOD.to_string())
-            .or_insert_with(|| {
-                let handler: ServerHandlerFn = Arc::new(ops_cancel_handler);
-                handler
-            });
+            .or_insert_with(|| -> ServerHandlerFn { Arc::new(ops_cancel_handler) });
         RpcServer {
             methods: Arc::new(methods),
             auth: self.auth,

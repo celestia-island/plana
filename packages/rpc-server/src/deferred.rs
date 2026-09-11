@@ -76,8 +76,11 @@ pub struct DeferredOpsConfig {
     /// How long a client-facing id stays valid, measured from creation
     /// (default 30 minutes — the top of the intended 10–30 minute band).
     /// Shortening this below the band is a client-facing contract change:
-    /// a client that reconnects near the end of the window loses the
-    /// outcome.
+    /// a client that reconnects near the end of the window loses the outcome.
+    /// The registry accepts 1ms–24h (see [`DeferredOpsConfig::MIN_TTL`] and
+    /// [`DeferredOpsConfig::MAX_TTL`]) and advertises the configured window
+    /// verbatim, so a deployment outside the band is publishing a different
+    /// contract than the service profile describes.
     pub ttl: Duration,
 
     /// Maximum number of concurrently **pending** (unsettled) operations
@@ -143,12 +146,6 @@ impl DeferredOpsConfig {
             max_pending,
             max_retained: self.max_retained.max(max_pending),
         }
-    }
-
-    /// Whole seconds advertised to clients, rounded up so a freshly created
-    /// id reads as the full window.
-    fn ttl_secs(&self) -> u64 {
-        secs_ceil(self.ttl)
     }
 }
 
@@ -378,9 +375,12 @@ impl DeferredOps {
             );
         }
 
+        // Derived from the stored deadline rather than the configured window:
+        // the two can differ when the deadline fell back to MIN_TTL, and the
+        // client must be told the window it actually has.
         let created = DeferredOpCreated {
             op_id: op_id.clone(),
-            expires_in: self.inner.config.ttl_secs(),
+            expires_in: secs_ceil(deadline.saturating_duration_since(now)),
         };
         Ok((
             created,
@@ -835,6 +835,39 @@ mod tests {
 
     #[tokio::test]
     async fn retention_evicts_the_oldest_settled_entry_never_a_pending_one() {
+        // A registry at its retention cap that also holds a **pending** op:
+        // the eviction the next `begin` triggers must take the settled entry,
+        // because a pending op that is dropped can never be settled at all.
+        let guarded = registry(Duration::from_secs(60), 3, 3);
+        let (settled_a, handle_a) = begin(&guarded, "payment.submit");
+        handle_a.complete(serde_json::json!("a")).await.unwrap();
+        let (pending, _pending_handle) = begin(&guarded, "payment.submit");
+        let (settled_b, handle_b) = begin(&guarded, "payment.submit");
+        handle_b.complete(serde_json::json!("b")).await.unwrap();
+        assert_eq!(guarded.retained_len(), 3);
+        assert_eq!(guarded.pending_len(), 1);
+
+        let (newcomer, _newcomer_handle) = begin(&guarded, "payment.submit");
+        assert_eq!(
+            guarded.status(&settled_a.op_id).unwrap_err(),
+            DeferredOpsError::Unknown,
+            "the oldest settled entry is the eviction victim"
+        );
+        assert_eq!(
+            guarded.status(&pending.op_id).unwrap().status,
+            DeferredOpStatus::Pending,
+            "a pending op must never be evicted"
+        );
+        assert_eq!(
+            guarded.status(&settled_b.op_id).unwrap().result,
+            Some(serde_json::json!("b")),
+            "the newer settled entry is retained"
+        );
+        assert_eq!(
+            guarded.status(&newcomer.op_id).unwrap().status,
+            DeferredOpStatus::Pending
+        );
+
         let ops = registry(Duration::from_secs(60), 1, 2);
 
         let (first, handle) = begin(&ops, "payment.submit");
