@@ -28,13 +28,15 @@ namespace!(
 fn resolves<T>() {}
 
 #[test]
-fn merged_http_module_carries_generic_and_domain_types() {
+fn merged_http_module_carries_generic_descriptors() {
+    // Only the generic health/status descriptors live here. The domain DTOs
+    // the former umbrella re-exported under this module (`AgentItem`,
+    // `ModelInfo`, `TierDefinition`, …) are domain-profile types: they live in
+    // `plana-celestia-types`, which pins them in its own surface test.
     resolves::<plana::http::HealthResponse>();
     resolves::<plana::http::NetworkInfo>();
     resolves::<plana::http::BackendKind>();
     resolves::<plana::http::ServiceStatus>();
-    #[cfg(feature = "celestia")]
-    resolves::<plana::http::AgentItem>();
 }
 
 #[test]
@@ -126,16 +128,13 @@ fn root_health_response_is_the_generic_one() {
 }
 
 #[test]
-fn root_handshake_and_capability_surface_resolves() {
-    // Generic core primitives (always available):
+fn root_handshake_primitives_resolve() {
+    // Generic core primitives. The scepter-flavored capability payloads the
+    // former umbrella re-exported here (`ClientCapability`,
+    // `ConnectHandshakeParams`) are domain-profile types: they live in
+    // `plana-celestia-types`, which pins them in its own surface test.
     resolves::<plana::HandshakeAckParams>();
     let _ = plana::HANDSHAKE_VERSION;
-    // Domain capability payload (celestia feature):
-    #[cfg(feature = "celestia")]
-    {
-        resolves::<plana::ClientCapability>();
-        resolves::<plana::ConnectHandshakeParams>();
-    }
 }
 
 #[test]
@@ -156,11 +155,14 @@ fn jsonrpc_framing_surface_resolves() {
     let _ = plana::jsonrpc::error_codes::INVALID_PARAMS;
     let _ = plana::jsonrpc::error_codes::INTERNAL_ERROR;
     // The asserted AUTH_ERROR is the plana-jsonrpc copy of the error-code
-    // table (arona matches on it in ~25 auth-guard dispatch sites); the
-    // profile crate's parallel copy is touched below via SNAPSHOT_FAILED in
-    // the celestia module.
+    // table (arona matches on it in ~25 auth-guard dispatch sites). The
+    // platform-specific (-32000 range) codes live in that same canonical
+    // table, and `plana-celestia-types` re-exports this very entry as
+    // `protocol::jsonrpc::error_codes::SNAPSHOT_FAILED` (pinned in that
+    // crate's own surface test), so the value is asserted here too.
     let _ = plana::jsonrpc::error_codes::AUTH_ERROR;
     assert_eq!(plana::jsonrpc::error_codes::AUTH_ERROR, -32005);
+    assert_eq!(plana::jsonrpc::error_codes::SNAPSHOT_FAILED, -32001);
 }
 
 #[test]
@@ -228,139 +230,4 @@ fn rpc_server_module_surface_resolves() {
     let _ = plana::rpc_server::sse::SSE_HEARTBEAT_INTERVAL_SECS;
     let _ = plana::rpc_server::sse::SSE_CONNECTED_COMMENT;
     let _ = plana::rpc_server::sse::SSE_HEARTBEAT_COMMENT;
-}
-
-#[cfg(feature = "celestia")]
-mod celestia_surface {
-    use super::*;
-
-    #[test]
-    fn celestia_domain_types_resolve() {
-        resolves::<plana::celestia::Agent>();
-        resolves::<plana::celestia::TaskStatus>();
-        resolves::<plana::celestia::malkuth::WorkerStatus>();
-        resolves::<plana::celestia::http::AgentItem>();
-        resolves::<plana::celestia::protocol::handshake::ConnectHandshakeParams>();
-        let _ = plana::celestia::protocol::jsonrpc::error_codes::SNAPSHOT_FAILED;
-        // The full domain surface is also reachable at the crate root via
-        // the `celestia` glob (feature-gated in the umbrella).
-        resolves::<plana::Agent>();
-    }
-
-    #[test]
-    fn celestia_http_domain_types_resolve_at_root() {
-        // Live consumer paths (arona / e-world admin panels):
-        resolves::<plana::http::ModelInfo>();
-        resolves::<plana::http::ProviderPublic>();
-        resolves::<plana::http::TierDefinition>();
-        resolves::<plana::http::UserPreferences>();
-    }
-
-    #[test]
-    fn celestia_enums_used_by_entelecheia_resolve() {
-        // entelecheia consumes the annotation and file-operation vocabulary
-        // through `plana::enums` (merged core + domain enums module):
-        resolves::<plana::enums::AnnotationType>();
-        resolves::<plana::enums::FileOperationType>();
-        resolves::<plana::enums::ObservationType>();
-        let _ = plana::enums::AnnotationType::Todo.as_str();
-        let _ = plana::enums::FileOperationType::Reading.as_str();
-        let _ = plana::enums::ObservationType::Watching.as_str();
-    }
-
-    #[test]
-    fn celestia_engine_extended_surface_resolves() {
-        // arona consumes the embeddings / invoke-start / stats vocabulary
-        // at `plana::engine`; construct with the real field sets to pin the
-        // wire shapes.
-        let _emb = plana::engine::EngineEmbeddingsParams {
-            model: "m".into(),
-            input: vec!["text".into()],
-        };
-        let _start = plana::engine::EngineInvokeStartResult {
-            ok: true,
-            error: None,
-            stream_id: "s-1".into(),
-        };
-        let _stats = plana::engine::EngineStatsResult {
-            gpu_utilization: vec![42],
-            uptime_secs: 7,
-            model_loaded: None,
-        };
-    }
-
-    #[test]
-    fn celestia_engine_mcp_and_external_mcp_resolve() {
-        // Engine (CEP) domain protocol:
-        resolves::<plana::engine::EngineHandshakeParams>();
-        // Per-tool I/O vocabulary:
-        resolves::<plana::tools::philia::ToolDetail>();
-        // External MCP server registry file:
-        resolves::<plana::external_mcp::McpServersFile>();
-    }
-
-    #[test]
-    fn celestia_engine_and_philia_surfaces_resolve() {
-        // Engine (CEP) request/result vocabulary — the gateway-facing
-        // handshake, chat, invoke, stream, model-list and binary-transfer
-        // payloads stay reachable at `plana::engine`:
-        resolves::<plana::engine::EngineChatParams>();
-        resolves::<plana::engine::EngineInvokeParams>();
-        resolves::<plana::engine::EngineStreamChunk>();
-        resolves::<plana::engine::EngineModality>();
-        resolves::<plana::engine::EngineBinaryStartParams>();
-        resolves::<plana::engine::EngineCapabilities>();
-        resolves::<plana::engine::EngineIdentity>();
-        resolves::<plana::engine::EngineModelsResult>();
-        resolves::<plana::engine::EngineHandshakeResult>();
-        let _ = plana::engine::ENGINE_PROTOCOL_VERSION;
-        // philia (memory tool) per-tool I/O vocabulary:
-        resolves::<plana::tools::philia::MemoryQueryItem>();
-        resolves::<plana::tools::philia::MemoryQueryParams>();
-        resolves::<plana::tools::philia::MemoryQueryResult>();
-        resolves::<plana::tools::philia::MemoryStoreParams>();
-        resolves::<plana::tools::philia::MemoryStoreResult>();
-        // malkuth supervision gate: restart proposal payload.
-        resolves::<plana::malkuth::RestartProposal>();
-    }
-
-    #[test]
-    fn celestia_domain_base_messages_resolve_to_generic_types() {
-        // I4: the domain copy is a re-export — `plana::celestia` and the
-        // umbrella root must expose the same generic type instance. The type
-        // annotation on the right proves identity at compile time: if the two
-        // paths named different types, this would not typecheck.
-        resolves::<plana::celestia::protocol::base_messages::BaseHeartbeatParams>();
-        resolves::<plana::protocol::base_messages::BaseHeartbeatParams>();
-        let _: plana::protocol::base_messages::BaseHeartbeatParams =
-            plana::celestia::protocol::base_messages::BaseHeartbeatParams { timestamp: 1 };
-    }
-
-    #[test]
-    fn malkuth_health_response_is_distinct_from_root() {
-        // Constructing each with its own field set proves they are two
-        // unrelated structs sharing only the name.
-        let _root = plana::http::HealthResponse::ok(
-            "1.0.0",
-            plana::http::BackendKind::Dev,
-            1,
-            plana::http::NetworkInfo::unknown(),
-        );
-        let _supervision = plana::malkuth::HealthResponse {
-            worker_id: "w-1".into(),
-            healthy: true,
-            ready: true,
-            not_ready_reason: None,
-            uptime_secs: 42,
-            version: "1.0.0".into(),
-        };
-        let _supervision_via_celestia = plana::celestia::malkuth::HealthResponse {
-            worker_id: "w-1".into(),
-            healthy: true,
-            ready: true,
-            not_ready_reason: None,
-            uptime_secs: 42,
-            version: "1.0.0".into(),
-        };
-    }
 }
