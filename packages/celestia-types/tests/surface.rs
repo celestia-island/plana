@@ -28,6 +28,7 @@ fn domain_types_resolve_at_the_crate_root() {
     resolves::<plana_celestia_types::malkuth::WorkerStatus>();
     resolves::<plana_celestia_types::http::AgentItem>();
     resolves::<plana_celestia_types::protocol::handshake::ConnectHandshakeParams>();
+    resolves::<plana_celestia_types::protocol::handshake::ClientCapability>();
     assert_eq!(
         plana_celestia_types::protocol::jsonrpc::error_codes::SNAPSHOT_FAILED,
         -32001
