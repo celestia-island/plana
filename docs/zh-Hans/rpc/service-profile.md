@@ -14,7 +14,7 @@
 
 ## 1. 信封
 
-- 信封为 `plana::jsonrpc`（`packages/jsonrpc/src/types.rs`）规范定义的
+- 信封为 `plana::jsonrpc`（`packages/plana/src/jsonrpc/types.rs`）规范定义的
   JSON-RPC 2.0——全舰队唯一的规范定义。每帧必须携带
   `"jsonrpc": "2.0"`。
 - 每个 WebSocket **text** 帧一个 JSON 对象。二进制帧是协议违规（关闭码

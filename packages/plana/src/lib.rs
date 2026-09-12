@@ -24,7 +24,7 @@
 //! - `plana-evernight-client` — the terminal-route dispatch client
 //!   (depends on this crate; likewise depend on it directly).
 //!
-//! The `rpc-server` feature adds the umbrella's own axum mounting module
+//! The `rpc-server` feature adds this crate's own axum mounting module
 //! ([`rpc_server`]) — geo-aware network descriptors and SSE lanes.
 
 pub mod jsonrpc;

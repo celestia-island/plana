@@ -5,7 +5,7 @@
 //! re-exports (`Agent`, `TaskStatus`, …), the `http`/`enums`/`engine`/
 //! `malkuth`/`tools`/`external_mcp` domain modules, the scepter-flavored
 //! handshake and client-capability payloads, and the platform error codes
-//! that re-export the canonical `plana-jsonrpc` table.
+//! that re-export the foundation's canonical `plana::jsonrpc` table.
 //!
 //! Mostly compile-only (empty `resolves::<T>()` calls). The one runtime
 //! assertion pins the platform error-code value, and the type ascription in

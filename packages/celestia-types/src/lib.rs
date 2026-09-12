@@ -7,20 +7,22 @@
 //! generation support.
 //!
 //! The generic protocol core (base messages, handshake primitives,
-//! health/network descriptors, RBAC, region policy, identity) lives in the
-//! separate `plana-protocol-core` crate, and the JSON-RPC 2.0 envelope and
-//! machinery live in `plana-jsonrpc`. The `plana` umbrella crate re-exports
-//! all three.
+//! health/network descriptors, RBAC, region policy, identity) and the JSON-RPC
+//! 2.0 envelope now live in the `plana` protocol foundation
+//! (`plana::protocol_core` and `plana::jsonrpc`); this crate depends on
+//! `plana` and is not re-exported by it.
 //!
 //! A type belongs here only when it is defined in this crate as the
 //! canonical source of truth and consumed on both sides of a wire protocol.
 //! Anything else stays out.
 //!
 //! > **Migration note:** the `tracing-helpers` feature that previously lived
-//! > in this crate has moved to `plana-protocol-core` (`plana::protocol_core::tracing_helpers`,
-//! > feature `tracing-helpers`), forwarded by the `plana` umbrella as
-//! > `plana::tracing_helpers`. Consumers enabling `tracing-helpers` on this
-//! > crate's old versions should enable it on `plana` or `plana-protocol-core`.
+//! > in this crate moved to the foundation, where it enables the
+//! > `plana::protocol_core::tracing_helpers` module (re-exported as
+//! > `plana::tracing_helpers`). Consumers enabling `tracing-helpers` on this
+//! > crate's old versions should enable it on `plana` — the
+//! > `plana-protocol-core` shim still forwards a feature of that name for old
+//! > pins, but it is `publish = false` and cannot be depended on by version.
 
 // ── Module tree ─────────────────────────────────────────────
 // Foundational shared enums are defined directly in this file (below). The
@@ -49,13 +51,14 @@ use ts_rs::TS;
 /// Default report type when none is specified.
 pub const DEFAULT_REPORT_TYPE: &str = "general";
 
-/// Generic health/network descriptors, re-exported here so the `celestia`
-/// module surface keeps matching the umbrella root (`plana::http::*`).
+/// Generic health/network descriptors, re-exported here so this crate's root
+/// surface carries the same generic HTTP types as the foundation
+/// (`plana::http::*`).
 ///
 /// NOTE: this explicit re-export also pins `HealthResponse` at the crate
 /// root to the generic HTTP type, shadowing the unrelated supervision
 /// `malkuth::HealthResponse` (reachable at
-/// `plana::celestia::malkuth::HealthResponse`).
+/// `plana_celestia_types::malkuth::HealthResponse`).
 pub use plana::protocol_core::http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
 
 /// Serde default helper for `bool` fields that default to `true`.
@@ -523,7 +526,8 @@ pub enum YoloTaskTier {
 // `ConnectHandshakeParams`, etc. all still resolve. Generic protocol-core
 // types are NOT re-exported here — except `base_messages`, kept for
 // root-surface parity with the pre-split crate; everything else comes from
-// `plana-protocol-core` and is re-exported once by the `plana` umbrella crate.
+// the foundation's `plana::protocol_core`, which re-exports it at the
+// `plana` crate root.
 // ═══════════════════════════════════════════════════════════════
 
 // The client-capability handshake payload types (scepter-flavored) stay at
@@ -533,8 +537,8 @@ pub use protocol::base_messages::*;
 pub use protocol::handshake::*;
 // The platform-specific JSON-RPC error codes stay reachable at the crate
 // root (`plana_celestia_types::jsonrpc::error_codes`) as a re-export of the
-// single canonical definition in plana-jsonrpc (`plana::jsonrpc::types`),
-// which the umbrella re-exports as `plana::jsonrpc`.
+// single canonical definition in the foundation's `plana::jsonrpc::types`,
+// which `plana` exposes as `plana::jsonrpc`.
 pub use protocol::jsonrpc;
 
 // enums/ — foundational shared enums (Agent, WorkStatus, etc.)

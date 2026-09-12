@@ -19,9 +19,11 @@ use uuid::Uuid;
 //   4.  Paste-based flat aliases on Method  (Method::SyncServerVersion)
 //
 // `#[macro_export]` (plus the `$crate::`-qualified bodies below) makes the
-// macro usable from external crates: it resolves as `plana_jsonrpc::namespace`
-// (and `plana::jsonrpc::namespace` through the umbrella). Invokers only need
-// the `strum::{Display, EnumIter, EnumString}` derives in scope.
+// macro usable from external crates: it resolves at the foundation crate root
+// as `plana::namespace`. The former `plana_jsonrpc::namespace` and
+// `plana::jsonrpc::namespace` paths no longer exist after the JSON-RPC layer
+// was absorbed into `plana`. Invokers only need the
+// `strum::{Display, EnumIter, EnumString}` derives in scope.
 #[macro_export]
 macro_rules! namespace {
     (

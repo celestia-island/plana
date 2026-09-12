@@ -1,18 +1,21 @@
-//! Umbrella surface compatibility contract.
+//! Foundation surface compatibility contract.
 //!
 //! This integration test is compiled as an *external* crate, so it proves
-//! the paths consumers of the `plana` umbrella rely on keep resolving:
-//! merged `http`/`enums` modules, the `jsonrpc` framing surface, the RBAC
-//! and protocol modules, and the re-exported `namespace!` macro.
+//! the paths consumers of the `plana` foundation rely on keep resolving:
+//! the generic `http`/`enums` modules, the `jsonrpc` framing surface, the RBAC
+//! and protocol modules, and the `namespace!` macro exported at the crate
+//! root.
 //!
 //! Mostly compile-only (empty `resolves::<T>()` calls); the small runtime
 //! assertions guard the macro-expansion semantics of a local namespace.
+//!
+//! Deliberately not covered here: the celestia domain surface. It is not
+//! reachable through this crate at all — it lives in `plana-celestia-types`,
+//! which pins it in its own `tests/surface.rs`.
 
-// `namespace!` is `#[macro_export]`ed at the crate root; after the JSON-RPC
-// layer was absorbed into this crate the umbrella path
-// `plana::jsonrpc::namespace` no longer exists (the doc comment in
-// `jsonrpc::pending` predates the absorb), so this external consumer — the
-// exact case that doc comment is about — resolves it from the root.
+// `namespace!` is `#[macro_export]`ed at the foundation crate root, so this
+// external consumer — the exact case the macro's own comment describes —
+// resolves it as `plana::namespace`.
 use plana::jsonrpc::MessageKind;
 use plana::namespace;
 use strum::{Display, EnumIter, EnumString};
@@ -57,8 +60,9 @@ fn jsonrpc_surface_resolves() {
 #[test]
 fn namespace_macro_is_invocable_from_an_external_crate() {
     // The local `Surface` namespace below is declared with the macro
-    // re-exported from the umbrella (`plana::jsonrpc::namespace`), which
-    // re-exports `plana_jsonrpc::namespace`.
+    // `#[macro_export]`ed at the foundation crate root (`plana::namespace`,
+    // imported above). The former `plana::jsonrpc::namespace` and
+    // `plana_jsonrpc::namespace` paths do not resolve.
     assert_eq!(SurfaceMethod::Ping.wire(), "Surface.Ping");
     assert_eq!(SurfaceMethod::Pong.wire(), "Surface.Pong");
     assert_eq!(SurfaceMethod::Ping.kind(), MessageKind::SyncReq);
@@ -107,7 +111,7 @@ fn tracing_helpers_forwarded_through_umbrella() {
 #[test]
 fn protocol_module_resolves() {
     // The generic JSON-RPC envelope has a single canonical definition in
-    // plana-jsonrpc (re-exported as `plana::jsonrpc`); `plana::protocol`
+    // this crate's `jsonrpc` module (`plana::jsonrpc`); `plana::protocol`
     // carries only base messages and handshake primitives.
     resolves::<plana::jsonrpc::JsonRpcError>();
     resolves::<plana::protocol::base_messages::BaseHeartbeatParams>();
