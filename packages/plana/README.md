@@ -5,41 +5,50 @@ application-layer protocol for real-time state synchronization and control
 between a client shell and a backend service runtime, built on JSON-RPC 2.0
 (the way HTTP is built on TCP). Not a general-purpose RPC framework.
 
-This repo is split into four publishable crates:
+The workspace has seven crates without `publish = false`: the protocol
+foundation (`plana`), the domain profile (`plana-celestia-types`) and the
+service-side crates built on them (`plana-rpc-server`, `plana-rpc-client`,
+`plana-tauri`, `plana-evernight-client`, `plana-celestia-config`); every other
+member is `publish = false` internal infrastructure. The `v*` release job in
+`.github/workflows/publish.yml` currently ships five of them: `plana`,
+`plana-rpc-server`, `plana-rpc-client`, `plana-tauri` and
+`plana-celestia-types`.
 
 | Crate | Role in the stack |
 |-------|-------------------|
-| `plana-protocol-core` | **Generic protocol core** - handshake and identity negotiation, base protocol messages, health/network descriptors, RBAC, and region policy. Independent of any specific platform domain. |
-| `plana-celestia-types` | **Celestia domain profile** - the celestia-island platform's agent, task, panel, industrial and tool domain messages, built on the generic `plana-protocol-core` message set. |
-| `plana-jsonrpc` | **Framing & transport base** - JSON-RPC 2.0 correlation, typed method routing, and Unix-socket / HTTP / WebSocket bindings. |
-| `plana` | **The protocol layer** - re-exports the core, the domain profile and the framing, and adds server-side session management (SSE, events) behind the `rpc-server` feature. |
+| `plana` | **The protocol foundation** - the JSON-RPC 2.0 wire layer (`plana::jsonrpc`) and the generic protocol core (`plana::protocol_core`) live here directly, plus the server-side axum mounting module behind the `rpc-server` feature. |
+| `plana-celestia-types` | **Celestia domain profile** - the celestia-island platform's agent, task, panel, industrial and tool domain messages, built on the generic core. It depends on `plana`, never the reverse. |
+| `plana-protocol-core` | **Re-export shim** (`publish = false`) - a one-line `pub use plana::protocol_core::*`, kept so git pins naming the former standalone crate keep compiling. |
+| `plana-jsonrpc` | **Re-export shim** (`publish = false`) - a one-line `pub use plana::jsonrpc::*`, same reason. |
 
+## Architecture: foundation + domain profiles
 
-
-## Architecture: generic core + domain profiles
-
-PLANA is layered: the generic protocol core sits at the bottom, a domain
-profile plugs its message vocabulary in on top of it, and the umbrella crate
-re-exports both for consumers.
+PLANA is layered: the foundation crate owns the wire layer and the generic
+protocol core, and a domain profile is a *separate crate* that depends on it
+and plugs its own message vocabulary in.
 
 ```text
-plana-protocol-core (generic message set)  ←  plana-celestia-types (domain profile)  ←  plana (umbrella)
-      └────────────────────────────────────────── plana-jsonrpc (framing; namespace! macro machinery)
+plana (foundation: plana::jsonrpc + plana::protocol_core)
+  ├── plana-protocol-core / plana-jsonrpc   (re-export shims, not published)
+  ├── plana-rpc-server / plana-rpc-client / plana-tauri   (service + client frameworks)
+  ├── plana-evernight-client                (terminal-route dispatch client)
+  └── plana-celestia-types                  (domain profile; depends on plana)
 ```
 
-- **The generic core** - `plana-protocol-core` owns the platform-independent
+- **The generic core** - `plana::protocol_core` owns the platform-independent
   message set: handshake/version/identity negotiation, base protocol messages,
   health and network descriptors, RBAC, and region policy. It knows nothing
   about agents, tasks, panels or any specific platform. The generic JSON-RPC
-  2.0 envelope lives with the framing crate (`plana-jsonrpc`) as the single
-  canonical definition - a former copy here drifted and was removed.
+  2.0 envelope lives in `plana::jsonrpc` as the single canonical definition -
+  a former copy in the core drifted and was removed.
 - **Registering a domain** - two mechanisms, one for the protocol's own
   families and one for third-party profiles:
   - *Built-in method families* declare their namespaces with the `namespace!`
-    macro (re-exported as `plana::jsonrpc::namespace`), which generates the
-    typed `Method` variants whose wire names are derived from the enum path
-    (`Sync.Ping`, `Base.Heartbeat`, …). The `Method` catalog itself is a
-    closed set — extending it is a change to the protocol crate.
+    macro (`plana::namespace`, `#[macro_export]`ed at the foundation crate
+    root), which generates the typed `Method` variants whose wire names are
+    derived from the enum path (`Sync.Ping`, `Base.Heartbeat`, …). The
+    `Method` catalog itself is a closed set — extending it is a change to the
+    protocol crate.
   - *Third-party profiles* do not fork or patch the protocol: they register
     their own method names directly into `plana::jsonrpc::RpcMethodMap`
     (`RpcMethodMap::empty().method("my.domain.op", handler)`, string-keyed
@@ -47,40 +56,44 @@ plana-protocol-core (generic message set)  ←  plana-celestia-types (domain pro
     `"client shell <-> backend runtime"` scenario can speak the same
     JSON-RPC 2.0 framing without the protocol knowing its methods.
 - **The celestia profile** - `plana-celestia-types` is the celestia-island
-  platform's domain profile, built on `plana-protocol-core`. It ships by
-  default (feature `celestia`) because the celestia platform is PLANA's
-  primary consumer; other consumers can disable it
-  (`default-features = false`) and register their own profiles.
-- **Shared module names** - `http` and `enums` exist in both the core and the
-  profile; the umbrella merges them under one path (`plana::http::*`), with
-  generic and domain types side by side. The full domain surface is also
-  reachable at `plana::celestia`.
+  platform's domain profile, built on the generic core of `plana`. It is its
+  own crate, not a feature of the foundation: consumers that need the domain
+  vocabulary depend on `plana-celestia-types` directly. The `plana` feature
+  named `celestia` is a **no-op compatibility feature** kept only so pins that
+  still declare it keep resolving (see [Feature flags](#feature-flags)).
+- **Shared module names** - `http` and `enums` exist in both crates, and there
+  is no merged umbrella path between them: `plana::http` / `plana::enums` carry
+  the generic descriptors only, while the domain DTOs (`AgentItem`,
+  `ModelInfo`, `TierDefinition`, …) live under `plana_celestia_types::http` /
+  `plana_celestia_types::enums`. `plana::http::AgentItem` does not resolve.
 - **Why it matters** - the protocol is usable beyond its origin: any
   "client shell <-> backend runtime" state-synchronization scenario can
-  implement its own profile without forking the protocol.
+  implement its own profile crate without forking the protocol.
 
 ## Usage
 
-Add to your `Cargo.toml` — either the umbrella crate:
+Add to your `Cargo.toml` — either the foundation crate:
 
 ```toml
 [dependencies]
-plana = { version = "0.1", features = ["rpc-server"] }
+plana = { version = "0.2", features = ["rpc-server"] }
 ```
 
-or just the parts you need:
+or the foundation plus the celestia domain profile:
 
 ```toml
 [dependencies]
-plana-protocol-core = { version = "0.2" }
-plana-celestia-types = { version = "0.1" }
-plana-jsonrpc = { version = "0.1" }
+plana = "0.2"
+plana-celestia-types = "0.1"
 ```
+
+`plana-jsonrpc` and `plana-protocol-core` are `publish = false` re-export
+shims; do not depend on them by version.
 
 ### Registering and calling a JSON-RPC method
 
 Built-in method families are declared with the `namespace!` macro (defined in
-`plana-jsonrpc`, see `pending.rs`) and dispatched through the typed `Method`
+`plana::jsonrpc::pending`) and dispatched through the typed `Method`
 enum. Third-party method names register directly into `RpcMethodMap` — no
 enum extension needed:
 
@@ -150,63 +163,63 @@ let response = transport.send(&JsonRpcRequest::new_raw("ping", None), TimeoutPol
 
 | Feature | Default | What it enables |
 |---------|---------|-----------------|
-| `celestia` | yes | `plana-celestia-types` re-exported at the crate root and at `plana::celestia`; `plana-protocol-core` is always re-exported at the root. |
+| `celestia` | no | **No-op compatibility feature.** The domain profile is the separate `plana-celestia-types` crate, which depends on `plana` (never the reverse), so there is nothing left to gate or re-export. Kept so pins that declare `features = ["celestia"]` keep resolving; `plana::celestia` does not exist. |
 | `rpc-server` | no | Server-side SSE event streaming and request network/geo detection (`rpc_server::detect_network`). Transport sessions for SSE live in `plana::jsonrpc::session`. |
-| `jsonrpc` | no | No-op compatibility feature — `plana-jsonrpc` is an always-on dependency now, so there is nothing to gate. Kept so consumers that declare it keep resolving. |
-| `tracing-helpers` | no | Forwards `plana-protocol-core/tracing-helpers`: `plana::tracing_helpers` module with a `ShortTimer` formatting type. |
+| `jsonrpc` | no | No-op compatibility feature — the JSON-RPC layer is an always-on module of this crate now (`plana::jsonrpc`), so there is nothing to gate. Kept so consumers that declare it keep resolving. |
+| `tracing-helpers` | no | Enables `plana::tracing_helpers`, the `ShortTimer` formatting type re-exported from `plana::protocol_core::tracing_helpers`. |
+
+`default = []`: no feature is on unless a consumer asks for it.
 
 ### Consumer migration (post re-pin)
 
-The feature surface of `plana` changed when the generic core was extracted:
+The feature surface of the foundation changed when the generic core was
+extracted and again when the `celestia` facade was removed. Current facts:
 
-- `jsonrpc` — no-op now (plana-jsonrpc is always on). A no-op compat feature is
-  kept so existing declarations keep resolving; do not rely on it to disable
-  anything.
-- `types` — renamed to `celestia`. The domain types now live in
-  `plana-celestia-types`; enable `celestia` for the domain vocabulary.
-- `tracing-helpers` — forwarded to `plana-protocol-core/tracing-helpers`.
+- `celestia` — no-op now. It no longer re-exports anything: the domain
+  vocabulary is the `plana-celestia-types` crate, so declare that crate
+  directly instead of `features = ["celestia"]`.
+- `jsonrpc` — no-op now (the JSON-RPC layer is always on). A no-op compat
+  feature is kept so existing declarations keep resolving; do not rely on it
+  to disable anything.
+- `types` — the pre-split name of the domain feature; no such feature exists
+  in any form now. The domain vocabulary is the `plana-celestia-types` crate.
+- `tracing-helpers` — enables `plana::tracing_helpers`.
 
-After re-pinning, declare the following features:
+Declarations observed in this workspace (verified against each consumer's
+`Cargo.toml`; keep them in that shape when re-pinning):
 
-| Consumer | Features to declare |
-|----------|---------------------|
-| arona | `rpc-server` |
-| shittim-chest | `jsonrpc`, `tracing-helpers`, `celestia` |
-| evernight | `jsonrpc` |
-| entelecheia | `rpc-server`, `celestia` (aspirational — see note below) |
-| scriptum | `jsonrpc` (aspirational — see note below) |
-
-> **entelecheia and scriptum rows are re-pin guidance, not current fact.**
-> entelecheia's manifest still pins the *dead* `plana-types` crate name
-> (`plana = { package = "plana-types", git = "…/plana", tag = "v0.1.9" }`),
-> and scriptum's Cargo.toml still pins the dead `plana-types` crate name as a
-> git dependency on live `master`; neither has been migrated to the split
-> `plana`/`plana-celestia-types` crates yet. The rows above are the feature
-> sets they should declare once re-pinned.
+| Consumer | Features to declare on `plana` | Domain types |
+|----------|-------------------------------|--------------|
+| arona | `rpc-server` | — |
+| shittim-chest | `jsonrpc`, `tracing-helpers` | direct `plana-celestia-types` dependency |
+| evernight | `jsonrpc` | — (uses the generic `plana::http` descriptors) |
+| entelecheia | `rpc-server` | direct `plana-celestia-types` dependency |
 
 ## TypeScript bindings
 
 Generated TS bindings live in **two** places, both regenerated by
 `just gen bindings`:
 
-- `packages/protocol-core/bindings/` — the generic core types (health,
-  RBAC, handshake, region policy, base messages). The JSON-RPC envelope
-  (owned by `plana-jsonrpc`) is Rust-only and has no TypeScript export.
-  In-repo for now;
-  an npm home for the generic bindings package is a follow-up decision.
+- `packages/plana/bindings/` — the generic core types (health, RBAC,
+  handshake, region policy, base messages) and the deferred-operation wire
+  shapes, generated by the foundation crate itself (the `plana-protocol-core`
+  shim owns no types). The JSON-RPC request/response envelope is Rust-only;
+  only the error object (`JsonRpcError`) is generated into `bindings/ops.ts`.
 - `packages/celestia-types/bindings/` — the celestia domain profile types
-  (agent, task, industrial, tool, malkuth supervision, …), shipped as
-  `@celestia-island/plana-celestia-types`.
+  (agent, task, industrial, tool, malkuth supervision, …), shipped as the
+  `@celestia-island/plana-types` npm package.
 
 The generic types (e.g. `HealthResponse`, `RbacUser`, `ConnectionStatus`,
-`BaseHeartbeatParams`, `RegionPolicy`) are exported **only** from
-`packages/protocol-core/bindings/`; the celestia package ships domain types
-only.
+`BaseHeartbeatParams`, `RegionPolicy`) are generated **only** into
+`packages/plana/bindings/`; `packages/celestia-types/bindings/` additionally
+carries two vendored snapshots of the foundation's generated bindings
+(`protocol-core-httpTypes.ts` and `ops.ts`) so the published npm tarball is
+self-contained.
 
 > **`HealthDetailed` was removed in the core split** (dead in-repo, unused by
-> in-repo consumers). If you consumed it from the old
-> `@celestia-island/plana-types` npm bindings, migrate to the structured
-> health fields (`HealthResponse` / `ServiceStatus` / `ConnectionStatus`).
+> in-repo consumers). If you consumed it from the `@celestia-island/plana-types`
+> npm bindings, migrate to the structured health fields (`HealthResponse` /
+> `ServiceStatus` / `ConnectionStatus`).
 
 ## Stability
 

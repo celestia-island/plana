@@ -1,9 +1,9 @@
 //! Generic protocol core of PLANA (absorbed from the former
-//! `plana-protocol-core` crate; the standalone name remains as a shim) — the shared wire types that any platform
-//! profile builds on.
+//! `plana-protocol-core` crate; the standalone name remains as a re-export
+//! shim) — the shared wire types that any platform profile builds on.
 //!
-//! `plana-protocol-core` owns the platform-independent message set of the
-//! PLANA protocol:
+//! This module owns the platform-independent message set of the PLANA
+//! protocol:
 //!
 //! - the base protocol messages ([`protocol::base_messages`]),
 //! - connection handshake / version / identity negotiation primitives
@@ -15,9 +15,8 @@
 //! - generic connection-topology vocabulary ([`enums`]).
 //!
 //! The generic JSON-RPC 2.0 envelope intentionally does NOT live here: its
-//! single canonical definition is `plana_jsonrpc::types` in the framing
-//! crate, re-exported by the `plana` umbrella as `plana::jsonrpc`. A former
-//! copy in this crate was removed after the two drifted apart.
+//! single canonical definition is the [`crate::jsonrpc`] module of this same
+//! crate. A former copy here was removed after the two drifted apart.
 //!
 //! Types carry serde (Serialize and/or Deserialize) and, where applicable,
 //! JSON-Schema (`schemars::JsonSchema`) and TypeScript-bindings (`ts-rs`)
@@ -25,17 +24,19 @@
 //! protocol message types are full serde round-trip types.
 //!
 //! This crate knows nothing about any specific platform domain. Domain
-//! profiles (e.g. `plana-celestia-types`) depend on it and plug their
-//! per-domain message vocabularies in; the `plana` umbrella crate re-exports
-//! the core alongside a domain profile and the `plana-jsonrpc` framing crate.
+//! profiles (e.g. `plana-celestia-types`) depend on the `plana` foundation
+//! and plug their per-domain message vocabularies in; `plana` re-exports this
+//! core at its crate root and as `plana::protocol_core`, and does not
+//! re-export any domain profile.
 
 // ── Module tree ─────────────────────────────────────────────
 // The generic wire vocabulary lives under a small set of folders:
 //   protocol/ — base messages, handshake (WS transport)
 //   http/     — health/network/status descriptors and generic REST DTOs
 // and a few single-file modules at the root (enums, identity, rbac, region).
-// The glob re-exports at the bottom keep every type reachable at the crate
-// root (`plana_protocol_core::TypeName`).
+// The glob re-exports at the bottom keep every type reachable at the module
+// root (`plana::protocol_core::TypeName` — and, through the re-export shim,
+// `plana_protocol_core::TypeName`).
 pub mod enums;
 pub mod http;
 pub mod identity;

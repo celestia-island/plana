@@ -24,10 +24,10 @@
 //!   lookups with compile-time-checked variants, reducing debugging surface
 //!   when the protocol evolves.
 //! - **`pending`** — pending-request registry with `Method` catalog,
-//!   one-shot completion handles, and the [`namespace!`] macro used to
-//!   declare typed method namespaces (built-in protocol families only — the
-//!   `Method` enum is a closed set; third-party method names register
-//!   directly into [`rpc_router::RpcMethodMap`]).
+//!   one-shot completion handles, and the [`namespace!`](crate::namespace)
+//!   macro used to declare typed method namespaces (built-in protocol
+//!   families only — the `Method` enum is a closed set; third-party method
+//!   names register directly into [`rpc_router::RpcMethodMap`]).
 //!
 //! Design philosophy: the bridge is *intentionally narrow*. Both sides agree
 //! on an exhaustive message catalog; clients never open a raw socket — they
