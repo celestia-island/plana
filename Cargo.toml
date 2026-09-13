@@ -73,7 +73,7 @@ _sync = { package = "plana_sync", path = "packages/sync" }
 _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
 _world_state = { package = "plana_world_state", path = "packages/world_state" }
-plana-rpc-client = { version = "0.2.1", path = "packages/rpc-client" }
+plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
 
 # ── Internal crate aliases ──────────────────────────────────
 plana = { version = "0.2.0", path = "packages/plana" }
@@ -127,6 +127,8 @@ os_info = "^3"
 parking_lot = "^0.12"
 pci-ids = "^0.2"
 rand = "^0.8"
+# Self-signed certificate generation for the rpc-client wss:// tests.
+rcgen = "^0.14"
 regex = "^1"
 reqwest = { version = "^0.13", default-features = false, features = [
     "json",

@@ -23,15 +23,21 @@
 //!   fallback) towards a caller-supplied deadline. This half is Rust-only for
 //!   now: the published TypeScript client has no equivalent helper yet.
 //!
-//! Transport scope of this first release: plaintext `ws://`. TLS (`wss://`)
-//! and the degraded-transport racing of the TS client are deliberately
-//! deferred until the first production consumer needs them; the HTTP POST
-//! fallback exists as a standalone one-shot transport in [`http`]
-//! (`http://` only) for degraded environments.
+//! Transport matrix: plaintext `ws://` and Unix-domain `ipc://` sockets
+//! (everything after `ipc://` is the socket file path) are always
+//! available; `wss://` rides the `tls` feature (rustls with webpki roots,
+//! certificate verification on by default — the builder's
+//! `danger_accept_invalid_certs` hook exists for tests that stand up their
+//! own throwaway certificate). The degraded-transport racing of the TS
+//! client is still deferred; the HTTP POST fallback exists as a standalone
+//! one-shot transport in [`http`] (`http://` only) for degraded
+//! environments.
 
 pub mod client;
 pub mod http;
 pub mod relay;
+#[cfg(feature = "tls")]
+mod tls;
 
 pub use client::{RpcClient, RpcClientBuilder, RpcClientConfig};
 pub use http::post_rpc;
