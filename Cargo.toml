@@ -73,7 +73,7 @@ _sync = { package = "plana_sync", path = "packages/sync" }
 _text = { package = "plana_text", path = "packages/text" }
 _timeline = { package = "plana_timeline", path = "packages/timeline" }
 _world_state = { package = "plana_world_state", path = "packages/world_state" }
-plana-rpc-client = { version = "0.2.0", path = "packages/rpc-client" }
+plana-rpc-client = { version = "0.2.1", path = "packages/rpc-client" }
 
 # ── Internal crate aliases ──────────────────────────────────
 plana = { version = "0.2.0", path = "packages/plana" }

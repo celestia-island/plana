@@ -32,9 +32,14 @@ pub struct RpcClientConfig {
     /// Cadence of `Base.Heartbeat` notifications.
     pub heartbeat_interval: Duration,
     /// No inbound frame (ack or otherwise) within this window ⇒ the
-    /// connection is declared dead and cycles.
+    /// connection is declared dead and cycles. Only armed while the
+    /// heartbeat service is enabled — see [`Self::heartbeat`].
     pub heartbeat_timeout: Duration,
-    /// Serve the built-in heartbeat service.
+    /// Serve the built-in heartbeat service. Disabling it also disarms the
+    /// silence watchdog: with no heartbeat traffic being generated, inbound
+    /// silence is not evidence of a dead connection, so a quiet connection
+    /// is only ever cycled by transport-level failures (close frame, TCP
+    /// error, EOF).
     pub heartbeat: bool,
     /// First reconnect delay; grows by `reconnect_factor` per failure.
     pub reconnect_initial: Duration,
@@ -571,7 +576,12 @@ async fn connected_phase(
                 }
             },
 
-            _ = watchdog.tick() => {
+            // The watchdog is the other half of the heartbeat service: it
+            // interprets inbound silence as death only while this client
+            // generates heartbeat traffic the server should be acking. With
+            // heartbeats disabled the branch stays closed, so an idle
+            // connection survives until the transport itself fails.
+            _ = watchdog.tick(), if config.heartbeat => {
                 if last_inbound.elapsed() >= config.heartbeat_timeout {
                     tracing::debug!("rpc client heartbeat watchdog fired");
                     break Outcome::Lost;
