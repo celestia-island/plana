@@ -35,14 +35,41 @@ use std::process::Command;
 /// Call from `build.rs`. Emits `unknown` when the sources have no git
 /// metadata (vendored build, source tarball) so the field is always present
 /// and honest, and suffixes `-dirty` when the tree has uncommitted changes.
-/// Also registers the git HEAD as a rerun trigger, so checking out another
-/// commit rebuilds the crate and the reported hash cannot go stale.
+///
+/// Registers every file git could move the revision through as a rerun
+/// trigger. Watching `.git/HEAD` alone is not enough: in a linked worktree —
+/// and in the build engine's checkouts — `HEAD` is a *symref* that keeps
+/// saying `ref: refs/heads/…` while the branch advances underneath it, so a
+/// warm target directory would keep reporting the revision it was first
+/// built from. The resolved ref file, the packed refs and the index close
+/// that hole.
 pub fn emit_build_hash() {
-    if let Some(head) = git_path("HEAD") {
-        println!("cargo:rerun-if-changed={head}");
+    for trigger in watch_paths() {
+        println!("cargo:rerun-if-changed={trigger}");
     }
     let hash = git_revision().unwrap_or_else(|| "unknown".to_string());
     println!("cargo:rustc-env=BUILD_HASH={hash}");
+}
+
+/// Files whose change may move the reported revision.
+fn watch_paths() -> Vec<String> {
+    let mut paths = Vec::new();
+    if let Some(head) = git_path("HEAD") {
+        paths.push(head);
+    }
+    // Where a symref actually points (`refs/heads/<branch>`), so advancing the
+    // branch on a worktree re-runs this script.
+    if let Some(path) = git(&["symbolic-ref", "-q", "HEAD"])
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .and_then(|reference| git_path(&reference))
+    {
+        paths.push(path);
+    }
+    if let Some(packed) = git_path("packed-refs") {
+        paths.push(packed);
+    }
+    paths
 }
 
 /// The build hash captured by [`emit_build_hash`], or `"unknown"` when the
@@ -146,6 +173,21 @@ mod tests {
     fn empty_output_is_not_a_revision() {
         assert_eq!(normalize_revision("  \n", false), None);
         assert_eq!(normalize_revision("", true), None);
+    }
+
+    /// Every trigger must be a non-empty path, and the resolved ref must be
+    /// watched alongside `HEAD` — the stale-hash bug was exactly this.
+    #[test]
+    fn watches_the_resolved_ref_not_only_head() {
+        let paths = watch_paths();
+        assert!(!paths.is_empty(), "at least .git/HEAD is watched");
+        assert!(paths.iter().all(|path| !path.trim().is_empty()));
+        assert!(paths.iter().any(|path| path.ends_with("HEAD")));
+        let git_dir = git(&["rev-parse", "--absolute-git-dir"]).expect("inside a git checkout");
+        assert!(
+            paths.iter().any(|path| path.contains(git_dir.trim())),
+            "triggers must live in the git dir, got {paths:?}"
+        );
     }
 
     #[test]
