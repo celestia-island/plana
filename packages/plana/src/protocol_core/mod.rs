@@ -47,7 +47,9 @@ pub mod region;
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;
 
-pub use http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
+pub use http::{
+    BackendKind, HealthResponse, NetworkInfo, ServiceStatus, VersionReport, SERVICE_INFO_METHOD,
+};
 
 // protocol/ — transport core
 pub use protocol::base_messages::*;

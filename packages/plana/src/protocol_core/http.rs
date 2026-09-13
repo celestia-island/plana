@@ -108,7 +108,60 @@ impl HealthResponse {
             engine_version: None,
         }
     }
+
+    /// Attach the build identity to a health payload.
+    ///
+    /// [`HealthResponse::ok`] deliberately leaves the hash empty, which is why
+    /// every backend used to report `build_hash: null` on `/health` while its
+    /// JSON-RPC twin said nothing at all. Services that know their revision
+    /// chain this (typically with `plana_build_info::build_hash!()` and
+    /// `build_kind!()`) so HTTP and RPC answer with the same triple.
+    pub fn with_build(
+        mut self,
+        build_hash: impl Into<String>,
+        engine_version: Option<String>,
+    ) -> Self {
+        let hash = build_hash.into();
+        if !hash.is_empty() {
+            self.build_hash = Some(hash);
+        }
+        self.engine_version = engine_version;
+        self
+    }
+
+    /// The version identity of this service, in the one shape every backend
+    /// must expose on both `/health` and its `Service.Info` JSON-RPC method.
+    pub fn version_report(&self) -> VersionReport {
+        VersionReport {
+            version: self.version.clone(),
+            build_hash: self.build_hash.clone(),
+            kind: self.kind,
+            engine_version: self.engine_version.clone(),
+        }
+    }
 }
+
+/// The version half of a health payload, shared by HTTP and JSON-RPC.
+///
+/// Backends answer `Service.Info` with exactly this struct, built from the
+/// same [`HealthResponse`] they serve on `/health`, so the two transports can
+/// never drift apart.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[ts(export, export_to = "httpTypes.ts")]
+pub struct VersionReport {
+    pub version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub build_hash: Option<String>,
+    pub kind: BackendKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub engine_version: Option<String>,
+}
+
+/// Wire method name of the JSON-RPC twin of `/health`. Every backend
+/// registers this method and answers with [`VersionReport`].
+pub const SERVICE_INFO_METHOD: &str = "Service.Info";
 
 /// Network context from the incoming request.
 #[derive(Debug, Clone, Serialize, TS)]
