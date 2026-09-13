@@ -1,6 +1,6 @@
 [package]
 name = "plana-rpc-client"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
@@ -36,6 +36,9 @@ uuid = { workspace = true }
 
 axum = { workspace = true }
 plana-rpc-server = { path = "../rpc-server" }
+rcgen = { workspace = true }
+tempfile = { workspace = true }
+tokio-rustls = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true

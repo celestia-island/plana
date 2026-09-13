@@ -2,12 +2,19 @@
 //! timeouts, heartbeat keepalive, and exponential-backoff reconnect.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
+use std::pin::Pin;
 use std::sync::{Arc, Mutex as StdMutex};
+use std::task::{Context, Poll};
 use std::time::Duration;
 
-use futures::{SinkExt, StreamExt};
+use futures::{Sink, SinkExt, Stream, StreamExt};
+use tokio::net::TcpStream;
+#[cfg(unix)]
+use tokio::net::UnixStream;
 use tokio::sync::{broadcast, mpsc, oneshot, watch};
-use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::tungstenite::{self, Message};
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 use plana::jsonrpc::deferred::{
     DeferredOpOutcome, DeferredOpRef, DeferredOpSettledParams, OpsResultParams, OPS_RESULT_METHOD,
@@ -117,12 +124,16 @@ struct Inner {
 pub struct RpcClientBuilder {
     url: String,
     config: RpcClientConfig,
+    #[cfg(feature = "tls")]
+    danger_accept_invalid_certs: bool,
 }
 
 impl RpcClientBuilder {
-    /// Endpoint URL, e.g. `ws://127.0.0.1:8092/api/ws` (or `wss://` under
-    /// the `tls` feature). Credentials may ride the fleet-canonical
-    /// `?token=` query parameter.
+    /// Endpoint URL: `ws://127.0.0.1:8092/api/ws`, `wss://…` (under the
+    /// `tls` feature), or `ipc:///path/to/socket` for a Unix domain socket
+    /// — everything after `ipc://` is the socket file path. Credentials may
+    /// ride the fleet-canonical `?token=` query parameter on `ws://` and
+    /// `wss://` URLs.
     pub fn url(mut self, url: impl Into<String>) -> Self {
         self.url = url.into();
         self
@@ -135,6 +146,21 @@ impl RpcClientBuilder {
     #[cfg(feature = "tls")]
     pub fn install_ring_tls_provider() {
         let _ = rustls::crypto::ring::default_provider().install_default();
+    }
+
+    /// Test hook (`tls` feature): accept server certificates that do not
+    /// chain to a trusted root — self-signed certificates above all.
+    ///
+    /// Defaults to `false`: `wss://` connections are verified against the
+    /// webpki root store, and an untrusted certificate fails the dial (the
+    /// supervisor treats it like any other transport failure). Only enable
+    /// this in tests that stand up their own throwaway certificate; doing
+    /// so in production strips the confidentiality and authenticity
+    /// guarantees TLS exists to provide.
+    #[cfg(feature = "tls")]
+    pub fn danger_accept_invalid_certs(mut self, accept: bool) -> Self {
+        self.danger_accept_invalid_certs = accept;
+        self
     }
 
     pub fn config(mut self, config: RpcClientConfig) -> Self {
@@ -160,7 +186,12 @@ impl RpcClientBuilder {
             pending: StdMutex::new(HashMap::new()),
         });
 
-        let supervisor = supervise(self.url, inner.clone(), cmd_rx);
+        let plan = DialPlan {
+            endpoint: Endpoint::parse(&self.url),
+            #[cfg(feature = "tls")]
+            danger_accept_invalid_certs: self.danger_accept_invalid_certs,
+        };
+        let supervisor = supervise(plan, inner.clone(), cmd_rx);
         tokio::spawn(supervisor);
 
         RpcClient { inner }
@@ -187,6 +218,8 @@ impl RpcClient {
         RpcClientBuilder {
             url: String::new(),
             config: RpcClientConfig::default(),
+            #[cfg(feature = "tls")]
+            danger_accept_invalid_certs: false,
         }
     }
 
@@ -429,7 +462,176 @@ enum Outcome {
     Shutdown,
 }
 
-async fn supervise(url: String, inner: Arc<Inner>, mut cmd_rx: mpsc::Receiver<Cmd>) {
+/// Where a client dials, parsed once from the builder URL.
+///
+/// - `ws://…` / `wss://…` — TCP, the latter requiring the `tls` feature;
+/// - `ipc:///path/to/socket` — Unix domain socket: everything after
+///   `ipc://` is the socket file path.
+enum Endpoint {
+    Tcp(String),
+    #[cfg(unix)]
+    Unix(PathBuf),
+    /// The URL matched no supported scheme (or this build lacks the
+    /// feature for it). Dialing fails with the carried reason, and the
+    /// supervisor keeps its normal backoff semantics — identical to an
+    /// unreachable TCP endpoint, which is what an unparseable URL already
+    /// was.
+    Unusable(String),
+}
+
+impl Endpoint {
+    fn parse(url: &str) -> Self {
+        let Some((scheme, rest)) = url.split_once("://") else {
+            return Self::Unusable(format!("not a transport url (no scheme): {url:?}"));
+        };
+        match scheme.to_ascii_lowercase().as_str() {
+            "ws" => Self::Tcp(url.to_owned()),
+            "wss" => wss_endpoint(url),
+            "ipc" if rest.is_empty() => {
+                Self::Unusable(format!("ipc:// url has no socket path: {url:?}"))
+            }
+            "ipc" => ipc_endpoint(rest),
+            other => Self::Unusable(format!(
+                "unsupported transport scheme {other:?} (expected ws, wss, or ipc)"
+            )),
+        }
+    }
+}
+
+#[cfg(feature = "tls")]
+fn wss_endpoint(url: &str) -> Endpoint {
+    Endpoint::Tcp(url.to_owned())
+}
+
+#[cfg(not(feature = "tls"))]
+fn wss_endpoint(url: &str) -> Endpoint {
+    Endpoint::Unusable(format!(
+        "wss:// requires the `tls` feature of plana-rpc-client: {url:?}"
+    ))
+}
+
+#[cfg(unix)]
+fn ipc_endpoint(path: &str) -> Endpoint {
+    Endpoint::Unix(PathBuf::from(path))
+}
+
+#[cfg(not(unix))]
+fn ipc_endpoint(path: &str) -> Endpoint {
+    let _ = path;
+    Endpoint::Unusable("ipc:// requires a unix platform".to_owned())
+}
+
+/// Everything the supervisor needs in order to redial: the parsed endpoint
+/// plus the TLS verification knob that only affects `wss://` dials.
+struct DialPlan {
+    endpoint: Endpoint,
+    #[cfg(feature = "tls")]
+    danger_accept_invalid_certs: bool,
+}
+
+/// A dialed connection, uniform across the supported transports.
+///
+/// The supervisor's state machine below is transport-agnostic — it only
+/// needs a WebSocket frame stream and sink. TCP dials wrap
+/// [`MaybeTlsStream<TcpStream>`] (plain or rustls, per the `tls` feature);
+/// `ipc://` dials handshake a [`UnixStream`] directly, with no TLS layer —
+/// filesystem permissions on the socket file are that transport's
+/// confidentiality boundary.
+enum ClientSocket {
+    Tcp(Box<WebSocketStream<MaybeTlsStream<TcpStream>>>),
+    #[cfg(unix)]
+    Unix(Box<WebSocketStream<UnixStream>>),
+}
+
+impl Stream for ClientSocket {
+    type Item = tungstenite::Result<Message>;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        match self.get_mut() {
+            ClientSocket::Tcp(socket) => socket.poll_next_unpin(cx),
+            #[cfg(unix)]
+            ClientSocket::Unix(socket) => socket.poll_next_unpin(cx),
+        }
+    }
+}
+
+impl Sink<Message> for ClientSocket {
+    type Error = tungstenite::Error;
+
+    fn poll_ready(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        match self.get_mut() {
+            ClientSocket::Tcp(socket) => socket.poll_ready_unpin(cx),
+            #[cfg(unix)]
+            ClientSocket::Unix(socket) => socket.poll_ready_unpin(cx),
+        }
+    }
+
+    fn start_send(self: Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
+        match self.get_mut() {
+            ClientSocket::Tcp(socket) => socket.start_send_unpin(item),
+            #[cfg(unix)]
+            ClientSocket::Unix(socket) => socket.start_send_unpin(item),
+        }
+    }
+
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        match self.get_mut() {
+            ClientSocket::Tcp(socket) => socket.poll_flush_unpin(cx),
+            #[cfg(unix)]
+            ClientSocket::Unix(socket) => socket.poll_flush_unpin(cx),
+        }
+    }
+
+    fn poll_close(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        match self.get_mut() {
+            ClientSocket::Tcp(socket) => socket.poll_close_unpin(cx),
+            #[cfg(unix)]
+            ClientSocket::Unix(socket) => socket.poll_close_unpin(cx),
+        }
+    }
+}
+
+/// Dial one connection, whichever transport the plan names.
+async fn dial(plan: &DialPlan) -> Result<ClientSocket, tungstenite::Error> {
+    match &plan.endpoint {
+        Endpoint::Tcp(url) => {
+            #[cfg(feature = "tls")]
+            {
+                let connector = crate::tls::connector(plan.danger_accept_invalid_certs);
+                let (socket, _response) = tokio_tungstenite::connect_async_tls_with_config(
+                    url.clone(),
+                    None,
+                    false,
+                    connector,
+                )
+                .await?;
+                Ok(ClientSocket::Tcp(Box::new(socket)))
+            }
+            #[cfg(not(feature = "tls"))]
+            {
+                let (socket, _response) = tokio_tungstenite::connect_async(url.clone()).await?;
+                Ok(ClientSocket::Tcp(Box::new(socket)))
+            }
+        }
+        #[cfg(unix)]
+        Endpoint::Unix(path) => {
+            let stream = UnixStream::connect(path).await?;
+            // The handshake request still needs a Host; the socket file is
+            // the real addressing, so `localhost` is the conventional
+            // stand-in and the request path stays `/`. ipc:// endpoints must
+            // therefore serve their WebSocket regardless of request path.
+            let (socket, _response) =
+                tokio_tungstenite::client_async_with_config("ws://localhost/", stream, None)
+                    .await?;
+            Ok(ClientSocket::Unix(Box::new(socket)))
+        }
+        Endpoint::Unusable(reason) => {
+            Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, reason.clone()).into())
+        }
+    }
+}
+
+async fn supervise(plan: DialPlan, inner: Arc<Inner>, mut cmd_rx: mpsc::Receiver<Cmd>) {
     let config = inner.config.clone();
     let mut backoff = config.reconnect_initial;
     let mut attempts: u32 = 0;
@@ -437,14 +639,10 @@ async fn supervise(url: String, inner: Arc<Inner>, mut cmd_rx: mpsc::Receiver<Cm
     loop {
         set_state(&inner, ConnectionState::Connecting);
 
-        let dialed = tokio::time::timeout(
-            config.connect_timeout,
-            tokio_tungstenite::connect_async(url.clone()),
-        )
-        .await;
+        let dialed = tokio::time::timeout(config.connect_timeout, dial(&plan)).await;
 
         let socket = match dialed {
-            Ok(Ok((socket, _))) => Some(socket),
+            Ok(Ok(socket)) => Some(socket),
             Ok(Err(err)) => {
                 tracing::debug!(error = %err, "rpc client dial failed");
                 None
@@ -516,9 +714,7 @@ async fn supervise(url: String, inner: Arc<Inner>, mut cmd_rx: mpsc::Receiver<Cm
 }
 
 async fn connected_phase(
-    socket: tokio_tungstenite::WebSocketStream<
-        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
-    >,
+    socket: ClientSocket,
     inner: &Arc<Inner>,
     cmd_rx: &mut mpsc::Receiver<Cmd>,
 ) -> Outcome {
