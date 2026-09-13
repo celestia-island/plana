@@ -241,6 +241,47 @@ fn ping_params_is_the_empty_object() {
 }
 
 #[test]
+fn ping_params_tolerates_the_omitted_params_form() {
+    // JSON-RPC 2.0 may omit `params` for a no-argument method (the
+    // TypeScript sibling client does when called without an argument), and
+    // plana's router hands such a handler `Value::Null` — the DTO must
+    // treat that as the same empty params, not an error. Serialization
+    // stays the canonical `{}` pinned above.
+    let from_null: PingParamsDto = serde_json::from_value(Value::Null).unwrap();
+    assert_eq!(from_null, PingParamsDto {});
+    let from_text: PingParamsDto = serde_json::from_str("null").unwrap();
+    assert_eq!(from_text, PingParamsDto {});
+    assert_eq!(
+        serde_json::to_value(PingParamsDto {}).unwrap(),
+        json!({}),
+        "serialization must stay the canonical empty object"
+    );
+}
+
+#[test]
+fn read_result_raw_covers_the_empty_and_large_array_edges() {
+    // An empty read serializes as an empty JSON array (`[]`, not `null`).
+    round_trip(
+        &ReadResultDto {
+            raw: vec![],
+            latency_us: 0,
+        },
+        json!({"raw": [], "latency_us": 0}),
+    );
+
+    // A large block (plus the u64 latency ceiling) must survive the
+    // Value round-trip byte-for-byte; pinned without a giant literal.
+    let big = ReadResultDto {
+        raw: (0..=255u8).cycle().take(4096).collect(),
+        latency_us: u64::MAX,
+    };
+    let wire = serde_json::to_value(&big).unwrap();
+    assert_eq!(wire["raw"].as_array().map(Vec::len), Some(4096));
+    let back: ReadResultDto = serde_json::from_value(wire).unwrap();
+    assert_eq!(back, big);
+}
+
+#[test]
 fn probe_params_and_result_pin_their_shapes() {
     round_trip(
         &ProbeParamsDto {
@@ -261,4 +302,32 @@ fn probe_params_and_result_pin_their_shapes() {
         },
         json!({"protocol": "modbus_tcp", "confidence": 0.75}),
     );
+}
+
+#[test]
+fn probe_result_confidence_precision_is_pinned_across_both_paths() {
+    // A non-dyadic confidence surfaces the two serialization paths
+    // differently, and both are legal wire forms:
+    //
+    // - `to_value` widens f32 → f64 (serde_json numbers carry f64), so the
+    //   Value-based wire — what `RpcClient::call(method, to_value(dto))`
+    //   actually sends — carries the widened repr 0.9900000095367432;
+    // - direct text serialization formats the f32 itself, emitting the
+    //   shortest round-tripping decimal "0.99".
+    //
+    // Both deserialize back to the same f32, which is the actual contract.
+    let dto = ProbeResultDto {
+        protocol: "modbus_tcp".into(),
+        confidence: 0.99,
+    };
+
+    let widened = json!({"protocol": "modbus_tcp", "confidence": f64::from(0.99f32)});
+    assert_eq!(serde_json::to_value(&dto).unwrap(), widened);
+    let from_widened: ProbeResultDto = serde_json::from_value(widened).unwrap();
+    assert_eq!(from_widened, dto);
+
+    let text = serde_json::to_string(&dto).unwrap();
+    assert_eq!(text, r#"{"protocol":"modbus_tcp","confidence":0.99}"#);
+    let from_text: ProbeResultDto = serde_json::from_str(&text).unwrap();
+    assert_eq!(from_text, dto);
 }

@@ -87,9 +87,54 @@ pub struct WriteResultDto {
 }
 
 /// Params of [`PROTOCOL_PING_METHOD`] — the empty params object `{}`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+///
+/// JSON-RPC 2.0 lets a no-argument method omit `params` entirely, and the
+/// sibling TypeScript client does exactly that when called without an
+/// argument; plana's router hands such a handler `Value::Null` for the
+/// missing field. Deserialization therefore tolerates `null` alongside the
+/// canonical `{}` (unknown fields are ignored, mirroring serde's derive
+/// default), while serialization always emits `{}`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, TS)]
 #[ts(export, export_to = "evernightProtocol.ts")]
 pub struct PingParamsDto {}
+
+impl<'de> Deserialize<'de> for PingParamsDto {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = PingParamsDto;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("the empty params object `{}` or null")
+            }
+
+            fn visit_unit<E>(self) -> Result<Self::Value, E> {
+                Ok(PingParamsDto {})
+            }
+
+            fn visit_none<E>(self) -> Result<Self::Value, E> {
+                Ok(PingParamsDto {})
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                while map
+                    .next_entry::<serde::de::IgnoredAny, serde::de::IgnoredAny>()?
+                    .is_some()
+                {}
+                Ok(PingParamsDto {})
+            }
+        }
+
+        deserializer.deserialize_any(Visitor)
+    }
+}
 
 /// Result of [`PROTOCOL_PING_METHOD`].
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]

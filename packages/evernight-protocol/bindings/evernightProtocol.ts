@@ -75,6 +75,13 @@ size: number, };
 
 /**
  * Params of [`PROTOCOL_PING_METHOD`] — the empty params object `{}`.
+ *
+ * JSON-RPC 2.0 lets a no-argument method omit `params` entirely, and the
+ * sibling TypeScript client does exactly that when called without an
+ * argument; plana's router hands such a handler `Value::Null` for the
+ * missing field. Deserialization therefore tolerates `null` alongside the
+ * canonical `{}` (unknown fields are ignored, mirroring serde's derive
+ * default), while serialization always emits `{}`.
  */
 export type PingParamsDto = Record<symbol, never>;
 
