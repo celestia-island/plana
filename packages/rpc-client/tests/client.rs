@@ -204,6 +204,48 @@ async fn watchdog_cycles_a_silent_connection() {
 }
 
 #[tokio::test]
+async fn watchdog_stays_disarmed_when_heartbeats_are_disabled() {
+    // Regression: with `heartbeat: false` the client sends nothing the
+    // server should ack, so inbound silence carries no signal. A quiet
+    // connection several watchdog windows old must NOT cycle — only
+    // transport-level failures may. The short 200ms `heartbeat_timeout`
+    // stands in for "a long idle connection" so the test fails fast if the
+    // watchdog is ever armed unconditionally again.
+    let server = RpcServer::builder()
+        .config(RpcServerConfig {
+            idle_timeout: Duration::from_secs(30),
+            heartbeat: false,
+            ..RpcServerConfig::default()
+        })
+        .method("echo", |p: Value| async move { Ok(p) })
+        .build();
+    let (url, _port) = spawn(server).await;
+
+    let client = RpcClient::builder()
+        .url(&url)
+        .config(RpcClientConfig {
+            heartbeat: false,
+            heartbeat_timeout: Duration::from_millis(200),
+            ..RpcClientConfig::default()
+        })
+        .build();
+
+    wait_for_state(&client, ConnectionState::Connected, Duration::from_secs(5)).await;
+
+    // Five watchdog windows of complete silence on the wire.
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+    assert_eq!(
+        client.state(),
+        ConnectionState::Connected,
+        "an idle connection must survive with heartbeats disabled"
+    );
+
+    // And it is still usable afterwards.
+    let result = client.call("echo", json!({"still": true})).await.unwrap();
+    assert_eq!(result["still"], true);
+}
+
+#[tokio::test]
 async fn force_reconnect_reestablishes_and_rejects_pending() {
     let server = RpcServer::builder()
         .config(RpcServerConfig {

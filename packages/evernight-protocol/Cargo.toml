@@ -1,0 +1,23 @@
+[package]
+name = "plana_evernight_protocol"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license-file.workspace = true
+description = "Wire DTOs for the evernight Tier 3 protocol.* JSON-RPC plugin contract: internally tagged transport/address payloads and the connect/read/write/ping/probe parameter and result shapes shared by the gateway and plugin authors."
+
+[lints]
+workspace = true
+
+[dependencies]
+
+serde = { workspace = true }
+ts-rs = { workspace = true }
+
+[dev-dependencies]
+
+serde_json.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
