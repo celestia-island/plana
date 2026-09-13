@@ -281,6 +281,60 @@ mod ipc {
             other => panic!("expected Closed in Failed state, got {other:?}"),
         }
     }
+
+    #[tokio::test]
+    async fn hanging_upgrade_handshake_is_bounded_by_connect_timeout() {
+        // A server that accepts the connection and then never answers the
+        // WebSocket upgrade: the local UnixStream::connect is fast, so the
+        // only thing that can bound the dial is connect_timeout covering
+        // the handshake too. Pin that: with the budget exhausted the client
+        // must land in Failed well inside the wall clock an unbounded
+        // handshake would blow past (each dial is capped at 250ms, three
+        // attempts plus backoff stay far under the 5s wait).
+        let dir = tempfile::tempdir().unwrap();
+        let socket = dir.path().join("stalling.sock");
+        let listener = UnixListener::bind(&socket).expect("bind unix socket");
+        tokio::spawn(async move {
+            // Hold every accepted stream open and say nothing: the client
+            // writes its upgrade request, then blocks reading a 101 that
+            // never comes.
+            let mut held = Vec::new();
+            while let Ok((stream, _)) = listener.accept().await {
+                held.push(stream);
+            }
+        });
+
+        let client = RpcClient::builder()
+            .url(format!("ipc://{}", socket.display()))
+            .config(RpcClientConfig {
+                connect_timeout: Duration::from_millis(250),
+                reconnect_initial: Duration::from_millis(30),
+                max_reconnect_attempts: Some(2),
+                ..RpcClientConfig::default()
+            })
+            .build();
+
+        wait_for_state(&client, ConnectionState::Failed, Duration::from_secs(5)).await;
+    }
+
+    #[tokio::test]
+    async fn socket_paths_with_spaces_and_non_ascii_are_taken_literally() {
+        // The text after ipc:// is the socket file path verbatim — no URL
+        // parsing, no percent-decoding. A path with spaces and non-ASCII
+        // bytes must reach the very same file the server bound.
+        let dir = tempfile::tempdir().unwrap();
+        let socket = dir.path().join("套接 字.sock");
+        serve(echo_server(), &socket).await;
+
+        let url = format!("ipc://{}", socket.display());
+        let client = RpcClient::builder().url(&url).build();
+
+        let result = client
+            .call("echo", json!({"path": "literal"}))
+            .await
+            .expect("echo should succeed over a non-ascii socket path");
+        assert_eq!(result["path"], "literal");
+    }
 }
 
 // ── wss:// — TLS WebSockets (`tls` feature) ──────────────────────────

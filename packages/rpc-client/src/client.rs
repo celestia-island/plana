@@ -2,6 +2,10 @@
 //! timeouts, heartbeat keepalive, and exponential-backoff reconnect.
 
 use std::collections::HashMap;
+// Only the `Endpoint::Unix` machinery touches paths; keeping the import
+// unix-gated avoids an unused-import warning (an error under -D warnings)
+// on targets where ipc:// dials compile out to the runtime Unusable arm.
+#[cfg(unix)]
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex as StdMutex};
