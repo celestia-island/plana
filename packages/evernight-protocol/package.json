@@ -1,0 +1,16 @@
+{
+  "name": "@celestia-island/plana-evernight-protocol",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/celestia-island/plana"
+  },
+  "description": "TypeScript bindings for the evernight Tier 3 protocol.* JSON-RPC plugin contract DTOs.",
+  "main": "index.ts",
+  "types": "index.ts",
+  "files": [
+    "index.ts",
+    "bindings"
+  ],
+  "packageManager": "pnpm@11.18.0"
+}

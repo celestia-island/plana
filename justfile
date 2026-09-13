@@ -73,16 +73,17 @@ test:
 
 # Regenerate artifacts. Default: bindings.
 # TS bindings are emitted by the test builds of the crates that own the
-# exported types, into TWO directories: packages/plana/bindings/ (generic
+# exported types, into THREE directories: packages/plana/bindings/ (generic
 # types — the `plana-protocol-core` package is now a re-export shim with no
-# types of its own, so the plana foundation is what generates this file set)
-# and packages/celestia-types/bindings/ (domain types). `just gen bindings`
-# regenerates both.
+# types of its own, so the plana foundation is what generates this file set),
+# packages/celestia-types/bindings/ (domain types) and
+# packages/evernight-protocol/bindings/ (Tier 3 wire DTOs). `just gen
+# bindings` regenerates all three.
 [script('sh')]
 gen target='bindings':
     set -euo pipefail
     case "{{target}}" in
-      bindings) cargo test --package plana --package plana-celestia-types ;;
+      bindings) cargo test --package plana --package plana-celestia-types --package plana_evernight_protocol ;;
       *) echo "Usage: just gen bindings"; exit 1 ;;
     esac
 

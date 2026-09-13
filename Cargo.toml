@@ -10,6 +10,7 @@ members = [
     "packages/rpc-client",
     "packages/tauri",
     "packages/evernight-client",
+    "packages/evernight-protocol",
     "packages/protocol-core",
     "packages/core",
     "packages/config",

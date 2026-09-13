@@ -28,3 +28,4 @@ npm = "0.1.7"
 
 [exempt.npm]
 "packages/celestia-types" = "independently published line"
+"packages/evernight-protocol" = "independently published line (npm 0.1.0, crate follows the workspace baseline)"
