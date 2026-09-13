@@ -60,3 +60,12 @@ export type ReadinessResponse = { status: string, database: boolean, };
 export type ServiceStatus = "ok" | "degraded" | "unhealthy";
 
 export type StatusResponse = { status: string, agent_id?: string, platform?: string, id?: string, plugin_id?: string, };
+
+/**
+ * The version half of a health payload, shared by HTTP and JSON-RPC.
+ *
+ * Backends answer `Service.Info` with exactly this struct, built from the
+ * same [`HealthResponse`] they serve on `/health`, so the two transports can
+ * never drift apart.
+ */
+export type VersionReport = { version: string, build_hash?: string, kind: BackendKind, engine_version?: string, };

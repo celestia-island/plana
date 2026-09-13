@@ -23,6 +23,7 @@ members = [
     "packages/infra_services",
     "packages/infra_utils",
     "packages/bootloader",
+    "packages/build_info",
     "packages/llm_provider",
     "packages/timeline",
     "packages/prompt",
@@ -53,6 +54,7 @@ all = "deny"
 [workspace.dependencies]
 
 _bootloader = { package = "plana_bootloader", path = "packages/bootloader" }
+_build_info = { package = "plana_build_info", path = "packages/build_info" }
 _config = { package = "plana_config", path = "packages/config" }
 _core = { package = "plana_core", path = "packages/core" }
 _custom_agent = { package = "plana_custom_agent", path = "packages/custom_agent" }

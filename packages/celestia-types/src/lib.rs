@@ -59,7 +59,9 @@ pub const DEFAULT_REPORT_TYPE: &str = "general";
 /// root to the generic HTTP type, shadowing the unrelated supervision
 /// `malkuth::HealthResponse` (reachable at
 /// `plana_celestia_types::malkuth::HealthResponse`).
-pub use plana::protocol_core::http::{BackendKind, HealthResponse, NetworkInfo, ServiceStatus};
+pub use plana::protocol_core::http::{
+    BackendKind, HealthResponse, NetworkInfo, ServiceStatus, VersionReport, SERVICE_INFO_METHOD,
+};
 
 /// Serde default helper for `bool` fields that default to `true`.
 pub(crate) fn default_true() -> bool {
