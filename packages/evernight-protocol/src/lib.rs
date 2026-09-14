@@ -18,9 +18,10 @@
 //! - **Tier 3 plugin authors, in any language**: the JSON shapes pinned by
 //!   this crate's tests *are* the contract. A Python, Go, C or Node.js
 //!   plugin implements a JSON-RPC server answering the five methods below;
-//!   TypeScript authors can consume the generated bindings
-//!   (`bindings/evernightProtocol.ts`, emitted by `cargo test` via ts-rs)
-//!   instead of hand-writing the types.
+//!   TypeScript authors consume the npm package
+//!   `@celestia-island/plana-evernight-protocol` (a types-only package
+//!   carrying the `.d.ts` mirror of `bindings/evernightProtocol.ts`,
+//!   emitted by `cargo test` via ts-rs) instead of hand-writing the types.
 //!
 //! # The five methods
 //!
@@ -31,6 +32,30 @@
 //! | [`PROTOCOL_WRITE_METHOD`] | `protocol.write` | [`WriteParamsDto`] → [`WriteResultDto`] |
 //! | [`PROTOCOL_PING_METHOD`] | `protocol.ping` | [`PingParamsDto`] → [`PingResultDto`] |
 //! | [`PROTOCOL_PROBE_METHOD`] | `protocol.probe` | [`ProbeParamsDto`] → [`ProbeResultDto`] |
+//!
+//! # Examples
+//!
+//! Every payload is plain JSON on the wire — the enums are internally
+//! tagged on `"kind"` with snake_case variant names:
+//!
+//! ```
+//! use plana_evernight_protocol::TransportInfoDto;
+//!
+//! let transport = TransportInfoDto::Tcp {
+//!     host: "192.0.2.10".to_string(),
+//!     port: 502,
+//! };
+//! let wire = serde_json::to_value(&transport).unwrap();
+//! assert_eq!(
+//!     wire,
+//!     serde_json::json!({"kind": "tcp", "host": "192.0.2.10", "port": 502}),
+//! );
+//!
+//! // The same JSON reads back into the DTO; the exact shapes for every
+//! // method are pinned by the contract tests in tests/wire_shapes.rs.
+//! let back: TransportInfoDto = serde_json::from_value(wire).unwrap();
+//! assert_eq!(back, transport);
+//! ```
 //!
 //! # Tagging decision
 //!
