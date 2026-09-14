@@ -10,3 +10,4 @@ minimumReleaseAgeExclude:
   - '@celestia-island/hikari'
   - '@celestia-island/plana-types'
   - '@celestia-island/plana-rpc-client'
+  - '@celestia-island/plana-evernight-protocol'
