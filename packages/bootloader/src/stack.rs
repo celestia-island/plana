@@ -321,9 +321,7 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     env.insert("COSMOS_CONTAINER_RUNTIME".into(), "docker".into());
     // Local image names (no registry prefix) for cosmos sub-containers.
     env.insert("CONTAINER_REGISTRY".into(), String::new());
-    // TODO: RBAC is being migrated to kirino v0.6 hierarchical permission model.
-    // Remove this once shittim-chest and entelecheia have adopted kirino::Permission.
-    env.insert("RBAC_ENABLED".into(), "false".into());
+    // Authorization is unconditional: the stack ships no RBAC off-switch.
     // Proxy passthrough — evernight provides host proxy access via polemos.
     if let Ok(proxy) = std::env::var("HTTP_PROXY").or(std::env::var("http_proxy")) {
         env.insert("HTTP_PROXY".into(), proxy.clone());
