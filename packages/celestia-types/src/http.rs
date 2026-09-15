@@ -151,22 +151,15 @@ pub struct SystemInfoDatabase {
     pub connections: u32,
 }
 // ── Workspace / Project ────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct WorkspaceItem {
-    pub id: String,
-    pub path: String,
-    pub editor: String,
-    pub git_branch: String,
-    pub status: String,
-    pub connected: bool,
-    pub short_id: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub alias: Option<String>,
-    pub connection_kind: String,
-}
+// `WorkspaceItem` and `WorkspaceResolveResponse` used to live here and
+// described a chest roster shape (`path` / `editor` / `git_branch` /
+// `connected`) that no chest endpoint ever produced — reading them is what
+// blanked the admin console's workspace roster for months (chest #884, which
+// also removed their last would-be consumers). The one real chest wire type
+// in this section, `AliasRegistryEntry`, stays: it matches the
+// `workspace.registry` payload exactly. The authoritative roster row type now
+// lives with its producer (`shittim-chest` `packages/webui/src/types/
+// workspace.ts`), next to the handler that serialises it.
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
@@ -174,17 +167,6 @@ pub struct AliasRegistryEntry {
     pub workspace_uuid: String,
     pub alias: String,
     pub short_id: String,
-}
-
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct WorkspaceResolveResponse {
-    pub workspace_uuid: String,
-    pub short_id: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub alias: Option<String>,
-    pub path: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
