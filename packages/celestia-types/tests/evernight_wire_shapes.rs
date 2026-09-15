@@ -7,15 +7,15 @@
 //! the contract — changing one is a wire break that must be coordinated
 //! with evernight's anchor tests and the Tier 3 guide's interface table.
 
-use plana_evernight_protocol::{
-    ConnectParamsDto, ConnectResultDto, DataAddressDto, PROTOCOL_CONNECT_METHOD,
-    PROTOCOL_PING_METHOD, PROTOCOL_PROBE_METHOD, PROTOCOL_READ_METHOD, PROTOCOL_WRITE_METHOD,
-    PingParamsDto, PingResultDto, ProbeParamsDto, ProbeResultDto, ReadParamsDto, ReadResultDto,
-    TransportInfoDto, WriteParamsDto, WriteResultDto, WriteVerificationDto,
+use plana_celestia_types::evernight::{
+    ConnectParamsDto, ConnectResultDto, DataAddressDto, PingParamsDto, PingResultDto,
+    ProbeParamsDto, ProbeResultDto, ReadParamsDto, ReadResultDto, TransportInfoDto, WriteParamsDto,
+    WriteResultDto, WriteVerificationDto, PROTOCOL_CONNECT_METHOD, PROTOCOL_PING_METHOD,
+    PROTOCOL_PROBE_METHOD, PROTOCOL_READ_METHOD, PROTOCOL_WRITE_METHOD,
 };
-use serde::Serialize;
 use serde::de::DeserializeOwned;
-use serde_json::{Value, json};
+use serde::Serialize;
+use serde_json::{json, Value};
 
 /// Serialize → assert the exact JSON → deserialize → re-serialize → assert
 /// the shape survived the round-trip unchanged.

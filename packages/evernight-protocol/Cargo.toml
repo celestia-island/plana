@@ -5,19 +5,11 @@ edition.workspace = true
 rust-version.workspace = true
 publish = false
 license-file.workspace = true
-description = "Wire DTOs for the evernight Tier 3 protocol.* JSON-RPC plugin contract: internally tagged transport/address payloads and the connect/read/write/ping/probe parameter and result shapes shared by the gateway and plugin authors."
+description = "Re-export shim: the evernight Tier 3 protocol.* wire DTOs now live in plana-celestia-types (and ship to npm inside @celestia-island/plana-types)."
 
 [lints]
 workspace = true
 
 [dependencies]
 
-serde = { workspace = true }
-ts-rs = { workspace = true }
-
-[dev-dependencies]
-
-serde_json.workspace = true
-
-[package.metadata.docs.rs]
-all-features = true
+plana-celestia-types = { workspace = true }

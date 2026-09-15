@@ -34,6 +34,7 @@
 // type reachable at the crate root (`plana_celestia_types::TypeName`).
 pub mod engine;
 pub mod enums;
+pub mod evernight;
 pub mod external_mcp;
 pub mod gateway;
 pub mod http;
