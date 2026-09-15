@@ -76,8 +76,8 @@ _world_state = { package = "plana_world_state", path = "packages/world_state" }
 plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
 
 # ── Internal crate aliases ──────────────────────────────────
-plana = { version = "0.2.0", path = "packages/plana" }
-plana-celestia-types = { version = "0.1.0", path = "packages/celestia-types" }
+plana = { version = "0.2.1", path = "packages/plana" }
+plana-celestia-types = { version = "0.1.1", path = "packages/celestia-types" }
 
 kirino = { version = "^0.6.5" }
 

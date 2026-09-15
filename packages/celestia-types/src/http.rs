@@ -578,7 +578,6 @@ pub struct UserProfileResponse {
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub is_active: bool,
-    pub is_admin: bool,
     pub role: String,
     pub groups: Vec<RbacGroup>,
     #[serde(skip_serializing_if = "Option::is_none")]
