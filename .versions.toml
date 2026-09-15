@@ -1,7 +1,7 @@
 # Version drift gate configuration for `celestia-devtools verify-versions`.
 #
 # plana carries two independent release lines that intentionally diverge from
-# the cargo workspace baseline (0.1.21): the published protocol crates are
+# the cargo workspace baseline (0.1.22): the published protocol crates are
 # versioned on their own publish line, and the npm packages follow their own
 # per-package line. Exemptions below record those deliberate divergences so the
 # gate still fails on accidental drift.
