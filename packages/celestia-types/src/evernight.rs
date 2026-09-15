@@ -1,13 +1,12 @@
 //! evernight Tier 3 `protocol.*` plugin-contract wire DTOs.
 //!
-//! Contract doc lives with the shim crate `plana_evernight_protocol` (which
-//! re-exports this module for the evernight gateway's git-dep import path);
-//! the authoritative JSON shapes are pinned by
+//! The authoritative JSON shapes are pinned by
 //! `tests/evernight_wire_shapes.rs`. TypeScript consumers get these from
 //! `@celestia-island/plana-types` (`bindings/evernightProtocol.ts`), the
-//! family's single protocol package — the standalone
-//! `@celestia-island/plana-evernight-protocol` package was folded in here
-//! before its first successful publish.
+//! family's single protocol package. (The standalone
+//! `@celestia-island/plana-evernight-protocol` package and its shim crate
+//! `plana_evernight_protocol` were retired — evernight's gateway now imports
+//! this module directly.)
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
