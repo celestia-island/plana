@@ -18,6 +18,7 @@ env:
 jobs:
   check:
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
       - name: Install libseccomp-dev (retry on apt lock contention)
@@ -38,6 +39,7 @@ jobs:
 
   clippy:
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
       - name: Install libseccomp-dev (retry on apt lock contention)
@@ -60,6 +62,7 @@ jobs:
 
   fmt:
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -69,6 +72,7 @@ jobs:
 
   test:
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v7
       - name: Install libseccomp-dev (retry on apt lock contention)

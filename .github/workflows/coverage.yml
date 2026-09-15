@@ -18,6 +18,7 @@ env:
 jobs:
   coverage:
     runs-on: [self-hosted, linux, x64, local]
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
