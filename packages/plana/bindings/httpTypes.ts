@@ -48,7 +48,7 @@ export type RbacGroup = { id: string, name: string, description: string, member_
 
 export type RbacGroupsResponse = { groups: Array<RbacGroup>, };
 
-export type RbacUser = { id: string, username: string, email: string, display_name: string, avatar_url: string | null, is_active: boolean, is_admin: boolean, role: string, tier: string, created_at: string, };
+export type RbacUser = { id: string, username: string, email: string, display_name: string, avatar_url: string | null, is_active: boolean, role: string, tier: string, created_at: string, };
 
 export type RbacUsersResponse = { users: Array<RbacUser>, };
 

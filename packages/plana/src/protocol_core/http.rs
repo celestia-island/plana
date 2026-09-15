@@ -204,7 +204,6 @@ pub struct RbacUser {
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub is_active: bool,
-    pub is_admin: bool,
     pub role: String,
     pub tier: String,
     pub created_at: String,

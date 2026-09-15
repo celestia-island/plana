@@ -114,7 +114,7 @@ export type UsageModelEntry = { model: string, tokens: bigint, cost_usd: number,
 
 export type UserPreferences = { theme?: string, themeMode?: string, chatMode?: string, locale?: string, };
 
-export type UserProfileResponse = { id: string, username: string, email: string, display_name: string, avatar_url: string | null, is_active: boolean, is_admin: boolean, role: string, groups: Array<RbacGroup>, preferences?: UserPreferences, created_at: string, };
+export type UserProfileResponse = { id: string, username: string, email: string, display_name: string, avatar_url: string | null, is_active: boolean, role: string, groups: Array<RbacGroup>, preferences?: UserPreferences, created_at: string, };
 
 export type UserTierInfo = { user_id: string, tier: string, tier_expires_at?: string, daily_quota_used: number, monthly_token_used: number, last_quota_reset_at?: string, };
 
