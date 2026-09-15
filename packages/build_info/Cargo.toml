@@ -10,3 +10,6 @@ license-file.workspace = true
 workspace = true
 
 [dependencies]
+# Digest behind the unified build token (see the crate docs): the same
+# SHA-256 → base32 → last-6 shape malkuth prints for supervised binaries.
+sha2 = { workspace = true }
