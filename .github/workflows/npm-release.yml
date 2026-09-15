@@ -45,9 +45,3 @@ jobs:
           if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then echo "$NAME@$VERSION already published — skipping"; else npm publish --access public --provenance; fi
       # Types-only package: no runtime code ships (index.d.ts + an empty
       # index.js placeholder), so publish straight from the package dir.
-      - name: Publish plana-evernight-protocol (dir packages/evernight-protocol)
-        run: |
-          cd packages/evernight-protocol
-          if [ -n "${{ github.event.inputs.version }}" ]; then npm version "${{ github.event.inputs.version }}" --no-git-tag-version --allow-same-version; fi
-          NAME=$(node -p "require('./package.json').name"); VERSION=$(node -p "require('./package.json').version")
-          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then echo "$NAME@$VERSION already published — skipping"; else npm publish --access public --provenance; fi

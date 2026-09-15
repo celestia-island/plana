@@ -1,20 +1,103 @@
-//! The five `protocol.*` methods and their parameter/result DTOs.
+//! evernight Tier 3 `protocol.*` plugin-contract wire DTOs.
 //!
-//! The method name constants give both sides of the contract one spelling;
-//! the param/result structs mirror the Tier 3 guide's interface table:
-//!
-//! | Method | Params | Result |
-//! |---|---|---|
-//! | `protocol.connect` | `{ transport }` | `{ connected }` |
-//! | `protocol.read` | `{ address }` | `{ raw, latency_us }` |
-//! | `protocol.write` | `{ address, data }` | `{ confirmed, verification }` |
-//! | `protocol.ping` | `{}` | `{ reachable }` |
-//! | `protocol.probe` | `{ transport }` | `{ protocol, confidence }` |
+//! Contract doc lives with the shim crate `plana_evernight_protocol` (which
+//! re-exports this module for the evernight gateway's git-dep import path);
+//! the authoritative JSON shapes are pinned by
+//! `tests/evernight_wire_shapes.rs`. TypeScript consumers get these from
+//! `@celestia-island/plana-types` (`bindings/evernightProtocol.ts`), the
+//! family's single protocol package — the standalone
+//! `@celestia-island/plana-evernight-protocol` package was folded in here
+//! before its first successful publish.
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::dto::{DataAddressDto, TransportInfoDto, WriteVerificationDto};
+/// Describes how to reach a device: the `transport` field of
+/// [`protocol.connect`](PROTOCOL_CONNECT_METHOD) and
+/// [`protocol.probe`](PROTOCOL_PROBE_METHOD) params.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(export, export_to = "evernightProtocol.ts")]
+pub enum TransportInfoDto {
+    /// TCP endpoint (host, port).
+    Tcp {
+        /// TCP hostname or IP address.
+        host: String,
+        /// TCP port number.
+        port: u16,
+    },
+    /// Serial port (device path, optional baud rate hint).
+    Serial {
+        /// Serial device path (e.g. "/dev/ttyUSB0").
+        port: String,
+        /// Optional baud rate hint. Serializes as `null` when absent and
+        /// defaults to `None` when the field is missing on the wire.
+        baud: Option<u32>,
+    },
+}
+
+/// Identifies a data location across any industrial protocol: the
+/// `address` field of [`protocol.read`](PROTOCOL_READ_METHOD) and
+/// [`protocol.write`](PROTOCOL_WRITE_METHOD) params.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(export, export_to = "evernightProtocol.ts")]
+pub enum DataAddressDto {
+    /// Modbus: station ID + function code + register address range.
+    Modbus {
+        /// Modbus station/slave ID.
+        station: u8,
+        /// Modbus function code.
+        fc: u8,
+        /// Starting register address.
+        address: u16,
+        /// Number of registers to read/write.
+        count: u16,
+    },
+    /// S7comm: DB number + byte offset + length.
+    S7 {
+        /// Data block number.
+        db_number: u16,
+        /// Byte offset within the DB.
+        offset: u16,
+        /// Number of bytes to read/write.
+        length: u16,
+    },
+    /// MC Protocol (Mitsubishi): device code + head address + count.
+    Mc {
+        /// Device code (e.g. "D", "M", "X", "Y").
+        device: String,
+        /// Starting head address.
+        head_address: u32,
+        /// Number of elements.
+        count: u16,
+    },
+    /// Generic raw address (for future protocols).
+    Raw {
+        /// Raw address string (protocol-specific).
+        address: String,
+        /// Expected data size in bytes.
+        size: usize,
+    },
+}
+
+/// Tri-state confirmation of a
+/// [`protocol.write`](PROTOCOL_WRITE_METHOD) result.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "evernightProtocol.ts")]
+pub enum WriteVerificationDto {
+    /// A subsequent read-back verified the written value.
+    Confirmed,
+    /// A read-back was attempted but did not verify the write.
+    Unconfirmed,
+    /// The protocol has no read-back capability, so verification status is
+    /// unknown (distinct from a silent `false`).
+    #[default]
+    Unknown,
+}
+
+// (dto.rs 与 methods.rs 合并为同一模块,类型直接可见,不再需要 crate::dto 路径。)
 
 /// `protocol.connect` — open a connection to a device.
 pub const PROTOCOL_CONNECT_METHOD: &str = "protocol.connect";

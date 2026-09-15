@@ -20,8 +20,8 @@ connected: boolean, };
 
 /**
  * Identifies a data location across any industrial protocol: the
- * `address` field of [`protocol.read`](crate::PROTOCOL_READ_METHOD) and
- * [`protocol.write`](crate::PROTOCOL_WRITE_METHOD) params.
+ * `address` field of [`protocol.read`](PROTOCOL_READ_METHOD) and
+ * [`protocol.write`](PROTOCOL_WRITE_METHOD) params.
  */
 export type DataAddressDto = { "kind": "modbus", 
 /**
@@ -144,8 +144,8 @@ latency_us: bigint, };
 
 /**
  * Describes how to reach a device: the `transport` field of
- * [`protocol.connect`](crate::PROTOCOL_CONNECT_METHOD) and
- * [`protocol.probe`](crate::PROTOCOL_PROBE_METHOD) params.
+ * [`protocol.connect`](PROTOCOL_CONNECT_METHOD) and
+ * [`protocol.probe`](PROTOCOL_PROBE_METHOD) params.
  */
 export type TransportInfoDto = { "kind": "tcp", 
 /**
@@ -198,6 +198,6 @@ verification: WriteVerificationDto, };
 
 /**
  * Tri-state confirmation of a
- * [`protocol.write`](crate::PROTOCOL_WRITE_METHOD) result.
+ * [`protocol.write`](PROTOCOL_WRITE_METHOD) result.
  */
 export type WriteVerificationDto = "confirmed" | "unconfirmed" | "unknown";
