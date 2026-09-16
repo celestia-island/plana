@@ -5,7 +5,14 @@ export type YoloConfigResponseParams = { tiers: Array<YoloTierConfig>, };
 
 export type YoloCycleCompleteParams = { loop_count: bigint, duration_ms: bigint, };
 
-export type YoloCycleStepParams = { skill: string, loop_count: bigint, status: string, token_usage?: [number, number], model_name?: string, };
+export type YoloCycleStepParams = { skill: string, loop_count: bigint, status: string, token_usage?: [number, number], model_name?: string, 
+/**
+ * Task-tree node this step belongs to (`TodoTreeNode.id`). Optional for
+ * backwards compatibility — older emitters omit it and the webui falls
+ * back to skill-title matching — but engines that know their task node
+ * should always set it: title matching is ambiguous under collisions.
+ */
+task_id?: string, };
 
 export type YoloRunTierNowResponseParams = { ok: boolean, error?: string, };
 
