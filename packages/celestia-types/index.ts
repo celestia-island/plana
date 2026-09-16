@@ -59,6 +59,7 @@ export * from "./bindings/ws/stateSync";
 export * from "./bindings/ws/systemUi";
 export * from "./bindings/ws/tasks";
 export * from "./bindings/ws/views";
+export * from "./bindings/ws/viewTemplate";
 export * from "./bindings/ws/workspace";
 export * from "./bindings/ws/yolo";
 export type { AnomalyDetectParams, AnomalyInfo, AnomalyResult, CausalReasonParams, CausalReasonResult, CorrelationInfo, Hypothesis, LlmChatParams, LlmChatResult, MediaAssetItem, MediaAssetRegisterResult, MediaAssetRetrieveResult, RagDbDeleteParams, RagDbDeleteResult, RagDbReadParams, RagDbReadResult, RagDbStatsParams, RagDbStatsResult, RagDbWriteParams, RagDbWriteResult, RagDocResult, TranslateReportParams, TranslateReportResult, WorkspaceIndexParams, WorkspaceIndexResult, WorkspaceSearchDoc, WorkspaceSearchParams, WorkspaceSearchResult, WorkspaceStatusResult } from "./bindings/tools/aporia";

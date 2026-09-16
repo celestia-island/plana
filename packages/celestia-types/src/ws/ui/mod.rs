@@ -8,5 +8,6 @@ pub mod logs;
 pub mod noa;
 pub mod realtime;
 pub mod system_ui;
+pub mod view_template;
 pub mod views;
 pub mod workspace;
