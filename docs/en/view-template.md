@@ -1,7 +1,8 @@
 # The panel view-template format
 
 Status: **active** (the format lives in `plana-celestia-types` 0.1.1, module
-`ws::ui::view_template`; 中文版：[view-template.md](../../zh-Hans/view-template.md))
+`ws::ui::view_template`; published bindings `@celestia-island/plana-types` 0.1.9;
+中文版：[view-template.md](../zh-Hans/view-template.md))
 
 Audience: template authors and the hosts that load them
 
@@ -12,8 +13,9 @@ exported to TypeScript as `@celestia-island/plana-types`, so the same shapes
 reach a Rust host and the web UI.
 
 Nothing in the format **executes code**. A template can only combine
-vocabulary the reading build already draws; an engine it does not know is
-reported as unsupported rather than silently replaced.
+vocabulary the reading build already draws. The types put no whitelist on the
+engine id — a host reports an engine it cannot draw as unsupported rather than
+silently substituting one.
 
 ## The five base views
 

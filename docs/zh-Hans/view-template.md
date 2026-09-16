@@ -1,7 +1,8 @@
 # 面板视图模板格式
 
 状态：**生效**（格式位于 `plana-celestia-types` 0.1.1 的 `ws::ui::view_template`
-模块。英文权威版：[view-template.md](../../en/view-template.md)）
+模块；已发布绑定 `@celestia-island/plana-types` 0.1.9。
+英文权威版：[view-template.md](../en/view-template.md)）
 
 读者：模板作者与加载它们的宿主
 
