@@ -451,11 +451,155 @@ pub struct PanelTemplate {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/viewTemplate.ts")]
 pub struct ViewTemplateFile {
-    /// Format version.
-    pub version: String,
+    /// Format version. A reader that does not know the version must reject
+    /// the file rather than guess — the same explicit stance the MDD
+    /// descriptor takes for its `schema_version`.
+    pub version: u32,
     /// The templates the file declares.
     #[serde(default)]
     pub template: Vec<PanelTemplate>,
+}
+
+/// The plugin-id shape the workspace-module contract fixes for render
+/// engines (`^[a-z][a-z0-9-]*$`), reused for template ids so the two
+/// vocabularies cannot drift apart.
+fn is_kebab_id(value: &str) -> bool {
+    let mut chars = value.chars();
+    match chars.next() {
+        Some(first) if first.is_ascii_lowercase() => {}
+        _ => return false,
+    }
+    chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-')
+}
+
+/// The i18n-key shape the admin catalog accepts: dotted, identifier-ish
+/// segments (`footer.addPanel.views.kanban.title`).
+fn is_i18n_key(value: &str) -> bool {
+    !value.is_empty()
+        && value.split('.').all(|segment| {
+            let mut chars = segment.chars();
+            match chars.next() {
+                Some(first) if first.is_ascii_alphabetic() => {}
+                _ => return false,
+            }
+            chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        })
+}
+
+impl ViewTemplateSpec {
+    /// Check that exactly the arm named by `base` is set.
+    ///
+    /// The type cannot express this — the arms are five independent options —
+    /// so a loader has to ask: a template whose arm disagrees with its base
+    /// would otherwise reach the renderer and be silently ignored.
+    pub fn check_arms(&self) -> Result<(), String> {
+        let settings = [
+            (BaseViewKind::Waterfall, self.waterfall.is_some()),
+            (BaseViewKind::NodeCanvas, self.node_canvas.is_some()),
+            (BaseViewKind::DataGrid, self.data_grid.is_some()),
+            (BaseViewKind::Kanban, self.kanban.is_some()),
+            (BaseViewKind::BlankCanvas, self.blank_canvas.is_some()),
+        ];
+        let set: Vec<BaseViewKind> = settings
+            .iter()
+            .filter(|(_, on)| *on)
+            .map(|(kind, _)| *kind)
+            .collect();
+        match set.as_slice() {
+            [only] if *only == self.base => Ok(()),
+            [only] => Err(format!(
+                "spec arm {only:?} does not match base {:?}",
+                self.base
+            )),
+            other => Err(format!(
+                "exactly one spec arm must be set, found {}",
+                other.len()
+            )),
+        }
+    }
+
+    /// Check the numeric bounds the types cannot carry.
+    fn check_bounds(&self) -> Result<(), String> {
+        if let Some(spec) = &self.waterfall {
+            match &spec.columns {
+                WaterfallColumns::Fixed { count } if *count == 0 => {
+                    return Err("waterfall columns: fixed count must be >= 1".to_string());
+                }
+                WaterfallColumns::Adaptive { max, min_width } if *max == 0 || *min_width == 0 => {
+                    return Err(
+                        "waterfall columns: adaptive max and min_width must be >= 1".to_string()
+                    );
+                }
+                _ => {}
+            }
+        }
+        if let Some(spec) = &self.node_canvas {
+            let camera = &spec.camera;
+            if !camera.min_zoom.is_finite()
+                || !camera.max_zoom.is_finite()
+                || camera.min_zoom <= 0.0
+                || camera.min_zoom > camera.max_zoom
+            {
+                return Err(format!(
+                    "node-canvas camera: need 0 < min_zoom <= max_zoom, got {}..{}",
+                    camera.min_zoom, camera.max_zoom
+                ));
+            }
+            if let Some(step) = camera.zoom_step {
+                if !step.is_finite() || step <= 0.0 {
+                    return Err("node-canvas camera: zoom_step must be finite and > 0".to_string());
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl PanelTemplate {
+    /// Validate everything the types cannot: the id and key shapes, the arm
+    /// matching the base, and the numeric bounds.
+    ///
+    /// Call this at the loading boundary (TOML -> validate -> renderer),
+    /// with the discipline the admin catalog already applies to untrusted
+    /// module payloads: reject and say why, never hand the renderer
+    /// something it will silently ignore.
+    pub fn validate(&self) -> Result<(), String> {
+        if !is_kebab_id(&self.id) {
+            return Err(format!(
+                "template id '{}' must match ^[a-z][a-z0-9-]*$",
+                self.id
+            ));
+        }
+        if !is_kebab_id(&self.render_engine) {
+            return Err(format!(
+                "render_engine '{}' must match ^[a-z][a-z0-9-]*$",
+                self.render_engine
+            ));
+        }
+        for (what, key) in [
+            ("title_key", &self.title_key),
+            ("description_key", &self.description_key),
+        ] {
+            if let Some(key) = key {
+                if !is_i18n_key(key) {
+                    return Err(format!("{what} '{key}' is not a dotted i18n key"));
+                }
+            }
+        }
+        self.spec.check_arms()?;
+        self.spec.check_bounds()?;
+        Ok(())
+    }
+}
+
+impl ViewTemplateFile {
+    /// Validate every template the file declares.
+    pub fn validate(&self) -> Result<(), String> {
+        for template in &self.template {
+            template.validate()?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -502,7 +646,7 @@ mod tests {
     #[test]
     fn round_trips_a_waterfall_template_through_toml() {
         let file = ViewTemplateFile {
-            version: "1".to_string(),
+            version: 1,
             template: vec![waterfall_template()],
         };
         let toml_text = toml::to_string(&file).expect("serialises");
@@ -538,6 +682,165 @@ mod tests {
         assert_eq!(dock.anchor, DockAnchor::Page);
         assert_eq!(dock.surface, DockSurface::Glass);
         assert_eq!(dock.order, 0);
+    }
+
+    #[test]
+    fn the_wire_spellings_of_the_base_views_are_pinned() {
+        // The kebab spellings ARE the wire contract: switching to snake_case
+        // would silently break every `base = "node-canvas"` a config file or
+        // plugin writes, and the round-trip test cannot see it (kebab and
+        // snake agree on the single-word variants).
+        for (kind, expected) in [
+            (BaseViewKind::Waterfall, "\"waterfall\""),
+            (BaseViewKind::NodeCanvas, "\"node-canvas\""),
+            (BaseViewKind::DataGrid, "\"data-grid\""),
+            (BaseViewKind::Kanban, "\"kanban\""),
+            (BaseViewKind::BlankCanvas, "\"blank-canvas\""),
+        ] {
+            assert_eq!(serde_json::to_string(&kind).expect("serialises"), expected);
+        }
+    }
+
+    #[test]
+    fn the_waterfall_columns_stay_internally_tagged() {
+        // `{"kind": …}` is the shape a consumer discriminates on. Dropping
+        // the tag turns the union into an externally tagged one, and every
+        // `columns.kind` read misses without an error.
+        assert_eq!(
+            serde_json::to_string(&WaterfallColumns::Single).expect("serialises"),
+            "{\"kind\":\"single\"}"
+        );
+        assert_eq!(
+            serde_json::to_string(&WaterfallColumns::Fixed { count: 2 }).expect("serialises"),
+            "{\"kind\":\"fixed\",\"count\":2}"
+        );
+        assert_eq!(
+            serde_json::to_string(&WaterfallColumns::Adaptive {
+                max: 3,
+                min_width: 320
+            })
+            .expect("serialises"),
+            "{\"kind\":\"adaptive\",\"max\":3,\"min_width\":320}"
+        );
+    }
+
+    #[test]
+    fn the_dock_placements_are_exactly_the_eight_anchors() {
+        // Pinned as a SET, not merely "each variant round-trips": removing a
+        // variant together with its entry in a round-trip list used to leave
+        // the suite green while the published union silently lost an anchor.
+        let mut spelled: Vec<String> = [
+            DockPlacement::Top,
+            DockPlacement::Bottom,
+            DockPlacement::Left,
+            DockPlacement::Right,
+            DockPlacement::TopLeft,
+            DockPlacement::TopRight,
+            DockPlacement::BottomLeft,
+            DockPlacement::BottomRight,
+        ]
+        .iter()
+        .map(|placement| serde_json::to_string(placement).expect("serialises"))
+        .collect();
+        spelled.sort();
+        assert_eq!(
+            spelled,
+            vec![
+                "\"bottom\"",
+                "\"bottom-left\"",
+                "\"bottom-right\"",
+                "\"left\"",
+                "\"right\"",
+                "\"top\"",
+                "\"top-left\"",
+                "\"top-right\"",
+            ]
+        );
+    }
+
+    #[test]
+    fn validation_rejects_an_arm_that_contradicts_its_base() {
+        let mut template = waterfall_template();
+        template.spec.base = BaseViewKind::Kanban;
+        let error = template.validate().expect_err("must be rejected");
+        assert!(error.contains("does not match base"), "{error}");
+    }
+
+    #[test]
+    fn validation_rejects_a_missing_arm() {
+        let mut template = waterfall_template();
+        template.spec.waterfall = None;
+        let error = template.validate().expect_err("must be rejected");
+        assert!(error.contains("exactly one spec arm"), "{error}");
+    }
+
+    #[test]
+    fn validation_rejects_malformed_ids_and_keys() {
+        for (label, mutate) in [
+            (
+                "id",
+                Box::new(|t: &mut PanelTemplate| t.id = "Not An Id".to_string())
+                    as Box<dyn Fn(&mut PanelTemplate)>,
+            ),
+            (
+                "render_engine",
+                Box::new(|t: &mut PanelTemplate| t.render_engine = "Celestia".to_string()),
+            ),
+            (
+                "title_key",
+                // A single bare segment IS a valid key; the malformed shape
+                // is a segment that does not start with a letter.
+                Box::new(|t: &mut PanelTemplate| t.title_key = Some("1bad.key".to_string())),
+            ),
+        ] {
+            let mut template = waterfall_template();
+            mutate(&mut template);
+            assert!(template.validate().is_err(), "{label} must be rejected");
+        }
+        // The untouched template passes, so the rejections above are not the
+        // validator refusing everything.
+        assert!(waterfall_template().validate().is_ok());
+    }
+
+    #[test]
+    fn validation_rejects_out_of_range_numbers() {
+        let mut zero_columns = waterfall_template();
+        if let Some(spec) = zero_columns.spec.waterfall.as_mut() {
+            spec.columns = WaterfallColumns::Fixed { count: 0 };
+        }
+        assert!(zero_columns.validate().is_err());
+
+        let inverted_zoom = PanelTemplate {
+            id: "canvas".to_string(),
+            title: "Canvas".to_string(),
+            title_key: None,
+            description: None,
+            description_key: None,
+            render_engine: "celestia-node-graph".to_string(),
+            spec: ViewTemplateSpec {
+                base: BaseViewKind::NodeCanvas,
+                waterfall: None,
+                node_canvas: Some(NodeCanvasSpec {
+                    backend: CanvasBackend::Svg,
+                    camera: CameraSpec {
+                        min_zoom: 4.0,
+                        max_zoom: 0.5,
+                        zoom_step: None,
+                        fit_on_load: true,
+                    },
+                    minimap: None,
+                    node_kinds: Vec::new(),
+                    palette: None,
+                    inspector: None,
+                    auto_layout: None,
+                }),
+                data_grid: None,
+                kanban: None,
+                blank_canvas: None,
+                chrome: None,
+            },
+        };
+        assert!(inverted_zoom.validate().is_err());
     }
 
     #[test]
@@ -603,7 +906,7 @@ mod tests {
             },
         };
         let text = toml::to_string(&ViewTemplateFile {
-            version: "1".to_string(),
+            version: 1,
             template: vec![template.clone()],
         })
         .expect("serialises");

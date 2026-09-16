@@ -268,9 +268,11 @@ export type ScrollAxes = "horizontal" | "vertical" | "both";
  */
 export type ViewTemplateFile = { 
 /**
- * Format version.
+ * Format version. A reader that does not know the version must reject
+ * the file rather than guess — the same explicit stance the MDD
+ * descriptor takes for its `schema_version`.
  */
-version: string, 
+version: number, 
 /**
  * The templates the file declares.
  */
