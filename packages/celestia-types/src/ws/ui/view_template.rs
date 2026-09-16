@@ -803,6 +803,30 @@ mod tests {
     }
 
     #[test]
+    fn validation_rejects_a_file_holding_one_bad_template() {
+        // The file-level entry point is what a loader actually calls, and it
+        // had no case: one broken template must fail the whole file rather
+        // than be skipped over. (Checked by removing its loop — this case
+        // turns red while the rest stay green.)
+        let mut bad = waterfall_template();
+        bad.id = "Not An Id".to_string();
+        let file = ViewTemplateFile {
+            version: 1,
+            template: vec![waterfall_template(), bad],
+        };
+        let error = file.validate().expect_err("must be rejected");
+        assert!(error.contains("template id"), "{error}");
+
+        // A clean file passes, so the rejection above is the bad template
+        // and not the file-level entry refusing everything.
+        let good = ViewTemplateFile {
+            version: 1,
+            template: vec![waterfall_template()],
+        };
+        assert!(good.validate().is_ok());
+    }
+
+    #[test]
     fn validation_rejects_out_of_range_numbers() {
         let mut zero_columns = waterfall_template();
         if let Some(spec) = zero_columns.spec.waterfall.as_mut() {
