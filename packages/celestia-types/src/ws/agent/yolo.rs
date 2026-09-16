@@ -97,6 +97,13 @@ pub struct YoloCycleStepParams {
     #[serde(default)]
     #[ts(optional)]
     pub model_name: Option<String>,
+    /// Task-tree node this step belongs to (`TodoTreeNode.id`). Optional for
+    /// backwards compatibility — older emitters omit it and the webui falls
+    /// back to skill-title matching — but engines that know their task node
+    /// should always set it: title matching is ambiguous under collisions.
+    #[serde(default)]
+    #[ts(optional)]
+    pub task_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
