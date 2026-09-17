@@ -104,9 +104,11 @@ match: GatewayMatch,
  */
 action: GatewayAction, 
 /**
- * Named middleware to apply (references or inline).
+ * Named middleware to apply (references or inline). Serde renames to
+ * `use` so hand-written TOML (`use = [mw]`) round-trips — without
+ * the rename serde looks for `use_` and silently drops the field.
  */
-use_: Array<string>, 
+use: Array<string>, 
 /**
  * Rate limit for this route.
  */
