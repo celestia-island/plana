@@ -331,8 +331,10 @@ pub struct GatewayRoute {
     pub r#match: GatewayMatch,
     /// What to do when the route matches (discriminated by `type`).
     pub action: GatewayAction,
-    /// Named middleware to apply (references or inline).
-    #[serde(default)]
+    /// Named middleware to apply (references or inline). Serde renames to
+    /// `use` so hand-written TOML (`use = [mw]`) round-trips — without
+    /// the rename serde looks for `use_` and silently drops the field.
+    #[serde(default, rename = "use")]
     pub use_: Vec<String>,
     /// Rate limit for this route.
     #[serde(default)]
