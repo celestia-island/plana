@@ -168,3 +168,36 @@ fn config_apply_params_round_trip() {
     assert_eq!(back.config_version, 42);
     assert_eq!(back.manifest.id, "m1");
 }
+
+#[test]
+fn the_middleware_list_round_trips_under_the_natural_toml_key() {
+    // Hand-written manifests use `use = [...]` (not `use_`); without the
+    // serde rename the field was silently dropped. Pinned by R2.
+    let toml_str = r#"
+version = 1
+id = "mw-example"
+exit_node = "ev-1"
+
+[[servers]]
+host = ["x.example.com"]
+
+  [[servers.routes]]
+  id = "r1"
+  match = { path_prefix = ["/api/"] }
+  action = { type = "proxy", upstream = ["http://127.0.0.1:3005"] }
+  use = ["auth-required"]
+"#;
+    let parsed: GatewayManifest = toml::from_str(toml_str).expect("must parse");
+    assert_eq!(
+        parsed.servers[0].routes[0].use_,
+        vec!["auth-required".to_string()],
+        "the natural TOML key must populate use_"
+    );
+    // Serializing back must emit `use` (not `use_`).
+    let back = toml::to_string(&parsed).unwrap();
+    assert!(
+        back.contains("use = ["),
+        "serialized key must be 'use': {back}"
+    );
+    assert!(!back.contains("use_"), "no underscore leak: {back}");
+}
