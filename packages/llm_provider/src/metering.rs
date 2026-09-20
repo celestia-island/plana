@@ -277,11 +277,10 @@ fn period_cutoff(period: BudgetPeriod) -> DateTime<Utc> {
 /// (arona, entelecheia, evernight, ...).  Model matching is substring-based on
 /// the lowercased model id; more specific families are matched before broader
 /// ones.  Returns `None` when the model family is not in the table.
-/// One model family's canonical pricing in USD per 1M tokens:
-/// (input, output, cached-input). The cached tier is the price providers
-/// charge for prompt-cache HITS; families without a published cached
-/// price keep it equal to the plain input price (conservative: cache
-/// savings then never overstate cost).
+/// One model family's canonical pricing in USD per 1M tokens. The
+/// cached tier is the price providers charge for prompt-cache HITS;
+/// families without a published cached price keep it equal to the plain
+/// input price (conservative: cache savings then never overstate cost).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FamilyPricing {
     pub input_per_million: f64,
@@ -289,9 +288,17 @@ pub struct FamilyPricing {
     pub cached_per_million: f64,
 }
 
-/// Peak/off-peak multipiers for the families that publish them. Cost
-/// estimates use PEAK pricing (the conservative upper bound) — the
-/// actual billing split lives with the provider's ledger, not here.
+/// Resolve a model id to its family's [`FamilyPricing`] by substring
+/// match (lowercased). All prices are PEAK-tier — the conservative
+/// upper bound; the actual off-peak billing split lives with the
+/// provider's ledger, not here. Returns `None` for unknown families;
+/// callers fall back to provider-keyed guesses (see `estimate_cost`).
+///
+/// FX convention: CNY prices convert at the rate documented next to
+/// each family (the reference rate at the time that family's prices
+/// were entered — NOT a single global rate, because official USD
+/// price lists and CNY lists disagree per family; see each arm's
+/// comment for the source rate).
 pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     let lower = model.to_lowercase();
     // GLM (Zhipu) — the fleet's primary workhorse. GLM-5.3 sits in the
