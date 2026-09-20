@@ -5,6 +5,8 @@
 //! config types — not exported to the TypeScript bindings — and are distinct
 //! from the per-agent tool I/O structs under `mcp/`.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -28,6 +30,13 @@ pub struct McpServerConfig {
     pub api_key: Option<String>,
     #[serde(default)]
     pub denylist: Vec<String>,
+    /// Per-server environment variables the spawned stdio server receives on
+    /// top of the consumer's allowlisted baseline. Consumers do not forward
+    /// their own process environment to MCP servers, so anything the server
+    /// needs beyond that baseline must be declared here; consumers resolve
+    /// `${VAR}` interpolations in the values themselves.
+    #[serde(default)]
+    pub env: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -127,6 +136,44 @@ denylist = ["rm_rf", "format_disk"]
 "#;
         let file: McpServersFile = toml::from_str(raw).context("test precondition")?;
         assert!(file.mcp_servers.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn parse_server_with_env_map() -> Result<()> {
+        let raw = r#"
+[[mcp_servers]]
+name = "files"
+transport = "stdio"
+command = ["uvx", "mcp-server-files"]
+env = { FILES_ROOT = "/srv/files", API_KEY = "${FILES_API_KEY}" }
+"#;
+        let file: McpServersFile = toml::from_str(raw).context("test precondition")?;
+        let server = file.mcp_servers.first().context("server must parse")?;
+        assert_eq!(
+            server.env.get("FILES_ROOT").map(String::as_str),
+            Some("/srv/files")
+        );
+        // Interpolation placeholders are carried verbatim; the consumer
+        // resolves them against its own environment when spawning.
+        assert_eq!(
+            server.env.get("API_KEY").map(String::as_str),
+            Some("${FILES_API_KEY}")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn env_defaults_to_empty() -> Result<()> {
+        let raw = r#"
+[[mcp_servers]]
+name = "files"
+transport = "stdio"
+command = ["uvx", "mcp-server-files"]
+"#;
+        let file: McpServersFile = toml::from_str(raw).context("test precondition")?;
+        let server = file.mcp_servers.first().context("server must parse")?;
+        assert!(server.env.is_empty());
         Ok(())
     }
 }
