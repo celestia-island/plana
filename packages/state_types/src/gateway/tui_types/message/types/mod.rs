@@ -721,6 +721,12 @@ pub enum SyncMessage {
         /// for, when the spawning chain knows one.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         conversation_id: Option<Uuid>,
+        /// Task Decompose estimate for this task, in degrees, when the
+        /// spawning chain produced one (chest reserves against it).
+        /// Absent on senders that do not estimate: old payloads and old
+        /// receivers stay wire-compatible in both directions.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        estimated_degrees: Option<i64>,
     },
     TaskStatusUpdate {
         task_id: Uuid,
@@ -1612,5 +1618,73 @@ mod tests {
         assert_eq!(json["action"], "UserMessage");
         assert!(json["timestamp"].is_string());
         assert_eq!(json["timestamp"], "1770000000000");
+    }
+
+    /// `TaskCreated` gained `estimated_degrees` for the degree-ledger
+    /// reserve flow. Old senders never emit the key: the message must
+    /// deserialize to `None`, and re-serializing must keep the key absent
+    /// (skip_serializing_if) so the old wire shape is preserved exactly.
+    #[test]
+    fn task_created_without_estimate_stays_wire_compatible() {
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "TaskCreated",
+                "task_id": "00000000-0000-0000-0000-000000000001",
+                "issue_id": "00000000-0000-0000-0000-000000000002",
+                "title": "t",
+                "sender_id": "u"
+            }
+        }))
+        .expect("payload without estimated_degrees must deserialize");
+
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::TaskCreated {
+            estimated_degrees, ..
+        } = &*sync
+        else {
+            panic!("expected TaskCreated variant");
+        };
+        assert!(estimated_degrees.is_none());
+
+        let json = serde_json::to_value(&*sync).expect("re-serialize TaskCreated");
+        assert!(
+            json.get("estimated_degrees").is_none(),
+            "None must not re-emit the key: {json}"
+        );
+    }
+
+    /// New senders attach the estimate; it must round-trip as i64 through
+    /// the same envelope the bridge rebuilds.
+    #[test]
+    fn task_created_round_trips_estimate() {
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "TaskCreated",
+                "task_id": "00000000-0000-0000-0000-000000000001",
+                "issue_id": "00000000-0000-0000-0000-000000000002",
+                "title": "t",
+                "sender_id": "u",
+                "estimated_degrees": 4_i64
+            }
+        }))
+        .expect("payload with estimated_degrees must deserialize");
+
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::TaskCreated {
+            estimated_degrees, ..
+        } = &*sync
+        else {
+            panic!("expected TaskCreated variant");
+        };
+        assert_eq!(*estimated_degrees, Some(4_i64));
+
+        let json = serde_json::to_value(&*sync).expect("re-serialize TaskCreated");
+        assert_eq!(json["estimated_degrees"], 4_i64);
     }
 }
