@@ -334,6 +334,8 @@ pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
         });
     }
     if lower.contains("kimi") || lower.contains("moonshot") {
+        // Moonshot's published international USD list ¥20/¥100,
+        // FX 7.1 CNY/USD (their stated billing rate).
         return Some(FamilyPricing {
             input_per_million: 2.82,
             output_per_million: 14.08,
