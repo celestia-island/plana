@@ -733,6 +733,15 @@ pub enum SyncMessage {
         status: crate::TaskStatus,
         progress: u8,
     },
+    /// A task's estimate was updated after creation (S2c: the skill chain
+    /// refines its estimate). Wire consumers use this to adjust reserves;
+    /// consumers reading the value must use `!= null` — `Some(0)` is a
+    /// legitimate zero-cost estimate, not "no estimate".
+    TaskEstimateUpdated {
+        task_id: Uuid,
+        #[serde(default)]
+        estimated_degrees: Option<i64>,
+    },
     // ═══ LLM Provider Configuration ═══
     ConfigureLlmProvider {
         provider_name: String,
@@ -1686,5 +1695,55 @@ mod tests {
 
         let json = serde_json::to_value(&*sync).expect("re-serialize TaskCreated");
         assert_eq!(json["estimated_degrees"], 4_i64);
+    }
+
+    /// `TaskEstimateUpdated` wire-compat: absent field → None; Some(0) is
+    /// a legitimate value distinct from None (consumers must `!= null`).
+    #[test]
+    fn task_estimate_updated_wire_compat() {
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "TaskEstimateUpdated",
+                "task_id": "00000000-0000-0000-0000-000000000001"
+            }
+        }))
+        .expect("payload without estimated_degrees must deserialize");
+
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::TaskEstimateUpdated {
+            estimated_degrees, ..
+        } = &*sync
+        else {
+            panic!("expected TaskEstimateUpdated variant");
+        };
+        assert!(estimated_degrees.is_none());
+
+        // Some(0) round-trips — falsy-checking consumers would lose this
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "TaskEstimateUpdated",
+                "task_id": "00000000-0000-0000-0000-000000000001",
+                "estimated_degrees": 0_i64
+            }
+        }))
+        .expect("payload with estimated_degrees=0 must deserialize");
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::TaskEstimateUpdated {
+            estimated_degrees, ..
+        } = &*sync
+        else {
+            panic!("expected TaskEstimateUpdated variant");
+        };
+        assert_eq!(
+            *estimated_degrees,
+            Some(0_i64),
+            "Some(0) must survive the wire"
+        );
     }
 }
