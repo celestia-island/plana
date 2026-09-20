@@ -271,12 +271,6 @@ fn period_cutoff(period: BudgetPeriod) -> DateTime<Utc> {
     }
 }
 
-/// Look up per-1M-token pricing `(input, output)` in USD for a model family.
-///
-/// This is the canonical pricing table shared across celestia-island services
-/// (arona, entelecheia, evernight, ...).  Model matching is substring-based on
-/// the lowercased model id; more specific families are matched before broader
-/// ones.  Returns `None` when the model family is not in the table.
 /// One model family's canonical pricing in USD per 1M tokens. The
 /// cached tier is the price providers charge for prompt-cache HITS;
 /// families without a published cached price keep it equal to the plain
@@ -302,17 +296,19 @@ pub struct FamilyPricing {
 pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     let lower = model.to_lowercase();
     // GLM (Zhipu) — the fleet's primary workhorse. GLM-5.3 sits in the
-    // "pro" band (~v4-pro scale); flash-style variants match deepseek
-    // flash economics. Order matters: "glm" before the generic checks.
+    // "pro" band (~v4-pro scale); Zhipu's OWN flash tier is a distinct
+    // (cheaper) band — NOT the deepseek flash band. Order matters:
+    // "glm" before the generic checks.
     if lower.contains("glm") {
         if lower.contains("flash") || lower.contains("air") || lower.contains("lite") {
+            // Zhipu's own flash list (not ds flash): ¥1/¥2 ≈ $0.14/$0.28.
             return Some(FamilyPricing {
                 input_per_million: 0.14,
                 output_per_million: 0.28,
                 cached_per_million: 0.04,
             });
         }
-        // pro / flagship band
+        // Pro band: CNY list ¥9/¥27/¥0.3, FX 6.5 CNY/USD.
         return Some(FamilyPricing {
             input_per_million: 9.0 / 6.5,
             output_per_million: 27.0 / 6.5,
@@ -321,13 +317,16 @@ pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     }
     if lower.contains("deepseek") {
         if lower.contains("pro") || lower.contains("r1") || lower.contains("reasoner") {
+            // Pro band: CNY list ¥9/¥27/¥0.3, FX 6.5 CNY/USD.
             return Some(FamilyPricing {
                 input_per_million: 9.0 / 6.5,
                 output_per_million: 27.0 / 6.5,
                 cached_per_million: 0.3 / 6.5,
             });
         }
-        // v4.1 flash band (peak: miss ¥2 ≈ $0.28; hit ¥0.04 ≈ $0.0056)
+        // v4.1 flash peak — DeepSeek's OFFICIAL USD list (implied
+        // FX ≈ 7.14 from the ¥2/¥8/¥0.04 CNY list; ~9% below a
+        // straight 6.5 conversion — we follow the USD list).
         return Some(FamilyPricing {
             input_per_million: 0.28,
             output_per_million: 1.13,
@@ -688,14 +687,16 @@ mod tests {
             "llama-3-8b",
             "mistral-7b",
         ] {
-            if let Some(p) = lookup_pricing(model) {
-                assert!(
-                    p.cached_per_million <= p.input_per_million + 1e-9,
-                    "{model}: cached {} > input {}",
-                    p.cached_per_million,
-                    p.input_per_million
-                );
-            }
+            // .expect, not if-let: a family dropping out of the table
+            // must FAIL here, not silently skip (R1's M3 evidence).
+            let p = lookup_pricing(model)
+                .unwrap_or_else(|| panic!("{model} dropped from the pricing table"));
+            assert!(
+                p.cached_per_million <= p.input_per_million + 1e-9,
+                "{model}: cached {} > input {}",
+                p.cached_per_million,
+                p.input_per_million
+            );
         }
     }
 }
