@@ -6,6 +6,17 @@ export type TaskCreatedParams = { task_id: string, issue_id: string, title: stri
  * Topic correlation: the conversation this task was spawned for,
  * when the spawning chain knows one.
  */
-conversation_id?: string, };
+conversation_id?: string,
+/**
+ * Task Decompose estimate in degrees; absent = no estimate produced.
+ * Consumers MUST use `!= null` — 0 is a legitimate zero-cost estimate.
+ */
+estimated_degrees?: number, };
 
 export type TaskStatusUpdateParams = { task_id: string, status: TaskStatus, progress: number, };
+
+/**
+ * A task's estimate was updated after creation (S2c follow-up).
+ * Consumers MUST use `!= null` — 0 is a legitimate zero-cost estimate.
+ */
+export type TaskEstimateUpdatedParams = { task_id: string, estimated_degrees?: number, };
