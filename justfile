@@ -13,6 +13,10 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command", "[C
 set unstable
 set lists
 
+# Repo definitions override the shared template's (imported above).
+set allow-duplicate-recipes
+set allow-duplicate-variables
+
 # Shared celestia-devtools recipes — NOT in git. Stage with: just fetch.
 # `import?` silently skips when absent, so this justfile parses pre-fetch.
 import? "./.just/git-bash-interop.just"
@@ -21,25 +25,9 @@ import? "./.just/celestia-devtools.just"
 # Stage shared celestia-devtools recipes into .just/ (gitignored).
 # Source order: explicit URL arg → local pip bundle (offline) → GitHub raw.
 # curl honors HTTP_PROXY/HTTPS_PROXY/ALL_PROXY env vars automatically.
-[script('bash')]
 fetch URL='':
-    #!/usr/bin/env bash
-    set -euo pipefail
-    out=.just/celestia-devtools.just
-    mkdir -p .just
-    if [ -n "{{URL}}" ]; then
-      echo "[fetch] {{URL}} -> $out"
-      curl -fsSL "{{URL}}" -o "$out"
-    elif command -v celestia-devtools >/dev/null 2>&1; then
-      src=$(celestia-devtools include-path)
-      echo "[fetch] local bundle ($src) -> $out"
-      cp "$src" "$out"
-    else
-      echo "[fetch] github raw -> $out"
-      curl -fsSL "https://raw.githubusercontent.com/celestia-island/celestia-devtools/dev/src/celestia_devtools/common.just" -o "$out"
-    fi
-    echo "[fetch] wrote $out"
-
+    {{ if os_family() == "windows" { "python" } else { "python3" } }} -c "import os; os.makedirs('.just', exist_ok=True)"
+    {{ if URL != "" { "curl -fsSL " + URL + " -o .just/celestia-devtools.just" } else if which("celestia-devtools") != "" { "celestia-devtools fetch-just" } else { "curl -fsSL https://raw.githubusercontent.com/celestia-island/celestia-devtools/dev/src/celestia_devtools/common.just -o .just/celestia-devtools.just" } }}
 default:
     @just --list
 
@@ -83,13 +71,21 @@ test:
 # packages/celestia-types/bindings/ (domain types) and
 # packages/evernight-protocol/bindings/ (Tier 3 wire DTOs). `just gen
 # bindings` regenerates all three.
-[script('sh')]
+[script('python')]
 gen target='bindings':
-    set -euo pipefail
-    case "{{target}}" in
-      bindings) cargo test --package plana --package plana-celestia-types --package plana_evernight_protocol ;;
-      *) echo "Usage: just gen bindings"; exit 1 ;;
-    esac
+    import subprocess, sys
+
+    def run(cmd):
+        rc = subprocess.run(cmd).returncode
+        if rc != 0:
+            sys.exit(rc)
+
+    t = "{{target}}"
+    if t == "bindings":
+        run(["cargo", "test", "--package", "plana", "--package", "plana-celestia-types", "--package", "plana_evernight_protocol"])
+    else:
+        print("Usage: just gen bindings")
+        sys.exit(1)
 
 # ── Format ───────────────────────────────────────────────────────────
 
