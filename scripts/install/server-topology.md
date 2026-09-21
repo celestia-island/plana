@@ -35,7 +35,7 @@
   **not** proxy WebSocket; device traffic goes **direct to the pod port**
   (3008). Put `/api/ws` on a direct nginx location when exposing it publicly.
 
-## node-2 (192.168.2.65) — panel family
+## node-2 (192.0.2.23) — panel family
 
 | Service | Binary | Pod port | Proxy | Info | Public host |
 |---|---|---|---|---|---|
@@ -56,7 +56,7 @@ Downloads channel: `DOWNLOADS_DIR=/srv/celestia/downloads` (e.celestia.world
 unit drop-in `20-downloads.conf`); served at `/downloads/` with
 `manifest.json` digests.
 
-## node-3 (192.168.2.64) — model / orchestration / edge
+## node-3 (192.0.2.22) — model / orchestration / edge
 
 | Service | Binary | Port | Notes |
 |---|---|---|---|
