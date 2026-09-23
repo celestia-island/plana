@@ -101,6 +101,7 @@ fn register_builtins(registry: &AgentMetadataRegistry) {
         "Data Grid" / "data_grid" / "Data grid — multidimensional tables, fields, records, views" / 2 / false,
         "Media Flow" / "media_flow" / "Media flow — node-graph pipelines for generation" / 2 / false,
         "Industrial IoT" / "industrial_iot" / "Industrial IoT — PLC communication, sensor polling, alarm management" / 2 / false,
+        "Platform Admin" / "platform_admin" / "Platform governance — RBAC partitioning admin across the engine family" / 2 / false,
         "Remote Operations" / "remote_operations" / "Remote operations — SSH, remote terminal, file transfer" / 2 / false
     });
 }
@@ -111,10 +112,10 @@ mod tests {
     use anyhow::{Context, Result};
 
     #[test]
-    fn test_registry_has_all_19_agents() -> Result<()> {
+    fn test_registry_has_all_20_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let all = registry.all_agents();
-        assert_eq!(all.len(), 19);
+        assert_eq!(all.len(), 20);
         Ok(())
     }
 
@@ -130,7 +131,7 @@ mod tests {
     fn test_layer2_has_7_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let layer2 = registry.layer2_agents();
-        assert_eq!(layer2.len(), 7);
+        assert_eq!(layer2.len(), 8);
         Ok(())
     }
 

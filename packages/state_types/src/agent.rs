@@ -154,6 +154,7 @@ agent_variants!(
     MediaFlow,
     IndustrialIoT,
     RemoteOperations,
+    PlatformAdmin,
 );
 
 impl Agent {
