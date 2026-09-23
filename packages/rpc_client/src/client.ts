@@ -80,7 +80,6 @@ export interface RpcClientOpts {
   heartbeatInterval?: number;
   heartbeatTimeout?: number;
   callTimeoutMs?: number;
-  sseMaxRetries?: number;
   pollIntervalMs?: number;
   local?: boolean;
   /**
@@ -143,7 +142,6 @@ export class RpcClient {
   #sessionId: string;
   #eventSource: EventSource | null = null;
 
-  #pollTimer: ReturnType<typeof setInterval> | null = null;
   #tier: TransportTier = "ws";
   readonly #local: boolean;
 
@@ -427,15 +425,6 @@ export class RpcClient {
       }
     }
     return null;
-  }
-
-  async #tryTransportOnce(tier: TransportTier, timeoutMs: number): Promise<boolean> {
-    switch (tier) {
-      case "ws": return this.#tryWsOnce(timeoutMs);
-      case "sse": return this.#trySseOnce(timeoutMs);
-      case "poll": return this.#tryPollOnce(timeoutMs);
-      default: return false;
-    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -929,7 +918,6 @@ export class RpcClient {
     this.#cancelRecovery();
     this.#eventSource?.close();
     this.#eventSource = null;
-    if (this.#pollTimer) { clearInterval(this.#pollTimer); this.#pollTimer = null; }
     this.#clearHeartbeat();
     this.#latencyMs = null;
     this.#hbSentAt = null;
