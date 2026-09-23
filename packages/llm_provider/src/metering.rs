@@ -440,7 +440,7 @@ pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
 /// Consults the canonical [`lookup_pricing`] table first, then falls back to
 /// provider-keyed pricing for model families not in the table.
 pub fn estimate_cost(provider: &str, model: &str, input: u64, output: u64) -> f64 {
-    let p = lookup_pricing(model).unwrap_or_else(|| match (provider, model.contains("haiku")) {
+    let p = resolve_pricing(model).unwrap_or_else(|| match (provider, model.contains("haiku")) {
         ("anthropic", true) => FamilyPricing {
             input_per_million: 0.8,
             output_per_million: 4.0,
@@ -764,7 +764,7 @@ pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
 #[cfg(test)]
 mod injection_tests {
     use super::*;
-    /// The OnceLock is PROCESS-wide: the injection tests serialize on
+    /// The injected slot is PROCESS-wide: the injection tests serialize on
     /// this mutex so parallel test threads do not fight over the
     /// single slot.
     static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -791,6 +791,7 @@ mod injection_tests {
 
     #[test]
     fn a_failing_source_falls_through_not_panics() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         clear_pricing_source_for_tests();
         assert!(set_pricing_source(Arc::new(|_m: &str| None)));
         assert!(
@@ -814,6 +815,31 @@ mod injection_tests {
         assert!(!set_pricing_source(Arc::new(|_m: &str| None)));
         // ...and the first still answers.
         assert_eq!(resolve_pricing("anything"), Some(first));
+        clear_pricing_source_for_tests();
+    }
+
+    /// estimate_cost inherits the injected chain: a source pricing a
+    /// private model makes its cost REAL (not the provider-keyed
+    /// guess) — the whole point of C2c.
+    #[test]
+    fn estimate_cost_honors_the_injected_source() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_pricing_source_for_tests();
+        let custom = FamilyPricing {
+            input_per_million: 1.0,
+            output_per_million: 2.0,
+            cached_per_million: 0.1,
+        };
+        assert!(set_pricing_source(Arc::new(move |m: &str| {
+            (m == "my-private-model").then_some(custom)
+        })));
+        // 1M input + 1M output at 1/2 = $3.0 — NOT the generic $3/$15
+        // guess the fallback would charge for an unknown family.
+        let cost = estimate_cost("any-provider", "my-private-model", 1_000_000, 1_000_000);
+        assert!(
+            (cost - 3.0).abs() < 1e-9,
+            "the injected rates apply: {cost}"
+        );
         clear_pricing_source_for_tests();
     }
 
