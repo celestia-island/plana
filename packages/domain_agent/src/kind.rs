@@ -58,6 +58,10 @@ pub enum AgentKind {
     MediaFlow,
     /// Industrial IoT agent — PLC communication, sensor polling, alarm management
     IndustrialIoT,
+    /// Platform governance agent — RBAC partitioning admin across the
+    /// engine family (chest grants / arona groups / evernight node RBAC),
+    /// driven conversationally through its tool set
+    PlatformAdmin,
     /// Remote operations agent — SSH, remote terminal, GUI automation, file transfer
     RemoteOperations,
 }
@@ -117,6 +121,7 @@ impl AgentKind {
             AgentKind::DataGrid => "Data Grid",
             AgentKind::MediaFlow => "Media Flow",
             AgentKind::IndustrialIoT => "Industrial IoT",
+            AgentKind::PlatformAdmin => "Platform Admin",
             AgentKind::RemoteOperations => "Remote Operations",
         }
     }
@@ -149,6 +154,7 @@ impl AgentKind {
             AgentKind::DataGrid => "data_grid",
             AgentKind::MediaFlow => "media_flow",
             AgentKind::IndustrialIoT => "industrial_iot",
+            AgentKind::PlatformAdmin => "platform_admin",
             AgentKind::RemoteOperations => "remote_operations",
         }
     }
@@ -177,6 +183,7 @@ impl AgentKind {
             "data_grid" | "datagrid" => Some(AgentKind::DataGrid),
             "media_flow" | "mediaflow" => Some(AgentKind::MediaFlow),
             "industrial_iot" | "industrialiot" => Some(AgentKind::IndustrialIoT),
+            "platform_admin" | "platformadmin" => Some(AgentKind::PlatformAdmin),
             "remote_operations" | "remoteoperations" => Some(AgentKind::RemoteOperations),
             _ => None,
         }
@@ -253,6 +260,9 @@ impl AgentKind {
             AgentKind::MediaFlow => "Media flow — node-graph pipelines for generation",
             AgentKind::IndustrialIoT => {
                 "Industrial IoT — PLC communication, sensor polling, alarm management"
+            }
+            AgentKind::PlatformAdmin => {
+                "Platform governance — RBAC partitioning admin across the engine family"
             }
             AgentKind::RemoteOperations => {
                 "Remote operations — SSH, remote terminal, GUI automation, file transfer"
@@ -343,8 +353,8 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn all_agents_has_19_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::all_agents().len(), 19);
+    fn all_agents_has_20_variants() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::all_agents().len(), 20);
         Ok(())
     }
 
@@ -355,8 +365,8 @@ mod tests {
     }
 
     #[test]
-    fn layer2_has_7_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::domain_agents().len(), 7);
+    fn layer2_has_8_variants() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::domain_agents().len(), 8);
         Ok(())
     }
 

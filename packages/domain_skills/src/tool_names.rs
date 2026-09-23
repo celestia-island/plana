@@ -314,3 +314,26 @@ pub fn agent_tools(agent: _state_sync::Agent) -> Vec<String> {
         .map(|s| s.to_string())
         .collect()
 }
+
+pub mod platform_admin {
+    /// Inspect RBAC state across the engine family (chest grants/groups,
+    /// arona groups, evernight node tables) — the read-side fan-out.
+    pub const RBAC_INSPECT: &str = "rbac_inspect";
+    /// Grant a permission at a scope (global / user-group / workspace)
+    /// on chest; workspace-qualified grants carry the workspace uuid.
+    pub const RBAC_GRANT: &str = "rbac_grant";
+    /// Revoke grants / file denies (the same replace semantics the
+    /// chest admin surface applies, with its escalation guards).
+    pub const RBAC_REVOKE: &str = "rbac_revoke";
+    /// Manage user groups (create / rename / membership) on chest and
+    /// arona — the dedicated-group mint high-privilege operators use.
+    pub const GROUP_MANAGE: &str = "group_manage";
+    /// Allow/deny model access for an arona group (the cloud-resource
+    /// partition).
+    pub const GROUP_MODELS: &str = "group_models";
+    /// Credit top-up / balance for an arona group.
+    pub const GROUP_CREDITS: &str = "group_credits";
+    /// Grant/revoke on a node's evernight RBAC table (device-plane
+    /// authority).
+    pub const EVERNIGHT_GRANT: &str = "evernight_grant";
+}

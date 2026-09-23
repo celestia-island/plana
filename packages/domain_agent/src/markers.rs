@@ -46,6 +46,7 @@ define_marker! {
     WebAutomationMarker => WebAutomation / "web_automation" / "Web Automation",
     ClassicSoftwareEngineeringMarker => ClassicSoftwareEngineering / "classic_software_engineering" / "Classic Software Engineering",
     IndustrialIoTMarker => IndustrialIoT / "industrial_iot" / "Industrial IoT",
+    PlatformAdminMarker => PlatformAdmin / "platform_admin" / "Platform Admin",
     RemoteOperationsMarker => RemoteOperations / "remote_operations" / "Remote Operations",
 }
 
