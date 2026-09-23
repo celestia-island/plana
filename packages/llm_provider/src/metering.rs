@@ -702,3 +702,136 @@ mod tests {
         }
     }
 }
+
+// ── External pricing source injection (C2c) ──────────────────────────────
+//
+// The upstream stays the single ALGORITHM owner: family matching, the FX
+// convention and the conservative cached-price rule live here and nowhere
+// else. The DATA may come from an injected source (arona's model_pricing
+// table) BEFORE the compiled-in families — the injectable source answers
+// first, the hardcoded table remains the fallback, and `estimate_cost`
+// inherits the chain unchanged (one call site, no consumer edits).
+//
+// The hook is process-wide and set-once: a service wires it at boot (an
+// Arc'd closure over its DB pool); tests set and clear it. A source that
+// panics poisons the process — sources must answer `None` on their own
+// errors (falling back to the families), never panic.
+
+use std::sync::Arc;
+
+type PricingSource = Arc<dyn Fn(&str) -> Option<FamilyPricing> + Send + Sync>;
+
+static INJECTED_SOURCE: std::sync::RwLock<Option<PricingSource>> = std::sync::RwLock::new(None);
+
+/// Install the external pricing source. Returns whether the install took
+/// effect (a second install is REJECTED — the first source wins, so a
+/// misbehaving late initializer cannot silently replace the fleet's
+/// pricing at runtime).
+pub fn set_pricing_source(source: PricingSource) -> bool {
+    let mut slot = INJECTED_SOURCE
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if slot.is_some() {
+        return false;
+    }
+    *slot = Some(source);
+    true
+}
+
+/// Test-only: clear the injected source between tests.
+#[cfg(test)]
+pub(crate) fn clear_pricing_source_for_tests() {
+    let mut slot = INJECTED_SOURCE
+        .write()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    *slot = None;
+}
+
+/// The injected-source-aware resolution: the external source first, the
+/// compiled-in families as the fallback. This is the CONSUMER-facing
+/// lookup — `lookup_pricing` itself stays family-pure for direct callers.
+pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
+    let snapshot = INJECTED_SOURCE
+        .read()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    if let Some(p) = snapshot.as_ref().and_then(|source| source(model)) {
+        return Some(p);
+    }
+    lookup_pricing(model)
+}
+
+#[cfg(test)]
+mod injection_tests {
+    use super::*;
+    /// The OnceLock is PROCESS-wide: the injection tests serialize on
+    /// this mutex so parallel test threads do not fight over the
+    /// single slot.
+    static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    #[test]
+    fn injected_source_answers_before_the_families() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_pricing_source_for_tests();
+        let custom = FamilyPricing {
+            input_per_million: 1.25,
+            output_per_million: 2.5,
+            cached_per_million: 0.125,
+        };
+        assert!(set_pricing_source(Arc::new(move |m: &str| {
+            (m == "my-private-model").then_some(custom)
+        })));
+        // The injected source answers for its model...
+        assert_eq!(resolve_pricing("my-private-model"), Some(custom));
+        // ...and falls THROUGH to the families for everything else.
+        let glm = resolve_pricing("glm-4.7");
+        assert!(glm.is_some(), "the family table still answers glm");
+        clear_pricing_source_for_tests();
+    }
+
+    #[test]
+    fn a_failing_source_falls_through_not_panics() {
+        clear_pricing_source_for_tests();
+        assert!(set_pricing_source(Arc::new(|_m: &str| None)));
+        assert!(
+            resolve_pricing("glm-4.7").is_some(),
+            "None falls to the families"
+        );
+        clear_pricing_source_for_tests();
+    }
+
+    #[test]
+    fn the_first_source_wins() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_pricing_source_for_tests();
+        let first = FamilyPricing {
+            input_per_million: 9.9,
+            output_per_million: 9.9,
+            cached_per_million: 9.9,
+        };
+        assert!(set_pricing_source(Arc::new(move |_m: &str| Some(first))));
+        // The second install is rejected...
+        assert!(!set_pricing_source(Arc::new(|_m: &str| None)));
+        // ...and the first still answers.
+        assert_eq!(resolve_pricing("anything"), Some(first));
+        clear_pricing_source_for_tests();
+    }
+
+    #[test]
+    fn lookup_pricing_stays_family_pure() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        // The raw table function is NOT source-aware: an injected source
+        // must not leak into direct family callers.
+        clear_pricing_source_for_tests();
+        assert!(set_pricing_source(Arc::new(|_m: &str| Some(
+            FamilyPricing {
+                input_per_million: 0.0,
+                output_per_million: 0.0,
+                cached_per_million: 0.0,
+            }
+        ))));
+        let glm = lookup_pricing("glm-4.7").expect("the family table answers");
+        assert!(glm.input_per_million > 0.0, "not the injected zero");
+        clear_pricing_source_for_tests();
+    }
+}
