@@ -185,9 +185,21 @@ pub mod polemos {
 }
 
 /// HapLotes tool names
+///
+/// The webhook family (B3b, user-panel redesign) manages the running
+/// agent owner's SCOPED webhook subscriptions on shittim-chest: the
+/// scepter service credential reaches chest's `webhook.self.*` RPCs
+/// with `X-User-Id` = the owner, so the authorization matrix bounds the
+/// tools to exactly the scopes the owner controls. The owner identity
+/// is injected by the scepter infrastructure per invocation — it is
+/// never a tool parameter (an LLM-authored parameter could impersonate
+/// any user).
 pub mod haplotes {
     pub const LLM_PROVIDER_CALL: &str = "llm_provider_call";
     pub const SUBSCRIBE_TRIGGER: &str = "subscribe_trigger";
+    pub const WEBHOOK_SUBSCRIBE: &str = "webhook_subscribe";
+    pub const WEBHOOK_UNSUBSCRIBE: &str = "webhook_unsubscribe";
+    pub const WEBHOOK_LIST: &str = "webhook_list";
 }
 
 /// Epieikeia tool names — event/message dispatch and async operations
