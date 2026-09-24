@@ -21,7 +21,10 @@ export type GrantItem = { id: string, scope: string, user_id: string | null, gro
 export type GrantListResponse = { grants: Array<GrantItem>, };
 
 /**
- * Standard /api/health response for all plana backends.
+ * Standard /api/health response for all plana backends (backend service
+ * plane). Not to be confused with the malkuth supervision worker probe
+ * `plana_celestia_types::malkuth::WorkerHealthResponse` (`/healthz` on the
+ * worker-lifecycle plane) — a different type with a distinct field set.
  */
 export type HealthResponse = { status: ServiceStatus, version: string, kind: BackendKind, uptime: bigint, network: NetworkInfo, build_hash: string | null, engine_version: string | null, };
 

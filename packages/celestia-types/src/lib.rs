@@ -58,8 +58,8 @@ pub const DEFAULT_REPORT_TYPE: &str = "general";
 ///
 /// NOTE: this explicit re-export also pins `HealthResponse` at the crate
 /// root to the generic HTTP type, shadowing the unrelated supervision
-/// `malkuth::HealthResponse` (reachable at
-/// `plana_celestia_types::malkuth::HealthResponse`).
+/// `malkuth::WorkerHealthResponse` (reachable at
+/// `plana_celestia_types::malkuth::WorkerHealthResponse`).
 pub use plana::protocol_core::http::{
     BackendKind, HealthResponse, NetworkInfo, ServiceStatus, VersionReport, SERVICE_INFO_METHOD,
 };

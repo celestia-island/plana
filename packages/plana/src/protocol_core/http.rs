@@ -78,7 +78,10 @@ pub enum BackendKind {
     Mock,
 }
 
-/// Standard /api/health response for all plana backends.
+/// Standard /api/health response for all plana backends (backend service
+/// plane). Not to be confused with the malkuth supervision worker probe
+/// `plana_celestia_types::malkuth::WorkerHealthResponse` (`/healthz` on the
+/// worker-lifecycle plane) — a different type with a distinct field set.
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
 pub struct HealthResponse {

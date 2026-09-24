@@ -122,7 +122,8 @@ fn protocol_module_resolves() {
 fn root_health_response_is_the_generic_one() {
     resolves::<plana::HealthResponse>();
     // `plana::http::HealthResponse` and the root one are the same generic
-    // type; the malkuth supervision `HealthResponse` is a different type.
+    // type; the malkuth supervision `WorkerHealthResponse` is a different
+    // type with a distinct wire shape.
     let _ = plana::HealthResponse::ok(
         "1.0.0",
         plana::http::BackendKind::Dev,
