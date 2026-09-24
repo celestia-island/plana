@@ -78,7 +78,7 @@ plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
 plana = { version = "0.2.1", path = "packages/plana" }
 plana-celestia-types = { version = "0.1.1", path = "packages/celestia-types" }
 
-kirino = { version = "^0.6.5" }
+kirino = { version = "^0.7" }
 
 # Container toolkit extracted to the cherino repo (P1 atomic switch):
 # the former packages/container and packages/container_runtime now live at
