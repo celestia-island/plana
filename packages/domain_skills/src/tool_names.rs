@@ -188,12 +188,12 @@ pub mod polemos {
 ///
 /// The webhook family (B3b, user-panel redesign) manages the running
 /// agent owner's SCOPED webhook subscriptions on shittim-chest: the
-/// scepter service credential reaches chest's `webhook.self.*` RPCs
-/// with `X-User-Id` = the owner, so the authorization matrix bounds the
-/// tools to exactly the scopes the owner controls. The owner identity
-/// is injected by the scepter infrastructure per invocation — it is
-/// never a tool parameter (an LLM-authored parameter could impersonate
-/// any user).
+/// scepter service credential reaches chest's `webhook.workspace.*`
+/// service family, where chest resolves the real authority from the
+/// workspace ownership (the subscription's scope bounds the tools to
+/// exactly what the workspace controls). The workspace identity rides
+/// the service credential — it is never a tool parameter (an
+/// LLM-authored parameter could impersonate any workspace).
 pub mod haplotes {
     pub const LLM_PROVIDER_CALL: &str = "llm_provider_call";
     pub const SUBSCRIBE_TRIGGER: &str = "subscribe_trigger";
