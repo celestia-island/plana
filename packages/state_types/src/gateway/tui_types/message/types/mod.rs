@@ -395,6 +395,12 @@ pub struct ThinkingStepEntry {
 pub struct ActorClaims {
     pub user_id: Uuid,
     pub agent_execute: bool,
+    /// The acting user's group identifiers (builtin keys for builtins,
+    /// names for custom groups), resolved fresh by the gateway at send
+    /// time. Empty for legacy senders that predate the field — group
+    /// gated policies treat an empty list as "on no group" (fail-closed).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1648,6 +1654,34 @@ mod tests {
         // The actor claim must stay off the wire when absent — legacy
         // peers see the exact same shape as before this field existed.
         assert!(json.get("actor").is_none());
+
+        // The groups field rides inside the claim: present when non-empty,
+        // and a legacy claim (pre-groups) deserializes with an empty list.
+        let claim = super::ActorClaims {
+            user_id: uuid::Uuid::new_v4(),
+            agent_execute: true,
+            groups: vec!["registered".to_string()],
+        };
+        let wire = serde_json::to_value(&claim).expect("serialize claim");
+        assert_eq!(wire["groups"], serde_json::json!(["registered"]));
+        let legacy: super::ActorClaims = serde_json::from_str(
+            r#"{"user_id":"0f8fad5b-d9cb-469f-a165-70867728950e","agent_execute":true}"#,
+        )
+        .expect("legacy claim without groups must deserialize");
+        assert!(legacy.groups.is_empty(), "absent groups = empty list");
+
+        // And the mirror half: an empty group list must stay off the wire
+        // (skip_serializing_if), so legacy peers never see "groups": [].
+        let empty = super::ActorClaims {
+            user_id: uuid::Uuid::new_v4(),
+            agent_execute: false,
+            groups: Vec::new(),
+        };
+        let wire = serde_json::to_value(&empty).expect("serialize empty claim");
+        assert!(
+            wire.get("groups").is_none(),
+            "an empty group list must stay off the wire"
+        );
     }
 
     /// `TaskCreated` gained `estimated_degrees` for the degree-ledger
