@@ -10,7 +10,7 @@ use std::{
 
 use tracing::warn;
 
-use _core::execution_mode::ExecutionMode;
+use plana_core::execution_mode::ExecutionMode;
 
 fn deserialize_description<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
 where
@@ -134,7 +134,7 @@ pub struct PromptMetadata {
 #[derive(Debug, Clone, Default, serde::Deserialize)]
 pub struct PromptFeatures {
     #[serde(default)]
-    pub location: Option<_state_sync::tools::SkillLocation>,
+    pub location: Option<plana_state_sync::tools::SkillLocation>,
     #[serde(default)]
     pub config: Vec<String>,
     #[serde(default)]

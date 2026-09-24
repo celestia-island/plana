@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-pub use _core::execution_mode::{ExecutionMode, UnknownExecutionModeError};
-use _core::shell_safety::contains_shell_metacharacters;
+pub use plana_core::execution_mode::{ExecutionMode, UnknownExecutionModeError};
+use plana_core::shell_safety::contains_shell_metacharacters;
 
 const SYSTEMCTL_STATUS_PREFIX: &str = "systemctl status";
 const SYSTEMCTL_LIST_PREFIX: &str = "systemctl list";

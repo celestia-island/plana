@@ -5,8 +5,8 @@ use std::collections::HashMap;
 
 use tracing::{debug, error, info};
 
-use _domain_skills_permissions::ToolCapability;
-use _state_sync::{Agent, ToolInfo};
+use plana_domain_skills_permissions::ToolCapability;
+use plana_state_sync::{Agent, ToolInfo};
 
 /// Validate that all required parameters are present and non-empty.
 /// Returns `None` if valid, or a failure `ToolResult` if any required param is missing/empty.

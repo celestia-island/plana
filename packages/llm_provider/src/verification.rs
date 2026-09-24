@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use _config::GenProtocol;
+use plana_config::GenProtocol;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ContentIntegrity {

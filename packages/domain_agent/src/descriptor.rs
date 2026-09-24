@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 
 use dashmap::DashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize, _macros::Getters)]
+#[derive(Debug, Clone, Serialize, Deserialize, plana_macros::Getters)]
 pub struct AgentDescriptor {
     pub friendly_name: &'static str,
     pub folder_name: &'static str,

@@ -2,8 +2,8 @@ use serde_json::Value;
 use std::{collections::HashMap, marker::PhantomData};
 
 use super::{tool_trait::ToolDescriptor, tools::ToolResult};
-use _domain_agent::AgentMarker;
-use _domain_skills_permissions::ToolCapability;
+use plana_domain_agent::AgentMarker;
+use plana_domain_skills_permissions::ToolCapability;
 
 pub struct ToolRegistry<M: AgentMarker> {
     tools: HashMap<&'static str, ToolDescriptor>,
@@ -134,7 +134,7 @@ impl Default for GlobalToolRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use _domain_agent::HubRisMarker;
+    use plana_domain_agent::HubRisMarker;
     use std::future::Future;
     use std::pin::Pin;
 

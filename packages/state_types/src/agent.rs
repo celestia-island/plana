@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 use super::tools::{SkillInfo, ToolInfo};
-use _core::{AgentBadge, AgentId};
-use _domain_agent::AgentKind;
+use plana_core::{AgentBadge, AgentId};
+use plana_domain_agent::AgentKind;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 pub struct CustomAgentId(pub String);

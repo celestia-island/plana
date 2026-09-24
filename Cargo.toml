@@ -53,28 +53,28 @@ all = "deny"
 
 [workspace.dependencies]
 
-_bootloader = { package = "plana_bootloader", path = "packages/bootloader" }
-_build_info = { package = "plana_build_info", path = "packages/build_info" }
-_config = { package = "plana_config", path = "packages/config" }
-_core = { package = "plana_core", path = "packages/core" }
-_custom_agent = { package = "plana_custom_agent", path = "packages/custom_agent" }
-_domain_agent = { package = "plana_domain_agent", path = "packages/domain_agent" }
-_domain_skills = { package = "plana_domain_skills", path = "packages/domain_skills" }
-_domain_skills_permissions = { package = "plana_domain_skills_permissions", path = "packages/domain_skills_permissions" }
-_infra_services = { package = "plana_infra_services", path = "packages/infra_services" }
-_infra_utils = { package = "plana_infra_utils", path = "packages/infra_utils" }
-_llm_provider = { package = "plana_llm_provider", path = "packages/llm_provider" }
-_macros = { package = "plana_macros", path = "packages/macros" }
-_prompt = { package = "plana_prompt", path = "packages/prompt" }
-_res = { package = "plana_res", path = "packages/res" }
-_state_sync = { package = "plana_state_sync", path = "packages/state_types" }
-_sync = { package = "plana_sync", path = "packages/sync" }
-_text = { package = "plana_text", path = "packages/text" }
-_timeline = { package = "plana_timeline", path = "packages/timeline" }
-_world_state = { package = "plana_world_state", path = "packages/world_state" }
+# ── Internal workspace crates (path deps; keys are the real crate names) ──
+plana_bootloader = { path = "packages/bootloader" }
+plana_build_info = { path = "packages/build_info" }
+plana_config = { path = "packages/config" }
+plana_core = { path = "packages/core" }
+plana_custom_agent = { path = "packages/custom_agent" }
+plana_domain_agent = { path = "packages/domain_agent" }
+plana_domain_skills = { path = "packages/domain_skills" }
+plana_domain_skills_permissions = { path = "packages/domain_skills_permissions" }
+plana_infra_services = { path = "packages/infra_services" }
+plana_infra_utils = { path = "packages/infra_utils" }
+plana_llm_provider = { path = "packages/llm_provider" }
+plana_macros = { path = "packages/macros" }
+plana_prompt = { path = "packages/prompt" }
+plana_res = { path = "packages/res" }
+plana_state_sync = { path = "packages/state_types" }
+plana_sync = { path = "packages/sync" }
+plana_text = { path = "packages/text" }
+plana_timeline = { path = "packages/timeline" }
+plana_world_state = { path = "packages/world_state" }
 plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
 
-# ── Internal crate aliases ──────────────────────────────────
 plana = { version = "0.2.1", path = "packages/plana" }
 plana-celestia-types = { version = "0.1.1", path = "packages/celestia-types" }
 

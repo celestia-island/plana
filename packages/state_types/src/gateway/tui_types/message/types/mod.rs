@@ -9,9 +9,9 @@ use super::super::super::{
     monitor::{CosmosContainerInfo, CosmosOperationLogEntry},
 };
 use crate::{agent::Agent, agent_error::StructuredAgentError};
-use _config::GenProtocol;
-use _core::AgentBadge;
-use _text::{LlmStream, StreamChunkKind};
+use plana_config::GenProtocol;
+use plana_core::AgentBadge;
+use plana_text::{LlmStream, StreamChunkKind};
 
 fn default_search_limit() -> u64 {
     10
@@ -513,7 +513,7 @@ pub enum SyncMessage {
         #[serde(default)]
         language: Option<String>,
         #[serde(default)]
-        images: Option<Vec<_core::LlmImageContent>>,
+        images: Option<Vec<plana_core::LlmImageContent>>,
         #[serde(default)]
         workspace_id: Option<Uuid>,
         /// Client-supplied topic correlation id (e.g. the shittim-chest

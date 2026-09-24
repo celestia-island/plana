@@ -20,13 +20,13 @@ use super::{
     events::{clone_repository, copy_dir_recursive, find_agent_root},
     signature::{pubkey_for, subscription_owner, verify_agent_package},
 };
-use _state_sync::gateway::tui_types::layer2::CustomAgentInfo;
+use plana_state_sync::gateway::tui_types::layer2::CustomAgentInfo;
 
 pub struct CustomAgentManager;
 
 impl CustomAgentManager {
     pub fn custom_agents_root() -> PathBuf {
-        _config::UserConfig::custom_agents_dir()
+        plana_config::UserConfig::custom_agents_dir()
     }
 
     pub fn git_dir() -> PathBuf {

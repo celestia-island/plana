@@ -11,7 +11,7 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
 };
 
-use _core::{CredentialError, CredentialStorage};
+use plana_core::{CredentialError, CredentialStorage};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CredentialRecord {
@@ -80,7 +80,7 @@ impl FileCredentialStorage {
     }
 
     fn get_credentials_dir() -> Result<PathBuf> {
-        Ok(_config::UserConfig::config_dir().join("credentials"))
+        Ok(plana_config::UserConfig::config_dir().join("credentials"))
     }
 
     pub fn credentials_dir(&self) -> &Path {

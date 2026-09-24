@@ -11,9 +11,9 @@ workspace = true
 
 [dependencies]
 
-_config = { workspace = true }
-_core = { workspace = true }
-_text = { workspace = true }
+plana_config = { workspace = true }
+plana_core = { workspace = true }
+plana_text = { workspace = true }
 anyhow.workspace = true
 async-trait.workspace = true
 base64.workspace = true

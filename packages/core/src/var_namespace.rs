@@ -8,7 +8,7 @@
 /// ## Usage
 ///
 /// ```ignore
-/// use _core::var_namespace::VN;
+/// use plana_core::var_namespace::VN;
 ///
 /// // JS initialization code
 /// VN.init_js()              // "globalThis.__vars = globalThis.__vars || {};"

@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use _config::model_category::GenerationModality;
+use plana_config::model_category::GenerationModality;
 
 #[derive(Debug, Error)]
 pub enum ProviderError {

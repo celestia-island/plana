@@ -1,1 +1,1 @@
-pub use _core::AgentBadge;
+pub use plana_core::AgentBadge;

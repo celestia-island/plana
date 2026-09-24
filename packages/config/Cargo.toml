@@ -11,8 +11,8 @@ workspace = true
 
 [dependencies]
 
-_core = { workspace = true }
-_res = { workspace = true }
+plana_core = { workspace = true }
+plana_res = { workspace = true }
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true

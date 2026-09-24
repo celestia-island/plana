@@ -2,8 +2,8 @@ use serde_json::Value;
 use std::{future::Future, pin::Pin};
 
 use super::tools::ToolResult;
-use _domain_agent::AgentMarker;
-use _domain_skills_permissions::ToolCapability;
+use plana_domain_agent::AgentMarker;
+use plana_domain_skills_permissions::ToolCapability;
 
 pub trait Tool: Send + Sync + 'static {
     type Agent: AgentMarker;
@@ -11,9 +11,9 @@ pub trait Tool: Send + Sync + 'static {
     const NAME: &'static str;
 
     const CAPABILITY: ToolCapability = ToolCapability {
-        access_mode: _domain_skills_permissions::AccessMode::Read,
-        risk_level: _domain_skills_permissions::RiskLevel::Info,
-        scope: _domain_skills_permissions::ToolScope::Any,
+        access_mode: plana_domain_skills_permissions::AccessMode::Read,
+        risk_level: plana_domain_skills_permissions::RiskLevel::Info,
+        scope: plana_domain_skills_permissions::ToolScope::Any,
     };
 
     fn invoke(&self, params: Value) -> Pin<Box<dyn Future<Output = ToolResult> + Send + '_>>;
@@ -106,7 +106,7 @@ impl ToolDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use _domain_agent::HubRisMarker;
+    use plana_domain_agent::HubRisMarker;
 
     struct DummyTool;
 

@@ -2,8 +2,8 @@ use anyhow::{Context, Result, bail};
 use uuid::Uuid;
 
 use super::*;
-use _core::var_namespace;
-use _text::StreamSegment;
+use plana_core::var_namespace;
+use plana_text::StreamSegment;
 
 fn txt(text: &str) -> StreamSegment {
     StreamSegment::Text {

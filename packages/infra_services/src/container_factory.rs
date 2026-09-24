@@ -8,7 +8,7 @@ use cherino::{
 };
 
 pub fn default_container_data_dir() -> PathBuf {
-    _config::UserConfig::config_dir().join("containers")
+    plana_config::UserConfig::config_dir().join("containers")
 }
 
 /// Returns the container runtime type for **outer orchestration**.
