@@ -16,7 +16,7 @@
 //   - Shadowed duplicates stay importable via deep imports
 //     (`import type { FileEntry } from "@celestia-island/plana-types/bindings/tools/kalos"`).
 //
-// The 6 current collisions (flat winner -> shadowed source):
+// The 7 current collisions (flat winner -> shadowed source):
 //
 //   WorkspaceStatusParams    ws/workspace        wins vs tools/aporia
 //   FileEntry                httpTypes           wins vs tools/kalos
@@ -24,10 +24,11 @@
 //   FileTreeEntry            ws/fileBrowsing     wins vs tools/kalos
 //   ContainerSnapshotParams  ws/stateSync        wins vs tools/neikos
 //   ReportHumanParams        tools/hubris          wins vs tools/orexis
+//   RbacGroup                httpTypes           wins vs protocol-core-httpTypes
 //
-// MAINTENANCE WARNING: the four exclusion lists are hand-maintained here —
+// MAINTENANCE WARNING: the five exclusion lists are hand-maintained here —
 // there is no generator script that rewrites this file. New types added to
-// the generated aporia/kalos/neikos/orexis files do NOT appear in the flat
+// the generated aporia/kalos/neikos/orexis/protocol-core-httpTypes files do NOT appear in the flat
 // surface unless their name is appended to the matching `export { ... }`
 // line below (keep the list alphabetically sorted). A type added with a
 // name that already exists on the flat surface is silently shadowed: it
@@ -70,7 +71,12 @@ export * from "./bindings/tools/hubris";
 export type { Annotation, FileCreateDirParams, FileDeleteParams, FileDeleteResult, FileEditParams, FileEditResult, FileExistsParams, FileExistsResult, FileGetInfoParams, FileInfoResult, FileListParams, FileListResult, FileReadResult, FileTreeListResult, FileWriteParams, FileWriteResult, ListAnnotationsResult, MkDirResult, ResolveAnnotationResult } from "./bindings/tools/kalos";
 export type { CheckWaitParams, ContainerCreateResult, ContainerFilterCriteria, ContainerForkParams, ContainerForkResult, ContainerInfoParams, ContainerInfoResult, ContainerListItem, ContainerListParams, ContainerListResult, ContainerRemoveParams, ContainerRemoveResult, ContainerSnapshotResult, ContainerStartParams, ContainerStartResult, ContainerStopParams, ContainerStopResult, ExecOnContainerParams, ExecResult, GitPushBranchParams, GitPushResult, NewContainerToolParams, NewContainerVolumeMount, SidecarDeliverResult, SidecarKillParams, SidecarSendParams, SidecarSendResult, SidecarSpawnParams, ToolchainEnsureParams, ToolchainEnsureResult, ToolchainListParams, ToolchainListResult, ToolchainProfileInfo, ToolchainVolumeSpec, VolumeInfo, WaitParams } from "./bindings/tools/neikos";
 export type { AgentIntegrityParams, AskResult, AuditAlignmentParams, AuditAlignmentResult, AuditFinding, AuditLegalityParams, AuditLegalityResult, BlockToolParams, CheckResultItem, ComplianceReportParams, ComplianceReportToolResult, ComplianceRule, ComplianceSummary, InspectToolCallParams, ManageSensitivityRulesParams, ReplyResult, ReportDetail, ReportHumanResult, RuleCheckResult, SecurityAuditParams, SecurityStatusParams, SecuritySuggestionsParams, SensitivityRule, SetNetworkPolicyParams, SetRiskThresholdParams, SetSecurityPolicyParams, StandardCheckParams, StandardCheckResult, StandardRegisterResult, UnblockToolParams } from "./bindings/tools/orexis";
-export type { GrantItem, GrantListResponse, MyPermissions, OAuthProvider, RbacGroupsResponse, RbacUser, RbacUsersResponse } from "./bindings/protocol-core-httpTypes";
+// Vendored foundation snapshot (see the file header there): RbacGroup stays
+// off this list on purpose — bindings/httpTypes already puts an identically
+// shaped RbacGroup on the flat surface — and HealthResponse is aliased to
+// ServiceHealthResponse so consumers that also bind their own backend's
+// /api/health HealthResponse never import two same-named shapes.
+export type { BackendKind, ConnectionStatus, CreatedResponse, DeletedResponse, ErrorResponse, GrantItem, GrantListResponse, HealthResponse as ServiceHealthResponse, IdResponse, MyPermissions, NetworkInfo, OAuthProvider, OkIdResponse, OkMessageResponse, OkResponse, PermissionsResponse, RbacGroupsResponse, RbacUser, RbacUsersResponse, ReadinessResponse, ServiceStatus, StatusResponse } from "./bindings/protocol-core-httpTypes";
 export * from "./bindings/tools/philia";
 export * from "./bindings/tools/polemos";
 export * from "./bindings/tools/skemma";
