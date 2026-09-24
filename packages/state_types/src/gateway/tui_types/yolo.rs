@@ -1,15 +1,25 @@
+//! YOLO Cruise Control: the autonomous background-loop tiers (realtime through
+//! strategic), the tasks each tier schedules and the status reported for them.
 use serde::{Deserialize, Serialize};
 
+/// Cadence class of a YOLO background task, from 2-minute realtime checks to
+/// weekly strategic passes. Serialized `snake_case` (`"realtime"`, ...).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum YoloTaskTier {
+    /// Fastest tier: 120 s default interval, disabled on a fresh config.
     Realtime,
+    /// Hourly tier (3600 s default), enabled on a fresh config.
     Periodic,
+    /// Six-hourly tier (21600 s default), enabled on a fresh config.
     Daily,
+    /// Weekly tier (604800 s default), disabled on a fresh config.
     Strategic,
 }
 
 impl YoloTaskTier {
+    /// All four tiers, ordered from the fastest cadence to the slowest; used to
+    /// build UI lists without hard-coding the variants.
     pub fn all() -> &'static [YoloTaskTier] {
         &[
             YoloTaskTier::Realtime,
@@ -19,6 +29,8 @@ impl YoloTaskTier {
         ]
     }
 
+    /// Stable label of the tier (`"realtime"` ...), identical to its serde
+    /// form, so it doubles as the wire/config token.
     pub fn name(&self) -> &'static str {
         match self {
             YoloTaskTier::Realtime => "realtime",
@@ -28,6 +40,8 @@ impl YoloTaskTier {
         }
     }
 
+    /// Parses a `name()` token back into a tier; case-sensitive, and returns
+    /// `None` for unknown or empty input.
     pub fn from_name(s: &str) -> Option<Self> {
         match s {
             "realtime" => Some(YoloTaskTier::Realtime),
@@ -38,6 +52,8 @@ impl YoloTaskTier {
         }
     }
 
+    /// Default tick interval for the tier, in seconds (120 / 3600 / 21600 /
+    /// 604800).
     pub fn default_interval_secs(&self) -> u64 {
         match self {
             YoloTaskTier::Realtime => 120,
@@ -47,6 +63,8 @@ impl YoloTaskTier {
         }
     }
 
+    /// Whether the tier starts enabled when a config is created from scratch:
+    /// `Realtime` and `Strategic` start off, the middle two start on.
     pub fn default_enabled(&self) -> bool {
         match self {
             YoloTaskTier::Realtime => false,
@@ -76,10 +94,16 @@ impl std::fmt::Display for YoloTaskTier {
     }
 }
 
+/// One scheduled task inside a tier: which agent runs which skill, and whether
+/// it is currently switched on.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloTierTaskConfig {
+    /// Name of the agent that runs the task.
     pub agent: String,
+    /// Name of the skill the agent executes.
     pub skill: String,
+    /// Whether the task runs; an absent key defaults to `true` (the opposite of
+    /// `YoloTierConfig.enabled`).
     #[serde(default = "default_true")]
     pub enabled: bool,
 }
@@ -88,17 +112,27 @@ fn default_true() -> bool {
     true
 }
 
+/// Configuration of one tier: on/off switch, cadence and the tasks it fires.
+/// Sent in `Sync.YoloConfigResponse` and edited by `Sync.YoloUpdateTask`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloTierConfig {
+    /// Tier this configuration block belongs to.
     pub tier: YoloTaskTier,
+    /// Whether the tier runs; an absent key defaults to `false`, so a tier only
+    /// starts enabled through `with_defaults` or an explicit value.
     #[serde(default)]
     pub enabled: bool,
+    /// Tick interval in seconds; an absent key defaults to `0`, which is not
+    /// the tier's own default (see `with_defaults`).
     #[serde(default)]
     pub interval_secs: u64,
+    /// Tasks fired by this tier; empty when the payload omits them.
     pub tasks: Vec<YoloTierTaskConfig>,
 }
 
 impl YoloTierConfig {
+    /// Builds a config for `tier` pre-filled with that tier's default enabled
+    /// flag and interval, and with no tasks.
     pub fn with_defaults(tier: YoloTaskTier) -> Self {
         Self {
             enabled: tier.default_enabled(),
@@ -109,38 +143,65 @@ impl YoloTierConfig {
     }
 }
 
+/// Runtime status of one tier as reported to the UI: schedule bookends plus the
+/// per-task outcome of the latest run.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloTierStatus {
+    /// Tier this status block describes.
     pub tier: YoloTaskTier,
+    /// Whether the tier is currently running.
     pub enabled: bool,
+    /// Effective tick interval in seconds.
     pub interval_secs: u64,
+    /// Timestamp of the last execution; `None` when the tier has never run.
     pub last_run_at: Option<String>,
+    /// Timestamp of the next scheduled execution; `None` when none is
+    /// scheduled.
     pub next_run_at: Option<String>,
+    /// Per-task status of this tier.
     pub tasks: Vec<YoloTaskStatus>,
 }
 
+/// Status of a single task inside a tier, including its most recent result.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloTaskStatus {
+    /// Agent that runs the task.
     pub agent: String,
+    /// Skill the agent executes.
     pub skill: String,
+    /// Whether the task is switched on for this tier.
     pub enabled: bool,
+    /// Outcome of the most recent run; `None` when it has not run yet.
     pub last_result: Option<YoloTaskResult>,
 }
 
+/// Outcome of one task execution: success flag, timing and the token spend the
+/// run accounted for.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloTaskResult {
+    /// Whether the task finished successfully.
     pub success: bool,
+    /// Wall-clock duration of the run, in milliseconds.
     pub duration_ms: u64,
+    /// Completion timestamp as a string; the emitters in this family write
+    /// ISO-8601 UTC (`2026-06-06T12:00:00Z` in this file's tests).
     pub completed_at: String,
+    /// Failure message when `success` is false; `None` on success (and for an
+    /// absent key, since the field is optional).
     pub error: Option<String>,
+    /// `(input, output)` token counts for the run; `None` when the producer
+    /// reports none.
     #[serde(default)]
     pub token_usage: Option<(u32, u32)>,
+    /// Model that served the run (e.g. `gpt-4o#1`); `None` when unreported.
     #[serde(default)]
     pub model_name: Option<String>,
 }
 
+/// Whole YOLO configuration as one payload: one configuration block per tier.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YoloFullConfig {
+    /// Configuration blocks for the tiers.
     pub tiers: Vec<YoloTierConfig>,
 }
 

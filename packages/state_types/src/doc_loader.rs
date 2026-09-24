@@ -1,3 +1,17 @@
+//! Loader for the per-tool markdown docs that ship under
+//! `res/prompts/agents/<agent>/tools/<tool>.md`, falling back to the `skills/`
+//! directory of the same agent when no tool doc exists.
+//!
+//! A doc file starts with a `+++` fenced TOML front matter whose `description`
+//! table maps language codes to text (`en` is the fallback when the requested
+//! language is missing).
+//!
+//! The body may contain a `## Parameters` section. Inside it, every line of the
+//! shape `- **name** (type, required, separate-call): description` becomes one
+//! property of the tool schema; `required` and `separate-call` are optional
+//! modifiers after the type, and a type this loader does not know falls back to
+//! `string`.
+
 use std::collections::HashMap;
 
 use tracing::debug;
@@ -8,13 +22,24 @@ const MARKDOWN_SECTION_PARAMS: &str = "## Parameters";
 const MARKDOWN_SECTION_PREFIX: &str = "## ";
 const TYPE_ARRAY_PREFIX: &str = "array";
 
+/// One tool's markdown documentation, parsed from its `.md` file: the `+++` TOML
+/// front matter for the description, and the `## Parameters` section for the
+/// argument schema. In-memory only, so it has no serde representation.
 #[derive(Debug, Clone)]
 pub struct ToolDoc {
+    /// Localized description for the requested language, falling back to the `en`
+    /// entry, and then to an empty string.
     pub description: String,
+    /// Argument schema assembled from the `## Parameters` bullet list; see
+    /// `parse_param_line` for the accepted line syntax.
     pub parameters: ToolParameters,
+    /// Markdown after the front matter, kept whole so a caller can inject it into a
+    /// prompt.
     pub body: String,
 }
 
+/// Namespace for reading tool docs off disk and folding them into `ToolInfo`. A
+/// unit struct: never instantiated, every entry point is an associated function.
 pub struct ToolDocLoader;
 
 struct ParsedParam {
@@ -57,6 +82,13 @@ fn make_array_prop_schema(desc: &str) -> serde_json::Value {
 }
 
 impl ToolDocLoader {
+    /// Load one tool's doc for one agent and language.
+    ///
+    /// Reads `res/prompts/agents/<agent_name>/tools/<tool_name>.md` relative to the
+    /// process working directory, falling back to the `skills/` directory of the same
+    /// agent. Returns `None` when neither file exists, when the front matter is
+    /// missing, or when it is not valid TOML. `lang` is normalized first: `zh`,
+    /// `zhs` and `zh-Hans` all mean `zh-Hans`, and anything unknown means `en`.
     pub fn load(agent_name: &str, tool_name: &str, lang: &str) -> Option<ToolDoc> {
         let tool_path = std::path::Path::new("res/prompts/agents")
             .join(agent_name)
@@ -107,6 +139,8 @@ impl ToolDocLoader {
         })
     }
 
+    /// Parse a doc from an in-memory markdown string instead of a file, using the
+    /// same grammar as `load` and the same language normalization.
     pub fn load_from_content(content: &str, lang: &str) -> Option<ToolDoc> {
         let (front_matter, body) = Self::split_front_matter(content)?;
         let toml_value: toml::Value = toml::from_str(&front_matter).ok()?;
@@ -234,6 +268,11 @@ impl ToolDocLoader {
         })
     }
 
+    /// Overlay the on-disk doc for `agent` onto `info`: the description and the
+    /// parameter schema replace the existing ones only when the doc supplies a
+    /// non-empty value, and every other field of `info` is left alone. A missing doc
+    /// is not an error, it only logs at debug level. Reached from
+    /// `agent_tool_module!` when a tool spec enables `enrich_docs`.
     pub fn enrich_tool_info(info: &mut ToolInfo, agent: &Agent, lang: &str) {
         let agent_name = agent.folder_name();
         match Self::load(agent_name, &info.name, lang) {

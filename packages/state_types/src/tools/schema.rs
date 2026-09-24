@@ -1,6 +1,22 @@
+//! JSON Schema support for tool parameters.
+//!
+//! `json_schema_types` holds the `type` literals; the crate-internal
+//! `normalize_schema_for_strict` rewrites a parameter schema so that a strict
+//! OpenAI-style tool call accepts it: every property becomes required and
+//! nullable, and nested objects get `additionalProperties: false`. It is driven
+//! from `ToolInfo::to_tool_definition` in the parent module.
+
+/// The JSON Schema `type` literals that the strict-mode normalizer writes and
+/// compares against, gathered in one place so the strings cannot drift.
 pub mod json_schema_types {
+    /// The `type` literal for a JSON null; appended to a property type list to mark
+    /// that property optional under strict mode.
     pub const NULL: &str = "null";
+    /// The `type` literal for JSON objects; also the default parameter type returned
+    /// by `default_param_type`.
     pub const OBJECT: &str = "object";
+    /// The `type` literal for JSON strings; the fallback type used when a property
+    /// type is rewritten.
     pub const STRING: &str = "string";
 }
 

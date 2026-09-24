@@ -1,3 +1,16 @@
+//! Bridge between the gateway method names and the JSON-RPC wire form.
+//!
+//! A fixed gateway method is `{namespace}.{action}` (`Sync.Ping`,
+//! `Tool.CallTool`, ...), the namespace being one of the `GatewayMethod`
+//! variants and the action the serde `action` tag of the payload enum. The
+//! helpers here convert the platform-internal tagged envelope
+//! `{"type": "<Namespace>", "data": {"action": "<Action>", ...}}` to and from
+//! a JSON-RPC 2.0 request or notification, so a consumer service can keep one
+//! dispatch table per namespace instead of hand-building method strings.
+//!
+//! The method strings are stable wire vocabulary: renaming one breaks every
+//! peer at once. Consumer-private methods travel unchanged in the `Extension`
+//! variant, which is why parsing never fails (see `UnknownGatewayMethodError`).
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::Value;
@@ -5,22 +18,60 @@ use std::fmt;
 
 use super::{json_keys::BridgeKey, types::*};
 
+/// One gateway method: a fixed namespace plus the action name inside it.
+///
+/// The namespace selects the method prefix that `as_str` emits and the `type`
+/// field the tagged envelope must carry. This is the entelecheia
+/// workspace-sync dialect, not the `lowercase.dotted` service profile
+/// (`docs/en/rpc/service-profile.md` §4).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GatewayMethod {
+    /// `Sync.*` — the workspace-sync dialect: client turns and
+    /// server-authoritative state (patches, snapshots, reports, notifications).
     Sync(&'static str),
+    /// `Base.*` — liveness and transport-level notices (heartbeat, error, ack),
+    /// valid in both directions and carrying no domain payload.
     Base(&'static str),
+    /// `Agent.*` — agent-registry CRUD on the control plane. No constant and no
+    /// `FromStr` arm exist, so the variant is reachable only in process.
     Agent(&'static str),
+    /// `Tool.*` — tool catalog and invocation, dispatched to the agent host that
+    /// owns the tool.
     Tool(&'static str),
+    /// `Skill.*` — skill catalog and invocation; a skill name is the entry point
+    /// of a server-side chain.
     Skill(&'static str),
+    /// `Node.*` — peer-node discovery and per-node info. Like `Agent` it has no
+    /// constant or parse arm and is constructible only in process.
     Node(&'static str),
+    /// `Monitor.*` — host and per-agent metrics sampling. Also without constants
+    /// or parse arms; `MonitorMessage` supplies the action names.
     Monitor(&'static str),
+    /// `Conversation.*` — agent-to-agent consultations about one file: ask,
+    /// reply, escalate to a human, resolve.
     Conversation(&'static str),
+    /// `Device.*` — polemos hardware terminals: registration, heartbeats, PTY
+    /// session control, file transfer, and WebRTC negotiation.
     Device(&'static str),
+    /// `Screen.*` — WebRTC screen-stream signalling (SDP offer/answer and ICE
+    /// candidates), separate from the `Device.*` control surface.
     Screen(&'static str),
+    /// `Cli.*` — operator queries (status, chat history, timeline, search,
+    /// listings). Overlaps `Tool.ListTools` and `Sync.OpenWorkspace` by name but
+    /// is a distinct method string.
     Cli(&'static str),
+    /// `Trigger.*` — hardware trigger events; `Trigger.Event` is the only action
+    /// the parser accepts.
     Trigger(&'static str),
+    /// `Sensor.*` — batched industrial sensor readings; the parser accepts only
+    /// `Sensor.Batch`.
     Sensor(&'static str),
+    /// `Discovery.*` — industrial discovery-scan progress; the parser accepts
+    /// only `Discovery.Progress`.
     Discovery(&'static str),
+    /// `Command.*` — one-shot shell execution on a broker host; `Command.Exec`
+    /// runs a single command string and answers with exit code plus stdout and
+    /// stderr.
     Command(&'static str),
     /// DLC extension method — arbitrary string for consumer-specific RPCs
     /// (e.g. shittim-chest's auth.*/channels.*/topology.* etc.)
@@ -28,61 +79,200 @@ pub enum GatewayMethod {
 }
 
 impl GatewayMethod {
+    /// `Sync.Ping` — keepalive the client sends with a `timestamp` (epoch
+    /// millis); the peer answers `Sync.Pong`, for which this crate defines no
+    /// payload type.
     pub const SYNC_PING: Self = Self::Sync("Ping");
+    /// `Sync.AgentPatch` — server push of field-level agent deltas (`patches`),
+    /// not whole agent objects; the client upserts each non-null field into its
+    /// `state.agents.<agent_id>` viewport.
     pub const SYNC_AGENT_PATCH: Self = Self::Sync("AgentPatch");
+    /// `Sync.OrchestrationStatus` — server push of one orchestration `stage`
+    /// (`SkillStage`) of a running chain, so a UI can show progress without
+    /// polling.
     pub const SYNC_ORCHESTRATION_STATUS: Self = Self::Sync("OrchestrationStatus");
+    /// `Sync.ToolResult` — server push reporting one settled tool call
+    /// (`tool_name`, `call_id`, `result`, `success`, optional `duration_ms`);
+    /// `call_id` is what pairs it with the invocation.
     pub const SYNC_TOOL_RESULT: Self = Self::Sync("ToolResult");
+    /// `Sync.AgentStreamingChunk` — server push of one incremental LLM `chunk`
+    /// for `agent_id`; `is_done` marks the last chunk of the turn.
     pub const SYNC_AGENT_STREAMING_CHUNK: Self = Self::Sync("AgentStreamingChunk");
+    /// `Sync.AgentReport` — server push of a report card (`report_type`, `title`,
+    /// `content`, optional `preset_options`); a `query` report is answered by the
+    /// client with `Sync.AgentReportReply`.
     pub const SYNC_AGENT_REPORT: Self = Self::Sync("AgentReport");
+    /// `Sync.AgentTransfer` — server push announcing a skill hand-off from
+    /// `from_skill` to `to_skill` inside one agent. This is the only constant
+    /// whose string the parser does not map back, so `"Sync.AgentTransfer"`
+    /// round-trips as `Extension` (see the `FromStr` impl).
     pub const SYNC_AGENT_TRANSFER: Self = Self::Sync("AgentTransfer");
+    /// `Sync.AskHumanRequest` — server push asking a human to answer `question`
+    /// for `consultation_id` from `options`; the client replies
+    /// `Sync.AskHumanReply`.
     pub const SYNC_ASK_HUMAN_REQUEST: Self = Self::Sync("AskHumanRequest");
+    /// `Sync.UserMessage` — the client-side user turn (`sender_id`, `content`,
+    /// `timestamp`); the server mints or reuses the `conversation_id` it carries
+    /// and drives the chain from there.
     pub const SYNC_USER_MESSAGE: Self = Self::Sync("UserMessage");
+    /// `Sync.AgentResponse` — server push of one finished agent answer
+    /// (`agent_type`, `agent_id`, `content`); `parent_id` names what it answers.
     pub const SYNC_AGENT_RESPONSE: Self = Self::Sync("AgentResponse");
+    /// `Sync.RequestFullSnapshot` — client request without payload for a
+    /// complete state dump; the payload enum has no `FullSnapshot` arm, so only
+    /// the per-domain snapshots can answer it.
     pub const SYNC_REQUEST_FULL_SNAPSHOT: Self = Self::Sync("RequestFullSnapshot");
+    /// `Sync.RequestGlobalSnapshot` — client request for one frame holding
+    /// agents, containers and active tasks; answered by `Sync.GlobalSnapshot`.
     pub const SYNC_REQUEST_GLOBAL_SNAPSHOT: Self = Self::Sync("RequestGlobalSnapshot");
+    /// `Sync.GlobalSnapshot` — server push wrapping a `GlobalSnapshot`
+    /// (`version`, `timestamp`, `agents`, `containers`, `active_tasks`), the
+    /// baseline a client resumes from.
     pub const SYNC_GLOBAL_SNAPSHOT: Self = Self::Sync("GlobalSnapshot");
+    /// `Sync.ModelsSnapshot` — server push of the whole model catalog as
+    /// `ModelInfo` entries, replacing the client-side model list outright.
     pub const SYNC_MODELS_SNAPSHOT: Self = Self::Sync("ModelsSnapshot");
+    /// `Sync.ProvidersSnapshot` — server push of the provider catalog as
+    /// `ProviderInfo` entries; it reports `has_api_key` rather than any key.
     pub const SYNC_PROVIDERS_SNAPSHOT: Self = Self::Sync("ProvidersSnapshot");
+    /// `Sync.ContainerSnapshot` — server push wrapping a full
+    /// `ContainerSnapshot` (`version`, `timestamp`, `containers`); the reply to
+    /// `Sync.RequestContainerSnapshot`.
     pub const SYNC_CONTAINER_SNAPSHOT: Self = Self::Sync("ContainerSnapshot");
+    /// `Sync.ContainerPatch` — server push of container deltas that the client
+    /// upserts into its container viewport, the incremental counterpart of
+    /// `Sync.ContainerSnapshot`.
     pub const SYNC_CONTAINER_PATCH: Self = Self::Sync("ContainerPatch");
+    /// `Sync.TaskPatch` — server push of task deltas (`status`, `progress`) that
+    /// the client upserts into its task viewport.
     pub const SYNC_TASK_PATCH: Self = Self::Sync("TaskPatch");
+    /// `Sync.TasksSnapshot` — server push wrapping the full task list; the reply
+    /// to `Sync.RequestTasksSnapshot`.
     pub const SYNC_TASKS_SNAPSHOT: Self = Self::Sync("TasksSnapshot");
+    /// `Sync.ListAgents` — client request for the agent roster, answered by
+    /// `Sync.AgentListResponse`. A client that subscribes to the `state.agents`
+    /// viewport no longer needs to send it on reconnect.
     pub const SYNC_LIST_AGENTS: Self = Self::Sync("ListAgents");
+    /// `Sync.ServerVersion` — server greeting: the gateway `version` plus a
+    /// free-form `build_info` string, so the client can show and compare the
+    /// peer build.
     pub const SYNC_SERVER_VERSION: Self = Self::Sync("ServerVersion");
+    /// `Sync.OpenWorkspace` — client request to open a workspace `uri`, answered
+    /// by `Sync.OpenWorkspaceResponse`. The legacy string
+    /// `Sync.OpenGitWorkspace` parses to this same method.
     pub const SYNC_OPEN_WORKSPACE: Self = Self::Sync("OpenWorkspace");
+    /// `Sync.WorkspaceStatus` — server push describing the open workspace: id,
+    /// display name, connection kind, resolved path, remote url, branch, host id.
+    /// Every one of those except the id and the connection kind is optional, so
+    /// an absent field means no remote, no checkout branch, no resolved path or
+    /// no recorded host.
     pub const SYNC_WORKSPACE_STATUS: Self = Self::Sync("WorkspaceStatus");
+    /// `Sync.RequestWorkspaceStatus` — client poll without payload; the server
+    /// answers `Sync.WorkspaceStatus`.
     pub const SYNC_REQUEST_WORKSPACE_STATUS: Self = Self::Sync("RequestWorkspaceStatus");
+    /// `Sync.SystemMessage` — server push of one `SystemNotification` plus its
+    /// `timestamp`; the client renders it (i18n key and params come from the
+    /// notification) and takes no protocol action. Published on the
+    /// `system_notification` channel topic.
     pub const SYNC_SYSTEM_MESSAGE: Self = Self::Sync("SystemMessage");
+    /// `Sync.WebUiControl` — request carrying one `command` for the host that
+    /// owns the embedded Web UI; that host answers
+    /// `Sync.WebUiControlResponse` echoing the command with its outcome.
     pub const SYNC_WEBUI_CONTROL: Self = Self::Sync("WebUiControl");
+    /// `Sync.WebUiControlResponse` — the owning host answer to
+    /// `Sync.WebUiControl`: the same `command`, a `success` flag, a human
+    /// `message`, and `url` once the Web UI is reachable.
     pub const SYNC_WEBUI_CONTROL_RESPONSE: Self = Self::Sync("WebUiControlResponse");
+    /// `Sync.WebUiStatus` — server push of the Web UI state: `running`, its
+    /// `url`, and the `container_id` it runs in; an absent optional field means
+    /// not running or not known.
     pub const SYNC_WEBUI_STATUS: Self = Self::Sync("WebUiStatus");
+    /// `Sync.RequestWebUiStatus` — client poll without payload; the server
+    /// answers `Sync.WebUiStatus`.
     pub const SYNC_REQUEST_WEBUI_STATUS: Self = Self::Sync("RequestWebUiStatus");
 
+    /// `Sync.AuthLogin` — client request with `username` and `password`; the
+    /// server answers `Sync.AuthLoginResponse`, which carries the session on
+    /// success. Credentials travel in params, never in the envelope.
     pub const SYNC_AUTH_LOGIN: Self = Self::Sync("AuthLogin");
+    /// `Sync.AuthLoginResponse` — the server answer to `Sync.AuthLogin`: `ok`
+    /// plus, on success, `token`, `session_id`, `user_id`, `username`,
+    /// `display_name` and `role`; on failure `ok = false`, `error`, no token.
     pub const SYNC_AUTH_LOGIN_RESPONSE: Self = Self::Sync("AuthLoginResponse");
+    /// `Sync.AuthRegister` — client request creating an account from `username`,
+    /// `password` and an optional `display_name`; answered by
+    /// `Sync.AuthRegisterResponse`.
     pub const SYNC_AUTH_REGISTER: Self = Self::Sync("AuthRegister");
+    /// `Sync.AuthRegisterResponse` — `ok` with `user_id` and `username` on
+    /// success, or `ok = false` with `error`; the password is never echoed.
     pub const SYNC_AUTH_REGISTER_RESPONSE: Self = Self::Sync("AuthRegisterResponse");
+    /// `Sync.AuthListUsers` — client request without payload for the user
+    /// roster; answered by `Sync.AuthListUsersResponse`.
     pub const SYNC_AUTH_LIST_USERS: Self = Self::Sync("AuthListUsers");
+    /// `Sync.AuthListUsersResponse` — `ok` plus `users` (`AuthUserInfo`) or an
+    /// `error`; both payload fields are optional, so read `ok` first.
     pub const SYNC_AUTH_LIST_USERS_RESPONSE: Self = Self::Sync("AuthListUsersResponse");
+    /// `Sync.AuthGetUser` — client request for the single `user_id`; answered by
+    /// `Sync.AuthGetUserResponse`.
     pub const SYNC_AUTH_GET_USER: Self = Self::Sync("AuthGetUser");
+    /// `Sync.AuthGetUserResponse` — `ok` with the resolved `user`, or
+    /// `ok = false` plus `error` when no such user exists.
     pub const SYNC_AUTH_GET_USER_RESPONSE: Self = Self::Sync("AuthGetUserResponse");
+    /// `Sync.AuthDeleteUser` — client request deleting `user_id`; answered by
+    /// `Sync.AuthDeleteUserResponse`.
     pub const SYNC_AUTH_DELETE_USER: Self = Self::Sync("AuthDeleteUser");
+    /// `Sync.AuthDeleteUserResponse` — `ok` plus an optional `error`; the deleted
+    /// user is not echoed back.
     pub const SYNC_AUTH_DELETE_USER_RESPONSE: Self = Self::Sync("AuthDeleteUserResponse");
+    /// `Sync.AuthChangePassword` — client request carrying `old_password` so the
+    /// server can verify the caller before storing `new_password` for `user_id`.
     pub const SYNC_AUTH_CHANGE_PASSWORD: Self = Self::Sync("AuthChangePassword");
+    /// `Sync.AuthChangePasswordResponse` — `ok` plus an optional `error`; neither
+    /// password appears in the answer.
     pub const SYNC_AUTH_CHANGE_PASSWORD_RESPONSE: Self = Self::Sync("AuthChangePasswordResponse");
 
+    /// `Base.Heartbeat` — client keepalive notification with no JSON-RPC id,
+    /// sent at the client cadence (the `plana-rpc-client` default is 15 s). The
+    /// server answers `Base.HeartbeatAck` on the control lane and drops a
+    /// connection idle for about three beats.
     pub const BASE_HEARTBEAT: Self = Self::Base("Heartbeat");
+    /// `Base.Error` — one-way notice carrying a machine-readable `code` and a
+    /// human `message` (`BaseMessage::Error`); declared `OneWay`, so the peer
+    /// sends no answer to it.
     pub const BASE_ERROR: Self = Self::Base("Error");
+    /// `Base.Ack` — one-way acknowledgement of an earlier message, named by
+    /// `message_id` (`BaseMessage::Ack`); distinct from the heartbeat ack
+    /// `Base.HeartbeatAck`.
     pub const BASE_ACK: Self = Self::Base("Ack");
 
+    /// `Tool.CallTool` — dispatched request to run `tool_name` with `parameters`
+    /// on behalf of `agent_type`. Declared `AsyncReq`, so the result arrives on a
+    /// later method rather than on the request id.
     pub const TOOL_CALL: Self = Self::Tool("CallTool");
+    /// `Tool.ListTools` — request for the tool catalog of one `agent_type`, or of
+    /// every agent when the field is absent; answered by
+    /// `Tool.ToolsListResponse`.
     pub const TOOL_LIST_TOOLS: Self = Self::Tool("ListTools");
+    /// `Tool.ToolsListResponse` — the answer to `Tool.ListTools`, carrying `tools`
+    /// as `ToolInfo` entries (name, description, owning agent, parameter schema,
+    /// tier, visibility).
     pub const TOOL_TOOLS_LIST_RESPONSE: Self = Self::Tool("ToolsListResponse");
 
+    /// `Skill.CallSkill` — dispatched request to start `skill_name` with
+    /// `parameters` on behalf of `agent_type`; declared `AsyncReq`, so the caller
+    /// is answered out of band.
     pub const SKILL_CALL: Self = Self::Skill("CallSkill");
+    /// `Skill.ListSkills` — request for the skill catalog of one `agent_type`, or
+    /// of every agent when absent; answered by `Skill.SkillsListResponse`.
     pub const SKILL_LIST_SKILLS: Self = Self::Skill("ListSkills");
+    /// `Skill.SkillsListResponse` — the answer to `Skill.ListSkills`, carrying
+    /// `skills` as `SkillInfo` entries (name, per-language descriptions, owning
+    /// agent, required tools).
     pub const SKILL_LIST_SKILLS_RESPONSE: Self = Self::Skill("SkillsListResponse");
 
+    /// Canonical wire method string: `{namespace}.{action}` for the fixed
+    /// namespaces, the raw consumer string for `Extension`. Owned rather than
+    /// `&'static str` because an extension method string is not static.
     pub fn as_str(&self) -> String {
         match self {
             Self::Sync(action) => format!("Sync.{}", action),
@@ -104,6 +294,10 @@ impl GatewayMethod {
         }
     }
 
+    /// Namespace label alone (`Sync`, `Base`, `Tool`, ...), matching the `type`
+    /// field of the tagged envelope. For `Extension` this is the literal
+    /// `Extension` — a classifier, not a wire prefix, since an extension method
+    /// keeps its own string.
     pub fn type_prefix(&self) -> &'static str {
         match self {
             Self::Sync(_) => "Sync",
@@ -125,6 +319,10 @@ impl GatewayMethod {
         }
     }
 
+    /// The action segment after the dot, i.e. the method name without its
+    /// namespace. For `Extension` it is the whole consumer string, which may
+    /// itself be dotted (`auth.login`), so it is not guaranteed to be a bare
+    /// action name.
     pub fn action(&self) -> &str {
         match self {
             Self::Sync(a)
@@ -153,6 +351,10 @@ impl fmt::Display for GatewayMethod {
     }
 }
 
+/// Error type of the `GatewayMethod` `FromStr` impl, holding the rejected
+/// input in its tuple field. As written the parser never returns it: an
+/// unknown method becomes `Extension` instead, so the type only fills the
+/// trait `Err` slot (message: `unknown gateway method: <input>`).
 #[derive(Debug, Clone, thiserror::Error)]
 #[error("unknown gateway method: {0}")]
 pub struct UnknownGatewayMethodError(pub String);
@@ -264,6 +466,14 @@ impl std::str::FromStr for GatewayMethod {
     }
 }
 
+/// Serialize a tagged gateway envelope and split it into a JSON-RPC method
+/// string and params: `method = "{type}.{action}"`, params = the `data`
+/// object minus its `action` key.
+///
+/// `params` is `None` when the action carries no other field, which keeps a
+/// unit action free of an empty object. An envelope whose `data` is not an
+/// object, or which serializes to a non-object, yields the fallback pair
+/// `("Unknown.Unknown", Some(json))` rather than an error.
 pub fn core_message_to_method_and_params<T: Serialize>(msg: &T) -> (String, Option<Value>) {
     let json = serde_json::to_value(msg).unwrap_or(Value::Null);
 
@@ -308,6 +518,14 @@ pub fn core_message_to_method_and_params<T: Serialize>(msg: &T) -> (String, Opti
     }
 }
 
+/// Inverse of `core_message_to_method_and_params`: split `method` at its
+/// first dot and deserialize the rebuilt `{type, data}` envelope into `T`,
+/// with the second segment restored as the `action` field.
+///
+/// For `Tool` and `Skill` methods it fills `agent_type` (`"SkoPeo"`) and an
+/// empty `parameters` object when the caller omitted them, because those
+/// payloads require both. Returns `None` when the value does not fit `T`, so
+/// a shape mismatch is indistinguishable from a missing method.
 pub fn from_jsonrpc_method<T: DeserializeOwned>(method: &str, params: Option<Value>) -> Option<T> {
     let (wire_prefix, action) = method.split_once('.')?;
     let type_name = wire_prefix;
@@ -350,6 +568,10 @@ pub fn from_jsonrpc_method<T: DeserializeOwned>(method: &str, params: Option<Val
     serde_json::from_value::<T>(reconstructed).ok()
 }
 
+/// Serialize a gateway message to a JSON-RPC frame: a notification without an
+/// `id` when `is_notification`, otherwise a request carrying a freshly minted
+/// UUID `id`. The caller cannot choose that id, so a request built here is
+/// correlated by the transport rather than by the caller.
 pub fn serialize_to_jsonrpc<T: Serialize>(
     msg: &T,
     is_notification: bool,
@@ -365,6 +587,12 @@ pub fn serialize_to_jsonrpc<T: Serialize>(
     }
 }
 
+/// Parse a JSON-RPC frame into the gateway type `T`.
+///
+/// A frame that is neither request nor notification (a response) yields
+/// `Ok(None)`, and so does a payload that fails to deserialize — the caller
+/// cannot tell the two apart. A JSON syntax error yields a `JsonRpcError`
+/// with code `-32700` and the parser message appended.
 pub fn deserialize_from_jsonrpc<T: DeserializeOwned>(
     json: &str,
 ) -> Result<Option<T>, JsonRpcError> {
