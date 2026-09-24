@@ -387,6 +387,16 @@ pub struct ThinkingStepEntry {
     pub timestamp: String,
 }
 
+/// The acting end user a forwarded conversational frame acts for, plus
+/// the tool-execution dimension of their RBAC standing. The panel
+/// gateway asserts it under the shared service credential; the
+/// execution plane gates tool runs on `agent_execute`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActorClaims {
+    pub user_id: Uuid,
+    pub agent_execute: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "action")]
 pub enum SyncMessage {
@@ -512,6 +522,13 @@ pub enum SyncMessage {
         /// replies chain into the same topic thread.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         conversation_id: Option<Uuid>,
+        /// Acting end-user assertion (tool-execution permission
+        /// dimension). The panel gateway stamps it on
+        /// service-authenticated forwards so the execution plane can
+        /// gate tool runs on the originating user's standing.
+        /// Absent on legacy/local senders — no gate applies.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        actor: Option<ActorClaims>,
     },
     AgentResponse {
         agent_type: Agent,
@@ -1621,12 +1638,16 @@ mod tests {
             images: None,
             workspace_id: None,
             conversation_id: None,
+            actor: None,
         };
 
         let json = serde_json::to_value(&msg).expect("serialize UserMessage");
         assert_eq!(json["action"], "UserMessage");
         assert!(json["timestamp"].is_string());
         assert_eq!(json["timestamp"], "1770000000000");
+        // The actor claim must stay off the wire when absent — legacy
+        // peers see the exact same shape as before this field existed.
+        assert!(json.get("actor").is_none());
     }
 
     /// `TaskCreated` gained `estimated_degrees` for the degree-ledger
