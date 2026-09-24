@@ -26,8 +26,8 @@ pub use knowledge_base::{
 };
 pub use layer2::{CustomAgentInfo, Layer2AgentInfo, Layer2SkillInfo, Layer2ToolInfo};
 pub use message::{
-    AuthUserInfo, ClientCapability, ClientNodeInfo, FilePayload, NoaEvent, PolemosDeviceInfo,
-    SyncMessage,
+    ActorClaims, AuthUserInfo, ClientCapability, ClientNodeInfo, FilePayload, NoaEvent,
+    PolemosDeviceInfo, SyncMessage,
 };
 
 // Industrial wire types (telemetry / alarm / discovery / write-approval /

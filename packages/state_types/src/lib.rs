@@ -46,7 +46,7 @@ pub use gateway::{
     ReportType, RetryReason, RouteInfo, SkillMessage, SkillStage, SyncMessage, SystemNotification,
     ToolMessage,
     tui_types::{
-        AgentPatch, AgentSnapshot, AgentUpdateParams, AuthUserInfo, CompletionOutcome,
+        ActorClaims, AgentPatch, AgentSnapshot, AgentUpdateParams, AuthUserInfo, CompletionOutcome,
         ConfiguredProvider, ContainerInfo, ContainerPatch, ContainerSnapshot, CustomAgentInfo,
         EntrypointApiConfigInfo, EntrypointConfigInfo, EntrypointDefaultsInfo, GlobalSnapshot,
         HistoryMessage, KeyInfo, KeyMetadata, KnowledgeBaseFilters, KnowledgeBaseInfo,
