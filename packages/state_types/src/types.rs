@@ -1,28 +1,48 @@
-// Shared type definitions
-//
-// ModelTier and UnknownTierError moved to shared-core (model_tier module).
-// This file retains the remaining state sync types.
+//! The remaining shared state types.
+//!
+//! `ModelTier` now lives in `plana_core::model_tier` and is only re-exported
+//! here. What stays in this module is `TaskStatus` with its parse error, plus
+//! the RFC 3339 helpers that only the `Waiting` variant needs.
 
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 pub use plana_core::ModelTier;
 
+/// Lifecycle of a task/todo record as carried in TUI snapshots and patches
+/// (`TaskInfo::status`, `TaskPatch::status_changed`, the `TaskStatusUpdate`
+/// message).
+///
+/// Wire form: `rename_all = "snake_case"`, so the unit variants are
+/// `not_started` / `in_progress` / `paused` / `completed` / `failed` /
+/// `warning`. `Waiting` is a struct variant and therefore externally tagged:
+/// `{"waiting":{"deadline":"<rfc3339>","handle":"..."}}`; the deadline goes
+/// through explicit serde functions, so it is written and parsed as RFC 3339.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TaskStatus {
+    /// Created but not picked up yet.
     NotStarted,
+    /// Currently being worked on.
     InProgress,
+    /// Started and then held; not terminal, so it can still resume.
     Paused,
+    /// Finished successfully; terminal.
     Completed,
+    /// Finished unsuccessfully; terminal.
     Failed,
+    /// Finished with a warning the caller should look at; not terminal.
     Warning,
+    /// Blocked on an external event until `deadline`, tracked by `handle`.
     Waiting {
+        /// Instant after which the wait may be treated as expired, in UTC.
         #[serde(
             serialize_with = "serialize_datetime",
             deserialize_with = "deserialize_datetime"
         )]
         deadline: chrono::DateTime<chrono::Utc>,
+        /// Opaque wait token: compared and echoed here, never interpreted.
+        /// `new_waiting` fills it with a UUID v7 string.
         handle: String,
     },
 }
@@ -44,14 +64,18 @@ fn deserialize_datetime<'de, D: serde::Deserializer<'de>>(
 }
 
 impl TaskStatus {
+    /// Whether the task has stopped for good: only `Completed` and `Failed` count,
+    /// so `Warning` and `Paused` are still treated as live.
     pub fn is_terminal(self) -> bool {
         matches!(&self, Self::Completed | Self::Failed)
     }
 
+    /// Whether the task is blocked in the `Waiting` state.
     pub fn is_waiting(&self) -> bool {
         matches!(&self, Self::Waiting { .. })
     }
 
+    /// The wait deadline when the status is `Waiting`, otherwise `None`.
     pub fn waiting_deadline(&self) -> Option<&chrono::DateTime<chrono::Utc>> {
         match &self {
             Self::Waiting { deadline, .. } => Some(deadline),
@@ -59,6 +83,7 @@ impl TaskStatus {
         }
     }
 
+    /// The opaque wait handle when the status is `Waiting`, otherwise `None`.
     pub fn waiting_handle(&self) -> Option<&str> {
         match &self {
             Self::Waiting { handle, .. } => Some(handle),
@@ -66,6 +91,9 @@ impl TaskStatus {
         }
     }
 
+    /// Start a `Waiting` status that lasts `seconds` from now, with a freshly
+    /// generated UUID v7 as its handle. The clock is read here, so the deadline is
+    /// not reproducible from the argument alone.
     pub fn new_waiting(seconds: u64) -> Self {
         let deadline = chrono::Utc::now() + chrono::Duration::seconds(seconds as i64);
         let handle = uuid::Uuid::now_v7().to_string();
@@ -88,6 +116,9 @@ impl std::fmt::Display for TaskStatus {
     }
 }
 
+/// Returned when a string cannot be parsed into a `TaskStatus`: the payload is
+/// the rejected input, and `Display` renders `unknown task status: <input>`
+/// through the `thiserror` attribute.
 #[derive(Debug, Clone, thiserror::Error)]
 #[error("unknown task status: {0}")]
 pub struct UnknownTaskStatusError(pub String);
