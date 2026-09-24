@@ -133,9 +133,11 @@ fn supervision_health_response_is_distinct_from_the_generic_one() {
         1,
         plana::http::NetworkInfo::unknown(),
     );
-    // Constructing each with its own field set proves the supervision
-    // `HealthResponse` is an unrelated struct sharing only the name.
-    let _supervision = plana_celestia_types::malkuth::HealthResponse {
+    // The supervision probe keeps its worker-specific name and field set.
+    // Serializing both and comparing key sets proves the two types also have
+    // distinct wire shapes, so the same-named history cannot collapse them
+    // back together silently.
+    let supervision = plana_celestia_types::malkuth::WorkerHealthResponse {
         worker_id: "w-1".into(),
         healthy: true,
         ready: true,
@@ -143,4 +145,23 @@ fn supervision_health_response_is_distinct_from_the_generic_one() {
         uptime_secs: 42,
         version: "1.0.0".into(),
     };
+    let worker_wire = serde_json::to_value(&supervision).unwrap();
+    let backend_wire = serde_json::to_value(plana_celestia_types::HealthResponse::ok(
+        "1.0.0",
+        plana::http::BackendKind::Dev,
+        1,
+        plana::http::NetworkInfo::unknown(),
+    ))
+    .unwrap();
+    let worker_keys: Vec<_> = worker_wire.as_object().unwrap().keys().cloned().collect();
+    let backend_keys: Vec<_> = backend_wire.as_object().unwrap().keys().cloned().collect();
+    // The shapes may share the generic `version` convention, but neither may
+    // degenerate into the other: the probe keeps its worker fields, the
+    // backend descriptor its service fields.
+    assert_ne!(
+        worker_keys, backend_keys,
+        "supervision probe and backend health wire shapes must stay distinct"
+    );
+    assert!(worker_keys.contains(&"worker_id".to_string()));
+    assert!(backend_keys.contains(&"status".to_string()));
 }

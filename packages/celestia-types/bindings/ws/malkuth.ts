@@ -28,15 +28,6 @@ drain_budget_secs: bigint | null, };
 export type GateDecision = "allow" | "review" | "block";
 
 /**
- * Health probe response returned by each worker at `/healthz` or `/readyz`.
- */
-export type HealthResponse = { worker_id: string, healthy: boolean, ready: boolean, 
-/**
- * If not ready, the reason (e.g. "draining", "starting").
- */
-not_ready_reason: string | null, uptime_secs: bigint, version: string, };
-
-/**
  * OreXis LAYER3_PREFLIGHT_GUARD gate decision for a restart proposal.
  */
 export type RestartGateDecision = { proposal_id: string, decision: GateDecision, findings: Array<string>, reason: string, };
@@ -47,6 +38,23 @@ export type RestartGateDecision = { proposal_id: string, decision: GateDecision,
 export type RestartProposal = { proposal_id: string, worker_id: string, repo_path: string, git_diff_summary: string, affected_services: Array<string>, risk_estimate: RestartRisk, };
 
 export type RestartRisk = "low" | "medium" | "high" | "critical";
+
+/**
+ * Health probe response returned by each malkuth supervision worker at
+ * `/healthz` or `/readyz` (worker-lifecycle plane).
+ *
+ * Distinct from the generic backend descriptor
+ * `plana::protocol_core::http::HealthResponse` (the `/api/health` payload of
+ * plana backends): the two share only the historical concept, not a wire
+ * shape — this struct carries the worker probe fields, the other the backend
+ * service/build fields — so they are separate types with distinct shapes
+ * (both carry the generic `version` field).
+ */
+export type WorkerHealthResponse = { worker_id: string, healthy: boolean, ready: boolean, 
+/**
+ * If not ready, the reason (e.g. "draining", "starting").
+ */
+not_ready_reason: string | null, uptime_secs: bigint, version: string, };
 
 /**
  * Registers a new worker with the malkuth supervisor.

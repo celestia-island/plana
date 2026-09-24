@@ -9,7 +9,7 @@
 //! - GateDecision: enum for the three-state gate
 //!
 //! ## Phase 1: worker lifecycle
-//! - DrainRequest / WorkerRegistration / WorkerStatus / HealthResponse
+//! - DrainRequest / WorkerRegistration / WorkerStatus / WorkerHealthResponse
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -131,10 +131,18 @@ pub enum WorkerState {
     Crashed,
 }
 
-/// Health probe response returned by each worker at `/healthz` or `/readyz`.
-#[derive(Debug, Clone, Serialize, Deserialize, TS, JsonSchema)]
+/// Health probe response returned by each malkuth supervision worker at
+/// `/healthz` or `/readyz` (worker-lifecycle plane).
+///
+/// Distinct from the generic backend descriptor
+/// `plana::protocol_core::http::HealthResponse` (the `/api/health` payload of
+/// plana backends): the two share only the historical concept, not a wire
+/// shape — this struct carries the worker probe fields, the other the backend
+/// service/build fields — so they are separate types with distinct shapes
+/// (both carry the generic `version` field).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, JsonSchema)]
 #[ts(export, export_to = "ws/malkuth.ts")]
-pub struct HealthResponse {
+pub struct WorkerHealthResponse {
     pub worker_id: String,
     pub healthy: bool,
     pub ready: bool,
@@ -142,4 +150,55 @@ pub struct HealthResponse {
     pub not_ready_reason: Option<String>,
     pub uptime_secs: u64,
     pub version: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::WorkerHealthResponse;
+    use serde::de::DeserializeOwned;
+    use serde::Serialize;
+    use serde_json::{json, Value};
+
+    /// Serialize → assert the exact JSON → deserialize → re-serialize, the
+    /// same contract the evernight wire-shape tests pin.
+    fn round_trip<T>(value: &T, want: Value)
+    where
+        T: Serialize + DeserializeOwned + PartialEq + std::fmt::Debug,
+    {
+        let wire = serde_json::to_value(value).unwrap();
+        assert_eq!(wire, want, "serialization must pin the wire shape");
+        let back: T = serde_json::from_value(want.clone()).unwrap();
+        assert_eq!(&back, value, "deserialization must reconstruct the value");
+        assert_eq!(
+            serde_json::to_value(&back).unwrap(),
+            want,
+            "the round-tripped value must serialize identically"
+        );
+    }
+
+    fn sample() -> WorkerHealthResponse {
+        WorkerHealthResponse {
+            worker_id: "w-1".into(),
+            healthy: true,
+            ready: false,
+            not_ready_reason: Some("draining".into()),
+            uptime_secs: 42,
+            version: "1.0.0".into(),
+        }
+    }
+
+    #[test]
+    fn worker_health_response_wire_shape_is_pinned() {
+        round_trip(
+            &sample(),
+            json!({
+                "worker_id": "w-1",
+                "healthy": true,
+                "ready": false,
+                "not_ready_reason": "draining",
+                "uptime_secs": 42,
+                "version": "1.0.0",
+            }),
+        );
+    }
 }
