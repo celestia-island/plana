@@ -64,7 +64,7 @@ pub use rpc::RpcProvider;
 use tracing::warn;
 pub use verification::{ContentIntegrity, ContentVerification, VerificationStatus};
 
-pub(crate) use _config::GenProtocol;
+pub(crate) use plana_config::GenProtocol;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
@@ -167,7 +167,7 @@ impl From<&str> for MessageRole {
     }
 }
 
-pub use _core::LlmImageContent;
+pub use plana_core::LlmImageContent;
 
 pub const HEADER_CONTENT_TYPE: &str = "Content-Type";
 pub const HEADER_AUTHORIZATION: &str = "Authorization";
@@ -340,7 +340,7 @@ pub struct LlmChatRequest {
     pub tool_choice: Option<ToolChoice>,
 }
 
-pub use _core::ToolDefinition;
+pub use plana_core::ToolDefinition;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmChatResponse {
@@ -400,7 +400,7 @@ pub struct ProviderConfig {
     #[serde(default)]
     pub auth_header: Option<String>,
     #[serde(default)]
-    pub protocol: Option<_config::GenProtocol>,
+    pub protocol: Option<plana_config::GenProtocol>,
     #[serde(default)]
     pub request_timeout_secs: Option<u64>,
 }
@@ -458,7 +458,7 @@ impl ProviderConfig {
         self
     }
 
-    pub fn with_protocol(mut self, protocol: _config::GenProtocol) -> Self {
+    pub fn with_protocol(mut self, protocol: plana_config::GenProtocol) -> Self {
         self.protocol = Some(protocol);
         self
     }

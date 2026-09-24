@@ -11,11 +11,11 @@ workspace = true
 
 [dependencies]
 
-_domain_agent = { workspace = true }
-_domain_skills_permissions = { workspace = true }
-_infra_utils = { workspace = true }
-_prompt = { workspace = true }
-_state_sync = { workspace = true }
+plana_domain_agent = { workspace = true }
+plana_domain_skills_permissions = { workspace = true }
+plana_infra_utils = { workspace = true }
+plana_prompt = { workspace = true }
+plana_state_sync = { workspace = true }
 anyhow.workspace = true
 async-trait.workspace = true
 regex.workspace = true

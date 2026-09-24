@@ -7,7 +7,7 @@
 
 use std::collections::HashSet;
 
-use _core::ExecutionMode;
+use plana_core::ExecutionMode;
 
 /// Context provided to feature checkers after skill execution.
 #[derive(Debug, Clone)]

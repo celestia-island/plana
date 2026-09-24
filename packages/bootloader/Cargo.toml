@@ -12,8 +12,8 @@ workspace = true
 [dependencies]
 
 cherino.workspace = true
-_infra_services = { workspace = true }
-_infra_utils = { workspace = true }
+plana_infra_services = { workspace = true }
+plana_infra_utils = { workspace = true }
 anyhow.workspace = true
 async-trait.workspace = true
 bollard.workspace = true

@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use tracing::{debug, error, info};
 
-use _infra_utils::soc::{ProcessReport, SOCProcessManager, SOCStage};
+use plana_infra_utils::soc::{ProcessReport, SOCProcessManager, SOCStage};
 
 #[derive(Debug, Clone, Serialize)]
 struct SocStageStatus {

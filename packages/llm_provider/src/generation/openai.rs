@@ -8,7 +8,7 @@ use reqwest::Client;
 use super::{
     GenerationError, GenerationOutput, GenerationOutputData, GenerationProvider, GenerationRequest,
 };
-use _config::model_category::GenerationModality;
+use plana_config::model_category::GenerationModality;
 
 #[derive(Serialize)]
 struct ImageGenBody<'a> {

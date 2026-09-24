@@ -1,5 +1,5 @@
 use crate::agent::Agent;
-use _core::AgentBadge;
+use plana_core::AgentBadge;
 
 #[derive(Debug, Clone)]
 pub struct AgentContext {

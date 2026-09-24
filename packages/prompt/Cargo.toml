@@ -11,9 +11,9 @@ workspace = true
 
 [dependencies]
 
-_core = { workspace = true }
-_domain_agent = { workspace = true }
-_state_sync = { workspace = true }
+plana_core = { workspace = true }
+plana_domain_agent = { workspace = true }
+plana_state_sync = { workspace = true }
 anyhow.workspace = true
 chrono.workspace = true
 serde = { workspace = true, features = ["derive"] }

@@ -11,8 +11,8 @@ workspace = true
 
 [dependencies]
 
-_core = { workspace = true }
-_macros = { workspace = true }
+plana_core = { workspace = true }
+plana_macros = { workspace = true }
 anyhow.workspace = true
 dashmap.workspace = true
 serde = { workspace = true, features = ["derive"] }

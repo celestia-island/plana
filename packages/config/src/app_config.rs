@@ -10,7 +10,7 @@ use std::{
     str::FromStr,
 };
 
-use _core::{DEFAULT_NETWORK, ModelTier};
+use plana_core::{DEFAULT_NETWORK, ModelTier};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum UiMode {
@@ -119,7 +119,7 @@ fn default_theme() -> String {
 }
 
 fn default_language() -> String {
-    _res::Language::default().code().to_string()
+    plana_res::Language::default().code().to_string()
 }
 
 fn default_cluster_prefix() -> String {

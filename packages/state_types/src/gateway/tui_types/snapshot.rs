@@ -3,8 +3,8 @@ use uuid::Uuid;
 
 use super::agent::{CompletionOutcome, RequestState, TuiAgentInfo};
 use crate::agent::{Agent, WorkStatus};
-use _core::{AgentBadge, AgentId};
 use cherino::ContainerStatus;
+use plana_core::{AgentBadge, AgentId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentPatch {

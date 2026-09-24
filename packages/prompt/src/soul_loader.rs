@@ -35,8 +35,8 @@ impl SoulLoader {
     }
 
     pub fn is_extra_agent(agent: &str) -> bool {
-        _domain_agent::AgentKind::from_folder_name(agent)
-            .map(|k: _domain_agent::AgentKind| k.is_layer2())
+        plana_domain_agent::AgentKind::from_folder_name(agent)
+            .map(|k: plana_domain_agent::AgentKind| k.is_layer2())
             .unwrap_or(false)
     }
 

@@ -1,1 +1,1 @@
-pub use _core::{AgentErrorCode, StructuredAgentError};
+pub use plana_core::{AgentErrorCode, StructuredAgentError};

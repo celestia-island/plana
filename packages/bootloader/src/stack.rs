@@ -150,8 +150,8 @@ fn secs_to_ns(secs: i64) -> Option<i64> {
 /// Build a container backend from the configured runtime string.
 async fn create_container_ops(backend: &str) -> Result<Box<dyn ContainerOps>> {
     let runtime = ContainerRuntimeType::from_str_lossy(backend);
-    let data_dir = _infra_services::container_factory::default_container_data_dir();
-    _infra_services::container_factory::create_container_backend(runtime, &data_dir)
+    let data_dir = plana_infra_services::container_factory::default_container_data_dir();
+    plana_infra_services::container_factory::create_container_backend(runtime, &data_dir)
         .await
         .map_err(|e| anyhow!("failed to initialize {runtime} backend: {e}"))
 }

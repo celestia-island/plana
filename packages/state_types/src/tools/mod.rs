@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
 use super::ModelTier;
-use _core::ToolDefinition;
+use plana_core::ToolDefinition;
 
 fn default_param_type() -> String {
     schema::default_param_type()
@@ -21,7 +21,7 @@ pub enum ToolLocation {
 
 pub type SkillLocation = ToolLocation;
 
-pub use _core::ToolCallMode;
+pub use plana_core::ToolCallMode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]

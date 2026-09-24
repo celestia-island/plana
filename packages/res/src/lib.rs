@@ -1,4 +1,4 @@
-//! _res
+//! plana_res
 //!
 //! Resource management crate — centralized management of all compile-time embedded resources
 //!

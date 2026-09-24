@@ -12,11 +12,11 @@ workspace = true
 
 [dependencies]
 
-_config = { workspace = true }
+plana_config = { workspace = true }
 cherino.workspace = true
-_core = { workspace = true }
-_domain_agent = { workspace = true }
-_text = { workspace = true }
+plana_core = { workspace = true }
+plana_domain_agent = { workspace = true }
+plana_text = { workspace = true }
 chrono.workspace = true
 plana.workspace = true
 plana-celestia-types.workspace = true
