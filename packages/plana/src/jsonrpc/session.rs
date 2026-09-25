@@ -45,13 +45,27 @@ impl SessionManager {
         id
     }
 
-    /// Send a message to a session. Returns true if delivered.
+    /// Send a message to a session. Returns true if delivered. A session
+    /// whose receiver is gone (client disconnected / never subscribed) is
+    /// RECLAIMED on the spot: without this the map grew once per request
+    /// forever (round-8's leak — `create_id` inserts, nothing ever removed).
     pub fn send(&self, session_id: &str, msg: &str) -> bool {
-        if let Some(tx) = self.sessions.lock().unwrap().get(session_id) {
-            tx.unbounded_send(msg.to_string()).is_ok()
+        let mut guard = self.sessions.lock().unwrap();
+        if let Some(tx) = guard.get(session_id) {
+            let ok = tx.unbounded_send(msg.to_string()).is_ok();
+            if !ok {
+                guard.remove(session_id);
+            }
+            ok
         } else {
             false
         }
+    }
+
+    /// Explicitly drop a session entry (callers that know a session is
+    /// finished). Idempotent.
+    pub fn close(&self, session_id: &str) {
+        self.sessions.lock().unwrap().remove(session_id);
     }
 
     pub fn exists(&self, session_id: &str) -> bool {
@@ -85,4 +99,42 @@ pub async fn sse_events_handler_impl(
         .insert(session_id.clone(), tx);
     let stream = rx.map(move |msg| Ok(Event::default().data(msg)));
     Sse::new(stream)
+}
+
+#[cfg(test)]
+mod reclamation_tests {
+    use super::*;
+    use futures::FutureExt;
+
+    /// Round-8's leak gate: a session whose receiver is gone (never
+    /// subscribed, or disconnected) must be reclaimed on the failed
+    /// push — the map may not grow once per request forever.
+    #[test]
+    fn a_dead_receiver_is_reclaimed_on_the_next_push() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        // No receiver was ever attached (create_id drops the rx) — the
+        // first push fails and must reclaim the entry.
+        assert!(!mgr.send(&sid, "x"), "no receiver: undeliverable");
+        assert!(!mgr.exists(&sid), "the dead entry is reclaimed");
+        // A second push is a plain miss, never a panic.
+        assert!(!mgr.send(&sid, "y"));
+    }
+
+    #[test]
+    fn a_live_receiver_stays_registered() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        // Attach a live receiver the way the SSE handler does.
+        let (tx, mut rx) = futures::channel::mpsc::unbounded();
+        mgr.sessions.lock().unwrap().insert(sid.clone(), tx);
+        assert!(mgr.send(&sid, "hello"));
+        assert!(mgr.exists(&sid), "live sessions stay");
+        use futures::StreamExt;
+        assert_eq!(rx.next().now_or_never().unwrap().unwrap(), "hello");
+        // close() removes explicitly and idempotently.
+        mgr.close(&sid);
+        mgr.close(&sid);
+        assert!(!mgr.exists(&sid));
+    }
 }
