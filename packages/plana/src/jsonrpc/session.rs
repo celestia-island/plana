@@ -97,8 +97,37 @@ pub async fn sse_events_handler_impl(
         .lock()
         .unwrap()
         .insert(session_id.clone(), tx);
-    let stream = rx.map(move |msg| Ok(Event::default().data(msg)));
+    // END-OF-STREAM RECLAMATION (round-9's V9-3): the send-failure
+    // path (round-8) only reclaims when something pushes NEXT; a
+    // stream that completes normally (last push delivered, client
+    // disconnects after) left its entry resident forever. When the SSE
+    // stream drops — client gone or response finished — the entry
+    // goes with it.
+    let janitor = SessionJanitor {
+        sessions: std::sync::Arc::clone(&sessions.sessions),
+        session_id: session_id.clone(),
+    };
+    let stream = rx
+        .map(move |msg| Ok(Event::default().data(msg)))
+        .chain(futures::stream::unfold(janitor, |_j| async {
+            // Runs when the source rx is EXHAUSTED (the tx dropped);
+            // the janitor then drops with the chain, closing the entry.
+            None::<(Result<Event, Infallible>, SessionJanitor)>
+        }));
     Sse::new(stream)
+}
+
+/// Closes a session entry when dropped — the end-of-stream reclamation
+/// for the SSE subscription path.
+struct SessionJanitor {
+    sessions: std::sync::Arc<std::sync::Mutex<HashMap<SessionId, SessionSender>>>,
+    session_id: String,
+}
+
+impl Drop for SessionJanitor {
+    fn drop(&mut self) {
+        self.sessions.lock().unwrap().remove(&self.session_id);
+    }
 }
 
 #[cfg(test)]
@@ -136,5 +165,30 @@ mod reclamation_tests {
         mgr.close(&sid);
         mgr.close(&sid);
         assert!(!mgr.exists(&sid));
+    }
+}
+
+#[cfg(test)]
+mod janitor_tests {
+    use super::*;
+
+    /// Round-9's V9-3 gate: a NORMALLY-completed subscription (the tx
+    /// dropped after the last message, no failed push ever) must still
+    /// reclaim its entry — the send-failure path alone left these
+    /// resident forever.
+    #[tokio::test]
+    async fn a_completed_subscription_reclaims_its_entry() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        let sse = sse_events_handler_impl(SessionManager::clone(&mgr), sid.clone()).await;
+        // The subscription is live: the entry exists.
+        assert!(mgr.exists(&sid));
+        // Drop the SSE response (the client disconnects / the stream
+        // finishes) — the janitor must close the entry.
+        drop(sse);
+        assert!(
+            !mgr.exists(&sid),
+            "a completed subscription must not outlive its stream"
+        );
     }
 }
