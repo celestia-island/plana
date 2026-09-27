@@ -37,6 +37,26 @@ pub struct TaskCreatedParams {
     #[ts(type = "string")]
     #[ts(optional)]
     pub conversation_id: Option<uuid::Uuid>,
+    /// Task Decompose estimate in degrees; absent = no estimate produced.
+    /// Consumers MUST use `!= null` — 0 is a legitimate zero-cost estimate.
+    ///
+    /// Round-21's finding: this field (and TaskEstimateUpdatedParams
+    /// below) existed ONLY as a hand-edit in the generated binding — any
+    /// regeneration silently wiped them from the published npm surface.
+    /// They now live in the SOURCE, so regeneration is faithful.
+    #[serde(default)]
+    #[ts(optional)]
+    pub estimated_degrees: Option<f64>,
+}
+
+#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "ws/tasks.ts")]
+pub struct TaskEstimateUpdatedParams {
+    #[ts(type = "string")]
+    pub task_id: uuid::Uuid,
+    #[serde(default)]
+    #[ts(optional)]
+    pub estimated_degrees: Option<f64>,
 }
 
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]

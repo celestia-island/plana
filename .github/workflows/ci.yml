@@ -90,6 +90,14 @@ jobs:
         run: python3 scripts/fetch_provider_registry.py
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
+      # Round-21's finding: the ts-rs export tests REGENERATE the bindings
+      # in place — a hand-edited generated file (the estimate fields lived
+      # only as a hand-edit for a week) was silently wiped on the next
+      # regeneration, and nothing checked the tree afterwards. The ws/
+      # bindings must be clean after the suite; httpTypes.ts is a known
+      # vendored hand-curated shape and is excluded.
+      - name: Bindings regeneration drift (ws/)
+        run: git diff --exit-code -- packages/celestia-types/bindings/ws/
 
   verify-versions:
     name: Verify version consistency
