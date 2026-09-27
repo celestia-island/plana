@@ -97,7 +97,11 @@ jobs:
       # bindings must be clean after the suite; httpTypes.ts is a known
       # vendored hand-curated shape and is excluded.
       - name: Bindings regeneration drift (ws/)
-        run: git diff --exit-code -- packages/celestia-types/bindings/ws/
+        # Round-22's Info-1: diff alone misses UNTRACKED new files a new
+        # export would leave behind — porcelain catches both shapes.
+        run: |
+          git diff --exit-code -- packages/celestia-types/bindings/ws/
+          test -z "$(git status --porcelain -- packages/celestia-types/bindings/ws/)" 
 
   verify-versions:
     name: Verify version consistency
