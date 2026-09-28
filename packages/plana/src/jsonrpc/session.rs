@@ -96,16 +96,23 @@ pub async fn sse_events_handler_impl(
         .sessions
         .lock()
         .unwrap()
-        .insert(session_id.clone(), tx);
+        .insert(session_id.clone(), tx.clone());
     // END-OF-STREAM RECLAMATION (round-9's V9-3): the send-failure
     // path (round-8) only reclaims when something pushes NEXT; a
     // stream that completes normally (last push delivered, client
     // disconnects after) left its entry resident forever. When the SSE
     // stream drops — client gone or response finished — the entry
     // goes with it.
+    // Round-30's F-30-1: the janitor keeps ITS OWN clone of the sender it
+    // registered — on drop it evicts the entry ONLY IF the map still holds
+    // that same receiver. A client reconnecting under the SAME session id
+    // replaces the sender; the old stream's janitor must not evict the new
+    // mount (the old shape left the EventSource open with events silently
+    // black-holed after every reconnect race).
     let janitor = SessionJanitor {
         sessions: std::sync::Arc::clone(&sessions.sessions),
         session_id: session_id.clone(),
+        own_tx: tx.clone(),
     };
     let stream = rx
         .map(move |msg| Ok(Event::default().data(msg)))
@@ -122,11 +129,20 @@ pub async fn sse_events_handler_impl(
 struct SessionJanitor {
     sessions: std::sync::Arc<std::sync::Mutex<HashMap<SessionId, SessionSender>>>,
     session_id: String,
+    /// The sender THIS mount registered — the drop guard compares it
+    /// against the map (same_receiver) so a reconnected mount's fresh
+    /// sender survives the old stream's death.
+    own_tx: SessionSender,
 }
 
 impl Drop for SessionJanitor {
     fn drop(&mut self) {
-        self.sessions.lock().unwrap().remove(&self.session_id);
+        let mut guard = self.sessions.lock().unwrap();
+        if let Some(current) = guard.get(&self.session_id) {
+            if current.same_receiver(&self.own_tx) {
+                guard.remove(&self.session_id);
+            }
+        }
     }
 }
 
@@ -190,5 +206,34 @@ mod janitor_tests {
             !mgr.exists(&sid),
             "a completed subscription must not outlive its stream"
         );
+    }
+}
+
+#[cfg(test)]
+mod reconnect_race_tests {
+    use super::*;
+
+    /// Round-30's F-30-1 gate: a client reconnecting under the SAME
+    /// session id replaces the sender — the OLD stream's janitor must
+    /// not evict the NEW mount (the old shape black-holed every event
+    /// after the reconnect race; proven red before the fix).
+    #[tokio::test]
+    async fn an_old_janitor_cannot_evict_a_reconnected_mount() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        let sse1 = sse_events_handler_impl(mgr.clone(), sid.clone()).await;
+        assert!(mgr.exists(&sid), "first mount registered");
+        let sse2 = sse_events_handler_impl(mgr.clone(), sid.clone()).await;
+        assert!(mgr.exists(&sid), "second mount replaced the sender");
+        // The FIRST stream dies (half-open connection finally noticed).
+        drop(sse1);
+        assert!(
+            mgr.exists(&sid),
+            "the old janitor must not evict the reconnected session"
+        );
+        // And the new mount still delivers.
+        assert!(mgr.send(&sid, "still-alive"));
+        drop(sse2);
+        assert!(!mgr.exists(&sid), "the last mount's janitor reclaims");
     }
 }
