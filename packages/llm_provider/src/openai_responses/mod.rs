@@ -234,6 +234,8 @@ impl LlmProvider for OpenAiResponsesProvider {
         struct SseState<S> {
             byte_stream: S,
             buffer: String,
+            /// Partial UTF-8 bytes straddling read boundaries.
+            raw_bytes: Vec<u8>,
             pending: std::collections::VecDeque<LlmStreamChunk>,
             delta_count: u64,
             tool_call_index: u32,
@@ -243,6 +245,7 @@ impl LlmProvider for OpenAiResponsesProvider {
             SseState {
                 byte_stream,
                 buffer: String::new(),
+                raw_bytes: Vec::new(),
                 pending: std::collections::VecDeque::new(),
                 delta_count: 0,
                 tool_call_index: 0,
@@ -413,7 +416,11 @@ impl LlmProvider for OpenAiResponsesProvider {
 
                     match state.byte_stream.next().await {
                         Some(Ok(bytes)) => {
-                            state.buffer.push_str(&String::from_utf8_lossy(&bytes));
+                            state.raw_bytes.extend_from_slice(&bytes);
+                            let (safe, consumed) =
+                                crate::sse_util::decode_complete_utf8_prefix(&state.raw_bytes);
+                            state.raw_bytes.drain(..consumed);
+                            state.buffer.push_str(&safe);
                         }
                         Some(Err(e)) => {
                             warn!(error = %e, "SSE stream error");
