@@ -104,3 +104,46 @@ mod tests {
         assert_eq!(events, vec!["no_space"]);
     }
 }
+
+/// Decode the longest complete UTF-8 prefix; returns (safe, consumed).
+pub fn decode_complete_utf8_prefix(bytes: &[u8]) -> (String, usize) {
+    match std::str::from_utf8(bytes) {
+        Ok(s) => (s.to_string(), bytes.len()),
+        Err(e) => {
+            let valid = e.valid_up_to();
+            (String::from_utf8_lossy(&bytes[..valid]).into_owned(), valid)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tail_and_utf8_tests {
+    use super::*;
+
+    /// Round-35's F-35-1 shape check: both the tail event and DONE must
+    /// extract from a single buffer (the old DONE handler dropped the
+    /// tail's parsed chunks when they shared a read).
+    #[test]
+    fn tail_and_done_extract_from_one_buffer() {
+        let buf = "data: {\"choices\":[{\"delta\":{\"content\":\"TAIL\"}}]}\n\ndata: [DONE]\n\n";
+        let (events, rest) = extract_sse_events(buf);
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[1], DONE);
+        assert!(rest.is_empty());
+    }
+
+    /// Round-35's F-35-2: a multi-byte char split across reads must
+    /// reassemble without replacement characters.
+    #[test]
+    fn utf8_split_across_reads_reassembles() {
+        let full = "你好".as_bytes();
+        let (first, second) = full.split_at(4);
+        let mut raw: Vec<u8> = first.to_vec();
+        let (s1, c1) = decode_complete_utf8_prefix(&raw);
+        raw.drain(..c1);
+        raw.extend_from_slice(second);
+        let (s2, c2) = decode_complete_utf8_prefix(&raw);
+        raw.drain(..c2);
+        assert_eq!(format!("{s1}{s2}"), "你好");
+    }
+}
