@@ -269,15 +269,26 @@ impl LlmProvider for OpenAiCompatibleProvider {
                     let consumed = state.buffer.len() - remaining.len();
                     state.buffer.drain(..consumed);
 
+                    // Round-36's F-36-1: parse ALL events first, THEN stop —
+                    // the old bare `return None` on DONE discarded chunks
+                    // parsed in the same lap (the agent's final tokens).
+                    let mut done = false;
                     for data in events {
                         if data == crate::sse_util::DONE {
-                            return None;
+                            done = true;
+                            break;
                         }
                         if let Ok(chunk_raw) = serde_json::from_str::<OpenAiStreamChunkRaw>(&data) {
                             for c in parse_openai_stream(&chunk_raw) {
                                 state.pending.push_back(c);
                             }
                         }
+                    }
+                    if done {
+                        if let Some(chunk) = state.pending.pop_front() {
+                            return Some((Ok(chunk), state));
+                        }
+                        return None;
                     }
 
                     if let Some(chunk) = state.pending.pop_front() {

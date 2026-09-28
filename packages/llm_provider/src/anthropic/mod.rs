@@ -263,8 +263,8 @@ impl LlmProvider for AnthropicProvider {
         let byte_stream = response.bytes_stream();
 
         let s = stream::unfold(
-            (byte_stream, String::new()),
-            |(mut byte_stream, mut buffer)| async move {
+            (byte_stream, String::new(), Vec::new()),
+            |(mut byte_stream, mut buffer, mut raw_bytes)| async move {
                 loop {
                     while let Some(pos) = buffer.find("\n\n") {
                         let event = buffer[..pos].to_string();
@@ -364,7 +364,7 @@ impl LlmProvider for AnthropicProvider {
                             if let Some(c) = chunk {
                                 return Some((
                                     Ok(c) as Result<LlmStreamChunk, ProviderError>,
-                                    (byte_stream, buffer),
+                                    (byte_stream, buffer, raw_bytes),
                                 ));
                             }
                         }
@@ -372,12 +372,19 @@ impl LlmProvider for AnthropicProvider {
 
                     match byte_stream.next().await {
                         Some(Ok(bytes)) => {
-                            buffer.push_str(&String::from_utf8_lossy(&bytes));
+                            // Round-36's F-36-2: decode only the complete
+                            // UTF-8 prefix; keep the partial tail (a split
+                            // multi-byte char would get U+FFFD in both halves).
+                            raw_bytes.extend_from_slice(&bytes);
+                            let (safe, consumed) =
+                                crate::sse_util::decode_complete_utf8_prefix(&raw_bytes);
+                            raw_bytes.drain(..consumed);
+                            buffer.push_str(&safe);
                         }
                         Some(Err(e)) => {
                             return Some((
                                 Err(ProviderError::NetworkError(format!("Stream error: {}", e))),
-                                (byte_stream, buffer),
+                                (byte_stream, buffer, raw_bytes),
                             ));
                         }
                         None => return None,
