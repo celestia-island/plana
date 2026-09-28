@@ -80,6 +80,28 @@ impl CircuitBreaker {
             }
             return CircuitState::HalfOpen;
         }
+        // Round-37's F-37-1: a HalfOpen circuit whose probe slots were
+        // consumed but never recorded (the routing layer calls
+        // is_available() on EVERY candidate but only uses one — the
+        // unselected candidates' slots leak) is stuck: no new probe is
+        // allowed and no transition can fire. When another full
+        // recovery window has elapsed since the last failure, the
+        // slots reset — the circuit gets a fresh probe attempt
+        // (self-healing instead of permanent half-open starvation).
+        if state == CircuitState::HalfOpen
+            && let Some(last) = *self.inner.last_failure.read()
+            && last.elapsed() >= self.inner.config.recovery_timeout * 2
+        {
+            let guard = self.inner.state.write();
+            if *guard == CircuitState::HalfOpen {
+                self.inner.half_open_calls.store(0, Ordering::Relaxed);
+                debug!(
+                    circuit = %self.inner.name,
+                    "circuit breaker resetting leaked HalfOpen probe slots \
+                     (recovery window elapsed again)"
+                );
+            }
+        }
         state
     }
 
