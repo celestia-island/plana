@@ -2,10 +2,20 @@ use anyhow::{Error, Result, bail};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
+/// The wire/enum form of each variant is its PascalCase name (`Deep` /
+/// `Normal` / `Basic`), but deserialization also accepts the lowercase
+/// aliases (`deep` / `normal` / `basic`) — the form `from_tier_str`,
+/// `provider_config.toml` model entries, and `as_tier_str` all use.
+/// Without the aliases, a hand-edited `agent_model_prefs.toml` written as
+/// `fallback_tier = "deep"` failed whole-file TOML deserialization and
+/// silently disabled *every* preference in the file (warn-only loader).
 #[derive(Debug, Clone, Serialize, Deserialize, Copy, PartialEq, Eq, Hash)]
 pub enum ModelTier {
+    #[serde(alias = "deep")]
     Deep,
+    #[serde(alias = "normal")]
     Normal,
+    #[serde(alias = "basic")]
     Basic,
 }
 
@@ -73,6 +83,32 @@ impl FromStr for ModelTier {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn serde_accepts_lowercase_aliases() -> anyhow::Result<()> {
+        // The hand-editing trap: `fallback_tier = "deep"` in
+        // agent_model_prefs.toml must deserialize, not invalidate the file.
+        for (text, expected) in [
+            ("Deep", ModelTier::Deep),
+            ("deep", ModelTier::Deep),
+            ("Normal", ModelTier::Normal),
+            ("normal", ModelTier::Normal),
+            ("Basic", ModelTier::Basic),
+            ("basic", ModelTier::Basic),
+        ] {
+            let parsed: ModelTier = serde_json::from_str(&format!("{text:?}"))
+                .unwrap_or_else(|e| panic!("failed to parse {text:?}: {e}"));
+            assert_eq!(parsed, expected);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn serde_rejects_unknown_tier_words() -> anyhow::Result<()> {
+        assert!(serde_json::from_str::<ModelTier>("premium").is_err());
+        assert!(serde_json::from_str::<ModelTier>("reasoning").is_err());
+        Ok(())
+    }
 
     #[test]
     fn fallback_tiers_basic_goes_up() -> anyhow::Result<()> {

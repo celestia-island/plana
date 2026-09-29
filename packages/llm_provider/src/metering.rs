@@ -42,6 +42,12 @@ pub struct UsageRecord {
     pub output_tokens: u64,
     pub cost_usd: f64,
     pub timestamp: DateTime<Utc>,
+    /// Which model tier the request was dispatched under (`deep` / `normal` /
+    /// `basic`). `None` on records written before the tier dimension existed
+    /// or by callers that have no tier context. Wire form is the lowercase
+    /// tier string (matches `ModelTier::as_tier_str`).
+    #[serde(default)]
+    pub tier: Option<String>,
 }
 
 /// Budget period for cost enforcement.
@@ -141,6 +147,29 @@ impl MeteringEngine {
         input_tokens: u64,
         output_tokens: u64,
     ) {
+        self.record_usage_with_tier(
+            agent_badge,
+            provider,
+            model,
+            input_tokens,
+            output_tokens,
+            None,
+        );
+    }
+
+    /// [`Self::record_usage`] with the dispatch tier attached, so the cost
+    /// ledger can answer "what did each tier actually cost" — the first
+    /// column of per-task cost accounting. `tier` takes the lowercase tier
+    /// string (`deep` / `normal` / `basic`).
+    pub fn record_usage_with_tier(
+        &self,
+        agent_badge: &str,
+        provider: &str,
+        model: &str,
+        input_tokens: u64,
+        output_tokens: u64,
+        tier: Option<&str>,
+    ) {
         let cost = estimate_cost(provider, model, input_tokens, output_tokens);
         let record = UsageRecord {
             agent_badge: agent_badge.to_string(),
@@ -150,6 +179,7 @@ impl MeteringEngine {
             output_tokens,
             cost_usd: cost,
             timestamp: Utc::now(),
+            tier: tier.map(str::to_string),
         };
 
         let mut records = self.records.write().unwrap_or_else(|e| e.into_inner());
@@ -217,6 +247,24 @@ impl MeteringEngine {
         let mut map: HashMap<String, Vec<&UsageRecord>> = HashMap::new();
         for r in records.iter() {
             map.entry(r.provider.clone()).or_default().push(r);
+        }
+        map.into_iter()
+            .map(|(k, v)| {
+                let refs: Vec<&UsageRecord> = v;
+                (k, aggregate_from_refs(&refs))
+            })
+            .collect()
+    }
+
+    /// Get per-tier breakdown. Records without a tier (written before the
+    /// tier dimension existed, or by tier-less callers) land under the
+    /// `"(untiered)"` key so the breakdown never silently drops usage.
+    pub fn by_tier(&self) -> HashMap<String, UsageSummary> {
+        let records = self.records.read().unwrap_or_else(|e| e.into_inner());
+        let mut map: HashMap<String, Vec<&UsageRecord>> = HashMap::new();
+        for r in records.iter() {
+            let key = r.tier.clone().unwrap_or_else(|| "(untiered)".to_string());
+            map.entry(key).or_default().push(r);
         }
         map.into_iter()
             .map(|(k, v)| {
@@ -560,6 +608,7 @@ mod tests {
             output_tokens: 500_000,
             cost_usd: 50.0,
             timestamp: Utc::now() - Duration::days(2),
+            tier: None,
         };
         {
             let mut records = engine.records.write().unwrap_or_else(|e| e.into_inner());
@@ -595,6 +644,89 @@ mod tests {
         let openai = by_prov.get("openai").ok_or("openai provider missing")?;
         assert_eq!(anthropic.request_count, 2);
         assert_eq!(openai.request_count, 1);
+        Ok(())
+    }
+
+    #[test]
+    fn by_tier_breakdown_buckets_tiered_and_untiered() -> Result<(), Box<dyn std::error::Error>> {
+        let engine = MeteringEngine::new();
+        engine.clear();
+
+        engine.record_usage_with_tier("a", "openai", "gpt-4o", 100, 50, Some("deep"));
+        engine.record_usage_with_tier("b", "openai", "gpt-4o", 200, 100, Some("deep"));
+        engine.record_usage_with_tier("c", "openai", "gpt-4o-mini", 300, 150, Some("basic"));
+        // Legacy path: no tier context.
+        engine.record_usage("d", "openai", "gpt-4o-mini", 10, 5);
+
+        let by_tier = engine.by_tier();
+        let deep = by_tier.get("deep").ok_or("deep tier missing")?;
+        let basic = by_tier.get("basic").ok_or("basic tier missing")?;
+        let untiered = by_tier
+            .get("(untiered)")
+            .ok_or("untiered bucket missing — legacy records must not vanish")?;
+        assert_eq!(deep.request_count, 2);
+        assert_eq!(basic.request_count, 1);
+        assert_eq!(untiered.request_count, 1);
+        // Pin the token/cost aggregation of `aggregate_from_refs` (shared by
+        // by_provider / by_tier) — before these assertions a mutation that
+        // dropped tokens from the refs-based aggregator survived every test.
+        assert_eq!(deep.total_input_tokens, 100 + 200);
+        assert_eq!(deep.total_output_tokens, 50 + 100);
+        assert_eq!(basic.total_input_tokens, 300);
+        assert_eq!(basic.total_output_tokens, 150);
+        assert_eq!(untiered.total_input_tokens, 10);
+        assert_eq!(untiered.total_output_tokens, 5);
+        let deep_cost = estimate_cost("openai", "gpt-4o", 300, 150);
+        assert!(
+            (deep.total_cost_usd - deep_cost).abs() < 1e-9,
+            "deep bucket cost should sum per-record estimates: got {:#?}, want {:#?}",
+            deep.total_cost_usd,
+            deep_cost
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn usage_record_deserializes_without_tier_field() -> Result<(), Box<dyn std::error::Error>> {
+        // Records serialized before the tier dimension existed have no
+        // `tier` key; they must deserialize with tier = None, not fail.
+        let legacy = serde_json::json!({
+            "agent_badge": "a",
+            "provider": "openai",
+            "model": "gpt-4o",
+            "input_tokens": 1,
+            "output_tokens": 2,
+            "cost_usd": 0.001,
+            "timestamp": "2026-09-29T00:00:00Z",
+        });
+        let record: UsageRecord = serde_json::from_value(legacy)?;
+        assert_eq!(record.tier, None);
+        Ok(())
+    }
+
+    #[test]
+    fn usage_record_round_trips_tier() -> Result<(), Box<dyn std::error::Error>> {
+        let engine = MeteringEngine::new();
+        engine.clear();
+        engine.record_usage_with_tier("a", "openai", "gpt-4o", 1, 1, Some("normal"));
+        let serialized = serde_json::to_string(
+            &engine.summarize_all().request_count, // touch aggregation to prove records exist
+        )?;
+        assert_eq!(serialized, "1");
+        // Direct record-level round trip:
+        let rec = UsageRecord {
+            agent_badge: "a".into(),
+            provider: "openai".into(),
+            model: "gpt-4o".into(),
+            input_tokens: 1,
+            output_tokens: 1,
+            cost_usd: 0.0,
+            timestamp: Utc::now(),
+            tier: Some("normal".into()),
+        };
+        let json = serde_json::to_string(&rec)?;
+        let back: UsageRecord = serde_json::from_str(&json)?;
+        assert_eq!(back.tier.as_deref(), Some("normal"));
         Ok(())
     }
 

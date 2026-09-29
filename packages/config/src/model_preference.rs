@@ -425,6 +425,30 @@ mod tests {
     use plana_core::ModelTier;
 
     #[test]
+    fn lowercase_fallback_tier_parses_and_resolves() {
+        // The hand-editing trap (entelecheia PR-C): `fallback_tier = "deep"`
+        // used to fail whole-file TOML deserialization, silently disabling
+        // every preference in agent_model_prefs.toml. The serde alias on
+        // ModelTier must accept the lowercase form end-to-end.
+        let toml_str = r#"
+[[skill_prefs]]
+skill = "generate_plc_program"
+fallback_tier = "deep"
+
+[[agent_prefs]]
+agent = "aporia"
+fallback_tier = "basic"
+"#;
+        let prefs: AgentModelPreferences =
+            toml::from_str(toml_str).expect("lowercase fallback_tier must parse");
+        let resolved = prefs.resolve(None, Some("generate_plc_program"), None);
+        assert_eq!(resolved.fallback_tier, Some(ModelTier::Deep));
+
+        let resolved_agent = prefs.resolve(Some("aporia"), None, None);
+        assert_eq!(resolved_agent.fallback_tier, Some(ModelTier::Basic));
+    }
+
+    #[test]
     fn qualified_model_id_parse() {
         let q: QualifiedModelId = "openai/gpt-image-2".parse().unwrap();
         assert_eq!(q.provider_id, "openai");
