@@ -171,8 +171,15 @@ pub enum CompletionOutcome {
 #[derive(JsonSchema, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub enum ModelTier {
+    // Lowercase serde aliases mirror plana_core::ModelTier (PR #394): a
+    // hand-edited config writing `deep`/`normal`/`basic` must not fail on
+    // the wire twin while the core enum accepts it. Serialization keeps
+    // the PascalCase variant names.
+    #[serde(alias = "deep")]
     Deep,
+    #[serde(alias = "normal")]
     Normal,
+    #[serde(alias = "basic")]
     Basic,
 }
 
@@ -568,6 +575,23 @@ pub use ws::ui::{
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn model_tier_accepts_lowercase_aliases() {
+        for (text, expected) in [
+            ("Deep", ModelTier::Deep),
+            ("deep", ModelTier::Deep),
+            ("normal", ModelTier::Normal),
+            ("Basic", ModelTier::Basic),
+        ] {
+            let parsed: ModelTier = serde_json::from_str(&format!("{text:?}"))
+                .unwrap_or_else(|e| panic!("failed to parse {text:?}: {e}"));
+            assert_eq!(parsed, expected);
+        }
+        // Serialization stays PascalCase (the TS wire type contract).
+        assert_eq!(serde_json::to_string(&ModelTier::Deep).unwrap(), "\"Deep\"");
+        assert!(serde_json::from_str::<ModelTier>("\"premium\"").is_err());
+    }
     use serde_json::json;
 
     // ── Agent enum ─────────────────────────────────────────────────
