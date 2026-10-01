@@ -22,7 +22,7 @@ pub mod stream_segment;
 pub use llm_text::{LlmText, LlmTextBuilder, LlmTextSlice};
 pub use report_text::{
     ReportJsonShape, classify_report_json, is_markdown_structured, looks_like_llm_meta_text,
-    plain_text_summary,
+    looks_like_stringified_machinery, plain_text_summary,
 };
 pub use stream_segment::{
     LlmStream, LlmStreamBuilder, StreamChunkKind, StreamSegment, StreamToolEvent,
