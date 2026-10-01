@@ -7,7 +7,7 @@
 //! grown a private, drifting copy of them. Per the workspace dependency plan,
 //! shared capability used by two or more services goes upstream first: this
 //! module is that upstream home. It exists because report cards on
-//! dev.celestia.world kept surfacing four classes of noise:
+//! dev.celestia.world kept surfacing five classes of noise:
 //!
 //! 1. **Truncated teasers** — naive byte slicing cut mid-CJK-grapheme and
 //!    dragged markdown table gutters (`|`) and code-fence bodies onto the
@@ -20,9 +20,16 @@
 //!    rendered verbatim where a report should be.
 //! 4. **Bare data JSON** — result blobs such as `{"polemos":[…]}` shown
 //!    where a human-readable report was expected.
+//! 5. **Stringified machinery blobs** — JSON-stringified chain-state
+//!    echoes and sandbox console transcripts that no longer OPEN as a
+//!    JSON object (`write_to_var` envelope echoes, `__vars['x'] set …`
+//!    confirmations, `... (N chars)` truncation markers, literal `\n` /
+//!    `\"` escapes), so every brace-anchored gate against (3)/(4) misses
+//!    them (live example: the 2026-10-01 `reflect_on_output` card).
 //!
 //! [`plain_text_summary`] addresses (1), [`looks_like_llm_meta_text`]
-//! addresses (2), [`classify_report_json`] addresses (3) and (4), and
+//! addresses (2), [`classify_report_json`] addresses (3) and (4),
+//! [`looks_like_stringified_machinery`] addresses (5), and
 //! [`is_markdown_structured`] picks the renderer for whatever survives.
 
 use serde_json::Value;
@@ -496,6 +503,199 @@ pub fn is_markdown_structured(text: &str) -> bool {
     })
 }
 
+// ─── Stringified-machinery detection ─────────────────────────────
+
+/// Whether `text` is a *stringified* machinery blob: a JSON-stringified
+/// chain-state echo or a sandbox console transcript that no longer opens
+/// as a JSON object — the one shape every brace-anchored gate above
+/// misses (live case 2026-10-01: the `reflect_on_output` card rendered a
+/// one-line `JSON.stringify`-style mash of `write_to_var` envelope
+/// echoes, `__vars['x'] set …` confirmations and `... (N chars)`
+/// truncation markers, with literal `\n` / `\"` escapes where newlines
+/// and quotes should be — it classified as `NotJson` prose and sailed
+/// through both consumers' report paths).
+///
+/// Semantics (all position-independent). Quoted code is removed first —
+/// fenced blocks AND inline backtick spans — so a report *quoting* a
+/// transcript sample is judged by its prose alone. A bare inline
+/// machinery quote (no fence, no backticks) is deliberately still
+/// condemned: the fingerprints below are the strongest signal this class
+/// has, and the worst case is a placeholder card — the safe error
+/// direction for a user-facing surface.
+///
+/// 1. A sandbox transcript confirmation marker — `vars['…'] set`
+///    (the skemma runtime's `write_to_var` echo, in its `__vars`,
+///    `$.vars` and front-clipped `_vars` forms, with the real
+///    `'] set:` / `'] set (` suffix) — never appears in prose.
+/// 2. An ESCAPED envelope key — `\"var_name\":` / `\"skill_name\":`
+///    after one escape-level collapse, so the single- and
+///    double-escaped forms fold together; prose never carries `\"`.
+///    A plain compact key (`"var_name":"` with no escaped quotes)
+///    only counts next to a `... (N chars)` truncation marker, and a
+///    spaced `"var_name": "x"` mention never matches — those two are
+///    how a report may *mention* the envelope shape without being one.
+/// 3. Pure escape density: a 200+-char text with NO real newlines but
+///    three or more literal `\n` escapes and a literal `\"` (or a
+///    truncation marker) is a stringified JSON body, not prose.
+///
+/// Accepted misses (documented after the 2026-10-01 R1/R2 reviews, all
+/// shapes no live producer has emitted): Python-style spaced
+/// serialization (`"var_name": "rep"` — JSON.stringify is compact),
+/// double-quoted vars (`__vars["x"]`), a single-level plain stringify
+/// carrying neither transcript marker nor truncation marker, keys
+/// escaped three-plus levels deep, and machinery sitting ON the info
+/// string of a fence opener that never closes (the tail lines are still
+/// scanned; only the opener line itself is dropped).
+pub fn looks_like_stringified_machinery(text: &str) -> bool {
+    let prose = without_quoted_code(text);
+    let prose = prose.trim_end();
+    // (1) transcript confirmation marker.
+    if has_vars_confirmation_marker(prose) {
+        return true;
+    }
+    let truncated = has_chars_truncation_marker(prose);
+    // (2) escaped envelope keys: one escape-level collapse folds
+    // `\\"var_name\\":` into `\"var_name\":`, so both serialized forms
+    // match the single-backslash needle.
+    let one_level = collapse_one_escape_level(prose);
+    const ESCAPED_ENVELOPE_KEYS: [&str; 2] = ["\\\"var_name\\\":", "\\\"skill_name\\\":"];
+    if ESCAPED_ENVELOPE_KEYS.iter().any(|k| one_level.contains(k)) {
+        return true;
+    }
+    // …or a plain compact key, but only next to a truncation marker.
+    let unescaped: String = prose.chars().filter(|c| *c != '\\').collect();
+    const PLAIN_ENVELOPE_KEYS: [&str; 2] = ["\"var_name\":\"", "\"skill_name\":\""];
+    if truncated && PLAIN_ENVELOPE_KEYS.iter().any(|k| unescaped.contains(k)) {
+        return true;
+    }
+    // (3) escape density on a single-line blob.
+    prose.chars().count() >= 200
+        && !prose.contains('\n')
+        && prose.matches("\\n").count() >= 3
+        && (prose.contains("\\\"") || truncated)
+}
+
+/// The skemma runtime's `write_to_var` confirmation echo:
+/// `vars['<name>'] set …` (covering the `__vars`, `$.vars` and
+/// front-clipped `_vars` forms — the needle is matched without its
+/// prefix). The confirmation suffix must be the real thing —
+/// `'] set:` / `'] set (` — so prose like `vars['x'] setting` does
+/// not pair, and the var name is scanned within a bounded window so
+/// an unrelated suffix later in the text cannot either.
+fn has_vars_confirmation_marker(text: &str) -> bool {
+    let mut rest = text;
+    while let Some(i) = rest.find("vars['") {
+        let after = &rest[i + "vars['".len()..];
+        let window: String = after.chars().take(64).collect();
+        if window.contains("'] set:") || window.contains("'] set (") {
+            return true;
+        }
+        rest = after;
+    }
+    false
+}
+
+/// `... (N chars)` — the skemma runtime's write_to_var truncation
+/// suffix. What FOLLOWS it is part of the fingerprint: inside a
+/// stringified blob the marker rides against the escaped quotes of the
+/// echo it cut (`\`, `"`, `,`, `}`, `]`) or lands at a line/text end; a
+/// natural-language "(500 chars)" phrase continues with prose
+/// punctuation and does not count.
+fn has_chars_truncation_marker(text: &str) -> bool {
+    let mut rest = text;
+    while let Some(i) = rest.find("... (") {
+        let tail = &rest[i + "... (".len()..];
+        let digits = tail.bytes().take_while(u8::is_ascii_digit).count();
+        if digits > 0 && tail[digits..].starts_with(" chars)") {
+            let after = tail[digits + " chars)".len()..].chars().next();
+            match after {
+                None | Some('\n') | Some('\\') | Some('"') | Some(',') | Some('}') | Some(']') => {
+                    return true;
+                }
+                _ => {}
+            }
+        }
+        rest = tail;
+    }
+    false
+}
+
+/// Collapse one level of backslash escaping (`\\` → `\`), folding the
+/// double-escaped forms of a stringified-inside-stringified blob onto
+/// the single-escaped ones. Lone backslashes pass through untouched.
+fn collapse_one_escape_level(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut chars = text.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\\' && chars.peek() == Some(&'\\') {
+            chars.next();
+        }
+        out.push(c);
+    }
+    out
+}
+
+/// Drop quoted code — fenced blocks (``` … ```) and inline backtick
+/// spans — keeping the prose around them, so a report *quoting* a
+/// transcript sample is judged by its prose alone. An UNCLOSED fence
+/// does not swallow the tail: these blobs are truncation products, so a
+/// fence that never closes is treated as never having opened (its lines
+/// are scanned as prose).
+fn without_quoted_code(text: &str) -> String {
+    let mut kept: Vec<String> = Vec::new();
+    let mut fenced: Vec<&str> = Vec::new();
+    let mut in_fence = false;
+    for line in text.lines() {
+        if line.trim_start().starts_with("```") {
+            if in_fence {
+                // A closing fence: discard the buffered body.
+                fenced.clear();
+                in_fence = false;
+            } else {
+                in_fence = true;
+            }
+            continue;
+        }
+        if in_fence {
+            fenced.push(line);
+        } else {
+            kept.push(strip_inline_code_spans(line));
+        }
+    }
+    if in_fence {
+        // Unclosed fence: scan the tail as prose after all.
+        kept.extend(fenced.iter().map(|l| strip_inline_code_spans(l)));
+    }
+    kept.join("\n")
+}
+
+/// Remove PAIRED single-backtick inline code spans from one line. An
+/// unpaired backtick is literal prose (markdown renders it as typed), so
+/// an unclosed span's buffered content is restored rather than dropped
+/// (R2 edge: a stray tick used to hide the rest of its line from the
+/// machinery scan).
+fn strip_inline_code_spans(line: &str) -> String {
+    let mut out = String::with_capacity(line.len());
+    let mut span: Option<String> = None;
+    for c in line.chars() {
+        if c == '`' {
+            if span.take().is_none() {
+                span = Some(String::new());
+            }
+            continue;
+        }
+        match span.as_mut() {
+            Some(buffered) => buffered.push(c),
+            None => out.push(c),
+        }
+    }
+    // Unclosed span: the opening tick was prose — keep its content.
+    if let Some(buffered) = span {
+        out.push_str(&buffered);
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -767,5 +967,204 @@ mod tests {
         assert!(!is_markdown_structured("-5°C outside"));
         assert!(!is_markdown_structured("3.14 is approximately pi"));
         assert!(!is_markdown_structured(""));
+    }
+
+    // ─── looks_like_stringified_machinery ─────────────────────────
+
+    /// High-fidelity reconstruction of the 2026-10-01 `reflect_on_output`
+    /// card body: a front-clipped, one-line stringified mash of
+    /// `write_to_var` envelope echoes, transcript confirmations and
+    /// truncation markers (literal `\n` / `\"` escapes throughout).
+    const STRINGIFIED_TRANSCRIPT_BLOB: &str = "report on data persistence and system integrity\\\\n\\\\nAcceptance Criteria:\\\\n- Final report includes: status summary, key findings, and recommendations\\\\n- All findings are supported by evidence from previous phases\\\\n- Report is concise, technically accurate, and free of contradictions\\\\n\\\\nRisk Factors:\\\\n- Misinterpretation of data due to ambiguous results (medium probability, medium impact)\\\\n- Incomplete reporting due to oversight (low probability, medium impact)\\\\n\\\\n### Total Estimated Time: 2.0 hours\\\\n\\\\n### Critical Path: Phase 1 → Phase 2 → Phase 3\\\\n\\\\n### Risk Register\\\\n| Risk | Probability | Impact | Mitigation |\\\\n|------|-----------|--------|------------|\\\\n| Index corruption | Low | Medium | Re-index if status indicates failure |\\\\n| Missing records | Medium | High | Cross-verify with backup or source |\\\\n\\\\n### Next Step\\\\nThe work plan has been generated and is ready for execution. The plan_execute skill will now implement the plan, applying the workspace_status() and ragSearch() tools in sequence to verify system state and validate data persistence.\\\"},\\\"var_name\\\":\\\"rep\\\"}\n__vars['rep'] set:\n## Work Plan: System Status Analysis\\\\n\\\\n### Phase 1: System State Verification (Duration: 0.5h)\\\\n\\\\nGoal: Confirm the integrity and availability of the workspace index.\\\\n... (3400 chars)\\\",\\\"skill_name\\\":\\\"workplan_generate\\\"},\\\"var_name\\\":\\\"input_data\\\"}\n__vars['input_data'] set (parsed JSON): object with 6 key(s)";
+
+    #[test]
+    fn stringified_live_reflect_on_output_card_is_machinery() {
+        // The blob must NOT parse as JSON and must NOT open with a brace —
+        // those are exactly why the brace-anchored gates missed it.
+        assert!(serde_json::from_str::<Value>(STRINGIFIED_TRANSCRIPT_BLOB).is_err());
+        assert!(!STRINGIFIED_TRANSCRIPT_BLOB.trim_start().starts_with('{'));
+        assert_eq!(
+            classify_report_json(STRINGIFIED_TRANSCRIPT_BLOB),
+            ReportJsonShape::NotJson,
+            "classifier still sees prose — the stringified gate is the catch"
+        );
+        assert!(looks_like_stringified_machinery(
+            STRINGIFIED_TRANSCRIPT_BLOB
+        ));
+    }
+
+    #[test]
+    fn stringified_vars_confirmation_marker_alone_fires() {
+        assert!(looks_like_stringified_machinery(
+            "## 报告\n\n节点正常。\n__vars['input_data'] set (parsed JSON): object with 6 key(s)"
+        ));
+        assert!(looks_like_stringified_machinery(
+            "$.vars['reply_payload'] set (parsed JSON): object with 2 keys"
+        ));
+        // Front-clipped form: the leading underscores are gone too.
+        assert!(looks_like_stringified_machinery(
+            "…echo tail…_vars['rep'] set:\n## Work Plan"
+        ));
+    }
+
+    #[test]
+    fn stringified_escaped_envelope_keys_fire() {
+        // Single-escaped key form (the serialized envelope riding inside
+        // a larger blob).
+        assert!(looks_like_stringified_machinery(
+            "…clipped head…\\n\\\",\\\"var_name\\\":\\\"rep\\\"} trailing fragment"
+        ));
+        // Escaped form plus truncation marker; skill_name is the ONLY
+        // envelope key present (mutation gap b: the key must stand alone).
+        assert!(looks_like_stringified_machinery(
+            "preview tail... (3400 chars)\\\",\\\"skill_name\\\":\\\"workplan_generate\\\"}"
+        ));
+    }
+
+    #[test]
+    fn stringified_plain_compact_key_needs_the_truncation_marker() {
+        // A plain compact key WITHOUT any escaped quotes is a mention,
+        // not a serialization (mutation gap c: rule 2's conjunction is
+        // the only thing keeping this prose safe).
+        assert!(!looks_like_stringified_machinery(
+            "存储格式为 {\"var_name\":\"rep\"}，调用方负责填充。"
+        ));
+        // …but next to a truncation marker it is the cut edge of a
+        // serialized envelope.
+        assert!(looks_like_stringified_machinery(
+            "{\"content\":\"## 计划... (3400 chars)\",\"var_name\":\"rep\"}"
+        ));
+    }
+
+    #[test]
+    fn stringified_double_escaped_keys_fold_and_fire() {
+        // One escape level up: the double-escaped form (text
+        // `\\"var_name\\":\\"rep\\"`) folds onto the single-escaped
+        // needle by the one-level collapse.
+        assert!(looks_like_stringified_machinery(
+            "outer string embedding \\\\\"var_name\\\\\":\\\\\"rep\\\\\" inside"
+        ));
+    }
+
+    #[test]
+    fn stringified_escape_density_alone_fires() {
+        // One 200+ char line, no real newlines, dense literal \n + \".
+        let blob = format!(
+            "clipped mid-sentence {}\\n{}\\n{}\\nend\\\"",
+            "x".repeat(120),
+            "y".repeat(80),
+            "z".repeat(40)
+        );
+        assert!(!blob.contains('\n'));
+        assert!(looks_like_stringified_machinery(&blob));
+    }
+
+    #[test]
+    fn stringified_clean_markdown_report_does_not_fire() {
+        let report = "## 巡检报告\n\n| 节点 | 状态 |\n| --- | --- |\n| node-1 | 正常 |\n\n- 全部子系统运行正常。\n- 建议保持观察频率。\n";
+        assert!(!looks_like_stringified_machinery(report));
+    }
+
+    #[test]
+    fn stringified_fenced_transcript_quote_does_not_fire() {
+        // A report QUOTING a transcript sample inside a fence is prose
+        // about the machinery, not machinery itself.
+        let report = "## 调试记录\n\n沙箱确认行形如：\n\n```text\n__vars['input_data'] set (parsed JSON): object with 6 key(s)\n```\n\n结论：行为符合预期。";
+        assert!(!looks_like_stringified_machinery(report));
+    }
+
+    #[test]
+    fn stringified_spaced_key_mention_does_not_fire() {
+        // A spaced `"var_name": "x"` mention (not the serialized form).
+        assert!(!looks_like_stringified_machinery(
+            "参数对象形如 { \"var_name\": \"rep\" }，调用方负责填充。"
+        ));
+    }
+
+    #[test]
+    fn stringified_long_single_line_prose_does_not_fire() {
+        let line = format!("巡检完成，一切正常。{}", "确认无误。".repeat(60));
+        assert!(!looks_like_stringified_machinery(&line));
+    }
+
+    #[test]
+    fn stringified_windows_paths_do_not_fire() {
+        // Backslash-n inside Windows paths is not an escape density signal
+        // without escaped quotes or a truncation marker.
+        let paths = (0..10)
+            .map(|i| format!("C:\\new\\node_{i}\\next\\bin"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        assert!(paths.chars().count() >= 200);
+        assert!(!looks_like_stringified_machinery(&paths));
+    }
+
+    #[test]
+    fn stringified_vars_marker_requires_the_set_suffix() {
+        // `_vars['x']` mentioned without the `'] set` confirmation is prose.
+        assert!(!looks_like_stringified_machinery(
+            "模型随后读取 _vars['rep'] 的内容并继续推理，没有产生副作用。"
+        ));
+    }
+
+    #[test]
+    fn stringified_backtick_quoted_marker_does_not_fire() {
+        // Inline backtick spans get the same protection as fenced
+        // blocks: quoting the echo is prose about machinery.
+        assert!(!looks_like_stringified_machinery(
+            "调试发现沙箱回显 `__vars['rep'] set: {...}` 之后紧跟完整 JSON，属于预期行为。"
+        ));
+    }
+
+    #[test]
+    fn stringified_bare_inline_quote_is_condemned_by_design() {
+        // The deliberate counterpart: a BARE inline quote (no fence, no
+        // backticks) still fires — the transcript marker is the
+        // strongest signal this class has, and the cost of a wrong
+        // condemnation is only a placeholder card (documented accepted
+        // FP, 2026-10-01 R1 review).
+        assert!(looks_like_stringified_machinery(
+            "调试发现沙箱回显 __vars['rep'] set: 之后紧跟完整 JSON，属于预期行为。"
+        ));
+    }
+
+    #[test]
+    fn stringified_unclosed_fence_tail_is_still_scanned() {
+        // These blobs are truncation products, so a fence that never
+        // closes must not swallow the tail it opens.
+        assert!(looks_like_stringified_machinery(
+            "## 报告\n\n正文完毕。\n\n```text\n__vars['x'] set: 噪声尾巴"
+        ));
+        // …and a properly closed fence still protects the quote.
+        assert!(!looks_like_stringified_machinery(
+            "## 报告\n\n正文完毕。\n\n```text\n__vars['x'] set: 引文\n```\n\n结论正常。"
+        ));
+    }
+
+    #[test]
+    fn stringified_unpaired_backtick_keeps_the_rest_of_the_line() {
+        // R2 edge: a stray (unclosed) backtick is prose, so what follows
+        // it must stay visible to the scan — machinery there still fires.
+        assert!(looks_like_stringified_machinery(
+            "调试记录 `引号开始 __vars['rep'] set: 之后紧跟完整 JSON"
+        ));
+        // …and a properly PAIRED span still protects the quote.
+        assert!(!looks_like_stringified_machinery(
+            "调试发现 `__vars['rep'] set: x` 属于预期行为。"
+        ));
+    }
+
+    #[test]
+    fn stringified_natural_chars_phrase_does_not_fire() {
+        // A natural-language "(500 chars)" phrase continues with prose
+        // punctuation — only markers riding against escape/quote edges
+        // count (Windows paths supply the \n density here).
+        let paths = (0..10)
+            .map(|i| format!("C:\\new\\node_{i}\\next\\bin"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let line = format!("{paths} 总计... (500 chars)。");
+        assert!(line.chars().count() >= 200);
+        assert!(!looks_like_stringified_machinery(&line));
     }
 }
