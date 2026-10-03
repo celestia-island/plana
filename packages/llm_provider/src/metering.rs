@@ -343,75 +343,199 @@ pub struct FamilyPricing {
 /// comment for the source rate).
 pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     let lower = model.to_lowercase();
-    // GLM (Zhipu) — the fleet's primary workhorse. GLM-5.3 sits in the
-    // "pro" band (~v4-pro scale); Zhipu's OWN flash tier is a distinct
-    // (cheaper) band — NOT the deepseek flash band. Order matters:
-    // "glm" before the generic checks.
+    // The compiled-in BAND HEADS mirror the provider-registry's current
+    // generation (verified against the vendors' official lists,
+    // 2026-10-03 — see PR for the per-family provenance). This table is
+    // the universal FALLBACK: arona's model_pricing DB rows win first,
+    // and an injected source (set_pricing_source) wins over both.
+    // GLM (Zhipu). Pro band = glm-5.2/5.3 official ¥8/¥28/¥2 (÷6.5 →
+    // 1.23/4.31/0.31); Zhipu's OWN flash tier is a distinct cheaper
+    // band (glm-5.3-flash ¥0.8/¥2.8/¥0.23 → 0.12/0.43/0.035). Order
+    // matters: "glm" before the generic checks.
     if lower.contains("glm") {
-        if lower.contains("flash") || lower.contains("air") || lower.contains("lite") {
-            // Zhipu's own flash list (not ds flash): ¥1/¥2 ≈ $0.14/$0.28.
+        if lower.contains("flashx") {
+            // glm-5.3-flashx official.
             return Some(FamilyPricing {
-                input_per_million: 0.14,
-                output_per_million: 0.28,
-                cached_per_million: 0.04,
+                input_per_million: 0.31,
+                output_per_million: 1.08,
+                cached_per_million: 0.088,
             });
         }
-        // Pro band: CNY list ¥9/¥27/¥0.3, FX 6.5 CNY/USD.
+        if lower.contains("prime") {
+            // glm-5.3-prime official.
+            return Some(FamilyPricing {
+                input_per_million: 2.80,
+                output_per_million: 8.80,
+                cached_per_million: 0.56,
+            });
+        }
+        if lower.contains("flash") || lower.contains("air") || lower.contains("lite") {
+            return Some(FamilyPricing {
+                input_per_million: 0.12,
+                output_per_million: 0.43,
+                cached_per_million: 0.035,
+            });
+        }
         return Some(FamilyPricing {
-            input_per_million: 9.0 / 6.5,
-            output_per_million: 27.0 / 6.5,
-            cached_per_million: 0.3 / 6.5,
+            input_per_million: 8.0 / 6.5,
+            output_per_million: 28.0 / 6.5,
+            cached_per_million: 2.0 / 6.5,
         });
     }
     if lower.contains("deepseek") {
         if lower.contains("pro") || lower.contains("r1") || lower.contains("reasoner") {
-            // Pro band: CNY list ¥9/¥27/¥0.3, FX 6.5 CNY/USD.
+            // v4-pro official USD list.
             return Some(FamilyPricing {
-                input_per_million: 9.0 / 6.5,
-                output_per_million: 27.0 / 6.5,
-                cached_per_million: 0.3 / 6.5,
+                input_per_million: 0.435,
+                output_per_million: 0.87,
+                cached_per_million: 0.003625,
             });
         }
-        // v4.1 flash peak — DeepSeek's OFFICIAL USD list (implied
-        // FX ≈ 7.14 from the ¥2/¥8/¥0.04 CNY list; ~9% below a
-        // straight 6.5 conversion — we follow the USD list).
+        if lower.contains("v4.1") || lower.contains("flash-latest") {
+            // v4.1-flash official USD list.
+            return Some(FamilyPricing {
+                input_per_million: 0.30,
+                output_per_million: 1.20,
+                cached_per_million: 0.006,
+            });
+        }
+        // v4-flash official USD list.
         return Some(FamilyPricing {
-            input_per_million: 0.28,
-            output_per_million: 1.13,
-            cached_per_million: 0.0056,
+            input_per_million: 0.14,
+            output_per_million: 0.28,
+            cached_per_million: 0.0028,
         });
     }
     if lower.contains("kimi") || lower.contains("moonshot") {
-        // Moonshot's published international USD list ¥20/¥100,
-        // FX 7.1 CNY/USD (their stated billing rate).
+        // Kimi K3 official USD list.
         return Some(FamilyPricing {
-            input_per_million: 2.82,
-            output_per_million: 14.08,
-            cached_per_million: 0.35,
+            input_per_million: 3.0,
+            output_per_million: 15.0,
+            cached_per_million: 0.3,
         });
     }
     if lower.contains("claude") {
         if lower.contains("haiku") {
+            if lower.contains("haiku-4") {
+                // Haiku 4.5 official.
+                return Some(FamilyPricing {
+                    input_per_million: 1.00,
+                    output_per_million: 5.00,
+                    cached_per_million: 0.10,
+                });
+            }
+            // The 3.x haiku list.
             return Some(FamilyPricing {
                 input_per_million: 0.80,
                 output_per_million: 4.00,
                 cached_per_million: 0.08,
             });
         }
+        if lower.contains("opus-5") {
+            // Opus 5.5 official.
+            return Some(FamilyPricing {
+                input_per_million: 4.00,
+                output_per_million: 20.00,
+                cached_per_million: 0.20,
+            });
+        }
+        if lower.contains("opus-4-8-fast") || lower.contains("opus-4.8-fast") {
+            // Opus 4.8-fast official.
+            return Some(FamilyPricing {
+                input_per_million: 10.00,
+                output_per_million: 50.00,
+                cached_per_million: 1.00,
+            });
+        }
+        if lower.contains("opus-4.6-fast")
+            || lower.contains("opus-4.7-fast")
+            || lower.contains("opus-4-6-fast")
+            || lower.contains("opus-4-7-fast")
+        {
+            // The 4.6/4.7 fast lanes official.
+            return Some(FamilyPricing {
+                input_per_million: 30.00,
+                output_per_million: 150.00,
+                cached_per_million: 3.00,
+            });
+        }
+        if lower.contains("opus-4-5")
+            || lower.contains("opus-4-6")
+            || lower.contains("opus-4-7")
+            || lower.contains("opus-4-8")
+            || lower.contains("opus-4.5")
+            || lower.contains("opus-4.6")
+            || lower.contains("opus-4.7")
+            || lower.contains("opus-4.8")
+        {
+            // The 4.5–4.8 line (4.8 official).
+            return Some(FamilyPricing {
+                input_per_million: 5.00,
+                output_per_million: 25.00,
+                cached_per_million: 0.50,
+            });
+        }
         if lower.contains("opus") {
+            // The legacy opus list (opus-4 / 4.1 / 3.x).
             return Some(FamilyPricing {
                 input_per_million: 15.00,
                 output_per_million: 75.00,
                 cached_per_million: 1.50,
             });
         }
+        if lower.contains("fable") {
+            // The Fable line (5 / 5.1 share 10/50; 5.1's cache read).
+            return Some(FamilyPricing {
+                input_per_million: 10.00,
+                output_per_million: 50.00,
+                cached_per_million: 0.25,
+            });
+        }
+        if lower.contains("sonnet-5") {
+            // Sonnet 5 / 5.5 official.
+            return Some(FamilyPricing {
+                input_per_million: 2.00,
+                output_per_million: 10.00,
+                cached_per_million: 0.20,
+            });
+        }
+        // The sonnet-4 line list.
         return Some(FamilyPricing {
             input_per_million: 3.00,
             output_per_million: 15.00,
             cached_per_million: 0.30,
         });
     }
+    if lower.contains("gemini-3")
+        || lower.contains("gemini-flash-latest")
+        || lower.contains("gemini-lite-latest")
+        || lower.contains("gemini-flash-lite-latest")
+    {
+        if lower.contains("lite") {
+            // 3.1-flash-lite official.
+            return Some(FamilyPricing {
+                input_per_million: 0.25,
+                output_per_million: 1.50,
+                cached_per_million: 0.025,
+            });
+        }
+        if lower.contains("flash") {
+            // 3.5-flash official.
+            return Some(FamilyPricing {
+                input_per_million: 1.50,
+                output_per_million: 9.00,
+                cached_per_million: 0.15,
+            });
+        }
+        // The 3.x pro band rides 2.5-pro's official list.
+        return Some(FamilyPricing {
+            input_per_million: 1.25,
+            output_per_million: 10.00,
+            cached_per_million: 0.125,
+        });
+    }
     if lower.contains("gemini") {
+        // The legacy 2.x bands.
         if lower.contains("flash") {
             return Some(FamilyPricing {
                 input_per_million: 0.075,
@@ -433,17 +557,126 @@ pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
         });
     }
     if lower.contains("gpt") && lower.contains("mini") {
+        // BEFORE the generation bands: every *-mini id is its own cheaper
+        // tier (round-1 caught the broad gpt-5 arm dominating this check —
+        // gpt-5.4-mini priced at the full 5.4 rate, 3.3× overcharge).
+        if lower.contains("gpt-5") {
+            // gpt-5.4-mini official.
+            return Some(FamilyPricing {
+                input_per_million: 0.75,
+                output_per_million: 4.50,
+                cached_per_million: 0.075,
+            });
+        }
+        // The 4o-mini official list.
         return Some(FamilyPricing {
             input_per_million: 0.15,
             output_per_million: 0.60,
-            cached_per_million: 0.0375,
+            cached_per_million: 0.075,
+        });
+    }
+    if lower.contains("gpt") && lower.contains("nano") {
+        if lower.contains("5.4") {
+            // gpt-5.4-nano official.
+            return Some(FamilyPricing {
+                input_per_million: 0.20,
+                output_per_million: 1.25,
+                cached_per_million: 0.02,
+            });
+        }
+        if lower.contains("gpt-5") {
+            // gpt-5-nano official.
+            return Some(FamilyPricing {
+                input_per_million: 0.05,
+                output_per_million: 0.40,
+                cached_per_million: 0.005,
+            });
+        }
+        // gpt-4.1-nano legacy list.
+        return Some(FamilyPricing {
+            input_per_million: 0.10,
+            output_per_million: 0.40,
+            cached_per_million: 0.025,
+        });
+    }
+    if lower.contains("gpt-5") && lower.contains("pro") {
+        // The 5.x pro line (5.4/5.5 official 30/180; 5.2-pro 21/168
+        // rides the headline).
+        return Some(FamilyPricing {
+            input_per_million: 30.00,
+            output_per_million: 180.00,
+            cached_per_million: 3.00,
+        });
+    }
+    if lower.contains("gpt-6") {
+        // The gpt-6 generation: astra (flagship) / sol (standard) /
+        // luna (light) — official standard-tier USD lists.
+        if lower.contains("astra") {
+            return Some(FamilyPricing {
+                input_per_million: 10.00,
+                output_per_million: 50.00,
+                cached_per_million: 1.00,
+            });
+        }
+        if lower.contains("luna") {
+            return Some(FamilyPricing {
+                input_per_million: 0.10,
+                output_per_million: 0.50,
+                cached_per_million: 0.01,
+            });
+        }
+        // sol band (covers 6.1-sol).
+        return Some(FamilyPricing {
+            input_per_million: 2.00,
+            output_per_million: 10.00,
+            cached_per_million: 0.20,
+        });
+    }
+    if lower.contains("daybreak") {
+        // The daybreak pair (official).
+        if lower.contains("red") {
+            return Some(FamilyPricing {
+                input_per_million: 12.50,
+                output_per_million: 75.00,
+                cached_per_million: 1.25,
+            });
+        }
+        return Some(FamilyPricing {
+            input_per_million: 4.00,
+            output_per_million: 20.00,
+            cached_per_million: 0.40,
+        });
+    }
+    if lower.contains("gpt-5.6") {
+        // Official: base/sol 4/20/0.4, terra 2/12/0.2, luna 0.2/1.2/0.02 —
+        // the band headline is the sol/base rate.
+        return Some(FamilyPricing {
+            input_per_million: 4.00,
+            output_per_million: 20.00,
+            cached_per_million: 0.40,
+        });
+    }
+    if lower.contains("gpt-5.5") {
+        return Some(FamilyPricing {
+            input_per_million: 5.00,
+            output_per_million: 30.00,
+            cached_per_million: 0.50,
+        });
+    }
+    if lower.contains("gpt-5") {
+        // The broad 5.x band (5/5.1/5.2/5.4 base ≈ 1.25–2.5); headline
+        // 5.4's official 2.5/15.
+        return Some(FamilyPricing {
+            input_per_million: 2.50,
+            output_per_million: 15.00,
+            cached_per_million: 0.25,
         });
     }
     if lower.contains("gpt-4o") {
         return Some(FamilyPricing {
             input_per_million: 2.50,
             output_per_million: 10.00,
-            cached_per_million: 0.625,
+            cached_per_million: 1.25,
         });
     }
     if lower.contains("gpt-4") {
@@ -747,8 +980,11 @@ mod tests {
 
     #[test]
     fn canonical_pricing_lookup() {
-        assert_eq!(lookup_pricing("gpt-4o"), f(2.50, 10.00, 0.625));
-        assert_eq!(lookup_pricing("gpt-4o-mini"), f(0.15, 0.60, 0.0375));
+        assert_eq!(lookup_pricing("gpt-4o"), f(2.50, 10.00, 1.25));
+        assert_eq!(lookup_pricing("gpt-4o-mini"), f(0.15, 0.60, 0.075));
+        // The mini tier is its own band — never the generation headline
+        // (round-1: the broad gpt-5 arm used to swallow this id).
+        assert_eq!(lookup_pricing("gpt-5.4-mini"), f(0.75, 4.50, 0.075));
         assert_eq!(lookup_pricing("gpt-4-turbo"), f(30.00, 60.00, 30.00));
         assert_eq!(lookup_pricing("gpt-3.5-turbo"), f(0.50, 1.50, 0.50));
         assert_eq!(lookup_pricing("o3-mini"), f(10.00, 40.00, 2.50));
@@ -765,6 +1001,24 @@ mod tests {
         assert_eq!(lookup_pricing("gemini-2.5-pro"), f(1.25, 5.00, 0.3125));
         assert_eq!(lookup_pricing("Qwen/Qwen3-1.7B"), f(0.50, 2.00, 0.125));
         assert_eq!(lookup_pricing("llama-3-8b-instruct"), f(0.20, 0.80, 0.20));
+        // Round-2 sub-band pins (variant/alias granularity).
+        assert_eq!(lookup_pricing("deepseek-v4.1-flash"), f(0.30, 1.20, 0.006));
+        assert_eq!(lookup_pricing("gpt-5.4-nano"), f(0.20, 1.25, 0.02));
+        assert_eq!(lookup_pricing("gpt-5-nano"), f(0.05, 0.40, 0.005));
+        assert_eq!(lookup_pricing("gpt-5.5-pro"), f(30.00, 180.00, 3.00));
+        assert_eq!(
+            lookup_pricing("gpt-daybreak-red-latest"),
+            f(12.50, 75.00, 1.25)
+        );
+        assert_eq!(lookup_pricing("claude-fable-5-1"), f(10.00, 50.00, 0.25));
+        assert_eq!(
+            lookup_pricing("claude-opus-4.6-fast"),
+            f(30.00, 150.00, 3.00)
+        );
+        assert_eq!(lookup_pricing("claude-opus-4.8"), f(5.00, 25.00, 0.50));
+        assert_eq!(lookup_pricing("gemini-flash-latest"), f(1.50, 9.00, 0.15));
+        assert_eq!(lookup_pricing("glm-5.3-flashx"), f(0.31, 1.08, 0.088));
+        assert_eq!(lookup_pricing("glm-5.3-prime"), f(2.80, 8.80, 0.56));
         assert_eq!(lookup_pricing("mistral-7b-instruct"), f(0.20, 0.80, 0.20));
         assert_eq!(lookup_pricing("google/gemma-3-1b-it"), None);
         assert_eq!(lookup_pricing("HuggingFaceTB/SmolLM2-1.7B-Instruct"), None);
@@ -775,26 +1029,33 @@ mod tests {
         // The four families the fleet actually runs (Phase 0 of the
         // commercialization plan): every one must resolve WITHOUT
         // falling through to the provider-keyed guess table.
-        // deepseek v4.1 flash — peak prices (miss ¥2 ≈ $0.28, hit ¥0.04 ≈ $0.0056).
-        let ds = lookup_pricing("deepseek-v4.1-flash").expect("ds flash");
-        assert!((ds.input_per_million - 0.28).abs() < 1e-9);
-        assert!((ds.output_per_million - 1.13).abs() < 1e-9);
-        assert!((ds.cached_per_million - 0.0056).abs() < 1e-9);
-        // deepseek v4 pro — ¥9/¥27 ≈ $1.38/$4.15 at 6.5 CNY/USD.
+        // The bands mirror the registry's current generation (2026-10-03).
+        let ds = lookup_pricing("deepseek-v4-flash").expect("ds flash");
+        assert!((ds.input_per_million - 0.14).abs() < 1e-9);
         let dsp = lookup_pricing("deepseek-v4-pro").expect("ds pro");
-        assert!((dsp.input_per_million - 9.0 / 6.5).abs() < 1e-9);
-        assert!((dsp.output_per_million - 27.0 / 6.5).abs() < 1e-9);
-        assert!((dsp.cached_per_million - 0.3 / 6.5).abs() < 1e-9);
-        // GLM 5.3 — same pro-band economics as ds pro; flash/lite variants
-        // ride the flash band.
+        assert!((dsp.input_per_million - 0.435).abs() < 1e-9);
+        // GLM 5.3 — ¥8/¥28/¥2 at FX 6.5; flash rides its own band.
         let glm = lookup_pricing("glm-5.3").expect("glm");
-        assert!((glm.input_per_million - 9.0 / 6.5).abs() < 1e-9);
+        assert!((glm.input_per_million - 8.0 / 6.5).abs() < 1e-9);
+        assert!((glm.cached_per_million - 2.0 / 6.5).abs() < 1e-9);
         let glmf = lookup_pricing("glm-5.3-flash").expect("glm flash");
-        assert!((glmf.input_per_million - 0.14).abs() < 1e-9);
-        // Kimi K3 — ¥20/¥100 ≈ $2.82/$14.08.
+        assert!((glmf.input_per_million - 0.12).abs() < 1e-9);
+        // Kimi K3 official USD list.
         let kimi = lookup_pricing("kimi-k3").expect("kimi");
-        assert!((kimi.input_per_million - 2.82).abs() < 1e-9);
-        assert!((kimi.output_per_million - 14.08).abs() < 1e-9);
+        assert!((kimi.input_per_million - 3.0).abs() < 1e-9);
+        assert!((kimi.output_per_million - 15.0).abs() < 1e-9);
+        // The gpt-6 generation resolves to its own bands.
+        let astra = lookup_pricing("gpt-6-astra").expect("astra");
+        assert!((astra.input_per_million - 10.0).abs() < 1e-9);
+        let luna = lookup_pricing("gpt-6-luna").expect("luna");
+        assert!((luna.output_per_million - 0.5).abs() < 1e-9);
+        let sol = lookup_pricing("gpt-6.1-sol").expect("sol");
+        assert!((sol.input_per_million - 2.0).abs() < 1e-9);
+        // And the 5.x heads stop falling through to the generic gpt arms.
+        let g56 = lookup_pricing("gpt-5.6").expect("gpt-5.6");
+        assert!((g56.input_per_million - 4.0).abs() < 1e-9);
+        let opus = lookup_pricing("claude-opus-5-5").expect("opus");
+        assert!((opus.input_per_million - 4.0).abs() < 1e-9);
     }
 
     #[test]
