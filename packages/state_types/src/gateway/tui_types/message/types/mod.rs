@@ -1476,6 +1476,14 @@ pub enum SyncMessage {
     /// `OpenWorkspaceResponse`.
     OpenWorkspace {
         uri: String,
+        /// Additional workspace URIs provisioned into the SAME workspace:
+        /// each is resolved against the opened workspace's resolved path
+        /// (git remotes clone into a subdirectory of it). `None` keeps the
+        /// single-source open; older receivers that don't know the field
+        /// drop it silently (serde internally-tagged enums ignore unknown
+        /// keys), so the field is additively wire-safe both ways.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        extra_sources: Option<Vec<String>>,
     },
     /// Result of `OpenWorkspace`, carrying the new workspace id on success.
     OpenWorkspaceResponse {
@@ -2325,6 +2333,50 @@ mod tests {
             *estimated_degrees,
             Some(0_i64),
             "Some(0) must survive the wire"
+        );
+    }
+
+    /// `OpenWorkspace.extra_sources` wire-compat: every sender that predates
+    /// the field omits it, so absence must deserialize to `None` — and the
+    /// multi-source senders' array must survive the JSON-RPC bridge path
+    /// scepter actually parses with.
+    #[test]
+    fn open_workspace_extra_sources_wire_compat() {
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "OpenWorkspace",
+                "uri": "git://https://github.com/org/repo.git"
+            }
+        }))
+        .expect("payload without extra_sources must deserialize");
+
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::OpenWorkspace { uri, extra_sources } = &*sync else {
+            panic!("expected OpenWorkspace variant");
+        };
+        assert_eq!(uri, "git://https://github.com/org/repo.git");
+        assert!(extra_sources.is_none(), "absent field must read as None");
+
+        let parsed = plana::jsonrpc::deserialize_from_jsonrpc::<Message>(
+            r#"{"jsonrpc":"2.0","method":"Sync.OpenWorkspace","params":{"uri":"git://https://github.com/org/repo.git","extra_sources":["git://https://github.com/org/other.git","ssh://gpu-node/opt/data"]}}"#,
+        )
+        .expect("jsonrpc parse must succeed");
+        let Some(Message::Sync(sync)) = parsed else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::OpenWorkspace { extra_sources, .. } = &*sync else {
+            panic!("expected OpenWorkspace variant");
+        };
+        assert_eq!(
+            *extra_sources,
+            Some(vec![
+                "git://https://github.com/org/other.git".to_string(),
+                "ssh://gpu-node/opt/data".to_string(),
+            ]),
+            "extra_sources must survive the bridge path"
         );
     }
 }
