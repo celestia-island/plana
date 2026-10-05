@@ -75,12 +75,13 @@ test:
 
 # Regenerate artifacts. Default: bindings.
 # TS bindings are emitted by the test builds of the crates that own the
-# exported types, into THREE directories: packages/plana/bindings/ (generic
-# types — the `plana-protocol-core` package is now a re-export shim with no
-# types of its own, so the plana foundation is what generates this file set),
-# packages/celestia-types/bindings/ (domain types) and
-# packages/evernight-protocol/bindings/ (Tier 3 wire DTOs). `just gen
-# bindings` regenerates all three.
+# exported types into TWO directories: packages/plana/bindings/ (the
+# foundation's generic types — `plana-protocol-core` is a re-export shim with
+# no types of its own) and packages/celestia-types/bindings/ (the domain
+# profile). `packages/celestia-types/bindings/protocol-core-httpTypes.ts` is
+# NOT a ts-rs product: it is the foundation's httpTypes VENDORED into the
+# published package by `scripts/vendor_http_types.py`, which this recipe runs
+# after the test builds. CI checks it with the same script's `--check`.
 [script('python')]
 gen target='bindings':
     import subprocess, sys
@@ -92,7 +93,10 @@ gen target='bindings':
 
     t = "{{target}}"
     if t == "bindings":
-        run(["cargo", "test", "--package", "plana", "--package", "plana-celestia-types", "--package", "plana_evernight_protocol"])
+        run(["cargo", "test", "--package", "plana", "--package", "plana-celestia-types"])
+        # The vendored copy is not a ts-rs product; regenerate it from the
+        # foundation's fresh bindings so the published package cannot drift.
+        run(["python3", "scripts/vendor_http_types.py"])
     else:
         print("Usage: just gen bindings")
         sys.exit(1)

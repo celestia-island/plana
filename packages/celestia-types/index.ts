@@ -76,7 +76,7 @@ export type { AgentIntegrityParams, AskResult, AuditAlignmentParams, AuditAlignm
 // shaped RbacGroup on the flat surface — and HealthResponse is aliased to
 // ServiceHealthResponse so consumers that also bind their own backend's
 // /api/health HealthResponse never import two same-named shapes.
-export type { BackendKind, ConnectionStatus, CreatedResponse, DeletedResponse, ErrorResponse, GrantItem, GrantListResponse, HealthResponse as ServiceHealthResponse, IdResponse, MyPermissions, NetworkInfo, OAuthProvider, OkIdResponse, OkMessageResponse, OkResponse, PermissionsResponse, RbacGroupsResponse, RbacUser, RbacUsersResponse, ReadinessResponse, ServiceStatus, StatusResponse } from "./bindings/protocol-core-httpTypes";
+export type { BackendKind, ConnectionStatus, CreatedResponse, DeletedResponse, ErrorResponse, GrantItem, GrantListResponse, HealthResponse as ServiceHealthResponse, IdResponse, MyPermissions, NetworkInfo, OAuthProvider, OkIdResponse, OkMessageResponse, OkResponse, PermissionsResponse, RbacGroupsResponse, RbacUser, RbacUsersResponse, ReadinessResponse, ServiceStatus, StatusResponse, VersionReport } from "./bindings/protocol-core-httpTypes";
 export * from "./bindings/tools/philia";
 export * from "./bindings/tools/polemos";
 export * from "./bindings/tools/skemma";
