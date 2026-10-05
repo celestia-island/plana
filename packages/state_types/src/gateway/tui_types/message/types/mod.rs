@@ -778,6 +778,13 @@ pub enum SyncMessage {
         /// Absent on legacy/local senders — no gate applies.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         actor: Option<ActorClaims>,
+        /// The conversation's user-configured system prompt (persona),
+        /// forwarded by the panel gateway on agent-mode turns (chest
+        /// #1425). The runtime side injects it into the chain's LLM
+        /// calls so the user's preset prompts survive the hop; absent on
+        /// simple-mode turns and legacy senders — no persona applies.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        system_prompt: Option<String>,
     },
     /// Server → client final answer for one turn; follows the streaming chunks
     /// emitted for the same `agent_id`.
@@ -2184,6 +2191,7 @@ mod tests {
             workspace_id: None,
             conversation_id: None,
             actor: None,
+            system_prompt: None,
         };
 
         let json = serde_json::to_value(&msg).expect("serialize UserMessage");
@@ -2221,6 +2229,60 @@ mod tests {
             wire.get("groups").is_none(),
             "an empty group list must stay off the wire"
         );
+    }
+
+    /// `UserMessage` gained `system_prompt` (chest #1425's persona
+    /// passthrough). Old senders never emit the key: the message must
+    /// deserialize to `None`; present rides as the plain string; and
+    /// re-serializing a `None` must keep the key absent so the old wire
+    /// shape is preserved exactly.
+    #[test]
+    fn user_message_system_prompt_round_trips() {
+        let base = SyncMessage::UserMessage {
+            sender_id: "u".to_string(),
+            content: "c".to_string(),
+            timestamp: "1770000000000".to_string(),
+            language: None,
+            images: None,
+            workspace_id: None,
+            conversation_id: None,
+            actor: None,
+            system_prompt: None,
+        };
+        let none_wire = serde_json::to_value(&base).expect("serialize absent persona");
+        assert!(
+            none_wire.get("system_prompt").is_none(),
+            "absent persona must stay off the wire, got {none_wire}"
+        );
+
+        let with_persona = SyncMessage::UserMessage {
+            sender_id: "u".to_string(),
+            content: "c".to_string(),
+            timestamp: "1770000000000".to_string(),
+            language: None,
+            images: None,
+            workspace_id: None,
+            conversation_id: None,
+            actor: None,
+            system_prompt: Some("You are the station's assistant.".to_string()),
+        };
+        let some_wire = serde_json::to_value(&with_persona).expect("serialize persona");
+        assert_eq!(
+            some_wire["system_prompt"].as_str(),
+            Some("You are the station's assistant.")
+        );
+
+        // The legacy half: a sender with no persona key deserializes to
+        // None (serde default), so pre-field peers keep working.
+        let legacy: SyncMessage = serde_json::from_value(
+            serde_json::json!({"action": "UserMessage", "sender_id": "u", "content": "c",
+                "timestamp": "1770000000000"}),
+        )
+        .expect("legacy wire without system_prompt must deserialize");
+        let SyncMessage::UserMessage { system_prompt, .. } = legacy else {
+            panic!("expected UserMessage");
+        };
+        assert_eq!(system_prompt, None);
     }
 
     /// `TaskCreated` gained `estimated_degrees` for the degree-ledger
