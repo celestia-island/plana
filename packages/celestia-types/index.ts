@@ -25,6 +25,13 @@
 //   ContainerSnapshotParams  ws/stateSync        wins vs tools/neikos
 //   ReportHumanParams        tools/hubris          wins vs tools/orexis
 //   RbacGroup                httpTypes           wins vs protocol-core-httpTypes
+//     ↑ that winner is a STALE mirror: nothing in this crate generates it
+//     (it predates the RBAC DTOs moving to the foundation), and it survives
+//     only because UserProfileResponse — same file — references the bare
+//     name. The TRUTHFUL RbacGroup (builtin/personal-visibility fields,
+//     nullable description) is the foundation's, vendored into
+//     protocol-core-httpTypes; deep-import it from there until the DTOs
+//     move into this crate or ts-rs learns the cross-crate import.
 //
 // MAINTENANCE WARNING: the five exclusion lists are hand-maintained here —
 // there is no generator script that rewrites this file. New types added to

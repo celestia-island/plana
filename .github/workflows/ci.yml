@@ -109,8 +109,12 @@ jobs:
         # bindings tree — everything in there is generated or vendored, so a
         # dirty path after the suite is always a real drift.
         run: |
-          git diff --exit-code -- packages/celestia-types/bindings/
-          test -z "$(git status --porcelain -- packages/celestia-types/bindings/)"
+          # Both bindings trees the suite regenerates: the domain package's
+          # AND the foundation's own. The foundation path is what catches
+          # "Rust changed, bindings never regenerated" — the suite rewrites
+          # them in place, leaving that tree dirty against HEAD.
+          git diff --exit-code -- packages/celestia-types/bindings/ packages/plana/bindings/
+          test -z "$(git status --porcelain -- packages/celestia-types/bindings/ packages/plana/bindings/)"
           # The vendored copies are byte-compared against the foundation's
           # generated files; --check prints the first divergence.
           python3 scripts/vendor_http_types.py --check

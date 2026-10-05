@@ -197,19 +197,32 @@ pub struct ConnectionStatus {
 }
 
 // ── RBAC ───────────────────────────────────────────────────
+//
+// These shapes are the CONTRACT for the admin RBAC listings. The canonical
+// emitter is shittim-chest's `proxy::handlers::iam` (`user_row_to_json` /
+// `group_row_to_json` plus the roster fields it attaches at the call site);
+// until 2026-10-06 the DTOs drifted from that wire in both directions —
+// fields the DTO promised that no emitter sent (`avatar_url`, `tier`,
+// `updated_at` on groups) and fields the emitter sent that the DTO never
+// grew (`updated_at` on users, the builtin/personal-visibility group
+// bookkeeping). The scalars are reconciled here; the nested rosters
+// (`members`, `workspaces`, per-user `groups`, presence) stay documented
+// client-side extensions until they earn their own DTOs.
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "httpTypes.ts")]
 pub struct RbacUser {
     pub id: String,
     pub username: String,
-    pub email: String,
-    pub display_name: String,
+    /// `auth_users.email` is nullable — accounts can exist without one.
+    pub email: Option<String>,
+    pub display_name: Option<String>,
     pub avatar_url: Option<String>,
     pub is_active: bool,
     pub role: String,
     pub tier: String,
     pub created_at: String,
+    pub updated_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -223,8 +236,22 @@ pub struct RbacUsersResponse {
 pub struct RbacGroup {
     pub id: String,
     pub name: String,
-    pub description: String,
+    pub description: Option<String>,
+    /// Members attached to this listing (the list response computes it from
+    /// the membership table; single-group reads may not). Carried since the
+    /// first DTO revision — the doc comment is what 2026-10-06 added.
     pub member_count: u32,
+    /// Personal-visibility enforcement: members see only their own
+    /// resources while the flag is on (and must acknowledge it once).
+    pub enforce_personal_visibility: bool,
+    /// Builtin groups ship with the deployment and cannot be deleted.
+    pub is_builtin: bool,
+    /// Stable key for a builtin group (e.g. "administrators"); null for
+    /// admin-authored groups.
+    pub builtin_key: Option<String>,
+    /// Admin-authored per-locale display names (locale tag → name); null
+    /// when none are authored.
+    pub display_names: Option<std::collections::BTreeMap<String, String>>,
     pub created_at: String,
     pub updated_at: String,
 }

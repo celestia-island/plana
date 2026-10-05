@@ -82,6 +82,14 @@ test:
 # NOT a ts-rs product: it is the foundation's httpTypes VENDORED into the
 # published package by `scripts/vendor_http_types.py`, which this recipe runs
 # after the test builds. CI checks it with the same script's `--check`.
+# ⚠️ NEVER run a FILTERED export test (e.g. `cargo test export_bindings_rbac`):
+# ts-rs's single-file export TRUNCATES the shared bindings file on the first
+# write, so a filtered run silently deletes every type the filter did not
+# match (measured: `--lib export_bindings_userprofileresponse` alone left
+# bindings/httpTypes.ts with 3 of its 67 types). Always regenerate through
+# this recipe or an unfiltered `cargo test --package …` — and if a filtered
+# run already happened, `git checkout -- packages/*/bindings` before
+# regenerating.
 [script('python')]
 gen target='bindings':
     import subprocess, sys
