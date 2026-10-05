@@ -7,8 +7,6 @@ settings:
 overrides:
   typescript: ~6.0
 
-pnpmfileChecksum: sha256-gEYuS9Wh9rjYgMjfcUOlbAKLhFaDbw07SkWUzwvy4gg=
-
 importers:
 
   packages/rpc_client:

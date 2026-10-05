@@ -1380,6 +1380,11 @@ pub enum SyncMessage {
     /// `MessagesResponse`.
     RequestRecentMessages {
         conversation_id: Uuid,
+        /// The workspace the caller is bound to — the per-workspace scope
+        /// key for the GLOBAL branch (nil conversation). Absent on older
+        /// callers (serde default), which keeps the scepter-wide tail.
+        #[serde(default)]
+        workspace_id: Option<Uuid>,
         #[serde(default = "default_history_limit")]
         limit: u64,
     },
