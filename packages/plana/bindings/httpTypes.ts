@@ -47,11 +47,40 @@ export type OkResponse = { ok: boolean, };
 
 export type PermissionsResponse = { role: string, permissions: Array<string>, };
 
-export type RbacGroup = { id: string, name: string, description: string, member_count: number, created_at: string, updated_at: string, };
+export type RbacGroup = { id: string, name: string, description: string | null, 
+/**
+ * Members attached to this listing (the list response computes it from
+ * the membership table; single-group reads may not). Carried since the
+ * first DTO revision — the doc comment is what 2026-10-06 added.
+ */
+member_count: number, 
+/**
+ * Personal-visibility enforcement: members see only their own
+ * resources while the flag is on (and must acknowledge it once).
+ */
+enforce_personal_visibility: boolean, 
+/**
+ * Builtin groups ship with the deployment and cannot be deleted.
+ */
+is_builtin: boolean, 
+/**
+ * Stable key for a builtin group (e.g. "administrators"); null for
+ * admin-authored groups.
+ */
+builtin_key: string | null, 
+/**
+ * Admin-authored per-locale display names (locale tag → name); null
+ * when none are authored.
+ */
+display_names: { [key in string]: string } | null, created_at: string, updated_at: string, };
 
 export type RbacGroupsResponse = { groups: Array<RbacGroup>, };
 
-export type RbacUser = { id: string, username: string, email: string, display_name: string, avatar_url: string | null, is_active: boolean, role: string, tier: string, created_at: string, };
+export type RbacUser = { id: string, username: string, 
+/**
+ * `auth_users.email` is nullable — accounts can exist without one.
+ */
+email: string | null, display_name: string | null, avatar_url: string | null, is_active: boolean, role: string, tier: string, created_at: string, updated_at: string, };
 
 export type RbacUsersResponse = { users: Array<RbacUser>, };
 
