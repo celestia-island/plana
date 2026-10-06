@@ -40,7 +40,13 @@ export type SkillStage = { "Started": string } | { "Done": string } | { "Complet
 
 export type StreamChunkKind = "Text" | "Thinking" | "DeepThinking";
 
-export type StreamSegment = { "Text": { text: string, message_id?: string, } } | { "Thinking": { text: string, message_id?: string, } } | { "DeepThinking": { text: string, message_id?: string, } } | { "ToolCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, } } | { "ToolResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, } };
+export type StreamSegment = { "Text": { text: string, message_id?: string, 
+/**
+ * Wall-clock ms epoch at the segment's last activity — mirrors
+ * plana_text's segment stamp (plana #407) so the two shapes stay
+ * aligned; absent on legacy/hand-built values.
+ */
+ts?: number, } } | { "Thinking": { text: string, message_id?: string, ts?: number, } } | { "DeepThinking": { text: string, message_id?: string, ts?: number, } } | { "ToolCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, ts?: number, } } | { "ToolResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, ts?: number, } };
 
 export type StructuredAgentError = { code: AgentErrorCode, detail?: string, context: { [key in string]: string }, };
 
