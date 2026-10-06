@@ -582,7 +582,7 @@ pub use malkuth::*;
 
 // model/ — unified model management (re-export key types to crate root
 // for ergonomic access: `arona::ModelCapability` not `arona::model::…`)
-pub use model::{GenerationTier, HardwareRequirements, ModelCapability};
+pub use model::{DeploymentMode, GenerationTier, HardwareRequirements, ModelCapability, ModelType};
 
 // mdd/ — model deployment descriptor schema v1
 pub use mdd::*;
