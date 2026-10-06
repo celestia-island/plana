@@ -497,9 +497,17 @@ mod tests {
         let mut b = LlmStreamBuilder::new();
         b.push_chunk("hel", StreamChunkKind::Text);
         let first = b.segments()[0].wall_ts().expect("creation stamps");
+        // A real stamp: past-2023 epoch (kills a miswired clock returning
+        // constants) — 2ms sleep so the refresh check below is strictly
+        // deterministic despite millisecond truncation.
+        assert!(
+            first > 1_700_000_000_000,
+            "the stamp must be a real wall clock, got {first}"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(2));
         b.push_chunk("lo", StreamChunkKind::Text);
         let refreshed = b.segments()[0].wall_ts().expect("append keeps the stamp");
-        assert!(refreshed >= first, "the stamp rides the LAST activity");
+        assert!(refreshed > first, "the stamp rides the LAST activity");
         assert_eq!(b.segments().len(), 1, "appends coalesce");
         let call = Uuid::now_v7();
         b.push_tool_call("exec".to_string(), call, None, None);
@@ -533,10 +541,7 @@ mod tests {
                 .expect("stamped wire");
         assert_eq!(stamped.wall_ts(), Some(1_790_000_000_123));
         let wire = serde_json::to_value(&stamped).expect("serialize");
-        assert_eq!(
-            wire["Text"]["ts"].as_u64(),
-            Some(1_790_000_000_123)
-        );
+        assert_eq!(wire["Text"]["ts"].as_u64(), Some(1_790_000_000_123));
     }
 
     #[test]
