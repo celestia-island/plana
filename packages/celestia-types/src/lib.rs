@@ -291,6 +291,13 @@ pub enum StreamSegment {
         #[ts(optional)]
         #[ts(type = "string")]
         message_id: Option<uuid::Uuid>,
+        /// Wall-clock ms epoch at the segment's last activity — mirrors
+        /// plana_text's segment stamp (plana #407) so the two shapes stay
+        /// aligned; absent on legacy/hand-built values.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        #[ts(type = "number")]
+        ts: Option<u64>,
     },
     Thinking {
         text: String,
@@ -298,6 +305,10 @@ pub enum StreamSegment {
         #[ts(optional)]
         #[ts(type = "string")]
         message_id: Option<uuid::Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        #[ts(type = "number")]
+        ts: Option<u64>,
     },
     DeepThinking {
         text: String,
@@ -305,6 +316,10 @@ pub enum StreamSegment {
         #[ts(optional)]
         #[ts(type = "string")]
         message_id: Option<uuid::Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        #[ts(type = "number")]
+        ts: Option<u64>,
     },
     ToolCall {
         tool_name: String,
@@ -318,6 +333,10 @@ pub enum StreamSegment {
         #[ts(optional)]
         #[ts(type = "string")]
         message_id: Option<uuid::Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        #[ts(type = "number")]
+        ts: Option<u64>,
     },
     ToolResult {
         tool_name: String,
@@ -335,6 +354,10 @@ pub enum StreamSegment {
         #[ts(optional)]
         #[ts(type = "string")]
         message_id: Option<uuid::Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        #[ts(type = "number")]
+        ts: Option<u64>,
     },
 }
 
@@ -865,10 +888,33 @@ mod tests {
         let seg = StreamSegment::Text {
             text: "hello".into(),
             message_id: None,
+            ts: None,
         };
         let v = serde_json::to_value(&seg).unwrap();
         // Externally tagged enum: {"Text": {"text": "hello", "message_id": null}}
         assert_eq!(v["Text"]["text"], "hello");
+        // The ts half of the #407 alignment: absent stays OFF the wire,
+        // present rides as a number, and legacy rows deserialize to None.
+        assert!(v["Text"].get("ts").is_none());
+        let stamped: StreamSegment = serde_json::from_value(json!({
+            "Text": {"text": "hi", "ts": 1790000000123u64}
+        }))
+        .unwrap();
+        match stamped {
+            StreamSegment::Text {
+                ts: Some(1_790_000_000_123),
+                ..
+            } => {}
+            other => panic!("expected a stamped Text, got {other:?}"),
+        }
+        let legacy: StreamSegment = serde_json::from_value(json!({
+            "Text": {"text": "hi"}
+        }))
+        .unwrap();
+        match legacy {
+            StreamSegment::Text { ts: None, .. } => {}
+            other => panic!("expected an unstamped Text, got {other:?}"),
+        }
         let back: StreamSegment = serde_json::from_value(v).unwrap();
         match back {
             StreamSegment::Text { text, .. } => assert_eq!(text, "hello"),
@@ -884,6 +930,7 @@ mod tests {
             params: json!({"path": "/etc/hosts"}),
             agent_type: None,
             message_id: None,
+            ts: None,
         };
         let v = serde_json::to_value(&seg).unwrap();
         let back: StreamSegment = serde_json::from_value(v).unwrap();
@@ -908,8 +955,11 @@ mod tests {
             duration_ms: Some(42),
             agent_type: Some("KaLos".into()),
             message_id: None,
+            ts: None,
         };
         let v = serde_json::to_value(&seg).unwrap();
+        // The ts omission is pinned on every variant, not just Text (R2 M1).
+        assert!(v["ToolResult"].get("ts").is_none());
         let back: StreamSegment = serde_json::from_value(v).unwrap();
         match back {
             StreamSegment::ToolResult {
