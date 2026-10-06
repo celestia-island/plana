@@ -958,6 +958,8 @@ mod tests {
             ts: None,
         };
         let v = serde_json::to_value(&seg).unwrap();
+        // The ts omission is pinned on every variant, not just Text (R2 M1).
+        assert!(v["ToolResult"].get("ts").is_none());
         let back: StreamSegment = serde_json::from_value(v).unwrap();
         match back {
             StreamSegment::ToolResult {
