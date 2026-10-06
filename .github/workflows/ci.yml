@@ -118,6 +118,11 @@ jobs:
           # The vendored copies are byte-compared against the foundation's
           # generated files; --check prints the first divergence.
           python3 scripts/vendor_http_types.py --check
+          # The flat surface: every type a named-list file generates must
+          # be either listed in index.ts or documented as a deliberate
+          # shadow in its collision ledger — this is the gate that would
+          # have caught VersionReport shipping absent (2026-10-06 audit).
+          python3 scripts/check_flat_surface.py
 
   verify-versions:
     name: Verify version consistency

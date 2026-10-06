@@ -105,6 +105,9 @@ gen target='bindings':
         # The vendored copy is not a ts-rs product; regenerate it from the
         # foundation's fresh bindings so the published package cannot drift.
         run(["python3", "scripts/vendor_http_types.py"])
+        # Flat-surface completeness: new generated names must be listed in
+        # index.ts (or ledgered as deliberate shadows) before they land.
+        run(["python3", "scripts/check_flat_surface.py"])
     else:
         print("Usage: just gen bindings")
         sys.exit(1)
