@@ -22,6 +22,15 @@ impl LlmStreamBuilder {
         self.push_chunk_with_id(chunk, kind, None)
     }
 
+    /// Wall clock for segment stamps — ms epoch. A free function so the
+    /// stamping policy (one clock read per push) stays inspectable.
+    fn now_ms() -> u64 {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0)
+    }
+
     fn push_chunk_with_id(&mut self, chunk: &str, kind: StreamChunkKind, message_id: Option<Uuid>) {
         if chunk.is_empty() {
             return;
@@ -38,11 +47,28 @@ impl LlmStreamBuilder {
             );
             if compatible {
                 let incoming_mid = message_id;
+                let now = Some(Self::now_ms());
                 match last {
-                    StreamSegment::Text { text, message_id }
-                    | StreamSegment::Thinking { text, message_id }
-                    | StreamSegment::DeepThinking { text, message_id } => {
+                    StreamSegment::Text {
+                        text,
+                        message_id,
+                        ts,
+                    }
+                    | StreamSegment::Thinking {
+                        text,
+                        message_id,
+                        ts,
+                    }
+                    | StreamSegment::DeepThinking {
+                        text,
+                        message_id,
+                        ts,
+                    } => {
                         text.push_str(chunk);
+                        // The segment's stamp rides its LAST activity, so
+                        // a long streaming text block ends with the moment
+                        // it finished — the span consumers want.
+                        *ts = now;
                         if incoming_mid.is_some() {
                             *message_id = incoming_mid;
                         }
@@ -54,18 +80,22 @@ impl LlmStreamBuilder {
                 return;
             }
         }
+        let ts = Some(Self::now_ms());
         let seg = match kind {
             StreamChunkKind::Text => StreamSegment::Text {
                 text: chunk.to_string(),
                 message_id,
+                ts,
             },
             StreamChunkKind::Thinking => StreamSegment::Thinking {
                 text: chunk.to_string(),
                 message_id,
+                ts,
             },
             StreamChunkKind::DeepThinking => StreamSegment::DeepThinking {
                 text: chunk.to_string(),
                 message_id,
+                ts,
             },
         };
         self.segments.push(seg);
@@ -85,6 +115,7 @@ impl LlmStreamBuilder {
             params: params.unwrap_or(Value::Null),
             agent_type,
             message_id: None,
+            ts: Some(Self::now_ms()),
         });
     }
 
@@ -140,6 +171,7 @@ impl LlmStreamBuilder {
             duration_ms,
             agent_type,
             message_id: None,
+            ts: Some(Self::now_ms()),
         });
     }
 
@@ -160,6 +192,7 @@ impl LlmStreamBuilder {
             duration_ms,
             agent_type,
             message_id: None,
+            ts: Some(Self::now_ms()),
         };
         let pos = self
             .segments
@@ -306,6 +339,9 @@ impl LlmStreamBuilder {
                     duration_ms: None,
                     agent_type: agent_type.clone(),
                     message_id: None,
+                    // A synthetic close has no activity instant of its
+                    // own — no clock beats the seal time.
+                    ts: None,
                 });
                 closed_ids.insert(*call_id);
             }
