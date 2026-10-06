@@ -312,6 +312,13 @@ pub struct ModelEntry {
     pub name: String,
     pub provider_id: String,
     pub api_model: String,
+    /// Registry identity of this model (D2, 2026-10-07): the UUIDv7
+    /// minted by the authoritative catalog (arona) at registration, or
+    /// by [`ProviderConfigData::migrate_in_memory`] for hand-written
+    /// toml. End-to-end consumers key on this — display strings may
+    /// drift between stores, this does not.
+    #[serde(default)]
+    pub uuid: Uuid,
     #[serde(default = "default_true")]
     pub is_enabled: bool,
     #[serde(default)]
@@ -371,9 +378,12 @@ pub struct ProviderConfigData {
 }
 
 impl ProviderConfigData {
-    /// In-memory migration for backward compatibility:
-    /// 1. Generate UUIDs for providers that have nil UUIDs
-    /// 2. Build priority_orders from legacy priority values if none exist
+    /// In-memory migration for backward compatibility. First it
+    /// generates UUIDv7s for providers and models that deserialize with
+    /// nil UUIDs (the model half is the D2 identity wave, 2026-10-07 —
+    /// persisted configs predating the field fall back to a fresh mint
+    /// here); then, when no priority_orders exist, it derives them from
+    /// the legacy per-model priority values.
     fn migrate_in_memory(&mut self) {
         // 1. Generate UUIDs
         for provider in self.providers.iter_mut() {
@@ -382,6 +392,17 @@ impl ProviderConfigData {
                 trace!(
                     "[ProviderConfig] Generated UUID {} for provider {}",
                     provider.uuid, provider.id
+                );
+            }
+        }
+
+        // 1b. Generate model UUIDs
+        for model in self.models.iter_mut() {
+            if model.uuid.is_nil() {
+                model.uuid = Uuid::now_v7();
+                trace!(
+                    "[ProviderConfig] Generated UUID {} for model {}",
+                    model.uuid, model.id
                 );
             }
         }
@@ -678,6 +699,9 @@ fn push_tier_models_from_toml(
             name: model_name.to_string(),
             provider_id: ep.entrypoint_id.clone(),
             api_model: model_name.to_string(),
+            // Env/entrypoint derivation bypasses migrate_in_memory, so
+            // the identity is minted right here.
+            uuid: Uuid::now_v7(),
             is_enabled: true,
             is_custom: false,
             priority: 0,
@@ -843,6 +867,8 @@ fn push_tier_models(
         name: model.to_string(),
         provider_id: provider_id.to_string(),
         api_model: model.to_string(),
+        // Placeholder identity — every tier row mints its own below.
+        uuid: Uuid::nil(),
         is_enabled: true,
         is_custom: false,
         priority: 0,
@@ -867,11 +893,15 @@ fn push_tier_models(
     };
 
     for tier in ["deep", TIER_NORMAL, "basic"] {
-        models.push(ModelEntry {
-            tier: tier.to_string(),
-            id: format!("{}_{}", provider_id, tier),
-            ..base.clone()
-        });
+        let mut row = base.clone();
+        // Per-row identity (R1' verifier finding): each tier row is a
+        // distinct selector candidate and the accounting chain keys on
+        // the row that served — sharing one uuid across the three rows
+        // would conflate them.
+        row.uuid = Uuid::now_v7();
+        row.tier = tier.to_string();
+        row.id = format!("{}_{}", provider_id, tier);
+        models.push(row);
         priority_orders.push(PriorityOrderEntry {
             tier: tier.to_string(),
             provider_uuids: vec![provider_uuid],
@@ -1091,6 +1121,93 @@ mod tests {
     }
 
     /// Build a minimal ProviderEntry for tests.
+    /// Model identity migration (D2): hand-written toml without model
+    /// uuids deserializes to nil and migrate_in_memory mints fresh v7s;
+    /// authored uuids survive untouched.
+    #[test]
+    fn migrate_mints_nil_model_uuids_and_keeps_authored() {
+        let mut data = ProviderConfigData::default();
+        let provider_uuid = Uuid::now_v7();
+        data.providers.push(mk_provider("p1", provider_uuid));
+        // Constructed nil on purpose: mk_model mints at construction, so
+        // the mint must be undone here or the migration's nil branch
+        // never fires (R1 verifier finding — the mutation stayed green).
+        let mut nil_entry = mk_model("p1", "normal", "m-nil");
+        nil_entry.uuid = Uuid::nil();
+        data.models.push(nil_entry);
+        let authored = Uuid::now_v7();
+        let mut kept = mk_model("p1", "deep", "m-kept");
+        kept.uuid = authored;
+        data.models.push(kept);
+
+        data.migrate_in_memory();
+
+        let nil_entry = data.models.iter().find(|m| m.api_model == "m-nil").unwrap();
+        assert!(!nil_entry.uuid.is_nil(), "nil model uuid must be minted");
+        let kept_entry = data
+            .models
+            .iter()
+            .find(|m| m.api_model == "m-kept")
+            .unwrap();
+        assert_eq!(kept_entry.uuid, authored, "authored model uuid survives");
+    }
+
+    /// Per-row identity in the env derivation's tier spread (R1'
+    /// verifier finding): deep/normal/basic are distinct selector
+    /// candidates and must not share one uuid.
+    #[test]
+    fn env_tier_rows_carry_distinct_identities() {
+        let mut models: Vec<ModelEntry> = Vec::new();
+        let mut orders: Vec<PriorityOrderEntry> = Vec::new();
+        push_tier_models(
+            "env_default",
+            "gpt-x",
+            Uuid::now_v7(),
+            &mut models,
+            &mut orders,
+        );
+        assert_eq!(models.len(), 3, "one row per tier");
+        let ids: Vec<Uuid> = models.iter().map(|m| m.uuid).collect();
+        assert!(ids.iter().all(|u| !u.is_nil()), "every tier row is minted");
+        assert_eq!(
+            ids.iter().collect::<std::collections::HashSet<_>>().len(),
+            3,
+            "tier rows must not share one identity"
+        );
+        assert_eq!(models[0].api_model, "gpt-x");
+        assert_eq!(models[2].id, "env_default_basic");
+    }
+
+    /// The uuid rides serde round-trips (the authoritative catalog sends
+    /// it; the toml persists it) — unknown-field tolerance is NOT enough,
+    /// the field must be read back.
+    #[test]
+    fn model_uuid_round_trips_through_serde() {
+        let mut m = mk_model("p1", "normal", "m-rt");
+        let minted = Uuid::now_v7();
+        m.uuid = minted;
+        let json = serde_json::to_string(&m).expect("serialize");
+        assert!(
+            json.contains(&minted.to_string()),
+            "uuid serialized: {json}"
+        );
+        let back: ModelEntry = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.uuid, minted);
+        // A payload WITHOUT the field still parses (older catalogs omit
+        // it — serde default) and answers nil — the migration's cue. An
+        // explicit null is NOT the absent case and stays a parse error.
+        let mut legacy_json: serde_json::Value = serde_json::from_str(&json).expect("value parse");
+        assert!(
+            legacy_json
+                .as_object_mut()
+                .unwrap()
+                .remove("uuid")
+                .is_some()
+        );
+        let legacy: ModelEntry = serde_json::from_value(legacy_json).expect("legacy parses");
+        assert!(legacy.uuid.is_nil());
+    }
+
     fn mk_provider(id: &str, uuid: Uuid) -> ProviderEntry {
         ProviderEntry {
             id: id.to_string(),
@@ -1114,6 +1231,7 @@ mod tests {
             name: api_model.to_string(),
             provider_id: provider_id.to_string(),
             api_model: api_model.to_string(),
+            uuid: Uuid::now_v7(),
             is_enabled: true,
             is_custom: false,
             priority: 0,
