@@ -16,6 +16,8 @@
 //!   threads and emit tracing spans, making production thread dumps actionable.
 //! - **`panic_guard`** / **`async_bridge`** — small utilities for safe panic recovery
 //!   and bridging sync ↔ async boundaries.
+//! - **`secret_box`** — AES-256-GCM sealing for at-rest credential columns
+//!   (provider API keys and friends), shared by the services that store them.
 //!
 //! Design principle: these are *policy-free* mechanisms. The circuit breaker doesn't
 //! decide which calls should be protected — the caller does. The pubsub bus doesn't
@@ -28,6 +30,7 @@ pub mod device_id;
 pub mod kv;
 pub mod panic_guard;
 pub mod pubsub;
+pub mod secret_box;
 pub mod soc;
 pub mod thread_audit;
 
