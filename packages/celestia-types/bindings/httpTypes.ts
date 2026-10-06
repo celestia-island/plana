@@ -46,7 +46,7 @@ export type ModelInfo = { id: string, provider_name: string, provider_id: string
 
 export type ProjectItem = { id: string, name: string, description: string | null, sort_order: number, created_at: string, updated_at: string, };
 
-export type ProviderPublic = { id: string, name: string, endpoint: string, api_key_masked: string, models: Array<string>, category: string, is_default: boolean, enabled: boolean, priority: number, };
+export type ProviderPublic = { id: string, name: string, endpoint: string, api_key_masked: string, models: Array<string>, category: string, enabled: boolean, priority: number, };
 
 export type ProxySystemInfo = { version: string, nodeVersion: string, platform: string, cpuUsage: number, memoryUsage: number, diskUsage: number, };
 
