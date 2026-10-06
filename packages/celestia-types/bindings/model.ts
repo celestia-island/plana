@@ -2,6 +2,20 @@
 import type { ModelTier } from "./ws/core";
 
 /**
+ * How a model-management catalog entry is deployed and managed
+ * (shittim-chest PR #1430's P1 wave, adjudicated 2026-10-06).
+ *
+ * The **management axis** of the P2 "add model" flow: `cloud` entries are
+ * provider registrations (an endpoint + credentials chest stores and
+ * probes, today's `llm_providers` rows); `local` entries are engine-side
+ * installations (P3: a `speech_engines` row publishes into the catalog as
+ * `mode = local`, `engine = whisper/cep/…`). Distinct from
+ * [`ModelBackend`], the evernight execution axis (remote API vs GPU vs
+ * CPU) — a `local` whisper container may still run on either backend.
+ */
+export type DeploymentMode = "cloud" | "local";
+
+/**
  * Generation quality tier — applies to image / 3D generation models.
  *
  * Distinct from [`super::ModelTier`] (which ranks LLM reasoning depth),
@@ -211,6 +225,30 @@ export type ModelServerKind = "ollama" | "whisper_cpp" | "vllm";
  * Status of a local model server (ollama, whisper.cpp, …).
  */
 export type ModelServerStatus = "running" | "starting" | "stopped" | "failed";
+
+/**
+ * Coarse catalog-level type of a model-management directory entry
+ * (shittim-chest PR #1430's P1 wave, adjudicated 2026-10-06).
+ *
+ * This is the **catalog axis** — "how does the directory describe this
+ * entry to a human picking something to add?" — and is deliberately
+ * coarser than [`ModelCategory`], the consumer axis that routes a model
+ * to the subsystem that runs it (`speech_to_text` vs `text_to_speech`
+ * split there; one `realtime_voice` here, because a voice-engine
+ * registration carries STT · TTS · duplex as one installable unit).
+ * `embedding` exists on both axes under the same name. Map between the
+ * two at the consumer site; do not merge them.
+ *
+ * Grounded in the values chest stores today, not invented:
+ *
+ * | Variant | Existing anchor |
+ * |---|---|
+ * | `llm` | every stock `llm_providers.category` row (`"chat"` migrates to `llm`) |
+ * | `realtime_voice` | `speech_engines.kind` = `whisper_docker` / `cloud_endpoint` / `cep_engine` |
+ * | `vision_caption` / `action_recognition` | the P1 proposal's edge-input set (fast perception feeding the world-model layer) |
+ * | `embedding` | a `llm_providers.category` value the seed-JSON channel can carry (chest's seed test sample) |
+ */
+export type ModelType = "llm" | "realtime_voice" | "vision_caption" | "action_recognition" | "embedding";
 
 /**
  * `Sync.RequestModelInference` — ask the engine to run a model.

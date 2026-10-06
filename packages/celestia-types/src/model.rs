@@ -203,6 +203,154 @@ pub enum ModelBackend {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Model-management catalog — ModelType × DeploymentMode
+// ═══════════════════════════════════════════════════════════════
+
+/// Coarse catalog-level type of a model-management directory entry
+/// (shittim-chest PR #1430's P1 wave, adjudicated 2026-10-06).
+///
+/// This is the **catalog axis** — "how does the directory describe this
+/// entry to a human picking something to add?" — and is deliberately
+/// coarser than [`ModelCategory`], the consumer axis that routes a model
+/// to the subsystem that runs it (`speech_to_text` vs `text_to_speech`
+/// split there; one `realtime_voice` here, because a voice-engine
+/// registration carries STT · TTS · duplex as one installable unit).
+/// `embedding` exists on both axes under the same name. Map between the
+/// two at the consumer site; do not merge them.
+///
+/// Grounded in the values chest stores today, not invented:
+///
+/// | Variant | Existing anchor |
+/// |---|---|
+/// | `llm` | every stock `llm_providers.category` row (`"chat"` migrates to `llm`) |
+/// | `realtime_voice` | `speech_engines.kind` = `whisper_docker` / `cloud_endpoint` / `cep_engine` |
+/// | `vision_caption` / `action_recognition` | the P1 proposal's edge-input set (fast perception feeding the world-model layer) |
+/// | `embedding` | a `llm_providers.category` value the seed-JSON channel can carry (chest's seed test sample) |
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "model.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum ModelType {
+    /// Large language model — chat, reasoning, tool use (cloud provider or
+    /// local engine).
+    Llm,
+    /// Realtime voice engine — speech-to-text · text-to-speech · duplex
+    /// sessions as one installable unit (whisper / cloud STT / CEP).
+    RealtimeVoice,
+    /// Fast image captioning — edge vision input for the world model.
+    VisionCaption,
+    /// Action / gesture recognition — edge video input for the world model.
+    ActionRecognition,
+    /// Text embedding model — vectors for RAG / similarity.
+    Embedding,
+}
+
+impl ModelType {
+    /// Canonical wire string (matches the serde representation).
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Llm => "llm",
+            Self::RealtimeVoice => "realtime_voice",
+            Self::VisionCaption => "vision_caption",
+            Self::ActionRecognition => "action_recognition",
+            Self::Embedding => "embedding",
+        }
+    }
+
+    /// Parse a legacy free-text `llm_providers.category` value (chest stores
+    /// the column as an unchecked `String`).
+    ///
+    /// `"chat"` — the column default every stock row carries (the env
+    /// override's documented domain is `chat`/`image`) — maps to
+    /// [`ModelType::Llm`] (PR #1430: the ever-`"chat"` stock rows migrate
+    /// smoothly to `llm`); `"embedding"` — a value chest's provider-seed
+    /// JSON can carry (its seed test uses exactly this sample) — maps to
+    /// [`ModelType::Embedding`]; the canonical [`ModelType::as_str`] values
+    /// pass through unchanged. This is a **whitelist, not an exhaustive
+    /// domain**: the column accepts any string (seed JSON can write
+    /// arbitrary values, and the env-documented domain also names `image`),
+    /// so anything unmapped returns `None` for the caller to surface —
+    /// never a silent fallback.
+    pub fn from_legacy_category(raw: &str) -> Option<Self> {
+        match raw {
+            "chat" => Some(Self::Llm),
+            s => Self::all().into_iter().find(|t| t.as_str() == s),
+        }
+    }
+
+    /// Every variant, in declaration order (drives round-trip tests).
+    pub fn all() -> [Self; 5] {
+        [
+            Self::Llm,
+            Self::RealtimeVoice,
+            Self::VisionCaption,
+            Self::ActionRecognition,
+            Self::Embedding,
+        ]
+    }
+}
+
+impl std::fmt::Display for ModelType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl From<ModelType> for String {
+    fn from(v: ModelType) -> String {
+        v.as_str().to_string()
+    }
+}
+
+/// How a model-management catalog entry is deployed and managed
+/// (shittim-chest PR #1430's P1 wave, adjudicated 2026-10-06).
+///
+/// The **management axis** of the P2 "add model" flow: `cloud` entries are
+/// provider registrations (an endpoint + credentials chest stores and
+/// probes, today's `llm_providers` rows); `local` entries are engine-side
+/// installations (P3: a `speech_engines` row publishes into the catalog as
+/// `mode = local`, `engine = whisper/cep/…`). Distinct from
+/// [`ModelBackend`], the evernight execution axis (remote API vs GPU vs
+/// CPU) — a `local` whisper container may still run on either backend.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS, JsonSchema)]
+#[ts(export, export_to = "model.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum DeploymentMode {
+    /// Cloud provider registration — external endpoint + key, nothing
+    /// deployed locally.
+    Cloud,
+    /// Local engine installation — deployed/registered on the engine side
+    /// (chest-hosted container or a locally-registered external engine).
+    Local,
+}
+
+impl DeploymentMode {
+    /// Canonical wire string (matches the serde representation).
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Cloud => "cloud",
+            Self::Local => "local",
+        }
+    }
+
+    /// Every variant, in declaration order (drives round-trip tests).
+    pub fn all() -> [Self; 2] {
+        [Self::Cloud, Self::Local]
+    }
+}
+
+impl std::fmt::Display for DeploymentMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl From<DeploymentMode> for String {
+    fn from(v: DeploymentMode) -> String {
+        v.as_str().to_string()
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Model descriptor — unified description of any model
 // ═══════════════════════════════════════════════════════════════
 
@@ -418,4 +566,126 @@ pub enum ModelServerAction {
     Start,
     Stop,
     Restart,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── ModelType / DeploymentMode wire contract ───────────────────
+    //
+    // The exact snake_case strings are the cross-repo contract (the TS
+    // union members chest/arona will switch on, and the values a consumer
+    // writes back into chest's free-text `llm_providers.category` column).
+    // They are pinned literally — a renamed variant must be a deliberate
+    // wire break, not a silent reshuffle.
+
+    #[test]
+    fn model_type_wire_strings_are_pinned() {
+        let expected = [
+            "llm",
+            "realtime_voice",
+            "vision_caption",
+            "action_recognition",
+            "embedding",
+        ];
+        for (variant, want) in ModelType::all().into_iter().zip(expected) {
+            assert_eq!(variant.to_string(), want);
+            assert_eq!(variant.as_str(), want);
+            assert_eq!(String::from(variant), want);
+            // serde and as_str must agree — unlike the str_enum! vocabulary
+            // in `enums.rs` (documented PascalCase divergence there), these
+            // catalog types are new with no legacy wire to honor.
+            assert_eq!(
+                serde_json::to_string(&variant).unwrap(),
+                format!("{want:?}")
+            );
+        }
+    }
+
+    #[test]
+    fn deployment_mode_wire_strings_are_pinned() {
+        for (variant, want) in DeploymentMode::all().into_iter().zip(["cloud", "local"]) {
+            assert_eq!(variant.to_string(), want);
+            assert_eq!(variant.as_str(), want);
+            assert_eq!(String::from(variant), want);
+            assert_eq!(
+                serde_json::to_string(&variant).unwrap(),
+                format!("{want:?}")
+            );
+        }
+    }
+
+    #[test]
+    fn catalog_enums_round_trip_through_serde() {
+        for variant in ModelType::all() {
+            let json = serde_json::to_string(&variant).unwrap();
+            let back: ModelType = serde_json::from_str(&json).unwrap();
+            assert_eq!(back, variant);
+        }
+        for variant in DeploymentMode::all() {
+            let json = serde_json::to_string(&variant).unwrap();
+            let back: DeploymentMode = serde_json::from_str(&json).unwrap();
+            assert_eq!(back, variant);
+        }
+    }
+
+    #[test]
+    fn unknown_wire_values_are_rejected_not_guessed() {
+        // No silent fallback: a value outside the pinned set must error,
+        // so a typo surfaces at the boundary instead of masquerading as a
+        // default (configuration-concentration rule ③).
+        for raw in ["chat", "generation_image", "Chat", "LLM", ""] {
+            assert!(
+                serde_json::from_str::<ModelType>(&format!("{raw:?}")).is_err(),
+                "raw {raw:?} must not deserialize as a ModelType"
+            );
+            assert!(
+                serde_json::from_str::<DeploymentMode>(&format!("{raw:?}")).is_err(),
+                "raw {raw:?} must not deserialize as a DeploymentMode"
+            );
+        }
+    }
+
+    #[test]
+    fn legacy_category_maps_chat_and_passthrough() {
+        // Legacy anchors, not an exhaustive domain (the column is an
+        // unchecked String): the default "chat" every stock row carries,
+        // and "embedding" — the seed-JSON test sample. Anything unmapped
+        // must surface as None below.
+        assert_eq!(
+            ModelType::from_legacy_category("chat"),
+            Some(ModelType::Llm)
+        );
+        assert_eq!(
+            ModelType::from_legacy_category("embedding"),
+            Some(ModelType::Embedding)
+        );
+        // Canonical names pass through — one entry point for the column.
+        for variant in ModelType::all() {
+            assert_eq!(
+                ModelType::from_legacy_category(variant.as_str()),
+                Some(variant)
+            );
+        }
+        // Anything else is unknown, not guessed. "image" is deliberate:
+        // chest's env-documented domain names it, and P1 has no variant
+        // for it yet — the caller must surface it, not get a guess.
+        for raw in ["gpt", "Chat", "stt", "generation_image", "image", ""] {
+            assert_eq!(ModelType::from_legacy_category(raw), None, "raw {raw:?}");
+        }
+    }
+
+    #[test]
+    fn catalog_surface_resolves_at_expected_paths() {
+        // Compile-time pin of the public paths consumers will import from —
+        // the crate-root named list in lib.rs (same footgun the TS flat
+        // surface hit: a type missing from the list stays deep-import-only).
+        fn _path_pins() {
+            let _ = crate::ModelType::Llm;
+            let _ = crate::model::ModelType::Llm;
+            let _ = crate::DeploymentMode::Cloud;
+            let _ = crate::model::DeploymentMode::Cloud;
+        }
+    }
 }
