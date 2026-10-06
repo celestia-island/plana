@@ -37,9 +37,6 @@ pub struct ProviderPublic {
     /// Capability class of the provider, `chat` for conversational endpoints; copied to every
     /// model row of this provider.
     pub category: String,
-    /// Whether this provider answers for model ids no provider lists; when no row is marked,
-    /// the first loaded provider is used instead.
-    pub is_default: bool,
     /// Whether the provider takes part in routing; disabled rows stay in the list but are
     /// skipped when the registry is loaded.
     pub enabled: bool,
