@@ -9,6 +9,7 @@ fn txt(text: &str) -> StreamSegment {
     StreamSegment::Text {
         text: text.to_string(),
         message_id: None,
+        ts: None,
     }
 }
 
@@ -25,6 +26,7 @@ fn tool_call(tool: &str, call_id: Uuid, text: &str) -> StreamSegment {
         params,
         agent_type: Some("haplotes".to_string()),
         message_id: None,
+        ts: None,
     }
 }
 
@@ -53,6 +55,7 @@ fn tool_result(
         duration_ms: dur_ms,
         agent_type: Some("haplotes".to_string()),
         message_id: None,
+        ts: None,
     }
 }
 

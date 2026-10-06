@@ -37,16 +37,27 @@ pub enum StreamSegment {
         text: String,
         #[serde(default)]
         message_id: Option<Uuid>,
+        /// Wall-clock ms epoch at the segment's LAST activity (creation
+        /// or latest append) — stamped by `LlmStreamBuilder` at push
+        /// time. Absent on legacy rows (serde default) and on segments
+        /// built by hand; consumers must treat `None` as "no clock"
+        /// exactly like a pre-field wire row.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ts: Option<u64>,
     },
     Thinking {
         text: String,
         #[serde(default)]
         message_id: Option<Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ts: Option<u64>,
     },
     DeepThinking {
         text: String,
         #[serde(default)]
         message_id: Option<Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ts: Option<u64>,
     },
     ToolCall {
         tool_name: String,
@@ -56,6 +67,8 @@ pub enum StreamSegment {
         agent_type: Option<String>,
         #[serde(default)]
         message_id: Option<Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ts: Option<u64>,
     },
     ToolResult {
         tool_name: String,
@@ -68,6 +81,8 @@ pub enum StreamSegment {
         agent_type: Option<String>,
         #[serde(default)]
         message_id: Option<Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ts: Option<u64>,
     },
 }
 
@@ -104,6 +119,19 @@ impl StreamSegment {
 
     pub fn is_tool(&self) -> bool {
         matches!(self, Self::ToolCall { .. } | Self::ToolResult { .. })
+    }
+
+    /// The segment's wall-clock stamp, when the builder recorded one.
+    /// `None` = legacy/hand-built segment — consumers must fall back to
+    /// their own sequencing, never to a fake clock.
+    pub fn wall_ts(&self) -> Option<u64> {
+        match self {
+            Self::Text { ts, .. }
+            | Self::Thinking { ts, .. }
+            | Self::DeepThinking { ts, .. }
+            | Self::ToolCall { ts, .. }
+            | Self::ToolResult { ts, .. } => *ts,
+        }
     }
 
     pub fn is_thinking(&self) -> bool {
@@ -464,10 +492,64 @@ mod tests {
     }
 
     #[test]
+    fn builder_stamps_a_wall_clock_on_every_push() {
+        use super::super::LlmStreamBuilder;
+        let mut b = LlmStreamBuilder::new();
+        b.push_chunk("hel", StreamChunkKind::Text);
+        let first = b.segments()[0].wall_ts().expect("creation stamps");
+        // A real stamp: past-2023 epoch (kills a miswired clock returning
+        // constants) — 2ms sleep so the refresh check below is strictly
+        // deterministic despite millisecond truncation.
+        assert!(
+            first > 1_700_000_000_000,
+            "the stamp must be a real wall clock, got {first}"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(2));
+        b.push_chunk("lo", StreamChunkKind::Text);
+        let refreshed = b.segments()[0].wall_ts().expect("append keeps the stamp");
+        assert!(refreshed > first, "the stamp rides the LAST activity");
+        assert_eq!(b.segments().len(), 1, "appends coalesce");
+        let call = Uuid::now_v7();
+        b.push_tool_call("exec".to_string(), call, None, None);
+        b.push_tool_result(
+            "exec".to_string(),
+            call,
+            serde_json::json!("ok"),
+            true,
+            Some(3),
+            None,
+        );
+        assert!(b.segments()[1].wall_ts().is_some(), "tool calls stamp");
+        assert!(b.segments()[2].wall_ts().is_some(), "tool results stamp");
+    }
+
+    #[test]
+    fn ts_is_off_the_wire_when_absent_and_a_number_when_present() {
+        // Legacy rows (pre-field) deserialize to None and re-serialize
+        // WITHOUT the key — the old wire shape is preserved exactly.
+        let legacy: StreamSegment =
+            serde_json::from_str(r#"{"Text":{"text":"hi"}}"#).expect("legacy wire");
+        assert_eq!(legacy.wall_ts(), None);
+        let wire = serde_json::to_value(&legacy).expect("serialize");
+        assert!(
+            wire["Text"].get("ts").is_none(),
+            "absent stays off the wire"
+        );
+
+        let stamped: StreamSegment =
+            serde_json::from_str(r#"{"Text":{"text":"hi","ts":1790000000123}}"#)
+                .expect("stamped wire");
+        assert_eq!(stamped.wall_ts(), Some(1_790_000_000_123));
+        let wire = serde_json::to_value(&stamped).expect("serialize");
+        assert_eq!(wire["Text"]["ts"].as_u64(), Some(1_790_000_000_123));
+    }
+
+    #[test]
     fn test_text_segment_returns_string_directly() -> Result<()> {
         let seg = StreamSegment::Text {
             text: "hello".to_string(),
             message_id: None,
+            ts: None,
         };
         assert_eq!(seg.text(), "hello");
         Ok(())
@@ -481,6 +563,7 @@ mod tests {
             params: serde_json::json!({"code": "import { report } from 'hubris'; report({text: 'hi'})"}),
             agent_type: None,
             message_id: None,
+            ts: None,
         };
         let params = seg.tool_params().context("expected tool params")?;
         assert_eq!(
@@ -500,6 +583,7 @@ mod tests {
             duration_ms: None,
             agent_type: None,
             message_id: None,
+            ts: None,
         };
         let data = seg
             .tool_result_data()

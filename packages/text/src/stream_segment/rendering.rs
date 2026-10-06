@@ -23,6 +23,7 @@ impl LlmStream {
             vec![StreamSegment::Text {
                 text: text.to_string(),
                 message_id: None,
+                ts: None,
             }]
         };
         Self { segments }
@@ -116,6 +117,7 @@ impl LlmStream {
                     duration_ms,
                     agent_type,
                     message_id: None,
+                    ts: None,
                 },
             );
             return true;
