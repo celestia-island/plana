@@ -87,6 +87,29 @@ str_enum!(ScriptLanguage {
     Layer2 = "layer2",
 });
 
+// Orthogonal outcome classes for a script execution. Replaces the previous
+// single-channel `exit_code` signalling: a timeout is not an exception, an
+// abandoned engine is not a timeout, and a validation rejection happens
+// before any code runs.
+str_enum!(ScriptExecutionOutcome {
+    Completed = "completed",
+    Exception = "exception",
+    Timeout = "timeout",
+    Violation = "violation",
+    OutputLimit = "output_limit",
+    EngineAbandoned = "engine_abandoned",
+});
+
+// Side-effect classification for tool dispatches made from inside a script
+// execution. The classifier is fail-closed: consumers must treat
+// `Undeclared` as the most conservative class (`Irreversible`).
+str_enum!(SideEffectClass {
+    Pure = "pure",
+    Stateful = "stateful",
+    Irreversible = "irreversible",
+    Undeclared = "undeclared",
+});
+
 str_enum!(ObservationType {
     Reading = "reading",
     Editing = "editing",
