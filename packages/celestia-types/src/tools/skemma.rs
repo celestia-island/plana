@@ -1,16 +1,68 @@
 use uuid::Uuid;
 
-use crate::enums::ScriptLanguage;
+use crate::enums::{ScriptExecutionOutcome, ScriptLanguage, SideEffectClass};
 
+/// Result of one `script_exec` run. `outcome` replaces the former
+/// `exit_code` with orthogonal failure classes; `value` carries the
+/// lossless JSON completion value of the program (distinct from the
+/// textual `stdout` console capture, which remains subject to the output
+/// limit — see `stdout_truncated`).
+///
+/// Invariants (producer contract; the DTO itself does not enforce):
+/// - `outcome == OutputLimit` implies `stdout_truncated == true`. The
+///   truncation marker covers `stdout` only — `stderr` has no separate
+///   flag, so engines that limit the streams jointly must mark the cut
+///   here and say so in `stderr`.
+/// - `value == None` means the completion was absent, undefined, or not
+///   losslessly expressible. A completion value of JSON `null` is
+///   indistinguishable from absence on the wire (`"value": null`
+///   collapses to `None` on deserialize) — the one known loss of the
+///   otherwise lossless boundary.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "tools/skemma.ts")]
 pub struct ScriptExecResult {
     pub language: ScriptLanguage,
     pub execution_id: Uuid,
-    pub exit_code: i32,
+    pub outcome: ScriptExecutionOutcome,
     pub duration_ms: u64,
     pub stdout: String,
     pub stderr: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<serde_json::Value>,
+    #[serde(default)]
+    pub stdout_truncated: bool,
+    #[serde(default)]
+    pub dispatches: Vec<ScriptDispatchRecord>,
+}
+
+/// One tool dispatch performed from inside a script execution, recorded as
+/// an implicit start/settle pair with parent linkage: `call_id` follows the
+/// `<execution_id>:js:<n>` scheme assigned in submission order.
+///
+/// Invariants (producer contract): `settled_at_ms >= started_at_ms`, both
+/// relative to the start of the enclosing execution. Consumers branch on
+/// `side_effect.effective()`, never on raw variant equality (fail-closed
+/// `Undeclared` handling).
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[ts(export, export_to = "tools/skemma.ts")]
+pub struct ScriptDispatchRecord {
+    pub call_id: String,
+    pub tool: String,
+    /// Milliseconds relative to the start of the enclosing execution.
+    pub started_at_ms: u64,
+    /// Milliseconds relative to the start of the enclosing execution; the
+    /// producer contract guarantees `settled_at_ms >= started_at_ms`.
+    pub settled_at_ms: u64,
+    pub ok: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    pub side_effect: SideEffectClass,
+    /// Whether the dispatch's platform-side effects were committed by the
+    /// enclosing execution's settlement. `false` on a settled record means
+    /// the effects were discarded with the program; irreversible dispatches
+    /// that already fired keep `committed = false` here as their audit
+    /// trail — the real-world side effect is not undoable.
+    pub committed: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
@@ -20,9 +72,11 @@ pub struct Layer2ScriptExecResult {
     pub agent: String,
     pub tool: String,
     pub execution_id: Uuid,
-    pub exit_code: i32,
+    pub outcome: ScriptExecutionOutcome,
     pub duration_ms: u64,
     pub output: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
@@ -275,20 +329,167 @@ mod tests {
     #[test]
     fn script_exec_result_round_trip() {
         let r = ScriptExecResult {
-            language: ScriptLanguage::Bash,
+            language: ScriptLanguage::Typescript,
             execution_id: Uuid::new_v4(),
-            exit_code: 0,
+            outcome: ScriptExecutionOutcome::Completed,
             duration_ms: 1500,
             stdout: "hello\n".into(),
             stderr: String::new(),
+            value: Some(serde_json::json!({"rows": 3})),
+            stdout_truncated: false,
+            dispatches: vec![ScriptDispatchRecord {
+                call_id: "018f3a2e-9c1d-7b4a-8e2f-1a2b3c4d5e6f:js:0".into(),
+                tool: "skemma.modbus_read".into(),
+                started_at_ms: 12,
+                settled_at_ms: 48,
+                ok: true,
+                error: None,
+                side_effect: SideEffectClass::Pure,
+                committed: true,
+            }],
         };
         let v = serde_json::to_value(&r).unwrap();
         // ScriptLanguage serializes as PascalCase variant name (serde default).
-        assert_eq!(v["language"], "Bash");
-        assert_eq!(v["exit_code"], 0);
+        assert_eq!(v["language"], "Typescript");
+        assert_eq!(v["outcome"], "Completed");
         assert_eq!(v["duration_ms"], 1500);
+        assert_eq!(v["value"]["rows"], 3);
+        assert_eq!(
+            v["dispatches"][0]["call_id"],
+            "018f3a2e-9c1d-7b4a-8e2f-1a2b3c4d5e6f:js:0"
+        );
+        assert_eq!(v["dispatches"][0]["side_effect"], "Pure");
+        assert_eq!(v["dispatches"][0]["committed"], true);
         let back: ScriptExecResult = serde_json::from_value(v).unwrap();
-        assert_eq!(back.language, ScriptLanguage::Bash);
+        assert_eq!(back.language, ScriptLanguage::Typescript);
+        assert_eq!(back.outcome, ScriptExecutionOutcome::Completed);
+        assert_eq!(back.dispatches.len(), 1);
+        assert_eq!(back.dispatches[0].settled_at_ms, 48);
+    }
+
+    #[test]
+    fn script_exec_result_omits_absent_value() {
+        let r = ScriptExecResult {
+            language: ScriptLanguage::Javascript,
+            execution_id: Uuid::new_v4(),
+            outcome: ScriptExecutionOutcome::Timeout,
+            duration_ms: 30_000,
+            stdout: String::new(),
+            stderr: "script exceeded timeout".into(),
+            value: None,
+            stdout_truncated: false,
+            dispatches: Vec::new(),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert!(v.get("value").is_none());
+        assert_eq!(v["outcome"], "Timeout");
+        // defaults materialize on deserialize
+        let back: ScriptExecResult = serde_json::from_value(v).unwrap();
+        assert!(back.dispatches.is_empty());
+    }
+
+    #[test]
+    fn dispatch_record_irreversible_undeclared_round_trip() {
+        let rec = ScriptDispatchRecord {
+            call_id: "x:js:1".into(),
+            tool: "neikos.git_push".into(),
+            started_at_ms: 100,
+            settled_at_ms: 250,
+            ok: true,
+            error: None,
+            side_effect: SideEffectClass::Irreversible,
+            committed: false,
+        };
+        let v = serde_json::to_value(&rec).unwrap();
+        assert_eq!(v["side_effect"], "Irreversible");
+        assert_eq!(v["committed"], false);
+        assert!(v.get("error").is_none());
+        let back: ScriptDispatchRecord = serde_json::from_value(v).unwrap();
+        assert_eq!(back.side_effect, SideEffectClass::Irreversible);
+    }
+
+    #[test]
+    fn script_exec_result_defaults_on_missing_fields() {
+        // Hand-written payload without the defaulted fields: the
+        // `#[serde(default)]` forward-compatibility path (a producer that
+        // knows `outcome` but predates value/truncation/dispatches).
+        let v: serde_json::Value = serde_json::json!({
+            "language": "Javascript",
+            "execution_id": Uuid::new_v4().to_string(),
+            "outcome": "Completed",
+            "duration_ms": 42,
+            "stdout": "ok",
+            "stderr": ""
+        });
+        let back: ScriptExecResult = serde_json::from_value(v).unwrap();
+        assert!(back.value.is_none());
+        assert!(!back.stdout_truncated);
+        assert!(back.dispatches.is_empty());
+    }
+
+    #[test]
+    fn script_exec_result_stdout_truncated_wire() {
+        let r = ScriptExecResult {
+            language: ScriptLanguage::Javascript,
+            execution_id: Uuid::new_v4(),
+            outcome: ScriptExecutionOutcome::OutputLimit,
+            duration_ms: 5,
+            stdout: "... [truncated]".into(),
+            stderr: String::new(),
+            value: None,
+            stdout_truncated: true,
+            dispatches: Vec::new(),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        // The marker is always on the wire, true in the truncated case —
+        // pinning the OutputLimit => stdout_truncated producer contract.
+        assert_eq!(v["stdout_truncated"], true);
+        let back: ScriptExecResult = serde_json::from_value(v).unwrap();
+        assert!(back.stdout_truncated);
+    }
+
+    #[test]
+    fn dispatch_record_undeclared_maps_irreversible() {
+        let rec = ScriptDispatchRecord {
+            call_id: "x:js:2".into(),
+            tool: "mystery_tool".into(),
+            started_at_ms: 10,
+            settled_at_ms: 30,
+            ok: true,
+            error: None,
+            side_effect: SideEffectClass::Undeclared,
+            committed: false,
+        };
+        let v = serde_json::to_value(&rec).unwrap();
+        assert_eq!(v["side_effect"], "Undeclared");
+        let back: ScriptDispatchRecord = serde_json::from_value(v).unwrap();
+        // Fail-closed canonical mapping: Undeclared acts as Irreversible.
+        assert_eq!(back.side_effect, SideEffectClass::Undeclared);
+        assert!(back.side_effect.is_irreversible());
+        assert_eq!(back.side_effect.effective(), SideEffectClass::Irreversible);
+        assert!(SideEffectClass::Irreversible.is_irreversible());
+        assert!(!SideEffectClass::Pure.is_irreversible());
+        assert!(!SideEffectClass::Stateful.is_irreversible());
+        assert_eq!(SideEffectClass::Pure.effective(), SideEffectClass::Pure);
+    }
+
+    #[test]
+    fn layer2_script_exec_result_round_trip() {
+        let r = Layer2ScriptExecResult {
+            language: ScriptLanguage::Layer2,
+            agent: "web_automation".into(),
+            tool: "browser_navigate".into(),
+            execution_id: Uuid::new_v4(),
+            outcome: ScriptExecutionOutcome::Exception,
+            duration_ms: 800,
+            output: "navigation failed".into(),
+            value: None,
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["outcome"], "Exception");
+        assert!(v.get("value").is_none());
+        let back: Layer2ScriptExecResult = serde_json::from_value(v).unwrap();
+        assert_eq!(back.outcome, ScriptExecutionOutcome::Exception);
     }
 
     #[test]

@@ -87,6 +87,50 @@ str_enum!(ScriptLanguage {
     Layer2 = "layer2",
 });
 
+// Orthogonal outcome classes for a script execution. Replaces the previous
+// single-channel `exit_code` signalling: a timeout is not an exception, an
+// abandoned engine is not a timeout, and a validation rejection happens
+// before any code runs.
+str_enum!(ScriptExecutionOutcome {
+    Completed = "completed",
+    Exception = "exception",
+    Timeout = "timeout",
+    Violation = "violation",
+    OutputLimit = "output_limit",
+    EngineAbandoned = "engine_abandoned",
+});
+
+// Side-effect classification for tool dispatches made from inside a script
+// execution. The classifier is fail-closed: consumers must treat
+// `Undeclared` as the most conservative class (`Irreversible`).
+str_enum!(SideEffectClass {
+    Pure = "pure",
+    Stateful = "stateful",
+    Irreversible = "irreversible",
+    Undeclared = "undeclared",
+});
+
+impl SideEffectClass {
+    /// The class every consumer must act on: `Undeclared` maps to
+    /// `Irreversible` (fail-closed), everything else maps to itself. This
+    /// is the single canonical mapping — downstream code and TS consumers
+    /// must branch on `effective()` (or `is_irreversible()`), never on
+    /// direct variant equality, so an undeclared tool can never slip
+    /// through as harmless.
+    pub fn effective(&self) -> Self {
+        match self {
+            Self::Undeclared => Self::Irreversible,
+            other => *other,
+        }
+    }
+
+    /// Whether the dispatch must be treated as having irreversible
+    /// real-world effects. Fail-closed: `Undeclared` counts as `true`.
+    pub fn is_irreversible(&self) -> bool {
+        matches!(self.effective(), Self::Irreversible)
+    }
+}
+
 str_enum!(ObservationType {
     Reading = "reading",
     Editing = "editing",
@@ -288,12 +332,15 @@ mod tests {
         // Deserializing the as_str() value fails — serde expects the
         // PascalCase variant name.
         assert!(serde_json::from_str::<ConsultationStatus>(r#""waiting_human""#).is_err());
+        assert!(serde_json::from_str::<SideEffectClass>(r#""undeclared""#).is_err());
+        assert!(serde_json::from_str::<ScriptExecutionOutcome>(r#""engine_abandoned""#).is_err());
     }
 
     #[test]
     fn serde_rejects_unknown_variant() {
         assert!(serde_json::from_str::<ScriptLanguage>(r#""ruby""#).is_err());
         assert!(serde_json::from_str::<GoalStatus>(r#""frozen""#).is_err());
+        assert!(serde_json::from_str::<SideEffectClass>(r#""unknown""#).is_err());
     }
 
     // ── PartialEq / Eq / Hash ──────────────────────────────────────

@@ -22,7 +22,11 @@ export type GoalTaskStatus = "Pending" | "InProgress" | "Completed" | "Failed" |
 
 export type ObservationType = "Reading" | "Editing" | "Deleting" | "Watching";
 
+export type ScriptExecutionOutcome = "Completed" | "Exception" | "Timeout" | "Violation" | "OutputLimit" | "EngineAbandoned";
+
 export type ScriptLanguage = "Bash" | "Sh" | "Python" | "Python3" | "Javascript" | "Typescript" | "Node" | "Zsh" | "Layer2";
+
+export type SideEffectClass = "Pure" | "Stateful" | "Irreversible" | "Undeclared";
 
 export type TrackStatus = "Active" | "Completed" | "Abandoned";
 
