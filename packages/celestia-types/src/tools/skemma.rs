@@ -7,6 +7,17 @@ use crate::enums::{ScriptExecutionOutcome, ScriptLanguage, SideEffectClass};
 /// lossless JSON completion value of the program (distinct from the
 /// textual `stdout` console capture, which remains subject to the output
 /// limit — see `stdout_truncated`).
+///
+/// Invariants (producer contract; the DTO itself does not enforce):
+/// - `outcome == OutputLimit` implies `stdout_truncated == true`. The
+///   truncation marker covers `stdout` only — `stderr` has no separate
+///   flag, so engines that limit the streams jointly must mark the cut
+///   here and say so in `stderr`.
+/// - `value == None` means the completion was absent, undefined, or not
+///   losslessly expressible. A completion value of JSON `null` is
+///   indistinguishable from absence on the wire (`"value": null`
+///   collapses to `None` on deserialize) — the one known loss of the
+///   otherwise lossless boundary.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "tools/skemma.ts")]
 pub struct ScriptExecResult {
@@ -27,6 +38,11 @@ pub struct ScriptExecResult {
 /// One tool dispatch performed from inside a script execution, recorded as
 /// an implicit start/settle pair with parent linkage: `call_id` follows the
 /// `<execution_id>:js:<n>` scheme assigned in submission order.
+///
+/// Invariants (producer contract): `settled_at_ms >= started_at_ms`, both
+/// relative to the start of the enclosing execution. Consumers branch on
+/// `side_effect.effective()`, never on raw variant equality (fail-closed
+/// `Undeclared` handling).
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
 #[ts(export, export_to = "tools/skemma.ts")]
 pub struct ScriptDispatchRecord {
@@ -34,6 +50,8 @@ pub struct ScriptDispatchRecord {
     pub tool: String,
     /// Milliseconds relative to the start of the enclosing execution.
     pub started_at_ms: u64,
+    /// Milliseconds relative to the start of the enclosing execution; the
+    /// producer contract guarantees `settled_at_ms >= started_at_ms`.
     pub settled_at_ms: u64,
     pub ok: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -388,6 +406,71 @@ mod tests {
         assert!(v.get("error").is_none());
         let back: ScriptDispatchRecord = serde_json::from_value(v).unwrap();
         assert_eq!(back.side_effect, SideEffectClass::Irreversible);
+    }
+
+    #[test]
+    fn script_exec_result_defaults_on_missing_fields() {
+        // Hand-written payload without the defaulted fields: the
+        // `#[serde(default)]` forward-compatibility path (a producer that
+        // knows `outcome` but predates value/truncation/dispatches).
+        let v: serde_json::Value = serde_json::json!({
+            "language": "Javascript",
+            "execution_id": Uuid::new_v4().to_string(),
+            "outcome": "Completed",
+            "duration_ms": 42,
+            "stdout": "ok",
+            "stderr": ""
+        });
+        let back: ScriptExecResult = serde_json::from_value(v).unwrap();
+        assert!(back.value.is_none());
+        assert!(!back.stdout_truncated);
+        assert!(back.dispatches.is_empty());
+    }
+
+    #[test]
+    fn script_exec_result_stdout_truncated_wire() {
+        let r = ScriptExecResult {
+            language: ScriptLanguage::Javascript,
+            execution_id: Uuid::new_v4(),
+            outcome: ScriptExecutionOutcome::OutputLimit,
+            duration_ms: 5,
+            stdout: "... [truncated]".into(),
+            stderr: String::new(),
+            value: None,
+            stdout_truncated: true,
+            dispatches: Vec::new(),
+        };
+        let v = serde_json::to_value(&r).unwrap();
+        // The marker is always on the wire, true in the truncated case —
+        // pinning the OutputLimit => stdout_truncated producer contract.
+        assert_eq!(v["stdout_truncated"], true);
+        let back: ScriptExecResult = serde_json::from_value(v).unwrap();
+        assert!(back.stdout_truncated);
+    }
+
+    #[test]
+    fn dispatch_record_undeclared_maps_irreversible() {
+        let rec = ScriptDispatchRecord {
+            call_id: "x:js:2".into(),
+            tool: "mystery_tool".into(),
+            started_at_ms: 10,
+            settled_at_ms: 30,
+            ok: true,
+            error: None,
+            side_effect: SideEffectClass::Undeclared,
+            committed: false,
+        };
+        let v = serde_json::to_value(&rec).unwrap();
+        assert_eq!(v["side_effect"], "Undeclared");
+        let back: ScriptDispatchRecord = serde_json::from_value(v).unwrap();
+        // Fail-closed canonical mapping: Undeclared acts as Irreversible.
+        assert_eq!(back.side_effect, SideEffectClass::Undeclared);
+        assert!(back.side_effect.is_irreversible());
+        assert_eq!(back.side_effect.effective(), SideEffectClass::Irreversible);
+        assert!(SideEffectClass::Irreversible.is_irreversible());
+        assert!(!SideEffectClass::Pure.is_irreversible());
+        assert!(!SideEffectClass::Stateful.is_irreversible());
+        assert_eq!(SideEffectClass::Pure.effective(), SideEffectClass::Pure);
     }
 
     #[test]

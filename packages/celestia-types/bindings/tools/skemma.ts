@@ -50,12 +50,22 @@ export type ScreenshotResult = { remote_id: string, width: number, height: numbe
  * One tool dispatch performed from inside a script execution, recorded as
  * an implicit start/settle pair with parent linkage: `call_id` follows the
  * `<execution_id>:js:<n>` scheme assigned in submission order.
+ *
+ * Invariants (producer contract): `settled_at_ms >= started_at_ms`, both
+ * relative to the start of the enclosing execution. Consumers branch on
+ * `side_effect.effective()`, never on raw variant equality (fail-closed
+ * `Undeclared` handling).
  */
 export type ScriptDispatchRecord = { call_id: string, tool: string, 
 /**
  * Milliseconds relative to the start of the enclosing execution.
  */
-started_at_ms: bigint, settled_at_ms: bigint, ok: boolean, error?: string | null, side_effect: SideEffectClass, 
+started_at_ms: bigint, 
+/**
+ * Milliseconds relative to the start of the enclosing execution; the
+ * producer contract guarantees `settled_at_ms >= started_at_ms`.
+ */
+settled_at_ms: bigint, ok: boolean, error?: string | null, side_effect: SideEffectClass, 
 /**
  * Whether the dispatch's platform-side effects were committed by the
  * enclosing execution's settlement. `false` on a settled record means
@@ -73,6 +83,17 @@ export type ScriptExecParams = { code: string, language: string | null, timeout:
  * lossless JSON completion value of the program (distinct from the
  * textual `stdout` console capture, which remains subject to the output
  * limit — see `stdout_truncated`).
+ *
+ * Invariants (producer contract; the DTO itself does not enforce):
+ * - `outcome == OutputLimit` implies `stdout_truncated == true`. The
+ *   truncation marker covers `stdout` only — `stderr` has no separate
+ *   flag, so engines that limit the streams jointly must mark the cut
+ *   here and say so in `stderr`.
+ * - `value == None` means the completion was absent, undefined, or not
+ *   losslessly expressible. A completion value of JSON `null` is
+ *   indistinguishable from absence on the wire (`"value": null`
+ *   collapses to `None` on deserialize) — the one known loss of the
+ *   otherwise lossless boundary.
  */
 export type ScriptExecResult = { language: ScriptLanguage, execution_id: string, outcome: ScriptExecutionOutcome, duration_ms: bigint, stdout: string, stderr: string, value?: JsonValue | null, stdout_truncated: boolean, dispatches: Array<ScriptDispatchRecord>, };
 
