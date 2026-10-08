@@ -179,15 +179,111 @@ async fn flush(conn: &DatabaseConnection, buffer: &mut Vec<LogEntry>) {
     }
 }
 
+/// Batch size for [`cleanup_old_logs`]: each DELETE touches at most this
+/// many rows, keeping every transaction short enough that concurrent
+/// INSERTs never queue behind it.
+pub const LOG_CLEANUP_BATCH: i64 = 5000;
+
 pub async fn cleanup_old_logs(conn: &DatabaseConnection, retention_days: u32) -> Result<u64> {
-    let stmt = Statement::from_sql_and_values(
-        conn.get_database_backend(),
-        "DELETE FROM log.entries WHERE created_at < NOW() - ($1::text || ' days')::interval",
-        [(retention_days as i64).into()],
-    );
-    let result = conn
-        .execute_raw(stmt)
+    // Bounded batches (the 2026-10-07 incident review): a single
+    // unbounded DELETE over an accumulated backlog holds its lock long
+    // enough to block EVERY concurrent log INSERT — the insert queue
+    // stalls, the WARN about slow inserts generates more inserts, and
+    // the storm self-excites (~100k rows/s observed). Deleting in
+    // bounded chunks instead keeps each transaction short; the loop
+    // drains the backlog to completion and reports the total.
+    let mut total: u64 = 0;
+    loop {
+        let stmt = Statement::from_sql_and_values(
+            conn.get_database_backend(),
+            "DELETE FROM log.entries WHERE id IN (\
+             SELECT id FROM log.entries \
+             WHERE created_at < NOW() - ($1::text || ' days')::interval \
+             LIMIT $2)",
+            [(retention_days as i64).into(), LOG_CLEANUP_BATCH.into()],
+        );
+        let n = conn
+            .execute_raw(stmt)
+            .await
+            .map_err(|e| anyhow!("Failed to clean up old logs: {}", e))?
+            .rows_affected();
+        total += n;
+        if (n as i64) < LOG_CLEANUP_BATCH {
+            break;
+        }
+    }
+    Ok(total)
+}
+
+#[cfg(test)]
+mod cleanup_tests {
+    use super::*;
+
+    /// The batching loop is verified end-to-end against a real PG when
+    /// `PLANA_LOG_PG_URL` is set (the harness seeds 12000 rows deeper
+    /// than the retention window — more than LOG_CLEANUP_BATCH — and
+    /// asserts the full backlog drains to zero while a fresh row inside
+    /// the window survives).
+    #[tokio::test]
+    async fn cleanup_old_logs_drains_a_backlog_in_batches() {
+        let Ok(url) = std::env::var("PLANA_LOG_PG_URL") else {
+            eprintln!("SKIP: set PLANA_LOG_PG_URL to run the batching drain test");
+            return;
+        };
+        let conn = sea_orm::Database::connect(url)
+            .await
+            .expect("connect test pg");
+
+        // Seed: 12000 stale rows (older than the 30-day window used
+        // below) + one fresh row that must survive.
+        conn.execute_raw(Statement::from_string(
+            sea_orm::DatabaseBackend::Postgres,
+            "TRUNCATE log.entries RESTART IDENTITY".to_string(),
+        ))
         .await
-        .map_err(|e| anyhow!("Failed to clean up old logs: {}", e))?;
-    Ok(result.rows_affected())
+        .expect("truncate");
+        conn.execute_raw(Statement::from_string(
+            sea_orm::DatabaseBackend::Postgres,
+            "INSERT INTO log.entries (source, level, message, created_at) \
+             SELECT 'test', 'info', 'stale', NOW() - (g || ' days')::interval \
+             FROM generate_series(1, 12000) g"
+                .to_string(),
+        ))
+        .await
+        .expect("seed stale");
+        conn.execute_raw(Statement::from_string(
+            sea_orm::DatabaseBackend::Postgres,
+            "INSERT INTO log.entries (source, level, message) VALUES ('test', 'info', 'fresh')"
+                .to_string(),
+        ))
+        .await
+        .expect("seed fresh");
+
+        // The 12000-row fixture exceeds LOG_CLEANUP_BATCH (5000), so
+        // the drain spans multiple batches. The fixture spreads rows at
+        // g days back for g in 1..=12000, so
+        // under a 30-day retention exactly g=30..=12000 (11971 rows) is
+        // stale and g=1..=29 plus the fresh row (30 total) survive.
+        let deleted = cleanup_old_logs(&conn, 30).await.expect("cleanup");
+        assert_eq!(
+            deleted, 11971,
+            "the whole stale backlog drains (multi-batch)"
+        );
+
+        let remaining = conn
+            .query_one_raw(Statement::from_string(
+                sea_orm::DatabaseBackend::Postgres,
+                "SELECT count(*) AS n, count(*) FILTER (WHERE message = 'fresh') AS f FROM log.entries".to_string(),
+            ))
+            .await
+            .expect("count")
+            .expect("row");
+        let n: i64 = remaining.try_get("", "n").expect("n");
+        let f: i64 = remaining.try_get("", "f").expect("f");
+        assert_eq!(
+            (n, f),
+            (30, 1),
+            "the in-window rows and the fresh row survive"
+        );
+    }
 }
