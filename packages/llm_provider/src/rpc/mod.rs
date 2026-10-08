@@ -337,6 +337,7 @@ impl LlmProvider for RpcProvider {
                                     {
                                         let _ = tx
                                             .send(Ok(LlmStreamChunk {
+                                                thinking: None,
                                                 content: None,
                                                 tool_call: None,
                                                 finish_reason: Some(FinishReason::Stop),
@@ -348,6 +349,7 @@ impl LlmProvider for RpcProvider {
 
                                     if tx
                                         .send(Ok(LlmStreamChunk {
+                                            thinking: None,
                                             content,
                                             tool_call,
                                             finish_reason,
@@ -362,6 +364,7 @@ impl LlmProvider for RpcProvider {
                                     if sp.is_complete {
                                         let _ = tx
                                             .send(Ok(LlmStreamChunk {
+                                                thinking: None,
                                                 content: None,
                                                 tool_call: None,
                                                 finish_reason: Some(FinishReason::Stop),

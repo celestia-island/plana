@@ -365,6 +365,13 @@ pub struct LlmUsage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmStreamChunk {
     pub content: Option<String>,
+    /// The delta's `reasoning_content`, carried SEPARATELY from content
+    /// (2026-10-08): the old parse folded it into `content` with a
+    /// model-specific fallback guess — but whether reasoning is
+    /// "thinking" or "output" is per-model knowledge the parser cannot
+    /// have. Consumers route it by the registry's `can_reason`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub thinking: Option<String>,
     pub tool_call: Option<ToolCallDelta>,
     pub finish_reason: Option<FinishReason>,
     pub usage: Option<LlmUsage>,

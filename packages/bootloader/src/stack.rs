@@ -587,7 +587,9 @@ mod tests {
 
         let mut cfg = StackConfig::default();
         assert!(
-            !scepter_params(&cfg).env.contains_key("COSMOS_REPO_READONLY"),
+            !scepter_params(&cfg)
+                .env
+                .contains_key("COSMOS_REPO_READONLY"),
             "no repo_root configured => no advertisement"
         );
 
