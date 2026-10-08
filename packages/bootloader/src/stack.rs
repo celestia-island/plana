@@ -364,6 +364,18 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         );
         volumes.push(VolumeMount::ro(repo_root.to_string_lossy(), "/celestia"));
     }
+    // ALSO mount the monorepo at its OWN host path (read-only) inside the
+    // main scepter container: scepter's cosmos spawn path guards on
+    // `Path::is_dir(COSMOS_REPO_READONLY)` evaluated INSIDE this container,
+    // so without this same-path view the guard is silently false in a
+    // production stack (the host path does not otherwise exist here) and no
+    // agent container gets the read lane (R3 review F1, 2026-10-08).
+    if let Some(ref repo_root) = cfg.host_repo_root {
+        volumes.push(VolumeMount::ro(
+            repo_root.to_string_lossy(),
+            repo_root.display().to_string(),
+        ));
+    }
     if let Some(ref dir) = cfg.model_cache_dir {
         volumes.push(VolumeMount::ro(dir.to_string_lossy(), "/models"));
     }
@@ -585,6 +597,26 @@ mod tests {
             params.env.get("COSMOS_REPO_READONLY").map(String::as_str),
             Some("/mnt/codespace"),
             "repo_root configured => the HOST path is advertised verbatim"
+        );
+        // F1 钉子：主容器必须同时看到宿主同路径的只读视图，否则 scepter 侧
+        // is_dir 守卫在生产栈里恒 false（读通道静默 no-op）。
+        let host_path = "/mnt/codespace";
+        let mounts: Vec<&VolumeMount> = params
+            .volumes
+            .iter()
+            .filter(|v| v.host_path == host_path)
+            .collect();
+        assert!(
+            mounts
+                .iter()
+                .any(|v| v.container_path == "/celestia" && v.read_only),
+            "repo_root must stay mounted read-only at /celestia"
+        );
+        assert!(
+            mounts
+                .iter()
+                .any(|v| v.container_path == host_path && v.read_only),
+            "repo_root must ALSO be visible at its own host path (F1 guard)"
         );
     }
 }
