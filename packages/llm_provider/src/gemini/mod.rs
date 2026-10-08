@@ -342,6 +342,7 @@ impl LlmProvider for GeminiProvider {
                                     });
                                     if text_content.is_some() || usage.is_some() {
                                         state.pending.push_back(LlmStreamChunk {
+                                            thinking: None,
                                             content: text_content,
                                             tool_call: None,
                                             finish_reason: None,
@@ -351,6 +352,7 @@ impl LlmProvider for GeminiProvider {
                                     for fc in fc_parts {
                                         state.pending.push_back(LlmStreamChunk {
                                             content: None,
+                                            thinking: None,
                                             tool_call: Some(super::ToolCallDelta {
                                                 id: Some(fc.name.clone()),
                                                 name: Some(fc.name),
@@ -369,6 +371,7 @@ impl LlmProvider for GeminiProvider {
                                     }
                                     if let Some(fr) = cand.finish_reason {
                                         state.pending.push_back(LlmStreamChunk {
+                                            thinking: None,
                                             content: None,
                                             tool_call: None,
                                             finish_reason: Some(FinishReason::from(fr.as_str())),

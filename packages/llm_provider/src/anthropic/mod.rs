@@ -289,6 +289,7 @@ impl LlmProvider for AnthropicProvider {
                             let chunk: Option<LlmStreamChunk> = match event {
                                 AnthropicStreamEvent::ContentBlockDelta { delta } => match delta {
                                     AnthropicStreamDelta::Text { text } => Some(LlmStreamChunk {
+                                        thinking: None,
                                         content: Some(text),
                                         tool_call: None,
                                         finish_reason: None,
@@ -296,6 +297,7 @@ impl LlmProvider for AnthropicProvider {
                                     }),
                                     AnthropicStreamDelta::InputJson { partial_json } => {
                                         Some(LlmStreamChunk {
+                                            thinking: None,
                                             content: None,
                                             tool_call: Some(ToolCallDelta {
                                                 id: None,
@@ -314,6 +316,7 @@ impl LlmProvider for AnthropicProvider {
                                     match content_block {
                                         AnthropicStreamContentBlockStart::ToolUse { id, name } => {
                                             Some(LlmStreamChunk {
+                                                thinking: None,
                                                 content: None,
                                                 tool_call: Some(ToolCallDelta {
                                                     id: Some(id),
@@ -331,6 +334,7 @@ impl LlmProvider for AnthropicProvider {
                                 }
                                 AnthropicStreamEvent::MessageStart { message } => {
                                     Some(LlmStreamChunk {
+                                        thinking: None,
                                         content: None,
                                         tool_call: None,
                                         finish_reason: None,
@@ -344,6 +348,7 @@ impl LlmProvider for AnthropicProvider {
                                 }
                                 AnthropicStreamEvent::MessageDelta { delta, usage } => {
                                     Some(LlmStreamChunk {
+                                        thinking: None,
                                         content: None,
                                         tool_call: None,
                                         finish_reason: delta

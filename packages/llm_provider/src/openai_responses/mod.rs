@@ -302,6 +302,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                             );
                                         }
                                         state.pending.push_back(LlmStreamChunk {
+                                            thinking: None,
                                             content: Some(delta.to_string()),
                                             tool_call: None,
                                             finish_reason: None,
@@ -333,6 +334,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                             state.tool_call_index += 1;
                                             debug!(call_id = %call_id, name = %name, idx, "function_call done");
                                             state.pending.push_back(LlmStreamChunk {
+                                                thinking: None,
                                                 content: None,
                                                 tool_call: Some(ToolCallDelta {
                                                     id: Some(call_id),
@@ -377,6 +379,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                         "response.completed"
                                     );
                                     state.pending.push_back(LlmStreamChunk {
+                                        thinking: None,
                                         content: None,
                                         tool_call: None,
                                         finish_reason: Some(finish),
@@ -397,6 +400,7 @@ impl LlmProvider for OpenAiResponsesProvider {
                                         "OpenAI Responses API returned incomplete response"
                                     );
                                     state.pending.push_back(LlmStreamChunk {
+                                        thinking: None,
                                         content: None,
                                         tool_call: None,
                                         finish_reason: Some(FinishReason::Length),

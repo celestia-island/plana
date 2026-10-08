@@ -120,14 +120,18 @@ pub fn parse_openai_stream(value: &OpenAiStreamChunkRaw) -> Vec<LlmStreamChunk> 
     // Newer GLM flash models (4.5+, 4.7+) return output in reasoning_content
     // while leaving content as Some("").  Fall back to reasoning_content when
     // content is None OR empty.
-    let content = {
-        let c = choice.delta.content.as_deref();
-        if c.is_some_and(|s| !s.is_empty()) {
-            choice.delta.content.clone()
-        } else {
-            choice.delta.reasoning_content.clone()
-        }
-    };
+    // 2026-10-08: reasoning_content rides its OWN field — the parser no
+    // longer guesses whether it is thinking or output (that is per-model
+    // registry knowledge: GLM-flash emits output there, DeepSeek emits
+    // thinking). Consumers fold `thinking` into content for the GLM-flash
+    // class; nothing is lost and thinking-capable models keep the two
+    // streams distinct.
+    let content = choice.delta.content.clone().filter(|s| !s.is_empty());
+    let thinking = choice
+        .delta
+        .reasoning_content
+        .clone()
+        .filter(|s| !s.is_empty());
     let finish_reason = choice.finish_reason.as_deref().map(FinishReason::from);
 
     let usage = value.usage.as_ref().map(|u| LlmUsage {
@@ -173,6 +177,7 @@ pub fn parse_openai_stream(value: &OpenAiStreamChunkRaw) -> Vec<LlmStreamChunk> 
         for tc_delta in tool_call_deltas {
             chunks.push(LlmStreamChunk {
                 content: None,
+                thinking: None,
                 tool_call: Some(tc_delta),
                 finish_reason: None,
                 usage: None,
@@ -180,10 +185,12 @@ pub fn parse_openai_stream(value: &OpenAiStreamChunkRaw) -> Vec<LlmStreamChunk> 
         }
     }
 
-    let has_non_tool_content = content.is_some() || finish_reason.is_some() || usage.is_some();
+    let has_non_tool_content =
+        content.is_some() || thinking.is_some() || finish_reason.is_some() || usage.is_some();
     if has_non_tool_content {
         chunks.push(LlmStreamChunk {
             content,
+            thinking,
             tool_call: None,
             finish_reason,
             usage,
@@ -191,4 +198,48 @@ pub fn parse_openai_stream(value: &OpenAiStreamChunkRaw) -> Vec<LlmStreamChunk> 
     }
 
     chunks
+}
+
+#[cfg(test)]
+mod reasoning_split_tests {
+    use super::*;
+
+    fn delta(content: Option<&str>, reasoning: Option<&str>) -> OpenAiStreamChunkRaw {
+        serde_json::from_value(serde_json::json!({
+            "choices": [{
+                "delta": {
+                    "content": content,
+                    "reasoning_content": reasoning,
+                },
+                "finish_reason": null,
+            }],
+        }))
+        .expect("raw chunk parses")
+    }
+
+    /// The 2026-10-08 split: reasoning deltas ride their OWN field — the
+    /// parser never guesses model semantics (GLM-flash output vs
+    /// DeepSeek thinking). Consumers route by the registry's can_reason.
+    #[test]
+    fn reasoning_delta_stays_separate_from_content() {
+        let out = parse_openai_stream(&delta(Some("answer"), Some("pondering")));
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].content.as_deref(), Some("answer"));
+        assert_eq!(out[0].thinking.as_deref(), Some("pondering"));
+    }
+
+    #[test]
+    fn reasoning_only_delta_has_empty_content() {
+        let out = parse_openai_stream(&delta(None, Some("pure thought")));
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].content, None);
+        assert_eq!(out[0].thinking.as_deref(), Some("pure thought"));
+    }
+
+    #[test]
+    fn content_only_delta_has_no_thinking() {
+        let out = parse_openai_stream(&delta(Some("plain"), None));
+        assert_eq!(out[0].content.as_deref(), Some("plain"));
+        assert_eq!(out[0].thinking, None);
+    }
 }
