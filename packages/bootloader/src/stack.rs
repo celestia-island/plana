@@ -321,6 +321,18 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     env.insert("COSMOS_CONTAINER_RUNTIME".into(), "docker".into());
     // Local image names (no registry prefix) for cosmos sub-containers.
     env.insert("CONTAINER_REGISTRY".into(), String::new());
+    // Read lane: advertise the monorepo's HOST path so scepter's cosmos spawn
+    // path (snowflake_manager) can mount it READ-ONLY into every agent
+    // container at the same /celestia path mounted below. Without this the
+    // main scepter container sees /celestia but the cosmos agents that
+    // actually execute skills do not (2026-10-08: the node-1 self-iteration
+    // engine could not read the workspace at all).
+    if let Some(ref repo_root) = cfg.host_repo_root {
+        env.insert(
+            "COSMOS_REPO_READONLY".into(),
+            repo_root.display().to_string(),
+        );
+    }
     // Authorization is unconditional: the stack ships no RBAC off-switch.
     // Proxy passthrough — evernight provides host proxy access via polemos.
     if let Ok(proxy) = std::env::var("HTTP_PROXY").or(std::env::var("http_proxy")) {
@@ -550,4 +562,29 @@ pub async fn teardown_stack(handle: &StackHandle) -> Result<()> {
     }
     info!("stack stopped.");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn repo_readonly_is_advertised_only_when_repo_root_is_set() {
+        // NB: 不碰 HTTP_PROXY —— 断言只看 COSMOS_REPO_READONLY 这一个键，
+        // 代理镜像（若设置）不影响本判据；edition 2024 里 env::remove_var 是 unsafe。
+
+        let mut cfg = StackConfig::default();
+        assert!(
+            !scepter_params(&cfg).env.contains_key("COSMOS_REPO_READONLY"),
+            "no repo_root configured => no advertisement"
+        );
+
+        cfg.host_repo_root = Some(PathBuf::from("/mnt/codespace"));
+        let params = scepter_params(&cfg);
+        assert_eq!(
+            params.env.get("COSMOS_REPO_READONLY").map(String::as_str),
+            Some("/mnt/codespace"),
+            "repo_root configured => the HOST path is advertised verbatim"
+        );
+    }
 }
