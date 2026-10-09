@@ -10,6 +10,5 @@ license-file = "LICENSE"
 workspace = true
 
 [dependencies]
-# Digest behind the unified build token (see the crate docs): the same
-# SHA-256 → base32 → last-6 shape malkuth prints for supervised binaries.
-sha2 = { workspace = true }
+# Deliberately dependency-free: the identity facility runs in every
+# consumer's build script; std-only keeps that cheap and hermetic.
