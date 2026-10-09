@@ -117,8 +117,9 @@ impl HealthResponse {
     /// [`HealthResponse::ok`] deliberately leaves the hash empty, which is why
     /// every backend used to report `build_hash: null` on `/health` while its
     /// JSON-RPC twin said nothing at all. Services that know their revision
-    /// chain this (typically with `plana_build_info::build_hash!()` and
-    /// `build_kind!()`) so HTTP and RPC answer with the same triple.
+    /// chain this (typically `env!("VERSION_HASH")` / `env!("VERSION")`,
+    /// exported by `plana_build_info::emit_version_line`) so HTTP and RPC
+    /// answer with the same identity.
     pub fn with_build(
         mut self,
         build_hash: impl Into<String>,

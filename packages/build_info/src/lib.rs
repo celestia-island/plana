@@ -1,281 +1,319 @@
-//! Build identity shared by every plana-consuming backend.
+//! Family build identity — the single source of the `<base> <branch>::<hash7>`
+//! version line (e.g. `0.1 master::d423747`).
 //!
-//! The About dialog of the panel shows one row per backend with the same
-//! three facts: service version, build hash and build kind. Version and kind
-//! are free (`CARGO_PKG_VERSION`, the build profile); the **hash** is the
-//! only piece that needs a build script, and every service was inventing its
-//! own — one repo emitted a hash of the build *timestamp* (useless as
-//! identity), two emitted nothing at all and reported `null`.
+//! User direction 2026-10-08: the numeric patch counter is retired; **the
+//! branch and the exact commit ARE the identity**. Every health surface and
+//! About row across the family prints the same shape, and the trailing
+//! hash7 is always the git short hash of the built source, so "does this
+//! deployment match the branch HEAD" stays answerable at a glance.
 //!
-//! The hash shape is the workspace-unified build token, the same scheme the
-//! malkuth supervisor prints for supervised binaries: a SHA-256 digest over
-//! the revision identity, base32-encoded (RFC 4648 alphabet `A-Z2-7`), cut
-//! to the **last 6 characters** — e.g. `XB7KQ2`. Every About row (WebUI and
-//! each engine) therefore renders one visually uniform token, while the
-//! underlying digest stays a per-revision identity (not a timestamp).
+//! This crate is the successor of the retired base32 build-token scheme
+//! (SHA-256 over the revision, base32, last 6 characters — tokens like
+//! `EDW62Q` that matched no commit anyone could check out). That scheme and
+//! its `emit_build_hash` / `build_hash!` API are gone; the last consumer
+//! (evernight) migrated with this crate's introduction.
+//!
+//! Resolution order (mirrors `celestia-devtools version-string`, the
+//! build-host facility):
+//! 1. `celestia-devtools version-string --dir <dir>` — the shared
+//!    implementation, when the devtools binary is on the build PATH;
+//! 2. direct git — branch via `rev-parse --abbrev-ref HEAD`, detached
+//!    worktrees resolved through a ladder (local heads → origin remote
+//!    heads → symbolic remote HEAD → `"detached"`), hash via
+//!    `rev-parse --short=7 HEAD`;
+//! 3. without git metadata — the honest markers `detached` / `unknown`,
+//!    never a fabricated token.
 //!
 //! Usage in a consuming crate:
 //!
 //! ```ignore
 //! // build.rs
 //! fn main() {
-//!     plana_build_info::emit_build_hash();
+//!     plana_build_info::emit_version_line(env!("CARGO_PKG_VERSION"));
 //! }
 //!
 //! // anywhere in that crate
-//! pub fn identity() -> (&'static str, &'static str) {
-//!     (plana_build_info::build_hash!(), plana_build_info::build_kind!())
-//! }
+//! pub fn version_line() -> &'static str { env!("VERSION") }
+//! pub fn version_hash() -> &'static str { env!("VERSION_HASH") }
 //! ```
 //!
-//! `build_hash!()` is a macro rather than a function on purpose:
-//! `option_env!("BUILD_HASH")` is resolved while compiling the crate that
-//! *spells it*, so a helper function living here would only ever see this
-//! crate's own build (i.e. nothing). The macro expands at the consumer.
+//! The TS twin of this facility lives in `packages/build_info_ts`
+//! (npm `@celestia-island/plana-build-info`) for build-time webui tooling.
 
+use std::env;
 use std::path::Path;
 use std::process::Command;
 
-use sha2::Digest;
+/// The resolved identity of one build.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BuildIdentity {
+    /// Version base (`major.minor`), e.g. `0.1`.
+    pub base: String,
+    /// Branch name, or `"detached"` when no name resolves.
+    pub branch: String,
+    /// Commit short hash (`rev-parse --short=7`), or `"unknown"` without git.
+    pub hash: String,
+}
 
-/// Read the git revision of the current checkout and export it as the
-/// `BUILD_HASH` compile-time environment variable.
+impl BuildIdentity {
+    /// The family version line: `<base> <branch>::<hash7>`.
+    pub fn version_line(&self) -> String {
+        format!("{} {}::{}", self.base, self.branch, self.hash)
+    }
+}
+
+/// Collapse a crate version to the identity base (`major.minor`).
 ///
-/// Call from `build.rs`. The exported value is the workspace-unified build
-/// token (see the crate docs): base32 of the SHA-256 over the full revision
-/// string, last 6 characters, `-dirty` suffixed for an uncommitted tree.
-/// Emits `unknown` when the sources have no git metadata (vendored build,
-/// source tarball) so the field is always present and honest.
-///
-/// Registers every file git could move the revision through as a rerun
-/// trigger. Watching `.git/HEAD` alone is not enough: in a linked worktree —
-/// and in the build engine's checkouts — `HEAD` is a *symref* that keeps
-/// saying `ref: refs/heads/…` while the branch advances underneath it, so a
-/// warm target directory would keep reporting the revision it was first
-/// built from. The resolved ref file, the packed refs and the index close
-/// that hole.
-pub fn emit_build_hash() {
-    for trigger in watch_paths() {
-        println!("cargo:rerun-if-changed={trigger}");
-    }
-    let hash = git_revision().unwrap_or_else(|| "unknown".to_string());
-    println!("cargo:rustc-env=BUILD_HASH={hash}");
-}
-
-/// Files whose change may move the reported revision.
-fn watch_paths() -> Vec<String> {
-    let mut paths = Vec::new();
-    if let Some(head) = git_path("HEAD") {
-        paths.push(head);
-    }
-    // Where a symref actually points (`refs/heads/<branch>`), so advancing the
-    // branch on a worktree re-runs this script.
-    if let Some(path) = git(&["symbolic-ref", "-q", "HEAD"])
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty())
-        .and_then(|reference| git_path(&reference))
-    {
-        paths.push(path);
-    }
-    if let Some(packed) = git_path("packed-refs") {
-        paths.push(packed);
-    }
-    paths
-}
-
-/// The build hash captured by [`emit_build_hash`], or `"unknown"` when the
-/// crate was built without a build script that called it.
-#[macro_export]
-macro_rules! build_hash {
-    () => {
-        ::core::option_env!("BUILD_HASH").unwrap_or("unknown")
-    };
-}
-
-/// The build kind every health surface reports: `"dev"` for a debug build,
-/// `"prod"` otherwise. Never hard-code this per handler — the About dialog
-/// compares the same word across all backends.
-#[macro_export]
-macro_rules! build_kind {
-    () => {
-        if ::core::cfg!(debug_assertions) {
-            "dev"
-        } else {
-            "prod"
-        }
-    };
-}
-
-/// Unified build token of the working tree: base32(SHA-256(revision))[:6],
-/// `-dirty` when it has uncommitted changes. `None` when this is not a git
-/// checkout or git is unavailable.
-fn git_revision() -> Option<String> {
-    let rev = git(&["rev-parse", "HEAD"])?;
-    let dirty = !git(&["status", "--porcelain"])
-        .unwrap_or_default()
-        .is_empty();
-    encode_revision(&rev, dirty)
-}
-
-/// Fold a raw `git rev-parse` output into the unified build token. Kept
-/// separate from the process call so the shape is testable without a
-/// repository: the digest input is the full revision string (never a short
-/// prefix, which would collide across repos), base32-encoded with the same
-/// RFC 4648 alphabet malkuth's binary info uses, cut to the LAST 6
-/// characters so every surface prints the same short form.
-fn encode_revision(raw: &str, dirty: bool) -> Option<String> {
-    let trimmed = raw.trim();
-    if trimmed.is_empty() {
-        return None;
-    }
-    let mut input = trimmed.to_string();
-    if dirty {
-        input.push_str("-dirty");
-    }
-    let digest = sha2::Sha256::digest(input.as_bytes());
-    let token = base32_encode(&digest);
-    let start = token.len() - 6;
-    let short = token[start..].to_string();
-    Some(if dirty {
-        format!("{short}-dirty")
+/// The patch counter is retired by the 2026-10-08 direction; `0.1.284`
+/// and `0.1.7` both identify as `0.1`.
+pub fn base_from_pkg_version(pkg_version: &str) -> String {
+    let parts: Vec<&str> = pkg_version.split('.').collect();
+    if parts.len() >= 2 {
+        format!("{}.{}", parts[0], parts[1])
     } else {
-        short
-    })
-}
-
-/// RFC 4648 base32 alphabet (no padding) — identical to malkuth's
-/// `BASE32_ALPHABET`, so a build token and a supervised-binary short hash
-/// read as the same kind of word.
-const BASE32_ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-
-fn base32_encode(bytes: &[u8]) -> String {
-    let mut out = String::with_capacity(bytes.len().div_ceil(5));
-    let mut buffer = 0u64;
-    let mut bits = 0u32;
-    for &byte in bytes {
-        buffer = (buffer << 8) | u64::from(byte);
-        bits += 8;
-        while bits >= 5 {
-            bits -= 5;
-            let index = ((buffer >> bits) & 0x1f) as usize;
-            out.push(BASE32_ALPHABET[index] as char);
-        }
+        pkg_version.to_string()
     }
-    if bits > 0 {
-        let index = ((buffer << (5 - bits)) & 0x1f) as usize;
-        out.push(BASE32_ALPHABET[index] as char);
+}
+
+/// Resolve the build identity of the git worktree containing `dir`.
+///
+/// See the crate docs for the resolution order and the fallback markers.
+pub fn resolve(base: &str, dir: &str) -> BuildIdentity {
+    if let Some(identity) = from_devtools(base, dir) {
+        return identity;
     }
-    out
+    let branch = branch_of(dir).unwrap_or_else(|| "detached".to_string());
+    let hash = short_hash(dir).unwrap_or_else(|| "unknown".to_string());
+    BuildIdentity {
+        base: base.to_string(),
+        branch,
+        hash,
+    }
 }
 
-/// Absolute path of a file inside the git dir (`.git/HEAD`, honoring
-/// worktrees and `GIT_DIR`), used for the rerun trigger.
-fn git_path(relative: &str) -> Option<String> {
-    let dir = git(&["rev-parse", "--absolute-git-dir"])?;
-    Some(
-        Path::new(dir.trim())
-            .join(relative)
-            .to_string_lossy()
-            .into_owned(),
-    )
-}
-
-fn git(args: &[&str]) -> Option<String> {
-    let output = Command::new("git").args(args).output().ok()?;
+/// Read the identity from the shared build-host facility, keeping the
+/// caller's authoritative base.
+fn from_devtools(base: &str, dir: &str) -> Option<BuildIdentity> {
+    let output = Command::new("celestia-devtools")
+        .args(["version-string", "--dir", dir])
+        .output()
+        .ok()?;
     if !output.status.success() {
         return None;
     }
-    Some(String::from_utf8_lossy(&output.stdout).into_owned())
+    let line = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    parse_identity_token(&line).map(|(branch, hash)| BuildIdentity {
+        base: base.to_string(),
+        branch,
+        hash,
+    })
+}
+
+/// Extract `<branch>::<hash7>` from a facility line, validating the hash
+/// shape so a malformed line can never masquerade as an identity.
+fn parse_identity_token(line: &str) -> Option<(String, String)> {
+    let token = line.split_whitespace().rev().find(|t| t.contains("::"))?;
+    let (branch, hash) = token.split_once("::")?;
+    if branch.is_empty() || !is_short_hash(hash) {
+        return None;
+    }
+    Some((branch.to_string(), hash.to_lowercase()))
+}
+
+/// Whether a string is a 7..=40 char lowercase hex commit hash.
+fn is_short_hash(value: &str) -> bool {
+    (7..=40).contains(&value.len())
+        && value
+            .chars()
+            .all(|c| c.is_ascii_digit() || ('a'..='f').contains(&c))
+}
+
+/// Branch name of `dir`'s HEAD, resolving detached worktrees through the
+/// ladder documented in the crate docs. `None` when git is unavailable.
+fn branch_of(dir: &str) -> Option<String> {
+    let branch = git(dir, &["rev-parse", "--abbrev-ref", "HEAD"])?;
+    if branch.is_empty() || branch == "HEAD" {
+        return resolve_detached(dir);
+    }
+    Some(branch)
+}
+
+/// The detached ladder: local heads, then origin's remote heads (a freshly
+/// fetched squash sha may live only on the remote), then the symbolic
+/// remote HEAD. `name-rev` prints the literal `undefined` when its ref set
+/// cannot name the commit — that must not leak into the identity.
+fn resolve_detached(dir: &str) -> Option<String> {
+    for refs in ["refs/heads/*", "refs/remotes/origin/*"] {
+        if let Ok(out) = Command::new("git")
+            .args([
+                "-C",
+                dir,
+                "name-rev",
+                "--name-only",
+                &format!("--refs={refs}"),
+                "HEAD",
+            ])
+            .output()
+        {
+            let named = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !named.is_empty() && named != "undefined" && named != "remotes/origin/HEAD" {
+                // Git refnames cannot contain '~', so this drops any depth
+                // suffix (`master~2`); remote names keep their last self.
+                let stripped = named
+                    .split('~')
+                    .next()
+                    .unwrap_or("detached")
+                    .trim_start_matches("remotes/origin/");
+                return Some(stripped.to_string());
+            }
+        }
+    }
+    if let Ok(out) = Command::new("git")
+        .args([
+            "-C",
+            dir,
+            "symbolic-ref",
+            "--short",
+            "refs/remotes/origin/HEAD",
+        ])
+        .output()
+    {
+        let sym = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        if !sym.is_empty() {
+            return Some(sym.rsplit('/').next().unwrap_or("detached").to_string());
+        }
+    }
+    Some("detached".to_string())
+}
+
+/// Short commit hash of `dir`'s HEAD, or `None` without git metadata.
+fn short_hash(dir: &str) -> Option<String> {
+    let hash = git(dir, &["rev-parse", "--short=7", "HEAD"])?;
+    if !is_short_hash(&hash) {
+        return None;
+    }
+    Some(hash)
+}
+
+fn git(dir: &str, args: &[&str]) -> Option<String> {
+    let mut full = vec!["-C", dir];
+    full.extend_from_slice(args);
+    let output = Command::new("git").args(&full).output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if value.is_empty() { None } else { Some(value) }
+}
+
+/// Resolve and export the identity for the crate whose build script calls
+/// this: sets `VERSION` (the full line) and `VERSION_HASH` (the bare
+/// hash7), and registers the git state that may move the identity as rerun
+/// triggers — a warm target directory must not ship a stale line.
+///
+/// `pkg_version` is the consuming crate's `CARGO_PKG_VERSION`; the base is
+/// collapsed per the 2026-10-08 direction.
+pub fn emit_version_line(pkg_version: &str) {
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+    emit_version_line_at(pkg_version, &manifest_dir);
+}
+
+/// Directory-explicit twin of [`emit_version_line`] (test seam).
+pub fn emit_version_line_at(pkg_version: &str, dir: &str) {
+    let identity = resolve(&base_from_pkg_version(pkg_version), dir);
+    println!("cargo:rustc-env=VERSION={}", identity.version_line());
+    // The bare hash7 for consumers that want the commit alone (probes,
+    // machine facts) without re-parsing the version line.
+    println!("cargo:rustc-env=VERSION_HASH={}", identity.hash);
+    watch_git_state(dir);
+    println!("cargo:rerun-if-changed=build.rs");
+}
+
+/// Watch the git state that can move the identity. Declaring ANY
+/// rerun-if opts out of cargo's any-file default, so the watch must be
+/// complete: `HEAD` (checkout switches), `refs/heads` (branch advances on
+/// a worktree, where `HEAD` is a symref that keeps its shape), and
+/// `packed-refs` (gc moves loose refs into the pack).
+fn watch_git_state(dir: &str) {
+    let Some(git_dir) = git(dir, &["rev-parse", "--absolute-git-dir"]) else {
+        return;
+    };
+    for relative in ["HEAD", "refs/heads", "packed-refs"] {
+        let path = Path::new(&git_dir).join(relative);
+        println!("cargo:rerun-if-changed={}", path.display());
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /// The whole point of the unified token: exactly 6 base32 characters,
-    /// from the same alphabet malkuth prints for supervised binaries.
     #[test]
-    fn token_is_six_base32_characters() {
-        let token = encode_revision("a8772b9d1f2e3c4b5a6978deadbeefcafe012345", false)
-            .expect("a revision encodes");
-        assert_eq!(token.len(), 6, "token must be 6 chars, got {token:?}");
-        assert!(
-            token.chars().all(|c| BASE32_ALPHABET.contains(&(c as u8))),
-            "token {token:?} must use the base32 alphabet"
-        );
-    }
-
-    /// Same revision in, same token out — and different revisions must not
-    /// collide on the 6-char window for a realistic spread of inputs.
-    #[test]
-    fn token_is_deterministic_per_revision() {
-        let a = encode_revision("a8772b9d1f2e3c4b5a6978deadbeefcafe012345", false).unwrap();
-        let again = encode_revision("a8772b9d1f2e3c4b5a6978deadbeefcafe012345", false).unwrap();
-        assert_eq!(a, again);
-        let b = encode_revision("0123456789abcdef0123456789abcdef01234567", false).unwrap();
-        assert_ne!(a, b);
+    fn base_collapses_to_major_minor() {
+        assert_eq!(base_from_pkg_version("0.1.284"), "0.1");
+        assert_eq!(base_from_pkg_version("2.7.9-rc.3"), "2.7");
+        assert_eq!(base_from_pkg_version("0.1"), "0.1");
+        assert_eq!(base_from_pkg_version("weird"), "weird");
     }
 
     #[test]
-    fn marks_uncommitted_trees() {
-        let clean = encode_revision("a8772b9d1f2e3c4b5a6978\n", false).unwrap();
-        let dirty = encode_revision("a8772b9d1f2e3c4b5a6978\n", true).unwrap();
-        assert!(dirty.ends_with("-dirty"));
-        assert_eq!(dirty.strip_suffix("-dirty").unwrap().len(), 6);
-        assert_ne!(clean, dirty, "the dirty marker must feed the digest");
-    }
-
-    #[test]
-    fn empty_output_is_not_a_revision() {
-        assert_eq!(encode_revision("  \n", false), None);
-        assert_eq!(encode_revision("", true), None);
-    }
-
-    /// One independently computed constant so an alphabet/width/digest-input
-    /// tweak cannot slip through silently: the expected tail below was
-    /// derived outside this crate with Python's hashlib + base64 (RFC 4648)
-    /// over the same digest input this crate hashes.
-    #[test]
-    fn known_revision_has_a_stable_token() {
-        let token = encode_revision("a8772b9", false).expect("encodes");
-        assert_eq!(token, "ZJVCEA");
-    }
-
-    /// Every trigger must be a non-empty path, and the resolved ref must be
-    /// watched alongside `HEAD` — the stale-hash bug was exactly this.
-    #[test]
-    fn watches_the_resolved_ref_not_only_head() {
-        let paths = watch_paths();
-        assert!(!paths.is_empty(), "at least .git/HEAD is watched");
-        assert!(paths.iter().all(|path| !path.trim().is_empty()));
-        assert!(paths.iter().any(|path| path.ends_with("HEAD")));
-        let git_dir = git(&["rev-parse", "--absolute-git-dir"]).expect("inside a git checkout");
-        assert!(
-            paths.iter().any(|path| path.contains(git_dir.trim())),
-            "triggers must live in the git dir, got {paths:?}"
-        );
-    }
-
-    /// The live checkout encodes to the unified token: 6 base32 chars,
-    /// optionally `-dirty` — this is what every About dialog row will show.
-    #[test]
-    fn the_live_checkout_encodes_to_the_unified_token() {
-        let Some(token) = git_revision() else {
-            return; // not a git checkout (vendored build) — nothing to assert
+    fn identity_line_is_the_family_shape() {
+        let identity = BuildIdentity {
+            base: "0.1".into(),
+            branch: "master".into(),
+            hash: "d423747".into(),
         };
-        let short = token.strip_suffix("-dirty").unwrap_or(&token);
-        assert_eq!(short.len(), 6, "token {token:?} must be 6 chars");
-        assert!(
-            short.chars().all(|c| BASE32_ALPHABET.contains(&(c as u8))),
-            "token {token:?} must use the base32 alphabet"
-        );
+        assert_eq!(identity.version_line(), "0.1 master::d423747");
     }
 
     #[test]
-    fn the_macros_expand_to_a_usable_triple() {
-        // This crate's own build has no build script calling emit_build_hash,
-        // so the macro must degrade to `unknown` rather than fail to compile.
-        assert!(!build_hash!().is_empty());
-        assert!(matches!(build_kind!(), "dev" | "prod"));
+    fn devtools_line_parses_and_validates() {
+        assert_eq!(
+            parse_identity_token("0.1 master::2e49260"),
+            Some(("master".into(), "2e49260".into()))
+        );
+        assert_eq!(
+            parse_identity_token("0.1 feat/x-y::badd902a"),
+            Some(("feat/x-y".into(), "badd902a".into()))
+        );
+        // Malformed hashes and hashless lines never become identities.
+        assert_eq!(parse_identity_token("0.1 master::zzz1234"), None);
+        assert_eq!(parse_identity_token("0.1.284"), None);
+        assert_eq!(parse_identity_token(""), None);
+    }
+
+    #[test]
+    fn short_hashes_are_seven_to_forty_hex() {
+        assert!(is_short_hash("d423747"));
+        assert!(is_short_hash("d4237476f9428618dc14d57de98fb58aa208db3f"));
+        assert!(!is_short_hash("d42374"));
+        assert!(!is_short_hash("d42374z"));
+        assert!(
+            !is_short_hash("EDW62Q"),
+            "retired base32 tokens are not hashes"
+        );
+    }
+
+    /// Inside a git checkout the resolver must produce a real identity —
+    /// including in CI's detached checkouts, where the ladder answers.
+    /// Without git metadata (vendored source) the honest markers appear.
+    #[test]
+    fn resolve_answers_for_this_checkout() {
+        let identity = resolve("0.1", env!("CARGO_MANIFEST_DIR"));
+        assert_eq!(identity.base, "0.1");
+        assert!(
+            !identity.branch.is_empty(),
+            "branch resolves or degrades to detached"
+        );
+        if identity.hash != "unknown" {
+            assert!(
+                is_short_hash(&identity.hash),
+                "hash {hash} must be a short commit hash",
+                hash = identity.hash
+            );
+        }
+        let line = identity.version_line();
+        assert!(line.starts_with("0.1 "), "line {line} keeps the base");
+        assert!(line.contains("::"), "line {line} carries the identity");
     }
 }
