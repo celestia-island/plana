@@ -1,9 +1,10 @@
 // Build-identity resolution — the TS twin of the Rust `plana_build_info`
 // crate, hosted behind this package's `build-info` subpath export.
 //
-// User direction 2026-10-08: the numeric patch counter is retired; the
-// branch and the exact commit ARE the identity, rendered as
-// `<base> <branch>::<hash7>` (e.g. `0.1 master::d423747`). This module
+// User direction 2026-10-08, base refined 2026-10-10: the numeric patch
+// counter is retired; the branch and the exact commit ARE the identity,
+// rendered as `<base> <branch>::<hash7>` (e.g. `0.1.0 master::d423747`).
+// This module
 // resolves the `<branch>::<hash7>` identity token of a source tree so a
 // webui build stamp means the same thing as every engine's version line.
 //
