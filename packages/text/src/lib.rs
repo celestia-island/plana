@@ -25,5 +25,5 @@ pub use report_text::{
     looks_like_stringified_machinery, plain_text_summary,
 };
 pub use stream_segment::{
-    LlmStream, LlmStreamBuilder, StreamChunkKind, StreamSegment, StreamToolEvent,
+    InputMessage, LlmStream, LlmStreamBuilder, StreamChunkKind, StreamSegment, StreamToolEvent,
 };

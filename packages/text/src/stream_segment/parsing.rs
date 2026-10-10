@@ -76,6 +76,11 @@ impl LlmStreamBuilder {
                     StreamSegment::ToolCall { .. } | StreamSegment::ToolResult { .. } => {
                         warn!("unexpected ToolCall/ToolResult segment in chunk push");
                     }
+                    // Input segments are caller-recorded, never streamed
+                    // live — the builder only ever appends after them.
+                    StreamSegment::Input { .. } => {
+                        warn!("unexpected Input segment in chunk push");
+                    }
                 }
                 return;
             }
@@ -267,6 +272,12 @@ impl LlmStreamBuilder {
                 StreamSegment::ToolResult { data, .. } => {
                     total += data.to_string().len();
                 }
+                StreamSegment::Input { messages, .. } => {
+                    total += messages
+                        .iter()
+                        .map(|m| m.content.len() + m.role.len())
+                        .sum::<usize>();
+                }
             }
         }
         total
@@ -280,6 +291,9 @@ impl LlmStreamBuilder {
                 | StreamSegment::DeepThinking { text, .. } => text.is_empty(),
                 StreamSegment::ToolCall { params, .. } => params.is_null(),
                 StreamSegment::ToolResult { data, .. } => data.is_null(),
+                // An Input segment always carries its messages' payload —
+                // a stream holding one is not empty.
+                StreamSegment::Input { .. } => false,
             })
     }
 
