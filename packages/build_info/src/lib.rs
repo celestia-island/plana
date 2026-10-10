@@ -10,6 +10,17 @@
 //! hash7 is always the git short hash of the built source, so "does this
 //! deployment match the branch HEAD" stays answerable at a glance.
 //!
+//! **Profile rule (2026-10-10, same day)**: a release-profile build
+//! (`PROFILE=release`, i.e. every deployed artifact and shipped installer)
+//! reports the bare semver — 正式版就是标准 semver — and the hash machine
+//! fact goes empty with it. Only dev builds carry the `<branch>::<hash7>`
+//! suffix. The gate lives HERE, in the one Rust facility, so no Rust
+//! consumer can drift into shipping build-environment identity inside a
+//! release. (The webui panel's left-bottom build stamp is the TS twin's
+//! separate product — a build stamp, not a version line — and stays
+//! per the 2026-10-10 user acceptance of #1508; it is deliberately not
+//! profile-gated.)
+//!
 //! This crate is the successor of the retired base32 build-token scheme
 //! (SHA-256 over the revision, base32, last 6 characters — tokens like
 //! `EDW62Q` that matched no commit anyone could check out). That scheme and
@@ -65,6 +76,32 @@ impl BuildIdentity {
     /// The family version line: `<base> <branch>::<hash7>`.
     pub fn version_line(&self) -> String {
         format!("{} {}::{}", self.base, self.branch, self.hash)
+    }
+
+    /// The line for one build profile (2026-10-10 user direction): a
+    /// release-profile build reports the bare semver (正式版就是标准
+    /// semver), while a dev build carries the `<branch>::<hash7>` suffix
+    /// (本地开发版). The same gate empties [`Self::hash_for_profile`] so
+    /// no display layer can re-append what the release line dropped.
+    pub fn line_for_profile(&self, release: bool) -> String {
+        if release {
+            self.base.clone()
+        } else {
+            self.version_line()
+        }
+    }
+
+    /// The bare hash7 machine fact for one build profile: empty under a
+    /// release build (the em dash of "not a dev build"), the commit hash
+    /// otherwise. Emitters print it verbatim into `VERSION_HASH`; every
+    /// consumer already treats an empty value as absent, so release
+    /// health payloads simply carry no hash at all.
+    pub fn hash_for_profile(&self, release: bool) -> String {
+        if release {
+            String::new()
+        } else {
+            self.hash.clone()
+        }
     }
 }
 
@@ -210,12 +247,17 @@ fn git(dir: &str, args: &[&str]) -> Option<String> {
 }
 
 /// Resolve and export the identity for the crate whose build script calls
-/// this: sets `VERSION` (the full line) and `VERSION_HASH` (the bare
-/// hash7), and registers the git state that may move the identity as rerun
-/// triggers — a warm target directory must not ship a stale line.
+/// this: sets `VERSION` (the full line, or the bare semver for a
+/// release-profile build) and `VERSION_HASH` (the bare hash7, empty under
+/// a release build), and registers the git state that may move the
+/// identity as rerun triggers — a warm target directory must not ship a
+/// stale line.
 ///
 /// `pkg_version` is the consuming crate's `CARGO_PKG_VERSION`; the base is
-/// the full package version per the 2026-10-10 direction.
+/// the full package version per the 2026-10-10 direction. The profile rule
+/// is the same day's follow-up: `cargo` tells build scripts the profile
+/// via `PROFILE` (`debug` / `release`), and a release build reports the
+/// standard semver only — the branch::hash suffix is dev-build furniture.
 pub fn emit_version_line(pkg_version: &str) {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     emit_version_line_at(pkg_version, &manifest_dir);
@@ -224,12 +266,38 @@ pub fn emit_version_line(pkg_version: &str) {
 /// Directory-explicit twin of [`emit_version_line`] (test seam).
 pub fn emit_version_line_at(pkg_version: &str, dir: &str) {
     let identity = resolve(&base_from_pkg_version(pkg_version), dir);
-    println!("cargo:rustc-env=VERSION={}", identity.version_line());
+    let release = is_release_profile();
+    println!(
+        "cargo:rustc-env=VERSION={}",
+        identity.line_for_profile(release)
+    );
     // The bare hash7 for consumers that want the commit alone (probes,
-    // machine facts) without re-parsing the version line.
-    println!("cargo:rustc-env=VERSION_HASH={}", identity.hash);
+    // machine facts) without re-parsing the version line. Empty under a
+    // release build — `with_build`-shaped consumers read that as absent.
+    println!(
+        "cargo:rustc-env=VERSION_HASH={}",
+        identity.hash_for_profile(release)
+    );
+    // Belt-and-suspenders: cargo rebuilds (and thereby re-runs) the
+    // build script per profile anyway, so profile switches re-emit
+    // without this line — but declaring the dependency costs one line
+    // and keeps the re-emit honest if the fingerprint machinery ever
+    // changes (R2-M3: provably redundant on cargo 1.98 native builds).
+    println!("cargo:rerun-if-env-changed=PROFILE");
     watch_git_state(dir);
     println!("cargo:rerun-if-changed=build.rs");
+}
+
+/// Whether the build script is running under a release-profile
+/// compilation. `cargo` sets `PROFILE=debug|release` for build scripts
+/// (bench inherits `release`, so a bench build reads as a release —
+/// bench artifacts never ship); tests keep `debug`, so in-crate
+/// assertions still see the full dev line. Note the inverse corollary:
+/// `cargo test --release` also reads as release, which turns the
+/// consumers' dev-line shape tests red by design — run those in the
+/// default profile.
+fn is_release_profile() -> bool {
+    env::var("PROFILE").as_deref() == Ok("release")
 }
 
 /// Watch the git state that can move the identity. Declaring ANY
@@ -270,6 +338,22 @@ mod tests {
             hash: "d423747".into(),
         };
         assert_eq!(identity.version_line(), "0.1.0 master::d423747");
+    }
+
+    /// The 2026-10-10 profile rule: release builds report the bare
+    /// semver and drop the hash machine fact entirely; dev builds keep
+    /// the full line and the hash.
+    #[test]
+    fn release_profile_strips_the_dev_identity() {
+        let identity = BuildIdentity {
+            base: "0.1.3".into(),
+            branch: "master".into(),
+            hash: "c5de4dc".into(),
+        };
+        assert_eq!(identity.line_for_profile(true), "0.1.3");
+        assert_eq!(identity.hash_for_profile(true), "");
+        assert_eq!(identity.line_for_profile(false), "0.1.3 master::c5de4dc");
+        assert_eq!(identity.hash_for_profile(false), "c5de4dc");
     }
 
     #[test]
