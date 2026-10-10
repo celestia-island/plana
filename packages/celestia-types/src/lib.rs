@@ -282,6 +282,22 @@ pub enum StreamChunkKind {
     DeepThinking,
 }
 
+/// The LIVE-STREAM wire mirror of `plana_text::StreamSegment` — the shape
+/// the WS event plane serializes (see `ws/core.ts`).
+///
+/// ⚠️ Deliberately NOT identical to the runtime enum: the runtime one
+/// gained `Input` (plana #420) for run-record capture — the composed
+/// prompt side of a skill invocation. It is CALLER-recorded at settle
+/// time and never streams live, so this wire enum has no `Input` arm.
+/// (One smaller typing difference is intentional too: the runtime types
+/// `call_id` as `Uuid` where this wire shape carries `call_id: String`;
+/// the optional `ts` stamp is the same on both.) Do
+/// NOT use this type to deserialize a stored run-record stream
+/// (`task_run_records.stream`): it hard-fails on the `Input` tag. Parse
+/// those with `plana_text::StreamSegment` (or the consumer's own adapter,
+/// as the chest webui does). The divergence is pinned by
+/// `wire_stream_segment_mirrors_live_events_only` below — adding `Input`
+/// here must be a deliberate decision that flips that test.
 #[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub enum StreamSegment {
@@ -972,6 +988,42 @@ mod tests {
             }
             other => panic!("expected ToolResult, got {other:?}"),
         }
+    }
+
+    /// The wire mirror carries every LIVE-streamed variant and exactly
+    /// those: `Input` (the run-record-only arm added by plana #420) must
+    /// be rejected here. If a future change adds an `Input` arm — or the
+    /// runtime enum grows a new live-streamed variant this mirror does
+    /// not know — this test forces the decision into the open.
+    #[test]
+    fn wire_stream_segment_mirrors_live_events_only() {
+        // The five live-streamed shapes parse on the wire type.
+        let live = [
+            json!({"Text": {"text": "t", "message_id": null}}),
+            json!({"Thinking": {"text": "t", "message_id": null}}),
+            json!({"DeepThinking": {"text": "t", "message_id": null}}),
+            json!({"ToolCall": {
+                "tool_name": "kalos.file_read", "call_id": "call-1",
+                "params": {"path": "/x"}, "agent_type": null, "message_id": null}}),
+            json!({"ToolResult": {
+                "tool_name": "kalos.file_read", "call_id": "call-1",
+                "success": true, "data": {"ok": true},
+                "duration_ms": null, "agent_type": null, "message_id": null}}),
+        ];
+        for sample in live {
+            serde_json::from_value::<StreamSegment>(sample.clone())
+                .unwrap_or_else(|e| panic!("live variant must parse: {sample}: {e}"));
+        }
+
+        // The run-record-only Input arm is NOT part of the live wire.
+        let input = json!({"Input": {
+            "messages": [{"role": "system", "content": "composed stack"}],
+            "message_id": null}});
+        assert!(
+            serde_json::from_value::<StreamSegment>(input).is_err(),
+            "the wire mirror must NOT accept the run-record-only Input arm — \
+             if this fails, a deliberate wire decision changed; see the enum's doc"
+        );
     }
 
     // ── StructuredAgentError ───────────────────────────────────────
