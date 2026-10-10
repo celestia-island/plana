@@ -1,8 +1,11 @@
 //! Family build identity — the single source of the `<base> <branch>::<hash7>`
-//! version line (e.g. `0.1 master::d423747`).
+//! version line (e.g. `0.1.0 master::d423747`).
 //!
-//! User direction 2026-10-08: the numeric patch counter is retired; **the
-//! branch and the exact commit ARE the identity**. Every health surface and
+//! User direction 2026-10-08, base refined 2026-10-10: the drifting numeric
+//! patch counter is retired — **the branch and the exact commit ARE the
+//! identity** — while the base reports the consuming crate's FULL package
+//! version (e.g. `0.1.0`), never a truncated `major.minor`. Every health
+//! surface and
 //! About row across the family prints the same shape, and the trailing
 //! hash7 is always the git short hash of the built source, so "does this
 //! deployment match the branch HEAD" stays answerable at a glance.
@@ -49,7 +52,8 @@ use std::process::Command;
 /// The resolved identity of one build.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BuildIdentity {
-    /// Version base (`major.minor`), e.g. `0.1`.
+    /// Version base — the consuming crate's full package version,
+    /// e.g. `0.1.0`.
     pub base: String,
     /// Branch name, or `"detached"` when no name resolves.
     pub branch: String,
@@ -64,17 +68,14 @@ impl BuildIdentity {
     }
 }
 
-/// Collapse a crate version to the identity base (`major.minor`).
+/// The identity base: the consuming crate's FULL package version.
 ///
-/// The patch counter is retired by the 2026-10-08 direction; `0.1.284`
-/// and `0.1.7` both identify as `0.1`.
+/// The 2026-10-08 direction collapsed this to `major.minor` (`0.1.284`
+/// and `0.1.7` both identifying as `0.1`); the 2026-10-10 user direction
+/// reversed that — the base is the honest full version (e.g. `0.1.0`),
+/// passed through verbatim.
 pub fn base_from_pkg_version(pkg_version: &str) -> String {
-    let parts: Vec<&str> = pkg_version.split('.').collect();
-    if parts.len() >= 2 {
-        format!("{}.{}", parts[0], parts[1])
-    } else {
-        pkg_version.to_string()
-    }
+    pkg_version.to_string()
 }
 
 /// Resolve the build identity of the git worktree containing `dir`.
@@ -214,7 +215,7 @@ fn git(dir: &str, args: &[&str]) -> Option<String> {
 /// triggers — a warm target directory must not ship a stale line.
 ///
 /// `pkg_version` is the consuming crate's `CARGO_PKG_VERSION`; the base is
-/// collapsed per the 2026-10-08 direction.
+/// the full package version per the 2026-10-10 direction.
 pub fn emit_version_line(pkg_version: &str) {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
     emit_version_line_at(pkg_version, &manifest_dir);
@@ -251,9 +252,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn base_collapses_to_major_minor() {
-        assert_eq!(base_from_pkg_version("0.1.284"), "0.1");
-        assert_eq!(base_from_pkg_version("2.7.9-rc.3"), "2.7");
+    fn base_is_the_full_package_version() {
+        // The 2026-10-10 direction: the base is the honest full version,
+        // never a truncated major.minor.
+        assert_eq!(base_from_pkg_version("0.1.284"), "0.1.284");
+        assert_eq!(base_from_pkg_version("0.1.0"), "0.1.0");
+        assert_eq!(base_from_pkg_version("2.7.9-rc.3"), "2.7.9-rc.3");
         assert_eq!(base_from_pkg_version("0.1"), "0.1");
         assert_eq!(base_from_pkg_version("weird"), "weird");
     }
@@ -261,11 +265,11 @@ mod tests {
     #[test]
     fn identity_line_is_the_family_shape() {
         let identity = BuildIdentity {
-            base: "0.1".into(),
+            base: "0.1.0".into(),
             branch: "master".into(),
             hash: "d423747".into(),
         };
-        assert_eq!(identity.version_line(), "0.1 master::d423747");
+        assert_eq!(identity.version_line(), "0.1.0 master::d423747");
     }
 
     #[test]
@@ -301,8 +305,8 @@ mod tests {
     /// Without git metadata (vendored source) the honest markers appear.
     #[test]
     fn resolve_answers_for_this_checkout() {
-        let identity = resolve("0.1", env!("CARGO_MANIFEST_DIR"));
-        assert_eq!(identity.base, "0.1");
+        let identity = resolve("0.1.0", env!("CARGO_MANIFEST_DIR"));
+        assert_eq!(identity.base, "0.1.0");
         assert!(
             !identity.branch.is_empty(),
             "branch resolves or degrades to detached"
@@ -315,7 +319,7 @@ mod tests {
             );
         }
         let line = identity.version_line();
-        assert!(line.starts_with("0.1 "), "line {line} keeps the base");
+        assert!(line.starts_with("0.1.0 "), "line {line} keeps the base");
         assert!(line.contains("::"), "line {line} carries the identity");
     }
 }
