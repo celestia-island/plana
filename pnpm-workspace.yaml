@@ -1,6 +1,5 @@
 packages:
   - 'packages/rpc_client'
-  - 'packages/build_info_ts'
 allowBuilds:
   '@parcel/watcher': true
   vue-demi: true
@@ -12,4 +11,3 @@ minimumReleaseAgeExclude:
   - '@celestia-island/plana-types'
   - '@celestia-island/plana-rpc-client'
   - '@celestia-island/plana-evernight-protocol'
-  - '@celestia-island/plana-build-info'

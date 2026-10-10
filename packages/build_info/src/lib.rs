@@ -37,8 +37,10 @@
 //! pub fn version_hash() -> &'static str { env!("VERSION_HASH") }
 //! ```
 //!
-//! The TS twin of this facility lives in `packages/build_info_ts`
-//! (npm `@celestia-island/plana-build-info`) for build-time webui tooling.
+//! The TS twin of this facility is exported from
+//! `@celestia-island/plana-rpc-client/build-info` for build-time webui
+//! tooling (a subpath export, so webview consumers of the main entry
+//! never pull the node-only module into their bundles).
 
 use std::env;
 use std::path::Path;
