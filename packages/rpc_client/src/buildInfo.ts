@@ -8,6 +8,13 @@
 // resolves the `<branch>::<hash7>` identity token of a source tree so a
 // webui build stamp means the same thing as every engine's version line.
 //
+// Profile rule (2026-10-10 evening — the exact twin of the Rust gate in
+// plana_build_info): a RELEASE build carries no build-environment
+// identity at all. 正式版就是标准 semver; only dev builds may show which
+// branch they came from. Consumers pass `{ release: true }` for
+// production builds and get `undefined` — by construction, no display
+// layer can ship branch identity inside a release artifact.
+//
 // Resolution order mirrors the Rust crate and `celestia-devtools
 // version-string`:
 // 1. the `celestia-devtools` facility, when on the build PATH;
@@ -95,13 +102,29 @@ function branchOf(root: string): string | undefined {
   return "detached";
 }
 
+/** Options for [`resolveBuildIdentity`]. */
+export interface BuildIdentityOptions {
+  /** Whether this is a release-profile build. `true` → the identity is
+   * withheld entirely (the 2026-10-10 profile rule: release artifacts
+   * never carry branch identity). Defaults to `false` (dev build). */
+  release?: boolean;
+}
+
 /**
  * Resolve the `<branch>::<hash7>` build identity of the git worktree
  * containing `root` (any directory inside the tree works), or `undefined`
  * when neither the devtools facility nor git can answer — callers keep
  * their own deterministic fallback for non-git builds (source tarballs).
+ *
+ * With `{ release: true }` the answer is always `undefined`: a release
+ * build reports its bare semver and nothing else (the TS twin of the
+ * Rust facility's PROFILE gate).
  */
-export function resolveBuildIdentity(root: string): string | undefined {
+export function resolveBuildIdentity(
+  root: string,
+  options?: BuildIdentityOptions,
+): string | undefined {
+  if (options?.release) return undefined;
   const facility = run(
     "celestia-devtools",
     ["version-string", "--dir", root],
