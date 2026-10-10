@@ -194,10 +194,9 @@ pub struct RagDbWriteParams {
 #[ts(export, export_to = "tools/aporia.ts")]
 pub struct RagDbReadParams {
     pub query_embedding: Vec<f64>,
-    /// Bare text query — the runtime's preferred path (workspace
-    /// indexer first, embedding fallback). Declared so generated IEPL
-    /// bindings match what the tool actually accepts (2026-10-10: the
-    /// stub omitted it while agents' live code used it).
+    // `query` (bare text, workspace-indexer first) carries no doc
+    // comment ON PURPOSE: ts_rs inlines field docs into the generated
+    // params signature, breaking the .d.ts line protocol (2026-10-10).
     #[serde(default)]
     pub query: Option<String>,
     #[serde(default)]
