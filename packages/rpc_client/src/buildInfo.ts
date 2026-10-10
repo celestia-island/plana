@@ -1,25 +1,26 @@
-/**
- * Family build identity — the TS twin of the Rust `plana_build_info`
- * crate, for build-time webui tooling (Vite plugins and the like).
- *
- * User direction 2026-10-08: the numeric patch counter is retired; the
- * branch and the exact commit ARE the identity, rendered as
- * `<base> <branch>::<hash7>` (e.g. `0.1 master::d423747`). This module
- * resolves the `<branch>::<hash7>` identity token of a source tree so a
- * webui build stamp means the same thing as every engine's version line.
- *
- * Resolution order mirrors the Rust crate and `celestia-devtools
- * version-string`:
- * 1. the `celestia-devtools` facility, when on the build PATH;
- * 2. direct git — branch via `rev-parse --abbrev-ref HEAD` (detached
- *    worktrees resolved through local heads → origin remote heads →
- *    symbolic remote HEAD → `"detached"`), hash via
- *    `rev-parse --short=7 HEAD`;
- * 3. no git metadata → `undefined`, so callers keep their own
- *    deterministic fallback instead of a fabricated token.
- *
- * Node context only (spawns git / devtools); not for browser bundles.
- */
+// Build-identity resolution — the TS twin of the Rust `plana_build_info`
+// crate, hosted behind this package's `build-info` subpath export.
+//
+// User direction 2026-10-08: the numeric patch counter is retired; the
+// branch and the exact commit ARE the identity, rendered as
+// `<base> <branch>::<hash7>` (e.g. `0.1 master::d423747`). This module
+// resolves the `<branch>::<hash7>` identity token of a source tree so a
+// webui build stamp means the same thing as every engine's version line.
+//
+// Resolution order mirrors the Rust crate and `celestia-devtools
+// version-string`:
+// 1. the `celestia-devtools` facility, when on the build PATH;
+// 2. direct git — branch via `rev-parse --abbrev-ref HEAD` (detached
+//    worktrees resolved through local heads → origin remote heads →
+//    symbolic remote HEAD → `"detached"`), hash via
+//    `rev-parse --short=7 HEAD`;
+// 3. no git metadata → `undefined`, so callers keep their own
+//    deterministic fallback instead of a fabricated token.
+//
+// Node context only (spawns git / devtools) — deliberately NOT exported
+// from the package index: webview consumers bundle the index, and a
+// `node:child_process` import there would break their browser builds.
+// Import as `@celestia-island/plana-rpc-client/build-info`.
 import { execFileSync } from "node:child_process";
 
 /** Shape of the identity token: `<branch>::<hash7>` (hash 7–40 hex). */
