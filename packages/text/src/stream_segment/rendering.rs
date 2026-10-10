@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::{StreamChunkKind, StreamSegment};
+use super::{InputMessage, StreamChunkKind, StreamSegment};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmStream {
@@ -14,6 +14,27 @@ impl LlmStream {
         Self {
             segments: Vec::new(),
         }
+    }
+
+    /// Prepend the composed INPUT side as the stream's leading segment
+    /// (user direction 2026-10-10): the caller — scepter's pipeline,
+    /// where the composed messages live — records what the model was
+    /// actually fed (the system stack + the task turn) so the run
+    /// record's input lane carries the prompt composition. One call per
+    /// captured stream: the first round's composition; later rounds
+    /// resend the same stack plus segments the stream already records.
+    pub fn prepend_input(&mut self, messages: Vec<InputMessage>) {
+        if messages.is_empty() {
+            return;
+        }
+        self.segments.insert(
+            0,
+            StreamSegment::Input {
+                messages,
+                message_id: None,
+                ts: None,
+            },
+        );
     }
 
     pub fn from_plain_text(text: &str) -> Self {
@@ -140,6 +161,9 @@ impl LlmStream {
                 | StreamSegment::DeepThinking { text, .. } => text.is_empty(),
                 StreamSegment::ToolCall { params, .. } => params.is_null(),
                 StreamSegment::ToolResult { data, .. } => data.is_null(),
+                // An Input segment always carries its messages' payload —
+                // a stream holding one is not empty.
+                StreamSegment::Input { .. } => false,
             })
     }
 

@@ -31,8 +31,31 @@ pub enum StreamToolEvent {
     },
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct InputMessage {
+    /// LLM wire role: `system` / `user` / … — one row per composed layer.
+    pub role: String,
+    /// The layer's verbatim content (never truncated here; the run
+    /// record's stream budget governs total size).
+    pub content: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum StreamSegment {
+    /// The composed INPUT side of an LLM call (user direction
+    /// 2026-10-10): every other segment records the model's OUTPUT
+    /// (thinking / text / tool traffic), so a run record without an
+    /// Input segment reads as if the run had consumed no prompt
+    /// composition at all. Recorded by the CALLER (scepter's pipeline,
+    /// where the composed messages live) — never streamed live, hence
+    /// never produced by `LlmStreamBuilder`.
+    Input {
+        messages: Vec<InputMessage>,
+        #[serde(default)]
+        message_id: Option<Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ts: Option<u64>,
+    },
     Text {
         text: String,
         #[serde(default)]
@@ -92,6 +115,7 @@ impl StreamSegment {
             Self::Text { text, .. }
             | Self::Thinking { text, .. }
             | Self::DeepThinking { text, .. } => text,
+            Self::Input { .. } => "",
             Self::ToolCall { params, .. } => match params {
                 Value::String(s) => s,
                 _ => "",
@@ -109,6 +133,7 @@ impl StreamSegment {
             Self::Text { text, .. }
             | Self::Thinking { text, .. }
             | Self::DeepThinking { text, .. } => text.clone(),
+            Self::Input { .. } => String::new(),
             Self::ToolCall { params, .. } | Self::ToolResult { data: params, .. } => match params {
                 Value::String(s) => s.clone(),
                 Value::Null => String::new(),
@@ -126,7 +151,8 @@ impl StreamSegment {
     /// their own sequencing, never to a fake clock.
     pub fn wall_ts(&self) -> Option<u64> {
         match self {
-            Self::Text { ts, .. }
+            Self::Input { ts, .. }
+            | Self::Text { ts, .. }
             | Self::Thinking { ts, .. }
             | Self::DeepThinking { ts, .. }
             | Self::ToolCall { ts, .. }
@@ -212,6 +238,73 @@ mod tests {
 
     fn empty() -> serde_json::Value {
         serde_json::Value::Object(Default::default())
+    }
+
+    /// The Input segment (user direction 2026-10-10): serde round-trips
+    /// its message layers, `prepend_input` leads the stream, and the
+    /// legacy helpers treat it as payload-bearing but output-free.
+    #[test]
+    fn test_input_segment_round_trip_and_prepend() -> Result<()> {
+        let mut stream = LlmStreamBuilder::new();
+        stream.push_chunk("answer", StreamChunkKind::Text);
+        let mut stream = stream.seal_coalesced();
+
+        stream.prepend_input(vec![
+            InputMessage {
+                role: "system".to_string(),
+                content: "standing law + soul + skill".to_string(),
+            },
+            InputMessage {
+                role: "user".to_string(),
+                content: "ingest the workspace knowledge".to_string(),
+            },
+        ]);
+
+        // Leads the stream — the prompts precede the output they shaped.
+        assert!(matches!(
+            stream.segments().first(),
+            Some(StreamSegment::Input { .. })
+        ));
+        // Output-side helpers stay Output-side: no text bleeds in, but
+        // the payload counts toward size and emptiness.
+        assert_eq!(stream.raw_text(), "answer");
+        assert!(!stream.is_empty());
+
+        // Wire round-trip keeps the layers (the run record column holds
+        // this shape; the webui adapter switches on the tag).
+        let value = serde_json::to_value(&stream)?;
+        let back: LlmStream = serde_json::from_value(value)?;
+        match back.segments().first() {
+            Some(StreamSegment::Input { messages, .. }) => {
+                assert_eq!(messages.len(), 2);
+                assert_eq!(messages[0].role, "system");
+                assert_eq!(messages[1].content, "ingest the workspace knowledge");
+            }
+            other => panic!("expected leading Input segment, got {other:?}"),
+        }
+        Ok(())
+    }
+
+    /// Prepending nothing is a no-op — callers without a composed input
+    /// (nudges, tests) keep their stream untouched.
+    #[test]
+    fn test_prepend_input_empty_is_noop() -> Result<()> {
+        let mut stream = LlmStream::from_plain_text("solo");
+        stream.prepend_input(Vec::new());
+        assert_eq!(stream.segments().len(), 1);
+        Ok(())
+    }
+
+    /// An Input-ONLY stream is not empty — the composition alone is
+    /// payload (R1 gap: a stream that also holds Text masked this arm).
+    #[test]
+    fn test_input_only_stream_is_not_empty() {
+        let mut stream = LlmStream::empty();
+        stream.prepend_input(vec![InputMessage {
+            role: "system".to_string(),
+            content: "law".to_string(),
+        }]);
+        assert!(!stream.is_empty());
     }
 
     #[test]

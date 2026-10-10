@@ -28,7 +28,14 @@ export type RagDbDeleteParams = { id: string, };
 
 export type RagDbDeleteResult = { doc_id: string, };
 
-export type RagDbReadParams = { query_embedding: Array<number>, limit: number | null, };
+export type RagDbReadParams = { query_embedding: Array<number>, 
+/**
+ * Bare text query — the runtime's preferred path (workspace
+ * indexer first, embedding fallback). Declared so generated IEPL
+ * bindings match what the tool actually accepts (2026-10-10: the
+ * stub omitted it while agents' live code used it).
+ */
+query: string | null, limit: number | null, };
 
 export type RagDbReadResult = { count: number, results: Array<RagDocResult>, };
 
