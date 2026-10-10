@@ -40,6 +40,24 @@ export type SkillStage = { "Started": string } | { "Done": string } | { "Complet
 
 export type StreamChunkKind = "Text" | "Thinking" | "DeepThinking";
 
+/**
+ * The LIVE-STREAM wire mirror of `plana_text::StreamSegment` — the shape
+ * the WS event plane serializes (see `ws/core.ts`).
+ *
+ * ⚠️ Deliberately NOT identical to the runtime enum: the runtime one
+ * gained `Input` (plana #420) for run-record capture — the composed
+ * prompt side of a skill invocation. It is CALLER-recorded at settle
+ * time and never streams live, so this wire enum has no `Input` arm.
+ * (One smaller typing difference is intentional too: the runtime types
+ * `call_id` as `Uuid` where this wire shape carries `call_id: String`;
+ * the optional `ts` stamp is the same on both.) Do
+ * NOT use this type to deserialize a stored run-record stream
+ * (`task_run_records.stream`): it hard-fails on the `Input` tag. Parse
+ * those with `plana_text::StreamSegment` (or the consumer's own adapter,
+ * as the chest webui does). The divergence is pinned by
+ * `wire_stream_segment_mirrors_live_events_only` below — adding `Input`
+ * here must be a deliberate decision that flips that test.
+ */
 export type StreamSegment = { "Text": { text: string, message_id?: string, 
 /**
  * Wall-clock ms epoch at the segment's last activity — mirrors
