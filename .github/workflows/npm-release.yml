@@ -29,6 +29,12 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - name: Install workspace deps
         run: pnpm install --no-frozen-lockfile
+      # The rpc-client's build-info subpath ships COMPILED JS: node-native
+      # config loaders (vite --configLoader native/bundle) refuse type
+      # stripping under node_modules, so the TS source alone is not
+      # importable from build scripts. Compile it fresh before publishing.
+      - name: Build rpc-client build-info subpath
+        run: pnpm --filter @celestia-island/plana-rpc-client run build:build-info
       # Idempotent: a package already at its manifest version on npm is
       # skipped, so a wave republishing one package does not fail on the others.
       - name: Publish plana-rpc-client

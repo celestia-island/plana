@@ -1,6 +1,6 @@
 {
   "name": "@celestia-island/plana-rpc-client",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "repository": {
     "type": "git",
     "url": "https://github.com/celestia-island/plana"
@@ -10,13 +10,18 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./build-info": "./src/buildInfo.ts"
+    "./build-info": {
+      "types": "./dist/buildInfo.d.ts",
+      "default": "./dist/buildInfo.js"
+    }
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:build-info": "esbuild src/buildInfo.ts --bundle --platform=node --format=esm --outfile=dist/buildInfo.js && tsc src/buildInfo.ts --declaration --emitDeclarationOnly --outDir dist --skipLibCheck --ignoreConfig --target ES2022 --module nodenext --moduleResolution nodenext --types node"
   },
   "devDependencies": {
     "@types/node": "^*",
-    "typescript": "^*"
+    "typescript": "^*",
+    "esbuild": "^*"
   }
 }
