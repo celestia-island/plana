@@ -120,11 +120,90 @@ impl Persistence {
         Ok(())
     }
 
+    /// Soft-offline every `agents` row whose `last_heartbeat` is older than
+    /// `stale_after_secs` seconds AND whose `status` is not already
+    /// `Offline`. Returns the number of rows newly marked offline.
+    ///
+    /// Backs the scepter agent-cleanup loop (`scepter-stale-offline`): the
+    /// in-process heartbeat monitor only watches the in-memory
+    /// `PoleMosState` workspace/device nodes — the persisted `agents` rows
+    /// were accumulating forever with `status = 'Online'`.
+    ///
+    /// Indexing NOTE: a partial index on
+    /// `agents (last_heartbeat) WHERE status <> 'Offline'` (created in
+    /// scepter migration `m20261010_create_stale_offline_index`) keeps
+    /// this an index-only scan even after the table grows. The index
+    /// predicate has to match the WHERE clause (Postgres's partial-index
+    /// planner does not infer `status <> 'Offline'` from
+    /// `status = 'Online'`); a narrow `WHERE status = 'Online'` index
+    /// will NOT be picked. Keep them in lockstep when either is changed.
+    ///
+    /// Bound NOTE: `stale_after_secs` is a `u64` at the API boundary but
+    /// bound as `i64` for `make_interval(secs => $1)` — any value above
+    /// `i64::MAX` (~9.22e18) saturates into a negative interval and the
+    /// statement will fail at the database. Callers should pass a sane
+    /// wall-clock duration (minutes to hours, not epoch seconds).
+    ///
+    /// Status casing NOTE: this writes the bare `Offline` — the same
+    /// literal that `plana_state_sync::AgentStatus::Offline` produces via
+    /// its `Display` impl and that `save_agent`/`update_agent_status`
+    /// persist. scepter's persisted data is therefore capitalised
+    /// (`Initializing` / `Online` / `Busy` / `Offline` / `Error`), not
+    /// lower-case. The earlier `get_online_agents` query used
+    /// `status = 'online'` and matched nothing in production — that was
+    /// a pre-existing latent bug, also fixed in this PR.
+    ///
+    /// Soft-delete only: rows stay in the table for audit / re-registration
+    /// to keep the same `id` and to keep `get_online_agents` (which
+    /// filters on `status = 'Online'`) the single source of truth for
+    /// "alive". Hard deletion is intentionally NOT provided here — scepter
+    /// owns lifecycle and would need a separate decision.
+    pub async fn mark_stale_agents_offline(
+        &self,
+        stale_after_secs: u64,
+    ) -> Result<u64> {
+        let sql = r#"
+            WITH moved AS (
+                UPDATE agents
+                SET status = 'Offline',
+                    updated_at = NOW()
+                WHERE status <> 'Offline'
+                  AND last_heartbeat < NOW() - make_interval(secs => $1)
+                RETURNING 1
+            )
+            SELECT count(*)::bigint FROM moved
+        "#;
+
+        let stmt = sea_orm::Statement::from_sql_and_values(
+            self.conn.get_database_backend(),
+            sql,
+            [(stale_after_secs as i64).into()],
+        );
+
+        let row = self
+            .conn
+            .query_one_raw(stmt)
+            .await
+            .map_err(|e| anyhow!("Failed to mark stale agents offline: {}", e))?
+            .ok_or_else(|| anyhow!("mark_stale_agents_offline: no row returned"))?;
+
+        let count: i64 = row
+            .try_get("", "count")
+            .map_err(|e| anyhow!("mark_stale_agents_offline: missing count: {}", e))?;
+
+        Ok(count.max(0) as u64)
+    }
+
     pub async fn get_online_agents(&self) -> Result<Vec<OnlineAgentInfo>> {
+        // Status casing: scepter persists `Online` (via `Display` of
+        // `plana_state_sync::AgentStatus::Online`). The earlier `status =
+        // 'online'` filter matched nothing in production and was a
+        // pre-existing latent bug; this filter uses the same capitalised
+        // literal the scepter write path produces.
         let sql = r#"
             SELECT agent_type, agent_id, started_at, last_heartbeat
             FROM agents
-            WHERE status = 'online'
+            WHERE status = 'Online'
             ORDER BY agent_type
         "#;
 
