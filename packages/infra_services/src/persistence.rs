@@ -158,10 +158,7 @@ impl Persistence {
     /// filters on `status = 'Online'`) the single source of truth for
     /// "alive". Hard deletion is intentionally NOT provided here — scepter
     /// owns lifecycle and would need a separate decision.
-    pub async fn mark_stale_agents_offline(
-        &self,
-        stale_after_secs: u64,
-    ) -> Result<u64> {
+    pub async fn mark_stale_agents_offline(&self, stale_after_secs: u64) -> Result<u64> {
         let sql = r#"
             WITH moved AS (
                 UPDATE agents

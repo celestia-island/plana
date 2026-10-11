@@ -2,8 +2,8 @@
 //!
 //! - [`auto_bump`] — wraps methods annotated with `#[bump]` to auto-increment a
 //!   revision counter, supporting optimistic concurrency in persistent state.
-//! - [`iepl_agent_types`] / [`iepl_agent_tools`] — generate `.d.ts` TypeScript
-//!   declarations from rust types via `ts_rs`, used by the IEPL codegen pipeline.
+//! - [`ptc_agent_types`] / [`ptc_agent_tools`] — generate `.d.ts` TypeScript
+//!   declarations from rust types via `ts_rs`, used by the PTC codegen pipeline.
 //! - [`Getters`] — derive macro that generates `fn field_name(&self) -> &T` accessor
 //!   methods on structs, with `#[getter(skip)]` and `#[getter(rename = "…")]`.
 //! - [`define_typed_tools`] — declares typed tool structs and `Tool` impls
@@ -61,11 +61,11 @@ fn wrap_method_body(method: &mut syn::ImplItemFn) {
     });
 }
 
-/// Declares agent-to-type mappings for IEPL .d.ts code generation.
+/// Declares agent-to-type mappings for PTC .d.ts code generation.
 ///
 /// Input syntax:
 /// ```ignore
-/// iepl_agent_types! {
+/// ptc_agent_types! {
 ///     kalos => [FileListResult, FileEntry, MkDirResult, ...],
 ///     neikos => [ContainerListResult, ContainerListItem, ...],
 ///     ...
@@ -73,11 +73,11 @@ fn wrap_method_body(method: &mut syn::ImplItemFn) {
 /// ```
 ///
 /// Generates:
-/// - `fn iepl_codegen_collect_all() -> Vec<(&'static str, String)>` — returns (agent_name, combined_ts_decls)
-/// - `fn iepl_codegen_write_dts(base_path: &str)` — writes .d.ts to `{base_path}/{agent}/types/api.d.ts`
+/// - `fn ptc_codegen_collect_all() -> Vec<(&'static str, String)>` — returns (agent_name, combined_ts_decls)
+/// - `fn ptc_codegen_write_dts(base_path: &str)` — writes .d.ts to `{base_path}/{agent}/types/api.d.ts`
 #[proc_macro]
-pub fn iepl_agent_types(input: TokenStream) -> TokenStream {
-    let parsed = syn::parse_macro_input!(input as IeplAgentTypesInput);
+pub fn ptc_agent_types(input: TokenStream) -> TokenStream {
+    let parsed = syn::parse_macro_input!(input as PtcAgentTypesInput);
     let agent_entries = &parsed.entries;
 
     let collect_arms: Vec<proc_macro2::TokenStream> = agent_entries
@@ -103,37 +103,37 @@ pub fn iepl_agent_types(input: TokenStream) -> TokenStream {
         .collect();
 
     let expanded = quote! {
-        pub fn iepl_codegen_collect_all() -> Vec<(&'static str, String)> {
+        pub fn ptc_codegen_collect_all() -> Vec<(&'static str, String)> {
             vec![
                 #(#collect_arms),*
             ]
         }
 
-        pub fn iepl_codegen_write_dts(base_path: &str) {
-            let entries = iepl_codegen_collect_all();
+        pub fn ptc_codegen_write_dts(base_path: &str) {
+            let entries = ptc_codegen_collect_all();
 
             let types_dir = std::path::Path::new(base_path)
                 .join("packages/shared/bindings/types");
             if let Err(e) = std::fs::create_dir_all(&types_dir) {
-                eprintln!("[iepl_codegen] failed to create dir {}: {}", types_dir.display(), e);
+                eprintln!("[ptc_codegen] failed to create dir {}: {}", types_dir.display(), e);
                 return;
             }
 
             for (agent, content) in &entries {
                 let file_path = types_dir.join(format!("{}.d.ts", agent));
                 if let Err(e) = std::fs::write(&file_path, content.as_bytes()) {
-                    eprintln!("[iepl_codegen] failed to write {}: {}", file_path.display(), e);
+                    eprintln!("[ptc_codegen] failed to write {}: {}", file_path.display(), e);
                 }
             }
 
-            eprintln!("[iepl_codegen] wrote .d.ts for {} agents to {}", entries.len(), types_dir.display());
+            eprintln!("[ptc_codegen] wrote .d.ts for {} agents to {}", entries.len(), types_dir.display());
         }
     };
 
     expanded.into()
 }
 
-struct IeplAgentTypesInput {
+struct PtcAgentTypesInput {
     entries: Vec<AgentEntry>,
 }
 
@@ -142,7 +142,7 @@ struct AgentEntry {
     type_paths: Vec<syn::Path>,
 }
 
-impl syn::parse::Parse for IeplAgentTypesInput {
+impl syn::parse::Parse for PtcAgentTypesInput {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut entries = Vec::new();
 
@@ -171,7 +171,7 @@ impl syn::parse::Parse for IeplAgentTypesInput {
             }
         }
 
-        Ok(IeplAgentTypesInput { entries })
+        Ok(PtcAgentTypesInput { entries })
     }
 }
 
@@ -179,7 +179,7 @@ impl syn::parse::Parse for IeplAgentTypesInput {
 ///
 /// Input syntax:
 /// ```ignore
-/// iepl_agent_tools! {
+/// ptc_agent_tools! {
 ///     "hubris" => [
 ///         ("create_todo", CreateTodoParams, String),
 ///         ("list_todo", ListTodoParams, TodoTreeListResult),
@@ -188,11 +188,11 @@ impl syn::parse::Parse for IeplAgentTypesInput {
 /// ```
 ///
 /// Generates:
-/// - `fn iepl_codegen_collect_api_sigs() -> Vec<(&'static str, String)>`
+/// - `fn ptc_codegen_collect_api_sigs() -> Vec<(&'static str, String)>`
 ///   Returns (agent_name, full api declaration block with typed signatures)
 #[proc_macro]
-pub fn iepl_agent_tools(input: TokenStream) -> TokenStream {
-    let parsed = syn::parse_macro_input!(input as IeplAgentToolsInput);
+pub fn ptc_agent_tools(input: TokenStream) -> TokenStream {
+    let parsed = syn::parse_macro_input!(input as PtcAgentToolsInput);
     let agent_entries = &parsed.entries;
 
     let collect_arms: Vec<proc_macro2::TokenStream> = agent_entries
@@ -236,7 +236,7 @@ pub fn iepl_agent_tools(input: TokenStream) -> TokenStream {
         .collect();
 
     let expanded = quote! {
-        pub fn iepl_codegen_collect_api_sigs() -> Vec<(&'static str, String)> {
+        pub fn ptc_codegen_collect_api_sigs() -> Vec<(&'static str, String)> {
             vec![
                 #(#collect_arms),*
             ]
@@ -246,7 +246,7 @@ pub fn iepl_agent_tools(input: TokenStream) -> TokenStream {
     expanded.into()
 }
 
-struct IeplAgentToolsInput {
+struct PtcAgentToolsInput {
     entries: Vec<AgentToolsEntry>,
 }
 
@@ -261,7 +261,7 @@ struct ToolEntry {
     result_type: syn::Path,
 }
 
-impl syn::parse::Parse for IeplAgentToolsInput {
+impl syn::parse::Parse for PtcAgentToolsInput {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut entries = Vec::new();
 
@@ -297,7 +297,7 @@ impl syn::parse::Parse for IeplAgentToolsInput {
             }
         }
 
-        Ok(IeplAgentToolsInput { entries })
+        Ok(PtcAgentToolsInput { entries })
     }
 }
 
