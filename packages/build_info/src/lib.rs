@@ -23,13 +23,17 @@
 //!
 //! Resolution order (mirrors `celestia-devtools version-string`, the
 //! build-host facility):
-//! 1. `celestia-devtools version-string --dir <dir>` — the shared
+//! 1. `CELESTIA_BUILD_BRANCH` + `CELESTIA_BUILD_HASH` — the engine
+//!    passthrough (2026-10-11 mislabel incident): a builder that checked
+//!    out a known ref states it; honored only when the hash pins to this
+//!    checkout's HEAD;
+//! 2. `celestia-devtools version-string --dir <dir>` — the shared
 //!    implementation, when the devtools binary is on the build PATH;
-//! 2. direct git — branch via `rev-parse --abbrev-ref HEAD`, detached
-//!    worktrees resolved through a ladder (local heads → origin remote
-//!    heads → symbolic remote HEAD → `"detached"`), hash via
-//!    `rev-parse --short=7 HEAD`;
-//! 3. without git metadata — the honest markers `detached` / `unknown`,
+//! 3. direct git — branch via `rev-parse --abbrev-ref HEAD`, detached
+//!    worktrees resolved through a ladder (exact default-branch tip →
+//!    local heads → origin remote heads → symbolic remote HEAD →
+//!    `"detached"`), hash via `rev-parse --short=7 HEAD`;
+//! 4. without git metadata — the honest markers `detached` / `unknown`,
 //!    never a fabricated token.
 //!
 //! Usage in a consuming crate:
@@ -87,6 +91,21 @@ pub fn base_from_pkg_version(pkg_version: &str) -> String {
 ///
 /// See the crate docs for the resolution order and the fallback markers.
 pub fn resolve(base: &str, dir: &str) -> BuildIdentity {
+    // The engine passthrough outranks everything (2026-10-11 mislabel
+    // incident): a builder that checked out a known ref states it, so no
+    // refstore re-derivation can relabel the artifact mid-build.
+    if let Some(branch) = identity_from_env(
+        env::var("CELESTIA_BUILD_BRANCH").ok(),
+        env::var("CELESTIA_BUILD_HASH").ok(),
+        git(dir, &["rev-parse", "HEAD"]),
+    ) {
+        let hash = short_hash(dir).unwrap_or_else(|| "unknown".to_string());
+        return BuildIdentity {
+            base: base.to_string(),
+            branch,
+            hash,
+        };
+    }
     if let Some(identity) = from_devtools(base, dir) {
         return identity;
     }
@@ -96,6 +115,25 @@ pub fn resolve(base: &str, dir: &str) -> BuildIdentity {
         base: base.to_string(),
         branch,
         hash,
+    }
+}
+
+/// The engine passthrough (2026-10-11 mislabel incident): a builder that
+/// KNOWS the ref it checked out — celestia-build, which synced `CB_REF` at
+/// wave start — states it as `CELESTIA_BUILD_BRANCH` pinned to this
+/// checkout by `CELESTIA_BUILD_HASH`. The pair is honored only together
+/// and only when the hash equals the checkout's HEAD, so a stale or stray
+/// branch-only env can never relabel a build; any mismatch falls through
+/// to the normal resolution.
+fn identity_from_env(
+    branch: Option<String>,
+    hash: Option<String>,
+    head: Option<String>,
+) -> Option<String> {
+    let branch = branch.filter(|b| !b.is_empty())?;
+    match hash.as_deref() {
+        Some(h) if !h.is_empty() && head.as_deref() == Some(h) => Some(branch),
+        _ => None,
     }
 }
 
@@ -155,7 +193,17 @@ fn branch_of(dir: &str) -> Option<String> {
 /// fetched squash sha may live only on the remote), then the symbolic
 /// remote HEAD. `name-rev` prints the literal `undefined` when its ref set
 /// cannot name the commit — that must not leak into the identity.
+///
+/// Before any of that: the default branch's EXACT tip wins (2026-10-11
+/// mislabel incident). Deploy waves always build the default branch tip as
+/// a detached checkout, while parallel lanes leave same-tip feature
+/// branches in the shared refstore — `name-rev` then steals the identity
+/// (`feat/model-usage-selfhosted:770f625` on a `master` build). When HEAD
+/// IS the default tip, local or remote, the default name is the truth.
 fn resolve_detached(dir: &str) -> Option<String> {
+    if let Some(name) = default_branch_tip(dir) {
+        return Some(name);
+    }
     for refs in ["refs/heads/*", "refs/remotes/origin/*"] {
         if let Ok(out) = Command::new("git")
             .args([
@@ -199,6 +247,43 @@ fn resolve_detached(dir: &str) -> Option<String> {
     Some("detached".to_string())
 }
 
+/// The default branch's name per the remote's symbolic HEAD (e.g.
+/// `origin/master` → `master`), when the clone records one. The remote
+/// prefix is stripped at the FIRST slash so a slash-named default
+/// (`origin/release/2026-10` → `release/2026-10`) keeps its full name —
+/// taking the last component would probe a ref that never exists and
+/// silently disarm the tip guard (R2 2026-10-11).
+fn default_branch_name(dir: &str) -> Option<String> {
+    let sym = git(
+        dir,
+        &["symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+    )?;
+    let name = sym.split_once('/')?.1.to_string();
+    if name.is_empty() || name == "HEAD" {
+        return None;
+    }
+    Some(name)
+}
+
+/// `Some(default)` when HEAD is EXACTLY the default branch's tip, local
+/// ref or remote ref — the shape every default-branch deploy wave builds.
+/// A local master behind origin's (post-fetch, pre-ff) still matches the
+/// remote ref; neither matching means HEAD is genuinely off-tip and the
+/// ladder answers instead.
+fn default_branch_tip(dir: &str) -> Option<String> {
+    let name = default_branch_name(dir)?;
+    let head = git(dir, &["rev-parse", "HEAD"])?;
+    for r#ref in [
+        format!("refs/heads/{name}"),
+        format!("refs/remotes/origin/{name}"),
+    ] {
+        if git(dir, &["rev-parse", "--verify", &r#ref]).as_deref() == Some(head.as_str()) {
+            return Some(name);
+        }
+    }
+    None
+}
+
 /// Short commit hash of `dir`'s HEAD, or `None` without git metadata.
 fn short_hash(dir: &str) -> Option<String> {
     let hash = git(dir, &["rev-parse", "--short=7", "HEAD"])?;
@@ -238,6 +323,11 @@ pub fn emit_version_line_at(pkg_version: &str, dir: &str) {
     // The bare hash7 for consumers that want the commit alone (probes,
     // machine facts) without re-parsing the version line.
     println!("cargo:rustc-env=VERSION_HASH={}", identity.hash);
+    // The engine passthrough moves the identity between waves even on an
+    // unchanged checkout — watch both halves of the pair (the branch alone
+    // never relabels anything, but the hash pin flips the whole override).
+    println!("cargo:rerun-if-env-changed=CELESTIA_BUILD_BRANCH");
+    println!("cargo:rerun-if-env-changed=CELESTIA_BUILD_HASH");
     watch_git_state(dir);
     println!("cargo:rerun-if-changed=build.rs");
 }
@@ -353,5 +443,167 @@ mod tests {
             is_short_hash(hash),
             "line {line} ends in a short commit hash"
         );
+    }
+
+    // ── engine passthrough (2026-10-11 mislabel incident) ──────────────
+
+    #[test]
+    fn env_passthrough_honors_only_a_hash_pinned_pair() {
+        let head = "0123456789abcdef0123456789abcdef01234567";
+        // The pair, pinned: the branch is stated verbatim.
+        assert_eq!(
+            identity_from_env(Some("master".into()), Some(head.into()), Some(head.into())),
+            Some("master".into())
+        );
+        // Hash mismatch (stale env, different checkout): ignored.
+        assert_eq!(
+            identity_from_env(
+                Some("master".into()),
+                Some(head.into()),
+                Some("fedcba9876543210fedcba9876543210fedcba98".into())
+            ),
+            None
+        );
+        // A branch alone can never relabel a build.
+        assert_eq!(
+            identity_from_env(Some("master".into()), None, Some(head.into())),
+            None
+        );
+        // A hash alone names nothing.
+        assert_eq!(
+            identity_from_env(None, Some(head.into()), Some(head.into())),
+            None
+        );
+        // Empty branch is no statement.
+        assert_eq!(
+            identity_from_env(Some(String::new()), Some(head.into()), Some(head.into())),
+            None
+        );
+        // Empty hash pin is no pin.
+        assert_eq!(
+            identity_from_env(
+                Some("master".into()),
+                Some(String::new()),
+                Some(head.into())
+            ),
+            None
+        );
+        // No git metadata at all: nothing to pin against.
+        assert_eq!(
+            identity_from_env(Some("master".into()), Some(head.into()), None),
+            None
+        );
+    }
+
+    // ── detached default-tip rule (2026-10-11 mislabel incident) ───────
+
+    /// A throwaway git repo shaped like the mislabel incident: the default
+    /// branch (`default_name`) carries a same-tip feature branch, and HEAD
+    /// sits detached on that tip (the deploy wave's checkout shape). With
+    /// `advance_master` the default branch moves one commit ahead first —
+    /// the honest off-tip case where the ladder must keep answering.
+    fn mislabel_fixture(default_name: &str, advance_master: bool) -> std::path::PathBuf {
+        use std::fs;
+        let dir = std::env::temp_dir().join(format!(
+            "plana-build-info-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&dir).expect("fixture dir");
+        let git_args = |args: &[&str]| {
+            let mut full = vec!["-C", dir.to_str().unwrap()];
+            full.extend_from_slice(args);
+            let out = Command::new("git").args(&full).output().expect("git runs");
+            assert!(
+                out.status.success(),
+                "fixture git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git_args(&["init", "--quiet", "-b", "master"]);
+        // Fixture commits bypass the org-wide core.hooksPath commit-msg
+        // lint (house precedent: fixtures always run with hooksPath
+        // cleared — the org hook would reject "tip"/"ahead" as subjects).
+        git_args(&[
+            "-c",
+            "core.hooksPath=",
+            "-c",
+            "user.email=fixture@test",
+            "-c",
+            "user.name=fixture",
+            "commit",
+            "--quiet",
+            "--allow-empty",
+            "-m",
+            "tip",
+        ]);
+        let tip = git_args(&["rev-parse", "HEAD"]);
+        let remote_ref = format!("refs/remotes/origin/{default_name}");
+        git_args(&["update-ref", &remote_ref, &tip]);
+        git_args(&["symbolic-ref", "refs/remotes/origin/HEAD", &remote_ref]);
+        git_args(&["branch", "feat/stale", &tip]);
+        if advance_master {
+            git_args(&[
+                "-c",
+                "core.hooksPath=",
+                "-c",
+                "user.email=fixture@test",
+                "-c",
+                "user.name=fixture",
+                "commit",
+                "--quiet",
+                "--allow-empty",
+                "-m",
+                "ahead",
+            ]);
+            // The fetch has happened too: the remote-tracking ref moved with
+            // the local default branch, so nothing default-shaped points at
+            // the detached tip anymore.
+            let ahead = git_args(&["rev-parse", "HEAD"]);
+            git_args(&["update-ref", &remote_ref, &ahead]);
+        }
+        git_args(&["checkout", "--quiet", "--detach", &tip]);
+        dir
+    }
+
+    #[test]
+    fn detached_default_tip_wins_over_same_tip_feature_branch() {
+        let dir = mislabel_fixture("master", false);
+        // Incident shape: name-rev would answer feat/stale (and did, in
+        // production) — the default tip rule must claim the identity.
+        assert_eq!(
+            resolve_detached(dir.to_str().unwrap()),
+            Some("master".into())
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn detached_slash_named_default_tip_also_wins() {
+        // R2 2026-10-11: a slash-named default (release/2026-10) must keep
+        // its full name — last-component extraction would probe
+        // refs/heads/2026-10, find nothing, and silently disarm the guard.
+        let dir = mislabel_fixture("release/2026-10", false);
+        assert_eq!(
+            resolve_detached(dir.to_str().unwrap()),
+            Some("release/2026-10".into())
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn detached_off_tip_keeps_the_ladder_answer() {
+        let dir = mislabel_fixture("master", true);
+        // master moved ahead; HEAD is genuinely only the feature branch's
+        // tip — the ladder's honest answer stands.
+        assert_eq!(
+            resolve_detached(dir.to_str().unwrap()),
+            Some("feat/stale".into())
+        );
+        std::fs::remove_dir_all(&dir).ok();
     }
 }
