@@ -48,11 +48,15 @@ derive_enum!(
 );
 
 impl UsageErrors {
+    /// The arms draw from `USAGE_PATHS` slots BY DESIGN (R1 MAJOR-1's
+    /// drift guard): a new variant forces a new match arm (compile
+    /// error without one), and the per-tree pin test asserts the exact
+    /// literal — going green REQUIRES the const to carry the new path.
     pub const fn path(&self) -> &'static str {
         match self {
-            Self::Forbidden => "Usage.Forbidden",
-            Self::Internal => "Usage.Internal",
-            Self::GroupByInvalid => "Usage.GroupByInvalid",
+            Self::Forbidden => USAGE_PATHS[0],
+            Self::Internal => USAGE_PATHS[1],
+            Self::GroupByInvalid => USAGE_PATHS[2],
         }
     }
 }
@@ -78,10 +82,11 @@ derive_enum!(
 );
 
 impl SchedulerErrors {
+    /// See UsageErrors::path — arms draw from `SCHEDULER_PATHS` slots.
     pub const fn path(&self) -> &'static str {
         match self {
-            Self::Unavailable => "Scheduler.Unavailable",
-            Self::QueryFailed => "Scheduler.QueryFailed",
+            Self::Unavailable => SCHEDULER_PATHS[0],
+            Self::QueryFailed => SCHEDULER_PATHS[1],
         }
     }
 }
@@ -108,11 +113,12 @@ derive_enum!(
 );
 
 impl PlatformErrors {
+    /// See UsageErrors::path — arms draw from `PLATFORM_PATHS` slots.
     pub const fn path(&self) -> &'static str {
         match self {
-            Self::Forbidden => "Platform.Forbidden",
-            Self::IdInvalid => "Platform.IdInvalid",
-            Self::Internal => "Platform.Internal",
+            Self::Forbidden => PLATFORM_PATHS[0],
+            Self::IdInvalid => PLATFORM_PATHS[1],
+            Self::Internal => PLATFORM_PATHS[2],
         }
     }
 }
@@ -145,15 +151,16 @@ derive_enum!(
 );
 
 impl SelfHostedErrors {
+    /// See UsageErrors::path — arms draw from `SELF_HOSTED_PATHS` slots.
     pub const fn path(&self) -> &'static str {
         match self {
-            Self::Forbidden => "Models.SelfHosted.Forbidden",
-            Self::KindInvalid => "Models.SelfHosted.KindInvalid",
-            Self::Params => "Models.SelfHosted.Params",
-            Self::UrlInvalid => "Models.SelfHosted.UrlInvalid",
-            Self::ModelsInvalid => "Models.SelfHosted.ModelsInvalid",
-            Self::ModelsRequired => "Models.SelfHosted.ModelsRequired",
-            Self::IndexRequired => "Models.SelfHosted.IndexRequired",
+            Self::Forbidden => SELF_HOSTED_PATHS[0],
+            Self::KindInvalid => SELF_HOSTED_PATHS[1],
+            Self::Params => SELF_HOSTED_PATHS[2],
+            Self::UrlInvalid => SELF_HOSTED_PATHS[3],
+            Self::ModelsInvalid => SELF_HOSTED_PATHS[4],
+            Self::ModelsRequired => SELF_HOSTED_PATHS[5],
+            Self::IndexRequired => SELF_HOSTED_PATHS[6],
         }
     }
 }
@@ -278,6 +285,17 @@ mod tests {
                     format!("  {variant}: \"{p}\",")
                 })
                 .collect();
+            // MINOR-1 guard: two paths in ONE tree sharing a last segment
+            // would collide as a duplicate TS object key (silent
+            // last-wins in JS object literals).
+            let mut keys: Vec<&str> = paths
+                .iter()
+                .map(|p| p.rsplit('.').next().unwrap())
+                .collect();
+            let before = keys.len();
+            keys.sort_unstable();
+            keys.dedup();
+            assert_eq!(before, keys.len(), "duplicate TS object key in {name}");
             format!(
                 "/** {doc} */\nexport const {name} = {{\n{}\n}} as const;\n",
                 entries.join("\n")
