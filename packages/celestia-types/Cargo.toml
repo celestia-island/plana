@@ -24,6 +24,7 @@ workspace = true
 default = []
 
 [dependencies]
+yuuka = { git = "https://github.com/celestia-island/yuuka.git", branch = "master" }
 
 kirino = { workspace = true }
 plana = { workspace = true }

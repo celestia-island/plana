@@ -42,6 +42,7 @@
 // must either stay deep-import-only (deliberate shadow) or the existing
 // name must be dropped from the earlier star-exported source.
 export * from "./bindings/engine";
+export * from "./bindings/errorPaths";
 export * from "./bindings/enums";
 export * from "./bindings/gateway";
 export * from "./bindings/httpTypes";
