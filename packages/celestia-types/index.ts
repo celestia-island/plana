@@ -43,6 +43,7 @@
 // name must be dropped from the earlier star-exported source.
 export * from "./bindings/engine";
 export * from "./bindings/enums";
+export * from "./bindings/errorPaths";
 export * from "./bindings/gateway";
 export * from "./bindings/httpTypes";
 export * from "./bindings/mdd";
