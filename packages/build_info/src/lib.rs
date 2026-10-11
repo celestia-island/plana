@@ -1,14 +1,19 @@
-//! Family build identity — the single source of the `<base> <branch>::<hash7>`
-//! version line (e.g. `0.1.0 master::d423747`).
+//! Family build identity — the single source of the `<base> <branch>:<hash7>`
+//! version line (e.g. `0.1.0 master:d423747`).
 //!
-//! User direction 2026-10-08, base refined 2026-10-10: the drifting numeric
-//! patch counter is retired — **the branch and the exact commit ARE the
-//! identity** — while the base reports the consuming crate's FULL package
-//! version (e.g. `0.1.0`), never a truncated `major.minor`. Every health
+//! User direction 2026-10-08, base refined 2026-10-10, separator narrowed
+//! 2026-10-11: the drifting numeric patch counter is retired — **the
+//! branch and the exact commit ARE the identity** — while the base reports
+//! the consuming crate's FULL package version (e.g. `0.1.0`), never a
+//! truncated `major.minor`. Every health
 //! surface and
 //! About row across the family prints the same shape, and the trailing
 //! hash7 is always the git short hash of the built source, so "does this
-//! deployment match the branch HEAD" stays answerable at a glance.
+//! deployment match the branch HEAD" stays answerable at a glance. The
+//! double-colon `<branch>::<hash7>` shape of the 2026-10-08..10 lines
+//! stays parseable — devtools builds and binaries from the transition
+//! window still speak it, and every parser here (and in the TS twin)
+//! accepts both separators.
 //!
 //! This crate is the successor of the retired base32 build-token scheme
 //! (SHA-256 over the revision, base32, last 6 characters — tokens like
@@ -62,9 +67,9 @@ pub struct BuildIdentity {
 }
 
 impl BuildIdentity {
-    /// The family version line: `<base> <branch>::<hash7>`.
+    /// The family version line: `<base> <branch>:<hash7>`.
     pub fn version_line(&self) -> String {
-        format!("{} {}::{}", self.base, self.branch, self.hash)
+        format!("{} {}:{}", self.base, self.branch, self.hash)
     }
 }
 
@@ -112,11 +117,16 @@ fn from_devtools(base: &str, dir: &str) -> Option<BuildIdentity> {
     })
 }
 
-/// Extract `<branch>::<hash7>` from a facility line, validating the hash
-/// shape so a malformed line can never masquerade as an identity.
+/// Extract `<branch>:<hash7>` from a facility line, validating the hash
+/// shape so a malformed line can never masquerade as an identity. The
+/// legacy `<branch>::<hash7>` double-colon shape (devtools binaries and
+/// lines from the pre-2026-10-11 transition window) stays parseable —
+/// git refnames cannot contain `:`, so the LAST colon always splits
+/// branch from hash.
 fn parse_identity_token(line: &str) -> Option<(String, String)> {
-    let token = line.split_whitespace().rev().find(|t| t.contains("::"))?;
-    let (branch, hash) = token.split_once("::")?;
+    let token = line.split_whitespace().rev().find(|t| t.contains(':'))?;
+    let (branch, hash) = token.rsplit_once(':')?;
+    let branch = branch.trim_end_matches(':');
     if branch.is_empty() || !is_short_hash(hash) {
         return None;
     }
@@ -269,11 +279,22 @@ mod tests {
             branch: "master".into(),
             hash: "d423747".into(),
         };
-        assert_eq!(identity.version_line(), "0.1.0 master::d423747");
+        assert_eq!(identity.version_line(), "0.1.0 master:d423747");
     }
 
     #[test]
     fn devtools_line_parses_and_validates() {
+        // The 2026-10-11 single-colon emit.
+        assert_eq!(
+            parse_identity_token("0.1.0 master:2e49260"),
+            Some(("master".into(), "2e49260".into()))
+        );
+        assert_eq!(
+            parse_identity_token("0.1.0 feat/x-y:badd902a"),
+            Some(("feat/x-y".into(), "badd902a".into()))
+        );
+        // The legacy double-colon shape (pre-2026-10-11 devtools binaries
+        // and binaries built in the transition window) stays parseable.
         assert_eq!(
             parse_identity_token("0.1 master::2e49260"),
             Some(("master".into(), "2e49260".into()))
@@ -283,6 +304,7 @@ mod tests {
             Some(("feat/x-y".into(), "badd902a".into()))
         );
         // Malformed hashes and hashless lines never become identities.
+        assert_eq!(parse_identity_token("0.1 master:zzz1234"), None);
         assert_eq!(parse_identity_token("0.1 master::zzz1234"), None);
         assert_eq!(parse_identity_token("0.1.284"), None);
         assert_eq!(parse_identity_token(""), None);
@@ -320,6 +342,16 @@ mod tests {
         }
         let line = identity.version_line();
         assert!(line.starts_with("0.1.0 "), "line {line} keeps the base");
-        assert!(line.contains("::"), "line {line} carries the identity");
+        // The identity token carries `branch:hash` (either separator — the
+        // devtools-first resolution may answer in the legacy shape on a
+        // transition-window build host).
+        let tail = line.split_whitespace().next_back().unwrap_or_default();
+        let (_, hash) = tail
+            .rsplit_once(':')
+            .expect("line carries the branch:hash identity");
+        assert!(
+            is_short_hash(hash),
+            "line {line} ends in a short commit hash"
+        );
     }
 }

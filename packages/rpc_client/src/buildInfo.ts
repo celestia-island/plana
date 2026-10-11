@@ -1,12 +1,14 @@
 // Build-identity resolution — the TS twin of the Rust `plana_build_info`
 // crate, hosted behind this package's `build-info` subpath export.
 //
-// User direction 2026-10-08, base refined 2026-10-10: the numeric patch
-// counter is retired; the branch and the exact commit ARE the identity,
-// rendered as `<base> <branch>::<hash7>` (e.g. `0.1.0 master::d423747`).
-// This module
-// resolves the `<branch>::<hash7>` identity token of a source tree so a
+// User direction 2026-10-08, base refined 2026-10-10, separator narrowed
+// 2026-10-11: the numeric patch counter is retired; the branch and the
+// exact commit ARE the identity, rendered as `<base> <branch>:<hash7>`
+// (e.g. `0.1.0 master:d423747`). This module
+// resolves the `<branch>:<hash7>` identity token of a source tree so a
 // webui build stamp means the same thing as every engine's version line.
+// The double-colon `<branch>::<hash7>` shape of the 2026-10-08..10 lines
+// stays parseable — transition-window devtools binaries still emit it.
 //
 // Resolution order mirrors the Rust crate and `celestia-devtools
 // version-string`:
@@ -24,17 +26,29 @@
 // Import as `@celestia-island/plana-rpc-client/build-info`.
 import { execFileSync } from "node:child_process";
 
-/** Shape of the identity token: `<branch>::<hash7>` (hash 7–40 hex). */
-export const IDENTITY_RE = /^(\S+)::([0-9a-f]{7,40})$/i;
+/** Loose shape of the identity token: `<branch>:<hash7>` or the legacy
+ * `<branch>::<hash7>` double-colon form (hash 7–40 hex). This regex is a
+ * shape sketch for consumers; [`parseIdentityToken`] is the strict
+ * validator that mirrors the Rust crate's acceptance rules. */
+export const IDENTITY_RE = /^(\S+?):+:?([0-9a-f]{7,40})$/i;
 
-/** Validate and normalize one `<branch>::<hash>` candidate line. */
+/** Validate and normalize one `<branch>:<hash>` candidate line — the
+ * structural twin of the Rust `parse_identity_token`: split the LAST
+ * colon, trim any further trailing colons off the branch (the legacy
+ * double-colon shape), then require a non-empty branch and a 7–40 hex
+ * hash. Normalizes to the single-colon shape and lowercases the hash. */
 export function parseIdentityToken(line: string): string | undefined {
   const token = line
     .split(/\s+/)
     .reverse()
-    .find((part) => part.includes("::"));
-  const match = token?.match(IDENTITY_RE);
-  return match ? `${match[1]}::${match[2].toLowerCase()}` : undefined;
+    .find((part) => part.includes(":"));
+  if (token === undefined) return undefined;
+  const splitAt = token.lastIndexOf(":");
+  if (splitAt <= 0) return undefined;
+  const branch = token.slice(0, splitAt).replace(/:+$/, "");
+  const hash = token.slice(splitAt + 1);
+  if (branch === "" || !isShortHash(hash)) return undefined;
+  return `${branch}:${hash.toLowerCase()}`;
 }
 
 /** Whether a value is a bare 7–40 char **lowercase** hex commit hash
@@ -96,7 +110,7 @@ function branchOf(root: string): string | undefined {
 }
 
 /**
- * Resolve the `<branch>::<hash7>` build identity of the git worktree
+ * Resolve the `<branch>:<hash7>` build identity of the git worktree
  * containing `root` (any directory inside the tree works), or `undefined`
  * when neither the devtools facility nor git can answer — callers keep
  * their own deterministic fallback for non-git builds (source tarballs).
@@ -114,5 +128,5 @@ export function resolveBuildIdentity(root: string): string | undefined {
   const branch = branchOf(root);
   const hash = run("git", ["rev-parse", "--short=7", "HEAD"], root, 10000);
   if (!branch || !hash || !isShortHash(hash)) return undefined;
-  return `${branch}::${hash.toLowerCase()}`;
+  return `${branch}:${hash.toLowerCase()}`;
 }
