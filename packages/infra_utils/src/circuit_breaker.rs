@@ -282,8 +282,9 @@ impl CircuitBreakerRegistry {
     /// Audit R1-CB-3, both sharp edges called out:
     /// - **First configuration wins.** A later call with a different
     ///   config returns the EXISTING breaker and its original config —
-    ///   in debug builds a config mismatch asserts loudly, because it is
-    ///   almost always a call-site bug rather than intent.
+    ///   in debug builds (and in test builds, where cargo forces
+    ///   debug-assertions on) a config mismatch asserts loudly, because
+    ///   it is almost always a call-site bug rather than intent.
     /// - **The registry is bounded** ([`MAX_REGISTRY_ENTRIES`]): past
     ///   the ceiling (dynamic per-tenant names and the like) the caller
     ///   gets an UNREGISTERED throwaway instance — its state is its own,
@@ -309,7 +310,7 @@ impl CircuitBreakerRegistry {
         if guard.len() >= MAX_REGISTRY_ENTRIES {
             if !UNREGISTERED_WARNED.swap(true, Ordering::Relaxed) {
                 warn!(
-                    "circuit breaker registry at its ceiling ({MAX_REGISTRY_ENTRIES});                      returning an unregistered throwaway instance for '{name}'"
+                    "circuit breaker registry at its ceiling ({MAX_REGISTRY_ENTRIES}); returning an unregistered throwaway instance for '{name}'"
                 );
             }
             return CircuitBreaker::new(name, config);
