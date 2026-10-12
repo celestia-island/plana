@@ -406,3 +406,59 @@ async fn handler_notifications_reach_the_client() {
     assert_eq!(second["id"], "w1");
     assert_eq!(second["result"]["watching"], true);
 }
+
+/// Audit R1-JR-3: a client that stops reading must be disconnected by the
+/// server itself (data-lane send budget) instead of wedging the connection
+/// — the pre-fix shape pinned the connection slot forever with the idle
+/// timer blind (the read loop stalled inside the lane send).
+#[tokio::test]
+async fn a_client_that_stops_reading_gets_disconnected_not_wedged() {
+    let server = RpcServer::builder()
+        .config(RpcServerConfig {
+            data_lane_capacity: 1,
+            data_lane_send_timeout: Duration::from_millis(50),
+            // Must NOT be the closer: the disconnect has to come from the
+            // wedge detection, not the idle window.
+            idle_timeout: Duration::from_secs(60),
+            ..RpcServerConfig::default()
+        })
+        .method("big", |_params: Value| async move {
+            Ok(json!({ "pad": "x".repeat(256 * 1024) }))
+        })
+        .build();
+    let url = spawn(server, "/api/ws").await;
+    let mut ws = connect(&url).await;
+
+    // More oversized responses than lane + socket buffers can swallow,
+    // and the client never reads a byte afterwards.
+    for i in 0..24 {
+        send_json(
+            &mut ws,
+            json!({ "jsonrpc": "2.0", "id": format!("r{i}"), "method": "big", "params": {} }),
+        )
+        .await;
+    }
+
+    // Stop reading entirely for a while: the server must trip the send
+    // budget (50ms per queued response once the lane backs up) and close
+    // the connection on its own.
+    tokio::time::sleep(Duration::from_millis(700)).await;
+
+    // Now poll the socket: it must already be closed (or close within the
+    // grace window) — not stay open until the 60s idle timeout.
+    let closed = tokio::time::timeout(Duration::from_secs(2), async {
+        loop {
+            match ws.next().await {
+                None => return,
+                Some(Err(_)) => return,
+                Some(Ok(Message::Close(_))) => return,
+                Some(Ok(_)) => continue, // the backlog we deliberately ignored
+            }
+        }
+    })
+    .await;
+    assert!(
+        closed.is_ok(),
+        "the server must disconnect a wedged client itself instead of pinning the slot"
+    );
+}
