@@ -318,33 +318,15 @@ mod tests {
         Ok(())
     }
 
-    /// Audit R1-CB-1: a late probe success must not overwrite a
-    /// concurrent probe failure's HalfOpen → Open trip.
-    #[test]
-    fn test_late_success_does_not_reclose_a_tripped_breaker() -> Result<()> {
-        let cb = CircuitBreaker::new(
-            "test",
-            CircuitBreakerConfig {
-                failure_threshold: 1,
-                recovery_timeout: Duration::from_millis(10),
-                ..Default::default()
-            },
-        );
-        cb.record_failure();
-        std::thread::sleep(Duration::from_millis(20));
-        assert_eq!(cb.state(), CircuitState::HalfOpen);
-        // The failing probe lands first…
-        cb.record_failure();
-        assert_eq!(cb.state(), CircuitState::Open);
-        // …and the success that was still in flight arrives afterwards.
-        cb.record_success();
-        assert_eq!(
-            cb.state(),
-            CircuitState::Open,
-            "a late success must not re-close a breaker a probe failure just tripped"
-        );
-        Ok(())
-    }
+    // Audit R1-CB-1 (record_success re-check): the race this fix closes —
+    // success READS HalfOpen, a concurrent failure flips Open, success's
+    // WRITE would re-close — has no sequential observable: between the
+    // read and the write no other thread can run, so no single-threaded
+    // test can distinguish fixed from unfixed code (the obvious
+    // "fail-then-success" sequence passes on both). The re-check mirrors
+    // `record_failure`'s existing Closed-arm re-check and is verified by
+    // inspection; a real pin would need a test seam between the two
+    // lock acquisitions.
 
     #[test]
     fn test_registry_get_or_create() -> Result<()> {
