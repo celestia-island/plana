@@ -16,7 +16,7 @@ pub enum CircuitState {
     HalfOpen,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CircuitBreakerConfig {
     pub failure_threshold: u64,
     pub recovery_timeout: Duration,
@@ -105,15 +105,65 @@ impl CircuitBreaker {
         state
     }
 
+    /// Legacy bool-shaped slot check (audit R1-CB-2 must-fix): the slot
+    /// is consumed on `true` and only an explicit record call returns
+    /// it — a caller that probes a candidate and never records LEAKS
+    /// the slot (recovered only by the 2×-window self-heal). Prefer
+    /// [`Self::probe`], whose guard returns the slot unconditionally.
+    ///
+    /// A REJECTED call rolls its increment back: without that, the
+    /// counter would inflate by one per rejection and the self-heal
+    /// could never fire.
+    #[deprecated(note = "leaks a probe slot unless the caller records; use CircuitBreaker::probe")]
     pub fn is_call_allowed(&self) -> bool {
         match self.state() {
             CircuitState::Closed => true,
             CircuitState::HalfOpen => {
                 let current = self.inner.half_open_calls.fetch_add(1, Ordering::Relaxed);
-                current < self.inner.config.half_open_max_calls
+                if current < self.inner.config.half_open_max_calls {
+                    true
+                } else {
+                    // Roll the rejected probe's increment back — an
+                    // inflated counter would block the self-heal forever.
+                    self.inner.half_open_calls.fetch_sub(1, Ordering::Relaxed);
+                    false
+                }
             }
             CircuitState::Open => false,
         }
+    }
+
+    /// Take a HalfOpen probe slot as a **self-returning guard**
+    /// (audit R1-CB-2).
+    ///
+    /// The bool-shaped [`Self::is_call_allowed`] has a structural flaw:
+    /// the slot is consumed on `true` and only ever returned by an
+    /// explicit record call — a caller that probes a candidate and never
+    /// uses it (the router tries every candidate, uses one) leaks the
+    /// slot until the leak self-heal fires. The guard returns the slot
+    /// on drop, so unselected candidates cost nothing.
+    ///
+    /// Returns `None` when the circuit is not HalfOpen or the probe
+    /// slots are exhausted. Record the outcome through
+    /// [`Self::record_success`] / [`Self::record_failure`] while the
+    /// guard is alive — the transition resets the slot counter first,
+    /// and the guard's own return is a no-op afterwards.
+    pub fn probe(&self) -> Option<ProbeGuard> {
+        // Runs the state machine (Open → HalfOpen promotion, leak
+        // self-heal) exactly like is_call_allowed.
+        let state = self.state();
+        if state != CircuitState::HalfOpen {
+            return None;
+        }
+        let current = self.inner.half_open_calls.fetch_add(1, Ordering::Relaxed);
+        if current >= self.inner.config.half_open_max_calls {
+            // Slots exhausted: roll back our own increment.
+            self.inner.half_open_calls.fetch_sub(1, Ordering::Relaxed);
+            return None;
+        }
+        Some(ProbeGuard {
+            inner: Arc::clone(&self.inner),
+        })
     }
 
     pub fn record_success(&self) {
@@ -196,6 +246,46 @@ pub struct CircuitBreakerRegistry {
     breakers: RwLock<Vec<CircuitBreaker>>,
 }
 
+/// A live HalfOpen probe slot taken via [`CircuitBreaker::probe`].
+///
+/// Returns the slot on drop — the whole point of the guard shape
+/// (audit R1-CB-2): unselected probe candidates can no longer leak
+/// their slot until a self-heal fires.
+pub struct ProbeGuard {
+    inner: Arc<Inner>,
+}
+
+impl ProbeGuard {
+    /// Whether the slot is still being tracked (the breaker has not
+    /// transitioned out of HalfOpen since the probe was taken).
+    pub fn holds_slot(&self) -> bool {
+        *self.inner.state.read() == CircuitState::HalfOpen
+    }
+}
+
+impl Drop for ProbeGuard {
+    fn drop(&mut self) {
+        // Return the slot — but only if the counter still tracks live
+        // probes. A recorded outcome (success/failure) resets the
+        // counter to zero on the state transition first; subtracting
+        // after that would underflow the count.
+        let current = self.inner.half_open_calls.load(Ordering::Relaxed);
+        if current > 0 {
+            self.inner.half_open_calls.fetch_sub(1, Ordering::Relaxed);
+        }
+    }
+}
+
+/// Soft ceiling on registered breakers (audit R1-CB-3): dynamic names
+/// (per-tenant keys and the like) must not grow the registry without
+/// bound — past the ceiling `get_or_create` hands out unregistered
+/// throwaway instances, warned once per process.
+const MAX_REGISTRY_ENTRIES: usize = 1_000;
+
+/// Warned-once flag for throwaway instances past the registry ceiling.
+static UNREGISTERED_WARNED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 impl CircuitBreakerRegistry {
     pub fn new() -> Self {
         Self {
@@ -203,15 +293,43 @@ impl CircuitBreakerRegistry {
         }
     }
 
+    /// Get the named breaker, creating and registering it on first use.
+    ///
+    /// Audit R1-CB-3, both sharp edges called out:
+    /// - **First configuration wins.** A later call with a different
+    ///   config returns the EXISTING breaker and its original config —
+    ///   in debug builds (and in test builds, where cargo forces
+    ///   debug-assertions on) a config mismatch asserts loudly, because
+    ///   it is almost always a call-site bug rather than intent.
+    /// - **The registry is bounded** ([`MAX_REGISTRY_ENTRIES`]): past
+    ///   the ceiling (dynamic per-tenant names and the like) the caller
+    ///   gets an UNREGISTERED throwaway instance — its state is its own,
+    ///   warned once per process.
     pub fn get_or_create(&self, name: &str, config: CircuitBreakerConfig) -> CircuitBreaker {
         let guard = self.breakers.read();
         if let Some(b) = guard.iter().find(|b| b.name() == name) {
+            debug_assert!(
+                b.inner.config == config,
+                "circuit breaker '{name}' is already registered with a different config"
+            );
             return b.clone();
         }
         drop(guard);
         let mut guard = self.breakers.write();
         if let Some(b) = guard.iter().find(|b| b.name() == name) {
+            debug_assert!(
+                b.inner.config == config,
+                "circuit breaker '{name}' is already registered with a different config"
+            );
             return b.clone();
+        }
+        if guard.len() >= MAX_REGISTRY_ENTRIES {
+            if !UNREGISTERED_WARNED.swap(true, Ordering::Relaxed) {
+                warn!(
+                    "circuit breaker registry at its ceiling ({MAX_REGISTRY_ENTRIES}); returning an unregistered throwaway instance for '{name}'"
+                );
+            }
+            return CircuitBreaker::new(name, config);
         }
         let cb = CircuitBreaker::new(name, config);
         guard.push(cb.clone());
@@ -246,6 +364,7 @@ mod tests {
     use anyhow::Result;
 
     #[test]
+    #[allow(deprecated)]
     fn test_starts_closed() -> Result<()> {
         let cb = CircuitBreaker::new("test", CircuitBreakerConfig::default());
         assert_eq!(cb.state(), CircuitState::Closed);
@@ -254,6 +373,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_trips_on_threshold() -> Result<()> {
         let cb = CircuitBreaker::new(
             "test",
@@ -361,6 +481,88 @@ mod tests {
         assert_eq!(cb.failure_count(), 3);
         cb.record_success();
         assert_eq!(cb.failure_count(), 0);
+        Ok(())
+    }
+
+    /// Audit R1-CB-2: the probe guard RETURNS its slot on drop — the
+    /// router shape (probe every candidate, use one) must not leak
+    /// slots anymore (that was round-37's F-37-1, handled before by a
+    /// self-heal).
+    #[test]
+    fn probe_guard_drop_returns_the_slot() -> Result<()> {
+        let cb = CircuitBreaker::new(
+            "test",
+            CircuitBreakerConfig {
+                failure_threshold: 1,
+                // 2x window = 1s: the leak self-heal must NOT fire inside
+                // this test's timeline (the whole point is to pin the
+                // guard's slot return, not the self-heal). The 600ms
+                // sleep completes the Open → HalfOpen promotion at 500ms
+                // but stays under the 1s self-heal line.
+                recovery_timeout: Duration::from_millis(500),
+                half_open_max_calls: 1,
+            },
+        );
+        cb.record_failure();
+        // 600ms ≥ the 500ms promotion line, < the 1s self-heal line.
+        std::thread::sleep(Duration::from_millis(600));
+        assert_eq!(cb.state(), CircuitState::HalfOpen);
+
+        // The one slot is taken…
+        let guard = cb.probe().expect("half-open probe must be admitted");
+        assert!(guard.holds_slot());
+        assert!(cb.probe().is_none(), "slots are exhausted");
+
+        // …and returned on drop: the next probe is admitted again.
+        drop(guard);
+        assert!(cb.probe().is_some(), "the slot must return on drop");
+        Ok(())
+    }
+
+    /// Audit R1-CB-2: a recorded outcome resets the slot counter — the
+    /// guard's later drop must be a no-op, not an underflow.
+    #[test]
+    fn probe_record_then_drop_does_not_underflow() -> Result<()> {
+        let cb = CircuitBreaker::new(
+            "test",
+            CircuitBreakerConfig {
+                failure_threshold: 1,
+                recovery_timeout: Duration::from_millis(10),
+                half_open_max_calls: 1,
+            },
+        );
+        cb.record_failure();
+        std::thread::sleep(Duration::from_millis(20));
+        assert_eq!(cb.state(), CircuitState::HalfOpen);
+        let guard = cb.probe().expect("probe admitted");
+        cb.record_success(); // transition resets the counter to zero
+        drop(guard); // must be a no-op
+        assert_eq!(cb.state(), CircuitState::Closed);
+        Ok(())
+    }
+
+    /// Audit R1-CB-3: the registry is bounded — past the ceiling the
+    /// caller gets an unregistered throwaway (its own state, not in the
+    /// registry, not visible to all_states).
+    #[test]
+    fn registry_is_bounded_and_throwaways_stay_unregistered() -> Result<()> {
+        let reg = CircuitBreakerRegistry::new();
+        for i in 0..MAX_REGISTRY_ENTRIES {
+            let _ = reg.get_or_create(&format!("cb-{i}"), CircuitBreakerConfig::default());
+        }
+        assert_eq!(reg.all_states().len(), MAX_REGISTRY_ENTRIES);
+
+        let throwaway = reg.get_or_create("over-the-cap", CircuitBreakerConfig::default());
+        assert_eq!(reg.all_states().len(), MAX_REGISTRY_ENTRIES);
+        assert!(
+            !std::ptr::eq(
+                reg.get_or_create("over-the-cap", CircuitBreakerConfig::default())
+                    .inner
+                    .as_ref(),
+                throwaway.inner.as_ref()
+            ),
+            "throwaway instances must not be registered"
+        );
         Ok(())
     }
 }
