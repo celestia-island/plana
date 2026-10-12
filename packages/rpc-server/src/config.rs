@@ -50,6 +50,15 @@ pub struct RpcServerConfig {
     /// to the read loop when full; the control lane is unbounded.
     pub data_lane_capacity: usize,
 
+    /// How long one response may wait for room on the data lane before
+    /// the connection is declared WEDGED and torn down (default 2s;
+    /// audit R1-JR-3). Without this budget a client that stops reading
+    /// pins its connection slot forever: the read loop stalls inside the
+    /// lane send, the idle timer never fires, and full occupancy makes
+    /// the whole server answer 429. A wedged connection is closed — the
+    /// client reconnects fresh.
+    pub data_lane_send_timeout: Duration,
+
     /// Serve the built-in `Base.Heartbeat` → `Base.HeartbeatAck` service on
     /// the control lane (default on).
     pub heartbeat: bool,
@@ -65,6 +74,7 @@ impl Default for RpcServerConfig {
             dispatch_stall_limit: Duration::from_secs(8),
             deferred_ops: crate::deferred::DeferredOpsConfig::default(),
             data_lane_capacity: 64,
+            data_lane_send_timeout: Duration::from_secs(2),
             heartbeat: true,
         }
     }

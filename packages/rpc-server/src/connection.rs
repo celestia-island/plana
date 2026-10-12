@@ -90,7 +90,7 @@ pub(crate) async fn run(
     let (data_tx, data_rx) = mpsc::channel::<Wire>(server.config.data_lane_capacity);
     let (close_tx, close_rx) = oneshot::channel::<()>();
 
-    tokio::spawn(run_writer(sink, control_rx, data_rx, close_rx));
+    let writer = tokio::spawn(run_writer(sink, control_rx, data_rx, close_rx));
 
     let outbound = OutboundHandle {
         data: data_tx.clone(),
@@ -101,8 +101,30 @@ pub(crate) async fn run(
             ReadFrame::Message(msg) => {
                 match msg {
                     Message::Text(text) => {
-                        handle_text(&text, &server, &conn_auth, &outbound, &data_tx, &control_tx)
-                            .await;
+                        if !handle_text(
+                            &text,
+                            &server,
+                            &conn_auth,
+                            &outbound,
+                            &data_tx,
+                            &control_tx,
+                        )
+                        .await
+                        {
+                            // Audit R1-JR-3: the data lane stayed full past
+                            // the send budget — the client stopped reading
+                            // and the connection is wedged. Abort the writer
+                            // (its select cannot observe close_rx while it
+                            // is parked inside a blocked socket write) and
+                            // end this connection: the slot is released and
+                            // the client reconnects fresh, instead of this
+                            // server answering 429 once the slots fill.
+                            tracing::warn!(
+                                "data lane wedged past the send budget; closing the connection"
+                            );
+                            writer.abort();
+                            break;
+                        }
                     }
                     Message::Binary(_) => {
                         // The profile is text-only; binary frames are a
@@ -154,7 +176,9 @@ where
     }
 }
 
-/// Classify and dispatch one text frame.
+/// Classify and dispatch one text frame. Returns `false` when the
+/// connection is wedged (the data lane refused a response past the send
+/// budget) and the read loop must stop serving it (audit R1-JR-3).
 async fn handle_text(
     text: &str,
     server: &Arc<RpcServer>,
@@ -162,24 +186,25 @@ async fn handle_text(
     outbound: &OutboundHandle,
     data_tx: &mpsc::Sender<Wire>,
     control_tx: &mpsc::UnboundedSender<Wire>,
-) {
+) -> bool {
     let value: serde_json::Value = match serde_json::from_str(text) {
         Ok(v) => v,
         Err(_) => {
             // Malformed JSON answers with id:null and keeps the connection,
             // matching the evernight reference behaviour.
-            respond(
+            return respond(
                 data_tx,
+                server.config.data_lane_send_timeout,
                 JsonRpcResponse::error(Id::Null, JsonRpcError::parse_error()),
             )
             .await;
-            return;
         }
     };
 
     if value.is_array() {
-        respond(
+        return respond(
             data_tx,
+            server.config.data_lane_send_timeout,
             JsonRpcResponse::error(
                 Id::Null,
                 JsonRpcError::invalid_request()
@@ -187,12 +212,11 @@ async fn handle_text(
             ),
         )
         .await;
-        return;
     }
 
     match serde_json::from_value::<plana::jsonrpc::JsonRpcMessage>(value) {
         Ok(plana::jsonrpc::JsonRpcMessage::Request(req)) => {
-            dispatch_request(req, server, conn_auth, outbound, data_tx).await;
+            dispatch_request(req, server, conn_auth, outbound, data_tx).await
         }
         Ok(plana::jsonrpc::JsonRpcMessage::Notification(notif)) => {
             if server.config.heartbeat && notif.method == close_codes::HEARTBEAT_METHOD {
@@ -208,16 +232,19 @@ async fn handle_text(
             } else {
                 tracing::debug!(method = %notif.method, "dropping client notification");
             }
+            true
         }
         Ok(plana::jsonrpc::JsonRpcMessage::Response(_)) => {
             tracing::warn!("client sent a JSON-RPC response frame; ignored");
+            true
         }
         Err(_) => {
             respond(
                 data_tx,
+                server.config.data_lane_send_timeout,
                 JsonRpcResponse::error(Id::Null, JsonRpcError::invalid_request()),
             )
-            .await;
+            .await
         }
     }
 }
@@ -228,24 +255,28 @@ async fn dispatch_request(
     conn_auth: &AuthContext,
     outbound: &OutboundHandle,
     data_tx: &mpsc::Sender<Wire>,
-) {
+) -> bool {
     let id = req.id.clone().unwrap_or(Id::Null);
     let params = req.params.unwrap_or(serde_json::Value::Null);
 
     if let Some(guard) = &server.guard {
         if let Err(err) = guard(conn_auth.clone(), &req.method, &params).await {
-            respond(data_tx, JsonRpcResponse::error(id, err)).await;
-            return;
+            return respond(
+                data_tx,
+                server.config.data_lane_send_timeout,
+                JsonRpcResponse::error(id, err),
+            )
+            .await;
         }
     }
 
     let Some(handler) = server.methods.get(&req.method).cloned() else {
-        respond(
+        return respond(
             data_tx,
+            server.config.data_lane_send_timeout,
             JsonRpcResponse::error(id, JsonRpcError::method_not_found(&req.method)),
         )
         .await;
-        return;
     };
 
     let ctx = RpcRequestCtx {
@@ -257,14 +288,29 @@ async fn dispatch_request(
     };
 
     match tokio::time::timeout(server.config.dispatch_stall_limit, handler(ctx)).await {
-        Ok(Ok(result)) => respond(data_tx, JsonRpcResponse::success(id, result)).await,
-        Ok(Err(err)) => respond(data_tx, JsonRpcResponse::error(id, err)).await,
+        Ok(Ok(result)) => {
+            respond(
+                data_tx,
+                server.config.data_lane_send_timeout,
+                JsonRpcResponse::success(id, result),
+            )
+            .await
+        }
+        Ok(Err(err)) => {
+            respond(
+                data_tx,
+                server.config.data_lane_send_timeout,
+                JsonRpcResponse::error(id, err),
+            )
+            .await
+        }
         Err(_) => {
             // The handler future is dropped by the timeout; the cancelled
             // result never reaches the wire.
             tracing::warn!(method = %req.method, "dispatch stalled; frame dropped");
             respond(
                 data_tx,
+                server.config.data_lane_send_timeout,
                 JsonRpcResponse::error(
                     id,
                     JsonRpcError::internal_error("dispatch stalled").with_data(serde_json::json!({
@@ -273,16 +319,35 @@ async fn dispatch_request(
                     })),
                 ),
             )
-            .await;
+            .await
         }
     }
 }
 
-async fn respond(data_tx: &mpsc::Sender<Wire>, response: JsonRpcResponse) {
-    if let Ok(text) = serde_json::to_string(&response) {
-        // A send failure means the writer is gone; stop reading.
-        if data_tx.send(Wire::Text(text)).await.is_err() {
+/// Queue one response frame on the data lane. Returns `false` when the
+/// frame could NOT be queued — the writer is gone, or the lane stayed
+/// full past `budget` (a client that stopped reading). The caller treats
+/// `false` as "this connection can no longer be served" and stops
+/// reading, which ends the connection instead of pinning its slot
+/// forever (audit R1-JR-3).
+async fn respond(
+    data_tx: &mpsc::Sender<Wire>,
+    budget: std::time::Duration,
+    response: JsonRpcResponse,
+) -> bool {
+    let Ok(text) = serde_json::to_string(&response) else {
+        // Nothing to send is not a wedge.
+        return true;
+    };
+    match tokio::time::timeout(budget, data_tx.send(Wire::Text(text))).await {
+        Ok(Ok(())) => true,
+        Ok(Err(_)) => {
             tracing::debug!("data lane closed while responding");
+            false
+        }
+        Err(_) => {
+            tracing::warn!("data lane stayed full past the send budget; connection is wedged");
+            false
         }
     }
 }
