@@ -339,6 +339,19 @@ mod reconnect_race_tests {
         assert!(mgr.exists(&sid), "first mount registered");
         let sse2 = sse_events_handler_impl(mgr.clone(), sid.clone()).await;
         assert!(mgr.exists(&sid), "second mount replaced the sender");
+        // Audit R2 follow-up: the remount REPLACED its order entry
+        // (dedupe) rather than appending — without the dedupe this count
+        // is 2 and the queue grows once per reconnect.
+        assert_eq!(
+            mgr.insertion_order
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|id| *id == &sid)
+                .count(),
+            1,
+            "a remount must replace its stale order entry"
+        );
         // The FIRST stream dies (half-open connection finally noticed).
         drop(sse1);
         assert!(
