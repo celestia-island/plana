@@ -104,6 +104,10 @@ pub struct UsageSummary {
 pub struct MeteringEngine {
     records: RwLock<Vec<UsageRecord>>,
     budgets: RwLock<HashMap<String, Budget>>,
+    /// Audit R1-LP-4: per-scope lifetime spend that NEVER gets evicted —
+    /// the records Vec drains at 100k, which silently shrank Total-period
+    /// budget checks. This map is the authoritative Total-spend source.
+    lifetime_cost: RwLock<HashMap<String, f64>>,
 }
 
 impl MeteringEngine {
@@ -113,6 +117,7 @@ impl MeteringEngine {
         INSTANCE.get_or_init(|| MeteringEngine {
             records: RwLock::new(Vec::new()),
             budgets: RwLock::new(HashMap::new()),
+            lifetime_cost: RwLock::new(HashMap::new()),
         })
     }
 
@@ -123,6 +128,7 @@ impl MeteringEngine {
         MeteringEngine {
             records: RwLock::new(Vec::new()),
             budgets: RwLock::new(HashMap::new()),
+            lifetime_cost: RwLock::new(HashMap::new()),
         }
     }
 
@@ -182,6 +188,17 @@ impl MeteringEngine {
             tier: tier.map(str::to_string),
         };
 
+        // Audit R1-LP-4: accumulate lifetime cost per scope — this map
+        // is never evicted, so Total-period budget checks remain accurate
+        // even after the records Vec drains.
+        {
+            let mut lifetime = self
+                .lifetime_cost
+                .write()
+                .unwrap_or_else(|e| e.into_inner());
+            *lifetime.entry(agent_badge.to_string()).or_default() += cost;
+        }
+
         let mut records = self.records.write().unwrap_or_else(|e| e.into_inner());
         records.push(record);
 
@@ -204,6 +221,14 @@ impl MeteringEngine {
             return false;
         };
 
+        // Audit R1-LP-4: for Total period, use the never-evicted
+        // lifetime cost instead of re-summing the (potentially drained)
+        // records Vec — the old path silently shrank as records aged out.
+        if budget.period == BudgetPeriod::Total {
+            let lifetime = self.lifetime_cost.read().unwrap_or_else(|e| e.into_inner());
+            let total = lifetime.get(scope).copied().unwrap_or(0.0);
+            return total >= budget.max_cost_usd;
+        }
         let summary = self.summarize_in_period(scope, budget.period);
         summary.total_cost_usd >= budget.max_cost_usd
     }
@@ -216,8 +241,17 @@ impl MeteringEngine {
             budgets.get(scope).cloned()
         };
         let budget = budget?;
-        let summary = self.summarize_in_period(scope, budget.period);
-        Some((budget.max_cost_usd - summary.total_cost_usd).max(0.0))
+        // Audit R1-LP-4: Total period reads the never-evicted lifetime
+        // spend (same source as is_over_budget) so the two entry points
+        // never disagree on whether the budget is exhausted.
+        let spend = if budget.period == BudgetPeriod::Total {
+            let lifetime = self.lifetime_cost.read().unwrap_or_else(|e| e.into_inner());
+            lifetime.get(scope).copied().unwrap_or(0.0)
+        } else {
+            self.summarize_in_period(scope, budget.period)
+                .total_cost_usd
+        };
+        Some((budget.max_cost_usd - spend).max(0.0))
     }
 
     /// Get a usage summary for a scope over all time.
@@ -866,6 +900,41 @@ mod tests {
 
         engine.record_usage("unlimited", "openai", "gpt-4o", 999_999_999, 999_999_999);
         assert!(!engine.is_over_budget("unlimited"));
+    }
+
+    /// Audit R1-LP-4: a Total-period budget must survive records-Vec
+    /// eviction. The old path re-summed the Vec — once it drained past
+    /// the 100k cap, the "total spend" silently shrank and a scope that
+    /// had blown through its budget appeared to have headroom again.
+    #[test]
+    fn total_budget_survives_records_eviction() {
+        let engine = MeteringEngine::new();
+        engine.set_budget("evict-test", Budget::total_usd(10.0));
+
+        // Spend $15 — the budget is blown.
+        engine.record_usage("evict-test", "openai", "gpt-4o", 10_000_000, 5_000_000);
+        assert!(
+            engine.is_over_budget("evict-test"),
+            "over-budget before eviction"
+        );
+
+        // Simulate the records-Vec drain: the entries backing that $15
+        // disappear, but the lifetime cost must NOT shrink.
+        {
+            let mut records = engine.records.write().unwrap_or_else(|e| e.into_inner());
+            records.clear();
+        }
+        assert!(
+            engine.is_over_budget("evict-test"),
+            "Total-period over-budget must survive records eviction"
+        );
+
+        // A different scope must NOT be affected by evict-test's spend.
+        engine.set_budget("other-scope", Budget::total_usd(10.0));
+        assert!(
+            !engine.is_over_budget("other-scope"),
+            "a different scope must start with a clean lifetime cost"
+        );
     }
 
     #[test]
