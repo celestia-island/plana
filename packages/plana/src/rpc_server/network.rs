@@ -52,10 +52,16 @@ pub fn detect_network(addr: &SocketAddr, headers: &axum::http::HeaderMap) -> Net
 }
 
 fn client_ip_from_headers(headers: &axum::http::HeaderMap) -> Option<IpAddr> {
+    // Audit R1-TY-1: X-Forwarded-For appends per proxy — the RIGHTMOST
+    // entry is the one the nearest (trusted) hop added, and the only one
+    // a direct client cannot spoof by sending its own header. The old
+    // leftmost pick let any client impersonate a region by prefacing its
+    // XFF with a fake IP. (Attribution stays display-only; authentication
+    // never reads this.)
     headers
         .get("X-Forwarded-For")
         .and_then(|v| v.to_str().ok())
-        .and_then(|s| s.split(',').next())
+        .and_then(|s| s.rsplit(',').next())
         .and_then(|s| s.trim().parse().ok())
 }
 
@@ -112,5 +118,44 @@ fn is_private(ip: &IpAddr) -> bool {
     match ip {
         IpAddr::V4(v4) => v4.is_private(),
         IpAddr::V6(_v6) => false,
+    }
+}
+
+#[cfg(test)]
+mod xff_tests {
+    use super::*;
+
+    /// Audit R1-TY-1: the rightmost XFF entry is the one the nearest
+    /// (trusted) hop added — a client cannot spoof a region by
+    /// prefacing its XFF with a fake IP.
+    #[test]
+    fn rightmost_xff_entry_wins() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert(
+            "X-Forwarded-For",
+            "203.0.113.7, 198.51.100.9".parse().unwrap(),
+        );
+        assert_eq!(
+            client_ip_from_headers(&headers),
+            Some("198.51.100.9".parse().unwrap())
+        );
+    }
+
+    #[test]
+    fn single_entry_xff_parses() {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert("X-Forwarded-For", "203.0.113.7".parse().unwrap());
+        assert_eq!(
+            client_ip_from_headers(&headers),
+            Some("203.0.113.7".parse().unwrap())
+        );
+    }
+
+    #[test]
+    fn missing_or_garbage_xff_is_none() {
+        assert_eq!(client_ip_from_headers(&axum::http::HeaderMap::new()), None);
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert("X-Forwarded-For", "not-an-ip".parse().unwrap());
+        assert_eq!(client_ip_from_headers(&headers), None);
     }
 }
