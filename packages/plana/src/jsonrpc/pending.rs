@@ -1,5 +1,5 @@
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use strum::{Display, EnumIter, EnumString};
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -622,14 +622,23 @@ impl PendingHandle {
     }
 }
 
+/// Soft ceiling on live pending entries (audit R1-JR-8): at the ceiling
+/// the OLDEST entry is evicted (its receiver errors with "registry
+/// evicted a stale pending"), so the map can never grow without bound
+/// no matter how many deferred ops are registered without resolution.
+const MAX_PENDING_ENTRIES: usize = 10_000;
+
 pub struct PendingRegistry {
     pending: HashMap<Uuid, oneshot::Sender<Value>>,
+    /// Insertion order for FIFO eviction at [`MAX_PENDING_ENTRIES`].
+    insertion_order: VecDeque<Uuid>,
 }
 
 impl PendingRegistry {
     pub fn new() -> Self {
         Self {
             pending: HashMap::new(),
+            insertion_order: VecDeque::new(),
         }
     }
     pub fn prepare_notify(method: Method, params: Value) -> Value {
@@ -661,9 +670,19 @@ impl PendingRegistry {
         self.pending.len()
     }
     fn register_pending(&mut self) -> (PendingHandle, Uuid) {
+        // Audit R1-JR-8: evict the oldest entry at the cap so the map
+        // cannot grow without bound.
+        while self.pending.len() >= MAX_PENDING_ENTRIES {
+            if let Some(oldest) = self.insertion_order.pop_front() {
+                self.pending.remove(&oldest);
+            } else {
+                break;
+            }
+        }
         let id = Uuid::new_v4();
         let (tx, rx) = oneshot::channel();
         self.pending.insert(id, tx);
+        self.insertion_order.push_back(id);
         (PendingHandle { id, rx }, id)
     }
 }
