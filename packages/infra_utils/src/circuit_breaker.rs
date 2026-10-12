@@ -89,7 +89,6 @@ impl CircuitBreaker {
         // slots reset — the circuit gets a fresh probe attempt
         // (self-healing instead of permanent half-open starvation).
         if state == CircuitState::HalfOpen
-            && self.inner.half_open_calls.load(Ordering::Relaxed) == 0
             && let Some(last) = *self.inner.last_failure.read()
             && last.elapsed() >= self.inner.config.recovery_timeout * 2
         {
@@ -106,12 +105,29 @@ impl CircuitBreaker {
         state
     }
 
+    /// Legacy bool-shaped slot check (audit R1-CB-2 must-fix): the slot
+    /// is consumed on `true` and only an explicit record call returns
+    /// it — a caller that probes a candidate and never records LEAKS
+    /// the slot (recovered only by the 2×-window self-heal). Prefer
+    /// [`Self::probe`], whose guard returns the slot unconditionally.
+    ///
+    /// A REJECTED call rolls its increment back: without that, the
+    /// counter would inflate by one per rejection and the self-heal
+    /// could never fire.
+    #[deprecated(note = "leaks a probe slot unless the caller records; use CircuitBreaker::probe")]
     pub fn is_call_allowed(&self) -> bool {
         match self.state() {
             CircuitState::Closed => true,
             CircuitState::HalfOpen => {
                 let current = self.inner.half_open_calls.fetch_add(1, Ordering::Relaxed);
-                current < self.inner.config.half_open_max_calls
+                if current < self.inner.config.half_open_max_calls {
+                    true
+                } else {
+                    // Roll the rejected probe's increment back — an
+                    // inflated counter would block the self-heal forever.
+                    self.inner.half_open_calls.fetch_sub(1, Ordering::Relaxed);
+                    false
+                }
             }
             CircuitState::Open => false,
         }
@@ -348,6 +364,7 @@ mod tests {
     use anyhow::Result;
 
     #[test]
+    #[allow(deprecated)]
     fn test_starts_closed() -> Result<()> {
         let cb = CircuitBreaker::new("test", CircuitBreakerConfig::default());
         assert_eq!(cb.state(), CircuitState::Closed);
@@ -356,6 +373,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_trips_on_threshold() -> Result<()> {
         let cb = CircuitBreaker::new(
             "test",
@@ -476,12 +494,18 @@ mod tests {
             "test",
             CircuitBreakerConfig {
                 failure_threshold: 1,
-                recovery_timeout: Duration::from_millis(10),
+                // 2x window = 1s: the leak self-heal must NOT fire inside
+                // this test's timeline (the whole point is to pin the
+                // guard's slot return, not the self-heal). The 600ms
+                // sleep completes the Open → HalfOpen promotion at 500ms
+                // but stays under the 1s self-heal line.
+                recovery_timeout: Duration::from_millis(500),
                 half_open_max_calls: 1,
             },
         );
         cb.record_failure();
-        std::thread::sleep(Duration::from_millis(20));
+        // 600ms ≥ the 500ms promotion line, < the 1s self-heal line.
+        std::thread::sleep(Duration::from_millis(600));
         assert_eq!(cb.state(), CircuitState::HalfOpen);
 
         // The one slot is taken…
