@@ -5,6 +5,47 @@
 //! bodies) with manual SSE parsing.  This module centralises the common
 //! buffer-and-split logic so each provider only implements the JSON
 //! deserialisation specific to its API format.
+//!
+//! # Stream hygiene (audit R1-LP-1/2)
+//!
+//! A user-configured endpoint can send bytes that never form valid UTF-8,
+//! CRLF-only framing, or one endless event. The helpers here keep such a
+//! stream from wedging a provider:
+//!
+//! - [`decode_complete_utf8_prefix`] resynchronises on permanently
+//!   invalid bytes (U+FFFD, per the WHATWG decoding the SSE spec
+//!   mandates) instead of leaving them stuck at the head of the buffer
+//!   forever — the pre-fix behavior stalled the stream AND grew the
+//!   buffer without bound.
+//! - [`normalize_sse_buffer`] folds CRLF/CR line endings to LF so
+//!   CRLF-framed events still split.
+//! - [`MAX_SSE_BUFFER_BYTES`] is the cap providers enforce on their
+//!   buffers; beyond it the stream is an error, not an allocation
+//!   growth chart.
+
+/// The cap on one provider's SSE decode buffers (`state.buffer` +
+/// `state.raw_bytes` together). Real LLM events are kilobytes; 8 MiB is
+/// generosity with a margin.
+pub const MAX_SSE_BUFFER_BYTES: usize = 8 * 1024 * 1024;
+
+/// Fold CRLF and bare-CR line endings to LF, in place.
+///
+/// The SSE spec allows CRLF, CR and LF as line terminators; this parser
+/// splits events on `\n\n`. A CRLF-only endpoint therefore never forms
+/// the separator and the buffer grows forever — normalise before
+/// splitting. Runs at most one allocation per call and only when the
+/// chunk actually contains a CR.
+pub fn normalize_sse_buffer(buffer: &mut String) {
+    if buffer.contains('\r') {
+        *buffer = buffer.replace("\r\n", "\n").replace('\r', "\n");
+    }
+}
+
+/// Whether `len` bytes of pending decode buffer are over the cap.
+#[must_use]
+pub fn over_buffer_cap(len: usize) -> bool {
+    len > MAX_SSE_BUFFER_BYTES
+}
 
 /// Extract complete SSE data events from a buffer.
 ///
@@ -106,12 +147,28 @@ mod tests {
 }
 
 /// Decode the longest complete UTF-8 prefix; returns (safe, consumed).
+///
+/// Audit R1-LP-1: a permanently invalid byte sequence (not a truncated
+/// multi-byte tail) used to be left at the head of the caller's buffer
+/// forever — `consumed` stayed 0, the stream stalled, and the buffer
+/// grew on every read. Per the WHATWG decoding the SSE spec mandates,
+/// the invalid run is now consumed and surfaced as U+FFFD, so the
+/// stream resynchronises instead of wedging.
 pub fn decode_complete_utf8_prefix(bytes: &[u8]) -> (String, usize) {
     match std::str::from_utf8(bytes) {
         Ok(s) => (s.to_string(), bytes.len()),
         Err(e) => {
             let valid = e.valid_up_to();
-            (String::from_utf8_lossy(&bytes[..valid]).into_owned(), valid)
+            let mut safe = String::from_utf8_lossy(&bytes[..valid]).into_owned();
+            match e.error_len() {
+                // Definitively invalid run: consume it, resynchronise.
+                Some(bad_len) => {
+                    safe.push('\u{FFFD}');
+                    (safe, valid + bad_len)
+                }
+                // Truncated multi-byte tail: wait for more bytes.
+                None => (safe, valid),
+            }
         }
     }
 }
@@ -145,5 +202,41 @@ mod tail_and_utf8_tests {
         let (s2, c2) = decode_complete_utf8_prefix(&raw);
         raw.drain(..c2);
         assert_eq!(format!("{s1}{s2}"), "你好");
+    }
+
+    /// Audit R1-LP-1: a permanently invalid byte used to stay at the
+    /// buffer head forever (consumed = 0 ⇒ stall + unbounded growth). It
+    /// must be consumed as U+FFFD so the stream resynchronises.
+    #[test]
+    fn invalid_bytes_resynchronise_instead_of_stalling() {
+        let mut raw: Vec<u8> = vec![0xFF, b'a', b'b'];
+        let (s, consumed) = decode_complete_utf8_prefix(&raw);
+        raw.drain(..consumed);
+        // Exactly the invalid run (1 byte) is consumed — the valid ASCII
+        // tail stays for the next decode. Pre-fix this was 0: stall.
+        assert_eq!(consumed, 1, "the invalid byte must be consumed");
+        assert!(s.contains('\u{FFFD}'));
+        assert_eq!(raw, b"ab");
+        // The stream keeps flowing after the resynchronisation.
+        raw.extend_from_slice(b"c");
+        let (s2, c2) = decode_complete_utf8_prefix(&raw);
+        assert_eq!(s2, "abc");
+        assert_eq!(c2, 3);
+    }
+
+    /// Audit R1-LP-2: CRLF-only and bare-CR framing must still split.
+    #[test]
+    fn crlf_and_cr_framing_normalize() {
+        let mut buf = String::from("data: a\r\n\r\ndata: b\r\rdata: c");
+        normalize_sse_buffer(&mut buf);
+        let (events, rest) = extract_sse_events(&buf);
+        assert_eq!(events, vec!["a", "b"]);
+        assert_eq!(rest, "data: c");
+    }
+
+    #[test]
+    fn cap_helper_flags_only_over() {
+        assert!(!over_buffer_cap(MAX_SSE_BUFFER_BYTES));
+        assert!(over_buffer_cap(MAX_SSE_BUFFER_BYTES + 1));
     }
 }

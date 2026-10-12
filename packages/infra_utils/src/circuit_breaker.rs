@@ -120,14 +120,20 @@ impl CircuitBreaker {
         self.inner.success_count.fetch_add(1, Ordering::Relaxed);
         let state = *self.inner.state.read();
         if state == CircuitState::HalfOpen {
+            // Audit R1-CB-1: re-check under the write lock — a concurrent
+            // probe failure may already have flipped HalfOpen → Open, and
+            // a late success must not overwrite that trip (which would
+            // silently re-close the breaker on a failing backend).
             let mut guard = self.inner.state.write();
-            *guard = CircuitState::Closed;
-            self.inner.failure_count.store(0, Ordering::Relaxed);
-            self.inner.half_open_calls.store(0, Ordering::Relaxed);
-            debug!(
-                circuit = %self.inner.name,
-                "circuit breaker transitioning HalfOpen → Closed (success)"
-            );
+            if *guard == CircuitState::HalfOpen {
+                *guard = CircuitState::Closed;
+                self.inner.failure_count.store(0, Ordering::Relaxed);
+                self.inner.half_open_calls.store(0, Ordering::Relaxed);
+                debug!(
+                    circuit = %self.inner.name,
+                    "circuit breaker transitioning HalfOpen → Closed (success)"
+                );
+            }
         } else if state == CircuitState::Closed {
             self.inner.failure_count.store(0, Ordering::Relaxed);
         }
@@ -309,6 +315,34 @@ mod tests {
         assert_eq!(cb.state(), CircuitState::HalfOpen);
         cb.record_failure();
         assert_eq!(cb.state(), CircuitState::Open);
+        Ok(())
+    }
+
+    /// Audit R1-CB-1: a late probe success must not overwrite a
+    /// concurrent probe failure's HalfOpen → Open trip.
+    #[test]
+    fn test_late_success_does_not_reclose_a_tripped_breaker() -> Result<()> {
+        let cb = CircuitBreaker::new(
+            "test",
+            CircuitBreakerConfig {
+                failure_threshold: 1,
+                recovery_timeout: Duration::from_millis(10),
+                ..Default::default()
+            },
+        );
+        cb.record_failure();
+        std::thread::sleep(Duration::from_millis(20));
+        assert_eq!(cb.state(), CircuitState::HalfOpen);
+        // The failing probe lands first…
+        cb.record_failure();
+        assert_eq!(cb.state(), CircuitState::Open);
+        // …and the success that was still in flight arrives afterwards.
+        cb.record_success();
+        assert_eq!(
+            cb.state(),
+            CircuitState::Open,
+            "a late success must not re-close a breaker a probe failure just tripped"
+        );
         Ok(())
     }
 

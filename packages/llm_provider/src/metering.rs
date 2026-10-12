@@ -1140,16 +1140,46 @@ pub(crate) fn clear_pricing_source_for_tests() {
     *slot = None;
 }
 
+/// Sanity gate for a price row from an INJECTED source (audit R1-LP-3):
+/// the compiled-in families are checked by invariant tests, but an
+/// injection wraps a live database row, and a corrupt row must not be
+/// able to make `estimate_cost` negative or NaN (a NaN silently defeats
+/// every `>= budget` comparison).
+fn injected_pricing_is_sane(p: &FamilyPricing) -> bool {
+    let finite_non_negative = |v: f64| v.is_finite() && v >= 0.0;
+    let FamilyPricing {
+        input_per_million,
+        output_per_million,
+        cached_per_million,
+    } = p;
+    finite_non_negative(*input_per_million)
+        && finite_non_negative(*output_per_million)
+        && finite_non_negative(*cached_per_million)
+        && cached_per_million <= input_per_million
+}
+
 /// The injected-source-aware resolution: the external source first, the
 /// compiled-in families as the fallback. This is the CONSUMER-facing
 /// lookup — `lookup_pricing` itself stays family-pure for direct callers.
+///
+/// An injected row that fails [`injected_pricing_is_sane`] is ignored
+/// (warned) and the compiled-in table answers instead — a corrupt DB row
+/// degrades to conservative peak pricing, never to free or NaN.
 pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
     let snapshot = INJECTED_SOURCE
         .read()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .clone();
     if let Some(p) = snapshot.as_ref().and_then(|source| source(model)) {
-        return Some(p);
+        if injected_pricing_is_sane(&p) {
+            return Some(p);
+        }
+        tracing::warn!(
+            target: "plana_llm_provider::metering",
+            model = %model,
+            "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
+             falling back to the compiled-in table"
+        );
     }
     lookup_pricing(model)
 }
@@ -1180,6 +1210,47 @@ mod injection_tests {
         let glm = resolve_pricing("glm-4.7");
         assert!(glm.is_some(), "the family table still answers glm");
         clear_pricing_source_for_tests();
+    }
+
+    /// Audit R1-LP-3: an injected row that is negative, non-finite, or
+    /// has cached > input must NOT answer — it degrades to the
+    /// compiled-in table. A corrupt DB row may not make cost negative or
+    /// NaN (NaN silently defeats every budget comparison).
+    #[test]
+    fn an_unsane_injected_row_falls_back_to_the_families() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_pricing_source_for_tests();
+        for bad in [
+            FamilyPricing {
+                input_per_million: -1.0,
+                output_per_million: 2.5,
+                cached_per_million: 0.125,
+            },
+            FamilyPricing {
+                input_per_million: f64::NAN,
+                output_per_million: 2.5,
+                cached_per_million: 0.125,
+            },
+            FamilyPricing {
+                input_per_million: 1.0,
+                output_per_million: 2.5,
+                cached_per_million: 5.0, // cached > input breaks the invariant
+            },
+        ] {
+            assert!(set_pricing_source(Arc::new(move |m: &str| {
+                (m == "my-private-model").then_some(bad)
+            })));
+            // The unsane row is refused: the compiled table answers
+            // instead. (Compared against `lookup_pricing` rather than
+            // `!= bad` — a NaN row would never compare equal to anything,
+            // making a `!=` assertion vacuous.)
+            assert_eq!(
+                resolve_pricing("my-private-model"),
+                lookup_pricing("my-private-model"),
+                "an unsane injected row must fall back to the compiled table"
+            );
+            clear_pricing_source_for_tests();
+        }
     }
 
     #[test]
