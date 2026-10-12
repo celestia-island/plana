@@ -266,6 +266,9 @@ impl LlmProvider for AnthropicProvider {
             (byte_stream, String::new(), Vec::new()),
             |(mut byte_stream, mut buffer, mut raw_bytes)| async move {
                 loop {
+                    // Audit R1-LP-2: a CRLF-only endpoint never forms the
+                    // `\n\n` separator — normalise line endings first.
+                    crate::sse_util::normalize_sse_buffer(&mut buffer);
                     while let Some(pos) = buffer.find("\n\n") {
                         let event = buffer[..pos].to_string();
                         let keep_from = pos + 2;
@@ -385,6 +388,21 @@ impl LlmProvider for AnthropicProvider {
                                 crate::sse_util::decode_complete_utf8_prefix(&raw_bytes);
                             raw_bytes.drain(..consumed);
                             buffer.push_str(&safe);
+                            // Audit R1-LP-2: an endpoint that never
+                            // terminates its events must surface an error,
+                            // not grow the buffer without bound.
+                            if crate::sse_util::over_buffer_cap(buffer.len() + raw_bytes.len()) {
+                                return Some((
+                                    Err(ProviderError::InvalidResponse {
+                                        expected: "a bounded SSE stream".into(),
+                                        got: format!(
+                                            "over {} bytes of unterminated SSE buffer",
+                                            crate::sse_util::MAX_SSE_BUFFER_BYTES
+                                        ),
+                                    }),
+                                    (byte_stream, buffer, raw_bytes),
+                                ));
+                            }
                         }
                         Some(Err(e)) => {
                             return Some((

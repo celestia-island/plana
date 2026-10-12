@@ -120,14 +120,20 @@ impl CircuitBreaker {
         self.inner.success_count.fetch_add(1, Ordering::Relaxed);
         let state = *self.inner.state.read();
         if state == CircuitState::HalfOpen {
+            // Audit R1-CB-1: re-check under the write lock — a concurrent
+            // probe failure may already have flipped HalfOpen → Open, and
+            // a late success must not overwrite that trip (which would
+            // silently re-close the breaker on a failing backend).
             let mut guard = self.inner.state.write();
-            *guard = CircuitState::Closed;
-            self.inner.failure_count.store(0, Ordering::Relaxed);
-            self.inner.half_open_calls.store(0, Ordering::Relaxed);
-            debug!(
-                circuit = %self.inner.name,
-                "circuit breaker transitioning HalfOpen → Closed (success)"
-            );
+            if *guard == CircuitState::HalfOpen {
+                *guard = CircuitState::Closed;
+                self.inner.failure_count.store(0, Ordering::Relaxed);
+                self.inner.half_open_calls.store(0, Ordering::Relaxed);
+                debug!(
+                    circuit = %self.inner.name,
+                    "circuit breaker transitioning HalfOpen → Closed (success)"
+                );
+            }
         } else if state == CircuitState::Closed {
             self.inner.failure_count.store(0, Ordering::Relaxed);
         }
@@ -155,12 +161,19 @@ impl CircuitBreaker {
             }
             CircuitState::HalfOpen => {
                 let mut guard = self.inner.state.write();
-                *guard = CircuitState::Open;
-                self.inner.half_open_calls.store(0, Ordering::Relaxed);
-                warn!(
-                    circuit = %self.inner.name,
-                    "circuit breaker tripped HalfOpen → Open (probe failed)"
-                );
+                // Mirror of record_success's re-check (audit R1-CB-1
+                // follow-up): a concurrent probe success may already have
+                // closed the breaker; the late failure must not reopen a
+                // legitimately recovered circuit. The direction is
+                // fail-safe either way, so the state is simply re-read.
+                if *guard == CircuitState::HalfOpen {
+                    *guard = CircuitState::Open;
+                    self.inner.half_open_calls.store(0, Ordering::Relaxed);
+                    warn!(
+                        circuit = %self.inner.name,
+                        "circuit breaker tripped HalfOpen → Open (probe failed)"
+                    );
+                }
             }
             CircuitState::Open => {}
         }
@@ -311,6 +324,16 @@ mod tests {
         assert_eq!(cb.state(), CircuitState::Open);
         Ok(())
     }
+
+    // Audit R1-CB-1 (record_success re-check): the race this fix closes —
+    // success READS HalfOpen, a concurrent failure flips Open, success's
+    // WRITE would re-close — has no sequential observable: between the
+    // read and the write no other thread can run, so no single-threaded
+    // test can distinguish fixed from unfixed code (the obvious
+    // "fail-then-success" sequence passes on both). The re-check mirrors
+    // `record_failure`'s existing Closed-arm re-check and is verified by
+    // inspection; a real pin would need a test seam between the two
+    // lock acquisitions.
 
     #[test]
     fn test_registry_get_or_create() -> Result<()> {

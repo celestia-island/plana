@@ -776,6 +776,13 @@ pub fn estimate_cost(provider: &str, model: &str, input: u64, output: u64) -> f6
 mod tests {
     use super::*;
 
+    /// Serializes every test that reads or writes the PROCESS-WIDE
+    /// metering state (the global records Vec and the injected pricing
+    /// slot) — `by_tier_breakdown` historically raced with the injection
+    /// tests' unconditional zero-price source and flaked its cost
+    /// assertions (audit R1 follow-up).
+    pub(crate) static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn record_and_summarize() {
         let engine = MeteringEngine::new();
@@ -882,6 +889,7 @@ mod tests {
 
     #[test]
     fn by_tier_breakdown_buckets_tiered_and_untiered() -> Result<(), Box<dyn std::error::Error>> {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let engine = MeteringEngine::new();
         engine.clear();
 
@@ -965,6 +973,7 @@ mod tests {
 
     #[test]
     fn cost_estimation_scales() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let cost1 = estimate_cost("anthropic", "claude-sonnet-4-20250514", 1000, 500);
         let cost2 = estimate_cost("anthropic", "claude-sonnet-4-20250514", 2000, 1000);
         assert!((cost2 / cost1 - 2.0).abs() < 0.01, "should scale linearly");
@@ -1140,27 +1149,64 @@ pub(crate) fn clear_pricing_source_for_tests() {
     *slot = None;
 }
 
+/// Sanity gate for a price row from an INJECTED source (audit R1-LP-3):
+/// the compiled-in families are checked by invariant tests, but an
+/// injection wraps a live database row, and a corrupt row must not be
+/// able to make `estimate_cost` negative or NaN (a NaN silently defeats
+/// every `>= budget` comparison).
+fn injected_pricing_is_sane(p: &FamilyPricing) -> bool {
+    let finite_non_negative = |v: f64| v.is_finite() && v >= 0.0;
+    let FamilyPricing {
+        input_per_million,
+        output_per_million,
+        cached_per_million,
+    } = p;
+    finite_non_negative(*input_per_million)
+        && finite_non_negative(*output_per_million)
+        && finite_non_negative(*cached_per_million)
+        && cached_per_million <= input_per_million
+}
+
+/// Warned-once flag for unsane injected pricing rows (audit R1
+/// should-fix: the warn fires per lookup otherwise — a hot path).
+static UNSANE_PRICING_WARNED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 /// The injected-source-aware resolution: the external source first, the
 /// compiled-in families as the fallback. This is the CONSUMER-facing
 /// lookup — `lookup_pricing` itself stays family-pure for direct callers.
+///
+/// An injected row that fails [`injected_pricing_is_sane`] is ignored
+/// (warned once per process) and the compiled-in table answers instead —
+/// a corrupt DB row degrades to conservative peak pricing, never to
+/// free or NaN.
 pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
     let snapshot = INJECTED_SOURCE
         .read()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .clone();
     if let Some(p) = snapshot.as_ref().and_then(|source| source(model)) {
-        return Some(p);
+        if injected_pricing_is_sane(&p) {
+            return Some(p);
+        }
+        if !UNSANE_PRICING_WARNED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            tracing::warn!(
+                target: "plana_llm_provider::metering",
+                "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
+                 falling back to the compiled-in table (further occurrences silenced)"
+            );
+        }
     }
     lookup_pricing(model)
 }
 
 #[cfg(test)]
 mod injection_tests {
-    use super::*;
     /// The injected slot is PROCESS-wide: the injection tests serialize on
     /// this mutex so parallel test threads do not fight over the
     /// single slot.
-    static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    use super::tests::TEST_LOCK;
+    use super::*;
 
     #[test]
     fn injected_source_answers_before_the_families() {
@@ -1180,6 +1226,47 @@ mod injection_tests {
         let glm = resolve_pricing("glm-4.7");
         assert!(glm.is_some(), "the family table still answers glm");
         clear_pricing_source_for_tests();
+    }
+
+    /// Audit R1-LP-3: an injected row that is negative, non-finite, or
+    /// has cached > input must NOT answer — it degrades to the
+    /// compiled-in table. A corrupt DB row may not make cost negative or
+    /// NaN (NaN silently defeats every budget comparison).
+    #[test]
+    fn an_unsane_injected_row_falls_back_to_the_families() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_pricing_source_for_tests();
+        for bad in [
+            FamilyPricing {
+                input_per_million: -1.0,
+                output_per_million: 2.5,
+                cached_per_million: 0.125,
+            },
+            FamilyPricing {
+                input_per_million: f64::NAN,
+                output_per_million: 2.5,
+                cached_per_million: 0.125,
+            },
+            FamilyPricing {
+                input_per_million: 1.0,
+                output_per_million: 2.5,
+                cached_per_million: 5.0, // cached > input breaks the invariant
+            },
+        ] {
+            assert!(set_pricing_source(Arc::new(move |m: &str| {
+                (m == "my-private-model").then_some(bad)
+            })));
+            // The unsane row is refused: the compiled table answers
+            // instead. (Compared against `lookup_pricing` rather than
+            // `!= bad` — a NaN row would never compare equal to anything,
+            // making a `!=` assertion vacuous.)
+            assert_eq!(
+                resolve_pricing("my-private-model"),
+                lookup_pricing("my-private-model"),
+                "an unsane injected row must fall back to the compiled table"
+            );
+            clear_pricing_source_for_tests();
+        }
     }
 
     #[test]
