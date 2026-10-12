@@ -241,8 +241,17 @@ impl MeteringEngine {
             budgets.get(scope).cloned()
         };
         let budget = budget?;
-        let summary = self.summarize_in_period(scope, budget.period);
-        Some((budget.max_cost_usd - summary.total_cost_usd).max(0.0))
+        // Audit R1-LP-4: Total period reads the never-evicted lifetime
+        // spend (same source as is_over_budget) so the two entry points
+        // never disagree on whether the budget is exhausted.
+        let spend = if budget.period == BudgetPeriod::Total {
+            let lifetime = self.lifetime_cost.read().unwrap_or_else(|e| e.into_inner());
+            lifetime.get(scope).copied().unwrap_or(0.0)
+        } else {
+            self.summarize_in_period(scope, budget.period)
+                .total_cost_usd
+        };
+        Some((budget.max_cost_usd - spend).max(0.0))
     }
 
     /// Get a usage summary for a scope over all time.
