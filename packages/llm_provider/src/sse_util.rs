@@ -35,10 +35,25 @@ pub const MAX_SSE_BUFFER_BYTES: usize = 8 * 1024 * 1024;
 /// the separator and the buffer grows forever — normalise before
 /// splitting. Runs at most one allocation per call and only when the
 /// chunk actually contains a CR.
+///
+/// A trailing lone `\r` is left alone: it may be the first half of a
+/// CRLF pair the next read completes, and folding it early would let
+/// the pairing `\n` masquerade as a second newline — a false event
+/// boundary splitting one event in two (whose halves then fail JSON
+/// parsing and are silently dropped). At end of stream the residual
+/// `\r` behaves like any other unterminated tail: no event dispatches
+/// without its blank line, which is the spec's own semantics.
 pub fn normalize_sse_buffer(buffer: &mut String) {
-    if buffer.contains('\r') {
-        *buffer = buffer.replace("\r\n", "\n").replace('\r', "\n");
+    if !buffer.contains('\r') {
+        return;
     }
+    let trailing_cr = buffer.ends_with('\r');
+    let head_len = buffer.len() - usize::from(trailing_cr);
+    let mut normalized = buffer[..head_len].replace("\r\n", "\n").replace('\r', "\n");
+    if trailing_cr {
+        normalized.push('\r');
+    }
+    *buffer = normalized;
 }
 
 /// Whether `len` bytes of pending decode buffer are over the cap.
@@ -232,6 +247,27 @@ mod tail_and_utf8_tests {
         let (events, rest) = extract_sse_events(&buf);
         assert_eq!(events, vec!["a", "b"]);
         assert_eq!(rest, "data: c");
+    }
+
+    /// Audit R1 follow-up (must-fix, re-applied in 8e76…): TCP may split
+    /// between the `\r` and the `\n`. The trailing lone `\r` must wait
+    /// for the next chunk — folding it early let the pairing `\n`
+    /// masquerade as a second newline, splitting one event in two (both
+    /// halves dropped by the JSON parse).
+    #[test]
+    fn crlf_split_across_chunks_keeps_event_boundaries() {
+        let mut buf = String::from("data: X\r");
+        normalize_sse_buffer(&mut buf);
+        assert_eq!(
+            buf, "data: X\r",
+            "a trailing lone \\r must wait for the next chunk"
+        );
+
+        buf.push_str("\ndata: Y\r\n\r\n");
+        normalize_sse_buffer(&mut buf);
+        let (events, rest) = extract_sse_events(&buf);
+        assert_eq!(events, vec!["X\nY"], "one event — no false boundary");
+        assert_eq!(rest, "");
     }
 
     #[test]
