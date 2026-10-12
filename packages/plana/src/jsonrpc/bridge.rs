@@ -15,6 +15,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::Value;
 use std::fmt;
+use tracing;
 
 use super::{json_keys::BridgeKey, types::*};
 
@@ -596,8 +597,13 @@ pub fn serialize_to_jsonrpc<T: Serialize>(
 pub fn deserialize_from_jsonrpc<T: DeserializeOwned>(
     json: &str,
 ) -> Result<Option<T>, JsonRpcError> {
-    let rpc_msg: JsonRpcMessage = serde_json::from_str(json)
-        .map_err(|e| JsonRpcError::new(-32700, format!("Parse error: {}", e)))?;
+    // Audit R1-JR-5: the serde error string can leak internal type/field
+    // names to unauthenticated callers — the wire response carries only
+    // the generic JSON-RPC code; the detail stays in the server trace.
+    let rpc_msg: JsonRpcMessage = serde_json::from_str(json).map_err(|e| {
+        tracing::debug!(error = %e, "JSON-RPC parse error");
+        JsonRpcError::new(-32700, "Parse error: invalid JSON".to_string())
+    })?;
 
     match rpc_msg {
         JsonRpcMessage::Request(req) => Ok(from_jsonrpc_method(&req.method, req.params)),
