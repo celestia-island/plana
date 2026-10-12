@@ -776,6 +776,13 @@ pub fn estimate_cost(provider: &str, model: &str, input: u64, output: u64) -> f6
 mod tests {
     use super::*;
 
+    /// Serializes every test that reads or writes the PROCESS-WIDE
+    /// metering state (the global records Vec and the injected pricing
+    /// slot) — `by_tier_breakdown` historically raced with the injection
+    /// tests' unconditional zero-price source and flaked its cost
+    /// assertions (audit R1 follow-up).
+    pub(crate) static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn record_and_summarize() {
         let engine = MeteringEngine::new();
@@ -882,6 +889,7 @@ mod tests {
 
     #[test]
     fn by_tier_breakdown_buckets_tiered_and_untiered() -> Result<(), Box<dyn std::error::Error>> {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let engine = MeteringEngine::new();
         engine.clear();
 
@@ -965,6 +973,7 @@ mod tests {
 
     #[test]
     fn cost_estimation_scales() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let cost1 = estimate_cost("anthropic", "claude-sonnet-4-20250514", 1000, 500);
         let cost2 = estimate_cost("anthropic", "claude-sonnet-4-20250514", 2000, 1000);
         assert!((cost2 / cost1 - 2.0).abs() < 0.01, "should scale linearly");
@@ -1158,13 +1167,19 @@ fn injected_pricing_is_sane(p: &FamilyPricing) -> bool {
         && cached_per_million <= input_per_million
 }
 
+/// Warned-once flag for unsane injected pricing rows (audit R1
+/// should-fix: the warn fires per lookup otherwise — a hot path).
+static UNSANE_PRICING_WARNED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 /// The injected-source-aware resolution: the external source first, the
 /// compiled-in families as the fallback. This is the CONSUMER-facing
 /// lookup — `lookup_pricing` itself stays family-pure for direct callers.
 ///
 /// An injected row that fails [`injected_pricing_is_sane`] is ignored
-/// (warned) and the compiled-in table answers instead — a corrupt DB row
-/// degrades to conservative peak pricing, never to free or NaN.
+/// (warned once per process) and the compiled-in table answers instead —
+/// a corrupt DB row degrades to conservative peak pricing, never to
+/// free or NaN.
 pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
     let snapshot = INJECTED_SOURCE
         .read()
@@ -1174,23 +1189,24 @@ pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
         if injected_pricing_is_sane(&p) {
             return Some(p);
         }
-        tracing::warn!(
-            target: "plana_llm_provider::metering",
-            model = %model,
-            "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
-             falling back to the compiled-in table"
-        );
+        if !UNSANE_PRICING_WARNED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            tracing::warn!(
+                target: "plana_llm_provider::metering",
+                "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
+                 falling back to the compiled-in table (further occurrences silenced)"
+            );
+        }
     }
     lookup_pricing(model)
 }
 
 #[cfg(test)]
 mod injection_tests {
-    use super::*;
     /// The injected slot is PROCESS-wide: the injection tests serialize on
     /// this mutex so parallel test threads do not fight over the
     /// single slot.
-    static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    use super::tests::TEST_LOCK;
+    use super::*;
 
     #[test]
     fn injected_source_answers_before_the_families() {

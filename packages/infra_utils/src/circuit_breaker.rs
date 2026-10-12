@@ -161,12 +161,19 @@ impl CircuitBreaker {
             }
             CircuitState::HalfOpen => {
                 let mut guard = self.inner.state.write();
-                *guard = CircuitState::Open;
-                self.inner.half_open_calls.store(0, Ordering::Relaxed);
-                warn!(
-                    circuit = %self.inner.name,
-                    "circuit breaker tripped HalfOpen → Open (probe failed)"
-                );
+                // Mirror of record_success's re-check (audit R1-CB-1
+                // follow-up): a concurrent probe success may already have
+                // closed the breaker; the late failure must not reopen a
+                // legitimately recovered circuit. The direction is
+                // fail-safe either way, so the state is simply re-read.
+                if *guard == CircuitState::HalfOpen {
+                    *guard = CircuitState::Open;
+                    self.inner.half_open_calls.store(0, Ordering::Relaxed);
+                    warn!(
+                        circuit = %self.inner.name,
+                        "circuit breaker tripped HalfOpen → Open (probe failed)"
+                    );
+                }
             }
             CircuitState::Open => {}
         }
