@@ -186,11 +186,13 @@ pub async fn sse_events_handler_impl(
             );
         }
         // Track insertion order for the FIFO ceiling on live sessions.
-        sessions
-            .insertion_order
-            .lock()
-            .unwrap()
-            .push_back(session_id.clone());
+        // A remounted id replaces its stale order entry first (audit R1
+        // follow-up: duplicate pushes would grow the queue per reconnect).
+        {
+            let mut order = sessions.insertion_order.lock().unwrap();
+            order.retain(|id| id != &session_id);
+            order.push_back(session_id.clone());
+        }
     }
     // END-OF-STREAM RECLAMATION (round-9's V9-3): the send-failure
     // path (round-8) only reclaims when something pushes NEXT; a
@@ -206,6 +208,7 @@ pub async fn sse_events_handler_impl(
     // black-holed after every reconnect race).
     let janitor = SessionJanitor {
         sessions: std::sync::Arc::clone(&sessions.sessions),
+        insertion_order: std::sync::Arc::clone(&sessions.insertion_order),
         session_id: session_id.clone(),
         own_tx: tx.clone(),
     };
@@ -227,6 +230,7 @@ pub async fn sse_events_handler_impl(
 /// for the SSE subscription path.
 struct SessionJanitor {
     sessions: std::sync::Arc<std::sync::Mutex<HashMap<SessionId, SessionSender>>>,
+    insertion_order: std::sync::Arc<std::sync::Mutex<VecDeque<SessionId>>>,
     session_id: String,
     /// The sender THIS mount registered — the drop guard compares it
     /// against the map (same_receiver) so a reconnected mount's fresh
@@ -242,6 +246,14 @@ impl Drop for SessionJanitor {
             // (the futures counterpart was `same_receiver`).
             if current.same_channel(&self.own_tx) {
                 guard.remove(&self.session_id);
+                // Audit R1 follow-up (must-fix): the FIFO order queue is
+                // part of the manager's state — a zombie id here would be
+                // the same unbounded growth JR-1 set out to kill, just
+                // moved into the helper structure.
+                self.insertion_order
+                    .lock()
+                    .unwrap()
+                    .retain(|id| id != &self.session_id);
             }
         }
     }
@@ -358,17 +370,42 @@ mod reconnect_race_tests {
         assert!(!mgr.exists(&sid), "the wedged session must be reclaimed");
     }
 
-    /// Audit R1-JR-1: minting ids is bounded — at the ceiling the oldest
-    /// session is evicted, so the map cannot grow without bound.
+    /// Audit R1-JR-1: minting ids is bounded — at the ceiling the OLDEST
+    /// session is evicted and the NEWEST survives (FIFO direction pinned
+    /// both ways; a pop_back-shaped mutation must go red).
     #[test]
     fn the_session_map_stays_under_its_ceiling() {
         let mgr = SessionManager::default();
+        let oldest = mgr.create_id();
         for _ in 0..(MAX_SESSIONS + 10) {
             let _ = mgr.create_id();
         }
         assert!(
             mgr.sessions.lock().unwrap().len() <= MAX_SESSIONS,
             "the map must stay at or under the ceiling"
+        );
+        assert!(
+            !mgr.exists(&oldest),
+            "FIFO: the oldest session must be the one evicted"
+        );
+        let newest = mgr.create_id();
+        assert!(mgr.exists(&newest), "the newest session must survive");
+    }
+
+    /// Audit R1 follow-up (must-fix): the FIFO order queue is manager
+    /// state too — a finished stream must not leave zombie order entries
+    /// behind (that would be JR-1's unbounded growth, relocated).
+    #[tokio::test]
+    async fn the_fifo_order_queue_never_holds_zombies() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        let sse = sse_events_handler_impl(mgr.clone(), sid.clone()).await;
+        assert!(mgr.exists(&sid));
+        drop(sse);
+        assert!(!mgr.exists(&sid), "map entry reclaimed");
+        assert!(
+            mgr.insertion_order.lock().unwrap().is_empty(),
+            "the order queue must not hold zombie ids"
         );
     }
 }

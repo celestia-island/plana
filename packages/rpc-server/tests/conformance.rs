@@ -431,7 +431,10 @@ async fn a_client_that_stops_reading_gets_disconnected_not_wedged() {
 
     // More oversized responses than lane + socket buffers can swallow,
     // and the client never reads a byte afterwards.
-    for i in 0..24 {
+    // 16 MB total defeats even auto-tuned loopback buffers (audit R1
+    // follow-up: 6 MB could be fully absorbed on a fat-buffer host and
+    // never wedge — flake direction was a false red).
+    for i in 0..64 {
         send_json(
             &mut ws,
             json!({ "jsonrpc": "2.0", "id": format!("r{i}"), "method": "big", "params": {} }),
