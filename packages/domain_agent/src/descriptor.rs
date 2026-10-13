@@ -95,14 +95,18 @@ fn register_builtins(registry: &AgentMetadataRegistry) {
         "OreXis"     / "orexis"      / "Security"                                 / 1 / true,
         "PhiLia"     / "philia"      / "Data storage"                             / 1 / true,
         "PoleMos"    / "polemos"     / "Hardware & vision"                        / 1 / true,
-        "Web Automation" / "web_automation" / "Web automation and browser testing" / 2 / false,
-        "Classic Software Engineering" / "classic_software_engineering" / "Code review, LSP integration, and refactoring" / 2 / false,
-        "Digital Twin" / "digital_twin" / "Digital twin — 3D scene, model placement, telemetry overlay" / 2 / false,
-        "Data Grid" / "data_grid" / "Data grid — multidimensional tables, fields, records, views" / 2 / false,
-        "Media Flow" / "media_flow" / "Media flow — node-graph pipelines for generation" / 2 / false,
-        "Industrial IoT" / "industrial_iot" / "Industrial IoT — PLC communication, sensor polling, alarm management" / 2 / false,
-        "Platform Admin" / "platform_admin" / "Platform governance — RBAC partitioning admin across the engine family" / 2 / false,
-        "Remote Operations" / "remote_operations" / "Remote operations — SSH, remote terminal, file transfer" / 2 / false
+        "Data Table" / "data_table" / "Data-table plugin — fields, records, typed columns, views" / 2 / false,
+        "Gauge Grid" / "gauge_grid" / "Gauge-grid plugin — metric gauges, thresholds, live dials" / 2 / false,
+        "History" / "history" / "History plugin — timelines, replay, retention windows" / 2 / false,
+        "Holographic" / "holographic" / "Holographic plugin — 3D holographic scene composition" / 2 / false,
+        "Image" / "image" / "Image plugin — image walls, lightboxes, annotations" / 2 / false,
+        "Kanban" / "kanban" / "Kanban plugin — boards, lanes, cards, WIP limits" / 2 / false,
+        "KV" / "kv" / "KV plugin — key-value browsing, search, bulk edits" / 2 / false,
+        "Node Graph" / "node_graph" / "Node-graph plugin — vertices, edges, layouts, queries" / 2 / false,
+        "Nodes" / "nodes" / "Nodes plugin — device/instance cards, grouping, status" / 2 / false,
+        "Note" / "note" / "Note plugin — notes, checklists, pinning" / 2 / false,
+        "Reports" / "reports" / "Reports plugin — report assembly, sections, export" / 2 / false,
+        "SCADA" / "scada" / "SCADA plugin — mimic scenes, bindings, alarms, trends" / 2 / false,
     });
 }
 
@@ -112,10 +116,10 @@ mod tests {
     use anyhow::{Context, Result};
 
     #[test]
-    fn test_registry_has_all_20_agents() -> Result<()> {
+    fn test_registry_has_all_24_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let all = registry.all_agents();
-        assert_eq!(all.len(), 20);
+        assert_eq!(all.len(), 24);
         Ok(())
     }
 
@@ -128,10 +132,10 @@ mod tests {
     }
 
     #[test]
-    fn test_layer2_has_7_agents() -> Result<()> {
+    fn test_layer2_has_12_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let layer2 = registry.layer2_agents();
-        assert_eq!(layer2.len(), 8);
+        assert_eq!(layer2.len(), 12);
         Ok(())
     }
 

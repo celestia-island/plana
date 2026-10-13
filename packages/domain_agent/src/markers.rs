@@ -43,11 +43,18 @@ define_marker! {
     OreXisMarker => OreXis / "orexis" / "OreXis",
     PhiLiaMarker => PhiLia / "philia" / "PhiLia",
     PoleMosMarker => PoleMos / "polemos" / "PoleMos",
-    WebAutomationMarker => WebAutomation / "web_automation" / "Web Automation",
-    ClassicSoftwareEngineeringMarker => ClassicSoftwareEngineering / "classic_software_engineering" / "Classic Software Engineering",
-    IndustrialIoTMarker => IndustrialIoT / "industrial_iot" / "Industrial IoT",
-    PlatformAdminMarker => PlatformAdmin / "platform_admin" / "Platform Admin",
-    RemoteOperationsMarker => RemoteOperations / "remote_operations" / "Remote Operations",
+    DataTableMarker => DataTable / "data_table" / "Data Table",
+    GaugeGridMarker => GaugeGrid / "gauge_grid" / "Gauge Grid",
+    HistoryMarker => History / "history" / "History",
+    HolographicMarker => Holographic / "holographic" / "Holographic",
+    ImageMarker => Image / "image" / "Image",
+    KanbanMarker => Kanban / "kanban" / "Kanban",
+    KvMarker => Kv / "kv" / "KV",
+    NodeGraphMarker => NodeGraph / "node_graph" / "Node Graph",
+    NodesMarker => Nodes / "nodes" / "Nodes",
+    NoteMarker => Note / "note" / "Note",
+    ReportsMarker => Reports / "reports" / "Reports",
+    ScadaMarker => Scada / "scada" / "SCADA",
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -89,10 +96,7 @@ mod tests {
         );
         assert_eq!(SkoPeoMarker::FOLDER_NAME, AgentKind::SkoPeo.folder_name());
         assert_eq!(HubRisMarker::FOLDER_NAME, AgentKind::HubRis.folder_name());
-        assert_eq!(
-            WebAutomationMarker::FOLDER_NAME,
-            AgentKind::WebAutomation.folder_name()
-        );
+        assert_eq!(ScadaMarker::FOLDER_NAME, AgentKind::Scada.folder_name());
     }
 
     #[test]

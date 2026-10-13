@@ -1,6 +1,6 @@
 //! Unified Agent kind enum.
 //!
-//! [`AgentKind`] covers all 19 agents (Layer1 × 12 + Layer2 × 7),
+//! [`AgentKind`] covers all 24 agents (Layer1 × 12 + Layer2 × 7),
 //! The single source for agent names, doc paths, UI display, and other strings.
 //! The `AgentType` in TUI is a re-export (type alias) of this type.
 
@@ -46,24 +46,35 @@ pub enum AgentKind {
     PoleMos,
 
     // ── Layer 2 ──────────────────────────────────────────────────────────────
-    /// Web automation
-    WebAutomation,
-    /// Classic software engineering (code review, LSP, refactoring)
-    ClassicSoftwareEngineering,
-    /// Digital twin agent — 3D holographic scene, model placement, telemetry overlay
-    DigitalTwin,
-    /// Data grid agent — multidimensional tables, fields, records, views
-    DataGrid,
-    /// Media flow agent — node-graph pipelines for image/3D/audio/video generation
-    MediaFlow,
-    /// Industrial IoT agent — PLC communication, sensor polling, alarm management
-    IndustrialIoT,
-    /// Platform governance agent — RBAC partitioning admin across the
-    /// engine family (chest grants / arona groups / evernight node RBAC),
-    /// driven conversationally through its tool set
-    PlatformAdmin,
-    /// Remote operations agent — SSH, remote terminal, GUI automation, file transfer
-    RemoteOperations,
+    // The 2026-10-13 user ruling: the builtin layer-2 lineup is ONE
+    // AGENT PER OFFICIAL WIDGET PLUGIN (twelve) — each bundles the
+    // plugin's operations as its tools and the usage recipes as its
+    // skills, so no builtin ships tools-only or skills-only. The eight
+    // pre-ruling folders (web_automation & co.) are retired wholesale.
+    /// Data-table plugin agent — fields, records, typed columns, views
+    DataTable,
+    /// Gauge-grid plugin agent — metric gauges, thresholds, live dials
+    GaugeGrid,
+    /// History plugin agent — timelines, replay, retention windows
+    History,
+    /// Holographic plugin agent — 3D holographic scene composition
+    Holographic,
+    /// Image plugin agent — image walls, lightboxes, annotations
+    Image,
+    /// Kanban plugin agent — boards, lanes, cards, WIP limits
+    Kanban,
+    /// KV plugin agent — key-value browsing, search, bulk edits
+    Kv,
+    /// Node-graph plugin agent — vertices, edges, layouts, queries
+    NodeGraph,
+    /// Nodes plugin agent — device/instance cards, grouping, status
+    Nodes,
+    /// Note plugin agent — notes, checklists, pinning
+    Note,
+    /// Reports plugin agent — report assembly, sections, export
+    Reports,
+    /// SCADA plugin agent — mimic scenes, bindings, alarms, trends
+    Scada,
 }
 
 // ─── Display (Pascal-case human-readable name) ─────────────────────────────
@@ -115,14 +126,18 @@ impl AgentKind {
             AgentKind::OreXis => "OreXis",
             AgentKind::PhiLia => "PhiLia",
             AgentKind::PoleMos => "PoleMos",
-            AgentKind::WebAutomation => "Web Automation",
-            AgentKind::ClassicSoftwareEngineering => "Classic Software Engineering",
-            AgentKind::DigitalTwin => "Digital Twin",
-            AgentKind::DataGrid => "Data Grid",
-            AgentKind::MediaFlow => "Media Flow",
-            AgentKind::IndustrialIoT => "Industrial IoT",
-            AgentKind::PlatformAdmin => "Platform Admin",
-            AgentKind::RemoteOperations => "Remote Operations",
+            AgentKind::DataTable => "Data Table",
+            AgentKind::GaugeGrid => "Gauge Grid",
+            AgentKind::History => "History",
+            AgentKind::Holographic => "Holographic",
+            AgentKind::Image => "Image",
+            AgentKind::Kanban => "Kanban",
+            AgentKind::Kv => "KV",
+            AgentKind::NodeGraph => "Node Graph",
+            AgentKind::Nodes => "Nodes",
+            AgentKind::Note => "Note",
+            AgentKind::Reports => "Reports",
+            AgentKind::Scada => "SCADA",
         }
     }
 
@@ -148,14 +163,18 @@ impl AgentKind {
             AgentKind::OreXis => "orexis",
             AgentKind::PhiLia => "philia",
             AgentKind::PoleMos => "polemos",
-            AgentKind::WebAutomation => "web_automation",
-            AgentKind::ClassicSoftwareEngineering => "classic_software_engineering",
-            AgentKind::DigitalTwin => "digital_twin",
-            AgentKind::DataGrid => "data_grid",
-            AgentKind::MediaFlow => "media_flow",
-            AgentKind::IndustrialIoT => "industrial_iot",
-            AgentKind::PlatformAdmin => "platform_admin",
-            AgentKind::RemoteOperations => "remote_operations",
+            AgentKind::DataTable => "data_table",
+            AgentKind::GaugeGrid => "gauge_grid",
+            AgentKind::History => "history",
+            AgentKind::Holographic => "holographic",
+            AgentKind::Image => "image",
+            AgentKind::Kanban => "kanban",
+            AgentKind::Kv => "kv",
+            AgentKind::NodeGraph => "node_graph",
+            AgentKind::Nodes => "nodes",
+            AgentKind::Note => "note",
+            AgentKind::Reports => "reports",
+            AgentKind::Scada => "scada",
         }
     }
 
@@ -175,16 +194,18 @@ impl AgentKind {
             "orexis" => Some(AgentKind::OreXis),
             "philia" => Some(AgentKind::PhiLia),
             "polemos" => Some(AgentKind::PoleMos),
-            "web_automation" | "webautomation" => Some(AgentKind::WebAutomation),
-            "classic_software_engineering" | "classicsoftwareengineering" => {
-                Some(AgentKind::ClassicSoftwareEngineering)
-            }
-            "digital_twin" | "digitaltwin" => Some(AgentKind::DigitalTwin),
-            "data_grid" | "datagrid" => Some(AgentKind::DataGrid),
-            "media_flow" | "mediaflow" => Some(AgentKind::MediaFlow),
-            "industrial_iot" | "industrialiot" => Some(AgentKind::IndustrialIoT),
-            "platform_admin" | "platformadmin" => Some(AgentKind::PlatformAdmin),
-            "remote_operations" | "remoteoperations" => Some(AgentKind::RemoteOperations),
+            "data_table" | "datatable" => Some(AgentKind::DataTable),
+            "gauge_grid" | "gaugegrid" => Some(AgentKind::GaugeGrid),
+            "history" => Some(AgentKind::History),
+            "holographic" => Some(AgentKind::Holographic),
+            "image" => Some(AgentKind::Image),
+            "kanban" => Some(AgentKind::Kanban),
+            "kv" => Some(AgentKind::Kv),
+            "node_graph" | "nodegraph" => Some(AgentKind::NodeGraph),
+            "nodes" => Some(AgentKind::Nodes),
+            "note" => Some(AgentKind::Note),
+            "reports" => Some(AgentKind::Reports),
+            "scada" => Some(AgentKind::Scada),
             _ => None,
         }
     }
@@ -211,13 +232,18 @@ impl AgentKind {
         } else {
             matches!(
                 self,
-                AgentKind::WebAutomation
-                    | AgentKind::ClassicSoftwareEngineering
-                    | AgentKind::DigitalTwin
-                    | AgentKind::DataGrid
-                    | AgentKind::MediaFlow
-                    | AgentKind::IndustrialIoT
-                    | AgentKind::RemoteOperations
+                AgentKind::DataTable
+                    | AgentKind::GaugeGrid
+                    | AgentKind::History
+                    | AgentKind::Holographic
+                    | AgentKind::Image
+                    | AgentKind::Kanban
+                    | AgentKind::Kv
+                    | AgentKind::NodeGraph
+                    | AgentKind::Nodes
+                    | AgentKind::Note
+                    | AgentKind::Reports
+                    | AgentKind::Scada
             )
         }
     }
@@ -251,22 +277,18 @@ impl AgentKind {
             AgentKind::OreXis => "Security audit and external integration",
             AgentKind::PhiLia => "System integration",
             AgentKind::PoleMos => "Edge computing and device management",
-            AgentKind::WebAutomation => "Web automation and browser testing",
-            AgentKind::ClassicSoftwareEngineering => {
-                "Code review, LSP integration, and refactoring"
-            }
-            AgentKind::DigitalTwin => "Digital twin — 3D scene, model placement, telemetry overlay",
-            AgentKind::DataGrid => "Data grid — multidimensional tables, fields, records, views",
-            AgentKind::MediaFlow => "Media flow — node-graph pipelines for generation",
-            AgentKind::IndustrialIoT => {
-                "Industrial IoT — PLC communication, sensor polling, alarm management"
-            }
-            AgentKind::PlatformAdmin => {
-                "Platform governance — RBAC partitioning admin across the engine family"
-            }
-            AgentKind::RemoteOperations => {
-                "Remote operations — SSH, remote terminal, GUI automation, file transfer"
-            }
+            AgentKind::DataTable => "Data-table plugin — fields, records, typed columns, views",
+            AgentKind::GaugeGrid => "Gauge-grid plugin — metric gauges, thresholds, live dials",
+            AgentKind::History => "History plugin — timelines, replay, retention windows",
+            AgentKind::Holographic => "Holographic plugin — 3D holographic scene composition",
+            AgentKind::Image => "Image plugin — image walls, lightboxes, annotations",
+            AgentKind::Kanban => "Kanban plugin — boards, lanes, cards, WIP limits",
+            AgentKind::Kv => "KV plugin — key-value browsing, search, bulk edits",
+            AgentKind::NodeGraph => "Node-graph plugin — vertices, edges, layouts, queries",
+            AgentKind::Nodes => "Nodes plugin — device/instance cards, grouping, status",
+            AgentKind::Note => "Note plugin — notes, checklists, pinning",
+            AgentKind::Reports => "Reports plugin — report assembly, sections, export",
+            AgentKind::Scada => "SCADA plugin — mimic scenes, bindings, alarms, trends",
         }
     }
 
@@ -307,7 +329,7 @@ impl AgentKind {
         ]
     }
 
-    /// All Layer2 extension agents (1 total).
+    /// All Layer2 extension agents (12 total).
     pub fn domain_agents() -> Vec<Self> {
         let registry = &*super::descriptor::AGENT_REGISTRY;
         let layer2_folders: Vec<&str> = registry
@@ -329,17 +351,22 @@ impl AgentKind {
 
     fn domain_agents_fallback() -> Vec<Self> {
         vec![
-            AgentKind::WebAutomation,
-            AgentKind::ClassicSoftwareEngineering,
-            AgentKind::DigitalTwin,
-            AgentKind::DataGrid,
-            AgentKind::MediaFlow,
-            AgentKind::IndustrialIoT,
-            AgentKind::RemoteOperations,
+            AgentKind::DataTable,
+            AgentKind::GaugeGrid,
+            AgentKind::History,
+            AgentKind::Holographic,
+            AgentKind::Image,
+            AgentKind::Kanban,
+            AgentKind::Kv,
+            AgentKind::NodeGraph,
+            AgentKind::Nodes,
+            AgentKind::Note,
+            AgentKind::Reports,
+            AgentKind::Scada,
         ]
     }
 
-    /// All 17 agents.
+    /// All 24 agents.
     pub fn all_agents() -> Vec<Self> {
         let mut v = Self::all();
         v.extend(Self::domain_agents());
@@ -353,8 +380,8 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn all_agents_has_20_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::all_agents().len(), 20);
+    fn all_agents_has_24_variants() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::all_agents().len(), 24);
         Ok(())
     }
 
@@ -365,8 +392,8 @@ mod tests {
     }
 
     #[test]
-    fn layer2_has_8_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::domain_agents().len(), 8);
+    fn layer2_has_12_variants() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::domain_agents().len(), 12);
         Ok(())
     }
 
