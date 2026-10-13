@@ -97,7 +97,6 @@ pub enum Agent {
     OreXis,
     PhiLia,
     PoleMos,
-    WebAutomation,
 }
 
 impl Agent {
@@ -115,7 +114,6 @@ impl Agent {
             Agent::OreXis,
             Agent::PhiLia,
             Agent::PoleMos,
-            Agent::WebAutomation,
         ]
     }
 }
@@ -637,12 +635,12 @@ mod tests {
     // ── Agent enum ─────────────────────────────────────────────────
 
     #[test]
-    fn agent_all_returns_thirteen_unique_variants() {
+    fn agent_all_returns_twelve_unique_variants() {
         let all = Agent::all();
         assert_eq!(
             all.len(),
-            13,
-            "Agent::all() must return exactly 13 variants"
+            12,
+            "Agent::all() must return exactly 12 variants"
         );
         // Verify uniqueness.
         let mut seen = std::collections::HashSet::new();
@@ -667,10 +665,6 @@ mod tests {
         assert_eq!(
             serde_json::to_string(&Agent::HapLotes).unwrap(),
             r#""HapLotes""#
-        );
-        assert_eq!(
-            serde_json::to_string(&Agent::WebAutomation).unwrap(),
-            r#""WebAutomation""#
         );
     }
 

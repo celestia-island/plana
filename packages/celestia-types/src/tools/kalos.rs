@@ -198,7 +198,7 @@ mod tests {
                 file_path: "src/main.rs".to_string(),
                 line_range: None,
                 conflicting_agent: super::super::haplotes::AgentReference {
-                    agent_type: "WebAutomation".to_string(),
+                    agent_type: "PoleMos".to_string(),
                     instance_badge: None,
                 },
                 operation_type: FileOperationType::Editing,
