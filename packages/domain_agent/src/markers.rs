@@ -55,6 +55,7 @@ define_marker! {
     NoteMarker => Note / "note" / "Note",
     ReportsMarker => Reports / "reports" / "Reports",
     ScadaMarker => Scada / "scada" / "SCADA",
+    IndustrialIoTMarker => IndustrialIoT / "industrial_iot" / "Industrial IoT",
 }
 
 #[derive(Debug, Clone, Copy)]

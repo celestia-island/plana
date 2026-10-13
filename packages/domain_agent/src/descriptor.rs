@@ -107,6 +107,8 @@ fn register_builtins(registry: &AgentMetadataRegistry) {
         "Note" / "note" / "Note plugin — notes, checklists, pinning" / 2 / false,
         "Reports" / "reports" / "Reports plugin — report assembly, sections, export" / 2 / false,
         "SCADA" / "scada" / "SCADA plugin — mimic scenes, bindings, alarms, trends" / 2 / false,
+        // layer 0: execution-only — neither console roster lists it.
+        "Industrial IoT" / "industrial_iot" / "Industrial protocol gateway — engine-internal execution identity" / 0 / false,
     });
 }
 
@@ -119,7 +121,7 @@ mod tests {
     fn test_registry_has_all_24_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let all = registry.all_agents();
-        assert_eq!(all.len(), 24);
+        assert_eq!(all.len(), 25);
         Ok(())
     }
 
@@ -137,6 +139,38 @@ mod tests {
         let layer2 = registry.layer2_agents();
         assert_eq!(layer2.len(), 12);
         Ok(())
+    }
+
+    #[test]
+    fn test_execution_only_kind_is_in_no_roster() -> Result<()> {
+        let registry = &*AGENT_REGISTRY;
+        let exec_only = registry
+            .get_by_folder("industrial_iot")
+            .context("execution-only descriptor missing")?;
+        assert_eq!(exec_only.layer, 0);
+        assert!(
+            !registry
+                .layer1_agents()
+                .iter()
+                .any(|d| d.folder_name == "industrial_iot")
+        );
+        assert!(
+            !registry
+                .layer2_agents()
+                .iter()
+                .any(|d| d.folder_name == "industrial_iot")
+        );
+        assert_eq!(layer1_agents_len(), 12);
+        assert_eq!(layer2_agents_len(), 12);
+        Ok(())
+    }
+
+    fn layer1_agents_len() -> usize {
+        (&*AGENT_REGISTRY).layer1_agents().len()
+    }
+
+    fn layer2_agents_len() -> usize {
+        (&*AGENT_REGISTRY).layer2_agents().len()
     }
 
     #[test]

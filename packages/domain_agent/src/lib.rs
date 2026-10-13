@@ -28,8 +28,8 @@ pub use badge::AgentBadge;
 pub use kind::{AgentKind, UnknownAgentError};
 pub use markers::{
     AgentMarker, ApoRiaMarker, DataTableMarker, EleOsMarker, EpieikeiaMarker, GaugeGridMarker,
-    HapLotesMarker, HistoryMarker, HolographicMarker, HubRisMarker, ImageMarker, KaLosMarker,
-    KanbanMarker, KvMarker, NeiKosMarker, NodeGraphMarker, NodesMarker, NoteMarker, OreXisMarker,
-    PhantomAgent, PhiLiaMarker, PoleMosMarker, ReportsMarker, ScadaMarker, SkeMmaMarker,
-    SkoPeoMarker,
+    HapLotesMarker, HistoryMarker, HolographicMarker, HubRisMarker, ImageMarker,
+    IndustrialIoTMarker, KaLosMarker, KanbanMarker, KvMarker, NeiKosMarker, NodeGraphMarker,
+    NodesMarker, NoteMarker, OreXisMarker, PhantomAgent, PhiLiaMarker, PoleMosMarker,
+    ReportsMarker, ScadaMarker, SkeMmaMarker, SkoPeoMarker,
 };

@@ -203,6 +203,7 @@ agent_variants!(
     Note,
     Reports,
     Scada,
+    IndustrialIoT,
 );
 
 impl Agent {
