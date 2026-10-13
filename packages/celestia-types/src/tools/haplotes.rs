@@ -189,12 +189,12 @@ mod tests {
     #[test]
     fn test_agent_reference_with_badge() -> Result<()> {
         let ar = AgentReference {
-            agent_type: "WebAutomation".to_string(),
+            agent_type: "PoleMos".to_string(),
             instance_badge: Some("#002".to_string()),
         };
         let json = serde_json::to_string(&ar)?;
         let de: AgentReference = serde_json::from_str(&json)?;
-        assert_eq!(de.agent_type, "WebAutomation");
+        assert_eq!(de.agent_type, "PoleMos");
         assert_eq!(de.instance_badge, Some("#002".to_string()));
         Ok(())
     }
@@ -218,7 +218,7 @@ mod tests {
             file_path: "src/auth.rs".to_string(),
             line_range: Some(FileLineRange { start: 10, end: 20 }),
             conflicting_agent: AgentReference {
-                agent_type: "WebAutomation".to_string(),
+                agent_type: "PoleMos".to_string(),
                 instance_badge: Some("#002".to_string()),
             },
             operation_type: FileOperationType::Editing,
