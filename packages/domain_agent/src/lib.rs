@@ -4,7 +4,7 @@
 //! Entelecheia platform for routing, tool scoping, and type-level dispatch.
 //!
 //! Key abstractions:
-//! - [`AgentKind`] — exhaustive enum of all 17 agents (12 Layer 1 + 5 Layer 2),
+//! - [`AgentKind`] — exhaustive enum of all 24 agents (12 Layer 1 + 12 Layer 2),
 //!   the single source of truth for agent names, doc paths, and UI display.
 //! - [`AgentMarker`] — sealed trait implemented by zero-sized marker structs
 //!   (e.g. [`KaLosMarker`], [`NeiKosMarker`]) that carry const metadata
@@ -27,8 +27,9 @@ pub mod markers;
 pub use badge::AgentBadge;
 pub use kind::{AgentKind, UnknownAgentError};
 pub use markers::{
-    AgentMarker, ApoRiaMarker, ClassicSoftwareEngineeringMarker, EleOsMarker, EpieikeiaMarker,
-    HapLotesMarker, HubRisMarker, IndustrialIoTMarker, KaLosMarker, NeiKosMarker, OreXisMarker,
-    PhantomAgent, PhiLiaMarker, PoleMosMarker, RemoteOperationsMarker, SkeMmaMarker, SkoPeoMarker,
-    WebAutomationMarker,
+    AgentMarker, ApoRiaMarker, DataTableMarker, EleOsMarker, EpieikeiaMarker, GaugeGridMarker,
+    HapLotesMarker, HistoryMarker, HolographicMarker, HubRisMarker, ImageMarker, KaLosMarker,
+    KanbanMarker, KvMarker, NeiKosMarker, NodeGraphMarker, NodesMarker, NoteMarker, OreXisMarker,
+    PhantomAgent, PhiLiaMarker, PoleMosMarker, ReportsMarker, ScadaMarker, SkeMmaMarker,
+    SkoPeoMarker,
 };
