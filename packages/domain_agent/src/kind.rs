@@ -75,6 +75,12 @@ pub enum AgentKind {
     Reports,
     /// SCADA plugin agent — mimic scenes, bindings, alarms, trends
     Scada,
+    /// EXECUTION-ONLY industrial protocol gateway (modbus & co.) — the
+    /// hydro axis's engine-internal dispatch identity. It never appears
+    /// in either console roster (its descriptor carries layer 0) and no
+    /// builtin-agent count includes it; entelecheia's industrial tools
+    /// initialize against it. Not a persona, a wire.
+    IndustrialIoT,
 }
 
 // ─── Display (Pascal-case human-readable name) ─────────────────────────────
@@ -138,6 +144,7 @@ impl AgentKind {
             AgentKind::Note => "Note",
             AgentKind::Reports => "Reports",
             AgentKind::Scada => "SCADA",
+            AgentKind::IndustrialIoT => "Industrial IoT",
         }
     }
 
@@ -175,6 +182,7 @@ impl AgentKind {
             AgentKind::Note => "note",
             AgentKind::Reports => "reports",
             AgentKind::Scada => "scada",
+            AgentKind::IndustrialIoT => "industrial_iot",
         }
     }
 
@@ -206,6 +214,7 @@ impl AgentKind {
             "note" => Some(AgentKind::Note),
             "reports" => Some(AgentKind::Reports),
             "scada" => Some(AgentKind::Scada),
+            "industrial_iot" | "industrialiot" => Some(AgentKind::IndustrialIoT),
             _ => None,
         }
     }
@@ -289,6 +298,9 @@ impl AgentKind {
             AgentKind::Note => "Note plugin — notes, checklists, pinning",
             AgentKind::Reports => "Reports plugin — report assembly, sections, export",
             AgentKind::Scada => "SCADA plugin — mimic scenes, bindings, alarms, trends",
+            AgentKind::IndustrialIoT => {
+                "Industrial protocol gateway — engine-internal execution identity"
+            }
         }
     }
 
