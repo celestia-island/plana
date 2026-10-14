@@ -105,6 +105,17 @@ async fn writer_task(
     let mut interval = tokio::time::interval(flush_interval);
     interval.tick().await;
 
+    // Circuit-breaker state (2026-10-14 finding): entelecheia's
+    // `m20261009_drop_legacy_log_schema` migration dropped `log.entries`,
+    // but this writer kept flushing every 500 ms — every flush failed and
+    // reported to stderr, ~2 lines/second forever, 1.2 GB of container
+    // log in four days on an otherwise IDLE instance. A missing target
+    // table can never self-heal, so it disables the DB sink permanently
+    // (the tap keeps serving subscriptions); other failures stay retried
+    // with rate-limited reporting.
+    let mut db_enabled = true;
+    let mut consecutive_failures: u64 = 0;
+
     loop {
         tokio::select! {
             Some(entry) = rx.recv() => {
@@ -113,27 +124,94 @@ async fn writer_task(
                 }
                 buffer.push(entry);
                 if buffer.len() >= buffer_size {
-                    flush(&conn, &mut buffer).await;
+                    drain(&conn, &mut buffer, &mut db_enabled, &mut consecutive_failures).await;
                 }
             }
             _ = interval.tick() => {
-                if !buffer.is_empty() {
-                    flush(&conn, &mut buffer).await;
-                }
+                drain(&conn, &mut buffer, &mut db_enabled, &mut consecutive_failures).await;
             }
             else => {
-                if !buffer.is_empty() {
-                    flush(&conn, &mut buffer).await;
-                }
+                drain(&conn, &mut buffer, &mut db_enabled, &mut consecutive_failures).await;
                 break;
             }
         }
     }
 }
 
-async fn flush(conn: &DatabaseConnection, buffer: &mut Vec<LogEntry>) {
+/// What a failed flush means for the DB sink's future.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SinkAction {
+    /// The target relation does not exist (Postgres `42P01`-shaped
+    /// "does not exist" errors): retrying can never succeed until a
+    /// migration recreates the table — disable the sink permanently.
+    Disable,
+    /// Transient-looking failure: keep retrying, report rate-limited.
+    Keep,
+}
+
+/// Pure classifier so the disable policy is unit-pinnable.
+fn classify_flush_failure(err: &sea_orm::DbErr) -> SinkAction {
+    if err.to_string().contains("does not exist") {
+        SinkAction::Disable
+    } else {
+        SinkAction::Keep
+    }
+}
+
+/// One buffered flush attempt, breaker-aware. Entries are dropped either
+/// way once attempted (same loss semantics as the previous writer) — the
+/// tap already received its copy on ingest.
+async fn drain(
+    conn: &DatabaseConnection,
+    buffer: &mut Vec<LogEntry>,
+    db_enabled: &mut bool,
+    consecutive_failures: &mut u64,
+) {
+    if !*db_enabled {
+        buffer.clear();
+        return;
+    }
     if buffer.is_empty() {
         return;
+    }
+    match flush(conn, buffer).await {
+        Ok(()) => {
+            *consecutive_failures = 0;
+        }
+        Err(e) => {
+            *consecutive_failures += 1;
+            match classify_flush_failure(&e) {
+                SinkAction::Disable => {
+                    *db_enabled = false;
+                    let _ = std::io::stderr().write_all(
+                        format!("[pg_log_writer] DB sink disabled (target table missing?): {e}\n")
+                            .as_bytes(),
+                    );
+                }
+                SinkAction::Keep => {
+                    // First failure and then every 1000th: a sustained
+                    // outage must not reproduce the line-per-flush spam.
+                    if *consecutive_failures == 1 || (*consecutive_failures).is_multiple_of(1000) {
+                        let _ = std::io::stderr().write_all(
+                            format!(
+                                "[pg_log_writer] flush failed ({} consecutive): {e}\n",
+                                *consecutive_failures
+                            )
+                            .as_bytes(),
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+async fn flush(
+    conn: &DatabaseConnection,
+    buffer: &mut Vec<LogEntry>,
+) -> Result<(), sea_orm::DbErr> {
+    if buffer.is_empty() {
+        return Ok(());
     }
 
     let mut values_parts: Vec<String> = Vec::with_capacity(buffer.len());
@@ -173,10 +251,7 @@ async fn flush(conn: &DatabaseConnection, buffer: &mut Vec<LogEntry>) {
 
     let stmt = sea_orm::Statement::from_sql_and_values(conn.get_database_backend(), sql, params);
 
-    if let Err(e) = conn.execute_raw(stmt).await {
-        let _ = std::io::stderr()
-            .write_all(format!("[pg_log_writer] flush failed: {}\n", e).as_bytes());
-    }
+    conn.execute_raw(stmt).await.map(|_| ())
 }
 
 /// Batch size for [`cleanup_old_logs`]: each DELETE touches at most this
@@ -218,6 +293,30 @@ pub async fn cleanup_old_logs(conn: &DatabaseConnection, retention_days: u32) ->
 #[cfg(test)]
 mod cleanup_tests {
     use super::*;
+
+    /// The breaker policy, pinned pure: a "does not exist" failure
+    /// (Postgres 42P01 — the exact entelecheia `m20261009` aftermath that
+    /// spammed 1.2 GB of container log) permanently disables the DB sink;
+    /// every other failure class keeps retrying.
+    #[test]
+    fn missing_relation_disables_the_sink_other_errors_retry() {
+        assert_eq!(
+            classify_flush_failure(&sea_orm::DbErr::Custom(
+                "error returned from database: relation \"log.entries\" does not exist".into()
+            )),
+            SinkAction::Disable
+        );
+        assert_eq!(
+            classify_flush_failure(&sea_orm::DbErr::Custom(
+                "connection refused (os error 111)".into()
+            )),
+            SinkAction::Keep
+        );
+        assert_eq!(
+            classify_flush_failure(&sea_orm::DbErr::Custom(String::new())),
+            SinkAction::Keep
+        );
+    }
 
     /// The batching loop is verified end-to-end against a real PG when
     /// `PLANA_LOG_PG_URL` is set (the harness seeds 12000 rows deeper
