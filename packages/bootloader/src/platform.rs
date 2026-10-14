@@ -72,8 +72,8 @@ pub enum ServiceStatus {
 #[async_trait]
 pub trait ServiceInstaller: Send + Sync {
     async fn install(&self, spec: &ServiceSpec) -> Result<()>;
-    async fn uninstall(&self) -> Result<()>;
-    async fn status(&self) -> Result<ServiceStatus>;
+    async fn uninstall(&self, name: &str) -> Result<()>;
+    async fn status(&self, name: &str) -> Result<ServiceStatus>;
 }
 
 /// Return the platform-native installer for the current target.
@@ -191,8 +191,7 @@ impl ServiceInstaller for SystemdInstaller {
         Ok(())
     }
 
-    async fn uninstall(&self) -> Result<()> {
-        let name = "evernight";
+    async fn uninstall(&self, name: &str) -> Result<()> {
         let _ = tokio::process::Command::new("systemctl")
             .args(["--user", "stop", name])
             .output()
@@ -211,8 +210,7 @@ impl ServiceInstaller for SystemdInstaller {
         Ok(())
     }
 
-    async fn status(&self) -> Result<ServiceStatus> {
-        let name = "evernight";
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
         let unit_path = self.unit_path(name)?;
         if !unit_path.exists() {
             return Ok(ServiceStatus::NotInstalled);
@@ -290,8 +288,7 @@ impl ServiceInstaller for WindowsScmInstaller {
         Ok(())
     }
 
-    async fn uninstall(&self) -> Result<()> {
-        let name = "evernight";
+    async fn uninstall(&self, name: &str) -> Result<()> {
         let _ = tokio::process::Command::new("sc")
             .args(["stop", name])
             .output()
@@ -311,8 +308,7 @@ impl ServiceInstaller for WindowsScmInstaller {
         Ok(())
     }
 
-    async fn status(&self) -> Result<ServiceStatus> {
-        let name = "evernight";
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
         let out = tokio::process::Command::new("sc")
             .args(["query", name])
             .output()
@@ -429,25 +425,25 @@ impl ServiceInstaller for LaunchdInstaller {
         Ok(())
     }
 
-    async fn uninstall(&self) -> Result<()> {
-        let label = "io.celestia.evernight";
+    async fn uninstall(&self, name: &str) -> Result<()> {
+        let label = format!("io.celestia.{name}");
         let _ = tokio::process::Command::new("launchctl")
             .args(["bootout", &format!("system/{label}")])
             .output()
             .await;
-        let path = self.plist_path("evernight")?;
+        let path = self.plist_path(name)?;
         let _ = std::fs::remove_file(&path);
         info!("launchd daemon removed");
         Ok(())
     }
 
-    async fn status(&self) -> Result<ServiceStatus> {
-        let path = self.plist_path("evernight")?;
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
+        let path = self.plist_path(name)?;
         if !path.exists() {
             return Ok(ServiceStatus::NotInstalled);
         }
         let out = tokio::process::Command::new("launchctl")
-            .args(["print", "system/io.celestia.evernight"])
+            .args(["print", &format!("system/io.celestia.{name}")])
             .output()
             .await;
         match out {
@@ -472,12 +468,12 @@ impl ServiceInstaller for UnsupportedInstaller {
             "native service install is not supported on this platform"
         ))
     }
-    async fn uninstall(&self) -> Result<()> {
+    async fn uninstall(&self, name: &str) -> Result<()> {
         Err(anyhow!(
             "native service uninstall is not supported on this platform"
         ))
     }
-    async fn status(&self) -> Result<ServiceStatus> {
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
         Ok(ServiceStatus::NotInstalled)
     }
 }
