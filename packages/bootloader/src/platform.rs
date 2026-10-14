@@ -36,6 +36,12 @@ pub struct ServiceSpec {
     pub description: String,
     /// Start automatically at boot / login.
     pub run_at_startup: bool,
+    /// Environment file the service loads at start (`KEY=VALUE` lines) —
+    /// the enrollment credentials a bootstrapped node runs with. Rendered
+    /// as systemd `EnvironmentFile=`; Windows SCM has no per-service env
+    /// file, so callers pass the path as an argument to a binary that
+    /// loads it itself (evernight's `service-main --env-file`).
+    pub env_file: Option<PathBuf>,
 }
 
 impl ServiceSpec {
@@ -46,6 +52,7 @@ impl ServiceSpec {
             args: vec!["supervise".to_string()],
             description: "Celestia evernight bootloader".to_string(),
             run_at_startup: true,
+            env_file: None,
         }
     }
 }
@@ -115,6 +122,11 @@ impl SystemdInstaller {
         } else {
             ""
         };
+        let env_file = spec
+            .env_file
+            .as_ref()
+            .map(|path| format!("EnvironmentFile={}\n", path.display()))
+            .unwrap_or_default();
         Ok(format!(
             "[Unit]\n\
              Description={desc}\n\
@@ -122,6 +134,7 @@ impl SystemdInstaller {
              \n\
              [Service]\n\
              Type=simple\n\
+             {env_file}\
              ExecStart={bin}{args}\n\
              Restart=on-failure\n\
              RestartSec=5\n\
@@ -129,6 +142,7 @@ impl SystemdInstaller {
              [Install]\n\
              {wanted_by}",
             desc = spec.description,
+            env_file = env_file,
             bin = spec.bin_path.display(),
             args = args,
             wanted_by = wanted_by,
@@ -489,10 +503,26 @@ mod tests {
             args: vec!["supervise".into(), "--once".into()],
             description: "Celestia evernight".into(),
             run_at_startup: true,
+            env_file: None,
         };
         let unit = inst.render_unit(&spec).unwrap();
         assert!(unit.contains("ExecStart=/usr/local/bin/evernight supervise --once"));
         assert!(unit.contains("WantedBy=default.target"));
+        assert!(!unit.contains("EnvironmentFile="));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_unit_renders_environment_file_when_present() {
+        let inst = SystemdInstaller;
+        let spec = ServiceSpec {
+            env_file: Some("/home/op/.local/share/celestia/evernight.env".into()),
+            args: vec!["host-serve".into()],
+            ..ServiceSpec::new("ShittimChestEvernight", "/usr/local/bin/evernight")
+        };
+        let unit = inst.render_unit(&spec).unwrap();
+        assert!(unit.contains("EnvironmentFile=/home/op/.local/share/celestia/evernight.env"));
+        assert!(unit.contains("ExecStart=/usr/local/bin/evernight host-serve"));
     }
 
     #[cfg(target_os = "macos")]
