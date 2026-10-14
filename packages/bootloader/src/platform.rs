@@ -36,6 +36,12 @@ pub struct ServiceSpec {
     pub description: String,
     /// Start automatically at boot / login.
     pub run_at_startup: bool,
+    /// Environment file the service loads at start (`KEY=VALUE` lines) —
+    /// the enrollment credentials a bootstrapped node runs with. Rendered
+    /// as systemd `EnvironmentFile=`; Windows SCM has no per-service env
+    /// file, so callers pass the path as an argument to a binary that
+    /// loads it itself (evernight's `service-main --env-file`).
+    pub env_file: Option<PathBuf>,
 }
 
 impl ServiceSpec {
@@ -46,6 +52,7 @@ impl ServiceSpec {
             args: vec!["supervise".to_string()],
             description: "Celestia evernight bootloader".to_string(),
             run_at_startup: true,
+            env_file: None,
         }
     }
 }
@@ -65,8 +72,8 @@ pub enum ServiceStatus {
 #[async_trait]
 pub trait ServiceInstaller: Send + Sync {
     async fn install(&self, spec: &ServiceSpec) -> Result<()>;
-    async fn uninstall(&self) -> Result<()>;
-    async fn status(&self) -> Result<ServiceStatus>;
+    async fn uninstall(&self, name: &str) -> Result<()>;
+    async fn status(&self, name: &str) -> Result<ServiceStatus>;
 }
 
 /// Return the platform-native installer for the current target.
@@ -115,6 +122,11 @@ impl SystemdInstaller {
         } else {
             ""
         };
+        let env_file = spec
+            .env_file
+            .as_ref()
+            .map(|path| format!("EnvironmentFile={}\n", path.display()))
+            .unwrap_or_default();
         Ok(format!(
             "[Unit]\n\
              Description={desc}\n\
@@ -122,6 +134,7 @@ impl SystemdInstaller {
              \n\
              [Service]\n\
              Type=simple\n\
+             {env_file}\
              ExecStart={bin}{args}\n\
              Restart=on-failure\n\
              RestartSec=5\n\
@@ -129,6 +142,7 @@ impl SystemdInstaller {
              [Install]\n\
              {wanted_by}",
             desc = spec.description,
+            env_file = env_file,
             bin = spec.bin_path.display(),
             args = args,
             wanted_by = wanted_by,
@@ -177,8 +191,7 @@ impl ServiceInstaller for SystemdInstaller {
         Ok(())
     }
 
-    async fn uninstall(&self) -> Result<()> {
-        let name = "evernight";
+    async fn uninstall(&self, name: &str) -> Result<()> {
         let _ = tokio::process::Command::new("systemctl")
             .args(["--user", "stop", name])
             .output()
@@ -197,8 +210,7 @@ impl ServiceInstaller for SystemdInstaller {
         Ok(())
     }
 
-    async fn status(&self) -> Result<ServiceStatus> {
-        let name = "evernight";
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
         let unit_path = self.unit_path(name)?;
         if !unit_path.exists() {
             return Ok(ServiceStatus::NotInstalled);
@@ -276,8 +288,7 @@ impl ServiceInstaller for WindowsScmInstaller {
         Ok(())
     }
 
-    async fn uninstall(&self) -> Result<()> {
-        let name = "evernight";
+    async fn uninstall(&self, name: &str) -> Result<()> {
         let _ = tokio::process::Command::new("sc")
             .args(["stop", name])
             .output()
@@ -297,8 +308,7 @@ impl ServiceInstaller for WindowsScmInstaller {
         Ok(())
     }
 
-    async fn status(&self) -> Result<ServiceStatus> {
-        let name = "evernight";
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
         let out = tokio::process::Command::new("sc")
             .args(["query", name])
             .output()
@@ -415,25 +425,25 @@ impl ServiceInstaller for LaunchdInstaller {
         Ok(())
     }
 
-    async fn uninstall(&self) -> Result<()> {
-        let label = "io.celestia.evernight";
+    async fn uninstall(&self, name: &str) -> Result<()> {
+        let label = format!("io.celestia.{name}");
         let _ = tokio::process::Command::new("launchctl")
             .args(["bootout", &format!("system/{label}")])
             .output()
             .await;
-        let path = self.plist_path("evernight")?;
+        let path = self.plist_path(name)?;
         let _ = std::fs::remove_file(&path);
         info!("launchd daemon removed");
         Ok(())
     }
 
-    async fn status(&self) -> Result<ServiceStatus> {
-        let path = self.plist_path("evernight")?;
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
+        let path = self.plist_path(name)?;
         if !path.exists() {
             return Ok(ServiceStatus::NotInstalled);
         }
         let out = tokio::process::Command::new("launchctl")
-            .args(["print", "system/io.celestia.evernight"])
+            .args(["print", &format!("system/io.celestia.{name}")])
             .output()
             .await;
         match out {
@@ -458,12 +468,12 @@ impl ServiceInstaller for UnsupportedInstaller {
             "native service install is not supported on this platform"
         ))
     }
-    async fn uninstall(&self) -> Result<()> {
+    async fn uninstall(&self, name: &str) -> Result<()> {
         Err(anyhow!(
             "native service uninstall is not supported on this platform"
         ))
     }
-    async fn status(&self) -> Result<ServiceStatus> {
+    async fn status(&self, name: &str) -> Result<ServiceStatus> {
         Ok(ServiceStatus::NotInstalled)
     }
 }
@@ -489,10 +499,26 @@ mod tests {
             args: vec!["supervise".into(), "--once".into()],
             description: "Celestia evernight".into(),
             run_at_startup: true,
+            env_file: None,
         };
         let unit = inst.render_unit(&spec).unwrap();
         assert!(unit.contains("ExecStart=/usr/local/bin/evernight supervise --once"));
         assert!(unit.contains("WantedBy=default.target"));
+        assert!(!unit.contains("EnvironmentFile="));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_unit_renders_environment_file_when_present() {
+        let inst = SystemdInstaller;
+        let spec = ServiceSpec {
+            env_file: Some("/home/op/.local/share/celestia/evernight.env".into()),
+            args: vec!["host-serve".into()],
+            ..ServiceSpec::new("ShittimChestEvernight", "/usr/local/bin/evernight")
+        };
+        let unit = inst.render_unit(&spec).unwrap();
+        assert!(unit.contains("EnvironmentFile=/home/op/.local/share/celestia/evernight.env"));
+        assert!(unit.contains("ExecStart=/usr/local/bin/evernight host-serve"));
     }
 
     #[cfg(target_os = "macos")]
