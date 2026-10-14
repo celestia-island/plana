@@ -101,9 +101,3 @@ wsl --unregister celestia-007
 - **scriptum** and **shittim-chest** shortcuts appear in Start Menu (Windows) or app launcher (Linux/macOS)
 - Edit `entelecheia/.env` to configure your LLM API key
 
-## Legacy scripts
-
-The old per-project installers are **deprecated** but retained for backward compatibility:
-
-- `entelecheia/scripts/deploy/install.ps1` → use `arona/scripts/install/celestia-install.ps1`
-- `entelecheia/scripts/deploy/install.sh` → use `arona/scripts/install/celestia-install.sh`

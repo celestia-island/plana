@@ -36,7 +36,7 @@ pub mod trigger_types;
 pub use skill_types::{Skill, SkillInvoker, SkillRegistry, SkillResult};
 pub use tool_names::{
     ParsedToolCall, agent_allowed_tools, agent_tools, aporia, cosmos, eleos, epieikeia, haplotes,
-    hubris, kalos, neikos, orexis, philia, polemos, skemma, skopeo, web_automation,
+    hubris, kalos, neikos, orexis, philia, polemos, skemma, skopeo,
 };
 pub use tool_permissions::{CommandSafety, TrustLevel, check_command_safety, classify_command};
 pub use tool_registry::{GlobalToolRegistry, ToolRegistry};

@@ -33,8 +33,8 @@ fn resolves<T>() {}
 #[test]
 fn merged_http_module_carries_generic_descriptors() {
     // Only the generic health/status descriptors live here. The domain DTOs
-    // the former umbrella re-exported under this module (`AgentItem`,
-    // `ModelInfo`, `TierDefinition`, …) are domain-profile types: they live in
+    // the former umbrella re-exported under this module (`ModelInfo`,
+    // `TierDefinition`, …) are domain-profile types: they live in
     // `plana-celestia-types`, which pins them in its own surface test.
     resolves::<plana::http::HealthResponse>();
     resolves::<plana::http::NetworkInfo>();
