@@ -9,9 +9,9 @@
 //! of `res/i18n/locales/*/tools.toml` (the UI labels), but only a subset — a
 //! rename must grep that directory rather than assume a label exists.
 //!
-//! Names are scoped per agent, not globally unique: `web_automation::SCREENSHOT`
-//! and `remote_operations::SCREENSHOT` are both `"screenshot"`, and only the
-//! agent namespace tells them apart. Under the microkernel architecture an agent
+//! Names are scoped per agent, not globally unique — the same bare name may
+//! exist under different agent namespaces, and only the agent namespace tells
+//! them apart. Under the microkernel architecture an agent
 //! may call just three tools directly (`exec`, `write_to_var`,
 //! `write_to_var_json` — see `agent_allowed_tools`); every other name in this
 //! file is reached from inside `exec` JavaScript, subject to the skill's
@@ -404,52 +404,6 @@ pub mod skemma {
     pub const SIGNAL_NORMALIZE: &str = "signal_normalize";
 }
 
-/// Classic Software Engineering — code review, LSP and refactoring (Layer 2).
-pub mod classic_software_engineering {
-    /// Run static analysis over a codebase and return the findings.
-    pub const STATIC_ANALYZE: &str = "static_analyze";
-    /// Review a change set and return review comments.
-    pub const CODE_REVIEW: &str = "code_review";
-    /// Run the project's quality gate (lint/format/tests) and report pass/fail.
-    pub const QUALITY_CHECK: &str = "quality_check";
-    /// Propose refactorings for a target without applying them.
-    pub const REFACTOR_SUGGEST: &str = "refactor_suggest";
-    /// Ask the language server for diagnostics on a file or workspace.
-    pub const LSP_DIAGNOSE: &str = "lsp_diagnose";
-    /// Query the language server's symbol index (definitions, references).
-    pub const LSP_SYMBOLS: &str = "lsp_symbols";
-    /// Apply an LSP-backed refactor — unlike `REFACTOR_SUGGEST`, this mutates code.
-    pub const LSP_REFACTOR: &str = "lsp_refactor";
-}
-
-/// Web Automation — browser automation and testing (Layer 2). Session-scoped:
-/// `CREATE` opens a browser session and every other tool needs its handle.
-pub mod web_automation {
-    /// Open a browser session; the returned handle is what every other
-    /// web-automation tool operates on. Wire name is the bare `"create"`.
-    pub const CREATE: &str = "create";
-    /// Close a browser session and release its resources.
-    pub const CLOSE: &str = "close";
-    /// Point the session at a URL and wait for the page to load.
-    pub const NAVIGATE: &str = "navigate";
-    /// Capture a screenshot of the current page.
-    pub const SCREENSHOT: &str = "screenshot";
-    /// Evaluate JavaScript in the page context.
-    pub const EXECUTE_SCRIPT: &str = "execute_script";
-    /// Read the page's console log buffer.
-    pub const GET_CONSOLE_LOGS: &str = "get_console_logs";
-    /// Read the page's network request log.
-    pub const GET_NETWORK_LOGS: &str = "get_network_logs";
-    /// Send a key (with modifiers) to the focused element.
-    pub const KEYPRESS: &str = "keypress";
-    /// Click at a page coordinate or on an element.
-    pub const MOUSE_CLICK: &str = "mouse_click";
-    /// Move the pointer to a page coordinate (hover states, drag preparation).
-    pub const MOUSE_MOVE: &str = "mouse_move";
-    /// Record the session (video/trace) for later inspection.
-    pub const RECORD: &str = "record";
-}
-
 /// Industrial IoT tool names — domain-specific industrial protocol tools
 /// migrated from SkeMma (modbus) and PoleMos (protocol discovery) to this
 /// Layer 2 domain agent.
@@ -472,52 +426,6 @@ pub mod industrial_iot {
     pub const PROTOCOL_PROBE: &str = "protocol_probe";
     /// Run a device self-test and return its report.
     pub const DEVICE_SELF_TEST: &str = "device_self_test";
-}
-
-/// Remote Operations tool names — Layer 2 remote access agent
-/// absorbing SSH, remote terminal, GUI automation, and file transfer tools
-/// from SkeMma (6 tools) and PoleMos (10 tools).
-pub mod remote_operations {
-    // From SkeMma
-    /// Open an SSH connection to a remote host and return a session handle.
-    pub const CONNECT_REMOTE_VIA_SSH: &str = "connect_remote_via_ssh";
-    /// Tear down a remote connection/session.
-    pub const DISCONNECT_REMOTE: &str = "disconnect_remote";
-    /// Run a command over an established remote session.
-    pub const EXEC_ON_REMOTE: &str = "exec_on_remote";
-    /// Capture the remote screen. Shares the wire name `"screenshot"` with
-    /// `web_automation::SCREENSHOT`; only the agent namespace separates them.
-    pub const SCREENSHOT: &str = "screenshot";
-    /// Drive the remote pointer — GUI automation on the remote host.
-    pub const MOUSE_OPERATE: &str = "mouse_operate";
-    /// Send keystrokes to the remote host.
-    pub const KEYBOARD_OPERATE: &str = "keyboard_operate";
-
-    // From PoleMos
-    /// Discover nodes reachable for remote operations.
-    pub const NODE_DISCOVER: &str = "node_discover";
-    /// Connect to a discovered node and open the control channel.
-    pub const NODE_CONNECT: &str = "node_connect";
-    /// Execute a command on a connected node.
-    pub const NODE_EXECUTE: &str = "node_execute";
-    /// Open an interactive terminal on a node; the returned id is used by the
-    /// write/resize/close terminal tools.
-    pub const NODE_TERMINAL_OPEN: &str = "node_terminal_open";
-    /// Send input to an open node terminal.
-    pub const NODE_TERMINAL_WRITE: &str = "node_terminal_write";
-    /// Resize a node terminal (the PTY window size).
-    pub const NODE_TERMINAL_RESIZE: &str = "node_terminal_resize";
-    /// Close a node terminal session.
-    pub const NODE_TERMINAL_CLOSE: &str = "node_terminal_close";
-    /// List files on a node.
-    pub const NODE_FILE_LIST: &str = "node_file_list";
-    /// Download a file from a node to the caller.
-    pub const NODE_FILE_DOWNLOAD: &str = "node_file_download";
-    /// Upload a file to a node.
-    pub const NODE_FILE_UPLOAD: &str = "node_file_upload";
-    /// Offer the node's screen stream to the operator — the node side of
-    /// starting screen sharing.
-    pub const NODE_SCREEN_OFFER: &str = "node_screen_offer";
 }
 
 /// Returns the LLM-visible tool surface for the given agent.

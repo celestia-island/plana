@@ -199,81 +199,6 @@ pub struct ProxySystemInfo {
     pub disk_usage: f64,
 }
 
-/// Legacy rich host snapshot. No handler in the workspace serves this shape — the System
-/// info tab reads `ProxySystemInfo` — so it is kept for wire compatibility only.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct SystemInfoResponse {
-    /// Version string of the serving instance, in the same format as `ProxySystemInfo.version`.
-    pub version: String,
-    /// Seconds the backend process has been running, counted from process start.
-    pub uptime_secs: u64,
-    /// Agent-fleet rollup; see `SystemInfoAgents`.
-    pub agents: SystemInfoAgents,
-    /// Host CPU, memory and disk counters, in the units the field names carry.
-    pub resources: SystemInfoResources,
-    /// Live connection counters, split by transport.
-    pub connections: SystemInfoConnections,
-    /// Database identity and load counters.
-    pub database: SystemInfoDatabase,
-}
-
-/// Agent-fleet rollup of the legacy snapshot: one count per lifecycle bucket. No producer
-/// fixes whether the buckets partition `total` or count containers rather than sessions.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct SystemInfoAgents {
-    /// Size of the fleet the snapshot covers; the per-state counts below are its breakdown.
-    pub total: u32,
-    /// Semantics TBC — see packages/celestia-types/bindings/httpTypes.ts:87 (the generated
-    /// mirror is the only remaining definition of this rollup).
-    pub running: u32,
-    /// Semantics TBC — see packages/celestia-types/bindings/httpTypes.ts:87 (the generated
-    /// mirror is the only remaining definition of this rollup).
-    pub idle: u32,
-    /// Semantics TBC — see packages/celestia-types/bindings/httpTypes.ts:87 (the generated
-    /// mirror is the only remaining definition of this rollup).
-    pub stopped: u32,
-}
-
-/// Host resource counters of the legacy snapshot; the units are the ones the field names
-/// carry, and the CPU figure is the same quantity `ProxySystemInfo.cpuUsage` reports.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct SystemInfoResources {
-    /// Aggregate CPU load as a percentage, 0–100.
-    pub cpu_usage_pct: f64,
-    /// Physical memory in use, in gigabytes.
-    pub memory_used_gb: f64,
-    /// Physical memory installed, in gigabytes — the denominator for `memory_used_gb`.
-    pub memory_total_gb: f64,
-    /// Disk space in use, in gigabytes.
-    pub disk_used_gb: f64,
-    /// Total disk space, in gigabytes — the denominator for `disk_used_gb`.
-    pub disk_total_gb: f64,
-}
-
-/// Live connection counters of the legacy snapshot, split by transport.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct SystemInfoConnections {
-    /// WebSocket connections the instance held at snapshot time.
-    pub active_ws: u32,
-    /// HTTP requests in flight at snapshot time (not a cumulative count).
-    pub active_http: u32,
-}
-
-/// Database identity and load counters of the legacy snapshot.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct SystemInfoDatabase {
-    /// Database engine name, e.g. `postgresql`.
-    pub engine: String,
-    /// Database size in megabytes, as a whole number.
-    pub size_mb: u32,
-    /// Connections open to the database at snapshot time.
-    pub connections: u32,
-}
 // ── Workspace / Project ────────────────────────────────────
 // `WorkspaceItem` and `WorkspaceResolveResponse` used to live here and
 // described a chest roster shape (`path` / `editor` / `git_branch` /
@@ -597,103 +522,6 @@ pub struct ChannelMessageListResponse {
 }
 // ── Agent ──────────────────────────────────────────────────
 
-/// Roster row of one platform agent as the retired panel served it: identity, lifecycle
-/// status, its tool list and container, plus the per-user marketplace flags. No handler in
-/// the workspace produces this shape any more — the live fleet DTO is `TuiAgentInfo` in the
-/// ws bindings (`ws/agentLifecycle.ts`).
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct AgentItem {
-    /// Agent identity string; the row's tool list, skills and container hang off it.
-    pub id: String,
-    /// Agent name shown in the roster.
-    pub name: String,
-    /// What the agent does; non-optional on the wire, so the producer sends an empty string
-    /// rather than null when it has no description.
-    pub description: String,
-    /// Agent family key — the `Agent` enum's wire value (e.g. `HubRis`) in the live fleet DTOs;
-    /// a plain string here because this shape predates the enum.
-    pub agent_type: String,
-    /// Platform layer the agent sits on (0 = foundation primitives … 3 = service layer).
-    pub layer: u32,
-    /// Lifecycle status string; the live fleet types this as `AgentStatus`, whose wire values
-    /// are `Initializing`, `Online`, `Busy`, `Offline` and `Error`.
-    pub status: String,
-    /// Whether the agent may be started at all; a disabled agent stays in the roster.
-    pub enabled: bool,
-    /// Tools the agent exposes, each with its own enable flag.
-    pub tools: Vec<AgentTool>,
-    /// Size of `tools`, serialized as `toolsCount`; carried alongside the array so a roster
-    /// can render the count without walking it.
-    #[serde(rename = "toolsCount")]
-    pub tools_count: usize,
-    /// Semantics TBC — see packages/celestia-types/tests/surface.rs:29 (the only site that
-    /// still names this DTO).
-    pub subscribed: bool,
-    /// Semantics TBC — see packages/celestia-types/tests/surface.rs:29 (the only site that
-    /// still names this DTO).
-    pub installed: bool,
-    /// Version string of the agent package this row describes.
-    pub version: String,
-    /// Runtime configuration of the agent: concurrency, timeout, retry, model and prompt.
-    pub config: AgentConfig,
-    /// Container backing the agent, or `null` when it has none running.
-    pub container: Option<AgentContainer>,
-    /// Semantics TBC — see packages/celestia-types/tests/surface.rs:29 (the only remaining
-    /// site; the producer is gone, so the skill-id format is unfixed).
-    pub skills: Vec<String>,
-    /// Registration timestamp, serialized as `createdAt`.
-    #[serde(rename = "createdAt")]
-    pub created_at: String,
-    /// Last-modified timestamp, serialized as `updatedAt`.
-    #[serde(rename = "updatedAt")]
-    pub updated_at: String,
-}
-
-/// One tool exposed by an agent in the roster.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct AgentTool {
-    /// Tool identity string that the agent's configuration references.
-    pub id: String,
-    /// Tool name shown in the roster's tool list.
-    pub name: String,
-    /// What the tool does, shown next to the name.
-    pub description: String,
-    /// Whether the agent may call this tool; disabled tools stay listed.
-    pub enabled: bool,
-}
-
-/// Runtime limits and prompt defaults of one agent.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct AgentConfig {
-    /// How many tasks the agent runs at the same time.
-    pub max_concurrent_tasks: u32,
-    /// Per-task timeout in seconds.
-    pub timeout_secs: u32,
-    /// Whether a failed task is retried automatically before it is reported.
-    pub retry_on_failure: bool,
-    /// Model id the agent runs on.
-    pub model: String,
-    /// System prompt prepended to the agent's conversations.
-    pub system_prompt: String,
-}
-
-/// Container instance backing a running agent.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct AgentContainer {
-    /// Container id as the container runtime reports it.
-    pub id: String,
-    /// Image reference the container was created from.
-    pub image: String,
-    /// Container lifecycle status; platform container operations use `Created`, `Running`,
-    /// `Stopped`, `Removed` and `Forked`.
-    pub status: String,
-    /// Seconds the container has been up; the TS mirror renders it as `bigint`.
-    pub uptime_secs: u64,
-}
 // ── Webhook ────────────────────────────────────────────────
 
 /// One outbound webhook subscription (`admin.webhooks.*`) as the admin console reads it
@@ -1018,33 +846,6 @@ pub struct SessionCreateResponse {
     pub signaling: serde_json::Value,
 }
 
-/// Legacy directory-listing payload: a directory path plus the entries found in it.
-/// No handler in the workspace serves this shape any more — the unified file picker
-/// resolves directories through `Sync.RequestFileTree` — so it is kept for wire
-/// compatibility only.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct FileListingResponse {
-    /// Directory the listing was taken from, spelled the way the producer reported it.
-    pub path: String,
-    /// One row per directory entry; order is whatever the producer walked.
-    pub entries: Vec<FileEntry>,
-}
-
-/// One directory entry of the legacy listing. No producer in the workspace emits it.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct FileEntry {
-    /// Entry name only — the parent directory lives on `FileListingResponse.path`.
-    pub name: String,
-    /// Entry kind, serialized as `type` (renamed because `type` is a Rust keyword).
-    #[serde(rename = "type")]
-    pub entry_type: String,
-    /// Size in bytes, `null` for entries that have no size; the TS mirror renders it
-    /// as `bigint | null`.
-    pub size: Option<i64>,
-}
-
 /// One inbound webhook endpoint this instance exposes (`GET /api/webhook`). An entry
 /// exists only for a provider whose signing secret is configured, plus the
 /// always-present `custom` catch-all.
@@ -1234,32 +1035,6 @@ pub struct ResourceUsageResponse {
 }
 
 // ── User Tier / Payment ──────────────────────────────────────
-
-/// Legacy per-user tier snapshot: the tier, its expiry and the quota consumed so far.
-/// No handler in the workspace emits this shape — the quota views read the billing
-/// self-overview — so it is kept for wire compatibility only.
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "httpTypes.ts")]
-pub struct UserTierInfo {
-    /// Account the snapshot describes, as a string UUID.
-    pub user_id: String,
-    /// Tier slug the account is on; `TierDefinition.tier` supplies the value set.
-    pub tier: String,
-    /// RFC 3339 expiry of the tier; omitted (not null) when the tier does not expire.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub tier_expires_at: Option<String>,
-    /// Quota consumed in the current day, in the tier's own quota unit.
-    #[ts(type = "number")]
-    pub daily_quota_used: f64,
-    /// Tokens consumed in the current month.
-    #[ts(type = "number")]
-    pub monthly_token_used: f64,
-    /// RFC 3339 time of the last quota reset; omitted when the account has never been reset.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[ts(optional)]
-    pub last_quota_reset_at: Option<String>,
-}
 
 /// One entry of the tier catalogue the instance serves; the console renders these as plan
 /// cards and `UpdateUserTierPayload` moves accounts between them.
