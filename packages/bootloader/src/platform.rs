@@ -19,6 +19,14 @@ use serde::{Deserialize, Serialize};
 #[allow(unused_imports)]
 use tracing::{info, warn};
 
+/// Quote one command-line element for the platform managers' plain-string
+/// surfaces: systemd `ExecStart=` splits on whitespace outside quotes, and
+/// the SCM `binPath=` obeys the usual quoted-argument rules — a profile
+/// path containing a space (`C:\Users\John Smith\…`) must not split.
+fn quote_element(element: &str) -> String {
+    format!("\"{element}\"")
+}
+
 /// What to install. The binary path + its args form the service's ExecStart;
 /// `run_at_startup` maps to systemd `WantedBy=default.target`, SCM
 /// `start=auto`, or launchd `RunAtLoad=true`.
@@ -115,7 +123,8 @@ impl SystemdInstaller {
         let args = if spec.args.is_empty() {
             String::new()
         } else {
-            format!(" {}", spec.args.join(" "))
+            let quoted: Vec<String> = spec.args.iter().map(|a| quote_element(a)).collect();
+            format!(" {}", quoted.join(" "))
         };
         let wanted_by = if spec.run_at_startup {
             "WantedBy=default.target\n"
@@ -143,7 +152,7 @@ impl SystemdInstaller {
              {wanted_by}",
             desc = spec.description,
             env_file = env_file,
-            bin = spec.bin_path.display(),
+            bin = quote_element(&spec.bin_path.display().to_string()),
             args = args,
             wanted_by = wanted_by,
         ))
@@ -245,7 +254,13 @@ impl ServiceInstaller for WindowsScmInstaller {
             // we always quote to be safe.
             ""
         );
-        let bin_arg = format!("\"{}\" {}", spec.bin_path.display(), spec.args.join(" "));
+        let args = spec
+            .args
+            .iter()
+            .map(|a| quote_element(a))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let bin_arg = format!("\"{}\" {}", spec.bin_path.display(), args);
 
         // create the service. start=auto ↔ run_at_startup.
         let start = if spec.run_at_startup {
@@ -502,9 +517,27 @@ mod tests {
             env_file: None,
         };
         let unit = inst.render_unit(&spec).unwrap();
-        assert!(unit.contains("ExecStart=/usr/local/bin/evernight supervise --once"));
+        assert!(unit.contains("ExecStart=\"/usr/local/bin/evernight\" \"supervise\" \"--once\""));
         assert!(unit.contains("WantedBy=default.target"));
         assert!(!unit.contains("EnvironmentFile="));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_unit_quotes_elements_with_spaces() {
+        let inst = SystemdInstaller;
+        let spec = ServiceSpec {
+            bin_path: "/opt/my app/evernight".into(),
+            args: vec![
+                "host-serve".into(),
+                "--node-id".into(),
+                "chest desktop 7".into(),
+            ],
+            ..ServiceSpec::new("Spaced", "/opt/my app/evernight")
+        };
+        let unit = inst.render_unit(&spec).unwrap();
+        assert!(unit.contains("ExecStart=\"/opt/my app/evernight\" \"host-serve\""));
+        assert!(unit.contains("\"chest desktop 7\""));
     }
 
     #[cfg(target_os = "linux")]
@@ -518,7 +551,7 @@ mod tests {
         };
         let unit = inst.render_unit(&spec).unwrap();
         assert!(unit.contains("EnvironmentFile=/home/op/.local/share/celestia/evernight.env"));
-        assert!(unit.contains("ExecStart=/usr/local/bin/evernight host-serve"));
+        assert!(unit.contains("ExecStart=\"/usr/local/bin/evernight\" \"host-serve\""));
     }
 
     #[cfg(target_os = "macos")]
