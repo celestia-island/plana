@@ -9,14 +9,23 @@ license-file.workspace = true
 [lints]
 workspace = true
 
+[features]
+# The container-stack bring-up half (identity + stack modules, the bollard
+# lane). Consumers that only need the native-service platform half (the
+# chest desktop's resident-node panel) opt out with
+# default-features = false — bollard's exact-pinned bollard-stubs then
+# stay out of their graph entirely.
+default = ["stack"]
+stack = ["dep:bollard", "dep:cherino", "dep:plana_infra_services", "dep:plana_infra_utils"]
+
 [dependencies]
 
-cherino.workspace = true
-plana_infra_services = { workspace = true }
-plana_infra_utils = { workspace = true }
+cherino = { workspace = true, optional = true }
+plana_infra_services = { workspace = true, optional = true }
+plana_infra_utils = { workspace = true, optional = true }
 anyhow.workspace = true
 async-trait.workspace = true
-bollard.workspace = true
+bollard = { workspace = true, optional = true }
 chrono.workspace = true
 dirs.workspace = true
 rand.workspace = true

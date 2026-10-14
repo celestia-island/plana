@@ -24,6 +24,7 @@
 
 pub mod identity;
 pub mod platform;
+#[cfg(feature = "stack")]
 pub mod stack;
 
 pub use identity::{
@@ -31,6 +32,7 @@ pub use identity::{
     node_id_for, write_instance_toml, write_instance_toml_at,
 };
 pub use platform::{ServiceInstaller, ServiceSpec, ServiceStatus, default_service_installer};
+#[cfg(feature = "stack")]
 pub use stack::{
     StackConfig, StackHandle, bring_up_stack, ensure_network, ensure_socket_dirs, teardown_stack,
 };
