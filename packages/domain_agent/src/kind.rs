@@ -1,6 +1,6 @@
 //! Unified Agent kind enum.
 //!
-//! [`AgentKind`] covers all 24 agents (Layer1 × 12 + Layer2 × 7),
+//! [`AgentKind`] covers all 27 agents (Layer1 × 12 + Layer2 × 15),
 //! The single source for agent names, doc paths, UI display, and other strings.
 //! The `AgentType` in TUI is a re-export (type alias) of this type.
 
@@ -11,7 +11,7 @@ use std::{fmt, str::FromStr};
 #[error("unknown agent: {0}")]
 pub struct UnknownAgentError(pub String);
 
-/// Unified Agent kind (Layer1 × 12 + Layer2 × 7)
+/// Unified Agent kind (Layer1 × 12 + Layer2 × 15)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 pub enum AgentKind {
     // ── Layer 1 ──────────────────────────────────────────────────────────────
@@ -63,6 +63,12 @@ pub enum AgentKind {
     Image,
     /// Kanban plugin agent — boards, lanes, cards, WIP limits
     Kanban,
+    /// DevOps plugin agent — noa source control, CI runs, CD targets
+    Devops,
+    /// Office plugin agent — files, document preview, annotations
+    Office,
+    /// Self-iteration plugin agent — engine fleet, inference tests
+    Selftrain,
     /// KV plugin agent — key-value browsing, search, bulk edits
     Kv,
     /// Node-graph plugin agent — vertices, edges, layouts, queries
@@ -138,6 +144,9 @@ impl AgentKind {
             AgentKind::Holographic => "Holographic",
             AgentKind::Image => "Image",
             AgentKind::Kanban => "Kanban",
+            AgentKind::Devops => "DevOps",
+            AgentKind::Office => "Office",
+            AgentKind::Selftrain => "Selftrain",
             AgentKind::Kv => "KV",
             AgentKind::NodeGraph => "Node Graph",
             AgentKind::Nodes => "Nodes",
@@ -176,6 +185,9 @@ impl AgentKind {
             AgentKind::Holographic => "holographic",
             AgentKind::Image => "image",
             AgentKind::Kanban => "kanban",
+            AgentKind::Devops => "devops",
+            AgentKind::Office => "office",
+            AgentKind::Selftrain => "selftrain",
             AgentKind::Kv => "kv",
             AgentKind::NodeGraph => "node_graph",
             AgentKind::Nodes => "nodes",
@@ -208,6 +220,9 @@ impl AgentKind {
             "holographic" => Some(AgentKind::Holographic),
             "image" => Some(AgentKind::Image),
             "kanban" => Some(AgentKind::Kanban),
+            "devops" => Some(AgentKind::Devops),
+            "office" => Some(AgentKind::Office),
+            "selftrain" => Some(AgentKind::Selftrain),
             "kv" => Some(AgentKind::Kv),
             "node_graph" | "nodegraph" => Some(AgentKind::NodeGraph),
             "nodes" => Some(AgentKind::Nodes),
@@ -247,6 +262,9 @@ impl AgentKind {
                     | AgentKind::Holographic
                     | AgentKind::Image
                     | AgentKind::Kanban
+                    | AgentKind::Devops
+                    | AgentKind::Office
+                    | AgentKind::Selftrain
                     | AgentKind::Kv
                     | AgentKind::NodeGraph
                     | AgentKind::Nodes
@@ -292,6 +310,11 @@ impl AgentKind {
             AgentKind::Holographic => "Holographic plugin — 3D holographic scene composition",
             AgentKind::Image => "Image plugin — image walls, lightboxes, annotations",
             AgentKind::Kanban => "Kanban plugin — boards, lanes, cards, WIP limits",
+            AgentKind::Devops => "DevOps plugin — noa source control, CI runs, CD targets",
+            AgentKind::Office => "Office plugin — files, document preview, annotations",
+            AgentKind::Selftrain => {
+                "Self-iteration plugin — engine fleet status, inference tests"
+            },
             AgentKind::Kv => "KV plugin — key-value browsing, search, bulk edits",
             AgentKind::NodeGraph => "Node-graph plugin — vertices, edges, layouts, queries",
             AgentKind::Nodes => "Nodes plugin — device/instance cards, grouping, status",
@@ -341,7 +364,7 @@ impl AgentKind {
         ]
     }
 
-    /// All Layer2 extension agents (12 total).
+    /// All Layer2 extension agents (15 total).
     pub fn domain_agents() -> Vec<Self> {
         let registry = &*super::descriptor::AGENT_REGISTRY;
         let layer2_folders: Vec<&str> = registry
@@ -369,6 +392,9 @@ impl AgentKind {
             AgentKind::Holographic,
             AgentKind::Image,
             AgentKind::Kanban,
+            AgentKind::Devops,
+            AgentKind::Office,
+            AgentKind::Selftrain,
             AgentKind::Kv,
             AgentKind::NodeGraph,
             AgentKind::Nodes,
@@ -378,7 +404,7 @@ impl AgentKind {
         ]
     }
 
-    /// All 24 agents.
+    /// All 27 agents.
     pub fn all_agents() -> Vec<Self> {
         let mut v = Self::all();
         v.extend(Self::domain_agents());
@@ -393,7 +419,7 @@ mod tests {
 
     #[test]
     fn all_agents_has_24_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::all_agents().len(), 24);
+        assert_eq!(AgentKind::all_agents().len(), 27);
         Ok(())
     }
 
@@ -405,7 +431,7 @@ mod tests {
 
     #[test]
     fn layer2_has_12_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::domain_agents().len(), 12);
+        assert_eq!(AgentKind::domain_agents().len(), 15);
         Ok(())
     }
 

@@ -101,6 +101,9 @@ fn register_builtins(registry: &AgentMetadataRegistry) {
         "Holographic" / "holographic" / "Holographic plugin — 3D holographic scene composition" / 2 / false,
         "Image" / "image" / "Image plugin — image walls, lightboxes, annotations" / 2 / false,
         "Kanban" / "kanban" / "Kanban plugin — boards, lanes, cards, WIP limits" / 2 / false,
+        "DevOps" / "devops" / "DevOps plugin — noa source control, CI runs, CD targets" / 2 / false,
+        "Office" / "office" / "Office plugin — files, document preview, annotations" / 2 / false,
+        "Selftrain" / "selftrain" / "Self-iteration plugin — engine fleet status, inference tests" / 2 / false,
         "KV" / "kv" / "KV plugin — key-value browsing, search, bulk edits" / 2 / false,
         "Node Graph" / "node_graph" / "Node-graph plugin — vertices, edges, layouts, queries" / 2 / false,
         "Nodes" / "nodes" / "Nodes plugin — device/instance cards, grouping, status" / 2 / false,
@@ -118,10 +121,10 @@ mod tests {
     use anyhow::{Context, Result};
 
     #[test]
-    fn test_registry_has_all_24_agents() -> Result<()> {
+    fn test_registry_has_all_28_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let all = registry.all_agents();
-        assert_eq!(all.len(), 25);
+        assert_eq!(all.len(), 28);
         Ok(())
     }
 
@@ -137,7 +140,7 @@ mod tests {
     fn test_layer2_has_12_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let layer2 = registry.layer2_agents();
-        assert_eq!(layer2.len(), 12);
+        assert_eq!(layer2.len(), 15);
         Ok(())
     }
 
@@ -161,7 +164,7 @@ mod tests {
                 .any(|d| d.folder_name == "industrial_iot")
         );
         assert_eq!(layer1_agents_len(), 12);
-        assert_eq!(layer2_agents_len(), 12);
+        assert_eq!(layer2_agents_len(), 15);
         Ok(())
     }
 
