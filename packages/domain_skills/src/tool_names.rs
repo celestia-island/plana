@@ -426,6 +426,17 @@ pub mod industrial_iot {
     pub const PROTOCOL_PROBE: &str = "protocol_probe";
     /// Run a device self-test and return its report.
     pub const DEVICE_SELF_TEST: &str = "device_self_test";
+
+    // OPC UA (IB-09) — read-side client tools on evernight's opcua stack
+    /// Connect to an OPC UA endpoint, verify the secure-channel handshake and
+    /// summarise the server (root folders + server state).
+    pub const OPCUA_DISCOVER: &str = "opcua_discover";
+    /// Browse an OPC UA address space (folder node → children with node ids
+    /// and classes).
+    pub const OPCUA_BROWSE: &str = "opcua_browse";
+    /// Read OPC UA variable nodes by node id (read-only; the write path stays
+    /// behind the OreXis approval gate and is not exposed yet).
+    pub const OPCUA_READ: &str = "opcua_read";
 }
 
 /// Returns the LLM-visible tool surface for the given agent.
