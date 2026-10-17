@@ -437,6 +437,18 @@ pub mod industrial_iot {
     /// Read OPC UA variable nodes by node id (read-only; the write path stays
     /// behind the OreXis approval gate and is not exposed yet).
     pub const OPCUA_READ: &str = "opcua_read";
+
+    // Compute engines — celestia-dialect HTTP JSON-RPC engines (the
+    // `celestia-plugin` SDK family; the electrode microstructure engine is
+    // the first instance). Credentials never ride tool params: the engine
+    // token is host-side process env, the endpoint is the only wire input.
+    /// Submit a job to a compute engine (`generate.start` pass-through).
+    pub const ENGINE_JOB_SUBMIT: &str = "engine_job_submit";
+    /// Poll a submitted job's state and progress (`generate.status`).
+    pub const ENGINE_JOB_STATUS: &str = "engine_job_status";
+    /// Fetch a finished job's metrics and artifact list
+    /// (`generate.result` + `generate.artifacts`).
+    pub const ENGINE_JOB_RESULT: &str = "engine_job_result";
 }
 
 /// Returns the LLM-visible tool surface for the given agent.
