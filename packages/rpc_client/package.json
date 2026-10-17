@@ -23,5 +23,8 @@
     "@types/node": "^*",
     "typescript": "^*",
     "esbuild": "^*"
+  },
+  "dependencies": {
+    "@celestia-island/tairitsu-transport": "^0.2"
   }
 }
