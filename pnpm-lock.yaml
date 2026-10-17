@@ -10,6 +10,10 @@ overrides:
 importers:
 
   packages/rpc_client:
+    dependencies:
+      '@celestia-island/tairitsu-transport':
+        specifier: ^0.2
+        version: 0.2.0
     devDependencies:
       '@types/node':
         specifier: ^*
@@ -22,6 +26,9 @@ importers:
         version: 6.0.3
 
 packages:
+
+  '@celestia-island/tairitsu-transport@0.2.0':
+    resolution: {integrity: sha512-4pdlaTuVN4J7RnZHQ7LsXFQb9ZXcY5yCPQ2u24TCq2ax1PNB3fX/a4lZycKBb4fPYjX4qWuzvFSkmWyn72tIFA==}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -196,6 +203,8 @@ packages:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
 snapshots:
+
+  '@celestia-island/tairitsu-transport@0.2.0': {}
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true

@@ -11,3 +11,6 @@ minimumReleaseAgeExclude:
   - '@celestia-island/hikari'
   - '@celestia-island/plana-types'
   - '@celestia-island/plana-rpc-client'
+  # 0.2.0 same-day pickup: the SSE channel's open edge — the rpc client's
+  # progressive-connect ladder gates on it (tairitsu #77).
+  - '@celestia-island/tairitsu-transport@0.2.0'

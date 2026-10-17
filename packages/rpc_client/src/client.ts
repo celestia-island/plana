@@ -1,3 +1,11 @@
+import {
+  createBrowserTransport,
+  TransportError,
+  type SseChannel,
+  type Transport,
+  type WsChannel,
+} from "@celestia-island/tairitsu-transport";
+
 export type ConnectionState =
   | "connected"
   | "disconnected"
@@ -83,6 +91,14 @@ export interface RpcClientOpts {
   pollIntervalMs?: number;
   local?: boolean;
   /**
+   * The request-transport this client rides — every tier's primitive
+   * (WebSocket, EventSource, HTTP fetch) comes from it. Defaults to the
+   * browser transport (@celestia-island/tairitsu-transport), whose fetch
+   * is the receiver-safe bindHostFetch; hosts with their own bridges
+   * (desktop shells) inject a DesktopHost-backed twin.
+   */
+  transport?: Transport;
+  /**
    * Probe-only mode: without a token the client performs a single anonymous
    * `/api/health` handshake, reports `connected` once it succeeds, then
    * immediately tears the connection down. Used by status bars to show
@@ -128,19 +144,20 @@ export class RpcClient {
   readonly #getToken: () => string | null;
   readonly #onAuthLost?: () => void;
   readonly #refreshToken?: () => Promise<string | null>;
+  readonly #transport: Transport;
   readonly #heartbeatInterval: number;
   readonly #heartbeatTimeout: number;
   readonly #callTimeoutMs: number;
   readonly #pollIntervalMs: number;
 
-  #ws: WebSocket | null = null;
+  #ws: WsChannel | null = null;
   #wsGen = 0;
   #idCounter = 0;
   #pending = new Map<string, PendingCall>();
   #disposed = false;
 
   #sessionId: string;
-  #eventSource: EventSource | null = null;
+  #eventSource: SseChannel | null = null;
 
   #tier: TransportTier = "ws";
   readonly #local: boolean;
@@ -175,7 +192,7 @@ export class RpcClient {
   #probeOnly = false;
 
   get state(): ConnectionState { return this.#state; }
-  get connected(): boolean { return this.#ws?.readyState === WebSocket.OPEN; }
+  get connected(): boolean { return this.#ws?.readyState === "open"; }
   get transportTier(): TransportTier { return this.#tier; }
   get retryCount(): number { return this.#retryCount; }
   /** Last measured heartbeat round-trip time (ws tier only); null when unknown. */
@@ -199,6 +216,7 @@ export class RpcClient {
     this.#callTimeoutMs = opts.callTimeoutMs ?? CALL_TIMEOUT;
     this.#pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL;
     this.#sessionId = randomSessionId();
+    this.#transport = opts.transport ?? createBrowserTransport();
     this.#local = opts.local ?? isLocalhost(this.#baseUrl);
     this.#probeOnly = opts.probeOnly ?? false;
   }
@@ -449,8 +467,10 @@ export class RpcClient {
         tokenJoin +
         encodeURIComponent(token);
       const gen = ++this.#wsGen;
-      const ws = new WebSocket(wsUrl);
-      ws.binaryType = "arraybuffer";
+      // Every primitive rides the injected transport (browser default =
+      // window APIs through the receiver-safe contract; desktop shells
+      // inject their host bridge). binaryType is the channel's concern.
+      const ws = this.#transport.openWs(wsUrl);
       this.#ws = ws;
       let settled = false;
 
@@ -461,22 +481,22 @@ export class RpcClient {
         resolve(false);
       }, timeoutMs);
 
-      ws.onopen = () => {
+      const offOpen = ws.onOpen?.(() => {
         if (settled || this.#wsGen !== gen) return;
         settled = true;
         clearTimeout(timer);
         resolve(true);
-      };
+      }) ?? (() => {});
 
-      ws.onerror = () => {
+      const offError = ws.onError(() => {
         if (settled || this.#wsGen !== gen) return;
         settled = true;
         clearTimeout(timer);
         this.#cleanupWs(ws, gen);
         resolve(false);
-      };
+      });
 
-      ws.onclose = () => {
+      const offClose = ws.onClose(() => {
         if (!settled) {
           // Attempt-phase close (never opened / failed mid-handshake).
           settled = true;
@@ -492,23 +512,24 @@ export class RpcClient {
         if (this.#ws === ws && this.#tier === "ws" && !this.#disposed) {
           this.#scheduleRecovery();
         }
-      };
+      });
+      void offOpen; void offClose;
 
-      ws.onmessage = (event) => {
+      const offMessage = ws.onMessage((data: string | ArrayBuffer | Blob) => {
         if (this.#wsGen !== gen) return;
         this.#resetHeartbeatTimeout();
 
-        if (event.data instanceof ArrayBuffer) {
-          this.#binaryHandlers.forEach((h) => h(event.data as ArrayBuffer));
+        if (data instanceof ArrayBuffer) {
+          this.#binaryHandlers.forEach((h) => h(data));
           return;
         }
-        if (event.data instanceof Blob) {
-          event.data.arrayBuffer().then((buf) => { this.#binaryHandlers.forEach((h) => h(buf)); }).catch(() => {});
+        if (data instanceof Blob) {
+          data.arrayBuffer().then((buf) => { this.#binaryHandlers.forEach((h) => h(buf)); }).catch(() => {});
           return;
         }
 
-        let data: any;
-        try { data = JSON.parse(event.data); } catch { return; }
+        let parsed: any;
+        try { parsed = JSON.parse(data); } catch { return; }
 
         // Upstreams may answer unknown methods with a literal `null`
         // body (JSON.parse("null") → null). Reading `.method` off it
@@ -517,43 +538,43 @@ export class RpcClient {
         // page behind a full-screen overlay. Only JSON objects carry
         // JSON-RPC semantics — drop everything else (null, scalars,
         // arrays) without touching `.method`/`.id`.
-        if (typeof data !== "object" || data === null) return;
+        if (typeof parsed !== "object" || parsed === null) return;
 
-        if (data.method === this.#hbProtocol.ackMethod) {
+        if (parsed.method === this.#hbProtocol.ackMethod) {
           this.#completeHeartbeat();
           return;
         }
 
-        if (data.method && data.id === undefined) {
+        if (parsed.method && parsed.id === undefined) {
           // Server-initiated ping → echo the configured reply (if any)
           // BEFORE fanning the notification out, so idle timers on the
           // server side are satisfied even if a consumer throws.
-          const echo = this.#hbProtocol.serverPings.get(data.method);
+          const echo = this.#hbProtocol.serverPings.get(parsed.method);
           if (echo !== undefined) {
             try { ws.send(JSON.stringify({ jsonrpc: "2.0", method: echo })); } catch { /* closing */ }
           }
-          this.#notifHandlers.forEach((h) => h({ method: data.method, params: data.params }));
+          this.#notifHandlers.forEach((h) => h({ method: parsed.method, params: parsed.params }));
           return;
         }
 
-        if (data.id !== undefined) {
+        if (parsed.id !== undefined) {
           // Request-mode heartbeat completion (id-correlated response).
-          const hbDone = this.#hbRequests.get(String(data.id));
+          const hbDone = this.#hbRequests.get(String(parsed.id));
           if (hbDone) {
-            this.#hbRequests.delete(String(data.id));
+            this.#hbRequests.delete(String(parsed.id));
             hbDone();
             return;
           }
         }
 
-        if (data.id !== undefined) {
-          const id = String(data.id);
+        if (parsed.id !== undefined) {
+          const id = String(parsed.id);
           const entry = this.#pending.get(id);
           if (entry) {
             this.#pending.delete(id);
             clearTimeout(entry.timer);
-            if (data.error) {
-              const msg: string = data.error.message || "unknown rpc error";
+            if (parsed.error) {
+              const msg: string = parsed.error.message || "unknown rpc error";
               // Authorization denials only: -32002 is chest's dedicated
               // admin/workspace-role gate code, -32005 its platform-proxy
               // grant gate. -32003 is chest's GENERIC internal/upstream
@@ -561,22 +582,20 @@ export class RpcClient {
               // mapping) made upstream faults render as permission
               // problems in every consumer webui.
               const kind: RpcErrorKind =
-                data.error.code === -32002 || data.error.code === -32005 ? "forbidden" : "rpc";
+                parsed.error.code === -32002 || parsed.error.code === -32005 ? "forbidden" : "rpc";
               entry.reject(new RpcError(kind, entry.method, msg));
             } else {
-              entry.resolve(data.result);
+              entry.resolve(parsed.result);
             }
           }
         }
-      };
+      });
     });
   }
 
-  #cleanupWs(ws: WebSocket, gen: number): void {
-    ws.onopen = null;
-    ws.onerror = null;
-    ws.onclose = null;
-    ws.onmessage = null;
+  #cleanupWs(ws: WsChannel, gen: number): void {
+    // Channels own their listener sets; closing tears the socket and the
+    // settled/generation guards make stale callbacks no-ops.
     ws.close();
     if (this.#ws === ws) this.#ws = null;
     this.#clearHeartbeat();
@@ -608,8 +627,6 @@ export class RpcClient {
   // ═══════════════════════════════════════════════════════════
 
   async #trySseOnce(timeoutMs: number): Promise<boolean> {
-    if (typeof EventSource === "undefined") return false;
-
     return new Promise((resolve) => {
       const cleanPath = this.#rpcPath.split("?")[0];
       const url = this.#baseUrl + cleanPath + "/events?session=" + this.#sessionId;
@@ -623,32 +640,39 @@ export class RpcClient {
         resolve(false);
       }, timeoutMs);
 
-      let es: EventSource;
+      let es: SseChannel;
       try {
-        es = new EventSource(url);
+        es = this.#transport.openSse(url);
         this.#eventSource = es;
       } catch {
+        // openSse throws synchronously on hosts without an SSE bridge
+        // (R2 on #451: the already-armed timer would later call
+        // es.close() on undefined — clear it before falling through).
+        settled = true;
+        clearTimeout(timer);
         resolve(false);
         return;
       }
 
-      es.onopen = () => {
+      const offOpen = es.onOpen?.(() => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
         resolve(true);
-      };
+      });
+      void offOpen;
 
-      es.onerror = () => {
+      const offError = es.onError(() => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
         es.close();
         this.#eventSource = null;
         resolve(false);
-      };
+      });
+      void offError;
 
-      es.onmessage = (event) => {
+      const offEvent = es.onEvent((event: { event?: string; data: string; id?: string }) => {
         try {
           const data = JSON.parse(event.data);
           if (data.method && data.params !== undefined) {
@@ -658,7 +682,8 @@ export class RpcClient {
             this.#heartbeatHandlers.forEach((h) => h());
           }
         } catch { /* ignore */ }
-      };
+      });
+      void offEvent;
     });
   }
 
@@ -673,7 +698,8 @@ export class RpcClient {
       const token = this.#getToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const resp = await fetch(url, {
+      const resp = await this.#transport.request({
+        url,
         method: "GET",
         headers,
         signal: AbortSignal.timeout(timeoutMs),
@@ -718,7 +744,8 @@ export class RpcClient {
     // Fallback: plain HTTP GET on the health endpoint.
     try {
       const url = this.#baseUrl + "/api/health";
-      const resp = await fetch(url, {
+      const resp = await this.#transport.request({
+        url,
         method: "GET",
         credentials: "include",
         signal: AbortSignal.timeout(5000),
@@ -746,9 +773,9 @@ export class RpcClient {
 
   async #probeWsOnce(timeoutMs: number): Promise<boolean> {
     return new Promise((resolve) => {
-      let ws: WebSocket | null = null;
+      let ws: WsChannel | null = null;
       try {
-        ws = new WebSocket(this.#baseUrl.replace(/^http/, "ws") + this.#rpcPath);
+        ws = this.#transport.openWs(this.#baseUrl.replace(/^http/, "ws") + this.#rpcPath);
       } catch {
         resolve(false);
         return;
@@ -763,7 +790,7 @@ export class RpcClient {
       };
       const timer = setTimeout(() => finish(false), timeoutMs);
 
-      ws.onopen = () => {
+      const offOpen = ws.onOpen?.(() => {
         try {
           ws?.send(
             JSON.stringify({
@@ -776,13 +803,17 @@ export class RpcClient {
         } catch {
           finish(false);
         }
-      };
-      ws.onmessage = () => finish(true);
-      ws.onerror = () => finish(false);
-      ws.onclose = () => {
+      });
+      void offOpen;
+      const offMessage = ws.onMessage(() => finish(true));
+      void offMessage;
+      const offError = ws.onError(() => finish(false));
+      void offError;
+      const offClose = ws.onClose(() => {
         clearTimeout(timer);
         if (!settled) resolve(false);
-      };
+      });
+      void offClose;
     });
   }
 
@@ -801,7 +832,8 @@ export class RpcClient {
       if (token) headers["Authorization"] = `Bearer ${token}`;
       headers["X-Session-Id"] = this.#sessionId;
 
-      const resp = await fetch(url, {
+      const resp = await this.#transport.request({
+        url,
         method: "POST",
         headers,
         body: JSON.stringify({ jsonrpc: "2.0", id: "http-" + (++this.#idCounter).toString(36), method, params }),
@@ -837,7 +869,13 @@ export class RpcClient {
       return body.result as T;
     } catch (e) {
       if (e instanceof RpcError) throw e;
-      if (e instanceof DOMException && e.name === "AbortError") {
+      if (
+        (e instanceof DOMException && e.name === "AbortError") ||
+        (e instanceof TransportError && (e.code === "aborted" || e.code === "timeout"))
+      ) {
+        // The transport maps fetch aborts onto TransportError (not a
+        // DOMException) — classify both shapes as the same timeout this
+        // client always reported (R2 on #451 caught the kind drift).
         throw new RpcError("timeout", method, `HTTP call '${method}' timed out`);
       }
       throw new RpcError("transport", method, String(e));
@@ -864,7 +902,7 @@ export class RpcClient {
   #startHeartbeat(): void {
     this.#clearHeartbeat();
     this.#hbTimer = setInterval(() => {
-      if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) return;
+      if (!this.#ws || this.#ws.readyState !== "open") return;
       if (this.#hbAckTimer) return;
       try {
         this.#hbSentAt = performance.now();
@@ -881,7 +919,7 @@ export class RpcClient {
           this.#hbAckTimer = null;
           this.#hbSentAt = null;
           this.#hbRequests.clear();
-          if (this.#ws && this.#ws.readyState === WebSocket.OPEN) {
+          if (this.#ws && this.#ws.readyState === "open") {
             this.#ws.close(4000, "heartbeat timeout");
           }
         }, this.#heartbeatTimeout);
@@ -923,10 +961,7 @@ export class RpcClient {
     this.#hbSentAt = null;
 
     if (this.#ws) {
-      this.#ws.onclose = null;
-      this.#ws.onerror = null;
-      this.#ws.onmessage = null;
-      this.#ws.onopen = null;
+      // Channel listeners die with the socket; nothing to null out.
       this.#ws.close();
       this.#ws = null;
     }
