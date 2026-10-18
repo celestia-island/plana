@@ -364,6 +364,9 @@ export class RpcClient {
    * handshakes, but one attempt per foreground return is cheap. */
   #nextPollUpgradeAt = 0;
   #pollUpgradeInFlight = false;
+  /** Pending deferred upgrade timer (settle-on-poll backstop); cleared
+   * with the rest of the machinery in #teardownAll. */
+  #pollUpgradeTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Try to climb from the deaf poll tier back onto a push tier (ws
@@ -402,7 +405,7 @@ export class RpcClient {
       } finally {
         this.#pollUpgradeInFlight = false;
       }
-    })();
+    })().catch(() => { /* a throwing state handler must not become an unhandled rejection */ });
   }
 
   #bindResumeTriggers(): void {
@@ -474,8 +477,25 @@ export class RpcClient {
 
       if (tier) {
         this.#tier = tier;
-        if (tier === "ws") this.#startHeartbeat();
-        else { this.#eventSource?.close(); this.#eventSource = null; if (this.#ws) { this.#cleanupWs(this.#ws, this.#wsGen); } }
+        // Close only the LOSING push channels. The old blanket else-branch
+        // closed `#eventSource` even when SSE had just WON the race — the
+        // client then reported connected/sse with its notification lane
+        // dead (the same deaf-green class as the poll tier). Symmetrically,
+        // a losing-but-open SSE used to leak when ws won.
+        if (tier === "ws") {
+          this.#startHeartbeat();
+          this.#eventSource?.close();
+          this.#eventSource = null;
+        } else if (tier === "sse") {
+          // #eventSource is the winner — keep it. The losing ws cleaned
+          // itself up in #tryWsOnce's failure path; the belt-and-braces
+          // sweep covers a bridged transport that never errored it.
+          if (this.#ws) this.#cleanupWs(this.#ws, this.#wsGen);
+        } else {
+          this.#eventSource?.close();
+          this.#eventSource = null;
+          if (this.#ws) this.#cleanupWs(this.#ws, this.#wsGen);
+        }
         // A fresh success also ends any recovery cycle with a clean
         // backoff for the next drop.
         if (this.#reconnectArmed || this.#reconnectDelay !== 1_000) this.#cancelRecovery();
@@ -485,7 +505,10 @@ export class RpcClient {
           // upgrade attempt so even a client that never leaves the
           // foreground regains a push tier. Failure keeps poll serving;
           // the next visibility resume retries.
-          setTimeout(() => { this.#tryUpgradeFromPoll(); }, POLL_UPGRADE_DEFERRAL_MS);
+          this.#pollUpgradeTimer = setTimeout(() => {
+            this.#pollUpgradeTimer = null;
+            this.#tryUpgradeFromPoll();
+          }, POLL_UPGRADE_DEFERRAL_MS);
         }
         return;
       }
@@ -1032,6 +1055,10 @@ export class RpcClient {
 
   #teardownAll(): void {
     this.#cancelRecovery();
+    if (this.#pollUpgradeTimer) {
+      clearTimeout(this.#pollUpgradeTimer);
+      this.#pollUpgradeTimer = null;
+    }
     this.#eventSource?.close();
     this.#eventSource = null;
     this.#clearHeartbeat();
