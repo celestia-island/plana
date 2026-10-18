@@ -378,8 +378,14 @@ export class RpcClient {
    * a transport upgrade.
    */
   #tryUpgradeFromPoll(): void {
+    // `#state === "connected"` is load-bearing: a ladder (recovery /
+    // forceReconnect / connect) flips #state synchronously on entry, so an
+    // upgrade that started before it aborts at the next guard instead of
+    // racing the fresh ladder's own attempts (two #trySseOnce clobbering
+    // #eventSource, the upgrade's adoption sweeping the ladder's
+    // mid-handshake ws — the ladder then settles on a dead winner).
     if (this.#disposed || this.#local || this.#pollUpgradeInFlight) return;
-    if (this.#tier !== "poll") return;
+    if (this.#tier !== "poll" || this.#state !== "connected") return;
     const now = Date.now();
     if (now < this.#nextPollUpgradeAt) return;
     this.#nextPollUpgradeAt = now + POLL_UPGRADE_MIN_INTERVAL_MS;
@@ -387,7 +393,7 @@ export class RpcClient {
     void (async () => {
       try {
         if (await this.#tryWsOnce(UPGRADE_ATTEMPT_TIMEOUT_MS)) {
-          if (this.#disposed || this.#tier !== "poll") return;
+          if (this.#disposed || this.#tier !== "poll" || this.#state !== "connected") return;
           this.#tier = "ws";
           this.#startHeartbeat();
           this.#eventSource?.close();
@@ -395,9 +401,9 @@ export class RpcClient {
           this.#setState("connected", undefined, "ws");
           return;
         }
-        if (this.#disposed || this.#tier !== "poll") return;
+        if (this.#disposed || this.#tier !== "poll" || this.#state !== "connected") return;
         if (await this.#trySseOnce(UPGRADE_ATTEMPT_TIMEOUT_MS)) {
-          if (this.#disposed || this.#tier !== "poll") return;
+          if (this.#disposed || this.#tier !== "poll" || this.#state !== "connected") return;
           this.#tier = "sse";
           if (this.#ws) this.#cleanupWs(this.#ws, this.#wsGen);
           this.#setState("connected", undefined, "sse");
