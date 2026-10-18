@@ -743,7 +743,11 @@ export class RpcClient {
         if (settled) return;
         settled = true;
         es.close();
-        this.#eventSource = null;
+        // Identity-guarded: an aborted attempt (e.g. an upgrade raced
+        // away by a fresh ladder) must not null the WINNER a later
+        // session installed — the close() above only kills its own
+        // channel; nulling the shared slot orphaned the live one.
+        if (this.#eventSource === es) this.#eventSource = null;
         resolve(false);
       }, timeoutMs);
 
@@ -774,7 +778,8 @@ export class RpcClient {
         settled = true;
         clearTimeout(timer);
         es.close();
-        this.#eventSource = null;
+        // Identity-guarded — see the timeout path above.
+        if (this.#eventSource === es) this.#eventSource = null;
         resolve(false);
       });
       void offError;
