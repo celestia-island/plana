@@ -130,6 +130,19 @@ const LOCAL_CALL_TIMEOUT = 5_000;
 const MAX_RETRIES = 3;
 const POLL_INTERVAL = 30_000;
 const ATTEMPT_TIMEOUTS = [1_000, 3_000, 5_000];
+/** Poll→push upgrade handshake budget — a background-tab timer clamp must
+ * not starve the attempt, but the client keeps serving over poll while
+ * it runs, so no round needs to be longer than the last connect round. */
+const UPGRADE_ATTEMPT_TIMEOUT_MS = 5_000;
+/** Spacing between two poll→push upgrade attempts (the visibility resume
+ * trigger can fire in bursts; the server should see at most one upgrade
+ * handshake per window). */
+const POLL_UPGRADE_MIN_INTERVAL_MS = 15_000;
+/** After the connect ladder settles on poll, wait this long before the
+ * one background upgrade attempt — a server that was mid-restart during
+ * the race is typically back by then, and the client never left the
+ * foreground to earn a visibility trigger (the desktop case). */
+const POLL_UPGRADE_DEFERRAL_MS = 10_000;
 
 function isLocalhost(baseUrl: string): boolean {
   try {
@@ -326,12 +339,70 @@ export class RpcClient {
 
   #onResumeTrigger(): void {
     if (!this.#revivable) return;
-    if (this.#state === "connected" || this.#state === "connecting") return;
+    if (this.#state === "connected" || this.#state === "connecting") {
+      // Deaf-but-green: the poll tier reports "connected" yet NEVER
+      // delivers notifications (server pushes only ride ws/sse). A client
+      // that lost its socket mid-session (server restart, slow handshake
+      // on a flaky link) and settled on poll would otherwise stay mute
+      // forever with a green light — the foreground return is exactly the
+      // moment to try to climb back onto a push tier. SSE needs no help
+      // here: it already delivers notifications.
+      if (this.#state === "connected" && this.#tier === "poll") {
+        this.#tryUpgradeFromPoll();
+      }
+      return;
+    }
     const now = Date.now();
     // Debounce: visibility flips and online events can burst together.
     if (now - this.#lastResumeAttemptAt < 5_000) return;
     this.#lastResumeAttemptAt = now;
     this.forceReconnect();
+  }
+
+  /** Earliest next poll→push upgrade attempt (ms epoch). Bounded retry
+   * cadence: visibility flapping must not hammer the server with
+   * handshakes, but one attempt per foreground return is cheap. */
+  #nextPollUpgradeAt = 0;
+  #pollUpgradeInFlight = false;
+
+  /**
+   * Try to climb from the deaf poll tier back onto a push tier (ws
+   * preferred, sse fallback), WITHOUT tearing the working poll lane: a
+   * failure keeps serving calls over HTTP, a success swaps `#tier` and
+   * re-emits `connected` so consumers re-declare their subscriptions on
+   * the fresh server session (chest's channel/state-tree viewport ride
+   * exactly that event). Fire-and-forget by design — callers never await
+   * a transport upgrade.
+   */
+  #tryUpgradeFromPoll(): void {
+    if (this.#disposed || this.#local || this.#pollUpgradeInFlight) return;
+    if (this.#tier !== "poll") return;
+    const now = Date.now();
+    if (now < this.#nextPollUpgradeAt) return;
+    this.#nextPollUpgradeAt = now + POLL_UPGRADE_MIN_INTERVAL_MS;
+    this.#pollUpgradeInFlight = true;
+    void (async () => {
+      try {
+        if (await this.#tryWsOnce(UPGRADE_ATTEMPT_TIMEOUT_MS)) {
+          if (this.#disposed || this.#tier !== "poll") return;
+          this.#tier = "ws";
+          this.#startHeartbeat();
+          this.#eventSource?.close();
+          this.#eventSource = null;
+          this.#setState("connected", undefined, "ws");
+          return;
+        }
+        if (this.#disposed || this.#tier !== "poll") return;
+        if (await this.#trySseOnce(UPGRADE_ATTEMPT_TIMEOUT_MS)) {
+          if (this.#disposed || this.#tier !== "poll") return;
+          this.#tier = "sse";
+          if (this.#ws) this.#cleanupWs(this.#ws, this.#wsGen);
+          this.#setState("connected", undefined, "sse");
+        }
+      } finally {
+        this.#pollUpgradeInFlight = false;
+      }
+    })();
   }
 
   #bindResumeTriggers(): void {
@@ -409,6 +480,13 @@ export class RpcClient {
         // backoff for the next drop.
         if (this.#reconnectArmed || this.#reconnectDelay !== 1_000) this.#cancelRecovery();
         this.#setState("connected", undefined, this.#tier);
+        if (tier === "poll") {
+          // Settled deaf (see #tryUpgradeFromPoll): arm one background
+          // upgrade attempt so even a client that never leaves the
+          // foreground regains a push tier. Failure keeps poll serving;
+          // the next visibility resume retries.
+          setTimeout(() => { this.#tryUpgradeFromPoll(); }, POLL_UPGRADE_DEFERRAL_MS);
+        }
         return;
       }
     }
