@@ -785,6 +785,15 @@ pub enum SyncMessage {
         /// simple-mode turns and legacy senders — no persona applies.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         system_prompt: Option<String>,
+        /// The turn's workspace primary languages, ordered by priority
+        /// (e.g. ["zh-Hans", "en"]), forwarded by the panel gateway from
+        /// the workspace's configuration (falling back to the sender's
+        /// UI locale). The runtime side uses the ordered list to
+        /// localize prompt assembly (comment-language rule, preferred-
+        /// language line); absent on legacy senders — the runtime falls
+        /// back to `language`, then server-side config.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        languages: Option<Vec<String>>,
     },
     /// Server → client final answer for one turn; follows the streaming chunks
     /// emitted for the same `agent_id`.
@@ -2192,6 +2201,7 @@ mod tests {
             conversation_id: None,
             actor: None,
             system_prompt: None,
+            languages: None,
         };
 
         let json = serde_json::to_value(&msg).expect("serialize UserMessage");
@@ -2248,6 +2258,7 @@ mod tests {
             conversation_id: None,
             actor: None,
             system_prompt: None,
+            languages: None,
         };
         let none_wire = serde_json::to_value(&base).expect("serialize absent persona");
         assert!(
@@ -2265,6 +2276,7 @@ mod tests {
             conversation_id: None,
             actor: None,
             system_prompt: Some("You are the station's assistant.".to_string()),
+            languages: None,
         };
         let some_wire = serde_json::to_value(&with_persona).expect("serialize persona");
         assert_eq!(
@@ -2283,6 +2295,68 @@ mod tests {
             panic!("expected UserMessage");
         };
         assert_eq!(system_prompt, None);
+    }
+
+    /// `UserMessage` gained `languages` (the workspace primary-languages
+    /// passthrough, ordered by priority). Same wire contract as the
+    /// persona field: absent stays absent, present rides as an ordered
+    /// string array, and legacy senders without the key deserialize to
+    /// `None`.
+    #[test]
+    fn user_message_languages_round_trips() {
+        let base = SyncMessage::UserMessage {
+            sender_id: "u".to_string(),
+            content: "c".to_string(),
+            timestamp: "1770000000000".to_string(),
+            language: None,
+            images: None,
+            workspace_id: None,
+            conversation_id: None,
+            actor: None,
+            system_prompt: None,
+            languages: None,
+        };
+        let none_wire = serde_json::to_value(&base).expect("serialize absent languages");
+        assert!(
+            none_wire.get("languages").is_none(),
+            "absent languages must stay off the wire, got {none_wire}"
+        );
+
+        let with_languages = SyncMessage::UserMessage {
+            sender_id: "u".to_string(),
+            content: "c".to_string(),
+            timestamp: "1770000000000".to_string(),
+            language: None,
+            images: None,
+            workspace_id: None,
+            conversation_id: None,
+            actor: None,
+            system_prompt: None,
+            languages: Some(vec!["zh-Hans".to_string(), "en".to_string()]),
+        };
+        let wire = serde_json::to_value(&with_languages).expect("serialize languages");
+        let rode: Vec<String> = wire["languages"]
+            .as_array()
+            .expect("languages must ride as an array")
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+        assert_eq!(
+            rode,
+            vec!["zh-Hans".to_string(), "en".to_string()],
+            "the ordered list must ride the wire in priority order"
+        );
+
+        // The legacy half: no languages key deserializes to None.
+        let legacy: SyncMessage = serde_json::from_value(
+            serde_json::json!({"action": "UserMessage", "sender_id": "u", "content": "c",
+                "timestamp": "1770000000000"}),
+        )
+        .expect("legacy wire without languages must deserialize");
+        let SyncMessage::UserMessage { languages, .. } = legacy else {
+            panic!("expected UserMessage");
+        };
+        assert_eq!(languages, None);
     }
 
     /// `TaskCreated` gained `estimated_degrees` for the degree-ledger
