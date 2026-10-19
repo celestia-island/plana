@@ -119,7 +119,10 @@ pub fn convert_messages(messages: &[LlmMessage]) -> (Option<String>, Vec<GeminiR
                 + messages[start..]
                     .iter()
                     .position(|m| m.role != MessageRole::System)
-                    .unwrap_or(messages.len())
+                    // Run reaches the table end: the offset is the remaining
+                    // length, so `system_run_end` lands exactly on `len`
+                    // instead of overshooting past it.
+                    .unwrap_or(messages.len() - start)
         });
     let contents: Vec<GeminiRequestContent> = messages
         .iter()
@@ -323,5 +326,26 @@ mod tests {
         assert_eq!(contents.len(), 2);
         assert_eq!(contents[0].role, ROLE_USER);
         assert_eq!(contents[1].role, ROLE_MODEL);
+    }
+
+    // The FIRST system run folds wherever it starts — even when it only
+    // appears after a user turn and runs to the very end of the table,
+    // which is exactly the shape that exercises the run-end fallback
+    // (`system_run_end == messages.len()`).
+    #[test]
+    fn late_first_run_also_folds() {
+        let messages = vec![
+            LlmMessage::user("hello"),
+            LlmMessage::system("identity"),
+            LlmMessage::system("contract"),
+        ];
+        let (system, contents) = convert_messages(&messages);
+        assert_eq!(system.as_deref(), Some("identity\n\ncontract"));
+        assert_eq!(contents.len(), 1);
+        assert_eq!(contents[0].role, ROLE_USER);
+        match contents[0].parts.as_slice() {
+            [GeminiRequestPart::Text { text }] => assert_eq!(text, "hello"),
+            other => panic!("expected a single text part, got {other:?}"),
+        }
     }
 }
