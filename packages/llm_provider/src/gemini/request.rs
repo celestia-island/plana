@@ -104,12 +104,38 @@ pub struct GeminiGenerationConfig {
 
 pub fn convert_messages(messages: &[LlmMessage]) -> (Option<String>, Vec<GeminiRequestContent>) {
     let mut system = None;
+    // Scepter (entelecheia#571) chunks the system prompt into multiple
+    // consecutive system messages; the whole first run of them is folded into
+    // the first message's content with the same "\n\n" join the anthropic
+    // adapter applies to its `system_parts` (see `anthropic/request.rs
+    // convert_messages`). A system message that reappears after the run is NOT
+    // re-absorbed: Gemini `contents` only carries user/model roles, so it is
+    // dropped, exactly as before the run-merge existed.
+    let system_run_end = messages
+        .iter()
+        .position(|m| m.role == MessageRole::System)
+        .map_or(0, |start| {
+            start
+                + messages[start..]
+                    .iter()
+                    .position(|m| m.role != MessageRole::System)
+                    // Run reaches the table end: the offset is the remaining
+                    // length, so `system_run_end` lands exactly on `len`
+                    // instead of overshooting past it.
+                    .unwrap_or(messages.len() - start)
+        });
     let contents: Vec<GeminiRequestContent> = messages
         .iter()
-        .filter_map(|m| match m.role {
+        .enumerate()
+        .filter_map(|(idx, m)| match m.role {
             MessageRole::System => {
                 if system.is_none() {
                     system = m.content.clone();
+                } else if idx < system_run_end
+                    && let (Some(sys), Some(content)) = (system.as_mut(), m.content.as_deref())
+                {
+                    sys.push_str("\n\n");
+                    sys.push_str(content);
                 }
                 None
             },
@@ -227,4 +253,99 @@ pub fn convert_tools(tools: &[ToolDefinition]) -> Vec<GeminiToolDef> {
     vec![GeminiToolDef {
         function_declarations: declarations,
     }]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Scepter (entelecheia#571) chunks the system prompt into multiple
+    // CONSECUTIVE system messages. The whole leading run is folded into the
+    // first system message's content, joined with "\n\n" in order — the same
+    // join the anthropic adapter applies to its `system_parts`
+    // (anthropic/request.rs `convert_messages`). Non-system messages pass
+    // through untouched.
+    #[test]
+    fn merges_consecutive_system_run_with_blank_line_join() {
+        let messages = vec![
+            LlmMessage::system("identity"),
+            LlmMessage::system("contract"),
+            LlmMessage::system("persona"),
+            LlmMessage::user("hello"),
+        ];
+        let (system, contents) = convert_messages(&messages);
+        assert_eq!(system.as_deref(), Some("identity\n\ncontract\n\npersona"));
+        assert_eq!(contents.len(), 1);
+        assert_eq!(contents[0].role, ROLE_USER);
+        match contents[0].parts.as_slice() {
+            [GeminiRequestPart::Text { text }] => assert_eq!(text, "hello"),
+            other => panic!("expected a single text part, got {other:?}"),
+        }
+    }
+
+    // A single system message stays byte-identical: no separator is glued on
+    // when there is nothing to merge.
+    #[test]
+    fn single_system_message_stays_byte_identical() {
+        let messages = vec![LlmMessage::system("identity"), LlmMessage::user("hello")];
+        let (system, contents) = convert_messages(&messages);
+        assert_eq!(system.as_deref(), Some("identity"));
+        assert_eq!(contents.len(), 1);
+    }
+
+    // Only the run of consecutive system messages is merged. A system message
+    // sandwiched after a user turn is NOT re-absorbed into the system
+    // instruction — Gemini `contents` carries user/model roles only, so the
+    // late run is dropped, the same fate it had before the run-merge existed.
+    // (The anthropic adapter differs here on purpose: its `system` field
+    // collects every system part regardless of position.)
+    #[test]
+    fn system_after_user_is_not_re_absorbed() {
+        let messages = vec![
+            LlmMessage::system("identity"),
+            LlmMessage::user("hello"),
+            LlmMessage::system("late"),
+            LlmMessage::system("later"),
+        ];
+        let (system, contents) = convert_messages(&messages);
+        assert_eq!(system.as_deref(), Some("identity"));
+        assert_eq!(contents.len(), 1);
+        assert_eq!(contents[0].role, ROLE_USER);
+        match contents[0].parts.as_slice() {
+            [GeminiRequestPart::Text { text }] => assert_eq!(text, "hello"),
+            other => panic!("expected a single text part, got {other:?}"),
+        }
+    }
+
+    // No system messages at all → no system instruction, contents unchanged.
+    #[test]
+    fn no_system_message_leaves_instruction_empty() {
+        let messages = vec![LlmMessage::user("hello"), LlmMessage::assistant("hi")];
+        let (system, contents) = convert_messages(&messages);
+        assert_eq!(system, None);
+        assert_eq!(contents.len(), 2);
+        assert_eq!(contents[0].role, ROLE_USER);
+        assert_eq!(contents[1].role, ROLE_MODEL);
+    }
+
+    // The FIRST system run folds wherever it starts — even when it only
+    // appears after a user turn and runs to the very end of the table,
+    // which is exactly the shape that exercises the run-end fallback
+    // (`system_run_end == messages.len()`).
+    #[test]
+    fn late_first_run_also_folds() {
+        let messages = vec![
+            LlmMessage::user("hello"),
+            LlmMessage::system("identity"),
+            LlmMessage::system("contract"),
+        ];
+        let (system, contents) = convert_messages(&messages);
+        assert_eq!(system.as_deref(), Some("identity\n\ncontract"));
+        assert_eq!(contents.len(), 1);
+        assert_eq!(contents[0].role, ROLE_USER);
+        match contents[0].parts.as_slice() {
+            [GeminiRequestPart::Text { text }] => assert_eq!(text, "hello"),
+            other => panic!("expected a single text part, got {other:?}"),
+        }
+    }
 }

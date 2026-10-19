@@ -83,6 +83,11 @@ pub struct AnthropicTool {
 }
 
 pub fn convert_messages(messages: &[LlmMessage]) -> (Option<String>, Vec<AnthropicMessage>) {
+    // Every system part is collected here and joined with "\n\n" below,
+    // regardless of where it sits in the message list. The gemini adapter
+    // mirrors this "\n\n" join for its leading run of consecutive system
+    // messages (see `gemini/request.rs convert_messages`), which is how
+    // chunked system prompts (scepter entelecheia#571) must be folded.
     let mut system_parts: Vec<String> = Vec::new();
     let anthropic_messages: Vec<AnthropicMessage> = messages
         .iter()
