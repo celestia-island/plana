@@ -30,6 +30,7 @@ pub mod device_id;
 pub mod kv;
 pub mod panic_guard;
 pub mod pubsub;
+pub mod rate_limit;
 pub mod secret_box;
 pub mod soc;
 pub mod thread_audit;
