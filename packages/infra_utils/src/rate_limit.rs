@@ -289,17 +289,22 @@ mod tests {
 
     #[tokio::test]
     async fn denial_does_not_count() {
-        let (l, clock) = limiter::<&str>(vec![WindowSpec::new("m", Duration::from_secs(60), 1)]);
-        assert!(l.check(&"k", 0).await.allowed);
-        for _ in 0..5 {
-            assert!(!l.check(&"k", 0).await.allowed);
-        }
-        clock.advance(60); // 窗口翻页
-        // 变异锚：若拒绝也计数，此刻 count=6 > 1 必拒；正确语义下仍只记 1 次，
-        // 翻页归零后立即放行。
+        // 双窗设计（R3 配方）：minute 上限 1、hour 上限 2。允许 1 次、拒绝 1 次后，
+        // 推进恰好 60s 让 minute 翻页而 hour 仍在窗内——
+        //   正确语义：hour 只记 1 次，第 3 次 check 的 hour 投影 2 ≤ 2 → 放行；
+        //   「拒绝也计数」变异：hour 已记 2 次，投影 3 > 2 → 拒绝（测试变红）。
+        // （前版锚用 advance(60) 落在单窗边界，roll 先归零再判，变异遗留计数被抹掉，
+        //   两实现同绿——已被 R3 变异实证推翻。）
+        let (l, clock) = limiter::<&str>(vec![
+            WindowSpec::new("minute", Duration::from_secs(60), 1),
+            WindowSpec::new("hour", Duration::from_secs(3600), 2),
+        ]);
+        assert!(l.check(&"k", 0).await.allowed, "first request passes");
+        assert!(!l.check(&"k", 0).await.allowed, "minute cap 1 denies");
+        clock.advance(60); // minute 翻页归零；hour（elapsed 60 < 3600）仍在窗内
         assert!(
             l.check(&"k", 0).await.allowed,
-            "denials must not count: after the window rolls the key must be fresh"
+            "denials must not count: hour carries only the allowed hit (2 <= 2); a counting implementation would sit at 3 > 2 and deny"
         );
     }
 
