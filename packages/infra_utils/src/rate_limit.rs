@@ -196,6 +196,11 @@ impl<K: Eq + Hash + Clone> RateLimiter<K> {
         }
     }
 
+    /// 丢弃某个 key 的全部窗口状态（如「验证成功后重置预算」语义）；返回是否确有丢弃。
+    pub async fn remove(&self, key: &K) -> bool {
+        self.slots.write().await.remove(key).is_some()
+    }
+
     /// 清掉全部窗口均已空闲超过 `max_idle` 的 key（定期巡检用；`scepter` 的
     /// cleanup_interval 语义）。返回清除的 key 数。
     pub async fn retain_active(&self, max_idle: Duration) -> usize {
@@ -359,6 +364,19 @@ mod tests {
             ra <= Duration::from_secs(50) && ra > Duration::from_secs(49),
             "≈50s left, got {ra:?}"
         );
+    }
+
+    #[tokio::test]
+    async fn remove_drops_a_keys_budget_and_reports_absence() {
+        let (l, _) = limiter::<&str>(minute_hour());
+        l.check(&"a", 0).await;
+        l.check(&"a", 0).await;
+        assert!(l.remove(&"a").await, "an occupied key reports removed");
+        assert!(!l.remove(&"a").await, "an absent key reports nothing");
+        assert_eq!(l.remaining(&"a", "minute").await, None, "budget is gone");
+        // 丢弃后 key 全新：同一窗口内可再打满（变异锚：若 remove 未真删状态，
+        // remaining 应报 0 而非 None）。
+        assert!(l.check(&"a", 0).await.allowed);
     }
 
     #[tokio::test]
