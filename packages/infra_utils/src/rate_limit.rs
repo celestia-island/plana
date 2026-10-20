@@ -178,6 +178,24 @@ impl<K: Eq + Hash + Clone> RateLimiter<K> {
         RateLimitDecision::allow()
     }
 
+    /// 只读查询某 key 指定窗口的 `(剩余请求数, 距重置时长)`：不记账、不改动状态；
+    /// key 尚无记录 → `None`（与原手搓实现的 get_remaining 语义一致）；窗口已过
+    /// 有效期 → `(满额, 0)`。
+    pub async fn remaining(&self, key: &K, window: &str) -> Option<(u64, Duration)> {
+        let now = (self.clock)();
+        let idx = self.specs.iter().position(|spec| spec.name == window)?;
+        let spec = &self.specs[idx];
+        let slots = self.slots.read().await;
+        let state = slots.get(key)?.get(idx)?;
+        let elapsed = now.duration_since(state.start);
+        if elapsed >= spec.window {
+            Some((spec.effective_count_limit(), Duration::ZERO))
+        } else {
+            let left = spec.effective_count_limit().saturating_sub(state.count);
+            Some((left, spec.window - elapsed))
+        }
+    }
+
     /// 清掉全部窗口均已空闲超过 `max_idle` 的 key（定期巡检用；`scepter` 的
     /// cleanup_interval 语义）。返回清除的 key 数。
     pub async fn retain_active(&self, max_idle: Duration) -> usize {
@@ -329,6 +347,30 @@ mod tests {
         assert!(
             ra <= Duration::from_secs(50) && ra > Duration::from_secs(49),
             "≈50s left, got {ra:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn remaining_reports_left_quota_and_absent_keys() {
+        let (l, clock) = limiter::<&str>(minute_hour());
+        assert_eq!(
+            l.remaining(&"ghost", "minute").await,
+            None,
+            "absent key -> None"
+        );
+        l.check(&"a", 0).await;
+        l.check(&"a", 0).await;
+        let (left, reset_in) = l.remaining(&"a", "minute").await.unwrap();
+        assert_eq!(left, 0, "minute cap 2 fully spent");
+        assert!(reset_in > Duration::ZERO && reset_in <= Duration::from_secs(60));
+        let (hour_left, _) = l.remaining(&"a", "hour").await.unwrap();
+        assert_eq!(hour_left, 3, "hour cap 5 spent 2");
+        clock.advance(61);
+        let (left, reset_in) = l.remaining(&"a", "minute").await.unwrap();
+        assert_eq!(
+            (left, reset_in),
+            (2, Duration::ZERO),
+            "expired window reports full quota"
         );
     }
 
