@@ -90,7 +90,13 @@ pub struct HealthResponse {
     pub kind: BackendKind,
     pub uptime: u64,
     pub network: NetworkInfo,
+    /// Absent when unset: consumers flatten this base into service health
+    /// payloads where a bare `null` field was deliberately retired (chest
+    /// 2026-10-10 ruling); absence and null are equivalent to every .get()
+    /// consumer.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub build_hash: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub engine_version: Option<String>,
 }
 
@@ -344,4 +350,38 @@ pub struct OkMessageResponse {
 pub struct ReadinessResponse {
     pub status: String,
     pub database: bool,
+}
+
+#[cfg(test)]
+mod health_serde_tests {
+    use super::*;
+
+    #[test]
+    fn optional_fields_stay_absent_when_none() {
+        let health = HealthResponse::ok(
+            "0.1.0 master:abc1234",
+            BackendKind::Prod,
+            60,
+            NetworkInfo::unknown(),
+        );
+        let json = serde_json::to_value(&health).unwrap();
+        let object = json.as_object().unwrap();
+        assert!(
+            !object.contains_key("build_hash"),
+            "None -> absent: {object:?}"
+        );
+        assert!(!object.contains_key("engine_version"), "None -> absent");
+        assert_eq!(object.get("status").and_then(|v| v.as_str()), Some("ok"));
+        assert_eq!(object.get("kind").and_then(|v| v.as_str()), Some("prod"));
+    }
+
+    #[test]
+    fn optional_fields_serialize_when_set() {
+        let mut health = HealthResponse::ok("v", BackendKind::Dev, 1, NetworkInfo::unknown());
+        health.build_hash = Some("abc1234".into());
+        health.engine_version = Some("v".into());
+        let json = serde_json::to_value(&health).unwrap();
+        assert_eq!(json["build_hash"], "abc1234");
+        assert_eq!(json["engine_version"], "v");
+    }
 }
