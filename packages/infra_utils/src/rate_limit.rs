@@ -289,12 +289,18 @@ mod tests {
 
     #[tokio::test]
     async fn denial_does_not_count() {
-        let (l, _) = limiter::<&str>(vec![WindowSpec::new("m", Duration::from_secs(60), 1)]);
+        let (l, clock) = limiter::<&str>(vec![WindowSpec::new("m", Duration::from_secs(60), 1)]);
         assert!(l.check(&"k", 0).await.allowed);
         for _ in 0..5 {
             assert!(!l.check(&"k", 0).await.allowed);
         }
-        // 仍只记 1 次：窗口翻页后立即放行。
+        clock.advance(60); // 窗口翻页
+        // 变异锚：若拒绝也计数，此刻 count=6 > 1 必拒；正确语义下仍只记 1 次，
+        // 翻页归零后立即放行。
+        assert!(
+            l.check(&"k", 0).await.allowed,
+            "denials must not count: after the window rolls the key must be fresh"
+        );
     }
 
     #[tokio::test]
