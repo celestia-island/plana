@@ -169,11 +169,11 @@ mod tests {
     }
 
     fn layer1_agents_len() -> usize {
-        (&*AGENT_REGISTRY).layer1_agents().len()
+        AGENT_REGISTRY.layer1_agents().len()
     }
 
     fn layer2_agents_len() -> usize {
-        (&*AGENT_REGISTRY).layer2_agents().len()
+        AGENT_REGISTRY.layer2_agents().len()
     }
 
     #[test]

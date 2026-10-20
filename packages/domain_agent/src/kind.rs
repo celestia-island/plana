@@ -312,9 +312,7 @@ impl AgentKind {
             AgentKind::Kanban => "Kanban plugin — boards, lanes, cards, WIP limits",
             AgentKind::Devops => "DevOps plugin — noa source control, CI runs, CD targets",
             AgentKind::Office => "Office plugin — files, document preview, annotations",
-            AgentKind::Selftrain => {
-                "Self-iteration plugin — engine fleet status, inference tests"
-            },
+            AgentKind::Selftrain => "Self-iteration plugin — engine fleet status, inference tests",
             AgentKind::Kv => "KV plugin — key-value browsing, search, bulk edits",
             AgentKind::NodeGraph => "Node-graph plugin — vertices, edges, layouts, queries",
             AgentKind::Nodes => "Nodes plugin — device/instance cards, grouping, status",
