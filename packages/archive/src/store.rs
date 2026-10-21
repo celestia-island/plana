@@ -596,9 +596,10 @@ impl ArchiveStore {
         })
     }
 
-    /// Delete one archive directory (the exact stamp, or the whole
-    /// `kind/id` set when the locator carries no stamp). There is no
-    /// undo — callers are expected to have restored or re-archived.
+    /// Delete one archive directory: the exact stamp, or the LATEST
+    /// single stamp when the locator carries none (repeat to drain the
+    /// set). There is no undo — callers are expected to have restored
+    /// or re-archived.
     pub fn purge(&self, locator: &ArchiveLocator) -> Result<(), ArchiveError> {
         let dir = locator.dir(&self.root)?;
         fs::remove_dir_all(&dir).map_err(|e| ArchiveError::Io {

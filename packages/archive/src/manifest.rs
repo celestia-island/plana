@@ -1,6 +1,6 @@
 //! The archive manifest: the metadata document that anchors integrity
-//! (`payload_sha256`) and, when encrypted, doubles as the AEAD
-//! additional authenticated data.
+//! — its `payload_sha256` is paired against the stored bytes on every
+//! open, so swapping either side fails loudly.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -16,8 +16,9 @@ pub const ARCHIVE_MANIFEST_SCHEMA: u32 = 1;
 pub enum Encryption {
     /// Plain tar; integrity rides the manifest SHA-256 alone.
     None,
-    /// AES-256-GCM; manifest JSON is the AEAD additional authenticated
-    /// data, so a swapped manifest breaks decryption.
+    /// AES-256-GCM; the decryption key is caller-supplied and never
+    /// stored. AEAD defends confidentiality — tamper evidence rides
+    /// the manifest's digest pairing.
     Aes256Gcm,
 }
 
@@ -72,9 +73,8 @@ pub struct ArchiveManifest {
 }
 
 impl ArchiveManifest {
-    /// The canonical JSON text — both the on-disk manifest bytes and
-    /// the AEAD additional authenticated data. One serialization, two
-    /// uses, so they can never drift apart.
+    /// The canonical JSON text — the on-disk manifest bytes in one
+    /// serialization, so the file and its digests never drift.
     pub fn canonical_json(&self) -> serde_json::Result<String> {
         serde_json::to_string(self)
     }
