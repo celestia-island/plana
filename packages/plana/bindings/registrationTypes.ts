@@ -5,6 +5,11 @@
  * extension fields. Unregistered instances carry only `instance_id` and
  * `registered: false`; every other field is omitted while unset so the
  * common case stays a two-key object.
+ *
+ * Invariant: `registered == true` implies `owner_account.is_some()` (a
+ * binding always has an owning account). The [`RegistrationState::registered`]
+ * constructor enforces it; direct struct construction bypasss it and takes
+ * on the obligation.
  */
 export type RegistrationState = { 
 /**
@@ -18,17 +23,17 @@ registered: boolean,
 /**
  * Opaque cloud account reference (the minting/owning account).
  */
-owner_account: string | null, 
+owner_account?: string, 
 /**
  * Opaque group reference (set when a team account auto-mounted the
  * instance as a group resource; absent for personal ownership).
  */
-owner_group: string | null, 
+owner_group?: string, 
 /**
  * The cloud registration surface the instance is bound to.
  */
-registry_endpoint: string | null, 
+registry_endpoint?: string, 
 /**
  * RFC 3339 UTC timestamp of the binding.
  */
-registered_at: string | null, };
+registered_at?: string, };

@@ -42,6 +42,11 @@ use ts_rs::TS;
 /// extension fields. Unregistered instances carry only `instance_id` and
 /// `registered: false`; every other field is omitted while unset so the
 /// common case stays a two-key object.
+///
+/// Invariant: `registered == true` implies `owner_account.is_some()` (a
+/// binding always has an owning account). The [`RegistrationState::registered`]
+/// constructor enforces it; direct struct construction bypasss it and takes
+/// on the obligation.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "registrationTypes.ts")]
 pub struct RegistrationState {
@@ -51,16 +56,20 @@ pub struct RegistrationState {
     pub registered: bool,
     /// Opaque cloud account reference (the minting/owning account).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub owner_account: Option<String>,
     /// Opaque group reference (set when a team account auto-mounted the
     /// instance as a group resource; absent for personal ownership).
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub owner_group: Option<String>,
     /// The cloud registration surface the instance is bound to.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub registry_endpoint: Option<String>,
     /// RFC 3339 UTC timestamp of the binding.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub registered_at: Option<String>,
 }
 
@@ -149,5 +158,44 @@ mod tests {
         assert!(state.registered);
         assert_eq!(state.owner_account.as_deref(), Some("acct-1"));
         assert_eq!(state.registry_endpoint, None);
+    }
+
+    #[test]
+    fn explicit_null_is_equivalent_to_absence() {
+        // Producers vary: some JSON stacks emit explicit nulls. Both forms
+        // must deserialize to None — the wire contract is "key absent",
+        // and null is the same statement.
+        let json = serde_json::json!({
+            "instance_id": "x",
+            "registered": false,
+            "owner_account": null,
+            "owner_group": null,
+        });
+        let state: RegistrationState = serde_json::from_value(json).expect("null parse");
+        assert_eq!(state.owner_account, None);
+        assert_eq!(state.owner_group, None);
+    }
+
+    #[test]
+    fn registered_constructor_invariants_hold() {
+        // `registered: true` MUST carry an owner account — a binding always
+        // has an owning account (module docs). The constructor enforces it;
+        // direct struct construction bypasses it, so this pin plus the doc
+        // note define the obligation for direct constructors.
+        let state = RegistrationState::registered("i", "acct", None, None, None);
+        assert!(state.registered);
+        assert!(state.owner_account.is_some());
+        // Personal ownership (no group) serializes to exactly three keys —
+        // the precise key set the wizard's TS types (`#[ts(optional)]`)
+        // promise: every optional key may be absent.
+        let json = serde_json::to_value(&state).expect("serialize");
+        assert_eq!(
+            json,
+            serde_json::json!({
+                "instance_id": "i",
+                "registered": true,
+                "owner_account": "acct",
+            })
+        );
     }
 }

@@ -161,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
                     file=sys.stderr,
                 )
                 continue
+            pair.target.parent.mkdir(parents=True, exist_ok=True)
             pair.target.write_bytes(expected_bytes(pair))
             print(f"wrote {pair.target.relative_to(ROOT)} from "
                   f"{pair.source.relative_to(ROOT)} (bootstrap)")
