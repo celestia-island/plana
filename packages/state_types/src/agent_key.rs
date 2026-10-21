@@ -29,8 +29,8 @@ use super::Agent;
 /// The prefix marking a plugin-carried agent on the wire.
 pub const PLUGIN_PREFIX: &str = "plugin:";
 
-/// Upper bound for the plugin id segment (matches the akivili manifest
-/// plugin-id rule).
+/// Upper bound for the plugin id segment (a plana-side cap; akivili
+/// checks the id shape only, so this stays deliberately stricter).
 const PLUGIN_ID_MAX: usize = 64;
 /// Upper bound for the folder segment (matches the akivili
 /// `[[agents]]` folder rule).
