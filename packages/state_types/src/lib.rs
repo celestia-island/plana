@@ -30,6 +30,9 @@ pub mod agent;
 pub mod agent_context;
 /// Re-export shim: `AgentErrorCode` and `StructuredAgentError` live in `plana_core`.
 pub mod agent_error;
+/// The runtime agent identity: builtin enum or plugin-carried folder
+/// (the L2 plugin platform's non-hardcoded key).
+pub mod agent_key;
 /// Reads per-tool markdown docs from disk and folds them into `ToolInfo`.
 pub mod doc_loader;
 /// The gateway `Message` union and the `tui_types` snapshot/patch model.
@@ -45,6 +48,7 @@ pub use agent::{
 };
 pub use agent_context::AgentContext;
 pub use agent_error::{AgentErrorCode, StructuredAgentError};
+pub use agent_key::{AgentKey, InvalidAgentKey, PLUGIN_PREFIX};
 pub use doc_loader::{ToolDoc, ToolDocLoader};
 pub use gateway::{
     AgentMessage, AskAnswerSource, BaseMessage, ClientCapability, ClientNodeInfo,
