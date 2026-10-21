@@ -60,7 +60,7 @@ impl fmt::Display for InvalidAgentKey {
 
 impl std::error::Error for InvalidAgentKey {}
 
-/// `^[a-z][a-z0-9-]*$` — the akivili plugin-id shape.
+/// `^[a-z0-9][a-z0-9-]*$` — the akivili plugin-id shape.
 fn is_valid_plugin_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= PLUGIN_ID_MAX
