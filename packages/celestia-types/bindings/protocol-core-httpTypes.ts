@@ -34,7 +34,14 @@ export type GrantListResponse = { grants: Array<GrantItem>, };
  * `plana_celestia_types::malkuth::WorkerHealthResponse` (`/healthz` on the
  * worker-lifecycle plane) — a different type with a distinct field set.
  */
-export type HealthResponse = { status: ServiceStatus, version: string, kind: BackendKind, uptime: bigint, network: NetworkInfo, build_hash: string | null, engine_version: string | null, };
+export type HealthResponse = { status: ServiceStatus, version: string, kind: BackendKind, uptime: bigint, network: NetworkInfo, 
+/**
+ * Absent when unset: consumers flatten this base into service health
+ * payloads where a bare `null` field was deliberately retired (chest
+ * 2026-10-10 ruling); absence and null are equivalent to every .get()
+ * consumer.
+ */
+build_hash: string | null, engine_version: string | null, };
 
 export type IdResponse = { id: string, };
 

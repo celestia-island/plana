@@ -43,6 +43,19 @@ fn merged_http_module_carries_generic_descriptors() {
 }
 
 #[test]
+fn registration_state_reaches_consumers_at_the_crate_root() {
+    // Consumer pattern (evernight/arona/entelecheia local instances and
+    // the desktop wizard): the local-suite registration block is reachable
+    // both through the protocol_core path and the flat crate-root glob —
+    // the surface the health-endpoint embedders and the TS bindings ship
+    // against (2026-10-21 local-suite registration contract).
+    resolves::<plana::protocol_core::RegistrationState>();
+    resolves::<plana::RegistrationState>();
+    let unregistered = plana::RegistrationState::unregistered("surface-probe");
+    assert!(!unregistered.registered);
+}
+
+#[test]
 fn merged_enums_module_carries_connection_topology() {
     resolves::<plana::enums::ConnectionType>();
 }

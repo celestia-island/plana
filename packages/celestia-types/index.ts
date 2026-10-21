@@ -51,6 +51,10 @@ export * from "./bindings/model";
 // Deferred-operation wire shapes (vendored snapshot of plana's generated
 // bindings): no name on this file's surface collides with the exports above.
 export * from "./bindings/ops";
+// Local-suite cloud registration block (vendored snapshot of plana's
+// generated bindings; the 2026-10-21 contract): single-type file, no
+// collisions on the flat surface.
+export * from "./bindings/protocol-core-registrationTypes";
 export * from "./bindings/ws/agentLifecycle";
 export * from "./bindings/ws/auth";
 export * from "./bindings/ws/bridgeNetwork";

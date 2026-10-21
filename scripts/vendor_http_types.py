@@ -64,6 +64,15 @@ OPS_HEADER = """// Vendored snapshot of packages/plana/bindings/ops.ts (ts-rs ge
 // this copy).
 """
 
+REGISTRATION_HEADER = """// Vendored snapshot of packages/plana/bindings/registrationTypes.ts (ts-rs
+// generated) so the published npm tarball carries the local-suite
+// registration block (the 2026-10-21 contract read by the desktop
+// registration wizard): npm `files` cannot reach a sibling package's
+// directory, exactly as with `protocol-core-httpTypes.ts` above.
+// Regenerate with `python3 scripts/vendor_http_types.py` (CI runs `--check`;
+// do not hand-edit this copy).
+"""
+
 PAIRS = (
     Pair(
         source=ROOT / "packages" / "plana" / "bindings" / "httpTypes.ts",
@@ -74,6 +83,15 @@ PAIRS = (
         source=ROOT / "packages" / "plana" / "bindings" / "ops.ts",
         target=ROOT / "packages" / "celestia-types" / "bindings" / "ops.ts",
         header=OPS_HEADER,
+    ),
+    Pair(
+        source=ROOT / "packages" / "plana" / "bindings" / "registrationTypes.ts",
+        target=ROOT
+        / "packages"
+        / "celestia-types"
+        / "bindings"
+        / "protocol-core-registrationTypes.ts",
+        header=REGISTRATION_HEADER,
     ),
 )
 
@@ -122,19 +140,31 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    missing = [
-        path
-        for pair in PAIRS
-        for path in (pair.source, pair.target)
-        if not path.exists()
-    ]
-    if missing:
-        for path in missing:
+    # A missing SOURCE is always fatal (nothing to vendor from). A missing
+    # TARGET is only fatal in --check mode: the write mode must be able to
+    # bootstrap a freshly added pair, or a new vendored file could never be
+    # created by the very script that owns it.
+    missing_sources = [pair.source for pair in PAIRS if not pair.source.exists()]
+    if missing_sources:
+        for path in missing_sources:
             print(f"error: missing {path.relative_to(ROOT)}", file=sys.stderr)
         return 2
 
     failures = 0
     for pair in PAIRS:
+        if not pair.target.exists():
+            if args.check:
+                failures += 1
+                print(
+                    f"error: {pair.target.relative_to(ROOT)} does not exist — "
+                    "run `python3 scripts/vendor_http_types.py`",
+                    file=sys.stderr,
+                )
+                continue
+            pair.target.write_bytes(expected_bytes(pair))
+            print(f"wrote {pair.target.relative_to(ROOT)} from "
+                  f"{pair.source.relative_to(ROOT)} (bootstrap)")
+            continue
         want = expected_bytes(pair)
         have = pair.target.read_bytes()
         target = pair.target.relative_to(ROOT)
