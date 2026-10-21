@@ -103,7 +103,12 @@ resolve_instance_id() {
 
 INSTANCE_ID=$(resolve_instance_id)
 INSTANCE_NAME=$(printf "celestia-%03d" "$INSTANCE_ID")
-SCEPTER_PORT=$((8424 + INSTANCE_ID * 100))
+# Port offset must match evernight supervise's primary convention
+# (base 8424 + instance id; id=1 → 8425, what the e-001 stack actually
+# runs). The old *100 stride disagreed with it, so a machine provisioned
+# by this script and one driven by supervise could never agree on where
+# scepter lives.
+SCEPTER_PORT=$((8424 + INSTANCE_ID))
 
 # ── Mirror detection ─────────────────────────────────────────────────────────
 
