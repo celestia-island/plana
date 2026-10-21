@@ -364,6 +364,82 @@ pub struct FamilyPricing {
     pub cached_per_million: f64,
 }
 
+/// The T3 v2 pricing schedule: the retail [`FamilyPricing`] (unchanged
+/// semantics — peak-tier list prices) plus the commercial extensions:
+/// an optional PURCHASE line (what WE pay the vendor per 1M tokens —
+/// the margin input) and optional off-peak windows (闲时). Everything
+/// is additive; existing `FamilyPricing` consumers are untouched.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PricingSchedule {
+    pub retail: FamilyPricing,
+    /// Supply-cost line; `None` = same as retail (margin unknown).
+    pub purchase: Option<FamilyPricing>,
+    /// Off-peak windows, evaluated in UTC hour-of-day. Empty = peak
+    /// around the clock (the pre-T3 behaviour).
+    pub off_peak: Vec<OffPeakWindow>,
+}
+
+/// One off-peak window: UTC hour-of-day range (start inclusive, end
+/// EXCLUSIVE, wrap-aware across midnight) and the multiplier applied
+/// to the retail prices inside it (e.g. `0.5` = half price).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OffPeakWindow {
+    pub start_hour: u8,
+    /// Exclusive end hour; `end <= start` wraps past midnight.
+    pub end_hour: u8,
+    pub multiplier: f64,
+}
+
+impl OffPeakWindow {
+    /// Whether `hour` (UTC 0–23) falls inside the window. Pure;
+    /// unit-tested.
+    pub fn contains(&self, hour: u8) -> bool {
+        let h = hour % 24;
+        if self.end_hour <= self.start_hour {
+            // wrap: [start, 24) ∪ [0, end)
+            h >= self.start_hour || h < self.end_hour
+        } else {
+            h >= self.start_hour && h < self.end_hour
+        }
+    }
+}
+
+impl PricingSchedule {
+    /// The multiplier in effect at `hour` (UTC): the first containing
+    /// off-peak window wins, else 1.0 (peak). Pure; unit-tested.
+    pub fn effective_multiplier_utc(&self, hour: u8) -> f64 {
+        self.off_peak
+            .iter()
+            .find(|w| w.contains(hour))
+            .map(|w| w.multiplier)
+            .unwrap_or(1.0)
+    }
+
+    /// Retail prices scaled by the window in effect at `hour` (UTC).
+    pub fn effective_pricing_utc(&self, hour: u8) -> FamilyPricing {
+        let m = self.effective_multiplier_utc(hour);
+        FamilyPricing {
+            input_per_million: self.retail.input_per_million * m,
+            output_per_million: self.retail.output_per_million * m,
+            cached_per_million: self.retail.cached_per_million * m,
+        }
+    }
+
+    /// The margin (retail − purchase) for a token count at `hour`
+    /// (UTC), in USD. `None` when no purchase line is published.
+    pub fn margin_usd(&self, input: u32, output: u32, hour: u8) -> Option<f64> {
+        let purchase = self.purchase?;
+        let m = self.effective_multiplier_utc(hour);
+        let retail_usd = (input as f64 / 1_000_000.0) * self.retail.input_per_million * m
+            + (output as f64 / 1_000_000.0) * self.retail.output_per_million * m;
+        Some(
+            retail_usd
+                - (input as f64 / 1_000_000.0) * purchase.input_per_million
+                - (output as f64 / 1_000_000.0) * purchase.output_per_million,
+        )
+    }
+}
+
 /// Resolve a model id to its family's [`FamilyPricing`] by substring
 /// match (lowercased). All prices are PEAK-tier — the conservative
 /// upper bound; the actual off-peak billing split lives with the
@@ -1408,5 +1484,94 @@ mod injection_tests {
         let glm = lookup_pricing("glm-4.7").expect("the family table answers");
         assert!(glm.input_per_million > 0.0, "not the injected zero");
         clear_pricing_source_for_tests();
+    }
+
+    // ── T3 pricing schedule: purchase line + off-peak windows ──
+
+    #[test]
+    fn off_peak_window_membership_is_wrap_aware() {
+        let night = OffPeakWindow {
+            start_hour: 22,
+            end_hour: 6,
+            multiplier: 0.5,
+        };
+        assert!(night.contains(23));
+        assert!(night.contains(0));
+        assert!(night.contains(5));
+        assert!(!night.contains(6));
+        assert!(!night.contains(12));
+        let day = OffPeakWindow {
+            start_hour: 9,
+            end_hour: 17,
+            multiplier: 0.7,
+        };
+        assert!(!day.contains(8));
+        assert!(day.contains(9));
+        assert!(day.contains(16));
+        assert!(!day.contains(17));
+    }
+
+    #[test]
+    fn effective_multiplier_defaults_to_peak_outside_windows() {
+        let schedule = PricingSchedule {
+            retail: FamilyPricing {
+                input_per_million: 1.0,
+                output_per_million: 2.0,
+                cached_per_million: 0.1,
+            },
+            purchase: None,
+            off_peak: vec![OffPeakWindow {
+                start_hour: 0,
+                end_hour: 6,
+                multiplier: 0.5,
+            }],
+        };
+        assert_eq!(schedule.effective_multiplier_utc(3), 0.5);
+        assert_eq!(schedule.effective_multiplier_utc(12), 1.0);
+        let peak = schedule.effective_pricing_utc(12);
+        assert_eq!(peak.input_per_million, 1.0);
+        let off = schedule.effective_pricing_utc(3);
+        assert_eq!(off.input_per_million, 0.5);
+        assert_eq!(off.output_per_million, 1.0);
+        assert_eq!(off.cached_per_million, 0.05);
+    }
+
+    #[test]
+    fn margin_needs_the_purchase_line_and_scales_with_the_window() {
+        let retail = FamilyPricing {
+            input_per_million: 1.0,
+            output_per_million: 2.0,
+            cached_per_million: 0.1,
+        };
+        let purchase = FamilyPricing {
+            input_per_million: 0.4,
+            output_per_million: 0.8,
+            cached_per_million: 0.1,
+        };
+        let schedule = PricingSchedule {
+            retail,
+            purchase: Some(purchase),
+            off_peak: vec![OffPeakWindow {
+                start_hour: 0,
+                end_hour: 6,
+                multiplier: 0.5,
+            }],
+        };
+        // Peak: 1M in → $1.0 retail − $0.4 purchase = $0.6 margin.
+        assert_eq!(schedule.margin_usd(1_000_000, 0, 12), Some(0.6));
+        // Off-peak: retail halves, purchase does NOT (our cost is
+        // contracted, not windowed) → $0.5 − $0.4 = $0.1.
+        let off = schedule.margin_usd(1_000_000, 0, 3);
+        assert!(
+            matches!(off, Some(v) if (v - 0.1).abs() < 1e-9),
+            "got {off:?}"
+        );
+        // No purchase line → no margin answer.
+        let bare = PricingSchedule {
+            retail,
+            purchase: None,
+            off_peak: vec![],
+        };
+        assert_eq!(bare.margin_usd(1_000_000, 0, 12), None);
     }
 }
