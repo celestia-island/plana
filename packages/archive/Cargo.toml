@@ -1,0 +1,29 @@
+[package]
+name = "plana_archive"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license-file.workspace = true
+description = "Content-addressed archive/restore facility with optional AEAD encryption, shared by every celestia project"
+
+[lints]
+workspace = true
+
+[dependencies]
+
+aes-gcm.workspace = true
+chrono = { workspace = true, features = ["serde", "clock"] }
+hex.workspace = true
+rand.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+sha2.workspace = true
+tar.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+
+anyhow.workspace = true
+tempfile.workspace = true
