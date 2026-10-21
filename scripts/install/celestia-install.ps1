@@ -566,7 +566,7 @@ function Start-ScepterInWSL {
     Write-Step "Phase 6: Starting scepter container"
     if (-not $BuildOk) {
         Write-Warn "scepter image not built — skipping auto-start."
-        Write-Warn "Start manually after build: wsl -d $($script:WSLDistro) podman run -d --name scepter -p 8424:8080 entelecheia:latest"
+        Write-Warn "Start manually after build: wsl -d $($script:WSLDistro) podman run -d --name scepter -p 8424:8424 -e SERVER_BIND_ADDRESS=0.0.0.0:8424 entelecheia:latest"
         return
     }
     $r = Invoke-WSL -Command @'
@@ -577,7 +577,14 @@ if podman ps --format '{{.Names}}' | grep -qF "$SNAME"; then
   exit 0
 fi
 podman rm -f "$SNAME" 2>/dev/null || true
-podman run -d --name "$SNAME" -p 8424:8080 \
+# The image's default SERVER_BIND_ADDRESS is 127.0.0.1:8424 — inside the
+# container that is the container's own loopback, unreachable through any
+# published port. Bind all interfaces and publish the SAME port the
+# listener actually uses (the old 8424:8080 mapping targeted a port
+# nothing listens on, so the auto-started container was unreachable and
+# the advertised http://localhost:8424/health never answered).
+podman run -d --name "$SNAME" -p 8424:8424 \
+  -e SERVER_BIND_ADDRESS=0.0.0.0:8424 \
   -v "$HOME/.config/celestia:/home/entelecheia/.config/celestia:ro" \
   entelecheia:latest 2>&1 && echo "STARTED" || echo "FAILED"
 '@ -NoProfile
@@ -616,13 +623,15 @@ function Show-Summary {
     Write-Host "    PostgreSQL:        localhost:5432 (in WSL2)"
     Write-Host ""
     Write-Host "  How to use:" -ForegroundColor Yellow
-    Write-Host "    • Open browser:    http://localhost:5173 (shittim-chest)"
+    Write-Host "    • Shittim Chest:    Start Menu → Celestia → Shittim Chest (chest-cli terminal)"
+    Write-Host "                       (there is no dev-server URL — the webui is build-only;"
+    Write-Host "                        the 5173 hint was stale)"
     Write-Host "    • Connect scriptum: cd scriptum && cargo run"
     Write-Host "    • Edit .env:        wsl -d $($script:WSLDistro) vi $WslSourcePath/entelecheia/.env"
-    Write-Host "    • Scepter logs:     wsl -d $($script:WSLDistro) podman logs scepter"
+    Write-Host "    • Scepter logs:     wsl -d $($script:WSLDistro) podman logs celestia-scepter-*"
     Write-Host ""
     Write-Host "  Stop / restart:" -ForegroundColor Yellow
-    Write-Host "    Stop scepter:   wsl -d $($script:WSLDistro) podman stop scepter"
+    Write-Host "    Stop scepter:   wsl -d $($script:WSLDistro) podman stop celestia-scepter-*"
     Write-Host "    Stop postgres:  wsl -d $($script:WSLDistro) podman stop celestia-pg-*"
     Write-Host "    Restart all:    re-run this script (idempotent)."
     Write-Host ""; Write-Host $sep
