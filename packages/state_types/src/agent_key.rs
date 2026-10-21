@@ -289,6 +289,29 @@ mod tests {
     }
 
     #[test]
+    fn plugin_prefix_is_case_sensitive_and_extra_colons_do_not_shift() {
+        // Mixed-case prefixes must not take the plugin path silently (the
+        // prefix match is exact; the builtin fallback rejects the colons).
+        assert!("Plugin:acme:office".parse::<AgentKey>().is_err());
+        assert!("PLUGIN:acme:office".parse::<AgentKey>().is_err());
+        // A colon leaking into the folder segment fails shape validation
+        // instead of splitting into a wrong (id, folder) pair.
+        assert!("plugin:acme:office:extra".parse::<AgentKey>().is_err());
+    }
+
+    #[test]
+    fn every_builtin_wire_string_parses_back_to_the_same_key() {
+        // Every folder spelling — including the underscore ones
+        // (`data_table`, `industrial_iot`) — survives a wire round trip.
+        for agent in Agent::all() {
+            let key = AgentKey::Builtin(agent.clone());
+            let wire = key.as_wire_str();
+            let parsed: AgentKey = wire.parse().unwrap_or_else(|e| panic!("{e}: {wire}"));
+            assert_eq!(parsed, key);
+        }
+    }
+
+    #[test]
     fn builtin_wire_form_stays_compatible_with_agent_display() {
         // The invariant existing string persistence relies on: a
         // builtin key's wire string equals the agent's own Display.
