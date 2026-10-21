@@ -8,12 +8,15 @@
 
 [track]
 # The npm baseline is pinned explicitly: the two publishable packages are
-# versioned on independent lines (celestia-types 0.1.15, rpc-client 0.1.12), so
+# versioned on independent lines (celestia-types 0.1.16, rpc-client 0.1.14), so
 # the "majority among publishable packages" fallback would tie and resolve by
 # filesystem walk order, which is not stable across machines. Track the
 # rpc-client line as the baseline: it advances with the registry publish wave
-# (currently 0.1.12), while celestia-types is exempted below as its own line.
-npm = "0.1.12"
+# (currently 0.1.14 — the 0.1.14 release of #452 forgot to bump this pin in
+# the same commit, unnoticed because the farm backlog cancelled every later
+# master CI run; caught by #461's verify-versions run, 2026-10-21), while
+# celestia-types is exempted below as its own line.
+npm = "0.1.14"
 
 [exempt.cargo]
 "packages/celestia-types" = "independently published line"

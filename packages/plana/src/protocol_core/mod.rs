@@ -9,6 +9,7 @@
 //! - connection handshake / version / identity negotiation primitives
 //!   ([`protocol::handshake`]),
 //! - health and network descriptors ([`http`]),
+//! - local-suite cloud registration state ([`registration`]),
 //! - RBAC permission/role types ([`rbac`]),
 //! - regional compliance policy ([`region`]),
 //! - cross-platform identity (machine fingerprint, [`identity`]),
@@ -33,7 +34,8 @@
 // The generic wire vocabulary lives under a small set of folders:
 //   protocol/ — base messages, handshake (WS transport)
 //   http/     — health/network/status descriptors and generic REST DTOs
-// and a few single-file modules at the root (enums, identity, rbac, region).
+// and a few single-file modules at the root (enums, identity, rbac, region,
+// registration).
 // The glob re-exports at the bottom keep every type reachable at the module
 // root (`plana::protocol_core::TypeName` — and, through the re-export shim,
 // `plana_protocol_core::TypeName`).
@@ -43,6 +45,7 @@ pub mod identity;
 pub mod protocol;
 pub mod rbac;
 pub mod region;
+pub mod registration;
 
 #[cfg(feature = "tracing-helpers")]
 pub mod tracing_helpers;
@@ -50,6 +53,7 @@ pub mod tracing_helpers;
 pub use http::{
     BackendKind, HealthResponse, NetworkInfo, ServiceStatus, VersionReport, SERVICE_INFO_METHOD,
 };
+pub use registration::RegistrationState;
 
 // protocol/ — transport core
 pub use protocol::base_messages::*;
