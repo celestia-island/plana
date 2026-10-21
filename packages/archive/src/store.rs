@@ -61,6 +61,15 @@ impl ArchiveLocator {
     }
 
     fn dir(&self, root: &Path) -> Result<PathBuf, ArchiveError> {
+        // A locator is rebuildable from external input (RPC parameters,
+        // config); every read/purge path funnels through here, so the
+        // kind/id/stamp charset is re-checked before anything is joined
+        // under the root.
+        validate_kind(&self.kind)?;
+        validate_id(&self.id)?;
+        if let Some(stamp) = &self.stamp {
+            validate_stamp(stamp)?;
+        }
         let base = root.join(&self.kind).join(&self.id);
         match &self.stamp {
             Some(stamp) => Ok(base.join(stamp)),
@@ -225,14 +234,52 @@ impl ArchiveStore {
         }
 
         let base = self.root.join(&request.kind).join(&request.id);
-        let stamp = fresh_stamp(max_stamp(&base).as_deref());
-        let dir = base.join(&stamp);
-        fs::create_dir_all(&dir).map_err(|e| ArchiveError::Io {
-            path: dir.clone(),
+        fs::create_dir_all(&base).map_err(|e| ArchiveError::Io {
+            path: base.clone(),
             source: e,
         })?;
+        // Atomically claim a unique stamp directory: `create_dir` fails
+        // with AlreadyExists when a concurrent archiver of the same id
+        // claimed the same name first, and the loop re-reads the winner
+        // and steps past it. (`create_dir_all` would let two
+        // same-millisecond writers interleave inside one directory and
+        // corrupt each other's payloads.)
+        let (stamp, dir) = loop {
+            let stamp = fresh_stamp(max_stamp(&base).as_deref());
+            let dir = base.join(&stamp);
+            match fs::create_dir(&dir) {
+                Ok(()) => break (stamp, dir),
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(e) => {
+                    return Err(ArchiveError::Io {
+                        path: dir,
+                        source: e,
+                    });
+                }
+            }
+        };
         set_private_dir(&dir)?;
 
+        let captured = self.capture(request, key, &dir, &stamp);
+        if captured.is_err() {
+            // The stamp directory was exclusively claimed above, so
+            // everything inside is ours: a failed capture must not leave
+            // a half-written directory behind — it would resolve as
+            // `latest` and poison both inspect and `list` for the id.
+            let _ = fs::remove_dir_all(&dir);
+        }
+        captured
+    }
+
+    /// The post-claim half of [`ArchiveStore::archive`]: write the tar
+    /// payload, seal it, anchor it with the manifest.
+    fn capture(
+        &self,
+        request: &ArchiveRequest,
+        key: Option<&[u8; 32]>,
+        dir: &Path,
+        stamp: &str,
+    ) -> Result<ArchiveReceipt, ArchiveError> {
         let payload_path = dir.join(PAYLOAD_FILE);
         let entry_count = write_tar(&request.sources, &payload_path)?;
         let payload_bytes = seal_payload(&payload_path, request.encryption, key)?;
@@ -262,10 +309,10 @@ impl ArchiveStore {
         let locator = ArchiveLocator {
             kind: request.kind.clone(),
             id: request.id.clone(),
-            stamp: Some(stamp),
+            stamp: Some(stamp.to_string()),
         };
         tracing::info!(
-            archive = %manifest.locator(locator.stamp.as_deref().unwrap_or_default()),
+            archive = %manifest.locator(stamp),
             bytes = payload_bytes,
             entries = entry_count,
             "archived"
@@ -427,6 +474,21 @@ impl ArchiveStore {
                     locator: locator_label.clone(),
                     reason: e.to_string(),
                 })?;
+                // v1 archives regular files; a link entry inside a
+                // payload means tampering or a hostile payload — refuse
+                // it fail-closed BEFORE anything is written, so a
+                // symlink can never sit in the target for a later entry
+                // to write through.
+                let entry_type = entry.header().entry_type();
+                if entry_type.is_symlink() || entry_type.is_hard_link() {
+                    return Err(ArchiveError::Corrupt {
+                        locator: locator_label.clone(),
+                        reason: format!(
+                            "tar entry `{}` is a symlink/hard link — payloads carry regular files only",
+                            header_path.display()
+                        ),
+                    });
+                }
                 let relative = confined_relative(header_path.as_ref()).ok_or_else(|| {
                     ArchiveError::Corrupt {
                         locator: locator_label.clone(),
@@ -512,21 +574,14 @@ impl ArchiveStore {
                     ),
                 })?;
             // `unpack_in` joins the entry's own stored path under the
-            // target and answers `Ok(false)` when an entry would land
-            // outside it — treat that as corruption, never silently
-            // skip.
-            if !entry.unpack_in(&target).map_err(|e| ArchiveError::Io {
+            // target. Every class it could refuse (`..` walks, links,
+            // canonical escapes) was already refused above, so the
+            // bool is unwritten-to-disk honesty rather than a live
+            // guard — the pre-flight is the enforcement point.
+            entry.unpack_in(&target).map_err(|e| ArchiveError::Io {
                 path: target.clone(),
                 source: e,
-            })? {
-                return Err(ArchiveError::Corrupt {
-                    locator: locator_label.clone(),
-                    reason: format!(
-                        "tar entry `{}` escaped the restore target",
-                        relative.display()
-                    ),
-                });
-            }
+            })?;
             restored.push(target.join(&relative));
         }
         tracing::info!(
@@ -583,6 +638,26 @@ fn validate_id(id: &str) -> Result<(), ArchiveError> {
     } else {
         Err(ArchiveError::Invalid(format!(
             "id '{id}' must match ^[a-z0-9._-]+$ (<= 128 chars)"
+        )))
+    }
+}
+
+/// Locator stamps are produced by [`fresh_stamp`] (`YYYYmmddTHHMMSS.mmm`)
+/// and must never act as a traversal vector when a locator is rebuilt
+/// from external input: fixed charset, bounded length, no `.`/`..`.
+fn validate_stamp(stamp: &str) -> Result<(), ArchiveError> {
+    let ok = !stamp.is_empty()
+        && stamp.len() <= 32
+        && stamp != "."
+        && stamp != ".."
+        && stamp
+            .bytes()
+            .all(|b| b.is_ascii_digit() || b == b'T' || b == b'.');
+    if ok {
+        Ok(())
+    } else {
+        Err(ArchiveError::Invalid(format!(
+            "stamp '{stamp}' must be a UTC stamp like 20261021T085618.123"
         )))
     }
 }
@@ -961,6 +1036,7 @@ fn write_private_file(path: &Path, bytes: &[u8]) -> Result<(), ArchiveError> {
 mod tests {
     use super::*;
     use std::collections::BTreeMap;
+    use std::sync::Arc;
 
     fn sample_request(root: &Path, name: &str) -> (ArchiveRequest, PathBuf) {
         // A source tree: <root>/src-<name>/config.toml + nested/tool.json
@@ -1137,14 +1213,49 @@ mod tests {
     }
 
     #[test]
+    fn an_in_place_tamper_that_keeps_the_tar_valid_is_caught() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
+        let (request, _source) = sample_request(tmp.path(), "pairing");
+        let receipt = store.archive(&request, None).unwrap();
+
+        let dir = receipt.locator.dir(store.root()).unwrap();
+        let payload = dir.join(PAYLOAD_FILE);
+        let mut bytes = fs::read(&payload).unwrap();
+        // Layout: [dir hdr][file hdr][config data][dir hdr][file hdr]
+        // [tool data]. Flip a byte inside the first file's data section
+        // (1024 + 6): the tar stays structurally valid, so only the
+        // manifest↔payload digest pairing can notice — a parse error
+        // would not.
+        assert!(bytes.len() > 2048, "fixture too small: {}", bytes.len());
+        bytes[1024 + 6] ^= 0xff;
+        fs::write(&payload, &bytes).unwrap();
+
+        let report = store.verify(&receipt.locator, None).unwrap();
+        assert!(!report.payload_digest_ok, "verify must flag the pairing");
+
+        let err = store.restore(
+            &receipt.locator,
+            tmp.path().join("out"),
+            &RestoreOptions::default(),
+            None,
+        );
+        assert!(
+            matches!(err, Err(ArchiveError::Corrupt { .. })),
+            "got {err:?}"
+        );
+    }
+
+    #[test]
     fn tar_entries_that_escape_the_target_are_refused() {
-        // Hand-craft a tar carrying an absolute path and a `..` walk.
+        // Hand-craft tars carrying an absolute path and a `..` walk.
         let tmp = tempfile::tempdir().unwrap();
         let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
 
         // tar-rs refuses absolute/..-paths at set_path time — so the
-        // attack is modeled the way a hostile payload actually arrives:
-        // a valid tar whose header name bytes were rewritten afterwards.
+        // attacks are modeled the way a hostile payload actually
+        // arrives: a valid tar whose header name bytes were rewritten
+        // afterwards.
         let mut builder = tar::Builder::new(Vec::new());
         let mut header = tar::Header::new_gnu();
         header.set_size(3);
@@ -1153,21 +1264,242 @@ mod tests {
         header.set_path("benign.txt").unwrap();
         builder.append(&header, b"pwd".as_slice()).unwrap();
         let mut evil: Vec<u8> = builder.into_inner().unwrap();
-        // Rewrite the GNU header's 100-byte name field in place, then
-        // recompute the checksum the way a hostile payload author would
-        // (checksum field 148..156 treated as spaces, octal, NUL-space
-        // terminated).
-        evil[0..11].copy_from_slice(b"/etc/passwd");
-        evil[148..156].copy_from_slice(b"        ");
-        let sum: u32 = evil[..512].iter().map(|b| *b as u32).sum();
-        let chksum = format!("{sum:06o}\0 ");
-        evil[148..156].copy_from_slice(chksum.as_bytes());
+        rewrite_tar_name(&mut evil, b"/etc/passwd");
 
-        // Store it as an archive by writing the payload directly beside
-        // a manifest that vouches for it.
+        let mut builder = tar::Builder::new(Vec::new());
+        let mut header = tar::Header::new_gnu();
+        header.set_size(4);
+        header.set_entry_type(tar::EntryType::Regular);
+        header.set_cksum();
+        header.set_path("deep/inner.txt").unwrap();
+        builder.append(&header, b"evil".as_slice()).unwrap();
+        let mut walker: Vec<u8> = builder.into_inner().unwrap();
+        rewrite_tar_name(&mut walker, b"deep/../evil.txt");
+
+        for (id, payload) in [("evil", evil), ("walker", walker)] {
+            let (_dir, receipt) = store_hostile_payload(&store, tmp.path(), id, &payload);
+            let target = tmp.path().join(format!("out-{id}"));
+            let err = store
+                .restore(&receipt.locator, &target, &RestoreOptions::default(), None)
+                .unwrap_err()
+                .to_string();
+            assert!(err.contains("escape"), "got {err}");
+            assert!(!target.join("etc").exists(), "nothing escaped");
+            assert!(!target.join("evil.txt").exists(), "no `..` walk landed");
+            assert!(!tmp.path().join("evil.txt").exists());
+        }
+    }
+
+    #[test]
+    fn hard_link_entries_pointing_outside_the_target_are_refused() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
+
+        // A hostile payload can carry entry shapes write_tar never
+        // produces: a hard link whose link target points outside the
+        // restore target.
+        let mut builder = tar::Builder::new(Vec::new());
+        let mut header = tar::Header::new_gnu();
+        header.set_size(0);
+        header.set_entry_type(tar::EntryType::Link);
+        header.set_cksum();
+        header.set_path("benign.txt").unwrap();
+        header.set_link_name(Path::new("/etc/passwd")).unwrap();
+        builder.append(&header, std::io::empty()).unwrap();
+        let payload: Vec<u8> = builder.into_inner().unwrap();
+
+        let (_dir, receipt) = store_hostile_payload(&store, tmp.path(), "hardlink", &payload);
+        let target = tmp.path().join("out");
+        let result = store.restore(&receipt.locator, &target, &RestoreOptions::default(), None);
+        assert!(result.is_err(), "hard link to /etc/passwd must be refused");
+        assert!(!target.join("benign.txt").exists(), "no link was created");
+    }
+
+    #[test]
+    fn symlink_then_write_through_is_refused() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
+
+        // Entry 1 plants a symlink pointing outside the target; entry 2
+        // is a regular file written *through* it. Both entry names are
+        // confined — the guard must come from the unpack layer.
+        let outside = tmp.path().join("outside");
+        let mut builder = tar::Builder::new(Vec::new());
+        let mut jump = tar::Header::new_gnu();
+        jump.set_size(0);
+        jump.set_entry_type(tar::EntryType::Symlink);
+        jump.set_cksum();
+        jump.set_path("jump").unwrap();
+        jump.set_link_name(&outside).unwrap();
+        builder.append(&jump, std::io::empty()).unwrap();
+        let mut file = tar::Header::new_gnu();
+        file.set_size(4);
+        file.set_entry_type(tar::EntryType::Regular);
+        file.set_cksum();
+        file.set_path("jump/evil.txt").unwrap();
+        builder.append(&file, b"evil".as_slice()).unwrap();
+        let payload: Vec<u8> = builder.into_inner().unwrap();
+
+        let (_dir, receipt) = store_hostile_payload(&store, tmp.path(), "symlink", &payload);
+        let target = tmp.path().join("out");
+        let result = store.restore(&receipt.locator, &target, &RestoreOptions::default(), None);
+        assert!(result.is_err(), "write-through a symlink must be refused");
+        assert!(!outside.join("evil.txt").exists(), "nothing landed outside");
+    }
+
+    #[test]
+    fn write_tree_edge_shapes_round_trip() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
+        let source = tmp.path().join("src-edge");
+        fs::create_dir_all(source.join("empty dir")).unwrap();
+        fs::create_dir_all(source.join("a/b/c/d/e")).unwrap();
+        fs::write(source.join("a/b/c/d/e/leaf with space.txt"), "deep").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStrExt;
+            fs::write(
+                source.join(std::ffi::OsStr::from_bytes(b"raw-\xff-name")),
+                "bytes",
+            )
+            .unwrap();
+        }
+
         let request = ArchiveRequest {
             kind: "plugins".into(),
-            id: "evil".into(),
+            id: "acme-edge".into(),
+            sources: vec![source],
+            source: "test".into(),
+            meta: BTreeMap::new(),
+            encryption: Encryption::None,
+        };
+        let receipt = store.archive(&request, None).unwrap();
+        #[cfg(unix)]
+        let want_entries = 9u64; // 7 dirs + 2 files
+        #[cfg(not(unix))]
+        let want_entries = 8u64; // the raw non-UTF-8 name is unix-only
+        assert_eq!(receipt.manifest.entry_count, want_entries);
+
+        let target = tmp.path().join("out");
+        let report = store
+            .restore(&receipt.locator, &target, &RestoreOptions::default(), None)
+            .unwrap();
+        assert_eq!(report.restored.len(), want_entries as usize);
+        assert_eq!(
+            fs::read_to_string(
+                target
+                    .join("src-edge")
+                    .join("a/b/c/d/e")
+                    .join("leaf with space.txt")
+            )
+            .unwrap(),
+            "deep"
+        );
+        assert!(target.join("src-edge").join("empty dir").is_dir());
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStrExt;
+            let raw = target
+                .join("src-edge")
+                .join(std::ffi::OsStr::from_bytes(b"raw-\xff-name"));
+            assert_eq!(fs::read_to_string(raw).unwrap(), "bytes");
+        }
+    }
+
+    #[test]
+    fn stamps_are_fixed_width_and_sort_chronologically() {
+        let s = fresh_stamp(None);
+        assert_eq!(s.len(), 19, "YYYYmmddTHHMMSS.mmm: {s}");
+        assert!(
+            s.bytes()
+                .all(|b| b.is_ascii_digit() || b == b'T' || b == b'.'),
+            "unexpected stamp shape: {s}"
+        );
+        // Millisecond precision with fixed width: lexicographic order is
+        // chronological order, across a year boundary too.
+        assert!("20261231T235959.999" < "20270101T000000.000");
+        assert!("20270101T000000.000" < "20270101T000000.001");
+    }
+
+    /// Rewrite a GNU tar header's 100-byte name field in place and
+    /// recompute the checksum the way a hostile payload author would
+    /// (checksum field 148..156 treated as spaces, octal, NUL-space
+    /// terminated).
+    fn rewrite_tar_name(tar: &mut [u8], name: &[u8]) {
+        assert!(name.len() <= 100);
+        let len = name.len();
+        tar[..len].copy_from_slice(name);
+        tar[len..100].fill(0);
+        tar[148..156].copy_from_slice(b"        ");
+        let sum: u32 = tar[..512].iter().map(|b| *b as u32).sum();
+        let chksum = format!("{sum:06o}\0 ");
+        tar[148..156].copy_from_slice(chksum.as_bytes());
+    }
+
+    /// Store hostile payload bytes as a well-formed archive (manifest
+    /// digest refreshed to vouch for them), so only the restore-level
+    /// guards — not digest pairing — can catch the attack.
+    fn store_hostile_payload(
+        store: &ArchiveStore,
+        tmp: &Path,
+        id: &str,
+        payload: &[u8],
+    ) -> (PathBuf, ArchiveReceipt) {
+        let seed = tmp.join(format!("seed-{id}"));
+        fs::write(&seed, "seed").unwrap();
+        let request = ArchiveRequest {
+            kind: "plugins".into(),
+            id: id.into(),
+            sources: vec![seed],
+            source: "test".into(),
+            meta: BTreeMap::new(),
+            encryption: Encryption::None,
+        };
+        let receipt = store.archive(&request, None).unwrap();
+        let dir = receipt.locator.dir(store.root()).unwrap();
+        fs::write(dir.join(PAYLOAD_FILE), payload).unwrap();
+        let manifest: ArchiveManifest = read_manifest(&dir).unwrap();
+        let manifest = ArchiveManifest {
+            payload_sha256: hex::encode(Sha256::digest(payload)),
+            payload_bytes: payload.len() as u64,
+            ..manifest
+        };
+        write_private_file(
+            &dir.join(MANIFEST_FILE),
+            manifest.canonical_json().unwrap().as_bytes(),
+        )
+        .unwrap();
+        (dir, receipt)
+    }
+
+    #[test]
+    fn a_symlink_entry_in_the_payload_is_refused_before_any_write() {
+        // A hostile payload plants a symlink and then a file "through"
+        // it: the file's own name is clean, so only the link-entry
+        // refusal keeps the write out of the pointed-to directory.
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
+
+        let mut builder = tar::Builder::new(Vec::new());
+        let mut link_header = tar::Header::new_gnu();
+        link_header.set_entry_type(tar::EntryType::Symlink);
+        link_header.set_size(0);
+        link_header.set_path("outside").unwrap();
+        link_header.set_link_name("/etc").unwrap();
+        // The checksum is computed over the finished header — set it last.
+        link_header.set_cksum();
+        builder.append(&link_header, std::io::empty()).unwrap();
+        let mut file_header = tar::Header::new_gnu();
+        file_header.set_entry_type(tar::EntryType::Regular);
+        file_header.set_size(4);
+        file_header.set_path("outside/evil.txt").unwrap();
+        file_header.set_cksum();
+        builder.append(&file_header, b"evil".as_slice()).unwrap();
+        let evil: Vec<u8> = builder.into_inner().unwrap();
+
+        let request = ArchiveRequest {
+            kind: "plugins".into(),
+            id: "symlink".into(),
             sources: vec![tmp.path().join("seed")],
             source: "test".into(),
             meta: BTreeMap::new(),
@@ -1178,8 +1510,6 @@ mod tests {
         let dir = receipt.locator.dir(store.root()).unwrap();
         let manifest: ArchiveManifest = read_manifest(&dir).unwrap();
         fs::write(dir.join(PAYLOAD_FILE), &evil).unwrap();
-        // The manifest digest now lies — refresh it so only the escape
-        // guard can fire.
         let digest = hex::encode(Sha256::digest(&evil));
         let manifest = ArchiveManifest {
             payload_sha256: digest,
@@ -1197,8 +1527,14 @@ mod tests {
             .restore(&receipt.locator, &target, &RestoreOptions::default(), None)
             .unwrap_err()
             .to_string();
-        assert!(err.contains("escapes the restore target"), "got {err}");
-        assert!(!target.join("etc").exists(), "nothing escaped");
+        assert!(
+            err.contains("symlink/hard link"),
+            "the link refusal must fire: {err}"
+        );
+        assert!(
+            !target.exists(),
+            "nothing was written on the refused restore"
+        );
     }
 
     #[test]
@@ -1364,6 +1700,14 @@ mod tests {
             store.archive(&request, None),
             Err(ArchiveError::Invalid(_))
         ));
+
+        // A source with no file name to store under (`/`, `.`, `..`)
+        // cannot be named inside a tar.
+        request.sources = vec![PathBuf::from("/")];
+        assert!(matches!(
+            store.archive(&request, None),
+            Err(ArchiveError::Invalid(_))
+        ));
     }
 
     #[test]
@@ -1372,6 +1716,132 @@ mod tests {
         let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
         assert!(matches!(
             store.inspect(&ArchiveLocator::latest("plugins", "ghost")),
+            Err(ArchiveError::NotFound { .. })
+        ));
+        assert!(store.list().unwrap().is_empty());
+    }
+
+    #[test]
+    fn locator_fields_rebuilt_from_external_input_cannot_traverse() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
+
+        let hostile_stamp = ArchiveLocator::at("plugins", "x", "../../escape");
+        assert!(matches!(
+            store.inspect(&hostile_stamp),
+            Err(ArchiveError::Invalid(_))
+        ));
+        assert!(matches!(
+            store.inspect(&ArchiveLocator::latest("../outside", "x")),
+            Err(ArchiveError::Invalid(_))
+        ));
+        assert!(matches!(
+            store.inspect(&ArchiveLocator::latest("plugins", "..")),
+            Err(ArchiveError::Invalid(_))
+        ));
+        // A stamp rebuilt from external input must not smuggle foreign
+        // characters through (the charset guard fires before any join).
+        let smuggled = ArchiveLocator::at("plugins", "x", "20261021T085618.12;");
+        assert!(matches!(
+            store.inspect(&smuggled),
+            Err(ArchiveError::Invalid(_))
+        ));
+
+        // purge must refuse to act outside the root.
+        let outside = tmp.path().join("precious");
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(outside.join("keep"), "x").unwrap();
+        let hostile = ArchiveLocator {
+            kind: "plugins".into(),
+            id: "x".into(),
+            stamp: Some("..".into()),
+        };
+        assert!(matches!(
+            store.purge(&hostile),
+            Err(ArchiveError::Invalid(_))
+        ));
+        assert!(
+            outside.join("keep").exists(),
+            "nothing outside the root was touched"
+        );
+    }
+
+    #[test]
+    fn concurrent_archives_of_one_id_claim_distinct_stamps() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = Arc::new(ArchiveStore::open(tmp.path().join("store")).unwrap());
+        let (request, _source) = sample_request(tmp.path(), "race");
+        let request = Arc::new(request);
+        let barrier = Arc::new(std::sync::Barrier::new(8));
+
+        let mut handles = Vec::new();
+        for _ in 0..8 {
+            let store = store.clone();
+            let request = request.clone();
+            let barrier = barrier.clone();
+            handles.push(std::thread::spawn(move || {
+                barrier.wait();
+                store.archive(&request, None)
+            }));
+        }
+        let mut stamps = Vec::new();
+        for handle in handles {
+            stamps.push(handle.join().unwrap().unwrap().locator.stamp.unwrap());
+        }
+        let unique: std::collections::BTreeSet<&String> = stamps.iter().collect();
+        assert_eq!(
+            unique.len(),
+            stamps.len(),
+            "same-millisecond writers must claim distinct stamps: {stamps:?}"
+        );
+
+        // Every archive independently verifies — no two writers ever
+        // shared a payload file.
+        for stamp in &stamps {
+            let report = store
+                .verify(
+                    &ArchiveLocator::at("plugins", "acme-race", stamp.clone()),
+                    None,
+                )
+                .unwrap();
+            assert!(report.payload_digest_ok);
+            assert_eq!(report.payload_decodes, Some(true));
+        }
+        assert_eq!(store.list().unwrap().len(), 8);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn a_failed_capture_leaves_no_partial_stamp_directory() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let tmp = tempfile::tempdir().unwrap();
+        let store = ArchiveStore::open(tmp.path().join("store")).unwrap();
+        let source = tmp.path().join("src-vanish");
+        fs::create_dir_all(&source).unwrap();
+        let unreadable = source.join("secret.txt");
+        fs::write(&unreadable, "s").unwrap();
+        fs::set_permissions(&unreadable, fs::Permissions::from_mode(0o000)).unwrap();
+
+        let request = ArchiveRequest {
+            kind: "plugins".into(),
+            id: "acme-vanish".into(),
+            sources: vec![source],
+            source: "test".into(),
+            meta: BTreeMap::new(),
+            encryption: Encryption::None,
+        };
+        let result = store.archive(&request, None);
+        fs::set_permissions(&unreadable, fs::Permissions::from_mode(0o644)).unwrap();
+        assert!(result.is_err(), "the unreadable file must fail the capture");
+
+        let base = store.root().join("plugins").join("acme-vanish");
+        let leftovers = fs::read_dir(&base)
+            .map(|entries| entries.count())
+            .unwrap_or(0);
+        assert_eq!(leftovers, 0, "no half-written stamp directory may survive");
+        assert!(matches!(
+            store.inspect(&ArchiveLocator::latest("plugins", "acme-vanish")),
             Err(ArchiveError::NotFound { .. })
         ));
         assert!(store.list().unwrap().is_empty());
