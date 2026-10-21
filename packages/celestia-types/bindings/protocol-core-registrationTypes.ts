@@ -15,7 +15,7 @@
  *
  * Invariant: `registered == true` implies `owner_account.is_some()` (a
  * binding always has an owning account). The [`RegistrationState::registered`]
- * constructor enforces it; direct struct construction bypasss it and takes
+ * constructor enforces it; direct struct construction bypasses it and takes
  * on the obligation.
  */
 export type RegistrationState = { 

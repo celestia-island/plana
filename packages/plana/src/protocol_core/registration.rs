@@ -45,7 +45,7 @@ use ts_rs::TS;
 ///
 /// Invariant: `registered == true` implies `owner_account.is_some()` (a
 /// binding always has an owning account). The [`RegistrationState::registered`]
-/// constructor enforces it; direct struct construction bypasss it and takes
+/// constructor enforces it; direct struct construction bypasses it and takes
 /// on the obligation.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "registrationTypes.ts")]
