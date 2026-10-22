@@ -11,6 +11,13 @@ pub enum StreamChunkKind {
     Text,
     Thinking,
     DeepThinking,
+    /// A prompt-change NOTICE chunk (user direction 2026-10-22): the
+    /// live-stream twin of `StreamSegment::PromptNotice`'s provenance row.
+    /// Carries the notice's SOURCE as the chunk text — never model prose,
+    /// never thinking. Unlike the segment-level arm (which is
+    /// caller-recorded into run records only), this kind exists precisely
+    /// to stream live.
+    Notice,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -229,6 +236,10 @@ impl StreamSegment {
             Self::Text { .. } => Some(StreamChunkKind::Text),
             Self::Thinking { .. } => Some(StreamChunkKind::Thinking),
             Self::DeepThinking { .. } => Some(StreamChunkKind::DeepThinking),
+            // PromptNotice reports NO chunk kind: `text_segments()` filters
+            // on this, and a (Notice, "") pair there would be noise for
+            // every kind-matching consumer. The live-stream emission maps
+            // the segment to StreamChunkKind::Notice itself.
             _ => None,
         }
     }
@@ -489,6 +500,55 @@ mod tests {
         assert_eq!(stream.segments().len(), 1);
         assert!(!stream.push_notice("", None, None));
         assert_eq!(stream.segments().len(), 1);
+    }
+
+    /// The BUILDER's live notice (user direction 2026-10-22): pushed the
+    /// moment a mid-run prompt change is observed, sealed with the stream,
+    /// and never visible on any text surface. A blank source is refused.
+    #[test]
+    fn test_builder_push_notice_streams_and_seals() -> Result<()> {
+        let mut builder = LlmStreamBuilder::new();
+        builder.push_chunk("answer", StreamChunkKind::Text);
+        assert!(builder.push_notice("soul, tools", Some("recomposed")));
+        assert!(
+            !builder.push_notice("  ", None),
+            "blank sources are refused"
+        );
+
+        let stream = builder.seal();
+        let segs = stream.segments();
+        // Order: the notice trails the text it follows (append semantics).
+        assert!(matches!(segs[0], StreamSegment::Text { .. }));
+        match &segs[1] {
+            StreamSegment::PromptNotice { source, detail, ts } => {
+                assert_eq!(source, "soul, tools");
+                assert_eq!(detail.as_deref(), Some("recomposed"));
+                assert!(ts.is_some(), "the live notice carries its wall clock");
+            }
+            other => panic!("expected PromptNotice, got {other:?}"),
+        }
+        // No text surface sees it, and it never reports a chunk kind.
+        assert_eq!(stream.raw_text(), "answer");
+        assert_eq!(segs[1].chunk_kind(), None);
+        assert!(segs[1].is_prompt_notice());
+        Ok(())
+    }
+
+    /// A Notice KIND handed to push_chunk is a warned no-op: the source
+    /// must not smear into the prose segments.
+    #[test]
+    fn test_push_chunk_rejects_the_notice_kind() -> Result<()> {
+        let mut builder = LlmStreamBuilder::new();
+        builder.push_chunk("prose", StreamChunkKind::Text);
+        builder.push_chunk("soul, tools", StreamChunkKind::Notice);
+        let stream = builder.seal();
+        assert_eq!(
+            stream.segments().len(),
+            1,
+            "the notice-kind chunk is dropped"
+        );
+        assert_eq!(stream.raw_text(), "prose");
+        Ok(())
     }
 
     /// The notice survives the wire round-trip (the run record column
