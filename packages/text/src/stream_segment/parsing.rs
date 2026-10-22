@@ -81,6 +81,11 @@ impl LlmStreamBuilder {
                     StreamSegment::Input { .. } => {
                         warn!("unexpected Input segment in chunk push");
                     }
+                    // Prompt notices are caller-recorded too (a
+                    // recomposition is not an LLM chunk).
+                    StreamSegment::PromptNotice { .. } => {
+                        warn!("unexpected PromptNotice segment in chunk push");
+                    }
                 }
                 return;
             }
@@ -278,6 +283,11 @@ impl LlmStreamBuilder {
                         .map(|m| m.content.len() + m.role.len())
                         .sum::<usize>();
                 }
+                // A notice's own text counts (it is payload the panel
+                // renders); the builder never produces one.
+                StreamSegment::PromptNotice { source, detail, .. } => {
+                    total += source.len() + detail.as_deref().map_or(0, str::len);
+                }
             }
         }
         total
@@ -294,6 +304,8 @@ impl LlmStreamBuilder {
                 // An Input segment always carries its messages' payload —
                 // a stream holding one is not empty.
                 StreamSegment::Input { .. } => false,
+                // A prompt notice is a recorded event, never emptiness.
+                StreamSegment::PromptNotice { .. } => false,
             })
     }
 

@@ -38,6 +38,37 @@ pub struct InputMessage {
     /// The layer's verbatim content (never truncated here; the run
     /// record's stream budget governs total size).
     pub content: String,
+    /// The layer's SOURCE label — which composed section this row is
+    /// ("env context", "core system doc", "actor", "soul", "tools", the
+    /// skill's own section name, …), so the panel can render provenance
+    /// instead of a bare "system" row (user direction 2026-10-22).
+    ///
+    /// `None` on legacy rows and on layers whose caller has no name:
+    /// consumers must render such rows without a source suffix — never
+    /// fabricate one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+}
+
+impl InputMessage {
+    /// A layer with no source label (the pre-label shape).
+    pub fn new(role: impl Into<String>, content: impl Into<String>) -> Self {
+        Self {
+            role: role.into(),
+            content: content.into(),
+            label: None,
+        }
+    }
+
+    /// Attach the layer's source label. A blank label is dropped (no
+    /// provenance is better than an empty suffix), matching the notice's
+    /// blank-source contract.
+    pub fn with_label(mut self, label: impl Into<String>) -> Self {
+        let label = label.into();
+        let trimmed = label.trim();
+        self.label = (!trimmed.is_empty()).then(|| trimmed.to_string());
+        self
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -53,6 +84,23 @@ pub enum StreamSegment {
         messages: Vec<InputMessage>,
         #[serde(default)]
         message_id: Option<Uuid>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        ts: Option<u64>,
+    },
+    /// A mid-run PROMPT NOTICE (user direction 2026-10-22): the composed
+    /// system stack changed between two LLM invocations of the same run,
+    /// so the panel draws ONE provenance line at the point of change
+    /// instead of letting the prompt silently drift. `source` names what
+    /// injected/changed (the changed layer labels, or the emitting
+    /// subsystem); `detail` optionally carries a human sentence.
+    ///
+    /// Recorded by the CALLER (scepter's pipeline — the only place that
+    /// knows a recomposition happened); never streamed live by
+    /// `LlmStreamBuilder`, hence never produced from an LLM chunk.
+    PromptNotice {
+        source: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        detail: Option<String>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         ts: Option<u64>,
     },
@@ -115,7 +163,9 @@ impl StreamSegment {
             Self::Text { text, .. }
             | Self::Thinking { text, .. }
             | Self::DeepThinking { text, .. } => text,
-            Self::Input { .. } => "",
+            // Input / PromptNotice are machine-side metadata, never
+            // message text: they must not bleed into raw_text()/Display.
+            Self::Input { .. } | Self::PromptNotice { .. } => "",
             Self::ToolCall { params, .. } => match params {
                 Value::String(s) => s,
                 _ => "",
@@ -133,7 +183,7 @@ impl StreamSegment {
             Self::Text { text, .. }
             | Self::Thinking { text, .. }
             | Self::DeepThinking { text, .. } => text.clone(),
-            Self::Input { .. } => String::new(),
+            Self::Input { .. } | Self::PromptNotice { .. } => String::new(),
             Self::ToolCall { params, .. } | Self::ToolResult { data: params, .. } => match params {
                 Value::String(s) => s.clone(),
                 Value::Null => String::new(),
@@ -146,6 +196,11 @@ impl StreamSegment {
         matches!(self, Self::ToolCall { .. } | Self::ToolResult { .. })
     }
 
+    /// A mid-run prompt-change notice (see [`Self::PromptNotice`]).
+    pub fn is_prompt_notice(&self) -> bool {
+        matches!(self, Self::PromptNotice { .. })
+    }
+
     /// The segment's wall-clock stamp, when the builder recorded one.
     /// `None` = legacy/hand-built segment — consumers must fall back to
     /// their own sequencing, never to a fake clock.
@@ -156,7 +211,8 @@ impl StreamSegment {
             | Self::Thinking { ts, .. }
             | Self::DeepThinking { ts, .. }
             | Self::ToolCall { ts, .. }
-            | Self::ToolResult { ts, .. } => *ts,
+            | Self::ToolResult { ts, .. }
+            | Self::PromptNotice { ts, .. } => *ts,
         }
     }
 
@@ -250,14 +306,8 @@ mod tests {
         let mut stream = stream.seal_coalesced();
 
         stream.prepend_input(vec![
-            InputMessage {
-                role: "system".to_string(),
-                content: "standing law + soul + skill".to_string(),
-            },
-            InputMessage {
-                role: "user".to_string(),
-                content: "ingest the workspace knowledge".to_string(),
-            },
+            InputMessage::new("system", "standing law + soul + skill").with_label("soul + skill"),
+            InputMessage::new("user", "ingest the workspace knowledge"),
         ]);
 
         // Leads the stream — the prompts precede the output they shaped.
@@ -300,11 +350,173 @@ mod tests {
     #[test]
     fn test_input_only_stream_is_not_empty() {
         let mut stream = LlmStream::empty();
-        stream.prepend_input(vec![InputMessage {
-            role: "system".to_string(),
-            content: "law".to_string(),
-        }]);
+        stream.prepend_input(vec![InputMessage::new("system", "law")]);
         assert!(!stream.is_empty());
+    }
+
+    /// The layer SOURCE label round-trips, and a legacy row (written
+    /// before the label field existed) deserializes to `None` — the wire
+    /// stays backward compatible, so an old run record never fabricates a
+    /// provenance it does not have.
+    #[test]
+    fn test_input_message_label_round_trips_and_legacy_rows_stay_labelless() -> Result<()> {
+        let labelled =
+            serde_json::to_value(InputMessage::new("system", "soul").with_label("soul"))?;
+        assert_eq!(labelled["label"], serde_json::json!("soul"));
+        let back: InputMessage = serde_json::from_value(labelled)?;
+        assert_eq!(back.label.as_deref(), Some("soul"));
+
+        // Legacy row: `{role, content}` only — no `label` key on the wire.
+        let legacy: InputMessage =
+            serde_json::from_value(serde_json::json!({ "role": "system", "content": "old" }))?;
+        assert_eq!(legacy.label, None);
+        // An unlabelled row serializes WITHOUT the key (skip_serializing_if).
+        let unlabelled = serde_json::to_value(InputMessage::new("user", "turn"))?;
+        assert!(unlabelled.get("label").is_none());
+        Ok(())
+    }
+
+    /// The mid-run prompt notice (user direction 2026-10-22): appended at
+    /// the TAIL (the change happened here, not at the run's head), kept
+    /// out of every text surface, and non-empty on its own.
+    #[test]
+    fn test_push_notice_appends_tail_and_stays_out_of_text() -> Result<()> {
+        let mut stream = LlmStream::empty();
+        stream.push_notice(
+            "soul, lessons",
+            Some("system prompt recomposed"),
+            Some(1_790_000_000_000),
+        );
+        assert!(
+            stream
+                .segments()
+                .last()
+                .is_some_and(|s| s.is_prompt_notice())
+        );
+        // A notice is an event, not message text: every text surface stays
+        // empty so no consumer mistakes it for output.
+        assert_eq!(stream.raw_text(), "");
+        assert_eq!(stream.display_text(), "");
+        assert_eq!(stream.thinking_text(), "");
+        assert!(!stream.is_empty());
+
+        // Tail position with existing output ahead of it.
+        let mut stream = LlmStream::from_plain_text("answer");
+        stream.push_notice("tools", None, None);
+        let segs = stream.segments();
+        assert_eq!(segs.len(), 2);
+        assert!(matches!(segs[0], StreamSegment::Text { .. }));
+        assert!(matches!(segs[1], StreamSegment::PromptNotice { .. }));
+        assert_eq!(segs[1].wall_ts(), None);
+        // The plain-text surface must stay empty too: plana_timeline feeds
+        // `seg.text()` into the body block list, so a leak here would
+        // render the provenance row as assistant prose (R1 M2b).
+        assert_eq!(segs[1].text(), "");
+        match &segs[1] {
+            StreamSegment::PromptNotice { source, detail, .. } => {
+                assert_eq!(source, "tools");
+                assert_eq!(*detail, None);
+            }
+            other => panic!("expected PromptNotice, got {other:?}"),
+        }
+        Ok(())
+    }
+
+    /// The notice's position contract: a notice that describes THIS
+    /// stream's prompt rides directly after the leading Input segment (the
+    /// output under it is what that prompt produced); without an Input it
+    /// leads the stream. A tail notice (the other slot) describes a change
+    /// observed after the output it did not shape.
+    #[test]
+    fn test_push_notice_after_input_rides_the_prompt_boundary() -> Result<()> {
+        // With a leading Input: [Input, Notice, output…].
+        let mut stream = LlmStream::empty();
+        stream.prepend_input(vec![InputMessage::new("system", "law")]);
+        stream.push_notice_after_input("soul", None, Some(1));
+        let segs = stream.segments();
+        assert_eq!(segs.len(), 2);
+        assert!(matches!(segs[0], StreamSegment::Input { .. }));
+        assert!(matches!(segs[1], StreamSegment::PromptNotice { .. }));
+        // The same call on a stream that ALREADY has output still places
+        // the notice at the prompt boundary, not after the output.
+        let mut stream = LlmStream::from_plain_text("answer");
+        stream.prepend_input(vec![InputMessage::new("system", "law")]);
+        stream.push_notice_after_input("tools", None, None);
+        let segs = stream.segments();
+        assert_eq!(segs.len(), 3);
+        assert!(matches!(segs[0], StreamSegment::Input { .. }));
+        assert!(matches!(segs[1], StreamSegment::PromptNotice { .. }));
+        assert!(matches!(segs[2], StreamSegment::Text { .. }));
+
+        // No leading Input: the notice leads the stream.
+        let mut stream = LlmStream::from_plain_text("answer");
+        stream.push_notice_after_input("env context", None, None);
+        let segs = stream.segments();
+        assert_eq!(segs.len(), 2);
+        assert!(matches!(segs[0], StreamSegment::PromptNotice { .. }));
+        assert!(matches!(segs[1], StreamSegment::Text { .. }));
+
+        // Same blank-source contract as the tail variant.
+        let mut stream = LlmStream::from_plain_text("answer");
+        assert!(!stream.push_notice_after_input("   ", None, None));
+        assert_eq!(stream.segments().len(), 1);
+        Ok(())
+    }
+
+    /// A blank detail is normalized away (an empty second line is noise),
+    /// and a blank source label never produces an empty provenance suffix.
+    #[test]
+    fn test_notice_detail_and_label_blanks_are_normalized() -> Result<()> {
+        let mut stream = LlmStream::from_plain_text("answer");
+        stream.push_notice("tools", Some("   "), None);
+        match stream.segments().last() {
+            Some(StreamSegment::PromptNotice { detail, .. }) => assert_eq!(*detail, None),
+            other => panic!("expected PromptNotice, got {other:?}"),
+        }
+        let labelled = InputMessage::new("system", "x").with_label("  ");
+        assert_eq!(labelled.label, None, "a blank label must not survive");
+        let labelled = InputMessage::new("system", "x").with_label("  soul  ");
+        assert_eq!(labelled.label.as_deref(), Some("soul"));
+        Ok(())
+    }
+
+    /// An anonymous notice is a call-site bug: the row exists ONLY to name
+    /// the origin, so a blank source is dropped rather than recorded.
+    #[test]
+    fn test_push_notice_rejects_blank_source() {
+        let mut stream = LlmStream::from_plain_text("answer");
+        assert!(!stream.push_notice("   ", Some("detail"), None));
+        assert_eq!(stream.segments().len(), 1);
+        assert!(!stream.push_notice("", None, None));
+        assert_eq!(stream.segments().len(), 1);
+    }
+
+    /// The notice survives the wire round-trip (the run record column
+    /// holds this shape and the webui adapter switches on the tag).
+    #[test]
+    fn test_prompt_notice_wire_round_trip() -> Result<()> {
+        let mut stream = LlmStream::from_plain_text("answer");
+        stream.push_notice(
+            "env context",
+            Some("language changed"),
+            Some(1_790_000_000_123),
+        );
+        let value = serde_json::to_value(&stream)?;
+        let back: LlmStream = serde_json::from_value(value)?;
+        let last = back.segments().last().expect("notice kept");
+        assert!(last.is_prompt_notice());
+        assert_eq!(last.wall_ts(), Some(1_790_000_000_123));
+        match last {
+            StreamSegment::PromptNotice { source, detail, .. } => {
+                assert_eq!(source, "env context");
+                assert_eq!(detail.as_deref(), Some("language changed"));
+            }
+            other => panic!("expected PromptNotice, got {other:?}"),
+        }
+        // Pin the exact wire tag the webui adapter switches on.
+        let raw = serde_json::to_string(&stream)?;
+        assert!(raw.contains("\"PromptNotice\""), "wire tag drifted: {raw}");
+        Ok(())
     }
 
     #[test]
