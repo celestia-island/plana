@@ -9,6 +9,22 @@ pub struct LlmStream {
     pub(crate) segments: Vec<StreamSegment>,
 }
 
+/// Trim a notice source; `None` when it carries no name at all (the row
+/// exists only to name an origin, so an anonymous one is refused).
+fn normalise_source(source: &str) -> Option<String> {
+    let trimmed = source.trim();
+    (!trimmed.is_empty()).then(|| trimmed.to_string())
+}
+
+/// Trim a notice detail; `None` when blank (an empty second line is
+/// noise, not information).
+fn normalise_detail(detail: Option<&str>) -> Option<String> {
+    detail
+        .map(str::trim)
+        .filter(|d| !d.is_empty())
+        .map(str::to_string)
+}
+
 impl LlmStream {
     pub fn empty() -> Self {
         Self {
@@ -35,6 +51,62 @@ impl LlmStream {
                 ts: None,
             },
         );
+    }
+
+    /// Append a PROMPT NOTICE at the stream's tail — the position for a
+    /// change observed AFTER the output it did not shape (a retry's
+    /// recomposition, an operator edit mid-settle).
+    ///
+    /// Use [`Self::push_notice_after_input`] instead when the notice
+    /// describes THIS stream's own prompt: there the change took effect
+    /// BEFORE the stream's output, and the tail slot would read as if the
+    /// output preceded the change.
+    ///
+    /// Returns whether the notice was recorded: a blank `source` is a bug
+    /// at the call site (the row exists only to name the origin), so it is
+    /// dropped rather than recorded as an anonymous notice.
+    pub fn push_notice(&mut self, source: &str, detail: Option<&str>, ts: Option<u64>) -> bool {
+        let Some(source) = normalise_source(source) else {
+            return false;
+        };
+        self.segments.push(StreamSegment::PromptNotice {
+            source,
+            detail: normalise_detail(detail),
+            ts,
+        });
+        true
+    }
+
+    /// Append a PROMPT NOTICE directly AFTER the leading `Input` segment —
+    /// the position for a notice that describes THIS stream's prompt: the
+    /// rows under it are the output that prompt produced, so the
+    /// provenance line leads them instead of trailing them. Without a
+    /// leading `Input` segment the notice leads the stream (index 0).
+    ///
+    /// Same blank-source contract as [`Self::push_notice`].
+    pub fn push_notice_after_input(
+        &mut self,
+        source: &str,
+        detail: Option<&str>,
+        ts: Option<u64>,
+    ) -> bool {
+        let Some(source) = normalise_source(source) else {
+            return false;
+        };
+        let pos = usize::from(
+            self.segments
+                .first()
+                .is_some_and(|seg| matches!(seg, StreamSegment::Input { .. })),
+        );
+        self.segments.insert(
+            pos,
+            StreamSegment::PromptNotice {
+                source,
+                detail: normalise_detail(detail),
+                ts,
+            },
+        );
+        true
     }
 
     pub fn from_plain_text(text: &str) -> Self {
@@ -164,6 +236,10 @@ impl LlmStream {
                 // An Input segment always carries its messages' payload —
                 // a stream holding one is not empty.
                 StreamSegment::Input { .. } => false,
+                // A prompt notice is a recorded event of its own: a
+                // stream holding only the notice is still an event the
+                // panel must render, never "no output".
+                StreamSegment::PromptNotice { .. } => false,
             })
     }
 
