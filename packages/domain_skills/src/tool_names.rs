@@ -345,6 +345,11 @@ pub mod polemos {
     /// Run a command on the host. Its writes are what the prompt-layer feature
     /// flag tracks (see `packages/prompt/src/features.rs`).
     pub const HOST_COMMAND_EXEC: &str = "host_command_exec";
+    /// Push one local plugin resource (binary-safe, chunked, digest
+    /// verified on the node) into the designated evernight node's
+    /// plugins directory — the L2 install lane's resource mover
+    /// (feature-gated `plugin-push` on the node side).
+    pub const PLUGIN_RESOURCE_PUSH: &str = "plugin_resource_push";
 }
 
 /// HapLotes — communication gateway (Layer 1).
