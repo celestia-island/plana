@@ -141,7 +141,7 @@ pub mod agent {
     /// `agent_id`, optional `agent_number` badge, `content`, `timestamp` and `parent_id`.
     pub const AGENT_RESPONSE: &str = "AgentResponse";
     /// `Sync.AgentStreamingChunk` - server -> client; one incremental `chunk` for `agent_id` with
-    /// `is_done` and an optional `chunk_kind` (Text / Thinking / DeepThinking).
+    /// `is_done` and an optional `chunk_kind` (Text / Thinking / DeepThinking / Notice).
     pub const AGENT_STREAMING_CHUNK: &str = "AgentStreamingChunk";
     /// `Sync.AgentReport` - server -> client; the report card: `report_type`, `title`, `content`,
     /// `preset_options` (with selection mode and custom-reply flags), plus routing, stream, usage

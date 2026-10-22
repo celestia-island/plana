@@ -279,6 +279,12 @@ pub enum StreamChunkKind {
     Text,
     Thinking,
     DeepThinking,
+    /// The prompt-change notice chunk (2026-10-22): unlike the
+    /// caller-recorded SEGMENT arms the wire mirror of `StreamSegment`
+    /// rejects, this kind exists precisely to stream live — the chunk
+    /// payload is the notice's SOURCE, and consumers must render it as a
+    /// provenance row, never as model prose.
+    Notice,
 }
 
 /// The LIVE-STREAM wire mirror of `plana_text::StreamSegment` — the shape
@@ -1122,6 +1128,20 @@ mod tests {
     #[test]
     fn stream_chunk_kind_default_is_text() {
         assert_eq!(StreamChunkKind::default(), StreamChunkKind::Text);
+    }
+
+    /// The notice chunk kind is part of the LIVE wire: it must serialize
+    /// as the exact tag consumers dispatch on, and an old consumer that
+    /// bins unknown kinds as text would smear the source into prose — the
+    /// paired chest release dispatches it explicitly.
+    #[test]
+    fn stream_chunk_kind_notice_serializes_on_the_live_wire() {
+        assert_eq!(
+            serde_json::to_string(&StreamChunkKind::Notice).unwrap(),
+            r#""Notice""#
+        );
+        let back: StreamChunkKind = serde_json::from_str(r#""Notice""#).unwrap();
+        assert_eq!(back, StreamChunkKind::Notice);
     }
 
     // ── Constants ──────────────────────────────────────────────────

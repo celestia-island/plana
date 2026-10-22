@@ -38,7 +38,7 @@ export type RouteInfo = { direction: string, target: string, target_token?: stri
 
 export type SkillStage = { "Started": string } | { "Done": string } | { "Complete": string } | { "Failed": string } | { "ToolCall": string } | { "Retrying": [string, number, number, RetryReason | null] } | { "TryingModel": [string, string] } | { "ModelFailed": [string, string, string] } | { "Nudging": string };
 
-export type StreamChunkKind = "Text" | "Thinking" | "DeepThinking";
+export type StreamChunkKind = "Text" | "Thinking" | "DeepThinking" | "Notice";
 
 /**
  * The LIVE-STREAM wire mirror of `plana_text::StreamSegment` — the shape

@@ -107,8 +107,38 @@ impl LlmStreamBuilder {
                 message_id,
                 ts,
             },
+            // A notice is not a text chunk: its payload rides a
+            // PromptNotice SEGMENT via [`Self::push_notice`]. Pushing one
+            // here would smear the source into prose.
+            StreamChunkKind::Notice => {
+                warn!("push_chunk received a Notice kind; use push_notice");
+                return;
+            }
         };
         self.segments.push(seg);
+    }
+
+    /// Append a PROMPT NOTICE to the LIVE stream (user direction
+    /// 2026-10-22): the mid-run prompt-change provenance row, pushed the
+    /// moment the change is observed — while the chain is still executing,
+    /// so connected panels see it in real time (the run-record copy is
+    /// written separately onto the sealed stream at settle). Same
+    /// blank-source contract as `LlmStream::push_notice`.
+    pub fn push_notice(&mut self, source: &str, detail: Option<&str>) -> bool {
+        let source = source.trim();
+        if source.is_empty() {
+            return false;
+        }
+        let detail = detail
+            .map(str::trim)
+            .filter(|d| !d.is_empty())
+            .map(str::to_string);
+        self.segments.push(StreamSegment::PromptNotice {
+            source: source.to_string(),
+            detail,
+            ts: Some(Self::now_ms()),
+        });
+        true
     }
 
     pub fn push_tool_call(
