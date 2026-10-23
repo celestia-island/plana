@@ -350,6 +350,14 @@ pub mod polemos {
     /// plugins directory — the L2 install lane's resource mover
     /// (feature-gated `plugin-push` on the node side).
     pub const PLUGIN_RESOURCE_PUSH: &str = "plugin_resource_push";
+    /// Register one MCP server entry in the designated evernight
+    /// node's `mcpTools` registry — the L2 install lane's stdio-only
+    /// registration step (fail-closed: no remote transports, the
+    /// command must live inside the pushed plugin directory).
+    pub const MCP_ENTRY_UPSERT: &str = "mcp_entry_upsert";
+    /// Probe one MCP registry entry on the node (initialize +
+    /// tools/list) — the install lane's post-install verification.
+    pub const MCP_ENTRY_PROBE: &str = "mcp_entry_probe";
 }
 
 /// HapLotes — communication gateway (Layer 1).
