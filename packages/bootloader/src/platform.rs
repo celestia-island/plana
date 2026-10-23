@@ -242,6 +242,23 @@ impl ServiceInstaller for SystemdInstaller {
 #[cfg(target_os = "windows")]
 struct WindowsScmInstaller;
 
+/// Suppress the console window for sc.exe children (dogfood 2026-10-23:
+/// a GUI-subsystem desktop spawning `sc.exe create/start/delete/query`
+/// flashes one console window per call — the desktop's resident-service
+/// panel produced a burst of them at startup). sc.exe output is piped,
+/// so CREATE_NO_WINDOW costs nothing and the service semantics are
+/// unchanged. cfg-gated: the flag does not exist off Windows.
+#[cfg(target_os = "windows")]
+fn silent(cmd: &mut tokio::process::Command) -> &mut tokio::process::Command {
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    cmd.creation_flags(CREATE_NO_WINDOW)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn silent(cmd: &mut tokio::process::Command) -> &mut tokio::process::Command {
+    cmd
+}
+
 #[cfg(target_os = "windows")]
 #[async_trait]
 impl ServiceInstaller for WindowsScmInstaller {
@@ -268,7 +285,7 @@ impl ServiceInstaller for WindowsScmInstaller {
         } else {
             "demand"
         };
-        let out = tokio::process::Command::new("sc")
+        let out = silent(&mut tokio::process::Command::new("sc"))
             .args([
                 "create",
                 &spec.name,
@@ -287,7 +304,7 @@ impl ServiceInstaller for WindowsScmInstaller {
             let existing = String::from_utf8_lossy(&out.stderr);
             if existing.contains("already exists") || existing.contains("1073") {
                 info!("service already exists, reconfiguring");
-                let _ = tokio::process::Command::new("sc")
+                let _ = silent(&mut tokio::process::Command::new("sc"))
                     .args(["config", &spec.name, "binPath=", &bin_arg, "start=", start])
                     .output()
                     .await;
@@ -304,11 +321,11 @@ impl ServiceInstaller for WindowsScmInstaller {
     }
 
     async fn uninstall(&self, name: &str) -> Result<()> {
-        let _ = tokio::process::Command::new("sc")
+        let _ = silent(&mut tokio::process::Command::new("sc"))
             .args(["stop", name])
             .output()
             .await;
-        let out = tokio::process::Command::new("sc")
+        let out = silent(&mut tokio::process::Command::new("sc"))
             .args(["delete", name])
             .output()
             .await
@@ -324,7 +341,7 @@ impl ServiceInstaller for WindowsScmInstaller {
     }
 
     async fn status(&self, name: &str) -> Result<ServiceStatus> {
-        let out = tokio::process::Command::new("sc")
+        let out = silent(&mut tokio::process::Command::new("sc"))
             .args(["query", name])
             .output()
             .await;
