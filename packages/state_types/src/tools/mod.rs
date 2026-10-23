@@ -835,7 +835,7 @@ mod edge_location_tests {
     fn edge_is_a_first_class_location() {
         let edge = ToolLocation::Edge;
         let text = serde_json::to_string(&edge).unwrap();
-        assert_eq!(text, "\"Edge\"");
+        assert_eq!(text, "\"edge\"");
         let back: ToolLocation = serde_json::from_str(&text).unwrap();
         assert!(matches!(back, ToolLocation::Edge));
         assert!(matches!(ToolLocation::default(), ToolLocation::Scepter));
