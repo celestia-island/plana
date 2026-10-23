@@ -37,6 +37,10 @@ pub enum ToolLocation {
     /// Cosmos microkernel (its own nested container runtime): the agent-agnostic
     /// tool surface that other tools are invoked through.
     Cosmos,
+    /// An evernight edge node: the tool executes in a node-side MCP
+    /// server and reaches scepter over the L2 MCP bridge (the L2
+    /// plugin platform's execution site for plugin-carried tools).
+    Edge,
 }
 
 /// Skills reuse the tool location enum, so a skill declares its host with the
@@ -820,5 +824,20 @@ impl PreserveState {
     pub fn add_decision(mut self, decision: &str) -> Self {
         self.critical_decisions.push(decision.to_string());
         self
+    }
+}
+
+#[cfg(test)]
+mod edge_location_tests {
+    use super::ToolLocation;
+
+    #[test]
+    fn edge_is_a_first_class_location() {
+        let edge = ToolLocation::Edge;
+        let text = serde_json::to_string(&edge).unwrap();
+        assert_eq!(text, "\"edge\"");
+        let back: ToolLocation = serde_json::from_str(&text).unwrap();
+        assert!(matches!(back, ToolLocation::Edge));
+        assert!(matches!(ToolLocation::default(), ToolLocation::Scepter));
     }
 }

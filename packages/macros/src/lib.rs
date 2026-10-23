@@ -1067,6 +1067,7 @@ fn amm_location_expr(loc: &syn::Ident) -> proc_macro2::TokenStream {
     match s.as_str() {
         "Cosmos" => quote! { plana_state_sync::ToolLocation::Cosmos },
         "Scepter" => quote! { plana_state_sync::ToolLocation::Scepter },
+        "Edge" => quote! { plana_state_sync::ToolLocation::Edge },
         _ => quote! { #loc },
     }
 }
