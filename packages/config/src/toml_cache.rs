@@ -18,13 +18,18 @@ use tracing::info;
 /// coarse-clock (jiffy-aligned), so a second write inside the same
 /// tick as the first keeps the mtime bit-for-bit, and an mtime-only
 /// cache would keep serving the stale bytes (the scepter #625 flake).
-/// A stamp therefore also carries the file size and, when the bytes
-/// were readable, their SHA-256 digest — same mtime AND same size AND
-/// same digest is the only combination trusted as "unchanged".
+/// A stamp therefore also carries the bytes' SHA-256 digest — same
+/// mtime AND same digest is the only combination trusted as
+/// "unchanged".
+///
+/// Size is deliberately NOT a decision key (PR #475 R1 ruling):
+/// under SHA-256 collision resistance, digest equality already
+/// implies byte equality and therefore size equality — a size
+/// comparison can never flip a decision, and the digest read happens
+/// unconditionally anyway, so a size pre-filter would save no I/O.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct FileStamp {
     mtime: SystemTime,
-    size: u64,
     /// `None` when the bytes could not be read at stamp time; such a
     /// stamp never proves "unchanged" (reload falls through instead).
     digest: Option<[u8; 32]>,
@@ -36,21 +41,18 @@ impl FileStamp {
     fn of(path: &Path) -> Option<Self> {
         let meta = std::fs::metadata(path).ok()?;
         let mtime = meta.modified().ok()?;
-        let size = meta.len();
         let digest = std::fs::read(path).ok().map(|b| Sha256::digest(&b).into());
-        Some(Self {
-            mtime,
-            size,
-            digest,
-        })
+        Some(Self { mtime, digest })
     }
 
     /// Whether `self` and `other` describe provably identical bytes.
     /// Equal mtime is necessary but never sufficient (coarse clocks);
-    /// size and digest must both match, and both must be known.
+    /// the digest must additionally match — and must be KNOWN on both
+    /// sides: any `None` digest is treated as "changed", because the
+    /// only thing a missing hash can prove is that we cannot prove
+    /// anything (correctness over cleverness).
     fn proves_unchanged(&self, other: &Self) -> bool {
         self.mtime == other.mtime
-            && self.size == other.size
             && matches!((self.digest, other.digest), (Some(a), Some(b)) if a == b)
     }
 }
@@ -318,6 +320,64 @@ mod tests {
         assert_eq!(
             cache.get_cached(&key).context("cached after move")?.value,
             9
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn stamp_comparison_digest_semantics() {
+        // Unit-level pin of the comparison's three states (the stamp
+        // is module-private, so its semantics are tested in-module).
+        let t = SystemTime::UNIX_EPOCH;
+        let some = |b: u8| FileStamp {
+            mtime: t,
+            digest: Some([b; 32]),
+        };
+        let none = FileStamp {
+            mtime: t,
+            digest: None,
+        };
+
+        // Positive controls: known equal digests prove unchanged;
+        // known different digests (or mtimes) do not.
+        assert!(some(1).proves_unchanged(&some(1)));
+        assert!(!some(1).proves_unchanged(&some(2)));
+        assert!(!some(1).proves_unchanged(&FileStamp {
+            mtime: t + std::time::Duration::from_secs(1),
+            digest: Some([1; 32]),
+        }));
+
+        // M-A: a digest that is None on EITHER side can never prove
+        // "unchanged" — including None on both sides. A missing hash
+        // only proves that we cannot prove anything.
+        assert!(!some(1).proves_unchanged(&none), "current-side None");
+        assert!(!none.proves_unchanged(&some(1)), "cached-side None");
+        assert!(
+            !none.proves_unchanged(&none.clone()),
+            "None == None must still count as changed"
+        );
+    }
+
+    #[test]
+    fn reload_falls_through_when_cached_stamp_lacks_a_digest() -> Result<()> {
+        // API-level M-A pin: a cached stamp whose digest went missing
+        // (unreadable bytes at stamp time) forces a reload even when
+        // the file is byte-identical under the same mtime.
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("test.toml");
+        std::fs::write(&path, b"name = \"aa\"\nvalue = 1\n")?;
+
+        let cache: TomlConfigCache<String, TestConfig> = TomlConfigCache::new();
+        let key = "test".to_string();
+        assert!(cache.reload_simple(&key, &path)?);
+
+        // Sabotage the cached stamp the way an unreadable-at-stamp-time
+        // file would have left it (module tests reach the private map).
+        cache.stamps.write().get_mut(&key).unwrap().digest = None;
+
+        assert!(
+            cache.reload_simple(&key, &path)?,
+            "a cached stamp without a digest must not skip the reload"
         );
         Ok(())
     }
