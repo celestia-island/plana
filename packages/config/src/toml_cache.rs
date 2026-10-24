@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, anyhow};
 use parking_lot::RwLock;
 use serde::de::DeserializeOwned;
+use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     hash::Hash,
@@ -11,13 +12,56 @@ use std::{
 
 use tracing::info;
 
+/// The freshness stamp recorded for one cached config file.
+///
+/// mtime ALONE is not a change detector: Linux timestamps are
+/// coarse-clock (jiffy-aligned), so a second write inside the same
+/// tick as the first keeps the mtime bit-for-bit, and an mtime-only
+/// cache would keep serving the stale bytes (the scepter #625 flake).
+/// A stamp therefore also carries the file size and, when the bytes
+/// were readable, their SHA-256 digest — same mtime AND same size AND
+/// same digest is the only combination trusted as "unchanged".
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct FileStamp {
+    mtime: SystemTime,
+    size: u64,
+    /// `None` when the bytes could not be read at stamp time; such a
+    /// stamp never proves "unchanged" (reload falls through instead).
+    digest: Option<[u8; 32]>,
+}
+
+impl FileStamp {
+    /// Stat + hash one config file. Config files are small, so the
+    /// read+hash cost is acceptable on every reload probe.
+    fn of(path: &Path) -> Option<Self> {
+        let meta = std::fs::metadata(path).ok()?;
+        let mtime = meta.modified().ok()?;
+        let size = meta.len();
+        let digest = std::fs::read(path).ok().map(|b| Sha256::digest(&b).into());
+        Some(Self {
+            mtime,
+            size,
+            digest,
+        })
+    }
+
+    /// Whether `self` and `other` describe provably identical bytes.
+    /// Equal mtime is necessary but never sufficient (coarse clocks);
+    /// size and digest must both match, and both must be known.
+    fn proves_unchanged(&self, other: &Self) -> bool {
+        self.mtime == other.mtime
+            && self.size == other.size
+            && matches!((self.digest, other.digest), (Some(a), Some(b)) if a == b)
+    }
+}
+
 pub struct TomlConfigCache<K, T>
 where
     K: Hash + Eq + Clone,
     T: Clone,
 {
     configs: Arc<RwLock<HashMap<K, T>>>,
-    mtimes: Arc<RwLock<HashMap<K, SystemTime>>>,
+    stamps: Arc<RwLock<HashMap<K, FileStamp>>>,
 }
 
 impl<K, T> TomlConfigCache<K, T>
@@ -28,7 +72,7 @@ where
     pub fn new() -> Self {
         Self {
             configs: Arc::new(RwLock::new(HashMap::new())),
-            mtimes: Arc::new(RwLock::new(HashMap::new())),
+            stamps: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -52,10 +96,10 @@ where
     }
 
     pub fn insert(&self, key: K, config: T, path: &Path) {
-        let mtime = std::fs::metadata(path).and_then(|m| m.modified()).ok();
+        let stamp = FileStamp::of(path);
         self.configs.write().insert(key.clone(), config);
-        if let Some(mt) = mtime {
-            self.mtimes.write().insert(key, mt);
+        if let Some(stamp) = stamp {
+            self.stamps.write().insert(key, stamp);
         }
     }
 
@@ -64,13 +108,16 @@ where
         F: FnOnce(&T) -> Result<(), E>,
         E: std::fmt::Display,
     {
-        let current_modified = std::fs::metadata(path).ok().and_then(|m| m.modified().ok());
+        let current = FileStamp::of(path);
 
+        // Skip only when the stamps PROVE the bytes are unchanged.
+        // mtime equality alone used to short-circuit here; under a
+        // coarse clock a same-tick rewrite inherited the old mtime and
+        // the fresh bytes were never read (scepter #625).
         {
-            let mtimes = self.mtimes.read();
-            if let Some(cached_mtime) = mtimes.get(key)
-                && let Some(current) = current_modified
-                && &current == cached_mtime
+            let stamps = self.stamps.read();
+            if let (Some(cached), Some(now)) = (stamps.get(key), &current)
+                && cached.proves_unchanged(now)
             {
                 return Ok(false);
             }
@@ -79,8 +126,8 @@ where
         if let Some(config) = self.load_from_file(path)? {
             validate(&config).map_err(|e| anyhow!("Validation failed: {e}"))?;
             self.configs.write().insert(key.clone(), config);
-            if let Some(modified) = current_modified {
-                self.mtimes.write().insert(key.clone(), modified);
+            if let Some(stamp) = current {
+                self.stamps.write().insert(key.clone(), stamp);
             }
             info!("Reloaded config for {:?}", key);
             Ok(true)
@@ -95,12 +142,12 @@ where
 
     pub fn invalidate(&self, key: &K) {
         self.configs.write().remove(key);
-        self.mtimes.write().remove(key);
+        self.stamps.write().remove(key);
     }
 
     pub fn invalidate_all(&self) {
         self.configs.write().clear();
-        self.mtimes.write().clear();
+        self.stamps.write().clear();
     }
 
     pub fn cached_keys(&self) -> Vec<K> {
@@ -180,6 +227,98 @@ mod tests {
 
         assert!(cache.reload_simple(&key, &path)?);
         assert!(!cache.reload_simple(&key, &path)?);
+        Ok(())
+    }
+
+    /// Forces `path` to carry exactly `mtime` (std `File::set_modified`)
+    /// — the deterministic way to reproduce coarse-clock same-tick
+    /// writes without sleeping.
+    fn force_mtime(path: &Path, mtime: std::time::SystemTime) -> Result<()> {
+        let file = std::fs::OpenOptions::new().write(true).open(path)?;
+        file.set_modified(mtime)?;
+        Ok(())
+    }
+
+    #[test]
+    fn reload_reloads_when_mtime_and_size_match_but_content_differs() -> Result<()> {
+        // The original weakness, pinned: a second write inside the
+        // same clock tick keeps the mtime, and a size-preserving edit
+        // defeats a size check too — only the content digest catches
+        // it. The cache must reload and serve the new bytes.
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("test.toml");
+        std::fs::write(&path, b"name = \"aa\"\nvalue = 1\n")?;
+
+        let cache: TomlConfigCache<String, TestConfig> = TomlConfigCache::new();
+        let key = "test".to_string();
+        assert!(cache.reload_simple(&key, &path)?);
+        assert_eq!(
+            cache.get_cached(&key).context("cached after 1st")?.name,
+            "aa"
+        );
+
+        let cached_mtime = std::fs::metadata(&path)?.modified()?;
+        std::fs::write(&path, b"name = \"bb\"\nvalue = 1\n")?; // same length
+        force_mtime(&path, cached_mtime)?;
+
+        assert!(
+            cache.reload_simple(&key, &path)?,
+            "same mtime + same size but different content must reload"
+        );
+        assert_eq!(
+            cache.get_cached(&key).context("cached after 2nd")?.name,
+            "bb",
+            "the cache must serve the rewritten bytes, not the stale ones"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn reload_skips_when_mtime_and_content_unchanged() -> Result<()> {
+        // Rewriting the IDENTICAL bytes and forcing the SAME mtime:
+        // the digest proves unchanged, so the reload is skipped.
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("test.toml");
+        std::fs::write(&path, b"name = \"aa\"\nvalue = 1\n")?;
+
+        let cache: TomlConfigCache<String, TestConfig> = TomlConfigCache::new();
+        let key = "test".to_string();
+        assert!(cache.reload_simple(&key, &path)?);
+
+        let cached_mtime = std::fs::metadata(&path)?.modified()?;
+        std::fs::write(&path, b"name = \"aa\"\nvalue = 1\n")?;
+        force_mtime(&path, cached_mtime)?;
+
+        assert!(
+            !cache.reload_simple(&key, &path)?,
+            "identical bytes under the same mtime must stay skipped"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn reload_reloads_when_mtime_changes() -> Result<()> {
+        // mtime moved → reload, regardless of what the digest would say.
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("test.toml");
+        std::fs::write(&path, b"name = \"aa\"\nvalue = 1\n")?;
+
+        let cache: TomlConfigCache<String, TestConfig> = TomlConfigCache::new();
+        let key = "test".to_string();
+        assert!(cache.reload_simple(&key, &path)?);
+
+        let cached_mtime = std::fs::metadata(&path)?.modified()?;
+        std::fs::write(&path, b"name = \"cc\"\nvalue = 9\n")?;
+        force_mtime(&path, cached_mtime + std::time::Duration::from_secs(3600))?;
+
+        assert!(
+            cache.reload_simple(&key, &path)?,
+            "a moved mtime must always reload"
+        );
+        assert_eq!(
+            cache.get_cached(&key).context("cached after move")?.value,
+            9
+        );
         Ok(())
     }
 
