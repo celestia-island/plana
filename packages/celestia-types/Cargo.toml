@@ -24,17 +24,18 @@ workspace = true
 default = []
 
 [dependencies]
-# yuuka stays on the git master line (0.10.x) on purpose: this crate uses
-# `yuuka::patch` / `merge` / `diff` / `path` / `viewport`, none of which exist
-# in the published 0.6 line (checked against the 0.6.2 crate: only
-# lib/template/tools/utils ship there). kirino (Layer 0) still consumes yuuka
-# 0.6.x from crates.io, so a graph holding both kirino and plana carries two
-# yuuka lines (0.6.2 + 0.10.1, measured in shittim-chest's lock 2026-10-24).
-# Fixing that needs one of two upstream moves - kirino moves to the 0.10 line,
-# or the five protocol APIs are backported to 0.6 - so it is recorded as a
-# follow-up ("yuuka single line", 2026-10-24 registry-first wave) instead of
-# being forced here. Do not "simplify" this to ^0.6: the crate will not build.
-yuuka = { git = "https://github.com/celestia-island/yuuka.git", branch = "master" }
+# yuuka is consumed from crates.io on the 0.10 line. This crate uses
+# `yuuka::patch` / `merge` / `diff` / `path` / `viewport`; the published 0.6
+# line ships only lib/template/tools/utils, so 0.6 is not an option, while
+# 0.10.0 (crates.io) carries every API used here. Registry consumption also
+# keeps this crate publishable: a git dependency without a version requirement
+# fails `cargo publish` ("all dependencies must have a version requirement").
+#
+# The family still carries two yuuka lines because kirino (Layer 0) is on 0.6,
+# so a graph holding kirino + plana resolves both 0.6.x and 0.10.x. Unifying
+# them needs an upstream move in either direction (kirino to 0.10, or a 0.6
+# backport) and stays registered as the "yuuka single line" follow-up.
+yuuka = { version = "^0.10" }
 
 kirino = { workspace = true }
 plana = { workspace = true }
