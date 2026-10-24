@@ -25,7 +25,12 @@ pub fn set_cluster_prefix(prefix: &str) {
     };
 }
 
-fn server_container_name() -> String {
+/// The docker container name the CLI's server probe looks up:
+/// `<cluster-prefix>scepter`, defaulting to `e-scepter`. Public since
+/// 2026-10-24 so downstream tests can pin the prefix wiring directly
+/// (entelecheia #618 hit a dead angle exactly here: the CLI never fed
+/// `set_cluster_prefix`, and the private name made the gap untestable).
+pub fn server_container_name() -> String {
     let guard = CLUSTER_PREFIX.lock().unwrap_or_else(|e| e.into_inner());
     match guard.as_deref() {
         Some(prefix) => format!("{}{}", prefix, SERVER_CONTAINER_SUFFIX),
@@ -369,5 +374,33 @@ impl ServerManager {
         }
 
         result
+    }
+}
+
+#[cfg(test)]
+mod prefix_tests {
+    use super::*;
+
+    #[test]
+    fn default_prefix_names_the_stock_container() {
+        assert_eq!(server_container_name(), "e-scepter");
+    }
+
+    #[test]
+    fn set_cluster_prefix_drives_the_probe_name() {
+        // Serialize: CLUSTER_PREFIX is a process-global static.
+        let guard = std::sync::Mutex::new(());
+        let _g = guard.lock().unwrap_or_else(|e| e.into_inner());
+        set_cluster_prefix("e-001-");
+        assert_eq!(server_container_name(), "e-001-scepter");
+        set_cluster_prefix("");
+        assert_eq!(
+            server_container_name(),
+            "e-scepter",
+            "an empty prefix must read as unset (None arm), matching \
+             server_manager::set_cluster_prefix's contract"
+        );
+        // Restore the process default for any test that runs after this.
+        set_cluster_prefix("e-");
     }
 }
