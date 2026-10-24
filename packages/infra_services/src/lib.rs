@@ -40,7 +40,7 @@ pub use file_credential_storage::{CredentialFile, CredentialRecord, FileCredenti
 pub use persistence::{OnlineAgentInfo, Persistence};
 pub use pg_log_layer::PgLogLayer;
 pub use pg_log_writer::{LogEntry, PgLogWriter, cleanup_old_logs};
-pub use server_manager::{ServerManager, ServerStatus, set_cluster_prefix};
+pub use server_manager::{ServerManager, ServerStatus, server_container_name, set_cluster_prefix};
 pub use types::{AgentMetadata, LogContext};
 pub use ws_transport::{
     Message as WsTransportMessage, WsReceiver, WsSender, WsTransport, WsTransportConfig,
