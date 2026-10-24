@@ -121,11 +121,14 @@ http = "^1"
 hyper-rustls = { version = "^0.27", default-features = false, features = ["native-tokio", "http1", "tls12", "ring"] }
 include_dir = { version = "^0.7", features = ["glob"] }
 interprocess = "^2"
-# libnoa is unpublished beyond 0.4.0 on crates.io while noa master is 0.4.2;
-# per the 2026-10-20 registry-first ruling, unpublished family crates consume
-# git master (also drops the stale registry pin that pulled suppaftp 9.0.0,
-# RUSTSEC-2026-0271 — entelecheia #449 did the same).
-libnoa = { version = "0.4", git = "https://github.com/celestia-island/noa.git", branch = "master" }
+# libnoa 0.4.2 is on crates.io (noa tag v0.4.2 == the master tree this used to
+# follow), and it carries the redb 4 / suppaftp 12 line, so the registry copy no
+# longer drags the suppaftp 9 RUSTSEC-2026-0271 pin that forced the git edge.
+# Consuming it from the registry also keeps one libnoa instance in consumer
+# graphs: the git edge made entelecheia link a registry copy for its own use
+# plus this git copy through plana_custom_agent (same version, different source
+# = two incompatible type universes).
+libnoa = { version = "^0.4" }
 lru = "^0.18"
 mockall = "^0.12"
 notify = "^6"
