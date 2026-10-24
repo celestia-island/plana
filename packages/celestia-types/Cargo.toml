@@ -24,6 +24,16 @@ workspace = true
 default = []
 
 [dependencies]
+# yuuka stays on the git master line (0.10.x) on purpose: this crate uses
+# `yuuka::patch` / `merge` / `diff` / `path` / `viewport`, none of which exist
+# in the published 0.6 line (checked against the 0.6.2 crate: only
+# lib/template/tools/utils ship there). kirino (Layer 0) still consumes yuuka
+# 0.6.x from crates.io, so a graph holding both kirino and plana carries two
+# yuuka lines (0.6.2 + 0.10.1, measured in shittim-chest's lock 2026-10-24).
+# Fixing that needs one of two upstream moves - kirino moves to the 0.10 line,
+# or the five protocol APIs are backported to 0.6 - so it is recorded as a
+# follow-up ("yuuka single line", 2026-10-24 registry-first wave) instead of
+# being forced here. Do not "simplify" this to ^0.6: the crate will not build.
 yuuka = { git = "https://github.com/celestia-island/yuuka.git", branch = "master" }
 
 kirino = { workspace = true }

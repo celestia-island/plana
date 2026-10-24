@@ -1,6 +1,11 @@
 [package]
 name = "plana-tauri"
-version.workspace = true
+# crates.io line of its own (last published 0.1.20): the crate shipped
+# 0.1.20 against plana-rpc-client 0.1.x and now requires ^0.2.0, so the
+# next release is 0.1.21. It used to inherit [workspace.package] (0.1.51),
+# which would have jumped the crates.io line 31 versions on the next
+# `cargo-v*` tag. Registered in .versions.toml [exempt.cargo].
+version = "0.1.21"
 edition.workspace = true
 rust-version.workspace = true
 license-file.workspace = true
