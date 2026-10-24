@@ -381,16 +381,22 @@ impl ServerManager {
 mod prefix_tests {
     use super::*;
 
+    /// CLUSTER_PREFIX is a process-global static and cargo runs lib
+    /// tests on parallel threads, so every test that reads or writes
+    /// the prefix must hold this SHARED lock — a mutex created inside
+    /// one test body serializes nothing and left the default-name
+    /// assertion racing the "e-001-" window.
+    static PREFIX_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn default_prefix_names_the_stock_container() {
+        let _g = PREFIX_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         assert_eq!(server_container_name(), "e-scepter");
     }
 
     #[test]
     fn set_cluster_prefix_drives_the_probe_name() {
-        // Serialize: CLUSTER_PREFIX is a process-global static.
-        let guard = std::sync::Mutex::new(());
-        let _g = guard.lock().unwrap_or_else(|e| e.into_inner());
+        let _g = PREFIX_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         set_cluster_prefix("e-001-");
         assert_eq!(server_container_name(), "e-001-scepter");
         set_cluster_prefix("");
@@ -400,7 +406,8 @@ mod prefix_tests {
             "an empty prefix must read as unset (None arm), matching \
              server_manager::set_cluster_prefix's contract"
         );
-        // Restore the process default for any test that runs after this.
-        set_cluster_prefix("e-");
+        // Restore the unset default for any test that runs after this
+        // ("" maps to None — the arm asserted just above).
+        set_cluster_prefix("");
     }
 }
