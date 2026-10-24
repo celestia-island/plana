@@ -5,6 +5,13 @@
 # versioned on their own publish line, and the npm packages follow their own
 # per-package line. Exemptions below record those deliberate divergences so the
 # gate still fails on accidental drift.
+#
+# Tag namespaces for the two families (2026-10-24 audit UP-06):
+#   cargo-v<version>     crates.io wave; <version> = packages/plana version
+#                        (publish.yml compares the tag against that manifest)
+#   plana-npm-v<version> npm family wave
+# A release tag is only created on the squash-merged master commit — publish.yml
+# rejects tags that are not ancestors of master.
 
 [track]
 # The npm baseline is pinned explicitly: the two publishable packages are
@@ -26,6 +33,7 @@ npm = "0.1.14"
 "packages/protocol-core" = "independently published line"
 "packages/rpc-client" = "independently published line"
 "packages/rpc-server" = "independently published line"
+"packages/tauri" = "independently published line (plana-tauri: last crates.io release 0.1.20, next 0.1.21; it no longer inherits the workspace 0.1.51 umbrella line)"
 "patches/ts-rs" = "vendored upstream ts-rs patch pinned to 12.0.1"
 "patches/ts-rs-macros" = "vendored upstream ts-rs patch pinned to 12.0.1"
 

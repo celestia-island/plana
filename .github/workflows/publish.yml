@@ -1,82 +1,174 @@
 name: Publish crates.io
 
+# crates.io release line for the publishable plana crates.
+#
+# Tag namespace: `cargo-v<version>`, deliberately separate from the npm family's
+# `plana-npm-v<version>` line — the two families advance independently. The
+# `<version>` in the tag is the umbrella crate `packages/plana` version (the
+# crate that tracks the crates release wave). The other publishable crates keep
+# their own independent lines (plana-rpc-client 0.2.x, plana-celestia-types
+# 0.1.x, plana-rpc-server 0.1.x, plana-tauri 0.1.x) and each decides for itself
+# whether it still has to ship, by asking crates.io about its own manifest
+# version.
+#
+# Two rules this replaces (2026-10-24 audit UP-06):
+#
+# 1. The old trigger was a bare `v*` and the guards compared crates.io's
+#    `max_version` against hard-coded strings ("0.2.0", "0.2.0", "0.1.0",
+#    "0.1.21", "0.1.0"). Once a manifest moved past its string the guard stayed
+#    true, so the crate could never ship again; and where the string matched the
+#    published max, a newer manifest version was silently skipped.
+# 2. Tags used to be pushed on PR branches, so 11 of 20 `v*` tags are not
+#    ancestors of master. A release tag must point at the squash-merged master
+#    commit (AGENTS §4), which is what the ancestor guard below enforces.
 on:
   push:
-    tags: ["v*"]
+    tags: ["cargo-v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (must equal packages/plana, e.g. 0.2.1)"
+        required: true
+        type: string
 
 permissions:
   contents: read
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  publish:
-    name: Publish plana crates
+  # ── Refuse to publish anything but the version the tag (or input) names ──
+  verify-version:
+    name: Verify the requested version
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history on purpose: `git merge-base --is-ancestor` cannot see
+          # past a shallow boundary. A depth-1 checkout reports every non-tip
+          # tag as "not on master" (probed 2026-10-24 on a fixture clone: a
+          # depth-1 clone at an older tag returns FALSE even though the tag is a
+          # direct ancestor of master).
+          fetch-depth: 0
+      - name: Resolve the requested version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_REF_NAME#cargo-v}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Ensure the tag is on master
+        if: github.event_name == 'push'
+        run: |
+          git fetch origin master
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::$GITHUB_REF_NAME is not an ancestor of master — tag the squash-merged master commit, not the PR branch"
+            exit 1
+          fi
+      - name: Compare with the umbrella manifest
+        run: |
+          WANT="${{ steps.version.outputs.version }}"
+          HAVE=$(awk '
+            /^\[package\]/ { in_pkg = 1; next }
+            /^\[/ { in_pkg = 0 }
+            in_pkg && /^version[[:space:]]*=/ {
+              sub(/^version[[:space:]]*=[[:space:]]*"/, ""); sub(/".*$/, ""); print; exit
+            }' packages/plana/Cargo.toml)
+          if [ -z "$HAVE" ]; then
+            echo "::error::could not read packages/plana/Cargo.toml version"
+            exit 1
+          fi
+          if [ "$HAVE" != "$WANT" ]; then
+            echo "::error::packages/plana version ($HAVE) != requested version ($WANT)"
+            exit 1
+          fi
+          echo "Publishing the crates release wave $HAVE"
+
+  # ── Real publish, one crate at a time, skipping what is already shipped ──
+  publish:
+    name: Publish the crates
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: verify-version
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      # Sequential publish order matters: plana-celestia-types depends on
-      # plana-protocol-core, and the plana umbrella depends on all three.
       # Cargo.lock is NOT committed (it is gitignored): a fresh checkout has
       # no lockfile (so each publish would resolve independently), and a
       # persistent runner may carry a stale untracked one from a previous
       # run — `cargo publish --locked` then hard-fails with "cannot update
       # the lock file because --locked was passed". The generate-lockfile
       # step writes the CURRENT dependency graph into the checkout first,
-      # and `--locked` pins all four publish steps to exactly that graph, so
-      # the crates ship as one consistent snapshot of the same resolution.
+      # and `--locked` pins every publish step to exactly that graph, so the
+      # crates ship as one consistent snapshot of the same resolution.
       - name: Regenerate lockfile
         run: cargo generate-lockfile
 
-      - name: Publish plana
+      - name: Publish every crate that still has to ship
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
         run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana" | grep -q '"max_version":"0.2.0"'; then
-            echo "plana@0.2.0 already published — skipping"
-          else
-            cargo publish -p plana --locked
-          fi
-      - name: Publish plana-rpc-server
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
-        run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-rpc-server" | grep -q '"max_version":"0.1.0"'; then
-            echo "plana-rpc-server@0.1.0 already published — skipping"
-          else
-            cargo publish -p plana-rpc-server --locked
-          fi
-      - name: Publish plana-rpc-client
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
-        run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-rpc-client" | grep -q '"max_version":"0.2.0"'; then
-            echo "plana-rpc-client@0.2.0 already published — skipping"
-          else
-            cargo publish -p plana-rpc-client --locked
-          fi
-      - name: Publish plana-tauri
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
-        run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-tauri" | grep -q '"max_version":"0.1.21"'; then
-            echo "plana-tauri@0.1.21 already published — skipping"
-          else
-            # --no-verify: the default bridge feature pulls the GTK/WebKit
-            # system stack for the tarball verification build, which no
-            # ubuntu runner carries by default; consumers build it in their
-            # own environments. Everything battery-only is CI-verified
-            # without the feature.
-            cargo publish -p plana-tauri --locked --no-verify
-          fi
-      - name: Publish plana-celestia-types
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_API_TOKEN }}
-        run: |
-          if curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/plana-celestia-types" | grep -q '"max_version":"0.1.0"'; then
-            echo "plana-celestia-types@0.1.0 already published — skipping"
-          else
-            cargo publish -p plana-celestia-types --locked
-          fi
+          set -euo pipefail
 
+          # A crate's own manifest version. `version.workspace = true` would
+          # mean the crate tracks [workspace.package] in the root manifest, so
+          # fall back to that instead of hard-coding a version string.
+          manifest_version() {
+            local manifest="$1" version
+            version=$(awk '
+              /^\[package\]/ { in_pkg = 1; next }
+              /^\[/ { in_pkg = 0 }
+              in_pkg && /^version[[:space:]]*=/ {
+                sub(/^version[[:space:]]*=[[:space:]]*"/, ""); sub(/".*$/, ""); print; exit
+              }' "$manifest")
+            if [ -z "$version" ]; then
+              version=$(awk '
+                /^\[workspace\.package\]/ { in_ws = 1; next }
+                /^\[/ { in_ws = 0 }
+                in_ws && /^version[[:space:]]*=/ {
+                  sub(/^version[[:space:]]*=[[:space:]]*"/, ""); sub(/".*$/, ""); print; exit
+                }' Cargo.toml)
+            fi
+            printf '%s' "$version"
+          }
+
+          # crates.io is the only authority on "already shipped": the manifest
+          # version is what would be published, and the registry says whether
+          # that exact version exists.
+          is_published() {
+            curl -fsSL -A "plana-release/1.0" "https://crates.io/api/v1/crates/$1/$2" >/dev/null
+          }
+
+          publish_crate() {
+            local crate="$1" manifest="$2"
+            shift 2
+            local version
+            version=$(manifest_version "$manifest")
+            if [ -z "$version" ]; then
+              echo "::error::no version found in $manifest"
+              exit 1
+            fi
+            if is_published "$crate" "$version"; then
+              echo "$crate@$version is already on crates.io — skipping"
+            else
+              echo "publishing $crate@$version"
+              cargo publish -p "$crate" --locked "$@"
+            fi
+          }
+
+          # Sequential order matters: plana-celestia-types depends on
+          # plana-protocol-core, and the plana umbrella depends on all three.
+          publish_crate plana packages/plana/Cargo.toml
+          publish_crate plana-rpc-server packages/rpc-server/Cargo.toml
+          publish_crate plana-rpc-client packages/rpc-client/Cargo.toml
+          # --no-verify: the default bridge feature pulls the GTK/WebKit
+          # system stack for the tarball verification build, which no
+          # ubuntu runner carries by default; consumers build it in their
+          # own environments. Everything battery-only is CI-verified
+          # without the feature.
+          publish_crate plana-tauri packages/tauri/Cargo.toml --no-verify
+          publish_crate plana-celestia-types packages/celestia-types/Cargo.toml
