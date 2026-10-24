@@ -98,6 +98,20 @@ pub struct StackConfig {
     /// `Some("host")` uses host networking (no port mapping, useful when the
     /// container runtime's bridge network is unavailable, e.g. podman+nftables).
     pub network_mode: Option<String>,
+    /// Evernight IPC lane — host path of the evernight broker's unix socket
+    /// (e.g. `/tmp/entelecheia-unix-socket/evernight-e-042.sock`). When set,
+    /// injected into the scepter container env as `EVERNIGHT_SOCK`. The ext4
+    /// socket dir is already bind-mounted at the same path inside the
+    /// container, so the host path works verbatim. Set together with
+    /// [`StackConfig::evernight_token`].
+    pub evernight_sock: Option<String>,
+    /// Evernight IPC lane — the dispatch token scepter presents as
+    /// `params.auth` when calling the broker. When set, injected into the
+    /// scepter container env as `EVERNIGHT_TOKEN`. This is a credential: it
+    /// travels spec → container env only and is deliberately NOT read from
+    /// the host process env here (unlike the HTTP_PROXY passthrough above).
+    /// Set together with [`StackConfig::evernight_sock`].
+    pub evernight_token: Option<String>,
 }
 
 impl Default for StackConfig {
@@ -122,6 +136,8 @@ impl Default for StackConfig {
             config_dir: Some(config_dir),
             host_repo_root: None,
             network_mode: None,
+            evernight_sock: None,
+            evernight_token: None,
         }
     }
 }
@@ -338,6 +354,29 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     if let Ok(proxy) = std::env::var("HTTP_PROXY").or(std::env::var("http_proxy")) {
         env.insert("HTTP_PROXY".into(), proxy.clone());
         env.insert("HTTPS_PROXY".into(), proxy);
+    }
+
+    // Evernight IPC lane (2026-10-23 loop-pilot follow-up): scepter — and the
+    // cosmos sub-containers that inherit scepter's env via snowflake_manager —
+    // need EVERNIGHT_SOCK / EVERNIGHT_TOKEN to reach the host evernight
+    // broker. Before this, the pair only existed in hand-rebuilt containers
+    // and was silently lost on every buffer/fork or stack rebuild. Values
+    // come from explicit StackConfig fields, NOT a host-env passthrough: the
+    // token is a credential whose only delivery path into the container is
+    // the spec, and the caller (evernight supervise) owns how it is sourced.
+    if let Some(ref sock) = cfg.evernight_sock {
+        env.insert("EVERNIGHT_SOCK".into(), sock.clone());
+    }
+    if let Some(ref token) = cfg.evernight_token {
+        env.insert("EVERNIGHT_TOKEN".into(), token.clone());
+    }
+    if cfg.evernight_sock.is_some() != cfg.evernight_token.is_some() {
+        warn!(
+            sock_set = cfg.evernight_sock.is_some(),
+            token_set = cfg.evernight_token.is_some(),
+            "evernight lane is half-configured — the broker will be unreachable \
+             or reject auth inside the scepter container"
+        );
     }
 
     let tmpfs_dir = socket_dir_tmpfs();
@@ -619,6 +658,56 @@ mod tests {
                 .iter()
                 .any(|v| v.container_path == host_path && v.read_only),
             "repo_root must ALSO be visible at its own host path (F1 guard)"
+        );
+    }
+
+    #[test]
+    fn evernight_lane_is_injected_into_scepter_when_configured() {
+        let cfg = StackConfig {
+            evernight_sock: Some("/tmp/entelecheia-unix-socket/evernight-e-042.sock".to_string()),
+            evernight_token: Some("spec-sourced-token".to_string()),
+            ..StackConfig::default()
+        };
+
+        let scepter = scepter_params(&cfg);
+        assert_eq!(
+            scepter.env.get("EVERNIGHT_SOCK").map(String::as_str),
+            Some("/tmp/entelecheia-unix-socket/evernight-e-042.sock"),
+            "configured sock must land verbatim in the scepter container env"
+        );
+        assert_eq!(
+            scepter.env.get("EVERNIGHT_TOKEN").map(String::as_str),
+            Some("spec-sourced-token"),
+            "configured token must land verbatim in the scepter container env"
+        );
+
+        // The broker lane is scepter-only: postgres / registry must not
+        // sprout evernight credentials they have no use for.
+        for (name, env) in [
+            ("postgres", &postgres_params(&cfg).env),
+            ("registry", &registry_params(&cfg).env),
+        ] {
+            assert!(
+                !env.contains_key("EVERNIGHT_SOCK") && !env.contains_key("EVERNIGHT_TOKEN"),
+                "{name} container env must stay free of the evernight lane"
+            );
+        }
+    }
+
+    #[test]
+    fn evernight_lane_is_absent_by_default() {
+        // Unset spec fields must mean no injection — no panic, no host-env
+        // fallback, no half-derived defaults (edition 2024 forbids touching
+        // process env here anyway: env::remove_var is unsafe).
+        let cfg = StackConfig::default();
+        let scepter = scepter_params(&cfg);
+        assert!(
+            !scepter.env.contains_key("EVERNIGHT_SOCK"),
+            "no evernight_sock in the spec => no EVERNIGHT_SOCK in the container env"
+        );
+        assert!(
+            !scepter.env.contains_key("EVERNIGHT_TOKEN"),
+            "no evernight_token in the spec => no EVERNIGHT_TOKEN in the container env"
         );
     }
 }

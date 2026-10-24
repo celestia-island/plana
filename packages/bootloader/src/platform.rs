@@ -254,11 +254,6 @@ fn silent(cmd: &mut tokio::process::Command) -> &mut tokio::process::Command {
     cmd.creation_flags(CREATE_NO_WINDOW)
 }
 
-#[cfg(not(target_os = "windows"))]
-fn silent(cmd: &mut tokio::process::Command) -> &mut tokio::process::Command {
-    cmd
-}
-
 #[cfg(target_os = "windows")]
 #[async_trait]
 impl ServiceInstaller for WindowsScmInstaller {
