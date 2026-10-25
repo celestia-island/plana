@@ -20,4 +20,14 @@ estimated_degrees?: number, };
 
 export type TaskEstimateUpdatedParams = { task_id: string, estimated_degrees?: number, };
 
-export type TaskStatusUpdateParams = { task_id: string, status: TaskStatus, progress: number, };
+export type TaskStatusUpdateParams = { task_id: string, status: TaskStatus, progress: number, 
+/**
+ * Latest measured `(input, output)` tokens for this task. Absent means
+ * "no fresh accounting", not "clear the consumer's last known pair".
+ */
+token_usage?: [number, number], 
+/**
+ * Model that produced the latest accounting. Optional for the same
+ * status-only compatibility rule as `token_usage`.
+ */
+model_name?: string, };

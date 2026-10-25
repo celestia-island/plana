@@ -164,3 +164,35 @@ fn supervision_health_response_is_distinct_from_the_generic_one() {
     assert!(worker_keys.contains(&"worker_id".to_string()));
     assert!(backend_keys.contains(&"status".to_string()));
 }
+
+#[test]
+fn task_status_update_usage_metadata_stays_optional_and_round_trips() {
+    let legacy = plana_celestia_types::TaskStatusUpdateParams {
+        task_id: uuid::Uuid::nil(),
+        status: plana_celestia_types::TaskStatus::InProgress,
+        progress: 20,
+        token_usage: None,
+        model_name: None,
+    };
+    let legacy_wire = serde_json::to_value(&legacy).unwrap();
+    assert!(legacy_wire.get("token_usage").is_none());
+    assert!(legacy_wire.get("model_name").is_none());
+    let decoded: plana_celestia_types::TaskStatusUpdateParams =
+        serde_json::from_value(legacy_wire).unwrap();
+    assert_eq!(decoded.token_usage, None);
+    assert_eq!(decoded.model_name, None);
+
+    let measured = plana_celestia_types::TaskStatusUpdateParams {
+        task_id: uuid::Uuid::nil(),
+        status: plana_celestia_types::TaskStatus::InProgress,
+        progress: 21,
+        token_usage: Some((120, 30)),
+        model_name: Some("deepseek-v4-flash".into()),
+    };
+    let wire = serde_json::to_value(&measured).unwrap();
+    assert_eq!(wire["token_usage"], serde_json::json!([120, 30]));
+    let decoded: plana_celestia_types::TaskStatusUpdateParams =
+        serde_json::from_value(wire).unwrap();
+    assert_eq!(decoded.token_usage, Some((120, 30)));
+    assert_eq!(decoded.model_name.as_deref(), Some("deepseek-v4-flash"));
+}

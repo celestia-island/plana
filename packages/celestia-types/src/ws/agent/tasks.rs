@@ -66,4 +66,14 @@ pub struct TaskStatusUpdateParams {
     pub task_id: uuid::Uuid,
     pub status: TaskStatus,
     pub progress: u8,
+    /// Latest measured `(input, output)` tokens for this task. Absent means
+    /// "no fresh accounting", not "clear the consumer's last known pair".
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub token_usage: Option<(u32, u32)>,
+    /// Model that produced the latest accounting. Optional for the same
+    /// status-only compatibility rule as `token_usage`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub model_name: Option<String>,
 }
