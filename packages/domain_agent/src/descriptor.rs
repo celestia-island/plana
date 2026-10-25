@@ -122,10 +122,10 @@ mod tests {
     }
 
     #[test]
-    fn test_layer2_has_12_agents() -> Result<()> {
+    fn test_layer2_has_zero_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let layer2 = registry.layer2_agents();
-        assert_eq!(layer2.len(), 15);
+        assert_eq!(layer2.len(), 0);
         Ok(())
     }
 

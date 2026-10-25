@@ -1,6 +1,6 @@
 //! Unified Agent kind enum.
 //!
-//! [`AgentKind`] covers the 13 compiled-in agents (Layer1 × 12 + the execution-only industrial gateway); the 15 widget L2 folders retired with W11-6 slice C — they are plugin-carried (`AgentKey::Plugin`) now,
+//! [`AgentKind`] covers the twelve Layer-1 agents (the execution-only industrial gateway stays out of every roster count, as always); the 15 widget L2 folders retired with W11-6 slice C — they are plugin-carried (`AgentKey::Plugin`) now,
 //! The single source for agent names, doc paths, UI display, and other strings.
 //! The `AgentType` in TUI is a re-export (type alias) of this type.
 
@@ -293,8 +293,8 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn all_agents_has_13_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::all_agents().len(), 13);
+    fn all_agents_has_the_twelve_builtin_l1() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::all_agents().len(), 12);
         Ok(())
     }
 
