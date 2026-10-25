@@ -95,21 +95,6 @@ fn register_builtins(registry: &AgentMetadataRegistry) {
         "OreXis"     / "orexis"      / "Security"                                 / 1 / true,
         "PhiLia"     / "philia"      / "Data storage"                             / 1 / true,
         "PoleMos"    / "polemos"     / "Hardware & vision"                        / 1 / true,
-        "Data Table" / "data_table" / "Data-table plugin — fields, records, typed columns, views" / 2 / false,
-        "Gauge Grid" / "gauge_grid" / "Gauge-grid plugin — metric gauges, thresholds, live dials" / 2 / false,
-        "History" / "history" / "History plugin — timelines, replay, retention windows" / 2 / false,
-        "Holographic" / "holographic" / "Holographic plugin — 3D holographic scene composition" / 2 / false,
-        "Image" / "image" / "Image plugin — image walls, lightboxes, annotations" / 2 / false,
-        "Kanban" / "kanban" / "Kanban plugin — boards, lanes, cards, WIP limits" / 2 / false,
-        "DevOps" / "devops" / "DevOps plugin — noa source control, CI runs, CD targets" / 2 / false,
-        "Office" / "office" / "Office plugin — files, document preview, annotations" / 2 / false,
-        "Selftrain" / "selftrain" / "Self-iteration plugin — engine fleet status, inference tests" / 2 / false,
-        "KV" / "kv" / "KV plugin — key-value browsing, search, bulk edits" / 2 / false,
-        "Node Graph" / "node_graph" / "Node-graph plugin — vertices, edges, layouts, queries" / 2 / false,
-        "Nodes" / "nodes" / "Nodes plugin — device/instance cards, grouping, status" / 2 / false,
-        "Note" / "note" / "Note plugin — notes, checklists, pinning" / 2 / false,
-        "Reports" / "reports" / "Reports plugin — report assembly, sections, export" / 2 / false,
-        "SCADA" / "scada" / "SCADA plugin — mimic scenes, bindings, alarms, trends" / 2 / false,
         // layer 0: execution-only — neither console roster lists it.
         "Industrial IoT" / "industrial_iot" / "Industrial protocol gateway — engine-internal execution identity" / 0 / false,
     });
@@ -121,10 +106,10 @@ mod tests {
     use anyhow::{Context, Result};
 
     #[test]
-    fn test_registry_has_all_28_agents() -> Result<()> {
+    fn test_registry_has_all_13_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let all = registry.all_agents();
-        assert_eq!(all.len(), 28);
+        assert_eq!(all.len(), 13);
         Ok(())
     }
 
@@ -137,10 +122,10 @@ mod tests {
     }
 
     #[test]
-    fn test_layer2_has_12_agents() -> Result<()> {
+    fn test_layer2_has_zero_agents() -> Result<()> {
         let registry = &*AGENT_REGISTRY;
         let layer2 = registry.layer2_agents();
-        assert_eq!(layer2.len(), 15);
+        assert_eq!(layer2.len(), 0);
         Ok(())
     }
 
@@ -164,7 +149,7 @@ mod tests {
                 .any(|d| d.folder_name == "industrial_iot")
         );
         assert_eq!(layer1_agents_len(), 12);
-        assert_eq!(layer2_agents_len(), 15);
+        assert_eq!(layer2_agents_len(), 0);
         Ok(())
     }
 

@@ -43,18 +43,6 @@ define_marker! {
     OreXisMarker => OreXis / "orexis" / "OreXis",
     PhiLiaMarker => PhiLia / "philia" / "PhiLia",
     PoleMosMarker => PoleMos / "polemos" / "PoleMos",
-    DataTableMarker => DataTable / "data_table" / "Data Table",
-    GaugeGridMarker => GaugeGrid / "gauge_grid" / "Gauge Grid",
-    HistoryMarker => History / "history" / "History",
-    HolographicMarker => Holographic / "holographic" / "Holographic",
-    ImageMarker => Image / "image" / "Image",
-    KanbanMarker => Kanban / "kanban" / "Kanban",
-    KvMarker => Kv / "kv" / "KV",
-    NodeGraphMarker => NodeGraph / "node_graph" / "Node Graph",
-    NodesMarker => Nodes / "nodes" / "Nodes",
-    NoteMarker => Note / "note" / "Note",
-    ReportsMarker => Reports / "reports" / "Reports",
-    ScadaMarker => Scada / "scada" / "SCADA",
     IndustrialIoTMarker => IndustrialIoT / "industrial_iot" / "Industrial IoT",
 }
 
@@ -97,7 +85,6 @@ mod tests {
         );
         assert_eq!(SkoPeoMarker::FOLDER_NAME, AgentKind::SkoPeo.folder_name());
         assert_eq!(HubRisMarker::FOLDER_NAME, AgentKind::HubRis.folder_name());
-        assert_eq!(ScadaMarker::FOLDER_NAME, AgentKind::Scada.folder_name());
     }
 
     #[test]

@@ -1,6 +1,6 @@
 //! Unified Agent kind enum.
 //!
-//! [`AgentKind`] covers all 27 agents (Layer1 × 12 + Layer2 × 15),
+//! [`AgentKind`] covers the twelve Layer-1 agents (the execution-only industrial gateway stays out of every roster count, as always); the 15 widget L2 folders retired with W11-6 slice C — they are plugin-carried (`AgentKey::Plugin`) now,
 //! The single source for agent names, doc paths, UI display, and other strings.
 //! The `AgentType` in TUI is a re-export (type alias) of this type.
 
@@ -11,7 +11,7 @@ use std::{fmt, str::FromStr};
 #[error("unknown agent: {0}")]
 pub struct UnknownAgentError(pub String);
 
-/// Unified Agent kind (Layer1 × 12 + Layer2 × 15)
+/// Unified Agent kind (Layer1 × 12 + industrial_iot; the widget L2 variants retired with W11-6 slice C)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
 pub enum AgentKind {
     // ── Layer 1 ──────────────────────────────────────────────────────────────
@@ -51,36 +51,6 @@ pub enum AgentKind {
     // plugin's operations as its tools and the usage recipes as its
     // skills, so no builtin ships tools-only or skills-only. The eight
     // pre-ruling folders (web_automation & co.) are retired wholesale.
-    /// Data-table plugin agent — fields, records, typed columns, views
-    DataTable,
-    /// Gauge-grid plugin agent — metric gauges, thresholds, live dials
-    GaugeGrid,
-    /// History plugin agent — timelines, replay, retention windows
-    History,
-    /// Holographic plugin agent — 3D holographic scene composition
-    Holographic,
-    /// Image plugin agent — image walls, lightboxes, annotations
-    Image,
-    /// Kanban plugin agent — boards, lanes, cards, WIP limits
-    Kanban,
-    /// DevOps plugin agent — noa source control, CI runs, CD targets
-    Devops,
-    /// Office plugin agent — files, document preview, annotations
-    Office,
-    /// Self-iteration plugin agent — engine fleet, inference tests
-    Selftrain,
-    /// KV plugin agent — key-value browsing, search, bulk edits
-    Kv,
-    /// Node-graph plugin agent — vertices, edges, layouts, queries
-    NodeGraph,
-    /// Nodes plugin agent — device/instance cards, grouping, status
-    Nodes,
-    /// Note plugin agent — notes, checklists, pinning
-    Note,
-    /// Reports plugin agent — report assembly, sections, export
-    Reports,
-    /// SCADA plugin agent — mimic scenes, bindings, alarms, trends
-    Scada,
     /// EXECUTION-ONLY industrial protocol gateway (modbus & co.) — the
     /// hydro axis's engine-internal dispatch identity. It never appears
     /// in either console roster (its descriptor carries layer 0) and no
@@ -138,21 +108,6 @@ impl AgentKind {
             AgentKind::OreXis => "OreXis",
             AgentKind::PhiLia => "PhiLia",
             AgentKind::PoleMos => "PoleMos",
-            AgentKind::DataTable => "Data Table",
-            AgentKind::GaugeGrid => "Gauge Grid",
-            AgentKind::History => "History",
-            AgentKind::Holographic => "Holographic",
-            AgentKind::Image => "Image",
-            AgentKind::Kanban => "Kanban",
-            AgentKind::Devops => "DevOps",
-            AgentKind::Office => "Office",
-            AgentKind::Selftrain => "Selftrain",
-            AgentKind::Kv => "KV",
-            AgentKind::NodeGraph => "Node Graph",
-            AgentKind::Nodes => "Nodes",
-            AgentKind::Note => "Note",
-            AgentKind::Reports => "Reports",
-            AgentKind::Scada => "SCADA",
             AgentKind::IndustrialIoT => "Industrial IoT",
         }
     }
@@ -179,21 +134,6 @@ impl AgentKind {
             AgentKind::OreXis => "orexis",
             AgentKind::PhiLia => "philia",
             AgentKind::PoleMos => "polemos",
-            AgentKind::DataTable => "data_table",
-            AgentKind::GaugeGrid => "gauge_grid",
-            AgentKind::History => "history",
-            AgentKind::Holographic => "holographic",
-            AgentKind::Image => "image",
-            AgentKind::Kanban => "kanban",
-            AgentKind::Devops => "devops",
-            AgentKind::Office => "office",
-            AgentKind::Selftrain => "selftrain",
-            AgentKind::Kv => "kv",
-            AgentKind::NodeGraph => "node_graph",
-            AgentKind::Nodes => "nodes",
-            AgentKind::Note => "note",
-            AgentKind::Reports => "reports",
-            AgentKind::Scada => "scada",
             AgentKind::IndustrialIoT => "industrial_iot",
         }
     }
@@ -214,21 +154,6 @@ impl AgentKind {
             "orexis" => Some(AgentKind::OreXis),
             "philia" => Some(AgentKind::PhiLia),
             "polemos" => Some(AgentKind::PoleMos),
-            "data_table" | "datatable" => Some(AgentKind::DataTable),
-            "gauge_grid" | "gaugegrid" => Some(AgentKind::GaugeGrid),
-            "history" => Some(AgentKind::History),
-            "holographic" => Some(AgentKind::Holographic),
-            "image" => Some(AgentKind::Image),
-            "kanban" => Some(AgentKind::Kanban),
-            "devops" => Some(AgentKind::Devops),
-            "office" => Some(AgentKind::Office),
-            "selftrain" => Some(AgentKind::Selftrain),
-            "kv" => Some(AgentKind::Kv),
-            "node_graph" | "nodegraph" => Some(AgentKind::NodeGraph),
-            "nodes" => Some(AgentKind::Nodes),
-            "note" => Some(AgentKind::Note),
-            "reports" => Some(AgentKind::Reports),
-            "scada" => Some(AgentKind::Scada),
             "industrial_iot" | "industrialiot" => Some(AgentKind::IndustrialIoT),
             _ => None,
         }
@@ -254,24 +179,7 @@ impl AgentKind {
         if let Some(desc) = super::descriptor::AGENT_REGISTRY.get_by_folder(folder) {
             desc.layer == 2
         } else {
-            matches!(
-                self,
-                AgentKind::DataTable
-                    | AgentKind::GaugeGrid
-                    | AgentKind::History
-                    | AgentKind::Holographic
-                    | AgentKind::Image
-                    | AgentKind::Kanban
-                    | AgentKind::Devops
-                    | AgentKind::Office
-                    | AgentKind::Selftrain
-                    | AgentKind::Kv
-                    | AgentKind::NodeGraph
-                    | AgentKind::Nodes
-                    | AgentKind::Note
-                    | AgentKind::Reports
-                    | AgentKind::Scada
-            )
+            false
         }
     }
 
@@ -304,21 +212,6 @@ impl AgentKind {
             AgentKind::OreXis => "Security audit and external integration",
             AgentKind::PhiLia => "System integration",
             AgentKind::PoleMos => "Edge computing and device management",
-            AgentKind::DataTable => "Data-table plugin — fields, records, typed columns, views",
-            AgentKind::GaugeGrid => "Gauge-grid plugin — metric gauges, thresholds, live dials",
-            AgentKind::History => "History plugin — timelines, replay, retention windows",
-            AgentKind::Holographic => "Holographic plugin — 3D holographic scene composition",
-            AgentKind::Image => "Image plugin — image walls, lightboxes, annotations",
-            AgentKind::Kanban => "Kanban plugin — boards, lanes, cards, WIP limits",
-            AgentKind::Devops => "DevOps plugin — noa source control, CI runs, CD targets",
-            AgentKind::Office => "Office plugin — files, document preview, annotations",
-            AgentKind::Selftrain => "Self-iteration plugin — engine fleet status, inference tests",
-            AgentKind::Kv => "KV plugin — key-value browsing, search, bulk edits",
-            AgentKind::NodeGraph => "Node-graph plugin — vertices, edges, layouts, queries",
-            AgentKind::Nodes => "Nodes plugin — device/instance cards, grouping, status",
-            AgentKind::Note => "Note plugin — notes, checklists, pinning",
-            AgentKind::Reports => "Reports plugin — report assembly, sections, export",
-            AgentKind::Scada => "SCADA plugin — mimic scenes, bindings, alarms, trends",
             AgentKind::IndustrialIoT => {
                 "Industrial protocol gateway — engine-internal execution identity"
             }
@@ -362,7 +255,7 @@ impl AgentKind {
         ]
     }
 
-    /// All Layer2 extension agents (15 total).
+    /// All Layer2 extension agents — empty since W11-6 slice C retired the 15 widget variants (plugin-carried now); the method stays for the seam.
     pub fn domain_agents() -> Vec<Self> {
         let registry = &*super::descriptor::AGENT_REGISTRY;
         let layer2_folders: Vec<&str> = registry
@@ -383,26 +276,10 @@ impl AgentKind {
     }
 
     fn domain_agents_fallback() -> Vec<Self> {
-        vec![
-            AgentKind::DataTable,
-            AgentKind::GaugeGrid,
-            AgentKind::History,
-            AgentKind::Holographic,
-            AgentKind::Image,
-            AgentKind::Kanban,
-            AgentKind::Devops,
-            AgentKind::Office,
-            AgentKind::Selftrain,
-            AgentKind::Kv,
-            AgentKind::NodeGraph,
-            AgentKind::Nodes,
-            AgentKind::Note,
-            AgentKind::Reports,
-            AgentKind::Scada,
-        ]
+        Vec::new()
     }
 
-    /// All 27 agents.
+    /// 12 L1 agents plus industrial_iot (L2 folders ride AgentKey::Plugin).
     pub fn all_agents() -> Vec<Self> {
         let mut v = Self::all();
         v.extend(Self::domain_agents());
@@ -416,8 +293,8 @@ mod tests {
     use anyhow::Result;
 
     #[test]
-    fn all_agents_has_24_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::all_agents().len(), 27);
+    fn all_agents_has_the_twelve_builtin_l1() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::all_agents().len(), 12);
         Ok(())
     }
 
@@ -428,8 +305,8 @@ mod tests {
     }
 
     #[test]
-    fn layer2_has_12_variants() -> anyhow::Result<()> {
-        assert_eq!(AgentKind::domain_agents().len(), 15);
+    fn layer2_has_zero_variants_after_retirement() -> anyhow::Result<()> {
+        assert_eq!(AgentKind::domain_agents().len(), 0);
         Ok(())
     }
 
