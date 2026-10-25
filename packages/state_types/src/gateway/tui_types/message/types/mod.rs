@@ -1052,11 +1052,19 @@ pub enum SyncMessage {
         estimated_degrees: Option<i64>,
     },
     /// One-way task progress update (push topic `task`): `status` plus `progress`
-    /// in percent.
+    /// in percent. Senders that have measured the task's model usage attach it
+    /// here so live consumers do not have to wait for the next tree snapshot.
+    /// Both metadata fields are optional: old senders omit them, and a status
+    /// transition without fresh accounting must leave the consumer's last
+    /// known usage/model untouched.
     TaskStatusUpdate {
         task_id: Uuid,
         status: crate::TaskStatus,
         progress: u8,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        token_usage: Option<(u32, u32)>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        model_name: Option<String>,
     },
     /// A task's estimate was updated after creation (S2c: the skill chain
     /// refines its estimate). Wire consumers use this to adjust reserves;
@@ -2357,6 +2365,59 @@ mod tests {
             panic!("expected UserMessage");
         };
         assert_eq!(languages, None);
+    }
+
+    /// `TaskStatusUpdate` carries optional live usage/model metadata without
+    /// changing the legacy status-only wire shape. Missing keys decode to
+    /// `None` (and therefore cannot clear a consumer's last known values);
+    /// present values round-trip verbatim.
+    #[test]
+    fn task_status_update_usage_metadata_is_wire_compatible() {
+        let legacy = SyncMessage::TaskStatusUpdate {
+            task_id: uuid::Uuid::nil(),
+            status: crate::TaskStatus::InProgress,
+            progress: 47,
+            token_usage: None,
+            model_name: None,
+        };
+        let legacy_wire = serde_json::to_value(&legacy).expect("serialize legacy update");
+        assert!(legacy_wire.get("token_usage").is_none());
+        assert!(legacy_wire.get("model_name").is_none());
+        let decoded: SyncMessage = serde_json::from_value(legacy_wire)
+            .expect("status-only update must stay wire-compatible");
+        let SyncMessage::TaskStatusUpdate {
+            token_usage,
+            model_name,
+            ..
+        } = decoded
+        else {
+            panic!("expected TaskStatusUpdate");
+        };
+        assert_eq!(token_usage, None);
+        assert_eq!(model_name, None);
+
+        let measured = SyncMessage::TaskStatusUpdate {
+            task_id: uuid::Uuid::nil(),
+            status: crate::TaskStatus::InProgress,
+            progress: 48,
+            token_usage: Some((120, 30)),
+            model_name: Some("deepseek-v4-flash".to_string()),
+        };
+        let wire = serde_json::to_value(&measured).expect("serialize measured update");
+        assert_eq!(wire["token_usage"], serde_json::json!([120, 30]));
+        assert_eq!(wire["model_name"], "deepseek-v4-flash");
+        let decoded: SyncMessage =
+            serde_json::from_value(wire).expect("measured update must round-trip");
+        let SyncMessage::TaskStatusUpdate {
+            token_usage,
+            model_name,
+            ..
+        } = decoded
+        else {
+            panic!("expected TaskStatusUpdate");
+        };
+        assert_eq!(token_usage, Some((120, 30)));
+        assert_eq!(model_name.as_deref(), Some("deepseek-v4-flash"));
     }
 
     /// `TaskCreated` gained `estimated_degrees` for the degree-ledger
