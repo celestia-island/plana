@@ -279,7 +279,7 @@ impl AgentKind {
         Vec::new()
     }
 
-    /// All 27 agents.
+    /// 12 L1 agents plus industrial_iot (L2 folders ride AgentKey::Plugin).
     pub fn all_agents() -> Vec<Self> {
         let mut v = Self::all();
         v.extend(Self::domain_agents());
