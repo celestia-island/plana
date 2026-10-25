@@ -224,7 +224,9 @@ impl Skill {
         plana_state_sync::SkillInfo {
             name: self.name.clone(),
             description: self.description.clone(),
-            agent_type: self.agent_type.clone(),
+            // The wire field is AgentKey now; this corpus-level struct
+            // keeps its builtin enum and converts at the boundary.
+            agent_type: plana_state_sync::AgentKey::Builtin(self.agent_type.clone()),
             required_tools: self.required_tools.clone(),
             location,
             ..Default::default()

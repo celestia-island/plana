@@ -390,8 +390,17 @@ pub struct SkillInfo {
     /// which is why the description is a map rather than a string.
     #[serde(default)]
     pub description: HashMap<String, String>,
-    /// Agent that provides the skill.
-    pub agent_type: super::agent::Agent,
+    /// Agent that provides the skill — the runtime-extensible identity
+    /// (`AgentKey`): a built-in agent OR a plugin-declared one. WIRE
+    /// COMPATIBLE with the former `Agent` field for every value that
+    /// ever rode the wire: `AgentKey`'s serde is a string, and
+    /// `Builtin(agent)` serializes to exactly the `Agent` string enum's
+    /// spelling (round-tripping through the same `from_str`), so old
+    /// peers and persisted payloads parse unchanged; the
+    /// `plugin:<id>:<folder>` spelling is strictly additive (only
+    /// plugin-carried skills — none existed before this type could
+    /// express them).
+    pub agent_type: super::agent_key::AgentKey,
     /// Names of the tools the skill needs in order to run; callers use the list to
     /// check the skill against the tools an agent actually offers.
     #[serde(default)]
@@ -410,7 +419,7 @@ impl Default for SkillInfo {
         Self {
             name: String::new(),
             description: HashMap::new(),
-            agent_type: super::agent::Agent::ApoRia,
+            agent_type: super::agent_key::AgentKey::Builtin(super::agent::Agent::ApoRia),
             required_tools: Vec::new(),
             tier: None,
             location: SkillLocation::default(),
@@ -839,5 +848,76 @@ mod edge_location_tests {
         let back: ToolLocation = serde_json::from_str(&text).unwrap();
         assert!(matches!(back, ToolLocation::Edge));
         assert!(matches!(ToolLocation::default(), ToolLocation::Scepter));
+    }
+}
+
+#[cfg(test)]
+mod skillinfo_agentkey_tests {
+    use super::*;
+
+    /// The AgentKey migration's wire pin, two honest states (R2 F1):
+    /// DESERIALIZATION is compatible in BOTH directions — the Agent-era
+    /// spelling (`"HubRis"`, the bare variant id `Agent`'s serde used)
+    /// and the folder spelling (`"hubris"`, `AgentKey`'s Display/serde)
+    /// both parse, because `AgentKey`'s Deserialize rides the looser
+    /// `from_str`. SERIALIZATION changed spelling: the Agent era wrote
+    /// `"HubRis"`, `AgentKey` writes `"hubris"` (its Display) — pinned
+    /// here as the new normal rather than papered over, because making
+    /// `AgentKey`'s serde re-emit the variant id would flip every OTHER
+    /// AgentKey wire row (the roster's agent_key field) that already
+    /// speaks the folder spelling.
+    #[test]
+    fn builtin_skillinfo_wire_is_deserialize_compatible_and_re_spelled() {
+        let skill = SkillInfo {
+            name: "visual_analysis".to_string(),
+            description: SkillInfo::desc_from_str("Analyze"),
+            agent_type: super::super::agent_key::AgentKey::Builtin(
+                super::super::agent::Agent::HubRis,
+            ),
+            ..SkillInfo::default()
+        };
+        let json = serde_json::to_value(&skill).unwrap();
+        assert_eq!(json["agent_type"], serde_json::json!("hubris"));
+
+        // The Agent-era payload (bare VARIANT spelling) still parses.
+        let legacy = serde_json::json!({
+            "name": "visual_analysis",
+            "description": { "en": "Analyze" },
+            "agent_type": "HubRis",
+            "required_tools": [],
+        });
+        let parsed: SkillInfo = serde_json::from_value(legacy).unwrap();
+        assert_eq!(
+            parsed.agent_type,
+            super::super::agent_key::AgentKey::Builtin(super::super::agent::Agent::HubRis)
+        );
+        // The folder spelling parses identically (AgentKey's own out-form
+        // round-trips).
+        let folder_spelled = serde_json::json!({
+            "name": "visual_analysis",
+            "agent_type": "hubris",
+        });
+        let parsed2: SkillInfo = serde_json::from_value(folder_spelled).unwrap();
+        assert_eq!(parsed.agent_type, parsed2.agent_type);
+    }
+
+    /// The additive half: a plugin-carried skill serializes to the
+    /// `plugin:<id>:<folder>` spelling — a value the Agent era could
+    /// not express, so no old payload can collide with it.
+    #[test]
+    fn plugin_skillinfo_serializes_to_the_plugin_spelling() {
+        let key =
+            super::super::agent_key::AgentKey::new_plugin("acme-pack", "acme_office").unwrap();
+        let skill = SkillInfo {
+            agent_type: key.clone(),
+            ..SkillInfo::default()
+        };
+        let json = serde_json::to_value(&skill).unwrap();
+        assert_eq!(
+            json["agent_type"],
+            serde_json::json!("plugin:acme-pack:acme_office")
+        );
+        let parsed: SkillInfo = serde_json::from_value(json).unwrap();
+        assert_eq!(parsed.agent_type, key);
     }
 }
