@@ -2,9 +2,18 @@
 #
 # This file replaces the hand-written substring ladder that lived in
 # metering.rs (2026-10-03 snapshot, hand-converted FX, "order matters"
-# nesting). Semantics mirror arona's model_pricing override layer: every
-# pattern is a DECLARED substring matched against the lowercased model id;
-# rows are matched IN ORDER and the first row that matches wins.
+# nesting). Every pattern is a DECLARED substring matched against the
+# lowercased model id; rows are matched IN ORDER and the first row that
+# matches wins.
+#
+# NOT the same tie-break as arona's DB override layer (deliberate, and the
+# difference matters if rows are ever migrated between the two): arona
+# matches `$1 ILIKE model_pattern` (SQL LIKE, `%` wildcards) and picks the
+# LONGEST matching pattern; this table matches declared substring sets and
+# picks the FIRST row in file order. The two layers are complementary, not
+# interchangeable — arona's DB rows take precedence at runtime; these bands
+# are the compiled-in fallback for every other consumer. Migrating rows in
+# either direction requires rewriting the patterns, not copying them.
 #
 # A row matches when every substring in `all` is present AND every group in
 # `any` has at least one member present (empty `all`/`any` = no constraint).

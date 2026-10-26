@@ -74,7 +74,15 @@ fn generate() -> String {
         if let Some(c) = cached {
             assert_price(c, &format!("snapshot {provider}/{id}: cached_per_million"));
         }
-        prices.insert(format!("{provider}/{id}"), (input, output, cached));
+        let key = format!("{provider}/{id}");
+        // Duplicate provider/id entries would silently last-win and make a
+        // band's anchor price depend on generation order — the same failure
+        // class the band-id check above refuses.
+        assert!(
+            !prices.contains_key(&key),
+            "models-snapshot.toml: duplicate entry {key} — the generator must emit one row per provider/id"
+        );
+        prices.insert(key, (input, output, cached));
     }
 
     let raw_bands: Vec<&toml::Value> = bands
