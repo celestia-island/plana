@@ -58,9 +58,15 @@ impl ExecOutput {
 }
 
 /// Raw broker result object for `Command.Exec` (`{exit_code, stdout, stderr}`).
+///
+/// `exit_code` is REQUIRED on the wire: a broker response missing it must
+/// fail deserialization, not default to `0` — reading a contract-violating
+/// response as "exited successfully" is exactly the silent-success hole
+/// this struct refuses (entelecheia #658 R2 follow-up). `stdout`/`stderr`
+/// stay defaulted: an omitted empty stream is harmless and the broker's
+/// own test doubles omit them.
 #[derive(Debug, Deserialize)]
 struct RawExecOutput {
-    #[serde(default)]
     exit_code: i32,
     #[serde(default)]
     stdout: String,
@@ -579,6 +585,27 @@ mod tests {
             .expect_err("must fail");
         assert_eq!(error.kind, ErrorKind::Other);
         assert_eq!(error.code, -32603);
+        assert!(error.message.contains("contract shape"));
+    }
+
+    /// A broker response WITHOUT `exit_code` must fail, not deserialize as
+    /// a successful `exit_code: 0` run — the silent-success hole the field
+    /// defaults used to open (entelecheia #658 R2 follow-up). Streams stay
+    /// optional; the exit status does not.
+    #[tokio::test]
+    async fn missing_exit_code_fails_instead_of_defaulting_to_success() {
+        let transport = RecordingTransport::new(json!({"stdout": "partial", "stderr": ""}));
+        let client = client_with(transport);
+        let error = client
+            .dispatch(envelope("bad-missing-exit"))
+            .await
+            .expect_err("a contract-violating response must not read as success");
+        assert_eq!(error.kind, ErrorKind::Other);
+        assert_eq!(error.code, -32603);
+        assert!(
+            error.message.contains("exit_code"),
+            "the error must name the missing field: {error}"
+        );
         assert!(error.message.contains("contract shape"));
     }
 
