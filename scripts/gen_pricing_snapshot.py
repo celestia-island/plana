@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""
+Generate the llm_provider pricing snapshot from provider-registry data.
+
+Reads `models/*/*.toml` from a provider-registry checkout (the same layout
+`fetch_provider_registry.py` syncs into `target/provider-registry/`) and
+writes `packages/llm_provider/pricing/models-snapshot.toml` — the checked-in,
+offline build input for `packages/llm_provider/build.rs`.
+
+Offline-reproducibility contract (2026-10-26 arch review P2-4):
+  * This script is the ONLY networked-adjacent step, and it does not touch
+    the network itself — it reads a local directory. Run
+    `just sync provider-registry` (network) first, or pass `--from` a local
+    checkout.
+  * `cargo build` NEVER fetches: build.rs reads only the checked-in
+    snapshot. A failed or skipped regeneration leaves the last generated
+    copy in place; there is no path to an empty or stale-silent table.
+  * The write is atomic (tmp + rename): on any failure the previous
+    snapshot survives untouched and the script exits non-zero.
+
+Usage:
+    python3 scripts/gen_pricing_snapshot.py                     # from target/provider-registry
+    python3 scripts/gen_pricing_snapshot.py --from /path/to/provider-registry
+"""
+
+import argparse
+import hashlib
+import math
+import sys
+import tomllib
+from datetime import datetime, timezone
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SNAPSHOT = REPO_ROOT / "packages" / "llm_provider" / "pricing" / "models-snapshot.toml"
+DEFAULT_SOURCE = REPO_ROOT / "target" / "provider-registry"
+
+
+def fmt_float(v: float) -> str:
+    """Shortest round-trip repr, always with a decimal point or exponent so
+    the generated TOML stays float-typed."""
+    s = repr(float(v))
+    return s
+
+
+def load_models(source: Path) -> tuple[list[dict], list[str]]:
+    models_dir = source / "models"
+    if not models_dir.is_dir():
+        sys.exit(
+            f"[ERROR] {models_dir} not found — run `just sync provider-registry` "
+            "first (network) or pass --from <provider-registry checkout>."
+        )
+    out = []
+    skipped_no_pricing: list[str] = []
+    for toml_file in sorted(models_dir.glob("*/*.toml")):
+        provider = toml_file.parent.name
+        try:
+            with open(toml_file, "rb") as fh:
+                data = tomllib.load(fh)
+        except tomllib.TOMLDecodeError as e:
+            sys.exit(f"[ERROR] {toml_file}: invalid TOML: {e}")
+        model = data.get("model")
+        if not isinstance(model, dict):
+            continue
+        mid = model.get("id")
+        if not mid:
+            continue
+        pricing = model.get("pricing")
+        if pricing is None:
+            # Non-token-billed entries (meshy/runway/tripo-style generation
+            # APIs) legitimately carry no [model.pricing]; they cannot feed a
+            # per-million-token table, so they are skipped, counted, and
+            # reported — not silently dropped.
+            skipped_no_pricing.append(f"{provider}/{mid}")
+            continue
+        if not isinstance(pricing, dict):
+            sys.exit(f"[ERROR] {toml_file}: [model.pricing] is not a table")
+        row = {
+            "provider": provider,
+            "id": str(mid),
+            "input_per_million": pricing.get("input_per_million"),
+            "output_per_million": pricing.get("output_per_million"),
+            "cached_per_million": pricing.get("cached_per_million"),
+        }
+        for key in ("input_per_million", "output_per_million"):
+            v = row[key]
+            if not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
+                sys.exit(f"[ERROR] {toml_file}: {key} must be a finite non-negative number, got {v!r}")
+        v = row["cached_per_million"]
+        if v is not None and (not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0):
+            sys.exit(f"[ERROR] {toml_file}: cached_per_million must be finite non-negative or absent, got {v!r}")
+        out.append(row)
+    if not out:
+        sys.exit(f"[ERROR] no model TOMLs under {models_dir} — refusing to write an empty snapshot")
+    return out, skipped_no_pricing
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate the llm_provider pricing snapshot")
+    parser.add_argument("--from", dest="source", type=Path, default=DEFAULT_SOURCE,
+                        help="provider-registry checkout to read (default: target/provider-registry)")
+    args = parser.parse_args()
+
+    models, skipped = load_models(args.source)
+    models.sort(key=lambda m: (m["provider"], m["id"]))
+    if skipped:
+        print(f"[INFO] {len(skipped)} entries without [model.pricing] skipped (non-token billing):")
+        for name in skipped:
+            print(f"       - {name}")
+
+    digest = hashlib.sha256()
+    for m in models:
+        digest.update(f"{m['provider']}/{m['id']}\n".encode())
+
+    header = [
+        "# AUTO-GENERATED by scripts/gen_pricing_snapshot.py — DO NOT EDIT.",
+        f"# Source: provider-registry models/ ({len(models)} entries), read from {args.source}",
+        f"# Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
+        f"# Content digest (provider/id list): sha256:{digest.hexdigest()[:16]}",
+        "# This file is the checked-in offline build input for",
+        "# packages/llm_provider/build.rs. Refresh: `just regen-pricing`.",
+        "# Prices are USD per million tokens as published by provider-registry",
+        "# (CNY-sourced lists arrive pre-converted there).",
+        "",
+    ]
+
+    lines = list(header)
+    for m in models:
+        lines.append("[[model]]")
+        lines.append(f'provider = "{m["provider"]}"')
+        lines.append(f'id = "{m["id"]}"')
+        lines.append(f'input_per_million = {fmt_float(m["input_per_million"])}')
+        lines.append(f'output_per_million = {fmt_float(m["output_per_million"])}')
+        if m["cached_per_million"] is not None:
+            lines.append(f'cached_per_million = {fmt_float(m["cached_per_million"])}')
+        lines.append("")
+
+    content = "\n".join(lines)
+
+    SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
+    tmp = SNAPSHOT.with_suffix(".toml.tmp")
+    tmp.write_text(content, encoding="utf-8")
+    tmp.replace(SNAPSHOT)
+    print(f"[OK] wrote {SNAPSHOT.relative_to(REPO_ROOT)} ({len(models)} models)")
+
+
+if __name__ == "__main__":
+    main()

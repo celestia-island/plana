@@ -440,391 +440,58 @@ impl PricingSchedule {
     }
 }
 
-/// Resolve a model id to its family's [`FamilyPricing`] by substring
-/// match (lowercased). All prices are PEAK-tier — the conservative
-/// upper bound; the actual off-peak billing split lives with the
-/// provider's ledger, not here. Returns `None` for unknown families;
-/// callers fall back to provider-keyed guesses (see `estimate_cost`).
+// The generated fallback pricing table. The `PricingBand` struct and the
+// `PRICING_BANDS` static are emitted into OUT_DIR by build.rs from the
+// CHECKED-IN `pricing/bands.toml` (explicit ordered patterns) joined with
+// `pricing/models-snapshot.toml` (the last generated copy of
+// provider-registry prices — refresh explicitly with `just regen-pricing`;
+// the build itself never fetches). The matcher lives below as ordinary
+// hand-written code so it stays unit-testable.
+include!(concat!(env!("OUT_DIR"), "/pricing_table.rs"));
+
+impl PricingBand {
+    /// Whether this band's declared patterns match a LOWERCASED model id:
+    /// every `all` substring present AND every `any` group contributing at
+    /// least one present member. This is the declared-pattern twin of the
+    /// nested `contains` ladder the table replaced (same matching
+    /// semantics, arona's model_pricing override style: every pattern
+    /// explicit, rows in priority order, first match wins).
+    pub(crate) fn matches(&self, lower: &str) -> bool {
+        self.all.iter().all(|p| lower.contains(p))
+            && self.any.iter().all(|g| g.iter().any(|p| lower.contains(p)))
+    }
+}
+
+/// Resolve a model id to its band pricing by the generated pattern table.
+/// Band numbers come from provider-registry data (USD per 1M tokens as the
+/// registry publishes them — CNY-sourced lists arrive pre-converted there,
+/// e.g. GLM's ¥ list at the 6.5 reference rate, rounded to 2dp). All prices
+/// are PEAK-tier — the conservative upper bound; the actual off-peak
+/// billing split lives with the provider's ledger, not here. Returns
+/// `None` for unknown families; callers fall back to provider-keyed
+/// guesses (see `estimate_cost`).
 ///
-/// FX convention: CNY prices convert at the rate documented next to
-/// each family (the reference rate at the time that family's prices
-/// were entered — NOT a single global rate, because official USD
-/// price lists and CNY lists disagree per family; see each arm's
-/// comment for the source rate).
+/// This is the universal FALLBACK: arona's model_pricing DB rows win first,
+/// and an injected source (set_pricing_source) wins over both.
 pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     let lower = model.to_lowercase();
-    // The compiled-in BAND HEADS mirror the provider-registry's current
-    // generation (verified against the vendors' official lists,
-    // 2026-10-03 — see PR for the per-family provenance). This table is
-    // the universal FALLBACK: arona's model_pricing DB rows win first,
-    // and an injected source (set_pricing_source) wins over both.
-    // GLM (Zhipu). Pro band = glm-5.2/5.3 official ¥8/¥28/¥2 (÷6.5 →
-    // 1.23/4.31/0.31); Zhipu's OWN flash tier is a distinct cheaper
-    // band (glm-5.3-flash ¥0.8/¥2.8/¥0.23 → 0.12/0.43/0.035). Order
-    // matters: "glm" before the generic checks.
-    if lower.contains("glm") {
-        if lower.contains("flashx") {
-            // glm-5.3-flashx official.
-            return Some(FamilyPricing {
-                input_per_million: 0.31,
-                output_per_million: 1.08,
-                cached_per_million: 0.088,
-            });
-        }
-        if lower.contains("prime") {
-            // glm-5.3-prime official.
-            return Some(FamilyPricing {
-                input_per_million: 2.80,
-                output_per_million: 8.80,
-                cached_per_million: 0.56,
-            });
-        }
-        if lower.contains("flash") || lower.contains("air") || lower.contains("lite") {
-            return Some(FamilyPricing {
-                input_per_million: 0.12,
-                output_per_million: 0.43,
-                cached_per_million: 0.035,
-            });
-        }
-        return Some(FamilyPricing {
-            input_per_million: 8.0 / 6.5,
-            output_per_million: 28.0 / 6.5,
-            cached_per_million: 2.0 / 6.5,
-        });
-    }
-    if lower.contains("deepseek") {
-        if lower.contains("pro") || lower.contains("r1") || lower.contains("reasoner") {
-            // v4-pro official USD list.
-            return Some(FamilyPricing {
-                input_per_million: 0.435,
-                output_per_million: 0.87,
-                cached_per_million: 0.003625,
-            });
-        }
-        if lower.contains("v4.1") || lower.contains("flash-latest") {
-            // v4.1-flash official USD list.
-            return Some(FamilyPricing {
-                input_per_million: 0.30,
-                output_per_million: 1.20,
-                cached_per_million: 0.006,
-            });
-        }
-        // v4-flash official USD list.
-        return Some(FamilyPricing {
-            input_per_million: 0.14,
-            output_per_million: 0.28,
-            cached_per_million: 0.0028,
-        });
-    }
-    if lower.contains("kimi") || lower.contains("moonshot") {
-        // Kimi K3 official USD list.
-        return Some(FamilyPricing {
-            input_per_million: 3.0,
-            output_per_million: 15.0,
-            cached_per_million: 0.3,
-        });
-    }
-    if lower.contains("claude") {
-        if lower.contains("haiku") {
-            if lower.contains("haiku-4") {
-                // Haiku 4.5 official.
-                return Some(FamilyPricing {
-                    input_per_million: 1.00,
-                    output_per_million: 5.00,
-                    cached_per_million: 0.10,
-                });
-            }
-            // The 3.x haiku list.
-            return Some(FamilyPricing {
-                input_per_million: 0.80,
-                output_per_million: 4.00,
-                cached_per_million: 0.08,
-            });
-        }
-        if lower.contains("opus-5") {
-            // Opus 5.5 official.
-            return Some(FamilyPricing {
-                input_per_million: 4.00,
-                output_per_million: 20.00,
-                cached_per_million: 0.20,
-            });
-        }
-        if lower.contains("opus-4-8-fast") || lower.contains("opus-4.8-fast") {
-            // Opus 4.8-fast official.
-            return Some(FamilyPricing {
-                input_per_million: 10.00,
-                output_per_million: 50.00,
-                cached_per_million: 1.00,
-            });
-        }
-        if lower.contains("opus-4.6-fast")
-            || lower.contains("opus-4.7-fast")
-            || lower.contains("opus-4-6-fast")
-            || lower.contains("opus-4-7-fast")
-        {
-            // The 4.6/4.7 fast lanes official.
-            return Some(FamilyPricing {
-                input_per_million: 30.00,
-                output_per_million: 150.00,
-                cached_per_million: 3.00,
-            });
-        }
-        if lower.contains("opus-4-5")
-            || lower.contains("opus-4-6")
-            || lower.contains("opus-4-7")
-            || lower.contains("opus-4-8")
-            || lower.contains("opus-4.5")
-            || lower.contains("opus-4.6")
-            || lower.contains("opus-4.7")
-            || lower.contains("opus-4.8")
-        {
-            // The 4.5–4.8 line (4.8 official).
-            return Some(FamilyPricing {
-                input_per_million: 5.00,
-                output_per_million: 25.00,
-                cached_per_million: 0.50,
-            });
-        }
-        if lower.contains("opus") {
-            // The legacy opus list (opus-4 / 4.1 / 3.x).
-            return Some(FamilyPricing {
-                input_per_million: 15.00,
-                output_per_million: 75.00,
-                cached_per_million: 1.50,
-            });
-        }
-        if lower.contains("fable") {
-            // The Fable line (5 / 5.1 share 10/50; 5.1's cache read).
-            return Some(FamilyPricing {
-                input_per_million: 10.00,
-                output_per_million: 50.00,
-                cached_per_million: 0.25,
-            });
-        }
-        if lower.contains("sonnet-5") {
-            // Sonnet 5 / 5.5 official.
-            return Some(FamilyPricing {
-                input_per_million: 2.00,
-                output_per_million: 10.00,
-                cached_per_million: 0.20,
-            });
-        }
-        // The sonnet-4 line list.
-        return Some(FamilyPricing {
-            input_per_million: 3.00,
-            output_per_million: 15.00,
-            cached_per_million: 0.30,
-        });
-    }
-    if lower.contains("gemini-3")
-        || lower.contains("gemini-flash-latest")
-        || lower.contains("gemini-lite-latest")
-        || lower.contains("gemini-flash-lite-latest")
-    {
-        if lower.contains("lite") {
-            // 3.1-flash-lite official.
-            return Some(FamilyPricing {
-                input_per_million: 0.25,
-                output_per_million: 1.50,
-                cached_per_million: 0.025,
-            });
-        }
-        if lower.contains("flash") {
-            // 3.5-flash official.
-            return Some(FamilyPricing {
-                input_per_million: 1.50,
-                output_per_million: 9.00,
-                cached_per_million: 0.15,
-            });
-        }
-        // The 3.x pro band rides 2.5-pro's official list.
-        return Some(FamilyPricing {
-            input_per_million: 1.25,
-            output_per_million: 10.00,
-            cached_per_million: 0.125,
-        });
-    }
-    if lower.contains("gemini") {
-        // The legacy 2.x bands.
-        if lower.contains("flash") {
-            return Some(FamilyPricing {
-                input_per_million: 0.075,
-                output_per_million: 0.30,
-                cached_per_million: 0.0188,
-            });
-        }
-        return Some(FamilyPricing {
-            input_per_million: 1.25,
-            output_per_million: 5.00,
-            cached_per_million: 0.3125,
-        });
-    }
-    if lower.contains("o1") || lower.contains("o3") {
-        return Some(FamilyPricing {
-            input_per_million: 10.00,
-            output_per_million: 40.00,
-            cached_per_million: 2.50,
-        });
-    }
-    if lower.contains("gpt") && lower.contains("mini") {
-        // BEFORE the generation bands: every *-mini id is its own cheaper
-        // tier (round-1 caught the broad gpt-5 arm dominating this check —
-        // gpt-5.4-mini priced at the full 5.4 rate, 3.3× overcharge).
-        if lower.contains("gpt-5") {
-            // gpt-5.4-mini official.
-            return Some(FamilyPricing {
-                input_per_million: 0.75,
-                output_per_million: 4.50,
-                cached_per_million: 0.075,
-            });
-        }
-        // The 4o-mini official list.
-        return Some(FamilyPricing {
-            input_per_million: 0.15,
-            output_per_million: 0.60,
-            cached_per_million: 0.075,
-        });
-    }
-    if lower.contains("gpt") && lower.contains("nano") {
-        if lower.contains("5.4") {
-            // gpt-5.4-nano official.
-            return Some(FamilyPricing {
-                input_per_million: 0.20,
-                output_per_million: 1.25,
-                cached_per_million: 0.02,
-            });
-        }
-        if lower.contains("gpt-5") {
-            // gpt-5-nano official.
-            return Some(FamilyPricing {
-                input_per_million: 0.05,
-                output_per_million: 0.40,
-                cached_per_million: 0.005,
-            });
-        }
-        // gpt-4.1-nano legacy list.
-        return Some(FamilyPricing {
-            input_per_million: 0.10,
-            output_per_million: 0.40,
-            cached_per_million: 0.025,
-        });
-    }
-    if lower.contains("gpt-5") && lower.contains("pro") {
-        // The 5.x pro line (5.4/5.5 official 30/180; 5.2-pro 21/168
-        // rides the headline).
-        return Some(FamilyPricing {
-            input_per_million: 30.00,
-            output_per_million: 180.00,
-            cached_per_million: 3.00,
-        });
-    }
-    if lower.contains("gpt-6") {
-        // The gpt-6 generation: astra (flagship) / sol (standard) /
-        // luna (light) — official standard-tier USD lists.
-        if lower.contains("astra") {
-            return Some(FamilyPricing {
-                input_per_million: 10.00,
-                output_per_million: 50.00,
-                cached_per_million: 1.00,
-            });
-        }
-        if lower.contains("luna") {
-            return Some(FamilyPricing {
-                input_per_million: 0.10,
-                output_per_million: 0.50,
-                cached_per_million: 0.01,
-            });
-        }
-        // sol band (covers 6.1-sol).
-        return Some(FamilyPricing {
-            input_per_million: 2.00,
-            output_per_million: 10.00,
-            cached_per_million: 0.20,
-        });
-    }
-    if lower.contains("daybreak") {
-        // The daybreak pair (official).
-        if lower.contains("red") {
-            return Some(FamilyPricing {
-                input_per_million: 12.50,
-                output_per_million: 75.00,
-                cached_per_million: 1.25,
-            });
-        }
-        return Some(FamilyPricing {
-            input_per_million: 4.00,
-            output_per_million: 20.00,
-            cached_per_million: 0.40,
-        });
-    }
-    if lower.contains("gpt-5.6") {
-        // Official: base/sol 4/20/0.4, terra 2/12/0.2, luna 0.2/1.2/0.02 —
-        // the band headline is the sol/base rate.
-        return Some(FamilyPricing {
-            input_per_million: 4.00,
-            output_per_million: 20.00,
-            cached_per_million: 0.40,
-        });
-    }
-    if lower.contains("gpt-5.5") {
-        return Some(FamilyPricing {
-            input_per_million: 5.00,
-            output_per_million: 30.00,
-            cached_per_million: 0.50,
-        });
-    }
-    if lower.contains("gpt-5") {
-        // The broad 5.x band (5/5.1/5.2/5.4 base ≈ 1.25–2.5); headline
-        // 5.4's official 2.5/15.
-        return Some(FamilyPricing {
-            input_per_million: 2.50,
-            output_per_million: 15.00,
-            cached_per_million: 0.25,
-        });
-    }
-    if lower.contains("gpt-4o") {
-        return Some(FamilyPricing {
-            input_per_million: 2.50,
-            output_per_million: 10.00,
-            cached_per_million: 1.25,
-        });
-    }
-    if lower.contains("gpt-4") {
-        return Some(FamilyPricing {
-            input_per_million: 30.00,
-            output_per_million: 60.00,
-            cached_per_million: 30.00,
-        });
-    }
-    if lower.contains("gpt-3.5") {
-        return Some(FamilyPricing {
-            input_per_million: 0.50,
-            output_per_million: 1.50,
-            cached_per_million: 0.50,
-        });
-    }
-    if lower.contains("qwen") {
-        return Some(FamilyPricing {
-            input_per_million: 0.50,
-            output_per_million: 2.00,
-            cached_per_million: 0.125,
-        });
-    }
-    if lower.contains("llama-3") || lower.contains("llama3") {
-        return Some(FamilyPricing {
-            input_per_million: 0.20,
-            output_per_million: 0.80,
-            cached_per_million: 0.20,
-        });
-    }
-    if lower.contains("mistral") {
-        return Some(FamilyPricing {
-            input_per_million: 0.20,
-            output_per_million: 0.80,
-            cached_per_million: 0.20,
-        });
-    }
-    None
+    PRICING_BANDS
+        .iter()
+        .find(|b| b.matches(&lower))
+        .map(|b| b.pricing)
+}
+
+/// The id of the band that would price `model`, for diagnostics and tests
+/// (e.g. "gpt-5.4-mini" → "gpt-mini-5"; `None` for unpriced models).
+/// Useful wherever a consumer wants to say WHICH fallback band answered —
+/// logging, the arona panel's "upstream family default" badge, and the
+/// generated-table tests.
+pub fn pricing_band_id(model: &str) -> Option<&'static str> {
+    let lower = model.to_lowercase();
+    PRICING_BANDS
+        .iter()
+        .find(|b| b.matches(&lower))
+        .map(|b| b.id)
 }
 
 /// Rough cost estimation for metering when actual cost isn't provided.
@@ -1188,10 +855,14 @@ mod tests {
         assert!((ds.input_per_million - 0.14).abs() < 1e-9);
         let dsp = lookup_pricing("deepseek-v4-pro").expect("ds pro");
         assert!((dsp.input_per_million - 0.435).abs() < 1e-9);
-        // GLM 5.3 — ¥8/¥28/¥2 at FX 6.5; flash rides its own band.
+        // GLM 5.3 — the registry publishes the ¥8/¥28/¥2 list converted at
+        // the 6.5 reference rate, rounded to 2dp (1.23/4.31/0.31); the
+        // pre-refactor hand table computed the division unrounded. The
+        // asserted relation is the conversion itself, within the rounding
+        // tolerance (the full-corpus pin is the golden fixture test).
         let glm = lookup_pricing("glm-5.3").expect("glm");
-        assert!((glm.input_per_million - 8.0 / 6.5).abs() < 1e-9);
-        assert!((glm.cached_per_million - 2.0 / 6.5).abs() < 1e-9);
+        assert!((glm.input_per_million - 8.0 / 6.5).abs() <= 0.005);
+        assert!((glm.cached_per_million - 2.0 / 6.5).abs() <= 0.005);
         let glmf = lookup_pricing("glm-5.3-flash").expect("glm flash");
         assert!((glmf.input_per_million - 0.12).abs() < 1e-9);
         // Kimi K3 official USD list.
@@ -1245,6 +916,243 @@ mod tests {
                 "{model}: cached {} > input {}",
                 p.cached_per_million,
                 p.input_per_million
+            );
+        }
+    }
+
+    // ── Generated-table equivalence and mismatch pins ──────────────────
+
+    #[derive(serde::Deserialize)]
+    struct GoldenFile {
+        outputs: std::collections::BTreeMap<String, GoldenValue>,
+    }
+
+    #[derive(serde::Deserialize)]
+    #[serde(untagged)]
+    enum GoldenValue {
+        /// The literal string "none" — the old table priced nothing.
+        Unpriced(String),
+        /// [input, output, cached] per million.
+        Triple(Vec<f64>),
+    }
+
+    fn read_golden() -> GoldenFile {
+        let src = std::fs::read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/pricing/golden-legacy-table.toml"
+        ))
+        .expect("golden fixture is checked in");
+        toml::from_str(&src).expect("golden fixture parses")
+    }
+
+    #[derive(serde::Deserialize)]
+    struct BandsFile {
+        band: Vec<BandRow>,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct BandRow {
+        id: String,
+        anchor: Option<String>,
+        #[serde(rename = "fx_assert")]
+        fx_assert: Option<FxAssert>,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct FxAssert {
+        cny_input: f64,
+        cny_output: f64,
+        cny_cached: f64,
+        rate: f64,
+        tolerance: f64,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct SnapshotFile {
+        model: Vec<SnapshotRow>,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct SnapshotRow {
+        provider: String,
+        id: String,
+        input_per_million: f64,
+        output_per_million: f64,
+        cached_per_million: Option<f64>,
+    }
+
+    /// The generated table must reproduce the PRE-REFACTOR hand table
+    /// bit-for-bit over the full corpus (every registry snapshot id plus
+    /// curated edge ids), with exactly one tolerated class: bands whose
+    /// registry source publishes a rounded FX conversion (declared in
+    /// bands.toml `fx_assert`, asserted here against the relation, not
+    /// against hard-coded numbers).
+    #[test]
+    fn golden_legacy_equivalence() {
+        let golden = read_golden();
+        assert!(
+            golden.outputs.len() > 1000,
+            "golden corpus shrank: {} entries",
+            golden.outputs.len()
+        );
+
+        // Resolve the single fx-tolerated band from the declared sources.
+        let bands: BandsFile = toml::from_str(
+            &std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/pricing/bands.toml"))
+                .expect("bands.toml readable"),
+        )
+        .expect("bands.toml parses");
+        let fx_rows: Vec<&BandRow> = bands
+            .band
+            .iter()
+            .filter(|b| b.fx_assert.is_some())
+            .collect();
+        assert_eq!(
+            fx_rows.len(),
+            1,
+            "exactly one fx_assert band is supported by this test's tolerance rule"
+        );
+        let fx_row = fx_rows[0];
+        let fx = fx_row.fx_assert.as_ref().unwrap();
+        let old_fx = [
+            fx.cny_input / fx.rate,
+            fx.cny_output / fx.rate,
+            fx.cny_cached / fx.rate,
+        ];
+        let snap: SnapshotFile = toml::from_str(
+            &std::fs::read_to_string(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/pricing/models-snapshot.toml"
+            ))
+            .expect("snapshot readable"),
+        )
+        .expect("snapshot parses");
+        let anchor = fx_row.anchor.as_deref().expect("fx band is anchored");
+        let anchor_row = snap
+            .model
+            .iter()
+            .find(|m| format!("{}/{}", m.provider, m.id) == anchor)
+            .unwrap_or_else(|| panic!("fx anchor {anchor} missing from snapshot"));
+        let new_fx = [
+            anchor_row.input_per_million,
+            anchor_row.output_per_million,
+            anchor_row.cached_per_million.unwrap_or(f64::NAN),
+        ];
+        // The asserted FX consistency: the registry's USD price is the
+        // CNY list at the reference rate, within the declared tolerance.
+        for (field, (old, new)) in old_fx.iter().zip(new_fx.iter()).enumerate() {
+            assert!(
+                (old - new).abs() <= fx.tolerance,
+                "{}: registry price {new} is not the {} conversion of the CNY list ({old}, tolerance {})",
+                fx_row.id,
+                ["input", "output", "cached"][field],
+                fx.tolerance
+            );
+        }
+
+        let as_pricing = |t: &[f64]| {
+            Some(FamilyPricing {
+                input_per_million: t[0],
+                output_per_million: t[1],
+                cached_per_million: t[2],
+            })
+        };
+        let is_old_fx = |t: &[f64]| -> bool {
+            t.len() == 3
+                && t[0].to_bits() == old_fx[0].to_bits()
+                && t[1].to_bits() == old_fx[1].to_bits()
+                && t[2].to_bits() == old_fx[2].to_bits()
+        };
+
+        let mut mismatches = Vec::new();
+        for (id, want) in &golden.outputs {
+            match want {
+                GoldenValue::Unpriced(s) => {
+                    assert_eq!(s, "none", "fixture sentinel for {id:?}");
+                    if lookup_pricing(id).is_some() {
+                        mismatches.push(format!("{id}: was unpriced, now priced"));
+                    }
+                }
+                GoldenValue::Triple(t) => {
+                    let got = lookup_pricing(id);
+                    if is_old_fx(t) {
+                        // The one tolerated class: rounded FX from the
+                        // registry. The band must still resolve to the
+                        // anchor's registry price, within tolerance of the
+                        // old unrounded values.
+                        match got {
+                            Some(p) => {
+                                let got_t = [
+                                    p.input_per_million,
+                                    p.output_per_million,
+                                    p.cached_per_million,
+                                ];
+                                for (old, new) in t.iter().zip(got_t.iter()) {
+                                    if (old - new).abs() > fx.tolerance {
+                                        mismatches.push(format!(
+                                            "{id}: fx-tolerated band drifted beyond tolerance: {old} vs {new}"
+                                        ));
+                                    }
+                                }
+                                for (new, expected) in got_t.iter().zip(new_fx.iter()) {
+                                    if new.to_bits() != expected.to_bits() {
+                                        mismatches.push(format!(
+                                            "{id}: fx band must use the registry anchor price: {new} vs {expected}"
+                                        ));
+                                    }
+                                }
+                            }
+                            None => mismatches.push(format!("{id}: fx band stopped resolving")),
+                        }
+                    } else if got != as_pricing(t) {
+                        mismatches.push(format!("{id}: got {got:?}, golden says {t:?}"));
+                    }
+                }
+            }
+        }
+        assert!(
+            mismatches.is_empty(),
+            "{} golden mismatches:\n  {}",
+            mismatches.len(),
+            mismatches.join("\n  ")
+        );
+    }
+
+    /// Negative pins for the generated pattern table: the mismatch risks
+    /// of substring banding, pinned so any drift (in patterns, ordering,
+    /// or the generator) is a conscious decision rather than silent rot.
+    #[test]
+    fn pattern_semantics_negative_pins() {
+        // "o1"/"o3" are BARE substrings (pre-refactor breadth, kept for
+        // equivalence): any id containing them lands in the legacy o-band.
+        let o_band = lookup_pricing("o1").expect("o1 priced");
+        assert_eq!(lookup_pricing("vogel-o3-mini"), Some(o_band));
+        // The mini tier is its own band — never the generation headline.
+        assert_ne!(lookup_pricing("gpt-5.4-mini"), lookup_pricing("gpt-5.4"));
+        // A glm flash-tier id joins the flash band, not the pro band.
+        assert_eq!(
+            lookup_pricing("glm-4.5-flash"),
+            lookup_pricing("glm-5.3-flash")
+        );
+        // Family prefixes must not leak across vendors.
+        assert_ne!(lookup_pricing("qwen-max"), lookup_pricing("glm-5.3"));
+        // Truly unknown ids stay unpriced — including the empty id.
+        assert_eq!(lookup_pricing("brand-new-vendor-x"), None);
+        assert_eq!(lookup_pricing(""), None);
+        assert_eq!(lookup_pricing("google/gemma-3-1b-it"), None);
+        // Matching is case-insensitive on the model id side.
+        assert_eq!(
+            lookup_pricing("GLM-5.3-FLASHX"),
+            lookup_pricing("glm-5.3-flashx")
+        );
+        // Every generated band keeps the conservative cached invariant.
+        for band in PRICING_BANDS {
+            assert!(
+                band.pricing.cached_per_million <= band.pricing.input_per_million + 1e-9,
+                "{}: cached {} > input {}",
+                band.id,
+                band.pricing.cached_per_million,
+                band.pricing.input_per_million
             );
         }
     }
