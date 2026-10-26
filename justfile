@@ -50,6 +50,16 @@ install:
 sync target='provider-registry' *ARGS='':
     {{python_cmd}} scripts/fetch_provider_registry.py {{ARGS}}
 
+# Regenerate the llm_provider pricing snapshot from provider-registry
+# (network: clones upstream first, then reads it locally — the build itself
+# never fetches). Fails WITHOUT touching the checked-in snapshot, so the
+# build keeps using the last generated copy; a deliberate price refresh
+# also updates pricing/bands.toml anchors and the golden fixture.
+#   just regen-pricing /path/to/local-checkout   # skip the clone
+regen-pricing *ARGS='':
+    just sync provider-registry {{ARGS}}
+    {{python_cmd}} scripts/gen_pricing_snapshot.py
+
 # ── Build ────────────────────────────────────────────────────────────
 
 build:

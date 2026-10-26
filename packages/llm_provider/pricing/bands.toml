@@ -1,0 +1,313 @@
+# Explicit model→band pattern table for plana_llm_provider's pricing fallback.
+#
+# This file replaces the hand-written substring ladder that lived in
+# metering.rs (2026-10-03 snapshot, hand-converted FX, "order matters"
+# nesting). Semantics mirror arona's model_pricing override layer: every
+# pattern is a DECLARED substring matched against the lowercased model id;
+# rows are matched IN ORDER and the first row that matches wins.
+#
+# A row matches when every substring in `all` is present AND every group in
+# `any` has at least one member present (empty `all`/`any` = no constraint).
+# Every row must declare at least one pattern overall — a catch-all row is
+# forbidden (unknown models must stay unpriced, not silently banded).
+#
+# Numbers come from the registry snapshot (`models-snapshot.toml`, the
+# checked-in last generation of provider-registry data) through the `anchor`
+# field — a provider-qualified model whose published price IS this band's
+# price. Rows the registry has no data for carry `legacy` numbers (with a
+# mandatory reason): they keep the pre-refactor fallback values bit-for-bit.
+#
+# Refresh flow (explicit, networked — the build itself never fetches):
+#   just regen-pricing        # sync provider-registry + regenerate snapshot
+# then update anchors here if bands moved, and update the golden fixture
+# consciously (the equivalence test pins it).
+
+# ── GLM (Zhipu) ────────────────────────────────────────────────────────
+
+[[band]]
+id = "glm-flashx"
+anchor = "zhipu_glm/glm-5.3-flashx"
+all = ["glm", "flashx"]
+
+[[band]]
+id = "glm-prime"
+anchor = "zhipu_glm/glm-5.3-prime"
+all = ["glm", "prime"]
+
+[[band]]
+id = "glm-flash"
+anchor = "zhipu_glm/glm-5.3-flash"
+all = ["glm"]
+any = [["flash", "air", "lite"]]
+
+# The pro band rides Zhipu's own CNY list, converted by the registry.
+# fx_assert: the registry's USD price must equal cny/rate at 2dp rounding;
+# the golden equivalence test enforces it (the pre-refactor table computed
+# the division unrounded — that spread is the one tolerated difference).
+[[band]]
+id = "glm-pro"
+anchor = "zhipu_glm/glm-5.3"
+all = ["glm"]
+[band.fx_assert]
+cny_input = 8.0
+cny_output = 28.0
+cny_cached = 2.0
+rate = 6.5
+tolerance = 0.005
+
+# ── DeepSeek ───────────────────────────────────────────────────────────
+
+[[band]]
+id = "deepseek-pro"
+anchor = "deepseek/deepseek-v4-pro"
+all = ["deepseek"]
+any = [["pro", "r1", "reasoner"]]
+
+[[band]]
+id = "deepseek-v4-1-flash"
+anchor = "deepseek/deepseek-v4.1-flash"
+all = ["deepseek"]
+any = [["v4.1", "flash-latest"]]
+
+[[band]]
+id = "deepseek-flash"
+anchor = "deepseek/deepseek-v4-flash"
+all = ["deepseek"]
+
+# ── Kimi / Moonshot ────────────────────────────────────────────────────
+
+[[band]]
+id = "kimi"
+anchor = "moonshot/kimi-k3"
+any = [["kimi", "moonshot"]]
+
+# ── Claude ─────────────────────────────────────────────────────────────
+
+[[band]]
+id = "claude-haiku-4"
+anchor = "anthropic/claude-haiku-4.5"
+all = ["claude", "haiku-4"]
+
+[[band]]
+id = "claude-haiku-3"
+anchor = "anthropic/claude-3.5-haiku"
+all = ["claude", "haiku"]
+
+[[band]]
+id = "claude-opus-5"
+anchor = "anthropic/claude-opus-5.5"
+all = ["claude", "opus-5"]
+
+[[band]]
+id = "claude-opus-4-8-fast"
+anchor = "anthropic/claude-opus-4.8-fast"
+all = ["claude"]
+any = [["opus-4-8-fast", "opus-4.8-fast"]]
+
+[[band]]
+id = "claude-opus-4-6-7-fast"
+anchor = "anthropic/claude-opus-4.6-fast"
+all = ["claude"]
+any = [["opus-4.6-fast", "opus-4.7-fast", "opus-4-6-fast", "opus-4-7-fast"]]
+
+[[band]]
+id = "claude-opus-4-5-8"
+anchor = "anthropic/claude-opus-4.8"
+all = ["claude"]
+any = [["opus-4-5", "opus-4-6", "opus-4-7", "opus-4-8", "opus-4.5", "opus-4.6", "opus-4.7", "opus-4.8"]]
+
+[[band]]
+id = "claude-opus-legacy"
+anchor = "anthropic/claude-opus-4-1"
+all = ["claude", "opus"]
+
+[[band]]
+id = "claude-fable"
+anchor = "anthropic/claude-fable-5.1"
+all = ["claude", "fable"]
+
+[[band]]
+id = "claude-sonnet-5"
+anchor = "anthropic/claude-sonnet-5"
+all = ["claude", "sonnet-5"]
+
+[[band]]
+id = "claude-sonnet-4"
+anchor = "anthropic/claude-sonnet-4"
+all = ["claude"]
+
+# ── Gemini 3.x generation ──────────────────────────────────────────────
+
+[[band]]
+id = "gemini-3-lite"
+anchor = "google/gemini-3.1-flash-lite"
+any = [
+    ["gemini-3", "gemini-flash-latest", "gemini-lite-latest", "gemini-flash-lite-latest"],
+    ["lite"],
+]
+
+[[band]]
+id = "gemini-3-flash"
+anchor = "google/gemini-3.5-flash"
+any = [
+    ["gemini-3", "gemini-flash-latest", "gemini-lite-latest", "gemini-flash-lite-latest"],
+    ["flash"],
+]
+
+# The 3.x pro band rides 2.5-pro's official list (no 3.x pro anchor exists).
+[[band]]
+id = "gemini-3-pro"
+anchor = "google/gemini-2.5-pro"
+any = [["gemini-3", "gemini-flash-latest", "gemini-lite-latest", "gemini-flash-lite-latest"]]
+
+# ── Gemini legacy 2.x ──────────────────────────────────────────────────
+
+[[band]]
+id = "gemini-2-flash-legacy"
+legacy = "registry's 2.5-flash list (0.3/2.5/0.03) is a newer repricing; the fallback keeps the 2.0-era band"
+all = ["gemini", "flash"]
+input_per_million = 0.075
+output_per_million = 0.30
+cached_per_million = 0.0188
+
+[[band]]
+id = "gemini-2-pro-legacy"
+legacy = "registry's 2.5-pro output (10.0) diverged from this frozen band"
+all = ["gemini"]
+input_per_million = 1.25
+output_per_million = 5.00
+cached_per_million = 0.3125
+
+# ── OpenAI o-series ────────────────────────────────────────────────────
+
+[[band]]
+id = "o1-o3-legacy"
+legacy = "registry carries newer o1/o3 lists (15/60/7.5, 2/8/0.5); the frozen fallback band predates them"
+any = [["o1", "o3"]]
+input_per_million = 10.00
+output_per_million = 40.00
+cached_per_million = 2.50
+
+# ── GPT mini/nano tiers (before every generation band) ─────────────────
+
+[[band]]
+id = "gpt-mini-5"
+anchor = "openai/gpt-5.4-mini"
+all = ["gpt", "mini", "gpt-5"]
+
+[[band]]
+id = "gpt-mini-4o"
+anchor = "openai/gpt-4o-mini"
+all = ["gpt", "mini"]
+
+[[band]]
+id = "gpt-nano-5-4"
+anchor = "openai/gpt-5.4-nano"
+all = ["gpt", "nano", "5.4"]
+
+[[band]]
+id = "gpt-nano-5"
+anchor = "openai/gpt-5-nano"
+all = ["gpt", "nano", "gpt-5"]
+
+[[band]]
+id = "gpt-nano-4-1"
+anchor = "openai/gpt-4.1-nano"
+all = ["gpt", "nano"]
+
+# ── GPT pro / 6 / daybreak / 5.x generations ──────────────────────────
+
+[[band]]
+id = "gpt-5-pro-legacy"
+legacy = "registry's gpt-5.5-pro row (30/180) carries no cached price; the frozen band keeps 3.0"
+all = ["gpt-5", "pro"]
+input_per_million = 30.00
+output_per_million = 180.00
+cached_per_million = 3.00
+
+[[band]]
+id = "gpt-6-astra"
+anchor = "openai/gpt-6-astra"
+all = ["gpt-6", "astra"]
+
+[[band]]
+id = "gpt-6-luna"
+anchor = "openai/gpt-6-luna"
+all = ["gpt-6", "luna"]
+
+[[band]]
+id = "gpt-6-sol"
+anchor = "openai/gpt-6-sol"
+all = ["gpt-6"]
+
+[[band]]
+id = "daybreak-red"
+anchor = "openai/gpt-daybreak-red-latest"
+all = ["daybreak", "red"]
+
+[[band]]
+id = "daybreak"
+anchor = "openai/gpt-daybreak-blue-latest"
+all = ["daybreak"]
+
+[[band]]
+id = "gpt-5-6"
+anchor = "openai/gpt-5.6"
+all = ["gpt-5.6"]
+
+[[band]]
+id = "gpt-5-5"
+anchor = "openai/gpt-5.5"
+all = ["gpt-5.5"]
+
+[[band]]
+id = "gpt-5"
+anchor = "openai/gpt-5.4"
+all = ["gpt-5"]
+
+[[band]]
+id = "gpt-4o"
+anchor = "openai/gpt-4o"
+all = ["gpt-4o"]
+
+[[band]]
+id = "gpt-4-legacy"
+legacy = "registry's gpt-4 row (30/60) carries no cached price; the frozen band keeps 30 (cached == input)"
+all = ["gpt-4"]
+input_per_million = 30.00
+output_per_million = 60.00
+cached_per_million = 30.00
+
+[[band]]
+id = "gpt-3-5-legacy"
+legacy = "registry's gpt-3.5-turbo row carries no cached price; the frozen band keeps 0.5"
+all = ["gpt-3.5"]
+input_per_million = 0.50
+output_per_million = 1.50
+cached_per_million = 0.50
+
+# ── Open-weight families ───────────────────────────────────────────────
+
+[[band]]
+id = "qwen-legacy"
+legacy = "registry prices qwen per-model (0.345/1.377 for qwen-max); the frozen band is the blended family rate"
+all = ["qwen"]
+input_per_million = 0.50
+output_per_million = 2.00
+cached_per_million = 0.125
+
+[[band]]
+id = "llama-3-legacy"
+legacy = "registry prices llama-3 per-model (0.14/0.14 for 8b); the frozen band is the blended family rate"
+any = [["llama-3", "llama3"]]
+input_per_million = 0.20
+output_per_million = 0.80
+cached_per_million = 0.20
+
+[[band]]
+id = "mistral-legacy"
+legacy = "registry prices mistral per-model (0.5/1.5 large, 0.15/0.6 small); the frozen band is the blended family rate"
+all = ["mistral"]
+input_per_million = 0.20
+output_per_million = 0.80
+cached_per_million = 0.20

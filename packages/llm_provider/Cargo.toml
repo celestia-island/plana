@@ -30,3 +30,12 @@ thiserror.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+# Test-side parsing of pricing/bands.toml, pricing/models-snapshot.toml and
+# the golden fixture (the build script parses the first two itself).
+toml = { workspace = true }
+
+[build-dependencies]
+# Parses the checked-in pricing inputs; see build.rs.
+toml = { workspace = true }
