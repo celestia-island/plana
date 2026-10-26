@@ -87,12 +87,165 @@ jobs:
           fi
           echo "Publishing the crates release wave $HAVE"
 
+  # ── API diff gate: a breaking change may not ride a non-breaking bump ──
+  #
+  # cargo-semver-checks builds rustdoc JSON for the current tree and for the
+  # crate's crates.io baseline, then refuses a release whose API diff needs a
+  # bigger bump than the manifest asks for. This is the mechanism the
+  # 2026-10-26 arch review (T1) asked for: #484 removed 15 public enum
+  # variants with zero bump and nothing caught it.
+  #
+  # Scope = exactly the publishable members (publish != false). A crate that
+  # has never shipped has no registry baseline to diff against (its FIRST
+  # release is unchecked by definition and enters the gate on the second
+  # one); a crate whose manifest version already equals the published one is
+  # skipped by the publish job below anyway. Both skips are printed, never
+  # silent. The publish=false members are listed at the end of the log as
+  # explicitly out of scope.
+  #
+  # Verified locally (2026-10-27, cargo-semver-checks 0.51.0):
+  #   - plana 0.2.1 → 0.2.2 with no API change: "no semver update required".
+  #   - plana 0.2.1 → 0.2.2 with a removed pub fn: function_missing fires,
+  #     "semver requires new major version", exit 100.
+  #   - plana-tauri 0.1.21 → 0.1.22 --only-explicit-features: clean without
+  #     any system deps on both sides.
+  semver-checks:
+    name: Semver API diff (published crates)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: verify-version
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-semver-checks (pinned release)
+        run: |
+          set -euo pipefail
+          VER=0.51.0
+          # The release asset name carries NO version prefix (verified:
+          # the versioned spelling 404s, this one is 200).
+          curl -fsSL "https://github.com/obi1kenobi/cargo-semver-checks/releases/download/v${VER}/cargo-semver-checks-x86_64-unknown-linux-musl.tar.gz" \
+            | tar xz -C "$HOME/.cargo/bin"
+          cargo semver-checks --version
+      - name: API-diff every publishable crate against its crates.io baseline
+        run: |
+          set -euo pipefail
+
+          # Same version reader as the publish job: fall back to
+          # [workspace.package] for `version.workspace = true` members.
+          manifest_version() {
+            local manifest="$1" version
+            version=$(awk '
+              /^\[package\]/ { in_pkg = 1; next }
+              /^\[/ { in_pkg = 0 }
+              in_pkg && /^version[[:space:]]*=/ {
+                sub(/^version[[:space:]]*=[[:space:]]*"/, ""); sub(/".*$/, ""); print; exit
+              }' "$manifest")
+            if [ -z "$version" ]; then
+              version=$(awk '
+                /^\[workspace\.package\]/ { in_ws = 1; next }
+                /^\[/ { in_ws = 0 }
+                in_ws && /^version[[:space:]]*=/ {
+                  sub(/^version[[:space:]]*=[[:space:]]*"/, ""); sub(/".*$/, ""); print; exit
+                }' Cargo.toml)
+            fi
+            printf '%s' "$version"
+          }
+
+          # publish=false means the member is NOT on the release line (unset
+          # or `true` = publishable) — the gate only applies to the latter.
+          manifest_publishable() {
+            local pub
+            pub=$(awk '
+              /^\[package\]/ { in_pkg = 1; next }
+              /^\[/ { in_pkg = 0 }
+              in_pkg && /^publish[[:space:]]*=/ {
+                sub(/^publish[[:space:]]*=[[:space:]]*/, ""); gsub(/[" ]/, ""); print; exit
+              }' "$1")
+            [ "${pub:-true}" != "false" ]
+          }
+
+          published_version() {
+            # Distinguishes "not on crates.io" (HTTP 404 → empty output, a
+            # legitimate SKIP) from "crates.io unreachable" (anything else
+            # after retries → die). Conflating them would fail OPEN: a
+            # published crate misread as never-released silently skips its
+            # API diff — the exact hole this gate exists to close.
+            local out code attempt
+            code=""
+            for attempt in 1 2 3; do
+              out=$(curl -sSL -m 20 -A "plana-release/1.0" -w '\n%{http_code}' \
+                "https://crates.io/api/v1/crates/$1" 2>/dev/null) && code=${out##*$'\n'} || code=""
+              [ "$code" = "404" ] && return 0
+              [ "$code" = "200" ] && break
+              code=""
+              sleep 5
+            done
+            if [ -z "$code" ]; then
+              # stderr: this function usually runs inside a command
+              # substitution, where stdout (including ::error:: workflow
+              # commands) would be swallowed with the subshell.
+              echo "semver gate: crates.io query for $1 failed after 3 attempts — refusing to guess (a published crate misread as never-released would skip its API diff)" >&2
+              exit 1
+            fi
+            printf '%s' "${out%$'\n'*}" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["crate"]["max_version"])'
+          }
+
+          # plana-tauri is checked with NO features enabled: cargo-semver-checks
+          # enables every feature by default (its unstable-only heuristic),
+          # which would pull `bridge` → the GTK/WebKit system stack the same
+          # way the publish job's tarball verification does (that is why it
+          # passes --no-verify). `--only-explicit-features` builds the pure
+          # battery surface on BOTH sides (current and baseline alike).
+          declare -A FEATURE_FLAGS=( [plana-tauri]="--only-explicit-features" )
+
+          internal_skipped=()
+          checked=0
+          failed=0
+
+          for manifest in packages/*/Cargo.toml; do
+            crate=$(awk '
+              /^\[package\]/ { in_pkg = 1; next }
+              /^\[/ { in_pkg = 0 }
+              in_pkg && /^name[[:space:]]*=/ {
+                sub(/^name[[:space:]]*=[[:space:]]*"/, ""); sub(/".*$/, ""); print; exit
+              }' "$manifest")
+            if ! manifest_publishable "$manifest"; then
+              internal_skipped+=("$crate")
+              continue
+            fi
+            version=$(manifest_version "$manifest")
+            base=$(published_version "$crate")
+            if [ -z "$base" ]; then
+              echo "::notice::$crate@$version was never released — no crates.io baseline to diff against; the gate starts on its second release"
+              continue
+            fi
+            if [ "$version" = "$base" ]; then
+              echo "$crate@$version already shipped at this version (the publish job skips it too) — API diff runs on the next bump"
+              continue
+            fi
+            echo "=== $crate: $base (crates.io) -> $version (manifest) ==="
+            flags=${FEATURE_FLAGS[$crate]:-}
+            if cargo semver-checks check-release -p "$crate" $flags; then
+              checked=$((checked + 1))
+            else
+              failed=$((failed + 1))
+              echo "::error::$crate's API diff requires a bigger version bump than $version — see the lints above"
+            fi
+          done
+
+          echo
+          echo "semver gate summary: checked=$checked failed=$failed"
+          echo "not on the release line (publish=false, gate not applicable): ${internal_skipped[*]}"
+          [ "$failed" -eq 0 ]
+
   # ── Real publish, one crate at a time, skipping what is already shipped ──
   publish:
     name: Publish the crates
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    needs: verify-version
+    needs: [verify-version, semver-checks]
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
