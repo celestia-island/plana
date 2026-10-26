@@ -122,7 +122,9 @@ jobs:
         run: |
           set -euo pipefail
           VER=0.51.0
-          curl -fsSL "https://github.com/obi1kenobi/cargo-semver-checks/releases/download/v${VER}/cargo-semver-checks-${VER}-x86_64-unknown-linux-musl.tar.gz" \
+          # The release asset name carries NO version prefix (verified:
+          # the versioned spelling 404s, this one is 200).
+          curl -fsSL "https://github.com/obi1kenobi/cargo-semver-checks/releases/download/v${VER}/cargo-semver-checks-x86_64-unknown-linux-musl.tar.gz" \
             | tar xz -C "$HOME/.cargo/bin"
           cargo semver-checks --version
       - name: API-diff every publishable crate against its crates.io baseline
@@ -164,12 +166,30 @@ jobs:
           }
 
           published_version() {
-            # Empty output = "not on crates.io". curl -f turns a 404 into an
-            # error, and the caller must not die on it (`|| true`): a crate
-            # that never shipped is a SKIP, not a failure.
-            curl -fsSL -m 20 -A "plana-release/1.0" "https://crates.io/api/v1/crates/$1" 2>/dev/null \
-              | python3 -c 'import json,sys; print(json.load(sys.stdin)["crate"]["max_version"])' 2>/dev/null \
-              || true
+            # Distinguishes "not on crates.io" (HTTP 404 → empty output, a
+            # legitimate SKIP) from "crates.io unreachable" (anything else
+            # after retries → die). Conflating them would fail OPEN: a
+            # published crate misread as never-released silently skips its
+            # API diff — the exact hole this gate exists to close.
+            local out code attempt
+            code=""
+            for attempt in 1 2 3; do
+              out=$(curl -sSL -m 20 -A "plana-release/1.0" -w '\n%{http_code}' \
+                "https://crates.io/api/v1/crates/$1" 2>/dev/null) && code=${out##*$'\n'} || code=""
+              [ "$code" = "404" ] && return 0
+              [ "$code" = "200" ] && break
+              code=""
+              sleep 5
+            done
+            if [ -z "$code" ]; then
+              # stderr: this function usually runs inside a command
+              # substitution, where stdout (including ::error:: workflow
+              # commands) would be swallowed with the subshell.
+              echo "semver gate: crates.io query for $1 failed after 3 attempts — refusing to guess (a published crate misread as never-released would skip its API diff)" >&2
+              exit 1
+            fi
+            printf '%s' "${out%$'\n'*}" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["crate"]["max_version"])'
           }
 
           # plana-tauri is checked with NO features enabled: cargo-semver-checks
