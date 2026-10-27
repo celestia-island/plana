@@ -325,3 +325,7 @@ jobs:
           # without the feature.
           publish_crate plana-tauri packages/tauri/Cargo.toml --no-verify
           publish_crate plana-celestia-types packages/celestia-types/Cargo.toml
+          # T4c-converged evernight broker dispatch client (the wire contract
+          # carrier): ships on its own 0.1.x line. Its only consumer today is
+          # entelecheia, which switches from git to registry in a follow-up.
+          publish_crate plana-evernight-client packages/evernight-client/Cargo.toml
