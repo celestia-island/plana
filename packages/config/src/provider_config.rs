@@ -5,7 +5,8 @@ use uuid::Uuid;
 use tracing::{debug, info, trace, warn};
 
 use super::model_category::{GenerationParams, ModelCategory};
-use plana_core::{ModelTier, is_invalid_api_key};
+use crate::constants::is_invalid_api_key;
+use crate::model_tier::ModelTier;
 
 const TIER_NORMAL: &str = "normal";
 

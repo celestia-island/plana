@@ -1,4 +1,5 @@
-pub const DEFAULT_NETWORK: &str = "entelecheia-network";
+/// Re-export shim (T1 decoupling 2026-10-27): lives in `plana_config`.
+pub use plana_config::DEFAULT_NETWORK;
 
 pub struct RuntimeTuningConfig {
     pub retry_backoff_secs: Vec<u64>,

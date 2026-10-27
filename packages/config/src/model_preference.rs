@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use plana_core::ModelTier;
+use crate::model_tier::ModelTier;
 
 use crate::gen_protocol::Capability;
 
@@ -422,7 +422,7 @@ pub fn load_agent_model_preferences() -> AgentModelPreferences {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use plana_core::ModelTier;
+    use crate::model_tier::ModelTier;
 
     #[test]
     fn lowercase_fallback_tier_parses_and_resolves() {

@@ -1,12 +1,3 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ToolDefinition {
-    pub name: String,
-    pub description: String,
-    pub parameters: serde_json::Value,
-    #[serde(default)]
-    pub call_mode: super::ToolCallMode,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub strict: Option<bool>,
-}
+//! Re-export shim (T1 decoupling 2026-10-27): the tool-call wire type now
+//! lives in `plana_llm_provider`.
+pub use plana_llm_provider::ToolDefinition;
