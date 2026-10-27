@@ -14,6 +14,7 @@ pub mod anthropic;
 pub mod errors;
 pub mod gemini;
 pub mod generation;
+pub mod llm_image_content;
 pub mod metering;
 pub mod model_router;
 pub mod openai;
@@ -21,7 +22,10 @@ pub mod openai_responses;
 pub mod quota_meter;
 pub mod registry;
 pub mod rpc;
+pub mod serde_bytes_base64;
 pub mod sse_util;
+pub mod tool_call_mode;
+pub mod tool_definition;
 pub mod verification;
 
 use futures::Stream;
@@ -167,7 +171,7 @@ impl From<&str> for MessageRole {
     }
 }
 
-pub use plana_core::LlmImageContent;
+pub use llm_image_content::{LlmImageContent, LlmImagePosition};
 
 pub const HEADER_CONTENT_TYPE: &str = "Content-Type";
 pub const HEADER_AUTHORIZATION: &str = "Authorization";
@@ -340,7 +344,8 @@ pub struct LlmChatRequest {
     pub tool_choice: Option<ToolChoice>,
 }
 
-pub use plana_core::ToolDefinition;
+pub use tool_call_mode::ToolCallMode;
+pub use tool_definition::ToolDefinition;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmChatResponse {

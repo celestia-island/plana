@@ -10,7 +10,8 @@ use std::{
     str::FromStr,
 };
 
-use plana_core::{DEFAULT_NETWORK, ModelTier};
+use crate::constants::DEFAULT_NETWORK;
+use crate::model_tier::ModelTier;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum UiMode {

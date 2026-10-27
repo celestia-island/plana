@@ -225,21 +225,5 @@ impl MonitorAction {
     }
 }
 
-pub fn is_invalid_api_key(api_key: &str) -> bool {
-    api_key.trim().is_empty()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_invalid_api_key() -> Result<()> {
-        assert!(is_invalid_api_key(""));
-        assert!(is_invalid_api_key("   "));
-        assert!(is_invalid_api_key("\t\n"));
-        assert!(!is_invalid_api_key("sk-abc123"));
-        assert!(!is_invalid_api_key(" key "));
-        Ok(())
-    }
-}
+/// Re-export shim (T1 decoupling 2026-10-27): lives in `plana_config`.
+pub use plana_config::is_invalid_api_key;

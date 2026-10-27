@@ -11,6 +11,7 @@
 mod agent_config;
 mod app_config;
 pub mod async_protocol;
+pub mod constants;
 pub mod context_config;
 pub mod dangerous_flags;
 pub mod embedding_models;
@@ -19,6 +20,7 @@ mod event_bus;
 pub mod gen_protocol;
 pub mod model_category;
 pub mod model_preference;
+pub mod model_tier;
 mod provider_config;
 mod provider_config_validator;
 mod provider_config_watcher;
@@ -75,3 +77,8 @@ pub use provider_metadata::{
 };
 pub use rbac_config::RbacConfig;
 pub use toml_cache::TomlConfigCache;
+
+// Shared vocabulary (T1 decoupling 2026-10-27): these moved here from
+// plana_core so this crate depends on the config/rule domain only.
+pub use constants::{DEFAULT_NETWORK, is_invalid_api_key};
+pub use model_tier::ModelTier;

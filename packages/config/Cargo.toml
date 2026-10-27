@@ -11,7 +11,6 @@ workspace = true
 
 [dependencies]
 
-plana_core = { workspace = true }
 plana_res = { workspace = true }
 anyhow.workspace = true
 async-trait.workspace = true

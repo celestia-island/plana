@@ -10,6 +10,8 @@ license-file.workspace = true
 workspace = true
 
 [dependencies]
+plana_config = { workspace = true }
+plana_llm_provider = { workspace = true }
 
 anyhow.workspace = true
 async-trait.workspace = true
