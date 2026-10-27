@@ -11,12 +11,12 @@ workspace = true
 
 [dependencies]
 
-plana_config = { workspace = true }
+plana-config = { workspace = true }
 # cli-backend enables the WSL Containers / Apple Container CLI adapters
 # (cherino's Docker backend is on by default).
 cherino = { workspace = true, features = ["cli-backend"] }
 plana_core = { workspace = true }
-plana_infra_utils = { workspace = true }
+plana-infra-utils = { workspace = true }
 plana = { workspace = true }
 plana_state_sync = { workspace = true }
 anyhow.workspace = true

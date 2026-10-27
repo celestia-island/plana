@@ -1,5 +1,5 @@
 [package]
-name = "plana_build_info"
+name = "plana-build-info"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

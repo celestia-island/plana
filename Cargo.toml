@@ -56,8 +56,8 @@ all = "deny"
 
 # ── Internal workspace crates (path deps; keys are the real crate names) ──
 plana_bootloader = { path = "packages/bootloader" }
-plana_build_info = { path = "packages/build_info" }
-plana_config = { path = "packages/config" }
+plana-build-info = { path = "packages/build_info", version = "0.1" }
+plana-config = { path = "packages/config", version = "0.1" }
 plana_core = { path = "packages/core" }
 plana_custom_agent = { path = "packages/custom_agent" }
 plana_domain_agent = { path = "packages/domain_agent" }
@@ -65,8 +65,8 @@ plana_domain_skills = { path = "packages/domain_skills" }
 plana_domain_skills_permissions = { path = "packages/domain_skills_permissions" }
 plana_infra_services = { path = "packages/infra_services" }
 plana_archive = { path = "packages/archive" }
-plana_infra_utils = { path = "packages/infra_utils" }
-plana_llm_provider = { path = "packages/llm_provider" }
+plana-infra-utils = { path = "packages/infra_utils", version = "0.1" }
+plana-llm-provider = { path = "packages/llm_provider", version = "0.1" }
 plana_macros = { path = "packages/macros" }
 plana_prompt = { path = "packages/prompt" }
 plana_res = { path = "packages/res" }

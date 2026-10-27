@@ -13,7 +13,7 @@ workspace = true
 
 plana_domain_agent = { workspace = true }
 plana_domain_skills_permissions = { workspace = true }
-plana_infra_utils = { workspace = true }
+plana-infra-utils = { workspace = true }
 plana_prompt = { workspace = true }
 plana_state_sync = { workspace = true }
 anyhow.workspace = true
