@@ -1,0 +1,49 @@
+# OpenAI Generation
+
+[entrypoint]
+id = "openai_generation"
+provider_id = "openai"
+website_domain = "openai.com"
+type = "generation"
+billing_type = "per_use"
+
+[entrypoint.api]
+protocol = "openai_chat_v1"
+base_url = "https://api.openai.com/v1"
+chat_endpoint = "/chat/completions"
+auth_type = "bearer"
+auth_header = "Authorization"
+env_var = "OPENAI_API_KEY"
+
+[entrypoint.name]
+en = "OpenAI Generation"
+zhs = "OpenAI 生成"
+zht = "OpenAI 生成"
+ja = "OpenAI 生成"
+ko = "OpenAI 생성"
+fr = "OpenAI Génération"
+es = "OpenAI Generación"
+ru = "OpenAI Генерация"
+
+[entrypoint.generation]
+modalities = ["image", "audio", "video"]
+
+[[entrypoint.models]]
+id = "dall-e-3"
+supports_vision = false
+
+[[entrypoint.models]]
+id = "gpt-image-1"
+supports_vision = true
+
+[[entrypoint.models]]
+id = "tts-1"
+supports_vision = false
+
+[[entrypoint.models]]
+id = "tts-1-hd"
+supports_vision = false
+
+[[entrypoint.models]]
+id = "sora"
+supports_vision = false

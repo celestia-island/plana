@@ -120,7 +120,10 @@ fn default_theme() -> String {
 }
 
 fn default_language() -> String {
-    plana_res::Language::default().code().to_string()
+    // The platform default locale (ZHS = zh-Hans). This is a static default;
+    // host-locale detection belongs to the language picker, not the config
+    // default (it matched `Language::default().code()` before T1 slice 2).
+    "zh-Hans".to_string()
 }
 
 fn default_cluster_prefix() -> String {
