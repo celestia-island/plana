@@ -27,7 +27,7 @@ npm = "0.1.14"
 
 [exempt.cargo]
 "packages/celestia-types" = "independently published line"
-"packages/evernight-client" = "independently published line"
+"packages/dispatch-client" = "independently published line"
 "packages/jsonrpc" = "independently published line"
 "packages/plana" = "independently published line"
 "packages/protocol-core" = "independently published line"

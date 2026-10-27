@@ -1,11 +1,11 @@
 [package]
-name = "plana-evernight-client"
+name = "plana-dispatch-client"
 version = "0.1.0"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
 license-file = "LICENSE"
-description = "Shared evernight broker dispatch client for the PoleMos terminal command routing contract (P83/M1): request envelope, idempotency window, Unix-socket transport, error classification and target-scope guarding."
+description = "Broker dispatch client for the terminal command routing contract: request envelope, idempotency window, Unix-socket transport, error classification and target-scope guarding."
 repository = "https://github.com/celestia-island/plana"
 keywords = ["evernight", "json-rpc", "terminal", "ipc"]
 categories = ["api-bindings", "network-programming"]

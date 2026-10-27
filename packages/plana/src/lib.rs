@@ -21,7 +21,7 @@
 //! - `plana-celestia-types` — the celestia platform domain profile
 //!   (depends on this crate; NOT re-exported here — the former
 //!   `celestia` facade feature is gone, depend on it directly).
-//! - `plana-evernight-client` — the terminal-route dispatch client
+//! - `plana-dispatch-client` — the terminal-route dispatch client
 //!   (depends on this crate; likewise depend on it directly).
 //!
 //! The `rpc-server` feature adds this crate's own axum mounting module
