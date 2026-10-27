@@ -3,7 +3,8 @@ name = "plana-llm-provider"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
+description = "LLM provider abstraction with metering and a generated pricing fallback for celestia-island services"
 license-file.workspace = true
 
 [lints]

@@ -3,7 +3,8 @@ name = "plana-infra-utils"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
+description = "Circuit breaker and rate limiter primitives for celestia-island services"
 license-file.workspace = true
 
 [lints]
