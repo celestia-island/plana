@@ -11,8 +11,8 @@ workspace = true
 
 [dependencies]
 
-plana_res = { workspace = true }
 anyhow.workspace = true
+include_dir.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
 dirs.workspace = true

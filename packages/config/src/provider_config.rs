@@ -88,7 +88,7 @@ pub struct ResolvedEntrypoint {
 
 pub fn load_all_entrypoints_from_toml() -> Vec<ResolvedEntrypoint> {
     let mut results = Vec::new();
-    for provider_dir in plana_res::entrypoint::ENTRYPOINT_DIR.dirs() {
+    for provider_dir in crate::provider_registry::ENTRYPOINT_DIR.dirs() {
         for file in provider_dir.files() {
             if file.path().extension().and_then(|e| e.to_str()) != Some("toml") {
                 continue;
@@ -733,27 +733,10 @@ fn push_tier_models_from_toml(
 }
 
 /// Read the cached capability score (`[model.score] value`) for a model from
-/// the embedded registry model card. Returns `None` when the provider dir,
-/// model file, or score section is absent.
+/// the embedded registry score table (see `crate::provider_registry`).
+/// Returns `None` when the provider or model has no cached score.
 fn read_model_card_score(registry_provider_id: &str, model_name: &str) -> Option<f64> {
-    let dir = plana_res::entrypoint::get_provider_models_dir(registry_provider_id)?;
-    let target = format!("{}.toml", model_name.replace('/', "_").replace(':', "-"));
-    // Iterate rather than get_file(): include_dir's get_file is unreliable for
-    // filenames containing dots, but files() reliably yields every entry.
-    let file = dir.files().find(|f| {
-        f.path()
-            .file_name()
-            .and_then(|n| n.to_str())
-            .map(|n| n == target)
-            .unwrap_or(false)
-    })?;
-    let content = file.contents_utf8()?;
-    let parsed: toml::Value = toml::from_str(content).ok()?;
-    parsed
-        .get("model")
-        .and_then(|m| m.get("score"))
-        .and_then(|s| s.get("value"))
-        .and_then(|v| v.as_float())
+    crate::provider_registry::model_score(registry_provider_id, model_name)
 }
 
 /// Merge per-provider `PriorityOrderEntry`s into a single entry per tier,

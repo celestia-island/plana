@@ -26,6 +26,7 @@ mod provider_config_validator;
 mod provider_config_watcher;
 mod provider_crud;
 mod provider_metadata;
+pub mod provider_registry;
 mod rbac_config;
 pub mod toml_cache;
 

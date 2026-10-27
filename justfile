@@ -50,6 +50,13 @@ install:
 sync target='provider-registry' *ARGS='':
     {{python_cmd}} scripts/fetch_provider_registry.py {{ARGS}}
 
+# Regenerate the plana_config embedded provider-registry snapshot
+# (entrypoint TOMLs + compact model-score table). The data is CHECKED IN —
+# review and commit the diff; the build itself never fetches.
+regen-config-registry *ARGS='':
+    just sync provider-registry {{ARGS}}
+    {{python_cmd}} scripts/gen_config_registry_data.py
+
 # Regenerate the llm_provider pricing snapshot from provider-registry
 # (network: clones upstream first, then reads it locally — the build itself
 # never fetches). Fails WITHOUT touching the checked-in snapshot, so the
