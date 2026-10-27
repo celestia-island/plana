@@ -3,7 +3,8 @@ name = "plana-build-info"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
+description = "Build-time version and commit-hash plumbing for celestia-island services"
 license-file = "LICENSE"
 
 [lints]
