@@ -16,13 +16,13 @@ workspace = true
 # default-features = false — bollard's exact-pinned bollard-stubs then
 # stay out of their graph entirely.
 default = ["stack"]
-stack = ["dep:bollard", "dep:cherino", "dep:plana_infra_services", "dep:plana_infra_utils"]
+stack = ["dep:bollard", "dep:cherino", "dep:plana_infra_services", "dep:plana-infra-utils"]
 
 [dependencies]
 
 cherino = { workspace = true, optional = true }
 plana_infra_services = { workspace = true, optional = true }
-plana_infra_utils = { workspace = true, optional = true }
+plana-infra-utils = { workspace = true, optional = true }
 anyhow.workspace = true
 async-trait.workspace = true
 bollard = { workspace = true, optional = true }

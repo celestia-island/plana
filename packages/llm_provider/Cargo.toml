@@ -1,5 +1,5 @@
 [package]
-name = "plana_llm_provider"
+name = "plana-llm-provider"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,7 +11,7 @@ workspace = true
 
 [dependencies]
 
-plana_config = { workspace = true }
+plana-config = { workspace = true }
 anyhow.workspace = true
 async-trait.workspace = true
 base64.workspace = true

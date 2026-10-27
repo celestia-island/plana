@@ -325,6 +325,14 @@ jobs:
           # without the feature.
           publish_crate plana-tauri packages/tauri/Cargo.toml --no-verify
           publish_crate plana-celestia-types packages/celestia-types/Cargo.toml
+          # T1 A-class wave (2026-10-27): the four generic platform crates,
+          # closure-clean since #491/#492 (no unpublished family dependencies).
+          # Names are service-agnostic per the naming ruling; order respects
+          # the intra-wave dependency (llm_provider depends on config).
+          publish_crate plana-config packages/config/Cargo.toml
+          publish_crate plana-llm-provider packages/llm_provider/Cargo.toml
+          publish_crate plana-infra-utils packages/infra_utils/Cargo.toml
+          publish_crate plana-build-info packages/build_info/Cargo.toml
           # T4c-converged broker dispatch client (the wire contract carrier):
           # ships on its own 0.1.x line. Its only consumer today is
           # entelecheia, which switches from git to registry in a follow-up.

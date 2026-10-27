@@ -1,5 +1,5 @@
 [package]
-name = "plana_infra_utils"
+name = "plana-infra-utils"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
