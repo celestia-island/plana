@@ -1285,3 +1285,24 @@ async fn call_no_body_sends_no_payload_at_all() {
     );
     assert!(reqs[0].headers.get("content-type").is_none());
 }
+
+#[tokio::test]
+async fn query_pair_lands_on_the_wire() {
+    use wiremock::matchers::query_param;
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/api/v1/prs"))
+        .and(query_param("state", "open"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"prs": []})))
+        .mount(&server)
+        .await;
+
+    let svc = fixed("noa", &[server.uri().as_str()]);
+    let out: serde_json::Value = svc
+        .call(plana_sibling::Method::GET, "/api/v1/prs", &())
+        .query_pair("state", "open")
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"prs": []}));
+}
