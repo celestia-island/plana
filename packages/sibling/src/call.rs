@@ -20,6 +20,7 @@ pub struct SiblingCall<'svc, 'req, B: Serialize + ?Sized> {
     pub(crate) method: http::Method,
     pub(crate) path: String,
     pub(crate) body: Option<&'req B>,
+    pub(crate) query_pairs: Vec<(String, String)>,
     pub(crate) retry: Retry,
     pub(crate) total_timeout: Option<Duration>,
     pub(crate) idempotency_key: Option<String>,
@@ -32,6 +33,14 @@ impl<B: Serialize + ?Sized> SiblingCall<'_, '_, B> {
     #[must_use]
     pub fn timeout(mut self, d: Duration) -> Self {
         self.total_timeout = Some(d);
+        self
+    }
+
+    /// Append one query parameter (applied to every attempt; values are
+    /// URL-encoded by the transport). Repeatable.
+    #[must_use]
+    pub fn query_pair(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.query_pairs.push((key.into(), value.into()));
         self
     }
 
@@ -61,6 +70,7 @@ impl<B: Serialize + ?Sized> SiblingCall<'_, '_, B> {
             method,
             path,
             body,
+            query_pairs,
             retry,
             total_timeout,
             idempotency_key,
@@ -90,6 +100,7 @@ impl<B: Serialize + ?Sized> SiblingCall<'_, '_, B> {
             &method,
             &path,
             payload.as_deref(),
+            query_pairs,
             retry,
             total_timeout,
             idempotency_key.as_deref(),
@@ -160,14 +171,17 @@ fn specific_error(name: &str, endpoint: &str, fail: AttemptFail) -> SiblingError
 
 /// Join an endpoint root and a call path into a validated absolute URL.
 /// `endpoint` may carry a trailing slash; `path` may omit the leading one.
+/// An **empty** path dials the endpoint verbatim (no slash appended) — the
+/// shape for providers that hand over full URLs (path included).
 fn build_url(endpoint: &str, path: &str) -> Result<String, String> {
     let base = endpoint.trim_end_matches('/');
-    let path = if path.starts_with('/') {
-        path.to_string()
+    let full = if path.is_empty() {
+        base.to_string()
+    } else if path.starts_with('/') {
+        format!("{base}{path}")
     } else {
-        format!("/{path}")
+        format!("{base}/{path}")
     };
-    let full = format!("{base}{path}");
     reqwest::Url::parse(&full).map_err(|e| format!("invalid endpoint URL `{full}`: {e}"))?;
     Ok(full)
 }
@@ -179,6 +193,7 @@ async fn execute(
     method: &http::Method,
     path: &str,
     payload: Option<&[u8]>,
+    query_pairs: Vec<(String, String)>,
     retry: Retry,
     total_override: Option<Duration>,
     idempotency_key: Option<&str>,
@@ -231,9 +246,16 @@ async fn execute(
                     elapsed_ms = tracing::field::Empty,
                 );
                 async {
-                    let res =
-                        do_attempt(service, method, path, payload, idempotency_key, &endpoint)
-                            .await;
+                    let res = do_attempt(
+                        service,
+                        method,
+                        path,
+                        payload,
+                        &query_pairs,
+                        idempotency_key,
+                        &endpoint,
+                    )
+                    .await;
                     let elapsed_ms = started.elapsed().as_millis() as u64;
                     let result_text = match &res {
                         Ok(_) => "ok".to_string(),
@@ -307,6 +329,7 @@ async fn do_attempt(
     method: &http::Method,
     path: &str,
     payload: Option<&[u8]>,
+    query_pairs: &[(String, String)],
     idempotency_key: Option<&str>,
     endpoint: &str,
 ) -> Result<Vec<u8>, AttemptFail> {
@@ -314,11 +337,18 @@ async fn do_attempt(
     let url = build_url(endpoint, path).map_err(AttemptFail::Unreachable)?;
 
     let mut req = service.client().request(method.clone(), url);
-    if let Some(token) = service.token() {
-        req = req.header(
-            http::header::AUTHORIZATION,
-            format!("Bearer {}", token.expose_secret()),
-        );
+    for (key, value) in query_pairs {
+        req = req.query(&[(key.as_str(), value.as_str())]);
+    }
+    if let Some(source) = service.token() {
+        // Static tokens resolve at build; dynamic providers resolve here so
+        // a rotated credential applies from this attempt on.
+        if let Some(token) = source.token_for_attempt() {
+            req = req.header(
+                http::header::AUTHORIZATION,
+                format!("Bearer {}", token.expose_secret()),
+            );
+        }
     }
     if let Some(key) = idempotency_key {
         req = req.header("Idempotency-Key", key);
@@ -376,6 +406,12 @@ mod tests {
         assert_eq!(
             build_url("http://192.0.2.1:3002", "api/x?y=1").unwrap(),
             "http://192.0.2.1:3002/api/x?y=1"
+        );
+        // Empty path dials the endpoint verbatim (full-URL providers) —
+        // no trailing slash appended.
+        assert_eq!(
+            build_url("http://192.0.2.1:3008/api/ws", "").unwrap(),
+            "http://192.0.2.1:3008/api/ws"
         );
         assert!(build_url("::::", "/x").is_err());
     }

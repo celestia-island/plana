@@ -9,7 +9,7 @@ use serde::Serialize;
 
 use crate::builder::SiblingServiceBuilder;
 use crate::call::SiblingCall;
-use crate::provider::EndpointProvider;
+use crate::provider::{BearerProvider, EndpointProvider};
 use crate::retry::Retry;
 
 /// One slot in the endpoint list, preserving builder declaration order:
@@ -20,6 +20,15 @@ pub(crate) enum EndpointSlot {
     Dynamic(Arc<dyn EndpointProvider>),
 }
 
+/// Where the bearer token comes from. Static sources resolve at build time;
+/// the dynamic provider is queried on every attempt (token rotation without
+/// restart).
+#[derive(Clone)]
+pub(crate) enum BearerSource {
+    Static(SecretString),
+    Dynamic(Arc<dyn BearerProvider>),
+}
+
 /// A declared sibling service endpoint — one instance per target sibling per
 /// consumer process. Cheap to clone (shares the underlying connection pool).
 #[derive(Clone)]
@@ -27,8 +36,18 @@ pub struct SiblingService {
     pub(crate) name: String,
     pub(crate) client: reqwest::Client,
     pub(crate) endpoints: Vec<EndpointSlot>,
-    pub(crate) token: Option<SecretString>,
+    pub(crate) token: Option<BearerSource>,
     pub(crate) total_timeout: Duration,
+}
+
+impl BearerSource {
+    /// Resolve the token for one attempt; `None` = no auth header.
+    pub(crate) fn token_for_attempt(&self) -> Option<SecretString> {
+        match self {
+            Self::Static(secret) => Some(secret.clone()),
+            Self::Dynamic(provider) => provider.bearer(),
+        }
+    }
 }
 
 impl fmt::Debug for SiblingService {
@@ -80,6 +99,23 @@ impl SiblingService {
             method,
             path: path.to_string(),
             body: Some(body),
+            query_pairs: Vec::new(),
+            retry: Retry::None,
+            total_timeout: None,
+            idempotency_key: None,
+        }
+    }
+
+    /// Begin a call with **no request body** — the faithful shape for
+    /// endpoints that POST without a payload (a `call(.., &())` would still
+    /// send the JSON literal `null`).
+    pub fn call_no_body(&self, method: http::Method, path: &str) -> SiblingCall<'_, '_, ()> {
+        SiblingCall {
+            service: self,
+            method,
+            path: path.to_string(),
+            body: None,
+            query_pairs: Vec::new(),
             retry: Retry::None,
             total_timeout: None,
             idempotency_key: None,
@@ -90,7 +126,7 @@ impl SiblingService {
         &self.client
     }
 
-    pub(crate) fn token(&self) -> Option<&SecretString> {
+    pub(crate) fn token(&self) -> Option<&BearerSource> {
         self.token.as_ref()
     }
 
