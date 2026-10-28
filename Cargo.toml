@@ -21,6 +21,7 @@ members = [
     "packages/state_types",
     "packages/infra_services",
     "packages/infra_utils",
+    "packages/sibling",
     "packages/bootloader",
     "packages/build_info",
     "packages/llm_provider",
@@ -183,6 +184,7 @@ ts-rs = { version = "^12", features = ["serde-compat", "serde-json-impl", "uuid-
 url = "^2"
 uuid = { version = "^1", features = ["v3", "v4", "v5", "v7", "serde"] }
 walkdir = "^2"
+wiremock = "^0.*"
 [profile.dev]
 debug = 1
 opt-level = 0
