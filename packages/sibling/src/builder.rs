@@ -9,7 +9,7 @@ use std::time::Duration;
 use secrecy::SecretString;
 use thiserror::Error;
 
-use crate::provider::EndpointProvider;
+use crate::provider::{BearerProvider, EndpointProvider};
 use crate::service::SiblingService;
 
 /// Total-deadline default (design §3.4: services in the wild currently
@@ -60,6 +60,7 @@ pub struct SiblingServiceBuilder {
     sources: Vec<EndpointSource>,
     bearer_env: Option<String>,
     bearer_secret: Option<SecretString>,
+    bearer_provider: Option<Arc<dyn BearerProvider>>,
     total_timeout: Option<Duration>,
     connect_timeout: Option<Duration>,
     read_timeout: Option<Duration>,
@@ -84,6 +85,7 @@ impl fmt::Debug for SiblingServiceBuilder {
             )
             .field("bearer_env", &self.bearer_env)
             .field("has_bearer_secret", &self.bearer_secret.is_some())
+            .field("has_bearer_provider", &self.bearer_provider.is_some())
             .field("total_timeout", &self.total_timeout)
             .field("connect_timeout", &self.connect_timeout)
             .field("read_timeout", &self.read_timeout)
@@ -99,6 +101,7 @@ impl SiblingServiceBuilder {
             sources: Vec::new(),
             bearer_env: None,
             bearer_secret: None,
+            bearer_provider: None,
             total_timeout: None,
             connect_timeout: None,
             read_timeout: None,
@@ -140,10 +143,21 @@ impl SiblingServiceBuilder {
     }
 
     /// Bearer token injected directly (already-resolved secret). Takes
-    /// precedence over [`bearer_env`](Self::bearer_env) when both are set.
+    /// precedence over [`bearer_provider`](Self::bearer_provider) and
+    /// [`bearer_env`](Self::bearer_env) when several are set.
     #[must_use]
     pub fn bearer_secret(mut self, secret: SecretString) -> Self {
         self.bearer_secret = Some(secret);
+        self
+    }
+
+    /// Dynamic bearer credential callback (e.g. a DB-encrypted token or an
+    /// env value that must be re-read per call). Queried on every attempt;
+    /// takes precedence over [`bearer_env`](Self::bearer_env) but yields to
+    /// [`bearer_secret`](Self::bearer_secret).
+    #[must_use]
+    pub fn bearer_provider(mut self, provider: Arc<dyn BearerProvider>) -> Self {
+        self.bearer_provider = Some(provider);
         self
     }
 
@@ -229,20 +243,24 @@ impl SiblingServiceBuilder {
             }
         }
 
-        // Credentials: direct secret wins (documented); env resolves
-        // fail-fast when no direct secret was given.
+        // Credentials: precedence is direct secret > dynamic provider >
+        // fail-fast env. The provider is stored unresolved — it is queried
+        // on every attempt (token rotation without restart).
         let token = match self.bearer_secret {
-            Some(secret) => Some(secret),
-            None => match &self.bearer_env {
-                Some(var) => {
-                    let raw = std::env::var(var)
-                        .map_err(|_| SiblingBuildError::TokenMissing { name: var.clone() })?;
-                    if raw.trim().is_empty() {
-                        return Err(SiblingBuildError::TokenMissing { name: var.clone() });
+            Some(secret) => Some(crate::service::BearerSource::Static(secret)),
+            None => match self.bearer_provider {
+                Some(provider) => Some(crate::service::BearerSource::Dynamic(provider)),
+                None => match &self.bearer_env {
+                    Some(var) => {
+                        let raw = std::env::var(var)
+                            .map_err(|_| SiblingBuildError::TokenMissing { name: var.clone() })?;
+                        if raw.trim().is_empty() {
+                            return Err(SiblingBuildError::TokenMissing { name: var.clone() });
+                        }
+                        Some(crate::service::BearerSource::Static(SecretString::new(raw)))
                     }
-                    Some(SecretString::new(raw))
-                }
-                None => None,
+                    None => None,
+                },
             },
         };
 

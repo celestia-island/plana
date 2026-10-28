@@ -59,9 +59,14 @@
 //!   overridden per call with `.timeout(...)`.
 //! - **Credentials**: `.bearer_env(name)` / `.bearer_secret(...)` are read
 //!   once at [`SiblingServiceBuilder::build`] (fail-fast) and stored in a
-//!   redacting [`secrecy::SecretString`]; tokens never appear in errors,
+//!   redacting [`secrecy::SecretString`]; `.bearer_provider(...)`
+//!   ([`BearerProvider`]) is queried on **every attempt** instead — the
+//!   shape for DB-encrypted tokens or call-time env secrets, so a rotated
+//!   credential applies without a restart. Tokens never appear in errors,
 //!   logs or `Debug` output. Endpoint URLs must not carry userinfo
 //!   (`user:password@`) — they would leak into spans and error contexts.
+//!   `call_no_body(...)` sends a bodyless request for endpoints that POST
+//!   without a payload.
 //! - **Telemetry**: every attempt emits a `sibling_call` tracing span with
 //!   `sibling`, `endpoint`, `method`, `path`, `result` and `elapsed_ms`
 //!   (plus one `sibling_call_done` event per attempt, so default
@@ -84,7 +89,7 @@ pub mod metrics;
 pub use builder::{SiblingBuildError, SiblingServiceBuilder};
 pub use error::{AttemptFailure, AttemptReason, SiblingError};
 pub use http::Method;
-pub use provider::EndpointProvider;
+pub use provider::{BearerProvider, EndpointProvider};
 pub use retry::Retry;
 pub use service::SiblingService;
 

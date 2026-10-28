@@ -1157,3 +1157,131 @@ async fn sibling_call_span_records_failure_result() {
     assert!(captured.contains("sibling=\"span-sib-fail\""), "{captured}");
     assert!(captured.contains("result=\"HTTP 500\""), "{captured}");
 }
+
+// ---------------------------------------------------------------------------
+// BearerProvider (dynamic credential) & call_no_body
+// ---------------------------------------------------------------------------
+
+struct StaticBearer(Option<SecretString>);
+
+impl plana_sibling::BearerProvider for StaticBearer {
+    fn bearer(&self) -> Option<SecretString> {
+        self.0.clone()
+    }
+}
+
+#[tokio::test]
+async fn bearer_provider_resolves_per_attempt() {
+    let server = MockServer::start().await;
+    Mock::given(header("authorization", "Bearer token-one"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"n": 1})))
+        .mount(&server)
+        .await;
+    Mock::given(header("authorization", "Bearer token-two"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"n": 2})))
+        .mount(&server)
+        .await;
+
+    // A provider whose answer flips between calls (rotation without restart).
+    struct Flipping(std::sync::Mutex<Option<SecretString>>);
+    impl plana_sibling::BearerProvider for Flipping {
+        fn bearer(&self) -> Option<SecretString> {
+            self.0.lock().unwrap().clone()
+        }
+    }
+    let flipping = Arc::new(Flipping(std::sync::Mutex::new(Some(SecretString::new(
+        "token-one".to_string(),
+    )))));
+    let provider: Arc<dyn plana_sibling::BearerProvider> = flipping.clone();
+
+    let svc = SiblingService::new("arona")
+        .endpoint_fixed(server.uri())
+        .bearer_provider(Arc::clone(&provider))
+        .build()
+        .unwrap();
+    let out: serde_json::Value = svc
+        .call(plana_sibling::Method::GET, "/api/x", &())
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"n": 1}));
+
+    // Rotate: the very next attempt carries the new token.
+    *flipping.0.lock().unwrap() = Some(SecretString::new("token-two".to_string()));
+    let out: serde_json::Value = svc
+        .call(plana_sibling::Method::GET, "/api/x", &())
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"n": 2}));
+}
+
+#[tokio::test]
+async fn bearer_provider_none_sends_no_authorization_header() {
+    let server = MockServer::start().await;
+    ok_mock(json!({"ok": true})).mount(&server).await;
+
+    let provider = Arc::new(StaticBearer(None));
+    let svc = SiblingService::new("arona")
+        .endpoint_fixed(server.uri())
+        .bearer_provider(provider)
+        .build()
+        .unwrap();
+    let out: serde_json::Value = svc
+        .call(plana_sibling::Method::GET, "/api/x", &())
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"ok": true}));
+    let reqs = server.received_requests().await.unwrap();
+    assert!(reqs[0].headers.get("authorization").is_none());
+}
+
+#[tokio::test]
+async fn bearer_secret_takes_precedence_over_provider() {
+    let server = MockServer::start().await;
+    Mock::given(header("authorization", "Bearer direct-secret"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&server)
+        .await;
+
+    let provider = Arc::new(StaticBearer(Some(SecretString::new(
+        "provider-secret".to_string(),
+    ))));
+    let svc = SiblingService::new("arona")
+        .endpoint_fixed(server.uri())
+        .bearer_provider(provider)
+        .bearer_secret(SecretString::new("direct-secret".to_string()))
+        .build()
+        .unwrap();
+    let out: serde_json::Value = svc
+        .call(plana_sibling::Method::GET, "/api/x", &())
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"ok": true}));
+}
+
+#[tokio::test]
+async fn call_no_body_sends_no_payload_at_all() {
+    let server = MockServer::start().await;
+    ok_mock(json!({"ok": true})).mount(&server).await;
+
+    let svc = fixed("arona", &[server.uri().as_str()]);
+    let out: serde_json::Value = svc
+        .call_no_body(plana_sibling::Method::POST, "/api/rotate")
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"ok": true}));
+    let reqs = server.received_requests().await.unwrap();
+    assert_eq!(reqs.len(), 1);
+    // A `call(.., &())` would wire the JSON literal `null`; a bodyless POST
+    // must wire neither body nor a JSON content-type.
+    assert!(
+        reqs[0].body.is_empty(),
+        "bodyless POST must not carry a payload: {:?}",
+        String::from_utf8_lossy(&reqs[0].body)
+    );
+    assert!(reqs[0].headers.get("content-type").is_none());
+}

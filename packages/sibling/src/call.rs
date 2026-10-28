@@ -314,11 +314,15 @@ async fn do_attempt(
     let url = build_url(endpoint, path).map_err(AttemptFail::Unreachable)?;
 
     let mut req = service.client().request(method.clone(), url);
-    if let Some(token) = service.token() {
-        req = req.header(
-            http::header::AUTHORIZATION,
-            format!("Bearer {}", token.expose_secret()),
-        );
+    if let Some(source) = service.token() {
+        // Static tokens resolve at build; dynamic providers resolve here so
+        // a rotated credential applies from this attempt on.
+        if let Some(token) = source.token_for_attempt() {
+            req = req.header(
+                http::header::AUTHORIZATION,
+                format!("Bearer {}", token.expose_secret()),
+            );
+        }
     }
     if let Some(key) = idempotency_key {
         req = req.header("Idempotency-Key", key);
