@@ -22,6 +22,7 @@ pub(crate) enum EndpointSlot {
 
 /// A declared sibling service endpoint — one instance per target sibling per
 /// consumer process. Cheap to clone (shares the underlying connection pool).
+#[derive(Clone)]
 pub struct SiblingService {
     pub(crate) name: String,
     pub(crate) client: reqwest::Client,

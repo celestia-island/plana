@@ -26,8 +26,9 @@ pub struct SiblingCall<'svc, 'req, B: Serialize + ?Sized> {
 }
 
 impl<B: Serialize + ?Sized> SiblingCall<'_, '_, B> {
-    /// Override the total deadline for this call only (connect/read stay at
-    /// their build-time values).
+    /// Override the call's total wall-clock deadline (shared across all
+    /// failover attempts — the worst case is not attempts × deadline);
+    /// connect/read stay at their build-time values.
     #[must_use]
     pub fn timeout(mut self, d: Duration) -> Self {
         self.total_timeout = Some(d);
@@ -210,86 +211,95 @@ async fn execute(
         );
     }
 
-    let mut tried: Vec<AttemptFailure> = Vec::new();
-    for attempt in 0..max_attempts {
-        let endpoint = endpoints[attempt % endpoints.len()].clone();
-        let started = Instant::now();
-        let outcome = {
-            let span = tracing::info_span!(
-                "sibling_call",
-                sibling = name,
-                endpoint = %endpoint,
-                method = %method,
-                path = path,
-                result = tracing::field::Empty,
-                elapsed_ms = tracing::field::Empty,
-            );
-            async {
-                let res = do_attempt(
-                    service,
-                    method,
-                    path,
-                    payload,
-                    idempotency_key,
-                    &endpoint,
-                    effective_total,
-                )
-                .await;
-                let elapsed_ms = started.elapsed().as_millis() as u64;
-                let result_text = match &res {
-                    Ok(_) => "ok".to_string(),
-                    Err(fail) => match fail {
-                        AttemptFail::Unreachable(cause) => format!("unreachable: {cause}"),
-                        AttemptFail::Timeout(_) => "timeout".to_string(),
-                        AttemptFail::Status(code, _) => format!("HTTP {code}"),
-                    },
-                };
-                let cur = tracing::Span::current();
-                cur.record("result", result_text.as_str());
-                cur.record("elapsed_ms", elapsed_ms);
-                // One event per attempt so default tracing-subscriber setups
-                // (which print events, not span lifecycles) still see the
-                // per-endpoint outcome; the span carries the same fields for
-                // structured consumers.
-                tracing::info!(
-                    result = result_text.as_str(),
-                    elapsed_ms,
-                    "sibling_call_done"
+    // The total timeout is a call-level wall-clock deadline: every failover
+    // attempt draws from the same budget (worst case is NOT attempts ×
+    // total). Individual attempts stay bounded by the build-time
+    // connect/read layers plus whatever is left of this deadline.
+    let call = async {
+        let mut tried: Vec<AttemptFailure> = Vec::new();
+        for attempt in 0..max_attempts {
+            let endpoint = endpoints[attempt % endpoints.len()].clone();
+            let started = Instant::now();
+            let outcome = {
+                let span = tracing::info_span!(
+                    "sibling_call",
+                    sibling = name,
+                    endpoint = %endpoint,
+                    method = %method,
+                    path = path,
+                    result = tracing::field::Empty,
+                    elapsed_ms = tracing::field::Empty,
                 );
-                res
-            }
-            .instrument(span)
-            .await
-        };
+                async {
+                    let res =
+                        do_attempt(service, method, path, payload, idempotency_key, &endpoint)
+                            .await;
+                    let elapsed_ms = started.elapsed().as_millis() as u64;
+                    let result_text = match &res {
+                        Ok(_) => "ok".to_string(),
+                        Err(fail) => match fail {
+                            AttemptFail::Unreachable(cause) => format!("unreachable: {cause}"),
+                            AttemptFail::Timeout(_) => "timeout".to_string(),
+                            AttemptFail::Status(code, _) => format!("HTTP {code}"),
+                        },
+                    };
+                    let cur = tracing::Span::current();
+                    cur.record("result", result_text.as_str());
+                    cur.record("elapsed_ms", elapsed_ms);
+                    // One event per attempt so default tracing-subscriber
+                    // setups (which print events, not span lifecycles) still
+                    // see the per-endpoint outcome; the span carries the same
+                    // fields for structured consumers.
+                    tracing::info!(
+                        result = result_text.as_str(),
+                        elapsed_ms,
+                        "sibling_call_done"
+                    );
+                    res
+                }
+                .instrument(span)
+                .await
+            };
 
-        match outcome {
-            Ok(bytes) => return Ok(bytes),
-            // 4xx is a business error: terminal on every endpoint, by design.
-            Err(AttemptFail::Status(code, body)) if (400..500).contains(&code) => {
-                return Err(SiblingError::Status {
-                    service: name.to_string(),
-                    code,
-                    body,
-                });
-            }
-            Err(fail) => {
-                tried.push(AttemptFailure {
-                    endpoint: endpoint.clone(),
-                    reason: fail.to_reason(),
-                });
-                if !idempotent {
-                    return Err(specific_error(name, &endpoint, fail));
+            match outcome {
+                Ok(bytes) => return Ok(bytes),
+                // 4xx is a business error: terminal on every endpoint, by design.
+                Err(AttemptFail::Status(code, body)) if (400..500).contains(&code) => {
+                    return Err(SiblingError::Status {
+                        service: name.to_string(),
+                        code,
+                        body,
+                    });
+                }
+                Err(fail) => {
+                    tried.push(AttemptFailure {
+                        endpoint: endpoint.clone(),
+                        reason: fail.to_reason(),
+                    });
+                    if !idempotent {
+                        return Err(specific_error(name, &endpoint, fail));
+                    }
                 }
             }
         }
-    }
 
-    // Exhaustion implies every endpoint was covered: the cycling budget is
-    // `len + retries` and `Retry::None` is exactly `len`.
-    Err(SiblingError::AllEndpointsDown {
-        service: name.to_string(),
-        tried,
-    })
+        // Exhaustion implies every endpoint was covered: the cycling budget
+        // is `len + retries` and `Retry::None` is exactly `len`.
+        Err(SiblingError::AllEndpointsDown {
+            service: name.to_string(),
+            tried,
+        })
+    };
+
+    match tokio::time::timeout(effective_total, call).await {
+        Ok(result) => result,
+        // The call-level deadline expired (an in-flight attempt's span ends
+        // without a recorded result; the call outcome is reported here).
+        Err(_) => Err(SiblingError::Timeout {
+            service: name.to_string(),
+            after: effective_total,
+        }),
+    }
 }
 
 async fn do_attempt(
@@ -299,7 +309,6 @@ async fn do_attempt(
     payload: Option<&[u8]>,
     idempotency_key: Option<&str>,
     endpoint: &str,
-    total: Duration,
 ) -> Result<Vec<u8>, AttemptFail> {
     let started = Instant::now();
     let url = build_url(endpoint, path).map_err(AttemptFail::Unreachable)?;
@@ -317,7 +326,9 @@ async fn do_attempt(
     if let Some(bytes) = payload {
         req = req.body(bytes.to_vec());
     }
-    req = req.timeout(total);
+    // No per-request total timeout here: the call-level deadline
+    // (`tokio::time::timeout` around the whole attempt loop) is the total
+    // layer; the connect/read layers come from the build-time client config.
 
     let resp = req.send().await.map_err(|e| {
         if e.is_timeout() {

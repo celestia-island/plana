@@ -147,8 +147,9 @@ impl SiblingServiceBuilder {
         self
     }
 
-    /// Total request deadline (client default; per-call `.timeout()`
-    /// overrides). Defaults to 10 s.
+    /// Total wall-clock deadline for one call — shared across all failover
+    /// attempts (the worst case is not attempts × deadline); per-call
+    /// `.timeout()` overrides it. Defaults to 10 s.
     #[must_use]
     pub fn total_timeout(mut self, d: Duration) -> Self {
         self.total_timeout = Some(d);
@@ -246,8 +247,10 @@ impl SiblingServiceBuilder {
         };
 
         crate::ensure_rustls_crypto_provider();
-        let mut client =
-            reqwest::Client::builder().timeout(self.total_timeout.unwrap_or(DEFAULT_TOTAL_TIMEOUT));
+        // No client-level total timeout: the call-level wall-clock deadline
+        // lives in call::execute (shared across failover attempts). Only the
+        // connect/read layers belong on the client.
+        let mut client = reqwest::Client::builder();
         if let Some(d) = self.connect_timeout {
             client = client.connect_timeout(d);
         }
@@ -281,13 +284,18 @@ pub(crate) fn split_endpoint_list(raw: &str) -> Vec<String> {
         .collect()
 }
 
-/// Endpoint URLs must parse and be http(s) — siblings are network services;
-/// anything else is configuration noise.
+/// Endpoint URLs must parse, be http(s), and carry no userinfo — siblings
+/// are network services; anything else is configuration noise. Userinfo is
+/// rejected because endpoint strings flow into tracing spans and error
+/// contexts, where embedded `user:password@` would leak credentials.
 pub(crate) fn validate_endpoint(url: &str) -> Result<(), String> {
     if url.is_empty() {
         return Err("empty URL".to_string());
     }
     let parsed = reqwest::Url::parse(url).map_err(|e| format!("parse failed: {e}"))?;
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return Err("userinfo (`user:password@`) is not allowed in endpoint URLs".to_string());
+    }
     match parsed.scheme() {
         "http" | "https" => Ok(()),
         other => Err(format!("unsupported scheme `{other}`")),
@@ -315,5 +323,15 @@ mod tests {
         assert!(validate_endpoint("not a url").is_err());
         assert!(validate_endpoint("http://192.0.2.1:3002").is_ok());
         assert!(validate_endpoint("https://192.0.2.1").is_ok());
+    }
+
+    #[test]
+    fn validate_endpoint_rejects_userinfo() {
+        // Credentials embedded in endpoint URLs would reach tracing spans
+        // and error contexts (R2 S3-1).
+        assert!(validate_endpoint("http://user:pass@192.0.2.1").is_err());
+        assert!(validate_endpoint("http://user@192.0.2.1").is_err());
+        assert!(validate_endpoint("http://:pass@192.0.2.1").is_err());
+        assert!(validate_endpoint("http://192.0.2.1").is_ok());
     }
 }

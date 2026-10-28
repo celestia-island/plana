@@ -11,20 +11,26 @@
 //! ```no_run
 //! use std::time::Duration;
 //!
-//! let arona = plana_sibling::SiblingService::new("arona")
-//!     // endpoint sources, tried in declaration order:
-//!     .endpoints_env("ARONA_SERVER_URLS")            // comma-separated list
-//!     .endpoint_fixed("http://192.0.2.10:3002")      // deployment-pinned root
-//!     .bearer_env("ARONA_SERVER_TOKEN")              // injected, never logged
-//!     .build()?;
+//! fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+//!     let arona = plana_sibling::SiblingService::new("arona")
+//!         // endpoint sources, tried in declaration order:
+//!         .endpoints_env("ARONA_SERVER_URLS")            // comma-separated list
+//!         .endpoint_fixed("http://192.0.2.10:3002")      // deployment-pinned root
+//!         .bearer_env("ARONA_SERVER_TOKEN")              // injected, never logged
+//!         .build()?;
 //!
-//! let out: serde_json::Value = arona
-//!     .call(plana_sibling::Method::POST, "/api/rpc", &serde_json::json!({"id": 1}))
-//!     .timeout(Duration::from_secs(10))
-//!     .retry(plana_sibling::Retry::idempotent(2))
-//!     .send()
-//!     .await?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
+//!     tokio::runtime::Runtime::new()?.block_on(async {
+//!         let out: serde_json::Value = arona
+//!             .call(plana_sibling::Method::POST, "/api/rpc", &serde_json::json!({"id": 1}))
+//!             .timeout(Duration::from_secs(10))
+//!             .retry(plana_sibling::Retry::idempotent(2))
+//!             .send()
+//!             .await?;
+//!         println!("{out}");
+//!         Ok::<(), Box<dyn std::error::Error + Send + Sync>>(())
+//!     })?;
+//!     Ok(())
+//! }
 //! ```
 //!
 //! # Semantics
@@ -46,18 +52,22 @@
 //! - **Default no_proxy**: the internally built `reqwest::Client` is always
 //!   `.no_proxy()` unless `.via_proxy()` opts in. Sibling endpoints live on
 //!   the internal network; new code can no longer forget proxy hygiene.
-//! - **Layered timeouts**: connect/read/total are set at build time
-//!   (`.connect_timeout` / `.read_timeout` / `.total_timeout`); the total
-//!   deadline defaults to 10 s and can be overridden per call with
-//!   `.timeout(...)`.
+//! - **Layered timeouts**: connect/read are set at build time
+//!   (`.connect_timeout` / `.read_timeout`); the **total** is a wall-clock
+//!   deadline for the whole call, shared across all failover attempts (the
+//!   worst case is not attempts × total). It defaults to 10 s and can be
+//!   overridden per call with `.timeout(...)`.
 //! - **Credentials**: `.bearer_env(name)` / `.bearer_secret(...)` are read
 //!   once at [`SiblingServiceBuilder::build`] (fail-fast) and stored in a
 //!   redacting [`secrecy::SecretString`]; tokens never appear in errors,
-//!   logs or `Debug` output.
+//!   logs or `Debug` output. Endpoint URLs must not carry userinfo
+//!   (`user:password@`) — they would leak into spans and error contexts.
 //! - **Telemetry**: every attempt emits a `sibling_call` tracing span with
-//!   `sibling`, `endpoint`, `method`, `path`, `result` and `elapsed_ms`.
-//!   Metrics counters are reserved behind the feature-gated `metrics`
-//!   module (see [`metrics`]) until the P2-1 observability baseline lands.
+//!   `sibling`, `endpoint`, `method`, `path`, `result` and `elapsed_ms`
+//!   (plus one `sibling_call_done` event per attempt, so default
+//!   fmt-subscriber setups see per-endpoint outcomes). Metrics counters are
+//!   reserved behind the feature-gated `metrics` module (see [`metrics`])
+//!   until the P2-1 observability baseline lands.
 
 #![forbid(unsafe_op_in_unsafe_fn)]
 

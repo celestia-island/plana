@@ -423,7 +423,14 @@ async fn post_with_idempotency_key_fails_over_like_get() {
     let first = MockServer::start().await;
     let alive = MockServer::start().await;
     status_mock(500, "boom").mount(&first).await;
-    ok_mock(json!({"ok": true})).mount(&alive).await;
+    // The key header itself must reach the endpoint (downstream dedup
+    // depends on it), so the failover target only answers requests that
+    // carry it.
+    Mock::given(method("POST"))
+        .and(header("idempotency-key", "t3sib-op-1"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .mount(&alive)
+        .await;
 
     let svc = fixed("arona", &[first.uri().as_str(), alive.uri().as_str()]);
     let out: serde_json::Value = svc
@@ -644,7 +651,7 @@ async fn status_error_carries_truncated_body() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn total_timeout_layer_fires_per_call() {
+async fn total_timeout_bounds_the_whole_call() {
     let server = MockServer::start().await;
     Mock::given(any())
         .respond_with(
@@ -665,6 +672,51 @@ async fn total_timeout_layer_fires_per_call() {
         .await
         .unwrap_err();
     assert_timeout(err, "arona");
+}
+
+#[tokio::test]
+async fn total_timeout_is_shared_across_failover_attempts() {
+    // Both endpoints stall past the budget. The total deadline is a
+    // call-level wall clock: it expires ONCE at 300 ms and reports Timeout —
+    // NOT a per-attempt reset that would try endpoint B and come back as
+    // AllEndpointsDown after ~600 ms.
+    let a = MockServer::start().await;
+    let b = MockServer::start().await;
+    for server in [&a, &b] {
+        Mock::given(any())
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(json!({"ok": true}))
+                    .set_delay(Duration::from_secs(3)),
+            )
+            .mount(server)
+            .await;
+    }
+
+    let _guard = EnvGuard::set(&["T3SIB_URLS_TOTAL"], &format!("{},{}", a.uri(), b.uri()));
+    let svc = SiblingService::new("arona")
+        .endpoints_env("T3SIB_URLS_TOTAL")
+        .total_timeout(Duration::from_millis(300))
+        .build()
+        .unwrap();
+
+    let err = svc
+        .call(plana_sibling::Method::GET, "/api/x", &())
+        .retry(Retry::none())
+        .send::<serde_json::Value>()
+        .await
+        .unwrap_err();
+    match err {
+        SiblingError::Timeout { service, after } => {
+            assert_eq!(service, "arona");
+            assert!(after >= Duration::from_millis(250), "{after:?}");
+            assert!(after < Duration::from_millis(1500), "{after:?}");
+        }
+        other => panic!("expected call-level Timeout, got: {other:?}"),
+    }
+    // The budget died inside attempt 1 — endpoint B must never be touched.
+    assert_eq!(a.received_requests().await.unwrap().len(), 1);
+    assert_eq!(b.received_requests().await.unwrap().len(), 0);
 }
 
 #[tokio::test]
@@ -725,10 +777,13 @@ async fn no_proxy_is_the_default_even_when_env_proxy_is_set() {
     ok_mock(json!({"ok": true})).mount(&server).await;
 
     // If the default `.no_proxy()` were missing, this dead proxy would
-    // swallow the request and the call would fail. reqwest reads proxy env
+    // swallow the request and the call would fail. NO_PROXY/no_proxy must
+    // go too — on runners where it contains 127.0.0.1 they would mask the
+    // mutation and keep the test green (R2 S2-2). reqwest reads proxy env
     // at client build time, so the lock + env only need to cover `build`.
     let svc = {
         let _lock = PROXY_ENV_LOCK.lock().unwrap();
+        let _no_proxy_guard = EnvGuard::remove(&["NO_PROXY", "no_proxy"]);
         let _guard = EnvGuard::set(
             &["HTTP_PROXY", "http_proxy", "ALL_PROXY", "all_proxy"],
             refused_endpoint().as_str(),
