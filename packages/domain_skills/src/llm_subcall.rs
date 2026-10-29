@@ -148,7 +148,7 @@ mod tests {
             badge: AgentBadge::new("foo.001.002"),
             ..Default::default()
         };
-        // Typed badge accepts legacy free-form roots too.
+        // Typed badge accepts legacy lenient dotted roots too.
         assert_eq!(
             typed.badge.as_ref().map(|b| b.as_str().to_string()),
             Some("foo.001.002".to_string())
