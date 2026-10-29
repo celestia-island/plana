@@ -217,23 +217,39 @@ impl LlmSessionId {
         })
     }
 
+    /// Parse a badge-form string into a session id.
+    ///
+    /// Two-segment input (`#root.NNN`) parses exactly as it always has.
+    /// Deep badges (3..=[`crate::BADGE_MAX_SEGMENTS`] segments, ghost
+    /// sub-agents) anchor to their **first two segments** — the session
+    /// they extend: sibling sub-agents `demiurge.001.002` and
+    /// `demiurge.001.003` deliberately resolve to the SAME session
+    /// `#demiurge.001`, because session registration and badge→session
+    /// resolution ask "which session does this badge belong to", and the
+    /// answer is the parent session. Segment 2 keeps its historical
+    /// leniency (any digit string parsing as u16 ≤ 999); segments 3+
+    /// must be exactly three digits each and the total depth is capped,
+    /// mirroring the badge grammar — malformed tails are rejected, never
+    /// silently truncated.
     pub fn parse(s: &str) -> Option<Self> {
         let stripped = s.trim_start_matches('#');
         let dot_pos = stripped.find('.')?;
         let parent = &stripped[..dot_pos];
         let rest = &stripped[dot_pos + 1..];
-        // Deep badges (ghost sub-agents, 3..=5 segments) anchor to the
-        // two-segment session they extend: only the segment before the
-        // next dot is the session number. Every deeper segment must still
-        // be well-formed digits — garbage tails are rejected, never
-        // silently truncated. Two-segment input parses exactly as before.
         let mut segments = rest.split('.');
         let child = segments.next()?;
         if child.is_empty() || !child.chars().all(|c| c.is_ascii_digit()) {
             return None;
         }
+        // Deep tail segments mirror the badge grammar: exactly three
+        // digits each, total depth capped.
+        let mut depth = 2usize;
         for seg in segments {
-            if seg.is_empty() || !seg.chars().all(|c| c.is_ascii_digit()) {
+            if seg.len() != 3 || !seg.chars().all(|c| c.is_ascii_digit()) {
+                return None;
+            }
+            depth += 1;
+            if depth > crate::BADGE_MAX_SEGMENTS {
                 return None;
             }
         }
@@ -500,6 +516,31 @@ mod tests {
         assert!(LlmSessionId::parse("").is_none());
         // A trailing dot leaves an empty session segment — rejected.
         assert!(LlmSessionId::parse("demiurge.001.").is_none());
+    }
+
+    #[test]
+    fn llm_session_id_parse_deep_tails_mirror_badge_grammar() {
+        // Tail segments must be exactly three digits — no silent
+        // acceptance of malformed depth.
+        assert!(LlmSessionId::parse("#demiurge.001.2").is_none());
+        assert!(LlmSessionId::parse("#demiurge.001.1000").is_none());
+        assert!(LlmSessionId::parse("#demiurge.001.abc").is_none());
+        // Depth beyond the badge cap is rejected, not truncated.
+        assert!(LlmSessionId::parse("#demiurge.001.002.003.004.005").is_none());
+        assert!(LlmSessionId::parse("#demiurge.001.002.003.004.005.006").is_none());
+        // Segment 2 keeps its historical leniency ("0045" → 45).
+        let legacy = LlmSessionId::parse("#demiurge.0045").expect("legacy 4-digit child");
+        assert_eq!(legacy.session_number, 45);
+    }
+
+    #[test]
+    fn llm_session_id_parse_deep_siblings_anchor_to_same_session() {
+        // Deliberate aliasing: sibling ghost sub-agents resolve to the
+        // session they extend.
+        let a = LlmSessionId::parse("#demiurge.001.002").expect("valid deep badge");
+        let b = LlmSessionId::parse("#demiurge.001.003").expect("valid deep badge");
+        assert_eq!(a, b);
+        assert_eq!(a.to_badge_string(), "#demiurge.001");
     }
 
     #[test]

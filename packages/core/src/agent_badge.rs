@@ -35,11 +35,13 @@ impl AgentBadge {
     }
 
     /// Grammar: an optional `@workspace` scope, then 1..=[`BADGE_MAX_SEGMENTS`]
-    /// dot-separated segments. The root segment is `demiurge` or a three-digit
-    /// number; every subsequent segment is a three-digit number. Before the
-    /// ghost-subagent extension this accepted exactly one sub-segment (two
-    /// total); deeper badges were rejected — the relaxation is strictly
-    /// additive for previously-valid input.
+    /// dot-separated segments. The root segment is any non-empty string
+    /// without a dot (historically never charset-validated — `demiurge`,
+    /// three-digit numbers, and legacy free-form roots all pass); every
+    /// subsequent segment is a three-digit number. Before the
+    /// ghost-subagent extension this accepted exactly one sub-segment
+    /// (two total); the relaxation is strictly additive for
+    /// previously-valid input.
     fn is_valid_str(s: &str) -> bool {
         if s.is_empty() {
             return false;
@@ -55,7 +57,7 @@ impl AgentBadge {
         };
         let mut segments = bare.split('.');
         let root = segments.next().unwrap_or("");
-        if !(root == "demiurge" || (root.len() == 3 && root.chars().all(|c| c.is_ascii_digit()))) {
+        if root.is_empty() {
             return false;
         }
         let mut count = 1usize;
@@ -151,15 +153,21 @@ mod tests {
         assert!(AgentBadge::new("demiurge").is_some());
         assert!(AgentBadge::new("001").is_some());
         assert!(AgentBadge::new("").is_none());
-        assert!(AgentBadge::new("demi").is_none());
-        assert!(AgentBadge::new("01").is_none());
-        assert!(AgentBadge::new("0001").is_none());
+        // Root charset was never validated historically — free-form roots
+        // stay valid (the depth relaxation must be strictly additive).
+        assert!(AgentBadge::new("foo").is_some());
+        assert!(AgentBadge::new("myproj").is_some());
     }
 
     #[test]
     fn two_segment_badges_stay_valid() {
         assert!(AgentBadge::new("demiurge.001").is_some());
         assert!(AgentBadge::new("123.456").is_some());
+        // Legacy free-form roots with a sub-segment: valid before, valid now.
+        assert!(AgentBadge::new("foo.001").is_some());
+        assert!(AgentBadge::new("myproj.042").is_some());
+        assert!(AgentBadge::new("1234.001").is_some());
+        assert!(AgentBadge::new("@ws#foo.001").is_some());
         assert!(AgentBadge::new("demiurge.1").is_none());
         assert!(AgentBadge::new("demiurge.0001").is_none());
         assert!(AgentBadge::new(".001").is_none());

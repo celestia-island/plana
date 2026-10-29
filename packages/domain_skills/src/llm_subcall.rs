@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use plana_domain_agent::AgentBadge;
 use plana_state_sync::ModelTier;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,11 +19,12 @@ pub struct LlmSubcallResult {
 /// `LlmSubcallService` calls into identity-carrying inline sub-agents:
 /// no downstream node, no container, but a badge, a UUID, and a record
 /// the parent's raw-record view can show.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SubagentCallContext {
     /// Full badge of the ghost sub-agent, e.g. `demiurge.001.002`.
-    /// The caller (allocator) guarantees uniqueness and depth ≤ 5.
-    pub badge: Option<String>,
+    /// Typed so recorders can trust grammar (depth ≤ 5) without
+    /// re-validating; the caller (allocator) guarantees uniqueness.
+    pub badge: Option<AgentBadge>,
     /// UUID minted for this invocation (string form; this crate stays
     /// uuid-dependency-free).
     pub uuid: Option<String>,
@@ -31,7 +33,7 @@ pub struct SubagentCallContext {
     pub kind: Option<String>,
     /// Badge of the parent the sub-agent nests under (for attribution
     /// when the recorder is not the allocator).
-    pub parent_badge: Option<String>,
+    pub parent_badge: Option<AgentBadge>,
 }
 
 #[async_trait::async_trait]
@@ -120,10 +122,10 @@ mod tests {
             anon_calls: AtomicUsize::new(0),
         };
         let ctx = SubagentCallContext {
-            badge: Some("demiurge.001.002".into()),
+            badge: AgentBadge::new("demiurge.001.002"),
             uuid: Some("0192aaaa-bbbb-7ccc-8ddd-0123456789ab".into()),
             kind: Some("rag_search".into()),
-            parent_badge: Some("demiurge.001".into()),
+            parent_badge: AgentBadge::new("demiurge.001"),
         };
         let result = svc
             .llm_chat_as(&ctx, ModelTier::Basic, "q", None, Some(16), Some(0.2))
@@ -134,11 +136,23 @@ mod tests {
     }
 
     #[test]
-    fn subagent_call_context_defaults_to_anonymous() {
+    fn subagent_call_context_defaults_to_anonymous_and_compares() {
         let ctx = SubagentCallContext::default();
         assert!(ctx.badge.is_none());
         assert!(ctx.uuid.is_none());
         assert!(ctx.kind.is_none());
         assert!(ctx.parent_badge.is_none());
+        assert_eq!(ctx, SubagentCallContext::default());
+
+        let typed = SubagentCallContext {
+            badge: AgentBadge::new("foo.001.002"),
+            ..Default::default()
+        };
+        // Typed badge accepts legacy free-form roots too.
+        assert_eq!(
+            typed.badge.as_ref().map(|b| b.as_str().to_string()),
+            Some("foo.001.002".to_string())
+        );
+        assert_ne!(typed, ctx);
     }
 }

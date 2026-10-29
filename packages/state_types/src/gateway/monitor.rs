@@ -106,8 +106,9 @@ pub struct CosmosContainerInfo {
     /// missing key — when the container sits on no branch.
     #[serde(default)]
     pub branch: Option<String>,
-    /// Instance badge (`AgentBadge`: a three-digit number, a `parent.NNN`
-    /// sub-badge, or `demiurge`); `None` when no badge is assigned.
+    /// Instance badge (`AgentBadge`: a root (any non-empty dot-free string —
+    /// historically `demiurge` or a three-digit number) followed by up to
+    /// four `.NNN` sub-segments); `None` when no badge is assigned.
     #[serde(default)]
     pub badge: Option<AgentBadge>,
 }
