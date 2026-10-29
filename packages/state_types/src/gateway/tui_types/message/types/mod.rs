@@ -42,6 +42,10 @@ pub const REPORT_ORIGIN_YOLO_TICK: &str = "yolo_tick";
 /// so a report is either byte-identical to the historical shape (`None`) or
 /// carries both facts together — an origin without a title map (or the
 /// reverse) is not a state emitters produce.
+///
+/// The map is a `BTreeMap` (not the front matter's `HashMap`) so the
+/// serialized key order is deterministic — byte-stable report rows; the
+/// emitter converts once at construction.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ReportProvenance {
     /// Emission-lane tag. `None`-free by design: the struct only exists when
@@ -2663,13 +2667,22 @@ mod tests {
             }
         }))
         .expect("legacy report without provenance must deserialize");
-        let Message::Sync(sync) = msg else {
+        let Message::Sync(sync) = &msg else {
             panic!("expected Sync variant");
         };
-        let SyncMessage::AgentReport { provenance, .. } = &*sync else {
+        let SyncMessage::AgentReport { provenance, .. } = &**sync else {
             panic!("expected AgentReport variant");
         };
         assert!(provenance.is_none(), "absent provenance must read as None");
+
+        // And the None half is symmetric on the way OUT: the historical
+        // byte-compat claim covers serialization too — a provenance-less
+        // report must not grow the key at all (skip_serializing_if).
+        let legacy_wire = serde_json::to_value(&msg).expect("legacy report must serialize");
+        assert!(
+            legacy_wire["data"].get("provenance").is_none(),
+            "a None provenance must serialize with NO provenance key"
+        );
 
         // Stamped shape: both facts survive a serialize round trip under the
         // nested key the panel reads.
