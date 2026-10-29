@@ -27,12 +27,14 @@
 pub mod async_bridge;
 pub mod circuit_breaker;
 pub mod device_id;
+pub mod instance_kind;
 pub mod kv;
 pub mod panic_guard;
 pub mod pubsub;
 pub mod rate_limit;
 pub mod secret_box;
 pub mod soc;
+pub mod tenant;
 pub mod thread_audit;
 
 pub use kv::{
