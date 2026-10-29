@@ -17,13 +17,18 @@ workspace = true
 default = []
 # wss:// support: rustls with webpki roots. The process must install a
 # CryptoProvider first (see RpcClientBuilder::install_ring_tls_provider).
-tls = ["dep:rustls", "tokio-tungstenite/rustls-tls-webpki-roots"]
+tls = ["tokio-tungstenite/rustls-tls-webpki-roots"]
 
 [dependencies]
 
 futures = { workspace = true }
 plana = { workspace = true }
-rustls = { workspace = true, optional = true }
+# socks adds the socks5 ProxyDecision scheme to reqwest's proxy support.
+reqwest = { workspace = true, features = ["socks"] }
+# Non-optional since the net module: reqwest (rustls-no-provider) panics at
+# client build without a process-wide CryptoProvider, so download_client
+# installs the workspace-standard ring provider itself.
+rustls = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
