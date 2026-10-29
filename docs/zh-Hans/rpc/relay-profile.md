@@ -79,6 +79,13 @@
 ambient 的 `HTTP(S)_PROXY` 永不生效：流量策略是显式配置。该跳上所有拨
 号器（WS 与 HTTP 一致）必须消费同一决策。
 
+同一决策也喂给下载通道：`relay::net::download_client` 据此构造
+reqwest 客户端（rustls TLS、重定向仅跟随 https、有界连接/读超时、代
+理原样套用，`Direct` 即显式 `no_proxy`）；`relay::net::mirror_ladder`
+把清单的 `(prefix, regions)` 镜像列表编成「用户镜像 → 源 → 公共镜
+像」的有序候选梯子（WoWSP 顺序：前缀原样拼接，空 regions 的镜像属死
+配置，直接剔除）。
+
 ## 7. 包落点
 
 - 协议核心（框架无关）：crates.io 的 `plana-rpc-client::relay` 与

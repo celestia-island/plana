@@ -98,6 +98,15 @@ environment family → **direct**. Ambient `HTTP(S)_PROXY` is never
 honored: traffic policy is explicit configuration. Every dialer on the
 hop (WebSocket and HTTP alike) consumes the same decision.
 
+The same decision also feeds fetch lanes: `relay::net::download_client`
+builds a reqwest client from it (rustls TLS, https-only redirects,
+bounded connect/read waits, the proxy applied verbatim, `Direct` =
+explicit `no_proxy`), and `relay::net::mirror_ladder` turns a
+manifest's `(prefix, regions)` mirror list into the ordered
+user → source → mirrors candidate ladder (the WoWSP ordering: prefixes
+prepend verbatim, empty-region mirrors are dead configuration and drop
+out).
+
 ## 7. Packaging
 
 - Protocol core (framework-agnostic): `plana-rpc-client::relay` on

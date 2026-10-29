@@ -11,6 +11,7 @@ pub mod edge;
 pub mod hops;
 pub mod host;
 pub mod names;
+pub mod net;
 pub mod proxy;
 pub mod router;
 
@@ -18,5 +19,6 @@ pub use edge::{EdgeListener, EdgeTransport, MemoryTransport};
 pub use hops::HopGuard;
 pub use host::{BridgeError, BridgeOutcome, LocalHandler, RelayHost, RpcSink};
 pub use names::{namespace_of, relay_methods, Namespace, RELAY};
+pub use net::{download_client, mirror_ladder};
 pub use proxy::{ProxyConfig, ProxyDecision};
 pub use router::{ForwardingTable, Route};
