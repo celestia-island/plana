@@ -502,8 +502,8 @@ mod tests {
         assert_eq!(session.session_number, 1);
         assert_eq!(session.to_badge_string(), "#demiurge.001");
 
-        let deep = LlmSessionId::parse("#123.045.006.007")
-            .context("expected anchored session id")?;
+        let deep =
+            LlmSessionId::parse("#123.045.006.007").context("expected anchored session id")?;
         assert_eq!(deep.container_id.as_str(), "123");
         assert_eq!(deep.session_number, 45);
         Ok(())
