@@ -221,7 +221,22 @@ impl LlmSessionId {
         let stripped = s.trim_start_matches('#');
         let dot_pos = stripped.find('.')?;
         let parent = &stripped[..dot_pos];
-        let child = &stripped[dot_pos + 1..];
+        let rest = &stripped[dot_pos + 1..];
+        // Deep badges (ghost sub-agents, 3..=5 segments) anchor to the
+        // two-segment session they extend: only the segment before the
+        // next dot is the session number. Every deeper segment must still
+        // be well-formed digits — garbage tails are rejected, never
+        // silently truncated. Two-segment input parses exactly as before.
+        let mut segments = rest.split('.');
+        let child = segments.next()?;
+        if child.is_empty() || !child.chars().all(|c| c.is_ascii_digit()) {
+            return None;
+        }
+        for seg in segments {
+            if seg.is_empty() || !seg.chars().all(|c| c.is_ascii_digit()) {
+                return None;
+            }
+        }
         let container_id = ContainerId::new(parent)?;
         let session_number = child.parse::<u16>().ok()?;
         Self::new(container_id, session_number)
@@ -459,6 +474,32 @@ mod tests {
         assert_eq!(session.container_id.as_str(), "demiurge");
         assert_eq!(session.session_number, 2);
         Ok(())
+    }
+
+    #[test]
+    fn llm_session_id_parse_deep_badge_anchors_to_first_two_segments() -> Result<()> {
+        // Ghost sub-agent badges (3..=5 segments) anchor to the session
+        // they extend: deeper segments are the sub-agent chain.
+        let session =
+            LlmSessionId::parse("#demiurge.001.002").context("expected anchored session id")?;
+        assert_eq!(session.container_id.as_str(), "demiurge");
+        assert_eq!(session.session_number, 1);
+        assert_eq!(session.to_badge_string(), "#demiurge.001");
+
+        let deep = LlmSessionId::parse("#123.045.006.007")
+            .context("expected anchored session id")?;
+        assert_eq!(deep.container_id.as_str(), "123");
+        assert_eq!(deep.session_number, 45);
+        Ok(())
+    }
+
+    #[test]
+    fn llm_session_id_parse_still_rejects_garbage() {
+        assert!(LlmSessionId::parse("demiurge.abc").is_none());
+        assert!(LlmSessionId::parse("nonsense").is_none());
+        assert!(LlmSessionId::parse("").is_none());
+        // A trailing dot leaves an empty session segment — rejected.
+        assert!(LlmSessionId::parse("demiurge.001.").is_none());
     }
 
     #[test]
