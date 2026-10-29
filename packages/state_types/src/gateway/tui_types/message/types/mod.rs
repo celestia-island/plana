@@ -16,6 +16,7 @@
 pub mod groups;
 
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 use super::super::super::{
@@ -26,6 +27,49 @@ use crate::{agent::Agent, agent_error::StructuredAgentError};
 use plana_config::GenProtocol;
 use plana_core::AgentBadge;
 use plana_text::{LlmStream, StreamChunkKind};
+
+/// `AgentReport.origin` value stamped on every report emitted by a chain the
+/// YOLO cruise daemon dispatched. Write path (scepter's tick dispatch) and
+/// read paths (panel provenance labels) share this one spelling so the
+/// scheduled-task vocabulary cannot drift between emitter and consumers.
+/// Deliberately the same string as scepter's chain-head row metadata kind:
+/// both mark the same provenance at their respective layer.
+pub const REPORT_ORIGIN_YOLO_TICK: &str = "yolo_tick";
+
+/// Provenance payload of one `AgentReport`: which kind of chain emitted it
+/// and the emitting skill's registration-carried localized display title.
+/// The pair travels as one optional boxed struct (`AgentReport.provenance`)
+/// so a report is either byte-identical to the historical shape (`None`) or
+/// carries both facts together — an origin without a title map (or the
+/// reverse) is not a state emitters produce.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ReportProvenance {
+    /// Emission-lane tag. `None`-free by design: the struct only exists when
+    /// a report HAS provenance. Known value today:
+    /// [`REPORT_ORIGIN_YOLO_TICK`]; unknown values must render generically
+    /// (or be ignored), never fail the parse.
+    pub origin: String,
+    /// Registration-carried localized display title of the emitting skill
+    /// (lang → title, e.g. `{"en": "Memory Garbage Collection",
+    /// "zh-Hans": "记忆整理"}`), resolved by the emitter from the skill's
+    /// registration metadata. Panels pick the viewer's locale from this map
+    /// and fall back to the raw `title` slug when the locale (or `en`) is
+    /// missing.
+    #[serde(default)]
+    pub title_i18n: BTreeMap<String, String>,
+}
+
+impl ReportProvenance {
+    /// Builds the provenance for a YOLO cruise-tick report from the skill's
+    /// registered localized titles (empty map allowed — the panel then falls
+    /// back to the raw slug).
+    pub fn yolo_tick(title_i18n: BTreeMap<String, String>) -> Self {
+        Self {
+            origin: REPORT_ORIGIN_YOLO_TICK.to_string(),
+            title_i18n,
+        }
+    }
+}
 
 fn default_search_limit() -> u64 {
     10
@@ -865,8 +909,13 @@ pub enum SyncMessage {
         next_route: Option<RouteInfo>,
         #[serde(default)]
         stream: Option<LlmStream>,
+        /// Boxed: this variant is the enum's largest and the error payload
+        /// carries an inline `HashMap`; boxing keeps the variant under the
+        /// `clippy::large_enum_variant` spread now that `provenance` rides
+        /// along (the envelope already transports the whole enum behind
+        /// `Box<SyncMessage>`). Serde- and TS-transparent.
         #[serde(default)]
-        error: Option<StructuredAgentError>,
+        error: Option<Box<StructuredAgentError>>,
         /// Topic correlation: the conversation this report belongs to
         /// (one conversation per user turn). Client-supplied via
         /// `UserMessage.conversation_id` when present, else minted by
@@ -879,6 +928,16 @@ pub enum SyncMessage {
         /// Workspace scope of the originating chain, when known.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_id: Option<Uuid>,
+        /// Provenance of the chain that emitted this report. `None` is the
+        /// historical user/machine-turn shape (byte-identical wire for every
+        /// pre-existing emitter). The YOLO cruise daemon's autonomous ticks
+        /// stamp [`REPORT_ORIGIN_YOLO_TICK`] so panels can present the report
+        /// as scheduled-task output (registration-carried localized title,
+        /// clock icon) instead of user chat. Boxed: the enum already carries
+        /// large inline payloads and this field is absent on the vast
+        /// majority of frames.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        provenance: Option<Box<ReportProvenance>>,
     },
     /// Server-bound reply to an inquiry (`AgentReport { report_type: Query }`)
     /// sent earlier. `report_id` mirrors the original `agent_id`.
@@ -2579,6 +2638,94 @@ mod tests {
                 "ssh://gpu-node/opt/data".to_string(),
             ]),
             "extra_sources must survive the bridge path"
+        );
+    }
+
+    /// `AgentReport.provenance` is an additive provenance struct: every
+    /// pre-existing emitter's payload (no such key) must deserialize with
+    /// `None`, and a YOLO-tick payload must round-trip origin + title map
+    /// through serde so the chest panel can classify scheduled-task reports.
+    #[test]
+    fn agent_report_provenance_is_additive_and_round_trips() {
+        // Legacy shape: absent key → None, byte-compatible with old emitters.
+        let msg: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "AgentReport",
+                "report_type": "skill_terminal",
+                "agent_type": "PhiLia",
+                "agent_id": "r1",
+                "title": "memory_gc",
+                "content": "done",
+                "timestamp": "2026-10-29T21:01:00+00:00",
+                "preset_options": [],
+                "recommended_options": []
+            }
+        }))
+        .expect("legacy report without provenance must deserialize");
+        let Message::Sync(sync) = msg else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::AgentReport { provenance, .. } = &*sync else {
+            panic!("expected AgentReport variant");
+        };
+        assert!(provenance.is_none(), "absent provenance must read as None");
+
+        // Stamped shape: both facts survive a serialize round trip under the
+        // nested key the panel reads.
+        let stamped: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "AgentReport",
+                "report_type": "skill_terminal",
+                "agent_type": "PhiLia",
+                "agent_id": "r2",
+                "title": "memory_gc",
+                "content": "done",
+                "timestamp": "2026-10-29T21:01:00+00:00",
+                "preset_options": [],
+                "recommended_options": [],
+                "provenance": {
+                    "origin": crate::gateway::tui_types::message::REPORT_ORIGIN_YOLO_TICK,
+                    "title_i18n": {
+                        "en": "Memory Garbage Collection",
+                        "zh-Hans": "记忆整理"
+                    }
+                }
+            }
+        }))
+        .expect("stamped report must deserialize");
+        let Message::Sync(sync) = stamped.clone() else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::AgentReport { provenance, .. } = &*sync else {
+            panic!("expected AgentReport variant");
+        };
+        let prov = provenance.as_deref().expect("provenance must be present");
+        assert_eq!(
+            prov.origin,
+            crate::gateway::tui_types::message::REPORT_ORIGIN_YOLO_TICK,
+            "yolo-tick origin must round-trip verbatim"
+        );
+        assert_eq!(
+            prov.title_i18n.get("zh-Hans").map(String::as_str),
+            Some("记忆整理")
+        );
+        assert_eq!(
+            prov.title_i18n.get("en").map(String::as_str),
+            Some("Memory Garbage Collection")
+        );
+
+        let wire = serde_json::to_value(&stamped).expect("stamped report must serialize");
+        let report = &wire["data"];
+        assert_eq!(
+            report["provenance"]["origin"],
+            crate::gateway::tui_types::message::REPORT_ORIGIN_YOLO_TICK,
+            "provenance.origin must serialize under the nested key"
+        );
+        assert!(
+            report["provenance"]["title_i18n"]["zh-Hans"] == "记忆整理",
+            "provenance.title_i18n must serialize as a lang map"
         );
     }
 }

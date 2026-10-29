@@ -43,6 +43,20 @@ where
     deserializer.deserialize_any(DescVisitor)
 }
 
+/// Lenient loader for the optional registration-carried localized display
+/// title (`[title_i18n]` front-matter table). Accepts the table form
+/// (`en = "…"`, `zh-Hans = "…"`, …) and, for authoring convenience, the
+/// scalar form (a bare string becomes the `en` entry) — mirroring
+/// `deserialize_description` so a skill author never has to learn two
+/// shapes. Absent on a skill = no registered localized title; emitters then
+/// omit the report's `title_i18n` and panels keep the raw slug.
+fn deserialize_title_i18n<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_description(deserializer)
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct StepAction {
     pub agent: String,
@@ -114,6 +128,15 @@ pub struct PromptMetadata {
     pub name: String,
     #[serde(deserialize_with = "deserialize_description")]
     pub description: HashMap<String, String>,
+    /// Registration-carried localized display title (lang → title). Optional
+    /// and absent on every pre-existing skill file; scepter forwards it on
+    /// reports emitted for the skill so panels can show
+    /// 「记忆整理」 instead of the raw `memory_gc` slug (2026-10-29 user
+    /// direction: scheduled-task report titles are defined at skill
+    /// registration and localized). Authoring: a `[title_i18n]` table, or a
+    /// bare string (treated as `en`).
+    #[serde(default, deserialize_with = "deserialize_title_i18n")]
+    pub title_i18n: HashMap<String, String>,
     pub agent: String,
     #[serde(default)]
     pub required_tools: Vec<String>,
@@ -397,6 +420,61 @@ This is the skill template content
                 .contains("This is the skill template content")
         );
         assert!(template.template.contains("{{example}}"));
+        Ok(())
+    }
+
+    /// `title_i18n` is optional: a front matter without it must default to an
+    /// empty map (every pre-existing skill file), the `[title_i18n]` table
+    /// must parse as a lang map, and the scalar form must land under `en`.
+    #[test]
+    fn test_title_i18n_absent_table_and_scalar_forms() -> Result<()> {
+        // Absent → empty map.
+        let absent = r#"+++
+name = "a"
+description = "d"
+agent = "TestAgent"
++++
+body"#;
+        let t = PromptLoader::parse_from_string(absent)?;
+        assert!(
+            t.metadata.title_i18n.is_empty(),
+            "absent title_i18n must default to empty"
+        );
+
+        // Table form → lang map.
+        let table = r#"+++
+name = "b"
+description = "d"
+agent = "TestAgent"
+
+[title_i18n]
+en = "Memory Garbage Collection"
+"zh-Hans" = "记忆整理"
++++
+body"#;
+        let t = PromptLoader::parse_from_string(table)?;
+        assert_eq!(
+            t.metadata.title_i18n.get("zh-Hans").map(String::as_str),
+            Some("记忆整理")
+        );
+        assert_eq!(
+            t.metadata.title_i18n.get("en").map(String::as_str),
+            Some("Memory Garbage Collection")
+        );
+
+        // Scalar form → the `en` entry (authoring convenience).
+        let scalar = r#"+++
+name = "c"
+description = "d"
+agent = "TestAgent"
+title_i18n = "Memory Garbage Collection"
++++
+body"#;
+        let t = PromptLoader::parse_from_string(scalar)?;
+        assert_eq!(
+            t.metadata.title_i18n.get("en").map(String::as_str),
+            Some("Memory Garbage Collection")
+        );
         Ok(())
     }
 
