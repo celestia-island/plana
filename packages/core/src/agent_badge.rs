@@ -35,13 +35,13 @@ impl AgentBadge {
     }
 
     /// Grammar: an optional `@workspace` scope, then 1..=[`BADGE_MAX_SEGMENTS`]
-    /// dot-separated segments. The root segment is any non-empty string
-    /// without a dot (historically never charset-validated — `demiurge`,
-    /// three-digit numbers, and legacy free-form roots all pass); every
-    /// subsequent segment is a three-digit number. Before the
-    /// ghost-subagent extension this accepted exactly one sub-segment
-    /// (two total); the relaxation is strictly additive for
-    /// previously-valid input.
+    /// dot-separated segments. A dot-free badge is exactly the historical
+    /// root form: `demiurge` or a three-digit number — nothing else. A
+    /// dotted badge keeps the historical lenient root (any non-empty
+    /// dot-free string; never charset-validated) followed by one to four
+    /// three-digit segments. Before the ghost-subagent extension dotted
+    /// badges carried exactly one sub-segment (two total); the relaxation
+    /// is strictly additive for previously-valid input.
     fn is_valid_str(s: &str) -> bool {
         if s.is_empty() {
             return false;
@@ -61,7 +61,9 @@ impl AgentBadge {
             return false;
         }
         let mut count = 1usize;
+        let mut has_dot = false;
         for seg in segments {
+            has_dot = true;
             if seg.len() != 3 || !seg.chars().all(|c| c.is_ascii_digit()) {
                 return false;
             }
@@ -70,7 +72,13 @@ impl AgentBadge {
                 return false;
             }
         }
-        true
+        if !has_dot {
+            // Dot-free roots keep their strict historical shape.
+            root == "demiurge" || (root.len() == 3 && root.chars().all(|c| c.is_ascii_digit()))
+        } else {
+            // Dotted roots were never charset-validated — stay lenient.
+            true
+        }
     }
 
     /// Number of dot-separated segments (workspace scope excluded). A bare
@@ -153,10 +161,12 @@ mod tests {
         assert!(AgentBadge::new("demiurge").is_some());
         assert!(AgentBadge::new("001").is_some());
         assert!(AgentBadge::new("").is_none());
-        // Root charset was never validated historically — free-form roots
-        // stay valid (the depth relaxation must be strictly additive).
-        assert!(AgentBadge::new("foo").is_some());
-        assert!(AgentBadge::new("myproj").is_some());
+        // Dot-free roots keep their strict historical shape: only
+        // `demiurge` or a three-digit number — garbage stays invalid.
+        assert!(AgentBadge::new("foo").is_none());
+        assert!(AgentBadge::new("not a badge!").is_none());
+        assert!(AgentBadge::new("01").is_none());
+        assert!(AgentBadge::new("0001").is_none());
     }
 
     #[test]
