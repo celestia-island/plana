@@ -40,9 +40,9 @@ pub use tui_types::{
     KnowledgeBaseInfo, KnowledgeBaseStatus, Layer2AgentInfo, Layer2SkillInfo, Layer2ToolInfo,
     LogEntryData, MaxConcurrentInfo, MessagesPage, ModelFsInfo, ModelFsPricing, ModelInfo,
     NoaEvent, PeriodType, PolemosDeviceInfo, ProviderCapabilitiesInfo, ProviderFsInfo,
-    ProviderInfo, ProviderLimitsInfo, QuotaInfo, RateRuleInfo, RequestState, SearchHit,
-    SearchResponse, SyncMessage, TaskInfo, TaskPatch, TasksSnapshot, TuiAgentInfo, UsagePeriodData,
-    UserInfo,
+    ProviderInfo, ProviderLimitsInfo, QuotaInfo, REPORT_ORIGIN_YOLO_TICK, RateRuleInfo,
+    ReportProvenance, RequestState, SearchHit, SearchResponse, SyncMessage, TaskInfo, TaskPatch,
+    TasksSnapshot, TuiAgentInfo, UsagePeriodData, UserInfo,
     knowledge_base::{
         AddDocumentRequest, AddDocumentResponse, CreateKnowledgeBaseRequest,
         CreateKnowledgeBaseResponse, CreateSubscriptionRequest, CreateSubscriptionResponse,

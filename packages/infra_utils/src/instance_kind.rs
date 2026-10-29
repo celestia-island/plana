@@ -82,6 +82,14 @@ mod tests {
 
     const KEY: &str = "T3SIB_INSTANCE_KIND";
 
+    /// These tests mutate the SHARED process environment, so concurrent
+    /// execution races: one test's `set_env(None)` wipes another's fixture
+    /// mid-run (observed as 2/4 failures under `--all-features`, where the
+    /// extra tests change the scheduler's interleaving — #503 follow-up,
+    /// fixed alongside the provenance PR). The mutex serializes the whole
+    /// group; each test still leaves the variable unset at its end.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
     fn set_env(value: Option<&str>) {
         match value {
             Some(v) => unsafe { std::env::set_var(KEY, v) },
@@ -91,6 +99,7 @@ mod tests {
 
     #[test]
     fn known_vocabulary_word_is_accepted_case_and_space_tolerant() {
+        let _guard = ENV_LOCK.lock().expect("instance-kind env test lock");
         for raw in ["prod", "  PROD ", "\tProd\n"] {
             set_env(Some(raw));
             let resolved = resolve_instance_kind(KEY, &["prod", "test", "dev"], "dev");
@@ -102,6 +111,7 @@ mod tests {
 
     #[test]
     fn unset_or_blank_degrades_to_the_fallback() {
+        let _guard = ENV_LOCK.lock().expect("instance-kind env test lock");
         set_env(None);
         let resolved = resolve_instance_kind(KEY, &["prod", "test", "dev"], "dev");
         assert_eq!(resolved.kind, "dev");
@@ -115,6 +125,7 @@ mod tests {
 
     #[test]
     fn unknown_value_degrades_loudly_with_the_marker() {
+        let _guard = ENV_LOCK.lock().expect("instance-kind env test lock");
         set_env(Some("staging"));
         let resolved = resolve_instance_kind(KEY, &["prod", "test", "dev"], "dev");
         assert_eq!(resolved.kind, "dev");
@@ -124,6 +135,7 @@ mod tests {
 
     #[test]
     fn vocabulary_is_a_caller_parameter() {
+        let _guard = ENV_LOCK.lock().expect("instance-kind env test lock");
         set_env(Some("stage"));
         let resolved = resolve_instance_kind(KEY, &["stage", "live"], "live");
         assert_eq!(resolved.kind, "stage");

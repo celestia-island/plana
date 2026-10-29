@@ -55,7 +55,7 @@ pub use layer2::{CustomAgentInfo, Layer2AgentInfo, Layer2SkillInfo, Layer2ToolIn
 /// Identity, file, event and client-info payloads used by `SyncMessage`.
 pub use message::{
     ActorClaims, AuthUserInfo, ClientCapability, ClientNodeInfo, FilePayload, NoaEvent,
-    PolemosDeviceInfo, SyncMessage,
+    PolemosDeviceInfo, REPORT_ORIGIN_YOLO_TICK, ReportProvenance, SyncMessage,
 };
 
 // Industrial wire types (telemetry / alarm / discovery / write-approval /

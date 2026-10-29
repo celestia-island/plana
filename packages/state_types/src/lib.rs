@@ -53,9 +53,9 @@ pub use doc_loader::{ToolDoc, ToolDocLoader};
 pub use gateway::{
     AgentMessage, AskAnswerSource, BaseMessage, ClientCapability, ClientNodeInfo,
     ConversationMessage, CosmosContainerInfo, CosmosOperationLogEntry, FilePayload, Message,
-    MetricsData, MonitorMessage, NodeInfo, NodeMessage, PolemosDeviceInfo, ReportSelection,
-    ReportType, RetryReason, RouteInfo, SkillMessage, SkillStage, SyncMessage, SystemNotification,
-    ToolMessage,
+    MetricsData, MonitorMessage, NodeInfo, NodeMessage, PolemosDeviceInfo, REPORT_ORIGIN_YOLO_TICK,
+    ReportProvenance, ReportSelection, ReportType, RetryReason, RouteInfo, SkillMessage,
+    SkillStage, SyncMessage, SystemNotification, ToolMessage,
     tui_types::{
         ActorClaims, AgentPatch, AgentSnapshot, AgentUpdateParams, AuthUserInfo, CompletionOutcome,
         ConfiguredProvider, ContainerInfo, ContainerPatch, ContainerSnapshot, CustomAgentInfo,
