@@ -46,7 +46,7 @@ pub mod version;
 pub mod workspace;
 pub mod workspace_ref;
 
-pub use agent_badge::AgentBadge;
+pub use agent_badge::{AgentBadge, BADGE_MAX_SEGMENTS};
 pub use constants::{
     AgentAction, BaseAction, CONFIG, DEFAULT_NETWORK, HttpMethod, LlmProvider, LogLevel,
     MessageType, MonitorAction, NodeAction, SkillAction, ToolAction, UnknownLogLevelError,
