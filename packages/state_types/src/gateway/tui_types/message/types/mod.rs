@@ -2736,6 +2736,15 @@ mod tests {
             crate::gateway::tui_types::message::REPORT_ORIGIN_YOLO_TICK,
             "provenance.origin must serialize under the nested key"
         );
+        // Literal pin (R3 mutation 2): the tests above reference the
+        // constant itself, so a value drift would round-trip self-
+        // consistently. The WIRE value is a cross-repo contract (scepter
+        // stamps it, the chest panel matches it) — pin the bytes.
+        assert_eq!(
+            report["provenance"]["origin"], "yolo_tick",
+            "the wire value is a cross-repo contract; changing it is a
+             breaking vocabulary change that must update every consumer"
+        );
         assert!(
             report["provenance"]["title_i18n"]["zh-Hans"] == "记忆整理",
             "provenance.title_i18n must serialize as a lang map"
