@@ -360,7 +360,7 @@ async fn retry_idempotent_cycles_back_through_the_list() {
 }
 
 #[tokio::test]
-async fn post_without_key_never_fails_over() {
+async fn post_without_key_fails_over_across_never_delivered() {
     let alive = MockServer::start().await;
     ok_mock(json!({"ok": true})).mount(&alive).await;
 
@@ -373,25 +373,78 @@ async fn post_without_key_never_fails_over() {
         .build()
         .unwrap();
 
-    let err = svc
+    // A connect-phase failure (refused) proves the request reached no
+    // server, so even a POST without an idempotency key advances to the
+    // next endpoint — replay cannot double-execute what nothing received.
+    let out: serde_json::Value = svc
         .call(plana_sibling::Method::POST, "/api/x", &json!({"a": 1}))
         .retry(Retry::idempotent(3))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"ok": true}));
+    // Exactly one hit: non-idempotent never cycles, the advance is only
+    // ever to the NEXT endpoint after a never-delivered failure.
+    assert_eq!(alive.received_requests().await.unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn post_read_timeout_does_not_replay_elsewhere() {
+    // Endpoint 1 DELIVERS the request, then stalls past the read-timeout
+    // layer: the server may have processed it, so a POST without an
+    // idempotency key must stop there — the healthy endpoint 2 must never
+    // see the request.
+    let stalling = MockServer::start().await;
+    Mock::given(any())
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({"ok": true}))
+                .set_delay(Duration::from_secs(3)),
+        )
+        .mount(&stalling)
+        .await;
+    let alive = MockServer::start().await;
+    ok_mock(json!({"ok": true})).mount(&alive).await;
+
+    let svc = SiblingService::new("arona")
+        .endpoint_fixed(stalling.uri())
+        .endpoint_fixed(alive.uri())
+        .read_timeout(Duration::from_millis(300))
+        .build()
+        .unwrap();
+
+    let err = svc
+        .call(plana_sibling::Method::POST, "/api/x", &json!({"a": 1}))
         .send::<serde_json::Value>()
         .await
         .unwrap_err();
-
-    // Single attempt, first endpoint: specific class, not AllEndpointsDown.
-    match err {
-        SiblingError::Unreachable {
-            service, endpoint, ..
-        } => {
-            assert_eq!(service, "arona");
-            assert!(endpoint.starts_with("http://127.0.0.1:"));
-        }
-        other => panic!("expected Unreachable, got: {other:?}"),
-    }
-    // The healthy second endpoint must never have been touched.
+    // The delivered/unknown failure is terminal with its specific class.
+    assert_timeout(err, "arona");
+    // The safety pin: no replay against the second endpoint.
     assert_eq!(alive.received_requests().await.unwrap().len(), 0);
+}
+
+#[tokio::test]
+async fn post_all_endpoints_refused_reports_all_down() {
+    let a = refused_endpoint();
+    let b = refused_endpoint();
+    let svc = fixed("arona", &[a.as_str(), b.as_str()]);
+    let err = svc
+        .call(plana_sibling::Method::POST, "/api/x", &json!({"a": 1}))
+        .send::<serde_json::Value>()
+        .await
+        .unwrap_err();
+    match err {
+        SiblingError::AllEndpointsDown { tried, .. } => {
+            assert_eq!(tried.len(), 2);
+            assert!(
+                tried
+                    .iter()
+                    .all(|t| matches!(t.reason, AttemptReason::Unreachable(_)))
+            );
+        }
+        other => panic!("expected AllEndpointsDown, got: {other:?}"),
+    }
 }
 
 #[tokio::test]
@@ -484,6 +537,9 @@ async fn four_xx_is_terminal_and_never_advances() {
 
 #[tokio::test]
 async fn unreachable_is_reported_with_endpoint_context() {
+    // A single refused endpoint on a POST: the connect-phase failure
+    // advances (nothing was delivered), the list is exhausted, and the
+    // aggregation carries the per-endpoint record.
     let dead = refused_endpoint();
     let svc = fixed("arona", &[dead.as_str()]);
     let err = svc
@@ -492,16 +548,16 @@ async fn unreachable_is_reported_with_endpoint_context() {
         .await
         .unwrap_err();
     match err {
-        SiblingError::Unreachable {
-            service,
-            endpoint,
-            cause,
-        } => {
+        SiblingError::AllEndpointsDown { service, tried, .. } => {
             assert_eq!(service, "arona");
-            assert_eq!(endpoint, dead);
-            assert!(!cause.is_empty());
+            assert_eq!(tried.len(), 1);
+            assert_eq!(tried[0].endpoint, dead);
+            match &tried[0].reason {
+                AttemptReason::Unreachable(cause) => assert!(!cause.is_empty()),
+                other => panic!("expected Unreachable reason, got: {other:?}"),
+            }
         }
-        other => panic!("expected Unreachable, got: {other:?}"),
+        other => panic!("expected AllEndpointsDown, got: {other:?}"),
     }
 }
 

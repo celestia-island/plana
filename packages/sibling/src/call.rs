@@ -53,7 +53,9 @@ impl<B: Serialize + ?Sized> SiblingCall<'_, '_, B> {
 
     /// Attach an idempotency key (`Idempotency-Key` header). This is the
     /// caller's promise the operation is safe to replay, so a POST carrying
-    /// one gains the same failover rights as GET.
+    /// one gains the same failover rights as GET (a POST without one still
+    /// advances across connect-phase failures — those prove the request
+    /// reached no server — but never across delivered/unknown failures).
     #[must_use]
     pub fn idempotency_key(mut self, key: impl Into<String>) -> Self {
         self.idempotency_key = Some(key.into());
@@ -132,6 +134,15 @@ fn is_bodyless(method: &http::Method) -> bool {
 /// Internal per-attempt failure (bodies kept only while the outcome is
 /// still being classified — records strip them).
 enum AttemptFail {
+    /// The connection was never established (refused, DNS, TLS handshake,
+    /// connect timeout) or the request never left the client (URL build
+    /// failure): nothing was delivered, so advancing to the next endpoint
+    /// is safe even for a non-idempotent call — replay cannot
+    /// double-execute what no server received.
+    Connect(String),
+    /// Transport failure at or after delivery (mid-body reset, response
+    /// read error): the endpoint may already have processed the request,
+    /// so a non-idempotent call stops at this endpoint.
     Unreachable(String),
     Timeout(Duration),
     Status(u16, String),
@@ -140,23 +151,34 @@ enum AttemptFail {
 impl AttemptFail {
     fn to_reason(&self) -> AttemptReason {
         match self {
-            Self::Unreachable(cause) => AttemptReason::Unreachable(cause.clone()),
+            Self::Connect(cause) | Self::Unreachable(cause) => {
+                AttemptReason::Unreachable(cause.clone())
+            }
             Self::Timeout(after) => AttemptReason::Timeout(*after),
             Self::Status(code, _) => AttemptReason::Status(*code),
         }
     }
+
+    /// True when this failure proves the request reached no server — the
+    /// one condition under which a NON-idempotent call may advance to the
+    /// next endpoint.
+    fn never_delivered(&self) -> bool {
+        matches!(self, Self::Connect(_))
+    }
 }
 
-/// `max_attempts == 1` (non-idempotent) must report the specific failure
-/// class — "all endpoints down" would be false when only the first endpoint
-/// was (deliberately) tried.
+/// A non-idempotent call that stops on a delivered/unknown failure must
+/// report the specific failure class — "all endpoints down" would be false
+/// when the never-delivered endpoints were skipped past.
 fn specific_error(name: &str, endpoint: &str, fail: AttemptFail) -> SiblingError {
     match fail {
-        AttemptFail::Unreachable(cause) => SiblingError::Unreachable {
-            service: name.to_string(),
-            endpoint: endpoint.to_string(),
-            cause,
-        },
+        AttemptFail::Connect(cause) | AttemptFail::Unreachable(cause) => {
+            SiblingError::Unreachable {
+                service: name.to_string(),
+                endpoint: endpoint.to_string(),
+                cause,
+            }
+        }
         AttemptFail::Timeout(after) => SiblingError::Timeout {
             service: name.to_string(),
             after,
@@ -210,8 +232,11 @@ async fn execute(
     let max_attempts = match (retry, idempotent) {
         // One ordered pass across the list.
         (Retry::None, true) => endpoints.len(),
-        // Non-idempotent: exactly one attempt, first endpoint only.
-        (Retry::None, false) | (Retry::Idempotent { .. }, false) => 1,
+        // Non-idempotent: one ordered pass, same budget — but the loop
+        // below stops at the FIRST endpoint whose failure class does not
+        // prove non-delivery, so the pass is only ever consumed by
+        // never-delivered (connect-phase) failures.
+        (Retry::None, false) | (Retry::Idempotent { .. }, false) => endpoints.len(),
         // Full pass plus cycling extra attempts.
         (Retry::Idempotent { max_retries }, true) => endpoints.len() + max_retries as usize,
     };
@@ -222,7 +247,8 @@ async fn execute(
             sibling = name,
             method = %method,
             "retry policy idempotent({max_retries}) has no effect on a \
-             non-idempotent request; attempting the first endpoint once"
+             non-idempotent request; advancing only across never-delivered \
+             (connect-phase) failures, no cycling"
         );
     }
 
@@ -260,6 +286,9 @@ async fn execute(
                     let result_text = match &res {
                         Ok(_) => "ok".to_string(),
                         Err(fail) => match fail {
+                            AttemptFail::Connect(cause) => {
+                                format!("connect (never delivered): {cause}")
+                            }
                             AttemptFail::Unreachable(cause) => format!("unreachable: {cause}"),
                             AttemptFail::Timeout(_) => "timeout".to_string(),
                             AttemptFail::Status(code, _) => format!("HTTP {code}"),
@@ -298,7 +327,12 @@ async fn execute(
                         endpoint: endpoint.clone(),
                         reason: fail.to_reason(),
                     });
-                    if !idempotent {
+                    // A non-idempotent call advances ONLY on a failure that
+                    // proves the request reached no server (connect-phase);
+                    // a delivered/unknown failure (timeout after send, 5xx,
+                    // mid-body reset) stops here — replaying it elsewhere
+                    // could double-execute.
+                    if !idempotent && !fail.never_delivered() {
                         return Err(specific_error(name, &endpoint, fail));
                     }
                 }
@@ -306,7 +340,8 @@ async fn execute(
         }
 
         // Exhaustion implies every endpoint was covered: the cycling budget
-        // is `len + retries` and `Retry::None` is exactly `len`.
+        // is `len + retries`, `Retry::None` is exactly `len`, and a
+        // non-idempotent pass only ever consumed never-delivered failures.
         Err(SiblingError::AllEndpointsDown {
             service: name.to_string(),
             tried,
@@ -334,7 +369,9 @@ async fn do_attempt(
     endpoint: &str,
 ) -> Result<Vec<u8>, AttemptFail> {
     let started = Instant::now();
-    let url = build_url(endpoint, path).map_err(AttemptFail::Unreachable)?;
+    // A URL that fails to build never leaves the client: nothing was
+    // delivered, same as a refused connection.
+    let url = build_url(endpoint, path).map_err(AttemptFail::Connect)?;
 
     let mut req = service.client().request(method.clone(), url);
     for (key, value) in query_pairs {
@@ -368,7 +405,15 @@ async fn do_attempt(
     // layer; the connect/read layers come from the build-time client config.
 
     let resp = req.send().await.map_err(|e| {
-        if e.is_timeout() {
+        // Connect-phase first: a connect timeout is BOTH is_connect() and
+        // is_timeout(), and the request provably reached no server — the
+        // one error class a non-idempotent call may replay elsewhere.
+        // Everything else on the send path (read timeout after delivery,
+        // reset mid-write) is delivered-or-unknown: terminal for a
+        // non-idempotent call.
+        if e.is_connect() {
+            AttemptFail::Connect(e.to_string())
+        } else if e.is_timeout() {
             AttemptFail::Timeout(started.elapsed())
         } else {
             AttemptFail::Unreachable(e.to_string())

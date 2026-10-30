@@ -4,8 +4,11 @@
 ///
 /// Failover across endpoints is idempotency-gated regardless of the policy:
 /// idempotent methods walk the endpoint list in order; a POST without an
-/// idempotency key is attempted exactly once against the first endpoint
-/// under every policy (replaying it elsewhere could double-execute).
+/// idempotency key also walks the list but only advances past a failure
+/// that proves non-delivery (connect-phase: refused, DNS, TLS handshake,
+/// connect timeout) — a delivered/unknown failure (read timeout, 5xx,
+/// mid-body reset) stops the call at that endpoint under every policy,
+/// because replaying it elsewhere could double-execute.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Retry {
     /// One pass through the endpoint list, no re-attempts. For an idempotent

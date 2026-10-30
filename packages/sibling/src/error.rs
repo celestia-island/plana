@@ -64,7 +64,11 @@ pub(crate) fn truncate_body(bytes: &[u8]) -> String {
 pub enum SiblingError {
     /// The endpoint could not be reached (connection refused/reset, DNS,
     /// TLS, mid-body transport failure). Reported for the failing endpoint
-    /// when a non-idempotent call stops there.
+    /// when a non-idempotent call stops there — which today is only a
+    /// delivered/unknown failure (read timeout, mid-body reset): a
+    /// connect-phase failure never stops a non-idempotent call, it advances
+    /// to the next endpoint, and exhausting the list reports
+    /// [`SiblingError::AllEndpointsDown`] instead.
     #[error("sibling `{service}` endpoint `{endpoint}` unreachable: {cause}")]
     Unreachable {
         service: String,
