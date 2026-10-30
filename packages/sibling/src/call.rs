@@ -410,7 +410,9 @@ async fn do_attempt(
         // one error class a non-idempotent call may replay elsewhere.
         // Everything else on the send path (read timeout after delivery,
         // reset mid-write) is delivered-or-unknown: terminal for a
-        // non-idempotent call.
+        // non-idempotent call. Redirects cannot blur this line: the client
+        // is built with `Policy::none()`, so `send()` only ever dials the
+        // URL built above (see builder.rs).
         if e.is_connect() {
             AttemptFail::Connect(e.to_string())
         } else if e.is_timeout() {
@@ -421,6 +423,23 @@ async fn do_attempt(
     })?;
 
     let status = resp.status().as_u16();
+    if (300..400).contains(&status) {
+        // The client does not follow redirects (builder-level `Policy::none()`):
+        // a 3xx means the endpoint ANSWERED — the request was delivered, and
+        // the Location it points at is not in the endpoint list. Classify as
+        // a delivered-class failure: terminal for a non-idempotent call,
+        // advance-to-next-endpoint for an idempotent one (same as a 5xx).
+        let location = resp
+            .headers()
+            .get(http::header::LOCATION)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string();
+        return Err(AttemptFail::Status(
+            status,
+            format!("redirect -> {location}"),
+        ));
+    }
     if (400..600).contains(&status) {
         let body = resp.bytes().await.map(|b| b.to_vec()).map_err(|e| {
             if e.is_timeout() {

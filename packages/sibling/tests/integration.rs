@@ -448,6 +448,70 @@ async fn post_all_endpoints_refused_reports_all_down() {
 }
 
 #[tokio::test]
+async fn post_with_retry_policy_never_cycles_when_all_refused() {
+    // Pins the at-most-once-per-endpoint guarantee for non-idempotent
+    // calls: even with Retry::idempotent(3), the pass is exactly one
+    // ordered sweep — `len` attempts, never `len + max_retries`.
+    let a = refused_endpoint();
+    let b = refused_endpoint();
+    let svc = fixed("arona", &[a.as_str(), b.as_str()]);
+    let err = svc
+        .call(plana_sibling::Method::POST, "/api/x", &json!({"a": 1}))
+        .retry(Retry::idempotent(3))
+        .send::<serde_json::Value>()
+        .await
+        .unwrap_err();
+    match err {
+        SiblingError::AllEndpointsDown { tried, .. } => {
+            assert_eq!(tried.len(), 2, "non-idempotent must not cycle: {tried:?}");
+        }
+        other => panic!("expected AllEndpointsDown, got: {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn post_redirect_answer_does_not_replay_elsewhere() {
+    // The redirect corner (R2 finding 1): endpoint A DELIVERS the request
+    // (answers 302). Redirects are not followed (builder-level
+    // `Policy::none()`), so the 3xx reads as a delivered-class failure —
+    // the non-idempotent POST stops at A and endpoint B never sees it.
+    let redirecting = MockServer::start().await;
+    let dead_target = refused_endpoint();
+    Mock::given(any())
+        .respond_with(ResponseTemplate::new(302).append_header("Location", dead_target.as_str()))
+        .mount(&redirecting)
+        .await;
+    let alive = MockServer::start().await;
+    ok_mock(json!({"ok": true})).mount(&alive).await;
+
+    let svc = fixed("arona", &[redirecting.uri().as_str(), alive.uri().as_str()]);
+    let err = svc
+        .call(plana_sibling::Method::POST, "/api/x", &json!({"a": 1}))
+        .send::<serde_json::Value>()
+        .await
+        .unwrap_err();
+    match &err {
+        SiblingError::Status { code, body, .. } => {
+            // Terminal at the redirecting endpoint, specific class.
+            assert_eq!(*code, 302);
+            assert!(
+                body.contains("redirect"),
+                "body should name the target: {body}"
+            );
+        }
+        other => panic!("expected Status(302), got: {other:?}"),
+    }
+    // The safety pin: no replay against the second endpoint.
+    assert_eq!(alive.received_requests().await.unwrap().len(), 0);
+    // And the redirect target was never dialed (no following).
+    assert_eq!(
+        redirecting.received_requests().await.unwrap().len(),
+        1,
+        "exactly one delivery to the redirecting endpoint"
+    );
+}
+
+#[tokio::test]
 async fn post_500_does_not_advance_without_key() {
     let first = MockServer::start().await;
     let alive = MockServer::start().await;
