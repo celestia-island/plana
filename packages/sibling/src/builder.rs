@@ -268,7 +268,18 @@ impl SiblingServiceBuilder {
         // No client-level total timeout: the call-level wall-clock deadline
         // lives in call::execute (shared across failover attempts). Only the
         // connect/read layers belong on the client.
-        let mut client = reqwest::Client::builder();
+        let mut client = reqwest::Client::builder()
+            // Redirects are deliberately NOT followed. Following one inside
+            // the single `send().await` dials a URL the endpoint list never
+            // named, and a failure on that hop still reports `is_connect()`
+            // with the ORIGINAL request URL attached (verified against
+            // reqwest 0.13.5: the redirect wrapper rebuilds the error with
+            // the outer url) — indistinguishable from a pre-delivery
+            // connect failure. With following disabled, a 3xx answer is
+            // classified as a delivered-class failure in `do_attempt`, so a
+            // non-idempotent call can never be replayed just because an
+            // endpoint answered with a redirect.
+            .redirect(reqwest::redirect::Policy::none());
         if let Some(d) = self.connect_timeout {
             client = client.connect_timeout(d);
         }

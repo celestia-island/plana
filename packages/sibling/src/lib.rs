@@ -40,10 +40,14 @@
 //!   endpoint; 4xx is a business error and returns [`SiblingError::Status`]
 //!   immediately without advancing.
 //! - **Cross-endpoint retry is idempotency-gated**: GET/HEAD/OPTIONS/TRACE/
-//!   PUT/DELETE fail over; a POST only fails over when it carries an
-//!   idempotency key (`.idempotency_key(...)`). A non-idempotent POST is
-//!   attempted exactly once against the first endpoint — retrying it against
-//!   another endpoint could double-execute the operation.
+//!   PUT/DELETE fail over; a POST only gains full failover when it carries
+//!   an idempotency key (`.idempotency_key(...)`). A non-idempotent POST
+//!   still advances — but only across failures that PROVE the request
+//!   reached no server (connect-phase: refused, DNS, TLS handshake,
+//!   connect timeout). A delivered or unknown failure (read timeout, 5xx,
+//!   mid-body reset, 3xx — redirects are never followed) stops the call
+//!   at that endpoint, because replaying it elsewhere could double-execute
+//!   the operation.
 //! - [`Retry::none()`] is a single pass through the endpoint list.
 //!   [`Retry::idempotent(n)`] adds `n` extra attempts cycling back through
 //!   the list (with two endpoints: A, B, A, ...). Both walk endpoints in
