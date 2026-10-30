@@ -1062,6 +1062,62 @@ async fn post_body_roundtrips_as_json() {
 }
 
 #[tokio::test]
+async fn post_body_is_labeled_as_json() {
+    // Regression pin (2026-10-30): axum-backed siblings (arona /api/rpc)
+    // answer a JSON body without `Content-Type: application/json` with
+    // 415 — which callers classify as "unreachable", the empty-roster
+    // outage. wiremock's `body_json` matcher alone never enforced the
+    // header, so the mock below gates on it explicitly: an unlabeled
+    // body falls through to the unmatched 404 and this test fails.
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/api/rpc"))
+        .and(header("content-type", "application/json"))
+        .and(body_json(json!({"id": 7, "op": "ping"})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"pong": 7})))
+        .mount(&server)
+        .await;
+
+    let svc = fixed("arona", &[server.uri().as_str()]);
+    let out: serde_json::Value = svc
+        .call(
+            plana_sibling::Method::POST,
+            "/api/rpc",
+            &json!({"id": 7, "op": "ping"}),
+        )
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(out, json!({"pong": 7}));
+    // Belt and braces: the header on the wire is exactly the JSON label.
+    let reqs = server.received_requests().await.unwrap();
+    assert_eq!(reqs.len(), 1);
+    assert_eq!(
+        reqs[0].headers.get("content-type").unwrap(),
+        "application/json"
+    );
+}
+
+#[tokio::test]
+async fn bodyless_requests_carry_no_content_type() {
+    // The JSON label is scoped to bodies: GET/HEAD must stay header-free
+    // (endpoint caches/CDNs key on content-type and a bogus label would
+    // poison them).
+    let server = MockServer::start().await;
+    ok_mock(json!({"ok": true})).mount(&server).await;
+
+    let svc = fixed("arona", &[server.uri().as_str()]);
+    let _: serde_json::Value = svc
+        .call(plana_sibling::Method::GET, "/api/x", &())
+        .send()
+        .await
+        .unwrap();
+    let reqs = server.received_requests().await.unwrap();
+    assert_eq!(reqs.len(), 1);
+    assert!(reqs[0].headers.get("content-type").is_none());
+}
+
+#[tokio::test]
 async fn send_bytes_returns_raw_body() {
     let server = MockServer::start().await;
     Mock::given(any())

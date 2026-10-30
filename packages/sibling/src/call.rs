@@ -354,7 +354,14 @@ async fn do_attempt(
         req = req.header("Idempotency-Key", key);
     }
     if let Some(bytes) = payload {
-        req = req.body(bytes.to_vec());
+        // Request bodies are always `serde_json::to_vec` output (see
+        // `send_bytes`), so label them as JSON: axum-backed siblings
+        // (e.g. arona's `/api/rpc`) reject an unlabeled body with 415,
+        // which callers surface as "unreachable" — the 2026-10-29
+        // empty-roster outage class.
+        req = req
+            .header(http::header::CONTENT_TYPE, "application/json")
+            .body(bytes.to_vec());
     }
     // No per-request total timeout here: the call-level deadline
     // (`tokio::time::timeout` around the whole attempt loop) is the total
