@@ -43,7 +43,7 @@ impl std::fmt::Display for AccessMode {
     }
 }
 
-/// Map a kirino `Permission` name string to an `AccessMode`.
+/// Map a hierarchical `Permission` name string to an `AccessMode`.
 ///
 /// The mapping follows the convention established in the hierarchical
 /// permission model:

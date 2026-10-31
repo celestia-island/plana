@@ -1,10 +1,11 @@
 [package]
-name = "plana_text"
+name = "plana-text"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
+description = "LLM text accumulation and structured streaming abstractions"
 
 [lints]
 workspace = true
