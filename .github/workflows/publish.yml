@@ -342,9 +342,9 @@ jobs:
           # akivili-plugin-host unblock wave (2026-11-01): the dependency
           # closure of plana-domain-skills + plana-state-sync, renamed to the
           # hyphenated published-crate convention. Dependency order matters
-          # within the batch; the state-sync entry assumes the local wire
-          # ContainerStatus (the cherino git edge was cut in the same wave —
-          # cherino itself is not on crates.io).
+          # within the batch; state-sync carries the local wire
+          # ContainerStatus because the cherino git dependency was cut from
+          # its manifest in this same PR (cherino is not on crates.io).
           publish_crate plana-macros packages/macros/Cargo.toml
           publish_crate plana-text packages/text/Cargo.toml
           publish_crate plana-core packages/core/Cargo.toml

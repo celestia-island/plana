@@ -13,7 +13,6 @@ workspace = true
 [dependencies]
 
 plana-config = { workspace = true }
-cherino.workspace = true
 plana_core = { workspace = true }
 plana_domain_agent = { workspace = true }
 plana_text = { workspace = true }
