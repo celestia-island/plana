@@ -1,10 +1,11 @@
 [package]
-name = "plana_macros"
+name = "plana-macros"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
+description = "Shared proc macros for the plana agent runtime"
 
 [lints]
 workspace = true

@@ -339,3 +339,17 @@ jobs:
           # Renamed from plana-evernight-client (2026-10-27 ruling: published
           # crate names must stay service-agnostic; the old name is yanked).
           publish_crate plana-dispatch-client packages/dispatch-client/Cargo.toml
+          # akivili-plugin-host unblock wave (2026-11-01): the dependency
+          # closure of plana-domain-skills + plana-state-sync, renamed to the
+          # hyphenated published-crate convention. Dependency order matters
+          # within the batch; the state-sync entry assumes the local wire
+          # ContainerStatus (the cherino git edge was cut in the same wave —
+          # cherino itself is not on crates.io).
+          publish_crate plana-macros packages/macros/Cargo.toml
+          publish_crate plana-text packages/text/Cargo.toml
+          publish_crate plana-core packages/core/Cargo.toml
+          publish_crate plana-domain-agent packages/domain_agent/Cargo.toml
+          publish_crate plana-state-sync packages/state_types/Cargo.toml
+          publish_crate plana-domain-skills-permissions packages/domain_skills_permissions/Cargo.toml
+          publish_crate plana-prompt packages/prompt/Cargo.toml
+          publish_crate plana-domain-skills packages/domain_skills/Cargo.toml

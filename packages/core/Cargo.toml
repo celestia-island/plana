@@ -1,10 +1,11 @@
 [package]
-name = "plana_core"
+name = "plana-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
+description = "Foundation domain types and vocabulary for the plana agent platform"
 
 [lints]
 workspace = true

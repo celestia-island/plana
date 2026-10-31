@@ -1,11 +1,11 @@
 [package]
-name = "plana_state_sync"
+name = "plana-state-sync"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
-description = "Wire protocol and state types for the entelecheia platform"
+description = "Wire protocol and state types for the plana agent platform"
 
 [lints]
 workspace = true

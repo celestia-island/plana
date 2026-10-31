@@ -13,8 +13,28 @@ use uuid::Uuid;
 
 use super::agent::{CompletionOutcome, RequestState, TuiAgentInfo};
 use crate::agent::{Agent, WorkStatus};
-use cherino::ContainerStatus;
 use plana_core::{AgentBadge, AgentId};
+
+/// Runtime status of one container, as carried on the gateway wire.
+///
+/// Wire-compatible with the runtime's own `cherino::ContainerStatus`
+/// (snake_case literals: `running`, `exited`, ...). Defined locally so this
+/// crate stays publishable while the runtime crate is not on crates.io; if
+/// cherino ever ships, the enum can move back behind a re-export without
+/// touching the wire.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ContainerStatus {
+    #[default]
+    Created,
+    Running,
+    Paused,
+    Restarting,
+    Removing,
+    Exited,
+    Dead,
+    Unknown,
+}
 
 /// Field-level incremental update for one agent - not a complete agent object.
 ///
@@ -277,7 +297,7 @@ pub struct ContainerInfo {
     pub id: String,
     /// Container name as created, for example `e-skemma-abc12345`.
     pub name: String,
-    /// Runtime status; the wire literals come from `cherino::ContainerStatus`
+    /// Runtime status; the wire literals match [`ContainerStatus`]
     /// (`running`, `exited`, ...).
     pub status: ContainerStatus,
     /// CPU load of the container; the unit is not pinned by this crate

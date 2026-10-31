@@ -1,10 +1,11 @@
 [package]
-name = "plana_domain_skills"
+name = "plana-domain-skills"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
+description = "Agent skill framework — tools, skill types, SOC executor, registry"
 
 [lints]
 workspace = true

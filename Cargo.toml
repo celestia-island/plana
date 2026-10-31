@@ -57,21 +57,21 @@ all = "deny"
 plana_bootloader = { path = "packages/bootloader" }
 plana-build-info = { path = "packages/build_info", version = "0.1" }
 plana-config = { path = "packages/config", version = "0.1" }
-plana_core = { path = "packages/core" }
+plana_core = { path = "packages/core", version = "0.1", package = "plana-core" }
 plana_custom_agent = { path = "packages/custom_agent" }
-plana_domain_agent = { path = "packages/domain_agent" }
-plana_domain_skills = { path = "packages/domain_skills" }
-plana_domain_skills_permissions = { path = "packages/domain_skills_permissions" }
+plana_domain_agent = { path = "packages/domain_agent", version = "0.1", package = "plana-domain-agent" }
+plana_domain_skills = { path = "packages/domain_skills", version = "0.1", package = "plana-domain-skills" }
+plana_domain_skills_permissions = { path = "packages/domain_skills_permissions", version = "0.1", package = "plana-domain-skills-permissions" }
 plana_infra_services = { path = "packages/infra_services" }
 plana_archive = { path = "packages/archive" }
 plana-infra-utils = { path = "packages/infra_utils", version = "0.1" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.1" }
-plana_macros = { path = "packages/macros" }
-plana_prompt = { path = "packages/prompt" }
+plana_macros = { path = "packages/macros", version = "0.1", package = "plana-macros" }
+plana_prompt = { path = "packages/prompt", version = "0.1", package = "plana-prompt" }
 plana_res = { path = "packages/res" }
-plana_state_sync = { path = "packages/state_types" }
+plana_state_sync = { path = "packages/state_types", version = "0.1", package = "plana-state-sync" }
 plana_sync = { path = "packages/sync" }
-plana_text = { path = "packages/text" }
+plana_text = { path = "packages/text", version = "0.1", package = "plana-text" }
 plana_timeline = { path = "packages/timeline" }
 plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
 

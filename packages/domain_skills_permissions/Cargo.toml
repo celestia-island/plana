@@ -1,17 +1,16 @@
 [package]
-name = "plana_domain_skills_permissions"
+name = "plana-domain-skills-permissions"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
+description = "Permission and security model for agent skills and tool execution"
 
 [lints]
 workspace = true
 
 [dependencies]
-
-kirino = { workspace = true }
 
 plana_core = { workspace = true }
 chrono.workspace = true

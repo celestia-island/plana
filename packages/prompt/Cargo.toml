@@ -1,10 +1,11 @@
 [package]
-name = "plana_prompt"
+name = "plana-prompt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
+description = "Prompt loading, templating, and agent soul management"
 
 [lints]
 workspace = true

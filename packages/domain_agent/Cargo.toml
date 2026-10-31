@@ -1,10 +1,11 @@
 [package]
-name = "plana_domain_agent"
+name = "plana-domain-agent"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
+description = "Agent type system — badge, descriptor, kind, and phantom-type markers"
 
 [lints]
 workspace = true
