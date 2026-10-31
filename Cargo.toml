@@ -1,0 +1,214 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "packages/plana",
+    "packages/celestia-types",
+    "packages/jsonrpc",
+    "packages/rpc-server",
+    "packages/rpc-client",
+    "packages/tauri",
+    "packages/dispatch-client",
+    "packages/protocol-core",
+    "packages/core",
+    "packages/config",
+    "packages/text",
+    "packages/macros",
+    "packages/domain_agent",
+    "packages/domain_skills",
+    "packages/domain_skills_permissions",
+    "packages/custom_agent",
+    "packages/state_types",
+    "packages/infra_services",
+    "packages/infra_utils",
+    "packages/sibling",
+    "packages/bootloader",
+    "packages/build_info",
+    "packages/llm_provider",
+    "packages/timeline",
+    "packages/prompt",
+    "packages/res",
+    "packages/sync",
+    "packages/dev_server",
+    "packages/assets",
+    "packages/archive",
+]
+
+[workspace.package]
+version = "0.1.52"
+edition = "2024"
+rust-version = "1.91"
+authors = ["langyo <langyo.china@gmail.com>"]
+license-file = "LICENSE"
+description = "Shared infrastructure and protocol types for celestia-island"
+repository = "https://github.com/celestia-island/plana"
+keywords = ["json-rpc", "protocol", "ai-agent", "infrastructure", "shared-types"]
+categories = ["data-structures", "development-tools"]
+
+[workspace.lints.rust]
+warnings = "deny"
+
+[workspace.lints.clippy]
+all = "deny"
+
+[workspace.dependencies]
+
+# ── Internal workspace crates (path deps; hyphenated names are the published
+#    crate names, legacy underscore keys alias them via package =) ──
+plana_bootloader = { path = "packages/bootloader" }
+plana-build-info = { path = "packages/build_info", version = "0.1" }
+plana-config = { path = "packages/config", version = "0.1" }
+plana_core = { path = "packages/core", version = "0.1", package = "plana-core" }
+plana_custom_agent = { path = "packages/custom_agent" }
+plana_domain_agent = { path = "packages/domain_agent", version = "0.1", package = "plana-domain-agent" }
+plana_domain_skills = { path = "packages/domain_skills", version = "0.1", package = "plana-domain-skills" }
+plana_domain_skills_permissions = { path = "packages/domain_skills_permissions", version = "0.1", package = "plana-domain-skills-permissions" }
+plana_infra_services = { path = "packages/infra_services" }
+plana_archive = { path = "packages/archive" }
+plana-infra-utils = { path = "packages/infra_utils", version = "0.1" }
+plana-llm-provider = { path = "packages/llm_provider", version = "0.1" }
+plana_macros = { path = "packages/macros", version = "0.1", package = "plana-macros" }
+plana_prompt = { path = "packages/prompt", version = "0.1", package = "plana-prompt" }
+plana_res = { path = "packages/res" }
+plana_state_sync = { path = "packages/state_types", version = "0.1", package = "plana-state-sync" }
+plana_sync = { path = "packages/sync" }
+plana_text = { path = "packages/text", version = "0.1", package = "plana-text" }
+plana_timeline = { path = "packages/timeline" }
+plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
+
+plana = { version = "0.2.1", path = "packages/plana" }
+plana-celestia-types = { version = "0.1.1", path = "packages/celestia-types" }
+
+kirino = { version = "^0.9" }
+
+# Container toolkit extracted to the cherino repo (P1 atomic switch):
+# the former packages/container and packages/container_runtime now live at
+# https://github.com/celestia-island/cherino as `cherino` / `cherino-runtime`.
+# Re-point to a crates.io version once cherino is published (P3).
+cherino = { git = "https://github.com/celestia-island/cherino.git", branch = "master" }
+cherino-runtime = { git = "https://github.com/celestia-island/cherino.git", branch = "master" }
+
+# External dependency versions (carried from entelecheia workspace)
+anyhow = "^1"
+append-only-bytes = "^0.1"
+async-trait = "^0.1"
+# Signature checks (custom_agent). The floor includes 3.0.0-rc.0 on purpose:
+# entelecheia's russh 0.61.x pins ed25519-dalek =3.0.0-rc.0 exactly, and a
+# bare ^3 range cannot unify with that pin — so consumers whose graph carries
+# russh 0.61 resolve to rc.0 while everyone else (no russh) keeps the 3.0.0
+# final. Re-tighten to ^3 once the family moves to russh >=0.62.3 (which
+# relaxed its pin to ^3).
+ed25519-dalek = "^3.0.0-rc.0"
+# Container / infrastructure
+aes-gcm = "^0.10"
+axum = { version = "^0.8", features = ["ws"] }
+base64 = "^0.23"
+boa_engine = "^0.21"
+boa_gc = "^0.21"
+boa_runtime = "^0.21"
+bollard = "^0.21"
+bytes = "^1"
+chrono = { version = "^0.4", features = ["serde", "clock"] }
+dashmap = "^6"
+deadpool-postgres = "^0.14"
+dirs = "^7"
+dotenvy = "^0.15"
+flume = "^0.12"
+futures = "^0.3"
+hex = "^0.4"
+http = "^1"
+hyper-rustls = { version = "^0.27", default-features = false, features = ["native-tokio", "http1", "tls12", "ring"] }
+include_dir = { version = "^0.7", features = ["glob"] }
+interprocess = "^2"
+# libnoa 0.4.2 is on crates.io (noa tag v0.4.2 == the master tree this used to
+# follow), and it carries the redb 4 / suppaftp 12 line, so the registry copy no
+# longer drags the suppaftp 9 RUSTSEC-2026-0271 pin that forced the git edge.
+# Consuming it from the registry also keeps one libnoa instance in consumer
+# graphs: the git edge made entelecheia link a registry copy for its own use
+# plus this git copy through plana_custom_agent (same version, different source
+# = two incompatible type universes).
+libnoa = { version = "^0.4" }
+lru = "^0.18"
+mockall = "^0.12"
+notify = "^6"
+os_info = "^3"
+parking_lot = "^0.12"
+pci-ids = "^0.2"
+rand = "^0.8"
+# Self-signed certificate generation for the rpc-client wss:// tests.
+rcgen = "^0.14"
+regex = "^1"
+reqwest = { version = "^0.13", default-features = false, features = [
+    "json",
+    "rustls-no-provider",
+    "stream",
+    "charset",
+    "http2",
+] }
+# Pure-Rust TLS: use rustls+ring instead of aws-lc-rs (avoids C compilation of aws-lc-sys).
+# Pinning rustls/hyper-rustls/tokio-rustls here with ring kills aws-lc-rs at the source.
+russh = "^0.45"
+rustls = { version = "^0.23", default-features = false, features = ["ring", "std", "tls12"] }
+schemars = { version = "^1", features = ["derive", "uuid1"] }
+sea-orm = { version = "^2", features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+] }
+sea-orm-migration = "^2"
+secrecy = { version = "^0.8", features = ["serde"] }
+serde = { version = "^1", features = ["derive"] }
+serde_json = "^1"
+serde_yaml = "^0.9"
+sha2 = "^0.10"
+strum = { version = "^0.28", features = ["derive"] }
+swc_core = "^40"
+sys-info = "^0.9"
+sys-locale = "^0.3"
+sysinfo = "^0.30"
+tar = "^0.4"
+tempfile = "^3"
+tera = "^2"
+thiserror = "^2"
+tokio = { version = "^1", features = ["rt", "rt-multi-thread", "macros", "time", "net", "io-util", "fs", "sync", "signal", "process"] }
+tokio-rustls = { version = "^0.26", default-features = false, features = ["ring", "tls12"] }
+tokio-test = "^0.4"
+tokio-tungstenite = "^0.30"
+tokio-util = "^0.7"
+toml = "^1"
+tower = "^0.5"
+tower-http = { version = "^0.7", features = ["cors", "trace", "fs"] }
+tracing = { version = "^0.1", features = ["log"] }
+tracing-appender = "^0.2"
+tracing-subscriber = { version = "^0.3", features = ["env-filter", "json"] }
+ts-rs = { version = "^12", features = ["serde-compat", "serde-json-impl", "uuid-impl"] }
+url = "^2"
+uuid = { version = "^1", features = ["v3", "v4", "v5", "v7", "serde"] }
+walkdir = "^2"
+wiremock = "^0.*"
+[profile.dev]
+debug = 1
+opt-level = 0
+incremental = true
+
+[profile.dev.package."*"]
+debug = 0
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 16
+debug = 0
+
+[profile.bench]
+debug = 0
+
+
+# Vendored ts-rs with a fix for the export-merge panic on files whose
+# header contains no imports (upstream ts-rs 12.0.1 bug, unpatched).
+# This patch exists solely so `just gen bindings` can produce the TS
+# bindings; it is not a publish blocker — published crates depend on the
+# upstream ts-rs from crates.io.
+[patch.crates-io]
+ts-rs = { path = "patches/ts-rs" }
+ts-rs-macros = { path = "patches/ts-rs-macros" }
