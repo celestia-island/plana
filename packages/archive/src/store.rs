@@ -831,12 +831,14 @@ fn seal_payload(
             })?;
             let mut nonce_bytes = [0u8; NONCE_LEN];
             rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
-            let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+            // GenericArray 0.14.9 deprecated from_slice; the From<[u8; N]>
+            // construction is the stable spelling for the fixed-size keys.
+            let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
             // Integrity rides the manifest digest pairing; AEAD here
             // defends confidentiality only.
             let ciphertext = cipher
                 .encrypt(
-                    Nonce::from_slice(&nonce_bytes),
+                    &Nonce::from(nonce_bytes),
                     Payload {
                         msg: &plain,
                         aad: &[],
@@ -890,11 +892,16 @@ fn open_payload(
                     reason: "encrypted payload is missing its magic/nonce header".to_string(),
                 });
             }
-            let nonce = Nonce::from_slice(&stored[ENC_MAGIC.len()..ENC_MAGIC.len() + NONCE_LEN]);
-            let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+            let nonce: [u8; NONCE_LEN] = stored[ENC_MAGIC.len()..ENC_MAGIC.len() + NONCE_LEN]
+                .try_into()
+                .map_err(|_| ArchiveError::Corrupt {
+                    locator: format!("{}/{}", manifest.kind, manifest.id),
+                    reason: "encrypted payload carries a malformed nonce".to_string(),
+                })?;
+            let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
             let plain = cipher
                 .decrypt(
-                    nonce,
+                    &Nonce::from(nonce),
                     Payload {
                         msg: &stored[ENC_MAGIC.len() + NONCE_LEN..],
                         aad: &[],
