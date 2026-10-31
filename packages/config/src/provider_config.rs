@@ -257,6 +257,12 @@ pub struct ProviderEntry {
     pub auth_type: Option<String>,
     #[serde(default)]
     pub auth_header: Option<String>,
+    /// Wire protocol the provider dials through (a plana `GenProtocol`
+    /// LLM-chat `as_str` value, e.g. `anthropic_messages_v1`). Absent on
+    /// legacy rows — consumers must default it to the OpenAI-compatible
+    /// chat path (`openai_chat_v1`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub protocol: Option<String>,
 }
 
 impl std::fmt::Debug for ProviderEntry {
@@ -271,6 +277,7 @@ impl std::fmt::Debug for ProviderEntry {
             .field("is_custom", &self.is_custom)
             .field("entry_point_id", &self.entry_point_id)
             .field("auth_type", &self.auth_type)
+            .field("protocol", &self.protocol)
             .finish()
     }
 }
@@ -532,6 +539,7 @@ fn derive_config_from_env() -> Option<ProviderConfigData> {
             period_billing_configs: vec![],
             auth_type,
             auth_header,
+            protocol: (!protocol.is_empty()).then(|| protocol.clone()),
         });
 
         push_tier_models(
@@ -576,6 +584,7 @@ fn derive_config_from_env() -> Option<ProviderConfigData> {
             period_billing_configs: vec![],
             auth_type,
             auth_header,
+            protocol: Some(ep.protocol.clone()),
         });
 
         push_tier_models_from_toml(ep, provider_uuid, &mut models, &mut priority_orders);
@@ -1192,6 +1201,38 @@ mod tests {
         assert!(legacy.uuid.is_nil());
     }
 
+    /// The protocol field rides serde round-trips (the authoritative
+    /// catalog sends it) while legacy payloads without it deserialize to
+    /// None — the OpenAI-compatible default downstream consumers apply.
+    #[test]
+    fn provider_protocol_round_trips_and_defaults_to_none() {
+        let mut p = mk_provider("p1", Uuid::now_v7());
+        p.protocol = Some("anthropic_messages_v1".to_string());
+        let json = serde_json::to_string(&p).expect("serialize");
+        assert!(
+            json.contains("\"protocol\":\"anthropic_messages_v1\""),
+            "protocol serialized: {json}"
+        );
+        let back: ProviderEntry = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.protocol.as_deref(), Some("anthropic_messages_v1"));
+
+        // A payload WITHOUT the key parses to None (older catalogs and
+        // hand-written TOML predate the field), and None serializes away
+        // so the persisted TOML stays legacy-identical.
+        let mut legacy_json: serde_json::Value = serde_json::from_str(&json).expect("value parse");
+        assert!(
+            legacy_json
+                .as_object_mut()
+                .unwrap()
+                .remove("protocol")
+                .is_some()
+        );
+        let legacy: ProviderEntry = serde_json::from_value(legacy_json).expect("legacy parses");
+        assert_eq!(legacy.protocol, None);
+        let re = serde_json::to_string(&legacy).expect("re-serialize");
+        assert!(!re.contains("protocol"), "None must not serialize: {re}");
+    }
+
     fn mk_provider(id: &str, uuid: Uuid) -> ProviderEntry {
         ProviderEntry {
             id: id.to_string(),
@@ -1205,6 +1246,7 @@ mod tests {
             period_billing_configs: vec![],
             auth_type: None,
             auth_header: None,
+            protocol: None,
         }
     }
 
