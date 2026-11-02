@@ -17,4 +17,4 @@ jobs:
   pr-title-check:
     uses: celestia-island/celestia-devtools/.github/workflows/pr-title-check.yml@2e76d373762dc6b36c1ab7625c1c34842c28ad4a
     with:
-      devtools-ref: 2e76d373762dc6b36c1ab7625c1c34842c28ad4a
+      devtools-ref: 24642bb2b5b30e339e4007d81cb48bb65034fd57
