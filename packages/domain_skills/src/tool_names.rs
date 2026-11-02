@@ -244,6 +244,17 @@ pub mod neikos {
     pub const WAIT: &str = "wait";
     /// Poll a pending wait without blocking, for callers that must stay responsive.
     pub const CHECK_WAIT: &str = "check_wait";
+    /// Draft a closed-set panel binding from one requirement sentence
+    /// (proposal only — nothing is written).
+    pub const PAGE_COMPOSE: &str = "page_compose";
+    /// Materialize a panel view file under the active workspace.
+    pub const PAGE_CREATE: &str = "page_create";
+    /// Regenerate an existing panel view under the same ref.
+    pub const PAGE_UPDATE: &str = "page_update";
+    /// Delete a panel view once no layout references it.
+    pub const PAGE_REMOVE: &str = "page_remove";
+    /// Bind a panel view into the workspace tab layout.
+    pub const PAGE_LINK: &str = "page_link";
 }
 
 /// OreXis — security audit and external integration (Layer 1).
