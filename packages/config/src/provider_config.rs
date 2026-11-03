@@ -257,6 +257,15 @@ pub struct ProviderEntry {
     pub auth_type: Option<String>,
     #[serde(default)]
     pub auth_header: Option<String>,
+    /// Whether this provider participates in routing. The arona catalog
+    /// exports the row's `enabled` toggle (its `provider_config_json`
+    /// carries it for the serving config), and consumers MUST honour it:
+    /// scepter's selector otherwise keeps a "disabled" provider in the
+    /// candidate pool (L128, 2026-11-03 — the admin toggle was a no-op on
+    /// the routing path). Defaults to `true` so every hand-written or
+    /// legacy `provider_config.toml` without the key keeps working.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
     /// Wire protocol the provider dials through (a plana `GenProtocol`
     /// LLM-chat `as_str` value, e.g. `anthropic_messages_v1`). Absent on
     /// legacy rows — consumers must default it to the OpenAI-compatible
@@ -539,6 +548,7 @@ fn derive_config_from_env() -> Option<ProviderConfigData> {
             period_billing_configs: vec![],
             auth_type,
             auth_header,
+            enabled: true,
             protocol: (!protocol.is_empty()).then(|| protocol.clone()),
         });
 
@@ -584,6 +594,7 @@ fn derive_config_from_env() -> Option<ProviderConfigData> {
             period_billing_configs: vec![],
             auth_type,
             auth_header,
+            enabled: true,
             protocol: Some(ep.protocol.clone()),
         });
 
@@ -1246,6 +1257,7 @@ mod tests {
             period_billing_configs: vec![],
             auth_type: None,
             auth_header: None,
+            enabled: true,
             protocol: None,
         }
     }
@@ -1718,5 +1730,45 @@ basic = 3
         );
         assert_eq!(entry.entrypoint.defaults.basic, vec!["model-basic"]);
         Ok(())
+    }
+
+    /// L128 contract pin (2026-11-03): the arona catalog exports each
+    /// provider row's `enabled` toggle and consumers filter on it — the
+    /// field must deserialize from the serving config, and a hand-written
+    /// / legacy TOML WITHOUT the key must default to ENABLED (a silent
+    /// default-false would have removed every legacy provider from
+    /// routing on the first upgrade).
+    #[test]
+    fn provider_enabled_defaults_true_and_parses_explicit_false() {
+        let legacy: ProviderConfigData = toml::from_str(
+            r#"
+            [[providers]]
+            id = "legacy"
+            name = "legacy"
+            api_key = "k"
+            base_url = "https://example.invalid/v1"
+            "#,
+        )
+        .expect("legacy provider config parses");
+        assert!(
+            legacy.providers[0].enabled,
+            "a provider without the key must default to enabled"
+        );
+
+        let disabled: ProviderConfigData = toml::from_str(
+            r#"
+            [[providers]]
+            id = "off"
+            name = "off"
+            api_key = "k"
+            base_url = "https://example.invalid/v1"
+            enabled = false
+            "#,
+        )
+        .expect("explicit-false provider config parses");
+        assert!(
+            !disabled.providers[0].enabled,
+            "an explicit enabled = false must round-trip"
+        );
     }
 }
