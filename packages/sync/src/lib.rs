@@ -25,6 +25,7 @@
 //! - [`state_bridge`] —— 同步上下文的服务端推送 writer。
 //! - [`domains`] —— 域适配器（agents / devices / conversations）。
 
+pub mod catalog;
 pub mod domains;
 pub mod patch;
 pub mod registry;

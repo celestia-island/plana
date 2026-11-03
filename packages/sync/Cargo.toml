@@ -14,6 +14,7 @@ workspace = true
 
 async-trait.workspace = true
 dashmap.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 tokio = { workspace = true }
 tracing.workspace = true
@@ -21,8 +22,9 @@ uuid = { workspace = true }
 
 # State-patch runtime (the patch / snapshot modules are thin compat
 # re-export layers over this crate).
-# yuuka is consumed from crates.io on the 0.10 line. This crate uses
-# `yuuka::patch` / `merge` / `diff` / `path` / `viewport`; the published 0.6
+# yuuka is consumed from crates.io on the 0.11 line (0.11.0 added the
+# `crdt` module the catalog protocol rides on). This crate uses
+# `yuuka::patch` / `merge` / `diff` / `path` / `viewport` / `crdt`; the published 0.6
 # line ships only lib/template/tools/utils, so 0.6 is not an option, while
 # 0.10.0 (crates.io) carries every API used here. Registry consumption also
 # keeps this crate publishable: a git dependency without a version requirement
@@ -32,4 +34,4 @@ uuid = { workspace = true }
 # so a graph holding kirino + plana resolves both 0.6.x and 0.10.x. Unifying
 # them needs an upstream move in either direction (kirino to 0.10, or a 0.6
 # backport) and stays registered as the "yuuka single line" follow-up.
-yuuka = { version = "^0.10" }
+yuuka = { version = "^0.11" }
