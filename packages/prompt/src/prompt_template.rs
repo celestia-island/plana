@@ -188,13 +188,10 @@ impl PromptTemplateService {
 
     fn render_empty_response_error(&self, _error_content: &str, lang: &str) -> String {
         match lang {
-            "zh-Hans" | "zhs" | "zh-CN" | "zh" => {
-                "LLM 返回了空响应，请稍后重试。".to_string()
-            }
-            "zh-Hant" | "zht" | "zh-TW" => {
-                "LLM 回傳了空回應，請稍後再試。".to_string()
-            }
-            "ja" => "LLM が空のレスポンスを返しました。しばらくしてからもう一度お試しください。".to_string(),
+            "zh-Hans" | "zhs" | "zh-CN" | "zh" => "LLM 返回了空响应，请稍后重试。".to_string(),
+            "zh-Hant" | "zht" | "zh-TW" => "LLM 回傳了空回應，請稍後再試。".to_string(),
+            "ja" => "LLM が空のレスポンスを返しました。しばらくしてからもう一度お試しください。"
+                .to_string(),
             "ko" => "LLM이 빈 응답을 반환했습니다. 잠시 후 다시 시도해 주세요.".to_string(),
             "fr" => "Le LLM a retourné une réponse vide. Veuillez réessayer plus tard.".to_string(),
             "es" => {
