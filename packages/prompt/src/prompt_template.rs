@@ -364,6 +364,20 @@ mod tests {
                 svc.render_skill_error_content("No available model", "en"),
                 "skill error content arm {lang} must be localized"
             );
+            // R2 mutation finding (2026-11-03): the previous pin covered
+            // only the model-selection route — render_empty_response_error
+            // and render_llm_call_error had NO test interception (a revert
+            // of either CJK arm stayed 16/16 green). Route both explicitly.
+            assert_ne!(
+                svc.render_skill_error_content("empty response", lang),
+                svc.render_skill_error_content("empty response", "en"),
+                "empty-response arm {lang} must be localized"
+            );
+            assert_ne!(
+                svc.render_skill_error_content("LLM call failed", lang),
+                svc.render_skill_error_content("LLM call failed", "en"),
+                "llm-call arm {lang} must be localized"
+            );
         }
         Ok(())
     }
