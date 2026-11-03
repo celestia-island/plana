@@ -68,7 +68,9 @@ pub enum CatalogOpBody {
     },
     /// Tombstone the provider's currently-visible add dots (remove
     /// intents stay traceable in the OR-Set — add-wins on concurrency).
-    RemoveProvider { id: String },
+    RemoveProvider {
+        id: String,
+    },
     UpsertModel {
         /// The model's stable catalog id.
         id: String,
@@ -76,7 +78,9 @@ pub enum CatalogOpBody {
         provider: String,
         fields: ModelFields,
     },
-    RemoveModel { id: String },
+    RemoveModel {
+        id: String,
+    },
 }
 
 /// The LWW-writable provider fields. Every value carries its stamp
@@ -213,8 +217,7 @@ mod tests {
         let gc = CatalogGc {
             watermark: Dvv::new(),
         };
-        let back: CatalogGc =
-            serde_json::from_value(serde_json::to_value(&gc).unwrap()).unwrap();
+        let back: CatalogGc = serde_json::from_value(serde_json::to_value(&gc).unwrap()).unwrap();
         assert_eq!(back, gc);
     }
 
@@ -223,10 +226,12 @@ mod tests {
     #[test]
     fn default_fields_are_no_writes() {
         let f = ProviderFields::default();
-        assert!(f.endpoint.is_none()
-            && f.priority.is_none()
-            && f.enabled.is_none()
-            && f.protocol.is_none()
-            && f.api_key_sealed.is_none());
+        assert!(
+            f.endpoint.is_none()
+                && f.priority.is_none()
+                && f.enabled.is_none()
+                && f.protocol.is_none()
+                && f.api_key_sealed.is_none()
+        );
     }
 }
