@@ -1426,6 +1426,10 @@ pub enum SyncMessage {
         related_node_ids: Option<Vec<String>>,
         #[serde(default)]
         properties: Option<std::collections::HashMap<String, String>>,
+        /// The ownership scope of the stored memory (see
+        /// `plana_celestia_types::tools::philia::MemoryStoreParams::scope`).
+        #[serde(default)]
+        scope: Option<String>,
     },
     /// Id assigned to the stored memory node.
     MemoryStoreResponse {
@@ -1442,6 +1446,10 @@ pub enum SyncMessage {
         node_type_filter: Option<String>,
         #[serde(default)]
         subgraph: Option<bool>,
+        /// Read-side scope restriction (see
+        /// `plana_celestia_types::tools::philia::MemoryQueryParams::scopes`).
+        #[serde(default)]
+        scopes: Option<Vec<String>>,
     },
     /// Memory query result set plus the total hit count.
     MemoryQueryResponse {
@@ -2366,6 +2374,96 @@ mod tests {
             panic!("expected UserMessage");
         };
         assert_eq!(system_prompt, None);
+    }
+
+    /// `MemoryQueryRequest` gained `scopes` — the multi-tenant read
+    /// restriction (knowledge-federation P0). Wire contract: absent
+    /// deserializes to `None` (legacy peers keep working), present rides
+    /// as a string array and round-trips exactly.
+    #[test]
+    fn memory_query_scopes_round_trip() {
+        let base = SyncMessage::MemoryQueryRequest {
+            query: "q".to_string(),
+            limit: 5,
+            graph_depth: None,
+            node_type_filter: None,
+            subgraph: None,
+            scopes: None,
+        };
+        let none_wire = serde_json::to_value(&base).expect("serialize absent scopes");
+        assert_eq!(none_wire["scopes"], serde_json::Value::Null);
+        let legacy: SyncMessage = serde_json::from_value(serde_json::json!({
+            "action": "MemoryQueryRequest", "query": "q", "limit": 5,
+        }))
+        .expect("legacy wire without scopes must deserialize");
+        let SyncMessage::MemoryQueryRequest { scopes, .. } = legacy else {
+            panic!("expected MemoryQueryRequest");
+        };
+        assert_eq!(scopes, None);
+
+        let scoped = SyncMessage::MemoryQueryRequest {
+            query: "q".to_string(),
+            limit: 5,
+            graph_depth: None,
+            node_type_filter: None,
+            subgraph: None,
+            scopes: Some(vec![
+                "user:11111111-1111-1111-1111-111111111111".to_string(),
+                "public".to_string(),
+                "default".to_string(),
+            ]),
+        };
+        let wire = serde_json::to_value(&scoped).expect("serialize scopes");
+        assert_eq!(
+            wire["scopes"],
+            serde_json::json!([
+                "user:11111111-1111-1111-1111-111111111111",
+                "public",
+                "default"
+            ])
+        );
+        let back: SyncMessage = serde_json::from_value(wire).expect("round-trip scoped");
+        let SyncMessage::MemoryQueryRequest { scopes, .. } = back else {
+            panic!("expected MemoryQueryRequest");
+        };
+        assert_eq!(
+            scopes.as_deref(),
+            Some(
+                &[
+                    "user:11111111-1111-1111-1111-111111111111".to_string(),
+                    "public".to_string(),
+                    "default".to_string()
+                ][..]
+            )
+        );
+    }
+
+    /// `MemoryStoreRequest` gained `scope` — the ownership key of the
+    /// persisted memory. Same absent-is-None contract.
+    #[test]
+    fn memory_store_scope_round_trip() {
+        let legacy: SyncMessage = serde_json::from_value(serde_json::json!({
+            "action": "MemoryStoreRequest", "text": "t", "node_type": "episode",
+        }))
+        .expect("legacy wire without scope must deserialize");
+        let SyncMessage::MemoryStoreRequest { scope, .. } = legacy else {
+            panic!("expected MemoryStoreRequest");
+        };
+        assert_eq!(scope, None);
+
+        let scoped = SyncMessage::MemoryStoreRequest {
+            text: "t".to_string(),
+            node_type: "episode".to_string(),
+            source_episode_id: None,
+            related_node_ids: None,
+            properties: None,
+            scope: Some("user:22222222-2222-2222-2222-222222222222".to_string()),
+        };
+        let wire = serde_json::to_value(&scoped).expect("serialize scope");
+        assert_eq!(
+            wire["scope"],
+            serde_json::json!("user:22222222-2222-2222-2222-222222222222")
+        );
     }
 
     /// `UserMessage` gained `languages` (the workspace primary-languages

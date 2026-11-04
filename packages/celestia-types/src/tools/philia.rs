@@ -150,6 +150,12 @@ pub struct MemoryStoreParams {
     pub source_episode_id: Option<String>,
     pub related_node_ids: Option<Vec<String>>,
     pub properties: Option<std::collections::HashMap<String, String>>,
+    /// The ownership scope the stored memory belongs to
+    /// (`user:<uuid>` / `org:<uuid>` / `public`). `None` leaves the
+    /// choice to the server (its active scope); callers that know whose
+    /// memory they are persisting SHOULD pass it.
+    #[serde(default)]
+    pub scope: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
@@ -160,6 +166,13 @@ pub struct MemoryQueryParams {
     pub graph_depth: Option<u64>,
     pub node_type_filter: Option<String>,
     pub subgraph: Option<bool>,
+    /// The read-side scope restriction (the caller's own key plus the
+    /// public and legacy buckets, e.g. `["user:<uuid>", "public",
+    /// "default"]`). `None` keeps the server's unscoped behaviour —
+    /// single-tenant deployments only; every multi-tenant caller MUST
+    /// pass its set.
+    #[serde(default)]
+    pub scopes: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ts_rs::TS)]
