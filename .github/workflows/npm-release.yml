@@ -2,7 +2,7 @@ name: npm Release (plana)
 
 on:
   push:
-    tags: ["plana-npm-v*"]
+    tags: ["npm-v*"]
   workflow_dispatch:
     inputs:
       version:
