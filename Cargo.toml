@@ -76,7 +76,7 @@ plana_text = { path = "packages/text", version = "0.2", package = "plana-text" }
 plana_timeline = { path = "packages/timeline" }
 plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
 
-plana = { version = "0.2.4", path = "packages/plana" }
+plana = { version = "0.2.5", path = "packages/plana" }
 plana-celestia-types = { version = "0.2", path = "packages/celestia-types" }
 
 kirino = { version = "^0.9" }

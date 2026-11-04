@@ -200,6 +200,19 @@ jobs:
           # battery surface on BOTH sides (current and baseline alike).
           declare -A FEATURE_FLAGS=( [plana-tauri]="--only-explicit-features" )
 
+          # Proc-macro-only crates have no library target: cargo-semver-checks
+          # refuses them outright ("no crates with library targets selected,
+          # nothing to semver-check") and exits non-zero, which the loop below
+          # would misread as "requires a bigger version bump". Observed live on
+          # plana-macros@0.2.0 (run 41803322090, tag cargo-v0.2.4): a clean
+          # major bump blocked forever by a crate whose API surface a rustlib
+          # diff cannot even represent. Map crate -> has-library-target once;
+          # the loop skips proc-macro-only members with a notice.
+          declare -A HAS_LIB=()
+          while IFS='=' read -r pkg haslib; do
+            HAS_LIB[$pkg]="$haslib"
+          done < <(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; d=json.load(sys.stdin); [print(p["name"], str(any("lib" in t.get("kind", []) for t in p["targets"])).lower(), sep="=") for p in d["packages"]]')
+
           internal_skipped=()
           checked=0
           failed=0
@@ -213,6 +226,10 @@ jobs:
               }' "$manifest")
             if ! manifest_publishable "$manifest"; then
               internal_skipped+=("$crate")
+              continue
+            fi
+            if [ "${HAS_LIB[$crate]:-true}" != "true" ]; then
+              echo "::notice::$crate is a proc-macro-only crate (no library target) — cargo-semver-checks has no API surface to diff; skipping"
               continue
             fi
             version=$(manifest_version "$manifest")
