@@ -26,11 +26,26 @@ export type MemoryNodeFull = { id: string, node_type: string, text: string, scor
 
 export type MemoryQueryItem = { node_type: string, text: string, score: number, };
 
-export type MemoryQueryParams = { query: string, limit: bigint | null, graph_depth: bigint | null, node_type_filter: string | null, subgraph: boolean | null, };
+export type MemoryQueryParams = { query: string, limit: bigint | null, graph_depth: bigint | null, node_type_filter: string | null, subgraph: boolean | null, 
+/**
+ * The read-side scope restriction (the caller's own key plus the
+ * public and legacy buckets, e.g. `["user:<uuid>", "public",
+ * "default"]`). `None` keeps the server's unscoped behaviour —
+ * single-tenant deployments only; every multi-tenant caller MUST
+ * pass its set.
+ */
+scopes: Array<string> | null, };
 
 export type MemoryQueryResult = { query: string, total: number, results: Array<MemoryQueryItem>, };
 
-export type MemoryStoreParams = { text: string, node_type: string, entity_type: string | null, source_episode_id: string | null, related_node_ids: Array<string> | null, properties: { [key in string]: string } | null, };
+export type MemoryStoreParams = { text: string, node_type: string, entity_type: string | null, source_episode_id: string | null, related_node_ids: Array<string> | null, properties: { [key in string]: string } | null, 
+/**
+ * The ownership scope the stored memory belongs to
+ * (`user:<uuid>` / `org:<uuid>` / `public`). `None` leaves the
+ * choice to the server (its active scope); callers that know whose
+ * memory they are persisting SHOULD pass it.
+ */
+scope: string | null, };
 
 export type MemoryStoreResult = { node_id: string, node_type: string, text_preview: string, };
 
