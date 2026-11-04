@@ -17,12 +17,14 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "build:build-info": "esbuild src/buildInfo.ts --bundle --platform=node --format=esm --outfile=dist/buildInfo.js && tsc src/buildInfo.ts --declaration --emitDeclarationOnly --outDir dist --skipLibCheck --ignoreConfig --target ES2022 --module nodenext --moduleResolution nodenext --types node"
   },
   "devDependencies": {
     "@types/node": "^*",
     "typescript": "^*",
-    "esbuild": "^*"
+    "esbuild": "^*",
+    "vitest": "^3"
   },
   "dependencies": {
     "@celestia-island/tairitsu-transport": "^0.2"

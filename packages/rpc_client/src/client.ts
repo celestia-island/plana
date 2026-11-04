@@ -34,11 +34,23 @@ export type RpcErrorKind =
 export class RpcError extends Error {
   readonly kind: RpcErrorKind;
   readonly method: string;
-  constructor(kind: RpcErrorKind, method: string, message: string) {
+  /**
+   * The JSON-RPC error code from the wire envelope, when the server sent
+   * one (-32002 authz denial, -32001 not-found gate, -32032 rate limit,
+   * ...). Absent for transport/timeout failures that never produced an
+   * envelope. Consumers branch on `kind` first; this field is the
+   * machine-readable half of the failure — the message string is prose
+   * and only the desktop gateway prefixes the code into it, so web-side
+   * string-matching on messages is structurally blind (the reason this
+   * field exists — see chest ledger L67).
+   */
+  readonly code?: number;
+  constructor(kind: RpcErrorKind, method: string, message: string, code?: number) {
     super(message);
     this.name = "RpcError";
     this.kind = kind;
     this.method = method;
+    this.code = code;
   }
 }
 
@@ -690,7 +702,7 @@ export class RpcClient {
               // problems in every consumer webui.
               const kind: RpcErrorKind =
                 parsed.error.code === -32002 || parsed.error.code === -32005 ? "forbidden" : "rpc";
-              entry.reject(new RpcError(kind, entry.method, msg));
+              entry.reject(new RpcError(kind, entry.method, msg, parsed.error.code));
             } else {
               entry.resolve(parsed.result);
             }
@@ -976,7 +988,7 @@ export class RpcClient {
         // authorization-denial codes; -32003 is generic upstream/internal.
         const kind: RpcErrorKind =
           body.error.code === -32002 || body.error.code === -32005 ? "forbidden" : "rpc";
-        throw new RpcError(kind, method, msg);
+        throw new RpcError(kind, method, msg, body.error.code);
       }
       return body.result as T;
     } catch (e) {
