@@ -3,7 +3,8 @@ name: Publish crates.io
 # crates.io release line for the publishable plana crates.
 #
 # Tag namespace: `cargo-v<version>`, deliberately separate from the npm family's
-# `plana-npm-v<version>` line — the two families advance independently. The
+# `npm-v<version>` line (migrated from the retired `plana-npm-v*` prefix,
+# versioning-audit B1 2026-11-04) — the two families advance independently. The
 # `<version>` in the tag is the umbrella crate `packages/plana` version (the
 # crate that tracks the crates release wave). The other publishable crates keep
 # their own independent lines (plana-rpc-client 0.2.x, plana-celestia-types
