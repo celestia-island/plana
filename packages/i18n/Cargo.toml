@@ -3,7 +3,7 @@ name = "plana-i18n"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
 description = "Language enum, BCP 47 detection, and compile-time embedded i18n locale resources for the PLANA protocol family."
 

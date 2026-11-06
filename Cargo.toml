@@ -54,26 +54,26 @@ all = "deny"
 
 # ── Internal workspace crates (path deps; hyphenated names are the published
 #    crate names, legacy underscore keys alias them via package =) ──
-plana-bootloader = { path = "packages/bootloader" }
+plana-bootloader = { path = "packages/bootloader", version = "^0.2" }
 plana-build-info = { path = "packages/build_info", version = "0.2" }
-plana-config = { path = "packages/config", version = "0.2" }
+plana-config = { path = "packages/config", version = "^0.2" }
 plana_core = { path = "packages/core", version = "0.2", package = "plana-core" }
-plana_custom_agent = { package = "plana-custom-agent", path = "packages/custom_agent" }
+plana_custom_agent = { package = "plana-custom-agent", path = "packages/custom_agent", version = "^0.2" }
 plana_domain_agent = { path = "packages/domain_agent", version = "0.2", package = "plana-domain-agent" }
 plana_domain_skills = { path = "packages/domain_skills", version = "0.2", package = "plana-domain-skills" }
 plana_domain_skills_permissions = { path = "packages/domain_skills_permissions", version = "0.2", package = "plana-domain-skills-permissions" }
-plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services" }
-plana-infra-utils = { path = "packages/infra_utils", version = "0.2" }
+plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services", version = "^0.2" }
+plana-infra-utils = { path = "packages/infra_utils", version = "^0.2" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.2" }
 plana_macros = { path = "packages/macros", version = "0.2", package = "plana-macros" }
 plana_prompt = { path = "packages/prompt", version = "0.2", package = "plana-prompt" }
-plana_state_sync = { path = "packages/state_types", version = "0.2", package = "plana-state-sync" }
+plana_state_sync = { path = "packages/state_types", version = "^0.2", package = "plana-state-sync" }
 plana-sync = { path = "packages/sync" }
 plana_text = { path = "packages/text", version = "0.2", package = "plana-text" }
-plana_timeline = { package = "plana-timeline", path = "packages/timeline" }
+plana_timeline = { package = "plana-timeline", path = "packages/timeline", version = "^0.2" }
 plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
 
-plana = { version = "0.2.5", path = "packages/plana" }
+plana = { version = "^0.2.5", path = "packages/plana" }
 plana-celestia-types = { version = "0.2", path = "packages/celestia-types" }
 
 kirino = { version = "^0.9" }
