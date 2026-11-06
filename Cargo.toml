@@ -53,7 +53,7 @@ all = "deny"
 
 # ── Internal workspace crates (path deps; hyphenated names are the published
 #    crate names, legacy underscore keys alias them via package =) ──
-plana_bootloader = { path = "packages/bootloader" }
+plana-bootloader = { path = "packages/bootloader" }
 plana-build-info = { path = "packages/build_info", version = "0.2" }
 plana-config = { path = "packages/config", version = "0.2" }
 plana_core = { path = "packages/core", version = "0.2", package = "plana-core" }
