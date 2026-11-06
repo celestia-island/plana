@@ -4,12 +4,10 @@ resolver = "2"
 members = [
     "packages/plana",
     "packages/celestia-types",
-    "packages/jsonrpc",
     "packages/rpc-server",
     "packages/rpc-client",
     "packages/tauri",
     "packages/dispatch-client",
-    "packages/protocol-core",
     "packages/core",
     "packages/config",
     "packages/text",

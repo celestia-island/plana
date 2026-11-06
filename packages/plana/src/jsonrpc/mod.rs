@@ -1,5 +1,5 @@
 //! JSON-RPC 2.0 wire layer (absorbed from the former `plana-jsonrpc`
-//! crate; the standalone name remains as a re-export shim).
+//! crate; depend on `plana` directly).
 //!
 //! Two transport backends:
 //! - **Unix socket** — Unix-domain-socket bridge for local IPC between
