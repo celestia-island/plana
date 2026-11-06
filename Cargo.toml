@@ -69,7 +69,7 @@ plana_macros = { path = "packages/macros", version = "0.2", package = "plana-mac
 plana_prompt = { path = "packages/prompt", version = "0.2", package = "plana-prompt" }
 plana_res = { path = "packages/res" }
 plana_state_sync = { path = "packages/state_types", version = "0.2", package = "plana-state-sync" }
-plana_sync = { path = "packages/sync" }
+plana-sync = { path = "packages/sync" }
 plana_text = { path = "packages/text", version = "0.2", package = "plana-text" }
 plana_timeline = { path = "packages/timeline" }
 plana-rpc-client = { version = "0.2.2", path = "packages/rpc-client" }
