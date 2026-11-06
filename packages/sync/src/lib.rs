@@ -96,6 +96,7 @@ pub const ALL_TOPICS: &[(&str, &str)] = &[
     ("Sync.SystemMessage", "system_notification"),
     ("Sync.AudioPullProgress", "audio_pull_progress"),
     ("Sync.VoiceEngineProgress", "voice_engine_progress"),
+    ("Sync.SwarmCursorProjection", "swarm_cursor"),
 ];
 
 /// Look up the channel topic name for a given JSON-RPC method.
@@ -124,6 +125,14 @@ mod topic_tests {
         assert_eq!(
             topic_for_method("Sync.VoiceEngineProgress"),
             Some("voice_engine_progress")
+        );
+    }
+
+    #[test]
+    fn swarm_cursor_projection_maps_to_its_topic() {
+        assert_eq!(
+            topic_for_method("Sync.SwarmCursorProjection"),
+            Some("swarm_cursor")
         );
     }
 }

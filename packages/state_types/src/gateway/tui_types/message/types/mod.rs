@@ -1019,6 +1019,43 @@ pub enum SyncMessage {
         result: Option<String>,
         status: String,
     },
+    /// Server → client swarm-cursor demo projection (push topic
+    /// `swarm_cursor`): one staged visual plan for the demo overlay.
+    /// Carries the visual frames plus the audience binding — the server
+    /// routes it to the originating browser session, and the client
+    /// drops any event whose audience does not match (fail-closed).
+    /// Visual-only by contract: no page data, no real input actions.
+    SwarmCursorProjection {
+        /// Unique animation id (uuidv7); clients dedup on it.
+        animation_id: String,
+        /// Monotonic per-session sequence for ordering/dedup.
+        seq: u64,
+        /// Stage name (e.g. `panel-overview`, `chat-evidence`).
+        stage: String,
+        /// Action frames for this stage (the demo projection DSL).
+        frames: Vec<serde_json::Value>,
+        /// Cursor count (1..=12).
+        cursors: u8,
+        /// Speed multiplier (0.25..=3).
+        speed: f64,
+        /// Palette id (aurora | ember | mono | high-contrast).
+        palette: String,
+        /// Reduced-motion policy (auto | on | off).
+        reduce_motion: String,
+        /// Mode (replay | live).
+        mode: String,
+        /// Container anchor the projection is clipped to (empty = active panel).
+        #[serde(default)]
+        container: Option<String>,
+        /// Planned total duration in ms.
+        planned_ms: u64,
+        /// Audience binding: the projection is only valid for this session.
+        audience_conversation_id: String,
+        /// Audience binding: originating user id.
+        audience_user_id: String,
+        /// TTL in ms (= planned_ms + 30s live wait margin); stale plans are dropped.
+        ttl_ms: u64,
+    },
     /// Semantics TBC — see no caller in this worktree; the variant is absent from
     /// the Sync method table in packages/plana/src/jsonrpc/pending.rs.
     StreamingTail {
