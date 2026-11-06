@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 publish = true
 license-file.workspace = true
+description = "Container bring-up and platform service bootstrap for family hosts"
 
 [lints]
 workspace = true

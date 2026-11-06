@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 publish = true
 license-file.workspace = true
+description = "Embedded development web-ui server for local plana workspaces"
 
 [lints]
 workspace = true

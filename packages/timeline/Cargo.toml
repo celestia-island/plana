@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 publish = true
 license-file.workspace = true
+description = "Timeline projection and replay over the family state-sync wire"
 
 [lints]
 workspace = true
