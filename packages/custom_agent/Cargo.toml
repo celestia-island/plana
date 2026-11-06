@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 publish = true
 license-file.workspace = true
+description = "Custom agent sessions brought up from manifests and container images"
 
 [lints]
 workspace = true
