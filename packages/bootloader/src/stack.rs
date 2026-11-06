@@ -112,6 +112,17 @@ pub struct StackConfig {
     /// the host process env here (unlike the HTTP_PROXY passthrough above).
     /// Set together with [`StackConfig::evernight_sock`].
     pub evernight_token: Option<String>,
+    /// Opt-in: mount the host docker socket into the scepter container.
+    ///
+    /// The socket is root-equivalent on the host (a container escape or code
+    /// execution inside scepter can spawn privileged containers and read any
+    /// host path). The 2026-11-06 security audit (R-01) therefore made it
+    /// **default off**: a stack built without this flag has no docker socket
+    /// and no docker GID, and scepter's cosmos sub-container spawn fails
+    /// loudly instead of silently holding host root. Set
+    /// `EVERNIGHT_ALLOW_DOCKER_SOCKET=1` (supervise) or the field directly
+    /// only when the host-root tradeoff is accepted.
+    pub allow_docker_socket: bool,
 }
 
 impl Default for StackConfig {
@@ -138,6 +149,7 @@ impl Default for StackConfig {
             network_mode: None,
             evernight_sock: None,
             evernight_token: None,
+            allow_docker_socket: false,
         }
     }
 }
@@ -381,14 +393,27 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
 
     let tmpfs_dir = socket_dir_tmpfs();
     let ext4_dir = socket_dir_ext4();
-    let mut volumes = vec![
+    let mut volumes = vec![];
+    if cfg.allow_docker_socket {
         // Docker socket — scepter spawns cosmos sub-containers through it.
-        VolumeMount::rw("/var/run/docker.sock", "/var/run/docker.sock"),
+        // Opt-in (R-01): root-equivalent on the host; see StackConfig.
+        volumes.push(VolumeMount::rw(
+            "/var/run/docker.sock",
+            "/var/run/docker.sock",
+        ));
+    } else {
+        info!(
+            "docker socket NOT mounted (R-01 default): cosmos sub-container spawn is disabled until EVERNIGHT_ALLOW_DOCKER_SOCKET=1"
+        );
+    }
+    volumes.push(
         // tmpfs socket dir (TUI unix socket lives here).
         VolumeMount::rw(&tmpfs_dir, &tmpfs_dir),
+    );
+    volumes.push(
         // ext4 socket dir (evernight IPC — must be ext4).
         VolumeMount::rw(&ext4_dir, &ext4_dir),
-    ];
+    );
 
     if let Some(ref dir) = cfg.config_dir {
         volumes.push(VolumeMount::rw(
@@ -437,8 +462,11 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         volumes.push(VolumeMount::rw(ws_str, "/workspace"));
     }
 
-    // Inject the docker socket GID so the scepter container can talk to dockerd.
-    let group_add: Option<Vec<String>> =
+    // Inject the docker socket GID so the scepter container can talk to
+    // dockerd — only when the socket itself is mounted (same opt-in).
+    let group_add: Option<Vec<String>> = if !cfg.allow_docker_socket {
+        None
+    } else {
         std::fs::metadata("/var/run/docker.sock")
             .ok()
             .and_then(|m| {
@@ -457,7 +485,8 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
                     let _ = m;
                     None
                 }
-            });
+            })
+    };
     if let Some(ref groups) = group_add {
         info!(
             gid = %groups.first().unwrap_or(&"0".to_string()),
@@ -692,6 +721,51 @@ mod tests {
                 "{name} container env must stay free of the evernight lane"
             );
         }
+    }
+
+    #[test]
+    fn docker_socket_is_absent_by_default() {
+        // R-01: the docker socket is root-equivalent on the host. The stack
+        // must NOT mount it (and must not add the docker GID) unless the
+        // operator explicitly opted in.
+        let cfg = StackConfig::default();
+        let scepter = scepter_params(&cfg);
+        assert!(
+            scepter
+                .volumes
+                .iter()
+                .all(|v| v.host_path != "/var/run/docker.sock"),
+            "default stack must not mount the docker socket"
+        );
+        assert!(
+            scepter.group_add.is_none(),
+            "default stack must not receive the docker GID"
+        );
+    }
+
+    #[test]
+    fn docker_socket_mounts_only_when_allowed() {
+        let cfg = StackConfig {
+            allow_docker_socket: true,
+            ..StackConfig::default()
+        };
+        let scepter = scepter_params(&cfg);
+        assert!(
+            scepter
+                .volumes
+                .iter()
+                .any(|v| v.host_path == "/var/run/docker.sock"
+                    && v.container_path == "/var/run/docker.sock"),
+            "explicit opt-in must mount the docker socket"
+        );
+        // The other two socket dirs stay mounted either way.
+        assert!(
+            scepter
+                .volumes
+                .iter()
+                .any(|v| v.container_path == socket_dir_tmpfs()),
+            "tmpfs socket dir must stay mounted"
+        );
     }
 
     #[test]
