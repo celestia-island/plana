@@ -34,7 +34,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
@@ -67,7 +67,7 @@ plana-infra-utils = { path = "packages/infra_utils", version = "^0.2" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.2" }
 plana_macros = { path = "packages/macros", version = "0.2", package = "plana-macros" }
 plana_prompt = { path = "packages/prompt", version = "0.2", package = "plana-prompt" }
-plana_state_sync = { path = "packages/state_types", version = "^0.2", package = "plana-state-sync" }
+plana_state_sync = { path = "packages/state_types", version = "^0.3", package = "plana-state-sync" }
 plana-sync = { path = "packages/sync" }
 plana_text = { path = "packages/text", version = "0.2", package = "plana-text" }
 plana_timeline = { package = "plana-timeline", path = "packages/timeline", version = "^0.2" }
