@@ -25,7 +25,9 @@ members = [
     "packages/llm_provider",
     "packages/timeline",
     "packages/prompt",
-    "packages/res",
+    "packages/i18n",
+    "packages/content-loader",
+    "packages/provider-catalog",
     "packages/sync",
     "packages/dev_server",
     "packages/assets",
@@ -65,7 +67,6 @@ plana-infra-utils = { path = "packages/infra_utils", version = "0.2" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.2" }
 plana_macros = { path = "packages/macros", version = "0.2", package = "plana-macros" }
 plana_prompt = { path = "packages/prompt", version = "0.2", package = "plana-prompt" }
-plana_res = { path = "packages/res" }
 plana_state_sync = { path = "packages/state_types", version = "0.2", package = "plana-state-sync" }
 plana-sync = { path = "packages/sync" }
 plana_text = { path = "packages/text", version = "0.2", package = "plana-text" }

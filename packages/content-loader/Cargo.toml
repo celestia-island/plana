@@ -1,0 +1,16 @@
+[package]
+name = "plana-content-loader"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+license-file.workspace = true
+description = "Markdown front-matter helpers plus the build-time bundled governance documents for the PLANA protocol family."
+
+[lints]
+workspace = true
+
+[dependencies]
+
+anyhow = { workspace = true }
+toml = { workspace = true }

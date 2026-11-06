@@ -4,7 +4,7 @@ use crate::Language;
 
 /// Compile-time embedded locale directories for all languages
 ///
-/// Path relative to packages/res, resolved from CARGO_MANIFEST_DIR
+/// Path relative to packages/i18n, resolved from CARGO_MANIFEST_DIR
 pub static LOCALES_DIR: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../res/i18n/locales");
 
 /// Get the locale directory for a given language
