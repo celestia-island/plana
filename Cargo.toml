@@ -29,7 +29,6 @@ members = [
     "packages/sync",
     "packages/dev_server",
     "packages/assets",
-    "packages/archive",
 ]
 
 [workspace.package]
@@ -62,7 +61,6 @@ plana_domain_agent = { path = "packages/domain_agent", version = "0.2", package 
 plana_domain_skills = { path = "packages/domain_skills", version = "0.2", package = "plana-domain-skills" }
 plana_domain_skills_permissions = { path = "packages/domain_skills_permissions", version = "0.2", package = "plana-domain-skills-permissions" }
 plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services" }
-plana_archive = { path = "packages/archive" }
 plana-infra-utils = { path = "packages/infra_utils", version = "0.2" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.2" }
 plana_macros = { path = "packages/macros", version = "0.2", package = "plana-macros" }

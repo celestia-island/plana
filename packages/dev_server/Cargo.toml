@@ -1,5 +1,5 @@
 [package]
-name = "plana_dev_server"
+name = "plana-dev-server"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
