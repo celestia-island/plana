@@ -31,6 +31,19 @@ macro_rules! log_blank {
 fn main() {
     println!("cargo:rerun-if-changed=../../res/i18n");
 
+    // The locale tree lives in the workspace, not in the published package:
+    // a build outside the plana workspace (crates.io checkout) would fail on
+    // the include_dir! path. Mirror provider-catalog's fallback — create the
+    // skeleton and build with an empty locale set under a loud warning.
+    let locales = Path::new("../../res/i18n/locales");
+    if !locales.join("zh-Hans").exists() {
+        for &lang in REQUIRED_LANGS {
+            let _ = fs::create_dir_all(locales.join(lang));
+        }
+        println!("cargo:warning=[ WARN ] locale sources not found - building with an EMPTY locale set (workspace-only content)");
+        return;
+    }
+
     let mut has_errors = false;
     let mut error_count = 0;
 

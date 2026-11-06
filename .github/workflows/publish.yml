@@ -371,3 +371,19 @@ jobs:
           publish_crate plana-domain-skills-permissions packages/domain_skills_permissions/Cargo.toml
           publish_crate plana-prompt packages/prompt/Cargo.toml
           publish_crate plana-domain-skills packages/domain_skills/Cargo.toml
+          # Package-surface wave (2026-11-06): the remaining platform crates
+          # join the registry line so consumers retire the git edge entirely
+          # (dual-source lock cleanup, PLAN 2.11). i18n/content-loader/
+          # provider-catalog carry registry-only deps; custom-agent/timeline
+          # ride config + state-sync + core/text (all shipped above);
+          # dev-server has no intra-family deps; infra-services needs the
+          # umbrella and bootloader needs infra-services, so both sit last.
+          publish_crate plana-i18n packages/i18n/Cargo.toml
+          publish_crate plana-content-loader packages/content-loader/Cargo.toml
+          publish_crate plana-provider-catalog packages/provider-catalog/Cargo.toml
+          publish_crate plana-custom-agent packages/custom_agent/Cargo.toml
+          publish_crate plana-timeline packages/timeline/Cargo.toml
+          publish_crate plana-dev-server packages/dev_server/Cargo.toml
+          publish_crate plana-sibling packages/sibling/Cargo.toml
+          publish_crate plana-infra-services packages/infra_services/Cargo.toml
+          publish_crate plana-bootloader packages/bootloader/Cargo.toml

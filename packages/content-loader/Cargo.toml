@@ -3,7 +3,7 @@ name = "plana-content-loader"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-publish = false
+publish = true
 license-file.workspace = true
 description = "Markdown front-matter helpers plus the build-time bundled governance documents for the PLANA protocol family."
 
