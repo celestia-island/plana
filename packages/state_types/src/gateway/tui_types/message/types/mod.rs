@@ -1019,6 +1019,43 @@ pub enum SyncMessage {
         result: Option<String>,
         status: String,
     },
+    /// Server → client swarm-cursor demo projection (push topic
+    /// `swarm_cursor`): one staged visual plan for the demo overlay.
+    /// Carries the visual frames plus the audience binding — the server
+    /// routes it to the originating browser session, and the client
+    /// drops any event whose audience does not match (fail-closed).
+    /// Visual-only by contract: no page data, no real input actions.
+    SwarmCursorProjection {
+        /// Unique animation id (uuidv7); clients dedup on it.
+        animation_id: String,
+        /// Monotonic per-session sequence for ordering/dedup.
+        seq: u64,
+        /// Stage name (e.g. `panel-overview`, `chat-evidence`).
+        stage: String,
+        /// Action frames for this stage (the demo projection DSL).
+        frames: Vec<serde_json::Value>,
+        /// Cursor count (1..=12).
+        cursors: u8,
+        /// Speed multiplier (0.25..=3).
+        speed: f64,
+        /// Palette id (aurora | ember | mono | high-contrast).
+        palette: String,
+        /// Reduced-motion policy (auto | on | off).
+        reduce_motion: String,
+        /// Mode (replay | live).
+        mode: String,
+        /// Container anchor the projection is clipped to (empty = active panel).
+        #[serde(default)]
+        container: Option<String>,
+        /// Planned total duration in ms.
+        planned_ms: u64,
+        /// Audience binding: the projection is only valid for this session.
+        audience_conversation_id: String,
+        /// Audience binding: originating user id.
+        audience_user_id: String,
+        /// TTL in ms (= planned_ms + 30s live wait margin); stale plans are dropped.
+        ttl_ms: u64,
+    },
     /// Semantics TBC — see no caller in this worktree; the variant is absent from
     /// the Sync method table in packages/plana/src/jsonrpc/pending.rs.
     StreamingTail {
@@ -2847,5 +2884,91 @@ mod tests {
             report["provenance"]["title_i18n"]["zh-Hans"] == "记忆整理",
             "provenance.title_i18n must serialize as a lang map"
         );
+    }
+}
+
+/// The swarm-cursor projection round-trips through the canonical wire
+/// envelope: serialize → `core_message_to_method_and_params` must yield
+/// `Sync.SwarmCursorProjection` with the payload minus `action`, and the
+/// JSON-RPC notification shape must re-parse into the same variant.
+#[cfg(test)]
+mod swarm_cursor_tests {
+    use super::SyncMessage;
+    use crate::gateway::Message;
+
+    #[test]
+    fn swarm_cursor_projection_round_trips() {
+        let msg = Message::Sync(Box::new(SyncMessage::SwarmCursorProjection {
+            animation_id: "018f0000-0000-7000-8000-000000000001".into(),
+            seq: 1,
+            stage: "panel-overview".into(),
+            frames: vec![serde_json::json!({"action": "swarm"})],
+            cursors: 3,
+            speed: 1.0,
+            palette: "aurora".into(),
+            reduce_motion: "auto".into(),
+            mode: "replay".into(),
+            container: Some("devops.panel".into()),
+            planned_ms: 3800,
+            audience_conversation_id: "c-1".into(),
+            audience_user_id: "u-1".into(),
+            ttl_ms: 33800,
+        }));
+
+        let (method, params) = plana::jsonrpc::core_message_to_method_and_params(&msg);
+        assert_eq!(method, "Sync.SwarmCursorProjection");
+        let params = params.expect("projection carries params");
+        assert_eq!(
+            params.get("stage").and_then(|v| v.as_str()),
+            Some("panel-overview")
+        );
+        assert!(
+            params.get("action").is_none(),
+            "action must be stripped from params"
+        );
+
+        // The JSON-RPC notification shape must re-parse losslessly.
+        // The JSON-RPC notification shape this message serializes into.
+        let _notification_shape = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+        });
+        let rebuilt: Message = serde_json::from_value(serde_json::json!({
+            "type": "Sync",
+            "data": {
+                "action": "SwarmCursorProjection",
+                "animation_id": "018f0000-0000-7000-8000-000000000001",
+                "seq": 1,
+                "stage": "panel-overview",
+                "frames": [{"action": "swarm"}],
+                "cursors": 3,
+                "speed": 1.0,
+                "palette": "aurora",
+                "reduce_motion": "auto",
+                "mode": "replay",
+                "container": "devops.panel",
+                "planned_ms": 3800,
+                "audience_conversation_id": "c-1",
+                "audience_user_id": "u-1",
+                "ttl_ms": 33800,
+            }
+        }))
+        .expect("projection must deserialize");
+        let Message::Sync(sync) = rebuilt else {
+            panic!("expected Sync variant");
+        };
+        let SyncMessage::SwarmCursorProjection {
+            animation_id,
+            stage,
+            cursors,
+            ..
+        } = &*sync
+        else {
+            panic!("expected SwarmCursorProjection variant");
+        };
+        assert_eq!(animation_id, "018f0000-0000-7000-8000-000000000001");
+        assert_eq!(stage, "panel-overview");
+        assert_eq!(*cursors, 3_u8);
     }
 }
