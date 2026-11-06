@@ -6,10 +6,9 @@
 //!
 //! This crate is the **protocol foundation**: the JSON-RPC 2.0 wire layer
 //! ([`jsonrpc`]) and the generic protocol core ([`protocol_core`]) live
-//! here directly. The former standalone crates `plana-jsonrpc` and
-//! `plana-protocol-core` remain in the workspace as one-line re-export
-//! shims so existing git-pin consumers keep compiling while they migrate
-//! to the merged paths.
+//! here directly. The former standalone `plana-jsonrpc` and
+//! `plana-protocol-core` crates were absorbed here; depend on `plana`
+//! directly.
 //!
 //! Layering (no cycles): everything below may be depended on by the
 //! upper crates, never the reverse:

@@ -20,9 +20,8 @@
 //! > in this crate moved to the foundation, where it enables the
 //! > `plana::protocol_core::tracing_helpers` module (re-exported as
 //! > `plana::tracing_helpers`). Consumers enabling `tracing-helpers` on this
-//! > crate's old versions should enable it on `plana` — the
-//! > `plana-protocol-core` shim still forwards a feature of that name for old
-//! > pins, but it is `publish = false` and cannot be depended on by version.
+//! > crate's old versions should enable it on `plana`; the former
+//! > `plana-protocol-core` shim was removed after its consumers migrated.
 
 // ── Module tree ─────────────────────────────────────────────
 // Foundational shared enums are defined directly in this file (below). The
@@ -590,7 +589,7 @@ pub enum YoloTaskTier {
 
 // The client-capability handshake payload types (scepter-flavored) stay at
 // the crate root. The generic handshake primitives (HandshakeAckParams,
-// PingParams, HANDSHAKE_VERSION) live in plana-protocol-core.
+// PingParams, HANDSHAKE_VERSION) live in `plana::protocol_core`.
 pub use protocol::base_messages::*;
 pub use protocol::handshake::*;
 // The platform-specific JSON-RPC error codes stay reachable at the crate

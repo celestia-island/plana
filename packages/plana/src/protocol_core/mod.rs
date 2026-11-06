@@ -1,6 +1,6 @@
 //! Generic protocol core of PLANA (absorbed from the former
-//! `plana-protocol-core` crate; the standalone name remains as a re-export
-//! shim) — the shared wire types that any platform profile builds on.
+//! `plana-protocol-core` crate; depend on `plana` directly) — the shared
+//! wire types that any platform profile builds on.
 //!
 //! This module owns the platform-independent message set of the PLANA
 //! protocol:

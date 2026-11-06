@@ -5,7 +5,7 @@
 //! crate root rather than under `tools/`. Per-agent tool request/result structs
 //! (see `tools/`) reference the types defined here. The generic
 //! connection-topology vocabulary (`ConnectionType`) lives in
-//! `plana-protocol-core`.
+//! `plana::protocol_core`.
 
 use serde::{Deserialize, Serialize};
 use std::fmt;

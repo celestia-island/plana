@@ -86,8 +86,7 @@ test:
 # Regenerate artifacts. Default: bindings.
 # TS bindings are emitted by the test builds of the crates that own the
 # exported types into TWO directories: packages/plana/bindings/ (the
-# foundation's generic types — `plana-protocol-core` is a re-export shim with
-# no types of its own) and packages/celestia-types/bindings/ (the domain
+# foundation's generic types, owned directly by `plana`) and packages/celestia-types/bindings/ (the domain
 # profile). `packages/celestia-types/bindings/protocol-core-httpTypes.ts` is
 # NOT a ts-rs product: it is the foundation's httpTypes VENDORED into the
 # published package by `scripts/vendor_http_types.py`, which this recipe runs
