@@ -31,7 +31,6 @@ client = [
 async-trait = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-thiserror = { workspace = true }
 uuid = { workspace = true }
 
 # `client` feature only.

@@ -31,9 +31,11 @@
 //!
 //! [`error::WalletError::rpc_code`] maps each variant to a JSON-RPC code in
 //! (or adjacent to) chest's reserved billing band `-32060..=-32079`:
-//! `-32060` insufficient (chest `BILLING_QUOTA_EXCEEDED`), `-32061`
+//! `-32060` insufficient (chest `BILLING_QUOTA_EXCEEDED`), `-32066`
 //! authority-moved (chest's wallet authority migrated to ERP), `-32062`
-//! already-reserved, `-32063` not-found, plus the shared `-32002` forbidden.
+//! already-reserved, `-32064` not-found, plus the shared `-32002`
+//! forbidden. `-32061`/`-32063` are chest's own (channel quota /
+//! payment-channel-not-configured) and stay untouched.
 //!
 //! # Credential discipline
 //!

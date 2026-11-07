@@ -3,7 +3,10 @@
 //! Codes returned by [`WalletError::rpc_code`] align with the chest billing
 //! plane's reserved JSON-RPC band `-32060..=-32079` (chest assigns
 //! `-32060` = quota-exceeded / insufficient and `-32002` = forbidden today;
-//! the `-32062`/`-32063` assignments below were made by this crate, which is
+//! slot assignment is cross-repo: chest already emits `-32061` (personal
+//! channel quota, channel_self.rs) and `-32063` (payment channel not
+//! configured, billing_checkout.rs), so this contract uses `-32062`,
+//! `-32064`, and `-32066` — the R2 review grep-verified those as free.
 //! the single home of the wire protocol until the ERP side implements it).
 
 use serde::{Deserialize, Serialize};
@@ -32,14 +35,16 @@ pub enum WalletError {
         ref_id: String,
     },
     /// The subject, reservation ref or resource addressed by the call does
-    /// not exist. JSON-RPC `-32063` (assigned by this contract).
+    /// not exist. JSON-RPC `-32064` (assigned by this contract; `-32063`
+    /// is chest's payment-channel-not-configured).
     NotFound,
     /// The caller is not allowed to operate this wallet.
     /// JSON-RPC `-32002`, aligned with chest's `JSONRPC_FORBIDDEN`.
     Forbidden,
     /// Chest's wallet authority has migrated to ERP (切刀专用): the caller
     /// must stop using chest `billing.task.*` and route through the ERP
-    /// bridge. JSON-RPC `-32061` (wallet-authority-moved lane).
+    /// bridge. JSON-RPC `-32066` (wallet-authority-moved lane; `-32061`
+    /// is chest's personal-channel-quota).
     AuthorityMoved,
     /// The bridge/service is unreachable (timeout, connect failure, 5xx,
     /// unparsable answer). Callers degrade per their existing policy.
@@ -58,9 +63,9 @@ impl WalletError {
         match self {
             WalletError::Insufficient { .. } => -32060,
             WalletError::AlreadyReserved { .. } => -32062,
-            WalletError::NotFound => -32063,
+            WalletError::NotFound => -32064,
             WalletError::Forbidden => -32002,
-            WalletError::AuthorityMoved => -32061,
+            WalletError::AuthorityMoved => -32066,
             WalletError::Unavailable => -32000,
             WalletError::Internal(_) => -32603,
         }
@@ -106,15 +111,17 @@ mod tests {
             WalletError::AlreadyReserved { ref_id: "t".into() }.rpc_code(),
             -32062
         );
-        assert_eq!(WalletError::NotFound.rpc_code(), -32063);
+        assert_eq!(WalletError::NotFound.rpc_code(), -32064);
         assert_eq!(WalletError::Forbidden.rpc_code(), -32002);
-        assert_eq!(WalletError::AuthorityMoved.rpc_code(), -32061);
+        assert_eq!(WalletError::AuthorityMoved.rpc_code(), -32066);
         assert_eq!(WalletError::Unavailable.rpc_code(), -32000);
         assert_eq!(WalletError::Internal("x".into()).rpc_code(), -32603);
     }
 
-    /// The serde form is the bridge's error wire shape
-    /// (`bridge::RawError` re-encodes from it); keep it tagged and stable.
+    /// The serde form is this crate's typed in-process shape, kept tagged
+    /// and stable for round-tripping. It is NOT the bridge wire shape:
+    /// `bridge::RawError` re-encodes errors as a flat
+    /// `{code, message, ...}` envelope on the wire.
     #[test]
     fn serde_form_is_tagged_and_stable() {
         let json = serde_json::to_value(WalletError::Insufficient { have: 5, need: 10 }).unwrap();

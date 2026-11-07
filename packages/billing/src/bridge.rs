@@ -273,9 +273,9 @@ fn map_remote_error(error: RawError) -> WalletError {
         -32062 => WalletError::AlreadyReserved {
             ref_id: ref_id.unwrap_or_default(),
         },
-        -32063 => WalletError::NotFound,
+        -32064 => WalletError::NotFound,
         -32002 => WalletError::Forbidden,
-        -32061 => WalletError::AuthorityMoved,
+        -32066 => WalletError::AuthorityMoved,
         -32000 => WalletError::Unavailable,
         -32603 => WalletError::Internal(message),
         other => WalletError::Internal(format!("remote wallet error {other}: {message}")),

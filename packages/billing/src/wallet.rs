@@ -87,6 +87,11 @@ pub trait Wallet: Send + Sync {
     /// reservation exists under `ref_id`, the deducted amount consumes that
     /// reservation's net (the consumed part is no longer refundable) — the
     /// caller then refunds the remainder to close the task.
+    /// Charge a finished question. IDEMPOTENT per `(subject, ref_id)`:
+    /// a retry after a lost response returns the first settlement
+    /// verbatim instead of re-applying (settle is the one operation a
+    /// caller WILL blindly retry — the charge already happened, only the
+    /// acknowledgement was lost).
     async fn settle(
         &self,
         s: &WalletSubject,
@@ -98,6 +103,11 @@ pub trait Wallet: Send + Sync {
     /// `Expire` is expected to carry a negative `amount`) and append a
     /// ledger entry tagged with `ref_type`/`ref_id`. Returns the
     /// post-operation available balance.
+    /// Add funds. IDEMPOTENT per `(subject, ref_type, ref_id)`: a retry
+    /// (e.g. a payment webhook replayed) returns the balance as of the
+    /// first application — credit is the mint path, a blind retry would
+    /// mint money. Callers therefore MUST carry a stable ref_id across
+    /// retries; generating a fresh one per attempt defeats the contract.
     async fn credit(
         &self,
         s: &WalletSubject,

@@ -62,6 +62,14 @@ struct MockState {
     balances: HashMap<SubjectKey, i64>,
     reservations: HashMap<ReservationKey, Reservation>,
     entries: HashMap<SubjectKey, Vec<LedgerEntry>>,
+    /// First outcome per (subject, ref_id): settle retries return it
+    /// verbatim instead of re-applying (the contract crate pins
+    /// settle/credit as idempotent — a lost response retried must not
+    /// double-charge or double-mint).
+    settlements: HashMap<(SubjectKey, String), Settlement>,
+    /// Balance as of first application per (subject, ref_type, ref_id):
+    /// credit retries return it without appending.
+    credit_replays: HashMap<(SubjectKey, String, String), i64>,
 }
 
 /// In-memory wallet; wrap in `Arc` and hand out as `Arc<dyn Wallet>`.
@@ -86,6 +94,8 @@ impl MockWallet {
                 balances: HashMap::new(),
                 reservations: HashMap::new(),
                 entries: HashMap::new(),
+                settlements: HashMap::new(),
+                credit_replays: HashMap::new(),
             }),
         }
     }
@@ -235,6 +245,13 @@ impl Wallet for MockWallet {
         let mut state = self.lock();
         let key = Self::subject_key(s);
         let rkey = Self::reservation_key(s, ref_id);
+        // Idempotent replay (contract: a settle retry after a lost
+        // response must not double-charge). The first outcome for this
+        // (subject, ref_id) is stored and returned verbatim.
+        let settle_key = (key, ref_id.to_string());
+        if let Some(prev) = state.settlements.get(&settle_key) {
+            return Ok(*prev);
+        }
         // The ref's hold absorbs the charge first (escrow semantics); only
         // the part beyond the hold touches the available balance. The total
         // charge clamps at hold + available: a wallet never goes negative
@@ -267,10 +284,12 @@ impl Wallet for MockWallet {
         } else {
             SettlementOutcome::Clamped
         };
-        Ok(Settlement {
+        let settlement = Settlement {
             outcome,
             deducted: charged,
-        })
+        };
+        state.settlements.insert(settle_key, settlement);
+        Ok(settlement)
     }
 
     async fn credit(
@@ -290,10 +309,22 @@ impl Wallet for MockWallet {
         if !valid {
             return Err(WalletError::Internal(ERR_CREDIT_ZERO.to_string()));
         }
+        // Idempotent replay (contract): a credit retry with the same
+        // (subject, ref_type, ref_id) returns the balance as of the
+        // first application without appending anything (no double-mint).
+        let credit_key = (
+            Self::subject_key(s),
+            ref_type.to_string(),
+            ref_id.to_string(),
+        );
         let mut state = self.lock();
+        if let Some(balance) = state.credit_replays.get(&credit_key) {
+            return Ok(*balance);
+        }
         let key = Self::subject_key(s);
         let balance = available_of(&mut state, key) + amount;
         state.balances.insert(key, balance);
+        state.credit_replays.insert(credit_key, balance);
         append_entry(
             &mut state,
             key,
@@ -546,6 +577,51 @@ mod tests {
             }
         );
         assert_eq!(wallet.balance(&s).await.unwrap().available, 700);
+    }
+
+    /// The contract crate's job is to pin retry semantics BEFORE four
+    /// repos invent four different ones: settle/credit are idempotent per
+    /// reference, because the lost-response-then-retry case is exactly
+    /// when double-charging (settle) and double-minting (credit) happen.
+    #[tokio::test]
+    async fn settle_and_credit_replays_return_the_first_outcome() {
+        let wallet = MockWallet::new(1_000);
+        let s = subject(1);
+        let first = wallet.settle(&s, 300, "task-retry").await.unwrap();
+        let balance_after_first = wallet.balance(&s).await.unwrap().available;
+        // the lost-acknowledgement retry: same ref, verbatim outcome
+        let replay = wallet.settle(&s, 300, "task-retry").await.unwrap();
+        assert_eq!(
+            replay, first,
+            "settle replay must return the first settlement"
+        );
+        assert_eq!(
+            wallet.balance(&s).await.unwrap().available,
+            balance_after_first,
+            "a settle replay must not charge twice"
+        );
+
+        wallet
+            .credit(&s, 500, CreditReason::Topup, "order", "ord-9")
+            .await
+            .unwrap();
+        let balance_after_credit = wallet.balance(&s).await.unwrap().available;
+        let replayed = wallet
+            .credit(&s, 500, CreditReason::Topup, "order", "ord-9")
+            .await
+            .unwrap();
+        assert_eq!(
+            replayed, balance_after_credit,
+            "credit replay returns the credited balance"
+        );
+        assert_eq!(
+            wallet.balance(&s).await.unwrap().available,
+            balance_after_credit,
+            "a credit replay must not mint twice"
+        );
+        // a DIFFERENT ref is a new charge/mint, not a replay
+        let second = wallet.settle(&s, 100, "task-retry-2").await.unwrap();
+        assert_eq!(second.deducted, 100, "a new ref charges normally");
     }
 
     #[tokio::test]
