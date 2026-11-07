@@ -8,6 +8,7 @@ members = [
     "packages/rpc-client",
     "packages/tauri",
     "packages/dispatch-client",
+    "packages/billing",
     "packages/core",
     "packages/config",
     "packages/text",
@@ -54,6 +55,7 @@ all = "deny"
 
 # ── Internal workspace crates (path deps; hyphenated names are the published
 #    crate names, legacy underscore keys alias them via package =) ──
+plana-billing = { path = "packages/billing", version = "^0.2" }
 plana-bootloader = { path = "packages/bootloader", version = "^0.2" }
 plana-build-info = { path = "packages/build_info", version = "0.2" }
 plana-config = { path = "packages/config", version = "^0.2" }
@@ -114,6 +116,9 @@ dotenvy = "^0.15"
 flume = "^0.12"
 futures = "^0.3"
 hex = "^0.4"
+# HMAC-SHA256 request signing (plana-billing's `client` feature: the ERP
+# wallet-service bridge line protocol).
+hmac = "^0.12"
 http = "^1"
 hyper-rustls = { version = "^0.27", default-features = false, features = ["native-tokio", "http1", "tls12", "ring"] }
 include_dir = { version = "^0.7", features = ["glob"] }

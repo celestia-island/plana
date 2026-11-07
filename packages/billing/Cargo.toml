@@ -1,0 +1,52 @@
+[package]
+name = "plana-billing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+description = "Wallet interface contract shared by the celestia-island services: subject/balance/settlement types, the async `Wallet` trait, an in-memory mock for tests, and an optional signed HTTP bridge client."
+license-file.workspace = true
+keywords = ["billing", "wallet", "contract", "celestia-island"]
+categories = ["api-bindings", "data-structures"]
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# Signed HTTP bridge client (`ErpBridgeWallet`) for the ERP wallet service
+# line protocol (`/api/wallet/service/*`). Off by default: pure consumers of
+# the trait and the mock carry no transport dependency tree.
+client = [
+    "dep:reqwest",
+    "dep:hmac",
+    "dep:sha2",
+    "dep:hex",
+    "dep:rustls",
+    "dep:serde_json",
+]
+
+[dependencies]
+
+async-trait = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+# `client` feature only.
+hex = { workspace = true, optional = true }
+hmac = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
+rustls = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
+
+[dev-dependencies]
+
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "time"] }
+wiremock = { workspace = true }
+
+[package.metadata.docs.rs]
+all-features = true
