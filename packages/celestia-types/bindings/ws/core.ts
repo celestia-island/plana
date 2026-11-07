@@ -4,7 +4,7 @@ export type Agent = "HapLotes" | "SkoPeo" | "HubRis" | "KaLos" | "NeiKos" | "Ske
 
 export type AgentBadge = string;
 
-export type AgentErrorCode = "model_no_providers" | "model_no_models" | "model_tier_mismatch" | "model_all_excluded" | "model_env_incomplete" | "model_selection_retry_exhausted" | "model_no_capable_model" | "llm_call_failed" | "llm_empty_response" | "llm_rate_limited" | "llm_auth_failed" | "llm_timeout" | "cosmos_no_connection" | "cosmos_tool_failed" | "cosmos_local_unavailable" | "chain_max_depth" | "chain_cycle" | "chain_failed" | "skill_failed" | "skill_empty_output" | "skill_missing_report";
+export type AgentErrorCode = "model_no_providers" | "model_no_models" | "model_tier_mismatch" | "model_all_excluded" | "model_env_incomplete" | "model_selection_retry_exhausted" | "model_no_capable_model" | "llm_call_failed" | "llm_empty_response" | "llm_rate_limited" | "llm_auth_failed" | "llm_timeout" | "cosmos_no_connection" | "cosmos_tool_failed" | "cosmos_local_unavailable" | "chain_max_depth" | "chain_cycle" | "chain_failed" | "skill_failed" | "skill_empty_output" | "skill_missing_report" | "dependency_down";
 
 export type AgentStatus = "Initializing" | "Online" | "Busy" | "Offline" | "Error";
 
@@ -70,7 +70,20 @@ export type StreamSegment = { "Text": { text: string, message_id?: string,
  */
 ts?: number, } } | { "Thinking": { text: string, message_id?: string, ts?: number, } } | { "DeepThinking": { text: string, message_id?: string, ts?: number, } } | { "ToolCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, ts?: number, } } | { "ToolResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, ts?: number, } };
 
-export type StructuredAgentError = { code: AgentErrorCode, detail?: string, context: { [key in string]: string }, };
+export type StructuredAgentError = { code: AgentErrorCode, detail?: string, 
+/**
+ * Free-form context bag; absent on the wire deserializes as an empty
+ * map (serde default), so payloads written by newer producers stay
+ * readable by older consumers and vice versa.
+ *
+ * Canonical keys for the `DependencyDown` code (infrastructure
+ * dependency failures):
+ * - `dependency`: stable identifier of the failed dependency
+ *   (e.g. `evernight-ipc`, `arona`);
+ * - `reason`: machine-readable reason label (e.g. `peer_unreachable`);
+ * - `hint`: optional operator-facing remediation hint.
+ */
+context: { [key in string]: string }, };
 
 export type TaskStatus = "not_started" | "in_progress" | "paused" | "completed" | "failed" | "warning" | { "waiting": { deadline: string, handle: string, } };
 

@@ -450,6 +450,11 @@ pub enum AgentErrorCode {
     SkillEmptyOutput,
     #[error("skill missing report")]
     SkillMissingReport,
+    /// An infrastructure dependency (IPC peer, upstream service, database) is
+    /// unreachable or unhealthy. See [`StructuredAgentError`]'s `context`
+    /// field for the canonical keys carried alongside this code.
+    #[error("infrastructure dependency failure")]
+    DependencyDown,
 }
 
 impl AgentErrorCode {
@@ -485,6 +490,10 @@ impl AgentErrorCode {
         )
     }
 
+    pub fn is_dependency_error(&self) -> bool {
+        matches!(self, Self::DependencyDown)
+    }
+
     pub fn is_model_selection_error(&self) -> bool {
         matches!(
             self,
@@ -499,13 +508,23 @@ impl AgentErrorCode {
     }
 }
 
-#[derive(JsonSchema, Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 pub struct StructuredAgentError {
     pub code: AgentErrorCode,
     #[serde(default)]
     #[ts(optional)]
     pub detail: Option<String>,
+    /// Free-form context bag; absent on the wire deserializes as an empty
+    /// map (serde default), so payloads written by newer producers stay
+    /// readable by older consumers and vice versa.
+    ///
+    /// Canonical keys for the `DependencyDown` code (infrastructure
+    /// dependency failures):
+    /// - `dependency`: stable identifier of the failed dependency
+    ///   (e.g. `evernight-ipc`, `arona`);
+    /// - `reason`: machine-readable reason label (e.g. `peer_unreachable`);
+    /// - `hint`: optional operator-facing remediation hint.
     #[serde(default)]
     pub context: std::collections::HashMap<String, String>,
 }
@@ -831,6 +850,13 @@ mod tests {
     }
 
     #[test]
+    fn agent_error_code_is_dependency_error() {
+        assert!(AgentErrorCode::DependencyDown.is_dependency_error());
+        assert!(!AgentErrorCode::ChainFailed.is_dependency_error());
+        assert!(!AgentErrorCode::CosmosNoConnection.is_dependency_error());
+    }
+
+    #[test]
     fn agent_error_code_is_model_selection_error() {
         let model_errors = [
             AgentErrorCode::ModelNoProviders,
@@ -873,6 +899,7 @@ mod tests {
             AgentErrorCode::SkillFailed,
             AgentErrorCode::SkillEmptyOutput,
             AgentErrorCode::SkillMissingReport,
+            AgentErrorCode::DependencyDown,
         ] {
             let count = [
                 code.is_llm_error(),
@@ -880,6 +907,7 @@ mod tests {
                 code.is_chain_error(),
                 code.is_skill_error(),
                 code.is_model_selection_error(),
+                code.is_dependency_error(),
             ]
             .iter()
             .filter(|&&b| b)
@@ -899,6 +927,102 @@ mod tests {
             AgentErrorCode::ModelNoProviders.to_string(),
             "model has no providers"
         );
+    }
+
+    /// The wire string of the dependency-failure code is a cross-service
+    /// contract (chest-side error routing reads it verbatim).
+    #[test]
+    fn dependency_down_wire_string_is_stable() {
+        let wire = serde_json::to_string(&AgentErrorCode::DependencyDown).unwrap();
+        assert_eq!(wire, r#""dependency_down""#);
+        let back: AgentErrorCode = serde_json::from_str(&wire).unwrap();
+        assert_eq!(back, AgentErrorCode::DependencyDown);
+        assert_eq!(
+            AgentErrorCode::DependencyDown.to_string(),
+            "infrastructure dependency failure"
+        );
+    }
+
+    /// Backward-compatibility tolerance for the `context` field, in both
+    /// directions: a payload that carries `context` must stay readable by a
+    /// consumer whose struct predates the field (unknown fields are ignored),
+    /// and the serde-default field must materialize as empty for payloads
+    /// that omit it.
+    #[test]
+    fn structured_agent_error_tolerates_context_field_in_both_directions() {
+        // Old-consumer struct shape: `code` + optional `detail`, no `context`.
+        #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+        struct LegacyStructuredAgentError {
+            code: AgentErrorCode,
+            #[serde(default)]
+            detail: Option<String>,
+        }
+
+        let payload = json!({
+            "code": "dependency_down",
+            "detail": "evernight ipc bridge is unreachable",
+            "context": {
+                "dependency": "evernight-ipc",
+                "reason": "peer_unreachable",
+                "hint": "check the evernight-ipc service on the host",
+            },
+        });
+
+        let legacy: LegacyStructuredAgentError = serde_json::from_value(payload.clone()).unwrap();
+        assert_eq!(legacy.code, AgentErrorCode::DependencyDown);
+        assert_eq!(
+            legacy.detail.as_deref(),
+            Some("evernight ipc bridge is unreachable")
+        );
+
+        let full: StructuredAgentError = serde_json::from_value(payload).unwrap();
+        assert_eq!(full.code, AgentErrorCode::DependencyDown);
+        assert_eq!(
+            full.context.get("dependency").map(String::as_str),
+            Some("evernight-ipc")
+        );
+        assert_eq!(
+            full.context.get("reason").map(String::as_str),
+            Some("peer_unreachable")
+        );
+        assert_eq!(
+            full.context.get("hint").map(String::as_str),
+            Some("check the evernight-ipc service on the host")
+        );
+
+        // A payload without `context` deserializes with the default empty bag.
+        let bare: StructuredAgentError = serde_json::from_value(json!({
+            "code": "chain_failed",
+        }))
+        .unwrap();
+        assert_eq!(bare.code, AgentErrorCode::ChainFailed);
+        assert_eq!(bare.detail, None);
+        assert!(bare.context.is_empty());
+    }
+
+    #[test]
+    fn structured_agent_error_dependency_context_round_trip() {
+        let err = StructuredAgentError {
+            code: AgentErrorCode::DependencyDown,
+            detail: Some("infrastructure dependency is unreachable".into()),
+            context: [
+                ("dependency".to_string(), "arona".to_string()),
+                ("reason".to_string(), "http_probe_failed".to_string()),
+                (
+                    "hint".to_string(),
+                    "restart the arona container".to_string(),
+                ),
+            ]
+            .into_iter()
+            .collect(),
+        };
+        let v = serde_json::to_value(&err).unwrap();
+        assert_eq!(v["code"], "dependency_down");
+        assert_eq!(v["context"]["dependency"], "arona");
+        assert_eq!(v["context"]["reason"], "http_probe_failed");
+        assert_eq!(v["context"]["hint"], "restart the arona container");
+        let back: StructuredAgentError = serde_json::from_value(v).unwrap();
+        assert_eq!(back, err);
     }
 
     // ── StreamSegment variants ─────────────────────────────────────

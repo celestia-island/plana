@@ -1,6 +1,10 @@
 [package]
 name = "plana-state-sync"
-version = "0.3.0"
+# Own release line (does not track [workspace.package]): the SyncMessage /
+# re-exported error-code surface is breaking-answered on this line — the
+# 0.3.0 bump answered the SwarmCursorProjection variant, 0.4.0 answers the
+# DependencyDown variant added to the re-exported plana-core enum.
+version = "0.4.0"
 edition.workspace = true
 rust-version.workspace = true
 publish = true
