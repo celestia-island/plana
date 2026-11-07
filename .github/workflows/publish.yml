@@ -365,6 +365,10 @@ jobs:
           # its manifest in this same PR (cherino is not on crates.io).
           publish_crate plana-macros packages/macros/Cargo.toml
           publish_crate plana-text packages/text/Cargo.toml
+          # plana-billing (W5 2026-11-07): wallet contract crate, no
+          # intra-family deps — position is free; first here so the
+          # dependents it will gain land after it.
+          publish_crate plana-billing packages/billing/Cargo.toml
           publish_crate plana-core packages/core/Cargo.toml
           publish_crate plana-domain-agent packages/domain_agent/Cargo.toml
           publish_crate plana-state-sync packages/state_types/Cargo.toml
