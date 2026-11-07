@@ -7,7 +7,6 @@
 //! channel quota, channel_self.rs) and `-32063` (payment channel not
 //! configured, billing_checkout.rs), so this contract uses `-32062`,
 //! `-32064`, and `-32066` — the R2 review grep-verified those as free.
-//! the single home of the wire protocol until the ERP side implements it).
 
 use serde::{Deserialize, Serialize};
 
