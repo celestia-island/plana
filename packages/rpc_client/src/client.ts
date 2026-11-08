@@ -763,8 +763,11 @@ export class RpcClient {
 
   #cleanupWs(ws: WsChannel, gen: number): void {
     // Channels own their listener sets; closing tears the socket and the
-    // settled/generation guards make stale callbacks no-ops.
-    ws.close();
+    // settled/generation guards make stale callbacks no-ops. A transport
+    // whose close() throws must not escape the link-loss path before the
+    // recovery ladder is armed (the SSE sibling is guarded for the same
+    // reason).
+    try { ws.close(); } catch { /* already closing */ }
     if (this.#ws === ws) this.#ws = null;
     this.#clearHeartbeat();
     this.#rejectAllPending("connection lost");

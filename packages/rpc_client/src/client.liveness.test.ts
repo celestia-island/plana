@@ -70,7 +70,10 @@ class FakeWsChannel implements WsChannel {
   closeCount = 0;
   private closeCb: ((info: WsCloseInfo) => void) | null = null;
 
-  constructor(private readonly failSend = false) {}
+  constructor(
+    private readonly failSend = false,
+    private readonly failClose = false,
+  ) {}
 
   send(): void {
     this.sendCount += 1;
@@ -78,6 +81,7 @@ class FakeWsChannel implements WsChannel {
   }
 
   close(): void {
+    if (this.failClose) throw new Error("test: ws close failed");
     this.closeCount += 1;
     this.readyState = "closed";
     this.closeCb?.({ code: 1006, reason: "gone", wasClean: false });
@@ -258,6 +262,31 @@ describe("established-link liveness", () => {
 
     expect(client.state).toBe("connected");
     expect(states[states.length - 1]).toBe("connected");
+    await client.disconnect();
+  });
+
+  it("arms recovery even when the ws transport throws from close()", async () => {
+    const listeners = stubPageLifecycle();
+    const ws = new FakeWsChannel(false, true);
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.includes("/api/health")) return healthOk();
+        throw new Error("test: rpc not expected");
+      },
+      ws,
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    const states: string[] = [];
+    client.on("state", (e) => states.push(e.state));
+    client.connect();
+    await settleConnect();
+    expect(client.state).toBe("connected");
+    expect(client.transportTier).toBe("ws");
+
+    listeners.offline?.();
+
+    expect(states).toContain("reconnecting");
+    expect(client.state).toBe("reconnecting");
     await client.disconnect();
   });
 
