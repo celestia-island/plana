@@ -66,13 +66,19 @@ function nonJsonResponse(): TransportResponse {
 
 class FakeWsChannel implements WsChannel {
   readyState: WsReadyState = "open";
+  sendCount = 0;
+  closeCount = 0;
   private closeCb: ((info: WsCloseInfo) => void) | null = null;
 
+  constructor(private readonly failSend = false) {}
+
   send(): void {
-    throw new Error("test: ws send failed");
+    this.sendCount += 1;
+    if (this.failSend) throw new Error("test: ws send failed");
   }
 
   close(): void {
+    this.closeCount += 1;
     this.readyState = "closed";
     this.closeCb?.({ code: 1006, reason: "gone", wasClean: false });
   }
@@ -228,7 +234,7 @@ describe("established-link liveness", () => {
     let rpcHealthy = false;
     const transport = makeTransport({
       request: async (req) => {
-        if (req.url.endsWith("/api/health")) return healthOk();
+        if (req.url.includes("/api/health")) return healthOk();
         if (!rpcHealthy) throw new TransportError("network", "connection closed");
         return jsonResponse(200, { result: { ok: true } });
       },
@@ -256,10 +262,10 @@ describe("established-link liveness", () => {
   });
 
   it("turns a ws send failure into reconnecting", async () => {
-    const ws = new FakeWsChannel();
+    const ws = new FakeWsChannel(true);
     const transport = makeTransport({
       request: async (req) => {
-        if (req.url.endsWith("/api/health")) return healthOk();
+        if (req.url.includes("/api/health")) return healthOk();
         throw new Error("test: rpc not expected");
       },
       ws,
@@ -281,12 +287,42 @@ describe("established-link liveness", () => {
     await client.disconnect();
   });
 
+  it("does not treat a caller-side serialization error as link loss on the ws tier", async () => {
+    const ws = new FakeWsChannel();
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.includes("/api/health")) return healthOk();
+        throw new Error("test: rpc not expected");
+      },
+      ws,
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    const states: string[] = [];
+    client.on("state", (e) => states.push(e.state));
+    client.connect();
+    await settleConnect();
+    expect(client.state).toBe("connected");
+    expect(client.transportTier).toBe("ws");
+
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    const err = await client.call("demo.method", circular).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(RpcError);
+    expect((err as RpcError).kind).toBe("transport");
+    expect(client.state).toBe("connected");
+    expect(ws.sendCount).toBe(0);
+    expect(ws.closeCount).toBe(0);
+    expect(states).not.toContain("reconnecting");
+    await client.disconnect();
+  });
+
   it("does not treat an HTTP status, a JSON-RPC error, a malformed 200 or a timeout as link loss", async () => {
     type RpcMode = "http500" | "rpcError" | "badJson" | "nullBody" | "timeout";
     let rpcMode: RpcMode = "http500";
     const transport = makeTransport({
       request: async (req) => {
-        if (req.url.endsWith("/api/health")) return healthOk();
+        if (req.url.includes("/api/health")) return healthOk();
         if (rpcMode === "http500") return jsonResponse(500, { error: "boom" });
         if (rpcMode === "rpcError") {
           return jsonResponse(200, { jsonrpc: "2.0", id: "x", error: { code: -32003, message: "upstream" } });
@@ -344,7 +380,7 @@ describe("established-link liveness", () => {
     const sseChannels: FakeSseChannel[] = [];
     const transport = makeTransport({
       request: async (req) => {
-        if (req.url.endsWith("/api/health")) return healthOk();
+        if (req.url.includes("/api/health")) return healthOk();
         throw new Error("test: rpc not expected");
       },
       sse: () => {
@@ -406,7 +442,7 @@ describe("established-link liveness", () => {
     const sseChannels: FakeSseChannel[] = [];
     const transport = makeTransport({
       request: async (req) => {
-        if (req.url.endsWith("/api/health")) return healthOk();
+        if (req.url.includes("/api/health")) return healthOk();
         throw new Error("test: rpc not expected");
       },
       sse: () => {
@@ -440,11 +476,83 @@ describe("established-link liveness", () => {
     await client.disconnect();
   });
 
+  it("does not report a connected poll tier when the health probe is non-JSON at connect", async () => {
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.includes("/api/health")) return nonJsonResponse();
+        throw new Error("test: rpc not expected");
+      },
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    const states: string[] = [];
+    client.on("state", (e) => states.push(e.state));
+    client.connect();
+
+    // Three progressive rounds: 1s + 3s + 5s.
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(states).not.toContain("connected");
+    expect(client.state).toBe("failed");
+    await client.disconnect();
+  });
+
+  it("cancels the reconnect countdown when the browser comes back online inside the backoff", async () => {
+    const listeners = stubPageLifecycle();
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.includes("/api/health")) return healthOk();
+        throw new Error("test: rpc not expected");
+      },
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    client.connect();
+    await settleConnect();
+    expect(client.state).toBe("connected");
+
+    listeners.offline?.();
+    await vi.advanceTimersByTimeAsync(100);
+    listeners.online?.();
+
+    // The leaked countdown tick used to re-stamp reconnecting after this
+    // ladder had already reached connected.
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    expect(client.state).toBe("connected");
+    await client.disconnect();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("cancels the reconnect countdown when the host retries during the backoff", async () => {
+    let healthCalls = 0;
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.includes("/api/health")) {
+          healthCalls += 1;
+          if (healthCalls === 2) throw new TransportError("network", "connection closed");
+          return healthOk();
+        }
+        throw new Error("test: rpc not expected");
+      },
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    client.connect();
+    await settleConnect();
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(client.state).toBe("reconnecting");
+
+    client.forceReconnect();
+    await vi.advanceTimersByTimeAsync(2_500);
+
+    expect(client.state).toBe("connected");
+    await client.disconnect();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("surfaces the browser offline edge as reconnecting and arms the recovery ladder", async () => {
     const listeners = stubPageLifecycle();
     const transport = makeTransport({
       request: async (req) => {
-        if (req.url.endsWith("/api/health")) return healthOk();
+        if (req.url.includes("/api/health")) return healthOk();
         throw new Error("test: rpc not expected");
       },
     });

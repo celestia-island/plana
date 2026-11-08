@@ -217,6 +217,10 @@ export class RpcClient {
    *  progressive rounds (exponential backoff, 1.5× → 30s cap + jitter).
    *  `connect()`/`forceReconnect()` reset it so manual retries are fresh. */
   #reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The 1 s countdown tick paired with #reconnectTimer. It MUST be cleared
+   *  with the timer — a leaked tick keeps re-emitting `reconnecting` after
+   *  a manual retry / fresh connect has already reached `connected`. */
+  #reconnectTick: ReturnType<typeof setInterval> | null = null;
   #reconnectDelay = 1_000;
   #reconnectArmed = false;
   /** True while a progressive session was entered by the recovery loop —
@@ -776,8 +780,21 @@ export class RpcClient {
 
       this.#pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timer, method });
 
+      // Serialization is caller-side work, not link health. Keeping it out
+      // of the send try prevents a circular/BigInt payload from closing a
+      // healthy socket and entering the recovery ladder.
+      let frame: string;
       try {
-        this.#ws!.send(JSON.stringify({ jsonrpc: "2.0", id, method, params: params ?? undefined }));
+        frame = JSON.stringify({ jsonrpc: "2.0", id, method, params: params ?? undefined });
+      } catch (e) {
+        this.#pending.delete(id);
+        clearTimeout(timer);
+        reject(new RpcError("transport", method, `Failed to serialize: ${e}`));
+        return;
+      }
+
+      try {
+        this.#ws!.send(frame);
       } catch (e) {
         this.#pending.delete(id);
         clearTimeout(timer);
@@ -894,11 +911,15 @@ export class RpcClient {
       });
 
       if (!resp.ok) return false;
-      if (liveness) {
-        // A 200 from something that is not the backend (maintenance page,
-        // intercepting proxy) is not a live lane. The beat validates the
-        // body; the connect-phase probe stays a cheap status check.
-        try { await resp.json(); } catch { return false; }
+      // A 200 from something that is not the backend (maintenance page,
+      // intercepting proxy) is not a live poll lane. Validate the body on
+      // BOTH phases: a lax connect probe plus a strict beat flaps forever
+      // (connect through HTML, beat kills it 15s later, repeat).
+      try {
+        const body = await resp.json();
+        if (body === null || typeof body !== "object" || Array.isArray(body)) return false;
+      } catch {
+        return false;
       }
 
       return true;
@@ -1199,14 +1220,14 @@ export class RpcClient {
     this.#reconnectDelay = Math.min(this.#reconnectDelay * 1.5, 30_000);
     let remaining = Math.ceil(delay / 1000);
     this.#setState("reconnecting", remaining);
-    const tick = setInterval(() => {
+    this.#reconnectTick = setInterval(() => {
       remaining -= 1;
       if (remaining >= 0 && !this.#disposed) {
         this.#setState("reconnecting", remaining);
       }
     }, 1_000);
     this.#reconnectTimer = setTimeout(() => {
-      clearInterval(tick);
+      this.#clearRecoveryTick();
       this.#reconnectTimer = null;
       this.#reconnectArmed = false;
       if (!this.#disposed) {
@@ -1216,9 +1237,17 @@ export class RpcClient {
     }, delay);
   }
 
+  #clearRecoveryTick(): void {
+    if (this.#reconnectTick !== null) {
+      clearInterval(this.#reconnectTick);
+      this.#reconnectTick = null;
+    }
+  }
+
   #cancelRecovery(): void {
     this.#reconnectArmed = false;
     this.#reconnectDelay = 1_000;
+    this.#clearRecoveryTick();
     if (this.#reconnectTimer !== null) {
       clearTimeout(this.#reconnectTimer);
       this.#reconnectTimer = null;
