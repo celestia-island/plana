@@ -318,7 +318,7 @@ describe("established-link liveness", () => {
   });
 
   it("does not treat an HTTP status, a JSON-RPC error, a malformed 200 or a timeout as link loss", async () => {
-    type RpcMode = "http500" | "rpcError" | "badJson" | "nullBody" | "timeout";
+    type RpcMode = "http500" | "rpcError" | "badJson" | "nullBody" | "arrayBody" | "scalarBody" | "timeout";
     let rpcMode: RpcMode = "http500";
     const transport = makeTransport({
       request: async (req) => {
@@ -329,6 +329,8 @@ describe("established-link liveness", () => {
         }
         if (rpcMode === "badJson") return nonJsonResponse();
         if (rpcMode === "nullBody") return jsonResponse(200, null);
+        if (rpcMode === "arrayBody") return jsonResponse(200, [1, 2, 3]);
+        if (rpcMode === "scalarBody") return jsonResponse(200, "ok");
         throw new TransportError("timeout", "slow");
       },
     });
@@ -338,7 +340,7 @@ describe("established-link liveness", () => {
     client.connect();
     await settleConnect();
 
-    for (const mode of ["http500", "rpcError", "badJson", "nullBody", "timeout"] as const) {
+    for (const mode of ["http500", "rpcError", "badJson", "nullBody", "arrayBody", "scalarBody", "timeout"] as const) {
       rpcMode = mode;
       await expect(client.call("demo.method"), mode).rejects.toBeInstanceOf(RpcError);
       expect(client.state, mode).toBe("connected");
