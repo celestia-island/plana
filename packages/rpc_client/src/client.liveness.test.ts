@@ -204,7 +204,7 @@ describe("established-link liveness", () => {
   });
 
   it("does not treat an HTTP status, a JSON-RPC error, a malformed 200 or a timeout as link loss", async () => {
-    type RpcMode = "http500" | "rpcError" | "badJson" | "timeout";
+    type RpcMode = "http500" | "rpcError" | "badJson" | "nullBody" | "timeout";
     let rpcMode: RpcMode = "http500";
     const transport = makeTransport({
       request: async (req) => {
@@ -214,6 +214,7 @@ describe("established-link liveness", () => {
           return jsonResponse(200, { jsonrpc: "2.0", id: "x", error: { code: -32003, message: "upstream" } });
         }
         if (rpcMode === "badJson") return nonJsonResponse();
+        if (rpcMode === "nullBody") return jsonResponse(200, null);
         throw new TransportError("timeout", "slow");
       },
     });
@@ -223,12 +224,41 @@ describe("established-link liveness", () => {
     client.connect();
     await settleConnect();
 
-    for (const mode of ["http500", "rpcError", "badJson", "timeout"] as const) {
+    for (const mode of ["http500", "rpcError", "badJson", "nullBody", "timeout"] as const) {
       rpcMode = mode;
       await expect(client.call("demo.method"), mode).rejects.toBeInstanceOf(RpcError);
       expect(client.state, mode).toBe("connected");
     }
+
+    // A caller-side serialization error is not a link verdict either.
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    await expect(client.call("demo.method", circular)).rejects.toBeInstanceOf(RpcError);
+    expect(client.state).toBe("connected");
     expect(states).not.toContain("reconnecting");
+    await client.disconnect();
+  });
+
+  it("leaves the green light alone on healthy poll beats", async () => {
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.includes("/api/health")) return healthOk();
+        throw new Error("test: rpc not expected");
+      },
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    const states: string[] = [];
+    client.on("state", (e) => states.push(e.state));
+    client.connect();
+    await settleConnect();
+    expect(client.state).toBe("connected");
+    const connectedCount = states.filter((s) => s === "connected").length;
+
+    await vi.advanceTimersByTimeAsync(30_000);
+
+    expect(client.state).toBe("connected");
+    expect(states).not.toContain("reconnecting");
+    expect(states.filter((s) => s === "connected")).toHaveLength(connectedCount);
     await client.disconnect();
   });
 

@@ -1048,6 +1048,13 @@ export class RpcClient {
       }
 
       const body = await resp.json() as any;
+      // JSON-RPC responses are objects; a null/array/scalar body is a
+      // malformed server reply, not link loss. Classify it explicitly so
+      // the catch below cannot mistake a downstream TypeError for a
+      // network failure.
+      if (body === null || typeof body !== "object" || Array.isArray(body)) {
+        throw new RpcError("transport", method, "malformed JSON-RPC response body");
+      }
       if (body.error) {
         const msg: string = body.error.message || "unknown rpc error";
         // Same classification as the WS path: -32002/-32005 are chest's
