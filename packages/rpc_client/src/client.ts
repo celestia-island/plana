@@ -155,6 +155,25 @@ const POLL_UPGRADE_MIN_INTERVAL_MS = 15_000;
  * the race is typically back by then, and the client never left the
  * foreground to earn a visibility trigger (the desktop case). */
 const POLL_UPGRADE_DEFERRAL_MS = 10_000;
+/** TransportError codes that mean "the link is gone", as opposed to a
+ *  server response that merely failed to parse (bad-json) or a host that
+ *  cannot carry the request at all (no-fetch / unsupported-body). */
+const NETWORK_FAILURE_CODES: ReadonlySet<string> = new Set([
+  "network",
+  "host-request-failed",
+  "channel-closed",
+  "send-failed",
+]);
+/** Poll-tier liveness cadence. Poll has no push channel and no heartbeat
+ *  (heartbeats are ws-only), so without a periodic probe a dead link
+ *  leaves the client reporting `connected` forever while every RPC call
+ *  fails — the stale-green light this client exists to avoid. The cadence
+ *  matches the ws heartbeat interval so both push tiers surface a drop in
+ *  the same window. */
+const POLL_LIVENESS_INTERVAL_MS = 15_000;
+/** Per-probe budget for the poll-tier liveness GET. Kept short so a dead
+ *  link is declared quickly; the normal call timeout is much longer. */
+const POLL_LIVENESS_TIMEOUT_MS = 5_000;
 
 function isLocalhost(baseUrl: string): boolean {
   try {
@@ -205,6 +224,13 @@ export class RpcClient {
    *  exhausting its rounds re-arms recovery instead of parking on
    *  "failed" (only FIRST-EVER connection attempts park on failed). */
   #fromRecovery = false;
+  /** Poll-tier liveness watchdog: the only signal that the HTTP lane is
+   *  still alive (poll has no heartbeat and no channel events). The
+   *  generation invalidates a probe that resolves after a stop/restart
+   *  (an upgrade or recovery must not be killed by a stale result). */
+  #pollGuardTimer: ReturnType<typeof setInterval> | null = null;
+  #pollGuardInFlight = false;
+  #pollGuardGen = 0;
 
   #notifHandlers = new Set<NotificationHandler>();
   #binaryHandlers = new Set<BinaryHandler>();
@@ -349,6 +375,19 @@ export class RpcClient {
     this.#onResumeTrigger();
   };
 
+  /** The browser's own link verdict. `offline` is authoritative even when
+   *  the tier's channel is still holding a half-open socket (mobile
+   *  suspend, Wi-Fi hop, VPN flap): surface the reconnecting state now so
+   *  the host's light turns yellow instead of staying green until the
+   *  heartbeat / next call notices. The existing `online` resume trigger
+   *  owns the reconnect itself. */
+  readonly #onOffline = (): void => {
+    if (!this.#revivable || this.#local) return;
+    if (this.#state === "connected" || this.#state === "connecting") {
+      this.#setState("reconnecting", 0);
+    }
+  };
+
   #onResumeTrigger(): void {
     if (!this.#revivable) return;
     if (this.#state === "connected" || this.#state === "connecting") {
@@ -431,6 +470,7 @@ export class RpcClient {
     this.#resumeBound = true;
     document.addEventListener("visibilitychange", this.#onVisibilityChange);
     window.addEventListener("online", this.#onOnline);
+    window.addEventListener("offline", this.#onOffline);
   }
 
   #unbindResumeTriggers(): void {
@@ -438,6 +478,7 @@ export class RpcClient {
     this.#resumeBound = false;
     document.removeEventListener("visibilitychange", this.#onVisibilityChange);
     window.removeEventListener("online", this.#onOnline);
+    window.removeEventListener("offline", this.#onOffline);
   }
 
   on(event: "notification", handler: NotificationHandler): () => void;
@@ -736,6 +777,9 @@ export class RpcClient {
       } catch (e) {
         this.#pending.delete(id);
         clearTimeout(timer);
+        // The socket was open when the call started but the send failed:
+        // the link is gone even if `onClose` has not fired yet.
+        this.#noteNetworkFailure();
         reject(new RpcError("transport", method, `Failed to send: ${e}`));
       }
     }) as Promise<T>;
@@ -786,13 +830,25 @@ export class RpcClient {
       void offOpen;
 
       const offError = es.onError(() => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        es.close();
-        // Identity-guarded — see the timeout path above.
-        if (this.#eventSource === es) this.#eventSource = null;
-        resolve(false);
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          es.close();
+          // Identity-guarded — see the timeout path above.
+          if (this.#eventSource === es) this.#eventSource = null;
+          resolve(false);
+          return;
+        }
+        // Established channel lost (server restart, proxy reset, network
+        // drop). The attempt-phase path above only covers a failure before
+        // adoption; without this branch a winning SSE left the client on a
+        // stale green light with a dead notification lane — the same
+        // "green but deaf" class the poll tier used to have. Re-enter the
+        // ONE recovery loop rather than trusting the error's own retry.
+        if (this.#disposed || this.#eventSource !== es || this.#tier !== "sse") return;
+        try { es.close(); } catch { /* already closing */ }
+        this.#eventSource = null;
+        this.#scheduleRecovery();
       });
       void offError;
 
@@ -1002,6 +1058,19 @@ export class RpcClient {
         // client always reported (R2 on #451 caught the kind drift).
         throw new RpcError("timeout", method, `HTTP call '${method}' timed out`);
       }
+      // Reaching here means the request transport rejected (fetch network
+      // error / channel closed) rather than answering with an HTTP or
+      // JSON-RPC error — the link itself is down. Surface it on the state
+      // machine before rejecting the caller so hosts can show the
+      // reconnecting light while the recovery ladder runs. A malformed
+      // 200 body is a server bug, not link loss, so only the transport's
+      // network-shaped codes (and the browser fetch TypeError twin) count.
+      if (
+        (e instanceof TransportError && NETWORK_FAILURE_CODES.has(e.code)) ||
+        e instanceof TypeError
+      ) {
+        this.#noteNetworkFailure();
+      }
       throw new RpcError("transport", method, String(e));
     } finally {
       clearTimeout(timer);
@@ -1078,6 +1147,7 @@ export class RpcClient {
 
   #teardownAll(): void {
     this.#cancelRecovery();
+    this.#stopPollGuard();
     if (this.#pollUpgradeTimer) {
       clearTimeout(this.#pollUpgradeTimer);
       this.#pollUpgradeTimer = null;
@@ -1137,8 +1207,90 @@ export class RpcClient {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // Established-link liveness (poll tier + shared failure signal)
+  // ═══════════════════════════════════════════════════════════
+
+  /** A request failed at the NETWORK layer while the client believed it
+   *  was connected. WS has its heartbeat and SSE has its channel error,
+   *  but the poll tier has neither — and an HTTP fallback call can fail
+   *  long before the next visibility resume. Enter the ONE recovery loop
+   *  so hosts render the reconnecting light instead of a stale green.
+   *  Server-side failures (non-2xx, JSON-RPC errors, call timeouts) are
+   *  classified before this point and never reach here. */
+  #noteNetworkFailure(): void {
+    if (this.#disposed || this.#local) return;
+    if (this.#state !== "connected") return;
+    // The HTTP lane and the SSE lane share one server; a rejected request
+    // means the notification channel is not trustworthy either. Close it
+    // before the recovery ladder opens a fresh one (a stale channel would
+    // otherwise be overwritten and leak).
+    if (this.#eventSource) {
+      try { this.#eventSource.close(); } catch { /* already closing */ }
+      this.#eventSource = null;
+    }
+    // Same for a ws socket that is open-but-broken (a send just failed) or
+    // still mid-handshake: drop it (and its pending calls) so the next
+    // ladder starts clean instead of overwriting a live listener set.
+    if (this.#ws) this.#cleanupWs(this.#ws, this.#wsGen);
+    this.#scheduleRecovery();
+  }
+
+  /** Arm the poll-tier watchdog. Poll has no push channel and no
+   *  heartbeat, so a health GET is the only proof the lane still works. */
+  #startPollGuard(): void {
+    if (this.#disposed || this.#probeOnly || this.#tier !== "poll") return;
+    if (this.#pollGuardTimer !== null) return;
+    this.#pollGuardGen += 1;
+    this.#pollGuardTimer = setInterval(() => {
+      void this.#checkPollLiveness();
+    }, POLL_LIVENESS_INTERVAL_MS);
+  }
+
+  #stopPollGuard(): void {
+    if (this.#pollGuardTimer !== null) {
+      clearInterval(this.#pollGuardTimer);
+      this.#pollGuardTimer = null;
+    }
+    this.#pollGuardInFlight = false;
+    this.#pollGuardGen += 1;
+  }
+
+  /** One poll-tier health probe. A failure means the HTTP lane is gone;
+   *  a success leaves the green light alone (no state churn per beat). */
+  async #checkPollLiveness(): Promise<void> {
+    if (this.#disposed || this.#tier !== "poll" || this.#state !== "connected") return;
+    if (this.#pollGuardInFlight) return;
+    this.#pollGuardInFlight = true;
+    const gen = this.#pollGuardGen;
+    try {
+      const healthy = await this.#tryPollOnce(POLL_LIVENESS_TIMEOUT_MS);
+      if (
+        !healthy &&
+        this.#pollGuardGen === gen &&
+        !this.#disposed &&
+        this.#tier === "poll" &&
+        this.#state === "connected"
+      ) {
+        this.#scheduleRecovery();
+      }
+    } finally {
+      if (this.#pollGuardGen === gen) this.#pollGuardInFlight = false;
+    }
+  }
+
   #setState(state: ConnectionState, retryIn?: number, transportTier?: string, attemptNumber?: number, countdown?: number): void {
     this.#state = state;
+    // The poll tier's watchdog follows the ONE state machine: green starts
+    // it, every non-connected state stops it (and the recovery loop owns
+    // the next connect ladder). This is the only place it is armed, so a
+    // missed call site cannot leave an interval behind.
+    if (state === "connected") {
+      if (this.#tier === "poll") this.#startPollGuard();
+      else this.#stopPollGuard();
+    } else {
+      this.#stopPollGuard();
+    }
     this.#stateHandlers.forEach((h) => h({
       state,
       retryIn,
