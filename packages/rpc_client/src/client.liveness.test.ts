@@ -119,6 +119,21 @@ async function settleRecovery(): Promise<void> {
   await vi.advanceTimersByTimeAsync(3_000);
 }
 
+/** Install the minimal browser lifecycle surface the client binds to. */
+function stubPageLifecycle(): Record<string, () => void> {
+  const listeners: Record<string, () => void> = {};
+  vi.stubGlobal("window", {
+    addEventListener: (type: string, cb: () => void) => { listeners[type] = cb; },
+    removeEventListener: (type: string) => { delete listeners[type]; },
+  });
+  vi.stubGlobal("document", {
+    visibilityState: "visible",
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  });
+  return listeners;
+}
+
 describe("established-link liveness", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -323,18 +338,47 @@ describe("established-link liveness", () => {
     await client.disconnect();
   });
 
-  it("surfaces the browser offline edge as reconnecting and arms the recovery ladder", async () => {
-    const listeners: Record<string, () => void> = {};
-    vi.stubGlobal("window", {
-      addEventListener: (type: string, cb: () => void) => { listeners[type] = cb; },
-      removeEventListener: (type: string) => { delete listeners[type]; },
+  it("closes the adopted SSE channel before recovering from an offline edge", async () => {
+    const listeners = stubPageLifecycle();
+    const sseChannels: FakeSseChannel[] = [];
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.endsWith("/api/health")) return healthOk();
+        throw new Error("test: rpc not expected");
+      },
+      sse: () => {
+        const channel = new FakeSseChannel();
+        sseChannels.push(channel);
+        return channel;
+      },
     });
-    vi.stubGlobal("document", {
-      visibilityState: "visible",
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    const states: string[] = [];
+    client.on("state", (e) => states.push(e.state));
+    client.connect();
+    await settleConnect();
+    expect(client.state).toBe("connected");
+    expect(client.transportTier).toBe("sse");
+    expect(sseChannels).toHaveLength(1);
 
+    listeners.offline?.();
+
+    expect(client.state).toBe("reconnecting");
+    // The adopted channel must be closed (a real EventSource would keep
+    // reconnecting and delivering into the old handler set).
+    expect(sseChannels[0]!.readyState).toBe("closed");
+
+    await settleRecovery();
+
+    expect(client.state).toBe("connected");
+    expect(client.transportTier).toBe("sse");
+    expect(sseChannels.length).toBeGreaterThan(1);
+    expect(states[states.length - 1]).toBe("connected");
+    await client.disconnect();
+  });
+
+  it("surfaces the browser offline edge as reconnecting and arms the recovery ladder", async () => {
+    const listeners = stubPageLifecycle();
     const transport = makeTransport({
       request: async (req) => {
         if (req.url.endsWith("/api/health")) return healthOk();

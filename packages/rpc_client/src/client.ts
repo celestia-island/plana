@@ -382,11 +382,14 @@ export class RpcClient {
    *  owns the reconnect itself. */
   readonly #onOffline = (): void => {
     if (!this.#revivable || this.#local) return;
-    // A real drop must not park on a bare `reconnecting` label: arm the
-    // SAME recovery loop so the yellow light is backed by actual retries.
-    // (While `connecting` the ladder is already running; the light is
-    // already yellow and must not be restarted underneath it.)
-    if (this.#state === "connected") this.#scheduleRecovery();
+    // A real drop must not park on a bare `reconnecting` label: enter the
+    // SAME link-loss path used by failed requests. That path closes the
+    // now untrustworthy channels (a real EventSource would otherwise keep
+    // reconnecting and delivering into the old handler set), rejects their
+    // pending calls and arms the recovery loop. (While `connecting` the
+    // ladder is already running; the light is already yellow and must not
+    // be restarted underneath it.)
+    if (this.#state === "connected") this.#noteNetworkFailure();
   };
 
   #onResumeTrigger(): void {
