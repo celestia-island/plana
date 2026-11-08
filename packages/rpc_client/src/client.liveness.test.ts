@@ -5,6 +5,9 @@ import {
   type SseReadyState,
   type Transport,
   type TransportResponse,
+  type WsChannel,
+  type WsCloseInfo,
+  type WsReadyState,
 } from "@celestia-island/tairitsu-transport";
 import { RpcClient, RpcError } from "./client.js";
 
@@ -61,6 +64,38 @@ function nonJsonResponse(): TransportResponse {
   };
 }
 
+class FakeWsChannel implements WsChannel {
+  readyState: WsReadyState = "open";
+  private closeCb: ((info: WsCloseInfo) => void) | null = null;
+
+  send(): void {
+    throw new Error("test: ws send failed");
+  }
+
+  close(): void {
+    this.readyState = "closed";
+    this.closeCb?.({ code: 1006, reason: "gone", wasClean: false });
+  }
+
+  onOpen(cb: () => void): () => void {
+    cb();
+    return () => {};
+  }
+
+  onMessage(): () => void {
+    return () => {};
+  }
+
+  onClose(cb: (info: WsCloseInfo) => void): () => void {
+    this.closeCb = cb;
+    return () => { this.closeCb = null; };
+  }
+
+  onError(): () => void {
+    return () => {};
+  }
+}
+
 class FakeSseChannel implements SseChannel {
   readyState: SseReadyState = "open";
   private openCb: (() => void) | null = null;
@@ -95,11 +130,13 @@ type RequestHandler = (req: { url: string; method?: string }) => Promise<Transpo
 function makeTransport(opts: {
   request: RequestHandler;
   sse?: SseChannel | (() => SseChannel);
+  ws?: WsChannel | (() => WsChannel);
 }): Transport {
   return {
     request: opts.request,
     openWs: () => {
-      throw new Error("test: ws unavailable");
+      if (!opts.ws) throw new Error("test: ws unavailable");
+      return typeof opts.ws === "function" ? opts.ws() : opts.ws;
     },
     openSse: () => {
       if (!opts.sse) throw new Error("test: sse unavailable");
@@ -215,6 +252,32 @@ describe("established-link liveness", () => {
 
     expect(client.state).toBe("connected");
     expect(states[states.length - 1]).toBe("connected");
+    await client.disconnect();
+  });
+
+  it("turns a ws send failure into reconnecting", async () => {
+    const ws = new FakeWsChannel();
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.endsWith("/api/health")) return healthOk();
+        throw new Error("test: rpc not expected");
+      },
+      ws,
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    const states: string[] = [];
+    client.on("state", (e) => states.push(e.state));
+    client.connect();
+    await settleConnect();
+    expect(client.state).toBe("connected");
+    expect(client.transportTier).toBe("ws");
+
+    const err = await client.call("demo.method").catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(RpcError);
+    expect((err as RpcError).kind).toBe("transport");
+    expect(states).toContain("reconnecting");
+    expect(client.state).toBe("reconnecting");
     await client.disconnect();
   });
 
