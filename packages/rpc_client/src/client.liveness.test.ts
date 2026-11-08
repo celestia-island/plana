@@ -108,10 +108,12 @@ describe("established-link liveness", () => {
 
   it("turns a dead poll lane into reconnecting via the periodic probe", async () => {
     let healthCalls = 0;
+    const healthUrls: string[] = [];
     const transport = makeTransport({
       request: async (req) => {
-        if (req.url.endsWith("/api/health")) {
+        if (req.url.includes("/api/health")) {
           healthCalls += 1;
+          healthUrls.push(req.url);
           if (healthCalls === 1) return healthOk();
           throw new TransportError("network", "connection closed");
         }
@@ -131,6 +133,10 @@ describe("established-link liveness", () => {
 
     expect(states).toContain("reconnecting");
     expect(client.state).toBe("reconnecting");
+    // The liveness beat must bypass the HTTP cache; the connect probe
+    // keeps the clean URL.
+    expect(healthUrls[0]).not.toContain("?_=");
+    expect(healthUrls[1]).toContain("?_=");
     await client.disconnect();
   });
 

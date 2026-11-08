@@ -871,9 +871,12 @@ export class RpcClient {
   // Tier 3 — HTTP POST probe (uses health endpoint)
   // ═══════════════════════════════════════════════════════════
 
-  async #tryPollOnce(timeoutMs: number): Promise<boolean> {
+  async #tryPollOnce(timeoutMs: number, cacheBust = false): Promise<boolean> {
     try {
-      const url = this.#baseUrl + "/api/health";
+      // The liveness beat MUST NOT be answered from the HTTP cache: a
+      // cached 200 would keep the light green through a real outage. The
+      // connect-phase probe keeps the clean URL (server logs, proxies).
+      const url = this.#baseUrl + "/api/health" + (cacheBust ? `?_=${Date.now()}` : "");
       const headers: Record<string, string> = {};
       const token = this.#getToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -1264,7 +1267,7 @@ export class RpcClient {
     this.#pollGuardInFlight = true;
     const gen = this.#pollGuardGen;
     try {
-      const healthy = await this.#tryPollOnce(POLL_LIVENESS_TIMEOUT_MS);
+      const healthy = await this.#tryPollOnce(POLL_LIVENESS_TIMEOUT_MS, true);
       if (
         !healthy &&
         this.#pollGuardGen === gen &&
