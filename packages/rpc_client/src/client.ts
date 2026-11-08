@@ -160,7 +160,6 @@ const POLL_UPGRADE_DEFERRAL_MS = 10_000;
  *  cannot carry the request at all (no-fetch / unsupported-body). */
 const NETWORK_FAILURE_CODES: ReadonlySet<string> = new Set([
   "network",
-  "host-request-failed",
   "channel-closed",
   "send-failed",
 ]);
@@ -383,9 +382,11 @@ export class RpcClient {
    *  owns the reconnect itself. */
   readonly #onOffline = (): void => {
     if (!this.#revivable || this.#local) return;
-    if (this.#state === "connected" || this.#state === "connecting") {
-      this.#setState("reconnecting", 0);
-    }
+    // A real drop must not park on a bare `reconnecting` label: arm the
+    // SAME recovery loop so the yellow light is backed by actual retries.
+    // (While `connecting` the ladder is already running; the light is
+    // already yellow and must not be restarted underneath it.)
+    if (this.#state === "connected") this.#scheduleRecovery();
   };
 
   #onResumeTrigger(): void {
@@ -871,12 +872,12 @@ export class RpcClient {
   // Tier 3 — HTTP POST probe (uses health endpoint)
   // ═══════════════════════════════════════════════════════════
 
-  async #tryPollOnce(timeoutMs: number, cacheBust = false): Promise<boolean> {
+  async #tryPollOnce(timeoutMs: number, liveness = false): Promise<boolean> {
     try {
       // The liveness beat MUST NOT be answered from the HTTP cache: a
       // cached 200 would keep the light green through a real outage. The
       // connect-phase probe keeps the clean URL (server logs, proxies).
-      const url = this.#baseUrl + "/api/health" + (cacheBust ? `?_=${Date.now()}` : "");
+      const url = this.#baseUrl + "/api/health" + (liveness ? `?_=${Date.now()}` : "");
       const headers: Record<string, string> = {};
       const token = this.#getToken();
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -890,6 +891,12 @@ export class RpcClient {
       });
 
       if (!resp.ok) return false;
+      if (liveness) {
+        // A 200 from something that is not the backend (maintenance page,
+        // intercepting proxy) is not a live lane. The beat validates the
+        // body; the connect-phase probe stays a cheap status check.
+        try { await resp.json(); } catch { return false; }
+      }
 
       return true;
     } catch {
@@ -1067,11 +1074,9 @@ export class RpcClient {
       // machine before rejecting the caller so hosts can show the
       // reconnecting light while the recovery ladder runs. A malformed
       // 200 body is a server bug, not link loss, so only the transport's
-      // network-shaped codes (and the browser fetch TypeError twin) count.
-      if (
-        (e instanceof TransportError && NETWORK_FAILURE_CODES.has(e.code)) ||
-        e instanceof TypeError
-      ) {
+      // network-shaped codes count (the browser transport wraps a fetch
+      // rejection as `network`; host-contract codes are not link verdicts).
+      if (e instanceof TransportError && NETWORK_FAILURE_CODES.has(e.code)) {
         this.#noteNetworkFailure();
       }
       throw new RpcError("transport", method, String(e));

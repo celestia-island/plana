@@ -12,19 +12,23 @@ import { RpcClient, RpcError } from "./client.js";
  * Established-link liveness.
  *
  * The client reports `connected` for the poll tier even though poll has
- * neither a push channel nor the ws heartbeat. These tests pin the two
- * signals that make the state honest:
+ * neither a push channel nor the ws heartbeat. These tests pin the signals
+ * that make the state honest:
  *
  *  - a periodic `/api/health` probe turns a dead poll lane into
- *    `reconnecting` (and the recovery ladder takes over);
+ *    `reconnecting` and the SAME recovery ladder brings it back;
  *  - a network-level HTTP failure does the same immediately, without
  *    waiting for the probe;
- *  - an established SSE channel's error re-enters the SAME recovery loop
- *    instead of leaving a stale green light with a dead notification lane;
- *  - the browser's `offline` event surfaces `reconnecting` immediately.
+ *  - an established SSE channel's error re-enters the SAME recovery loop;
+ *  - the browser's `offline` event surfaces `reconnecting` AND arms the
+ *    ladder (a bare state flip would park the light yellow forever);
+ *  - a non-JSON 200 from the liveness URL is not a live backend.
  *
- * Server-side failures (HTTP status, JSON-RPC error, call timeout) must
- * NOT trigger recovery — they are not link-loss evidence.
+ * Server-side failures (HTTP status, JSON-RPC error, malformed 200 body,
+ * call timeout) must NOT trigger recovery — they are not link-loss
+ * evidence. Every behavior test advances the fake clock past the recovery
+ * delay and asserts a real `connected` return, so a mutation that replaces
+ * the ladder with a bare state flip goes red.
  */
 
 function jsonResponse(status: number, body: unknown): TransportResponse {
@@ -33,7 +37,7 @@ function jsonResponse(status: number, body: unknown): TransportResponse {
     ok: status < 400,
     status,
     statusText: "",
-    headers: new Headers(),
+    headers: new Headers({ "content-type": "application/json" }),
     text: async () => text,
     json: async <T = unknown>() => body as T,
   };
@@ -41,6 +45,20 @@ function jsonResponse(status: number, body: unknown): TransportResponse {
 
 function healthOk(): TransportResponse {
   return jsonResponse(200, { status: "ok" });
+}
+
+/** A 200 that is not the backend: an HTML maintenance / SPA interstitial. */
+function nonJsonResponse(): TransportResponse {
+  return {
+    ok: true,
+    status: 200,
+    statusText: "",
+    headers: new Headers({ "content-type": "text/html" }),
+    text: async () => "<!doctype html><html><body>maintenance</body></html>",
+    json: async () => {
+      throw new SyntaxError("Unexpected token '<'");
+    },
+  };
 }
 
 class FakeSseChannel implements SseChannel {
@@ -76,7 +94,7 @@ type RequestHandler = (req: { url: string; method?: string }) => Promise<Transpo
 
 function makeTransport(opts: {
   request: RequestHandler;
-  sse?: SseChannel;
+  sse?: SseChannel | (() => SseChannel);
 }): Transport {
   return {
     request: opts.request,
@@ -85,7 +103,7 @@ function makeTransport(opts: {
     },
     openSse: () => {
       if (!opts.sse) throw new Error("test: sse unavailable");
-      return opts.sse;
+      return typeof opts.sse === "function" ? opts.sse() : opts.sse;
     },
   };
 }
@@ -94,6 +112,11 @@ async function settleConnect(): Promise<void> {
   // #raceTransports always waits the round's full timeout (1s) even when
   // every tier has already answered, so the fake clock must cross it.
   await vi.advanceTimersByTimeAsync(1_000);
+}
+
+/** Cross the recovery delay (1s + ≤0.5s jitter) and one 1s connect round. */
+async function settleRecovery(): Promise<void> {
+  await vi.advanceTimersByTimeAsync(3_000);
 }
 
 describe("established-link liveness", () => {
@@ -106,7 +129,7 @@ describe("established-link liveness", () => {
     vi.unstubAllGlobals();
   });
 
-  it("turns a dead poll lane into reconnecting via the periodic probe", async () => {
+  it("turns a dead poll lane into reconnecting and recovers via the periodic probe", async () => {
     let healthCalls = 0;
     const healthUrls: string[] = [];
     const transport = makeTransport({
@@ -114,8 +137,10 @@ describe("established-link liveness", () => {
         if (req.url.includes("/api/health")) {
           healthCalls += 1;
           healthUrls.push(req.url);
-          if (healthCalls === 1) return healthOk();
-          throw new TransportError("network", "connection closed");
+          // 1 = connect, 2 = the liveness beat that detects the drop,
+          // 3+ = the recovery ladder's health probe.
+          if (healthCalls === 2) throw new TransportError("network", "connection closed");
+          return healthOk();
         }
         throw new Error("test: rpc not expected");
       },
@@ -137,14 +162,23 @@ describe("established-link liveness", () => {
     // keeps the clean URL.
     expect(healthUrls[0]).not.toContain("?_=");
     expect(healthUrls[1]).toContain("?_=");
+
+    await settleRecovery();
+
+    expect(client.state).toBe("connected");
+    expect(client.transportTier).toBe("poll");
+    expect(states[states.length - 1]).toBe("connected");
+    expect(healthCalls).toBeGreaterThan(2);
     await client.disconnect();
   });
 
-  it("turns a network-level RPC failure into reconnecting immediately", async () => {
+  it("turns a network-level RPC failure into reconnecting immediately and recovers", async () => {
+    let rpcHealthy = false;
     const transport = makeTransport({
       request: async (req) => {
         if (req.url.endsWith("/api/health")) return healthOk();
-        throw new TransportError("network", "connection closed");
+        if (!rpcHealthy) throw new TransportError("network", "connection closed");
+        return jsonResponse(200, { result: { ok: true } });
       },
     });
     const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
@@ -160,16 +194,27 @@ describe("established-link liveness", () => {
     expect((err as RpcError).kind).toBe("transport");
     expect(states).toContain("reconnecting");
     expect(client.state).toBe("reconnecting");
+
+    rpcHealthy = true;
+    await settleRecovery();
+
+    expect(client.state).toBe("connected");
+    expect(states[states.length - 1]).toBe("connected");
     await client.disconnect();
   });
 
-  it("does not treat an HTTP status or a JSON-RPC error as link loss", async () => {
-    let rpcMode: "http500" | "rpcError" = "http500";
+  it("does not treat an HTTP status, a JSON-RPC error, a malformed 200 or a timeout as link loss", async () => {
+    type RpcMode = "http500" | "rpcError" | "badJson" | "timeout";
+    let rpcMode: RpcMode = "http500";
     const transport = makeTransport({
       request: async (req) => {
         if (req.url.endsWith("/api/health")) return healthOk();
         if (rpcMode === "http500") return jsonResponse(500, { error: "boom" });
-        return jsonResponse(200, { jsonrpc: "2.0", id: "x", error: { code: -32003, message: "upstream" } });
+        if (rpcMode === "rpcError") {
+          return jsonResponse(200, { jsonrpc: "2.0", id: "x", error: { code: -32003, message: "upstream" } });
+        }
+        if (rpcMode === "badJson") return nonJsonResponse();
+        throw new TransportError("timeout", "slow");
       },
     });
     const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
@@ -178,24 +223,27 @@ describe("established-link liveness", () => {
     client.connect();
     await settleConnect();
 
-    await expect(client.call("demo.method")).rejects.toBeInstanceOf(RpcError);
-    expect(client.state).toBe("connected");
-
-    rpcMode = "rpcError";
-    await expect(client.call("demo.method")).rejects.toBeInstanceOf(RpcError);
-    expect(client.state).toBe("connected");
+    for (const mode of ["http500", "rpcError", "badJson", "timeout"] as const) {
+      rpcMode = mode;
+      await expect(client.call("demo.method"), mode).rejects.toBeInstanceOf(RpcError);
+      expect(client.state, mode).toBe("connected");
+    }
     expect(states).not.toContain("reconnecting");
     await client.disconnect();
   });
 
   it("re-enters recovery when an established SSE channel errors", async () => {
-    const sse = new FakeSseChannel();
+    const sseChannels: FakeSseChannel[] = [];
     const transport = makeTransport({
       request: async (req) => {
         if (req.url.endsWith("/api/health")) return healthOk();
         throw new Error("test: rpc not expected");
       },
-      sse,
+      sse: () => {
+        const channel = new FakeSseChannel();
+        sseChannels.push(channel);
+        return channel;
+      },
     });
     const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
     const states: string[] = [];
@@ -205,15 +253,47 @@ describe("established-link liveness", () => {
 
     expect(client.state).toBe("connected");
     expect(client.transportTier).toBe("sse");
+    expect(sseChannels).toHaveLength(1);
 
-    sse.fireError();
+    sseChannels[0]!.fireError();
+
+    expect(states).toContain("reconnecting");
+    expect(client.state).toBe("reconnecting");
+
+    await settleRecovery();
+
+    expect(client.state).toBe("connected");
+    expect(client.transportTier).toBe("sse");
+    expect(sseChannels.length).toBeGreaterThan(1);
+    await client.disconnect();
+  });
+
+  it("treats a non-JSON 200 health response as a dead liveness beat", async () => {
+    let healthCalls = 0;
+    const transport = makeTransport({
+      request: async (req) => {
+        if (req.url.includes("/api/health")) {
+          healthCalls += 1;
+          return healthCalls === 1 ? healthOk() : nonJsonResponse();
+        }
+        throw new Error("test: rpc not expected");
+      },
+    });
+    const client = new RpcClient({ baseUrl: "https://backend.example.com", getToken: () => "t", transport });
+    const states: string[] = [];
+    client.on("state", (e) => states.push(e.state));
+    client.connect();
+    await settleConnect();
+    expect(client.state).toBe("connected");
+
+    await vi.advanceTimersByTimeAsync(15_000);
 
     expect(states).toContain("reconnecting");
     expect(client.state).toBe("reconnecting");
     await client.disconnect();
   });
 
-  it("surfaces the browser offline edge as reconnecting immediately", async () => {
+  it("surfaces the browser offline edge as reconnecting and arms the recovery ladder", async () => {
     const listeners: Record<string, () => void> = {};
     vi.stubGlobal("window", {
       addEventListener: (type: string, cb: () => void) => { listeners[type] = cb; },
@@ -242,6 +322,12 @@ describe("established-link liveness", () => {
 
     expect(states).toContain("reconnecting");
     expect(client.state).toBe("reconnecting");
+
+    // No `online` event here: the ladder must be armed by `offline` itself.
+    await settleRecovery();
+
+    expect(client.state).toBe("connected");
+    expect(states[states.length - 1]).toBe("connected");
     await client.disconnect();
   });
 });
