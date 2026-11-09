@@ -52,7 +52,7 @@ ts-rs = { workspace = true }
 chrono = { workspace = true, optional = true }
 tracing-subscriber = { workspace = true, optional = true }
 # ── rpc-server module (rpc-server feature) ─────────────────────
-maxminddb = { version = "^0", optional = true }
+maxminddb = { version = "^0.32", optional = true }
 
 [dev-dependencies]
 anyhow.workspace = true
