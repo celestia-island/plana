@@ -521,8 +521,8 @@ fn is_image_priced(lower: &str) -> bool {
 /// and an injected source (set_pricing_source) wins over both. Per-image
 /// models are excluded from ALL token faces here; the one lane that still
 /// invents token-shaped numbers is estimate_cost's provider-keyed
-/// fallback — see its doc for why that is left to the arona-side
-/// follow-up (lookup_image_price consumers).
+/// fallback for models with no band row at all — closing that lane is an
+/// arona-side follow-up once lookup_image_price gains consumers there.
 pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     let lower = model.to_lowercase();
     // Image models are per-image priced (`[[image_band]]`): token bands
@@ -696,8 +696,8 @@ mod tests {
 
         // THE GUARD: an image model must not resolve token pricing from
         // ANY face — not the band table, not the band-id diagnostics, and
-        // not resolve_pricing even with a sane injected token row sitting
-        // in the slot (installed above).
+        // not resolution even when a source would price it (fed to the
+        // extracted core above; the process slot itself stays untouched).
         assert_eq!(lookup_pricing("cogview-3-plus"), None);
         assert_eq!(pricing_band_id("cogview-3-plus"), None);
         assert_eq!(resolve_pricing("cogview-3-plus"), None);
