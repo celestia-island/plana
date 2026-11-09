@@ -17,4 +17,10 @@ serde = { workspace = true }
 sys-locale = { workspace = true }
 [dev-dependencies]
 
+# The agent-error catalog completeness test enumerates the canonical
+# `AgentErrorCode` variants from plana-core (test-only edge: the shipped
+# crate stays a leaf with no plana dependency).
+plana_core = { workspace = true }
 anyhow = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }

@@ -34,6 +34,12 @@ pub enum AgentErrorCode {
     /// unreachable or unhealthy. See [`StructuredAgentError`]'s `context`
     /// field for the canonical keys carried alongside this code.
     DependencyDown,
+    /// The request was refused because the engine is already processing
+    /// another user message (single-flight guard), not because of a fault.
+    AgentBusy,
+    /// The request was refused because the task's budget (steps, tokens or
+    /// wall-clock allowance) is exhausted, not because of a fault.
+    BudgetExhausted,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -127,6 +133,21 @@ mod tests {
         assert_eq!(wire, r#""dependency_down""#);
         let back: AgentErrorCode = serde_json::from_str(&wire).unwrap();
         assert_eq!(back, AgentErrorCode::DependencyDown);
+    }
+
+    /// The wire strings of the two engine-flow codes are cross-service
+    /// contracts (chest-side error routing reads them verbatim).
+    #[test]
+    fn engine_flow_codes_round_trip_snake_case() {
+        let wire = serde_json::to_string(&AgentErrorCode::AgentBusy).unwrap();
+        assert_eq!(wire, r#""agent_busy""#);
+        let back: AgentErrorCode = serde_json::from_str(&wire).unwrap();
+        assert_eq!(back, AgentErrorCode::AgentBusy);
+
+        let wire = serde_json::to_string(&AgentErrorCode::BudgetExhausted).unwrap();
+        assert_eq!(wire, r#""budget_exhausted""#);
+        let back: AgentErrorCode = serde_json::from_str(&wire).unwrap();
+        assert_eq!(back, AgentErrorCode::BudgetExhausted);
     }
 
     /// Backward-compatibility tolerance for the `context` field, in both
