@@ -455,6 +455,14 @@ pub enum AgentErrorCode {
     /// field for the canonical keys carried alongside this code.
     #[error("infrastructure dependency failure")]
     DependencyDown,
+    /// The request was refused because the engine is already processing
+    /// another user message (single-flight guard), not because of a fault.
+    #[error("agent is busy processing another request")]
+    AgentBusy,
+    /// The request was refused because the task's budget (steps, tokens or
+    /// wall-clock allowance) is exhausted, not because of a fault.
+    #[error("task budget is exhausted")]
+    BudgetExhausted,
 }
 
 impl AgentErrorCode {
@@ -492,6 +500,13 @@ impl AgentErrorCode {
 
     pub fn is_dependency_error(&self) -> bool {
         matches!(self, Self::DependencyDown)
+    }
+
+    /// Engine-flow refusals: the request was declined by the engine's own
+    /// flow control (single-flight guard, budget accounting) rather than
+    /// failing inside a model call, tool run or chain step.
+    pub fn is_engine_flow_error(&self) -> bool {
+        matches!(self, Self::AgentBusy | Self::BudgetExhausted)
     }
 
     pub fn is_model_selection_error(&self) -> bool {
@@ -857,6 +872,14 @@ mod tests {
     }
 
     #[test]
+    fn agent_error_code_is_engine_flow_error() {
+        assert!(AgentErrorCode::AgentBusy.is_engine_flow_error());
+        assert!(AgentErrorCode::BudgetExhausted.is_engine_flow_error());
+        assert!(!AgentErrorCode::DependencyDown.is_engine_flow_error());
+        assert!(!AgentErrorCode::LlmRateLimited.is_engine_flow_error());
+    }
+
+    #[test]
     fn agent_error_code_is_model_selection_error() {
         let model_errors = [
             AgentErrorCode::ModelNoProviders,
@@ -900,6 +923,8 @@ mod tests {
             AgentErrorCode::SkillEmptyOutput,
             AgentErrorCode::SkillMissingReport,
             AgentErrorCode::DependencyDown,
+            AgentErrorCode::AgentBusy,
+            AgentErrorCode::BudgetExhausted,
         ] {
             let count = [
                 code.is_llm_error(),
@@ -908,6 +933,7 @@ mod tests {
                 code.is_skill_error(),
                 code.is_model_selection_error(),
                 code.is_dependency_error(),
+                code.is_engine_flow_error(),
             ]
             .iter()
             .filter(|&&b| b)
@@ -940,6 +966,29 @@ mod tests {
         assert_eq!(
             AgentErrorCode::DependencyDown.to_string(),
             "infrastructure dependency failure"
+        );
+    }
+
+    /// The wire strings of the two engine-flow codes are cross-service
+    /// contracts (chest-side error routing reads them verbatim).
+    #[test]
+    fn engine_flow_wire_strings_are_stable() {
+        let wire = serde_json::to_string(&AgentErrorCode::AgentBusy).unwrap();
+        assert_eq!(wire, r#""agent_busy""#);
+        let back: AgentErrorCode = serde_json::from_str(&wire).unwrap();
+        assert_eq!(back, AgentErrorCode::AgentBusy);
+        assert_eq!(
+            AgentErrorCode::AgentBusy.to_string(),
+            "agent is busy processing another request"
+        );
+
+        let wire = serde_json::to_string(&AgentErrorCode::BudgetExhausted).unwrap();
+        assert_eq!(wire, r#""budget_exhausted""#);
+        let back: AgentErrorCode = serde_json::from_str(&wire).unwrap();
+        assert_eq!(back, AgentErrorCode::BudgetExhausted);
+        assert_eq!(
+            AgentErrorCode::BudgetExhausted.to_string(),
+            "task budget is exhausted"
         );
     }
 
