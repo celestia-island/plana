@@ -1,6 +1,10 @@
 [package]
 name = "plana-dispatch-client"
-version = "0.1.2"
+# Own release line (does not track [workspace.package]): 0.2.0 answers the
+# plana resolution break — this manifest previously published with the umbrella
+# pinned ^0.3, and the 0.4 release wave moved the workspace key to ^0.4, so
+# `^0.1` consumers would silently keep resolving the stale 0.1.2 manifest.
+version = "0.2.0"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
