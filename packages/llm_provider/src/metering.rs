@@ -462,6 +462,52 @@ impl PricingBand {
     }
 }
 
+impl ImagePricingBand {
+    /// Same substring grammar as [`PricingBand::matches`] — the two tables
+    /// must never grow apart.
+    pub(crate) fn matches(&self, lower: &str) -> bool {
+        self.all.iter().all(|p| lower.contains(p))
+            && self.any.iter().all(|g| g.iter().any(|p| lower.contains(p)))
+    }
+}
+
+/// The per-image price of a generation model, in micro-CNY (¥0.30 →
+/// 300_000). Image models are sold per generated image, never per token:
+/// consumers of this type must not multiply it by token counts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ImagePrice {
+    pub per_image_micros_cny: i64,
+}
+
+/// Resolve a model id to its per-image band (first matching row wins).
+/// `None` for models with no `[[image_band]]` row — unpriced stays
+/// unpriced, exactly like the token table.
+pub fn lookup_image_price(model: &str) -> Option<ImagePrice> {
+    let lower = model.to_lowercase();
+    IMAGE_PRICING_BANDS
+        .iter()
+        .find(|b| b.matches(&lower))
+        .map(|b| ImagePrice {
+            per_image_micros_cny: b.per_image_micros_cny,
+        })
+}
+
+/// The id of the image band that would price `model` (diagnostics twin of
+/// [`pricing_band_id`]).
+pub fn image_pricing_band_id(model: &str) -> Option<&'static str> {
+    let lower = model.to_lowercase();
+    IMAGE_PRICING_BANDS
+        .iter()
+        .find(|b| b.matches(&lower))
+        .map(|b| b.id)
+}
+
+/// True when `model` resolves through the per-image table — the guard
+/// [`lookup_pricing`] consults so an image model is never token-priced.
+fn is_image_priced(lower: &str) -> bool {
+    IMAGE_PRICING_BANDS.iter().any(|b| b.matches(lower))
+}
+
 /// Resolve a model id to its band pricing by the generated pattern table.
 /// Band numbers come from provider-registry data (USD per 1M tokens as the
 /// registry publishes them — CNY-sourced lists arrive pre-converted there,
@@ -475,6 +521,13 @@ impl PricingBand {
 /// and an injected source (set_pricing_source) wins over both.
 pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     let lower = model.to_lowercase();
+    // Image models are per-image priced (`[[image_band]]`): token bands
+    // must never answer for them, not even by substring accident — a
+    // token estimate in USD-per-million for a per-image CNY product is
+    // the exact distortion this guard exists to prevent.
+    if is_image_priced(&lower) {
+        return None;
+    }
     PRICING_BANDS
         .iter()
         .find(|b| b.matches(&lower))
@@ -488,6 +541,11 @@ pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
 /// generated-table tests.
 pub fn pricing_band_id(model: &str) -> Option<&'static str> {
     let lower = model.to_lowercase();
+    // Same guard as lookup_pricing: an image model's pricing identity is
+    // its image band (see image_pricing_band_id), never a text band.
+    if is_image_priced(&lower) {
+        return None;
+    }
     PRICING_BANDS
         .iter()
         .find(|b| b.matches(&lower))
@@ -585,6 +643,40 @@ mod tests {
         assert_eq!(summary.total_input_tokens, 3000);
         assert_eq!(summary.total_output_tokens, 1500);
         assert!(summary.total_cost_usd > 0.0);
+    }
+
+    #[test]
+    fn image_bands_price_per_image_and_never_per_token() {
+        // The checked-in row: cogview at ¥0.30/image.
+        assert_eq!(
+            lookup_image_price("cogview-3-plus"),
+            Some(ImagePrice {
+                per_image_micros_cny: 300_000
+            })
+        );
+        assert_eq!(image_pricing_band_id("cogview-3-plus"), Some("cogview"));
+        // Case-insensitive match, same as the token table.
+        assert_eq!(
+            lookup_image_price("CogView-3-Plus").map(|p| p.per_image_micros_cny),
+            Some(300_000)
+        );
+
+        // THE GUARD: an image model must not resolve token pricing from
+        // ANY face of the fallback — not the band table, not the band-id
+        // diagnostics, not resolve_pricing's injected-source lane.
+        assert_eq!(lookup_pricing("cogview-3-plus"), None);
+        assert_eq!(pricing_band_id("cogview-3-plus"), None);
+        assert_eq!(resolve_pricing("cogview-3-plus"), None);
+
+        // Unpriced stays unpriced on the image table too.
+        assert_eq!(lookup_image_price("some-unknown-model"), None);
+        assert_eq!(image_pricing_band_id("some-unknown-model"), None);
+
+        // Token models are untouched by the image table: a real text model
+        // still resolves its token band both ways.
+        assert!(lookup_pricing("deepseek/deepseek-v4-pro").is_some());
+        assert!(pricing_band_id("deepseek/deepseek-v4-pro").is_some());
+        assert_eq!(lookup_image_price("deepseek/deepseek-v4-pro"), None);
     }
 
     #[test]
@@ -1249,6 +1341,12 @@ pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
                  falling back to the compiled-in table (further occurrences silenced)"
             );
         }
+    }
+    // Per-image models never resolve token pricing from any source — the
+    // guard applies to injected rows and arona DB overrides too: a token
+    // row for a per-image product is wrong-unit data, not an override.
+    if image_pricing_band_id(model).is_some() {
+        return None;
     }
     lookup_pricing(model)
 }

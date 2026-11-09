@@ -320,3 +320,22 @@ all = ["mistral"]
 input_per_million = 0.20
 output_per_million = 0.80
 cached_per_million = 0.20
+
+# ── Image generation (per-image, never per-token) ─────────────────────
+#
+# Image models are sold per generated image, so the token tables above
+# must never price them — not even as an estimate. `gpt-5-image-mini`
+# matching the TEXT band `gpt-mini-5` by substring accident is the
+# distortion class this section exists to end: a model that matches an
+# image_band row is per-image priced, `lookup_pricing` returns None for
+# it, and consumers read `lookup_image_price` instead. The same
+# all/any substring grammar applies (first row wins, catch-alls
+# forbidden). Prices are CNY-native integers in micro-CNY (Zhipu bills
+# CNY; the snapshot carries no per-image field to anchor against, so
+# every row carries a mandatory reason instead of an anchor).
+
+[[image_band]]
+id = "cogview"
+all = ["cogview"]
+per_image_micros_cny = 300_000
+reason = "Zhipu cogview list price ¥0.30 per image (BigModel console, checked 2026-11-10); the registry snapshot publishes no per-image field"
