@@ -518,7 +518,11 @@ fn is_image_priced(lower: &str) -> bool {
 /// guesses (see `estimate_cost`).
 ///
 /// This is the universal FALLBACK: arona's model_pricing DB rows win first,
-/// and an injected source (set_pricing_source) wins over both.
+/// and an injected source (set_pricing_source) wins over both. Per-image
+/// models are excluded from ALL token faces here; the one lane that still
+/// invents token-shaped numbers is estimate_cost's provider-keyed
+/// fallback — see its doc for why that is left to the arona-side
+/// follow-up (lookup_image_price consumers).
 pub fn lookup_pricing(model: &str) -> Option<FamilyPricing> {
     let lower = model.to_lowercase();
     // Image models are per-image priced (`[[image_band]]`): token bands
@@ -647,6 +651,35 @@ mod tests {
 
     #[test]
     fn image_bands_price_per_image_and_never_per_token() {
+        // resolve_pricing reads the PROCESS-WIDE injected slot: serialize
+        // against the injection tests (the file's own TEST_LOCK policy)
+        // and pin the guard's precedence with an adversarial source
+        // installed — a sane-looking token row for an image model must
+        // STILL answer None.
+        // The process slot is set-once, so the adversarial source is fed
+        // through the extracted core instead of the slot: a source that
+        // would price EVERYTHING (the_first_source_wins' shape) must
+        // still answer None for a per-image model — precedence, pinned
+        // deterministically.
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let prices_everything = |_m: &str| {
+            Some(FamilyPricing {
+                input_per_million: 1.0,
+                output_per_million: 2.0,
+                cached_per_million: 0.5,
+            })
+        };
+        assert_eq!(
+            resolve_pricing_with(Some(&prices_everything), "cogview-3-plus"),
+            None,
+            "an occupied source pricing every model must still not price a per-image model"
+        );
+        assert_eq!(
+            resolve_pricing_with(Some(&prices_everything), "deepseek/deepseek-v4-pro")
+                .map(|p| p.input_per_million),
+            Some(1.0),
+            "the same source DOES answer for token models (guard, not a broken lane)"
+        );
         // The checked-in row: cogview at ¥0.30/image.
         assert_eq!(
             lookup_image_price("cogview-3-plus"),
@@ -662,11 +695,16 @@ mod tests {
         );
 
         // THE GUARD: an image model must not resolve token pricing from
-        // ANY face of the fallback — not the band table, not the band-id
-        // diagnostics, not resolve_pricing's injected-source lane.
+        // ANY face — not the band table, not the band-id diagnostics, and
+        // not resolve_pricing even with a sane injected token row sitting
+        // in the slot (installed above).
         assert_eq!(lookup_pricing("cogview-3-plus"), None);
         assert_eq!(pricing_band_id("cogview-3-plus"), None);
         assert_eq!(resolve_pricing("cogview-3-plus"), None);
+
+        // The injected source itself stays intact for TOKEN models —
+        // the guard must not have broken the injection lane it shadows.
+        assert!(resolve_pricing("deepseek/deepseek-v4-pro").is_some());
 
         // Unpriced stays unpriced on the image table too.
         assert_eq!(lookup_image_price("some-unknown-model"), None);
@@ -1330,23 +1368,38 @@ pub fn resolve_pricing(model: &str) -> Option<FamilyPricing> {
         .read()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .clone();
-    if let Some(p) = snapshot.as_ref().and_then(|source| source(model)) {
-        if injected_pricing_is_sane(&p) {
-            return Some(p);
-        }
-        if !UNSANE_PRICING_WARNED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-            tracing::warn!(
-                target: "plana_llm_provider::metering",
-                "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
-                 falling back to the compiled-in table (further occurrences silenced)"
-            );
-        }
-    }
-    // Per-image models never resolve token pricing from any source — the
-    // guard applies to injected rows and arona DB overrides too: a token
-    // row for a per-image product is wrong-unit data, not an override.
+    resolve_pricing_with(snapshot.as_deref(), model)
+}
+
+/// The testable core of [`resolve_pricing`]: an explicit source (the
+/// process slot, or a hand-built one in tests) over the compiled-in
+/// table. Extracted so the per-image guard's PRECEDENCE over an occupied
+/// source is pinnable deterministically — the process slot is set-once,
+/// so a test cannot install its own source after another test won it.
+fn resolve_pricing_with(
+    source: Option<&(dyn Fn(&str) -> Option<FamilyPricing> + Send + Sync)>,
+    model: &str,
+) -> Option<FamilyPricing> {
+    // Per-image models never resolve token pricing from any source. The
+    // guard runs BEFORE the injected source and the band table: a token
+    // row (injected or arona DB) for a per-image product is wrong-unit
+    // data, not an override.
     if image_pricing_band_id(model).is_some() {
         return None;
+    }
+    if let Some(source) = source {
+        if let Some(p) = source(model) {
+            if injected_pricing_is_sane(&p) {
+                return Some(p);
+            }
+            if !UNSANE_PRICING_WARNED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                tracing::warn!(
+                    target: "plana_llm_provider::metering",
+                    "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
+                     falling back to the compiled-in table (further occurrences silenced)"
+                );
+            }
+        }
     }
     lookup_pricing(model)
 }

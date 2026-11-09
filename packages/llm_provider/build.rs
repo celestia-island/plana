@@ -130,22 +130,7 @@ fn generate() -> String {
                 .unwrap_or_default()
         };
         let all: Vec<String> = read_patterns("all");
-        let any: Vec<Vec<String>> = row
-            .get("any")
-            .and_then(|v| v.as_array())
-            .map(|groups| {
-                groups
-                    .iter()
-                    .map(|g| {
-                        g.as_array()
-                            .expect("any entry is a group of strings")
-                            .iter()
-                            .map(|v| v.as_str().expect("pattern string").to_string())
-                            .collect()
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
+        let any: Vec<Vec<String>> = read_patterns_any(row);
 
         for p in all.iter().chain(any.iter().flatten()) {
             assert!(!p.is_empty(), "band {id}: empty pattern");
@@ -215,18 +200,18 @@ fn generate() -> String {
     // lives in metering.rs (lookup_pricing returns None for image-banded
     // models), which only works if this parse keeps the same substring
     // grammar and the same fail-closed posture.
-    let raw_image_bands: Vec<toml::Table> = bands
+    let raw_image_bands: Vec<&toml::Value> = bands
         .get("image_band")
-        .and_then(|v| v.as_array())
-        .map(|arr| {
-            arr.iter()
-                .map(|v| v.as_table().expect("image_band row is a table").clone())
-                .collect()
+        .map(|v| {
+            v.as_array()
+                .expect("image_band must be an array of tables — a typo'd scalar would silently re-enable token pricing")
         })
+        .map(|arr| arr.iter().collect())
         .unwrap_or_default();
     let mut parsed_images = Vec::new();
-    for row in &raw_image_bands {
-        let id = row
+    for row in raw_image_bands {
+        let row_table = row.as_table().expect("image_band row is a table");
+        let id = row_table
             .get("id")
             .and_then(|v| v.as_str())
             .expect("image_band id")
@@ -238,7 +223,8 @@ fn generate() -> String {
         seen_ids.insert(id.clone());
 
         let read_patterns = |key: &str| -> Vec<String> {
-            row.get(key)
+            row_table
+                .get(key)
                 .and_then(|v| v.as_array())
                 .map(|arr| {
                     arr.iter()
@@ -266,7 +252,7 @@ fn generate() -> String {
             "image_band {id}: empty any-group (drop it instead)"
         );
 
-        let reason = row.get("reason").and_then(|v| v.as_str());
+        let reason = row_table.get("reason").and_then(|v| v.as_str());
         assert!(
             reason.map(|r| !r.trim().is_empty()).unwrap_or(false),
             "image_band {id}: per-image rows need a non-empty `reason` (the snapshot has no per-image anchor to cite)"
@@ -363,9 +349,10 @@ fn generate() -> String {
     code
 }
 
-/// Shared `any`-group reader for the substring grammar (token bands read
-/// it inline; image bands go through here so both stay identical).
-fn read_patterns_any(row: &toml::Table) -> Vec<Vec<String>> {
+/// Shared `any`-group reader for the substring grammar — BOTH tables (token
+/// and image) parse `any` through this one helper so the grammar cannot
+/// drift between them.
+fn read_patterns_any(row: &toml::Value) -> Vec<Vec<String>> {
     row.get("any")
         .and_then(|v| v.as_array())
         .map(|groups| {
