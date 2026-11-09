@@ -156,6 +156,16 @@ pub struct AsyncGenResult {
 /// Each provider (Seedance, Kling, Sora, Hyper3D, etc.) implements this trait.
 /// The `protocol()` method returns the [`GenProtocol`] variant it handles.
 /// A registry maps `GenProtocol` → `Arc<dyn AsyncProtocolHandler>`.
+// `clippy::double_must_use`: async-trait 0.1.91's expansion stamps a
+// message-less `#[must_use]` on the three generated future-returning methods,
+// and clippy 1.99 flags that as double must_use because the boxed-`Future`
+// return type is already `#[must_use]`. `AsyncProtocolHandler` is an
+// out-of-tree provider extension surface — zero impls and zero callers in
+// this repo — so the injected marker adds nothing for any caller. The
+// attribute lives inside the macro expansion (no literal `#[must_use]` on
+// these methods to give a reason or to remove), hence one trait-level allow
+// covering all three expansion sites.
+#[allow(clippy::double_must_use)]
 #[async_trait]
 pub trait AsyncProtocolHandler: Send + Sync {
     /// Which protocol this handler implements.
