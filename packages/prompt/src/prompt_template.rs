@@ -58,7 +58,7 @@ static PREVIOUS_STEP_TEMPLATE: &str = "{{ header }}";
 // renderer fills with `Local::now()` exactly like `system_context`.
 static ERROR_SELFHEAL_INTERRUPTED_TEMPLATE: &str = r#"## Self-repair request: an engine restart interrupted this conversation's task chain
 
-An engine restart happened while this conversation's task chain was still in flight. The chain was interrupted, and the tasks listed below were left unfinished. You are the agent responsible for this conversation: assess the interruption, attempt to repair and continue the work on your own, and report what you did.
+An engine restart happened while this conversation's task chain was still in flight. The chain was interrupted{% if affected_tasks %}, and the tasks listed below were left unfinished{% endif %}. You are the agent responsible for this conversation: assess the interruption, attempt to repair and continue the work on your own, and report what you did.
 {% if affected_tasks %}
 ## Interrupted tasks
 {% for task in affected_tasks %}- {{ task }}
@@ -630,9 +630,10 @@ mod tests {
     /// Full-facts interrupted render: every caller-supplied surface must
     /// survive verbatim — the affected-task loop, the raw technical
     /// detail, the context lines, and the system-state block (including
-    /// the live chain count). A revert of any template section (or of any
-    /// ctx insertion in `render_error_selfheal`) breaks at least one pin
-    /// here.
+    /// the live chain count). Each record line carries its own pin: the
+    /// heading-and-clock assertions alone stay green through the loss of
+    /// any single one (R2 review, 2026-11-11 — title / summary / engine
+    /// version had NO red-on-revert interception before this wave).
     #[test]
     fn test_render_error_selfheal_interrupted_full_facts() -> Result<()> {
         let svc = PromptTemplateService::new()?;
@@ -664,10 +665,13 @@ mod tests {
         assert!(text.contains("- hubris::task_decompose (turn)"));
         assert!(text.contains("- hubris::plan_execute"));
         assert!(text.contains("- Error code: `chain_failed`"));
+        assert!(text.contains("- Report title: engine::restart_interrupted"));
         assert!(text.contains("was orphaned by a restart"));
         assert!(text.contains("  - interrupted: restart"));
         assert!(text.contains("- Detected at: 2026-11-10T10:35:00+08:00"));
+        assert!(text.contains("- Summary: The chain was interrupted by an engine restart."));
         assert!(text.contains("- Panel version: 0.1.0 master:a36c907"));
+        assert!(text.contains("- Engine version: 0.1.0 master:a36c907"));
         assert!(text.contains("- Engine connection: reachable"));
         assert!(text.contains("- Chains currently in flight: 2"));
         assert!(text.contains("- Conversation: conv-123"));
@@ -746,6 +750,22 @@ mod tests {
                 text.contains("Current time:"),
                 "variant {variant:?} lost the clock line"
             );
+            // The interruption framing is claimed by the VARIANT, not by
+            // default facts: with an empty affected-task list the section
+            // must be cleanly absent (older/foreign envelope), and the
+            // intro prose must not promise a list that does not follow
+            // (R2 finding: the fixed "tasks listed below" clause used to
+            // dangle on exactly this path).
+            if variant == ErrorSelfhealVariant::Interrupted {
+                assert!(
+                    !text.contains("Interrupted tasks"),
+                    "empty affected_tasks must drop the section"
+                );
+                assert!(
+                    !text.contains("listed below"),
+                    "empty affected_tasks must drop the list promise"
+                );
+            }
             assert!(
                 !text.contains("{{"),
                 "variant {variant:?} left placeholders"
