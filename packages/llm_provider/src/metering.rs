@@ -1387,18 +1387,18 @@ fn resolve_pricing_with(
     if image_pricing_band_id(model).is_some() {
         return None;
     }
-    if let Some(source) = source {
-        if let Some(p) = source(model) {
-            if injected_pricing_is_sane(&p) {
-                return Some(p);
-            }
-            if !UNSANE_PRICING_WARNED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                tracing::warn!(
-                    target: "plana_llm_provider::metering",
-                    "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
-                     falling back to the compiled-in table (further occurrences silenced)"
-                );
-            }
+    if let Some(source) = source
+        && let Some(p) = source(model)
+    {
+        if injected_pricing_is_sane(&p) {
+            return Some(p);
+        }
+        if !UNSANE_PRICING_WARNED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+            tracing::warn!(
+                target: "plana_llm_provider::metering",
+                "injected pricing row failed the sanity gate (finite, non-negative, cached ≤ input); \
+                 falling back to the compiled-in table (further occurrences silenced)"
+            );
         }
     }
     lookup_pricing(model)

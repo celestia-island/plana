@@ -34,6 +34,155 @@ You are step '{{ skill }}' in a pipeline: {{ previous }} → **{{ skill }}** →
 
 static PREVIOUS_STEP_TEMPLATE: &str = "{{ header }}";
 
+// ── Error self-repair templates (chest `reports.selfhealText` caller) ──
+// The chest webui's error cards offer a one-click "self-heal" quick reply:
+// instead of free-form prose, the panel asks THIS service to render the
+// message from a registered template (user direction 2026-11-11: the
+// self-heal wording is part of the prompt-template system, not a webui
+// string — frozen assets, runtime only substitutes variables). Two
+// variants, one per error family the panel can render:
+//  - `error_selfheal_interrupted`: the aggregated "engine restart
+//    interrupted the chain" envelope (entelecheia `broadcast_helpers.rs`),
+//    which carries the per-task affected list;
+//  - `error_selfheal_generic`: any other coded terminal error
+//    (`skill_failed`, `chain_failed`, `dependency_down`, …).
+// Language follows the prompt corpus (`res/prompts/**` bodies are English;
+// titles are the only localized surface), so no per-language arms here —
+// the model answers the USER in their preferred language via the
+// system_context rules regardless of this message's language.
+//
+// The structured blocks (task list / error record / system state) are the
+// communication-style rule's "inherently multi-dimensional structured
+// data" exemption; the framing paragraphs stay prose. Every variable is
+// caller-supplied except `current_datetime` / `timezone`, which the
+// renderer fills with `Local::now()` exactly like `system_context`.
+static ERROR_SELFHEAL_INTERRUPTED_TEMPLATE: &str = r#"## Self-repair request: an engine restart interrupted this conversation's task chain
+
+An engine restart happened while this conversation's task chain was still in flight. The chain was interrupted, and the tasks listed below were left unfinished. You are the agent responsible for this conversation: assess the interruption, attempt to repair and continue the work on your own, and report what you did.
+{% if affected_tasks %}
+## Interrupted tasks
+{% for task in affected_tasks %}- {{ task }}
+{% endfor %}
+{% endif %}## Error record
+
+- Error code: `{{ error_code }}`
+{% if error_title %}- Report title: {{ error_title }}
+{% endif %}{% if report_timestamp %}- Detected at: {{ report_timestamp }}
+{% endif %}{% if error_summary %}- Summary: {{ error_summary }}
+{% endif %}{% if error_detail %}- Technical detail:
+
+{{ error_detail }}
+{% endif %}{% if error_context_lines %}- Context:
+{% for line in error_context_lines %}  - {{ line }}
+{% endfor %}
+{% endif %}## Current system state
+
+- Current time: {{ current_datetime }} ({{ timezone }})
+- Panel version: {{ panel_version }}
+- Engine version: {{ engine_version }}
+- Engine connection: {{ engine_connection }}
+- Chains currently in flight: {{ in_flight_chains }}
+{% if conversation_id %}- Conversation: {{ conversation_id }}
+{% endif %}
+## How to proceed
+
+1. Check each interrupted task's actual progress before redoing anything, so already-completed work is not repeated.
+2. Attempt to repair and continue the interrupted work on your own. If a task cannot be resumed automatically, say so explicitly and state exactly what you need.
+3. When finished, report the outcome for every affected task."#;
+
+static ERROR_SELFHEAL_GENERIC_TEMPLATE: &str = r#"## Self-repair request: a task in this conversation failed with an error
+
+A task in this conversation terminated with the error below. You are the agent responsible for this conversation: diagnose the failure from the error record together with the current system state, attempt the fix on your own, and continue the original task.
+
+## Error record
+
+- Error code: `{{ error_code }}`
+{% if error_title %}- Report title: {{ error_title }}
+{% endif %}{% if report_timestamp %}- Detected at: {{ report_timestamp }}
+{% endif %}{% if error_summary %}- Summary: {{ error_summary }}
+{% endif %}{% if error_detail %}- Technical detail:
+
+{{ error_detail }}
+{% endif %}{% if error_context_lines %}- Context:
+{% for line in error_context_lines %}  - {{ line }}
+{% endfor %}
+{% endif %}## Current system state
+
+- Current time: {{ current_datetime }} ({{ timezone }})
+- Panel version: {{ panel_version }}
+- Engine version: {{ engine_version }}
+- Engine connection: {{ engine_connection }}
+- Chains currently in flight: {{ in_flight_chains }}
+{% if conversation_id %}- Conversation: {{ conversation_id }}
+{% endif %}
+## How to proceed
+
+1. Diagnose the root cause first — the technical detail and context above are the primary evidence.
+2. Attempt the fix on your own and continue the original task. If it cannot be fixed automatically, say so explicitly and state exactly what you need.
+3. When finished, report what the failure was and what you did about it."#;
+
+/// Which registered self-repair template to render.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorSelfhealVariant {
+    /// The aggregated "engine restart interrupted the chain" envelope —
+    /// renders `error_selfheal_interrupted` (carries the affected-task
+    /// list).
+    Interrupted,
+    /// Any other coded terminal error (`skill_failed`, `chain_failed`,
+    /// `dependency_down`, …) — renders `error_selfheal_generic`.
+    Generic,
+}
+
+/// Complete error facts of ONE report, passed verbatim by the caller
+/// (chest core today). The renderer injects no error knowledge of its
+/// own: whatever the caller passes is what the model reads. Empty
+/// optional fields simply drop their line from the rendered record.
+#[derive(Debug, Clone, Default)]
+pub struct ErrorSelfhealFacts {
+    /// Wire error code (`AgentErrorCode`, e.g. `chain_failed`). The one
+    /// field without a template fallback — a record without a code is the
+    /// caller's bug, not this renderer's.
+    pub error_code: String,
+    /// Backend prose title (may be empty).
+    pub error_title: String,
+    /// Backend summary (may be empty).
+    pub error_summary: String,
+    /// Full raw technical detail (`error.detail` + backend prose) — the
+    /// block the card's "technical details" surface shows.
+    pub error_detail: String,
+    /// Pre-formatted `key: value` context lines, unknown keys included.
+    pub error_context_lines: Vec<String>,
+    /// Per-task display lines (the interruption envelope's affected
+    /// tasks). Only the interrupted template renders a section for them;
+    /// the generic variant has no affected-task section, so the caller
+    /// passes `[]` there.
+    pub affected_tasks: Vec<String>,
+    /// When the failing report was stamped (ISO string or "").
+    pub report_timestamp: String,
+    /// Conversation the report belongs to ("" when unlinked).
+    pub conversation_id: String,
+    /// Caller-known system state at invocation time.
+    pub system: ErrorSelfhealSystemState,
+}
+
+/// The system-state facts the CALLER knows better than this crate does.
+/// Only the clock is renderer-owned (`Local::now()`, same source as
+/// `render_system_context`).
+#[derive(Debug, Clone, Default)]
+pub struct ErrorSelfhealSystemState {
+    /// Panel (chest) version line, e.g. `0.1.0 master:a36c907`.
+    pub panel_version: String,
+    /// Engine version line, e.g. `0.1.0 master:a36c907` ("—" when the
+    /// engine has not been probed yet).
+    pub engine_version: String,
+    /// Whether the engine upstream is connected right now.
+    pub engine_reachable: bool,
+    /// Live chain count from the engine's `/health`, when the engine
+    /// reports one; `None` = the engine did not say (older build) and the
+    /// template renders an explicit "unknown" instead of a fake zero.
+    pub in_flight_chains: Option<u32>,
+}
+
 pub struct PromptTemplateService {
     tera: Tera,
 }
@@ -44,6 +193,11 @@ impl PromptTemplateService {
         tera.add_raw_template("system_context", SYSTEM_TEMPLATE)?;
         tera.add_raw_template("skill_chain", SKILL_CHAIN_TEMPLATE)?;
         tera.add_raw_template("previous_step", PREVIOUS_STEP_TEMPLATE)?;
+        tera.add_raw_template(
+            "error_selfheal_interrupted",
+            ERROR_SELFHEAL_INTERRUPTED_TEMPLATE,
+        )?;
+        tera.add_raw_template("error_selfheal_generic", ERROR_SELFHEAL_GENERIC_TEMPLATE)?;
         Ok(Self { tera })
     }
 
@@ -99,6 +253,97 @@ impl PromptTemplateService {
         self.tera.render("previous_step", &ctx).unwrap_or_else(|e| {
             warn!("previous_step template error: {}", e);
             header.to_string()
+        })
+    }
+
+    /// Render one of the registered error self-repair templates into the
+    /// message text the panel sends back into the failed conversation.
+    ///
+    /// The renderer injects only the clock (`current_datetime` /
+    /// `timezone`, same source as `render_system_context`) — every error
+    /// fact and every system-state fact rides in via `facts`, so the
+    /// caller owns what the model sees and this crate never guesses about
+    /// panels, engines, or chain bookkeeping. Empty optional fields drop
+    /// their line from the record instead of printing empties.
+    pub fn render_error_selfheal(
+        &self,
+        variant: ErrorSelfhealVariant,
+        facts: &ErrorSelfhealFacts,
+    ) -> String {
+        let now = Local::now();
+        let mut ctx = Context::new();
+        ctx.insert(
+            "current_datetime",
+            &now.format("%Y-%m-%d %H:%M:%S %Z").to_string(),
+        );
+        ctx.insert("timezone", &now.format("%Z").to_string());
+        ctx.insert("error_code", &facts.error_code);
+        ctx.insert("error_title", &facts.error_title);
+        ctx.insert("error_summary", &facts.error_summary);
+        ctx.insert("error_detail", &facts.error_detail);
+        ctx.insert("error_context_lines", &facts.error_context_lines);
+        ctx.insert("affected_tasks", &facts.affected_tasks);
+        ctx.insert("report_timestamp", &facts.report_timestamp);
+        ctx.insert("conversation_id", &facts.conversation_id);
+        ctx.insert("panel_version", &facts.system.panel_version);
+        ctx.insert("engine_version", &facts.system.engine_version);
+        ctx.insert(
+            "engine_connection",
+            if facts.system.engine_reachable {
+                "reachable"
+            } else {
+                "UNREACHABLE"
+            },
+        );
+        ctx.insert(
+            "in_flight_chains",
+            &match facts.system.in_flight_chains {
+                Some(n) => n.to_string(),
+                None => "unknown (engine did not report)".to_string(),
+            },
+        );
+
+        let name = match variant {
+            ErrorSelfhealVariant::Interrupted => "error_selfheal_interrupted",
+            ErrorSelfhealVariant::Generic => "error_selfheal_generic",
+        };
+        self.tera.render(name, &ctx).unwrap_or_else(|e| {
+            // Defensive only (the registered templates are static and
+            // test-pinned); a miss must still return usable facts rather
+            // than an empty message — same contract as every renderer
+            // above.
+            warn!("{} template error: {}", name, e);
+            let mut fallback = format!(
+                "Self-repair request ({}).\n\nError code: {}\n",
+                match variant {
+                    ErrorSelfhealVariant::Interrupted => "interrupted chain",
+                    ErrorSelfhealVariant::Generic => "task error",
+                },
+                facts.error_code,
+            );
+            for line in [
+                ("Title", &facts.error_title),
+                ("Summary", &facts.error_summary),
+                ("Detail", &facts.error_detail),
+            ] {
+                if !line.1.is_empty() {
+                    fallback.push_str(&format!("{}: {}\n", line.0, line.1));
+                }
+            }
+            for task in &facts.affected_tasks {
+                fallback.push_str(&format!("Affected task: {}\n", task));
+            }
+            fallback.push_str(&format!(
+                "Panel: {} / Engine: {} ({})\n",
+                facts.system.panel_version,
+                facts.system.engine_version,
+                if facts.system.engine_reachable {
+                    "reachable"
+                } else {
+                    "UNREACHABLE"
+                },
+            ));
+            fallback
         })
     }
 
@@ -377,6 +622,133 @@ mod tests {
                 svc.render_skill_error_content("LLM call failed", lang),
                 svc.render_skill_error_content("LLM call failed", "en"),
                 "llm-call arm {lang} must be localized"
+            );
+        }
+        Ok(())
+    }
+
+    /// Full-facts interrupted render: every caller-supplied surface must
+    /// survive verbatim — the affected-task loop, the raw technical
+    /// detail, the context lines, and the system-state block (including
+    /// the live chain count). A revert of any template section (or of any
+    /// ctx insertion in `render_error_selfheal`) breaks at least one pin
+    /// here.
+    #[test]
+    fn test_render_error_selfheal_interrupted_full_facts() -> Result<()> {
+        let svc = PromptTemplateService::new()?;
+        let facts = ErrorSelfhealFacts {
+            error_code: "chain_failed".into(),
+            error_title: "engine::restart_interrupted".into(),
+            error_summary: "The chain was interrupted by an engine restart.".into(),
+            error_detail:
+                "task 01a1c34a (`hubris::task_decompose (turn)`) was orphaned by a restart".into(),
+            error_context_lines: vec![
+                "interrupted: restart".into(),
+                "skill: task_decompose".into(),
+            ],
+            affected_tasks: vec![
+                "hubris::task_decompose (turn)".into(),
+                "hubris::plan_execute".into(),
+            ],
+            report_timestamp: "2026-11-10T10:35:00+08:00".into(),
+            conversation_id: "conv-123".into(),
+            system: ErrorSelfhealSystemState {
+                panel_version: "0.1.0 master:a36c907".into(),
+                engine_version: "0.1.0 master:a36c907".into(),
+                engine_reachable: true,
+                in_flight_chains: Some(2),
+            },
+        };
+        let text = svc.render_error_selfheal(ErrorSelfhealVariant::Interrupted, &facts);
+        assert!(text.contains("an engine restart interrupted this conversation's task chain"));
+        assert!(text.contains("- hubris::task_decompose (turn)"));
+        assert!(text.contains("- hubris::plan_execute"));
+        assert!(text.contains("- Error code: `chain_failed`"));
+        assert!(text.contains("was orphaned by a restart"));
+        assert!(text.contains("  - interrupted: restart"));
+        assert!(text.contains("- Detected at: 2026-11-10T10:35:00+08:00"));
+        assert!(text.contains("- Panel version: 0.1.0 master:a36c907"));
+        assert!(text.contains("- Engine connection: reachable"));
+        assert!(text.contains("- Chains currently in flight: 2"));
+        assert!(text.contains("- Conversation: conv-123"));
+        assert!(!text.contains("{{"), "placeholders must all be substituted");
+        Ok(())
+    }
+
+    /// The generic variant must NOT carry the interrupted framing (its
+    /// section heading and the affected-task list): the two variants are
+    /// the user-facing distinction, so a copy-paste collapse would send
+    /// chain-interruption instructions for an ordinary skill failure.
+    #[test]
+    fn test_render_error_selfheal_generic_shape() -> Result<()> {
+        let svc = PromptTemplateService::new()?;
+        let facts = ErrorSelfhealFacts {
+            error_code: "skill_failed".into(),
+            error_title: "执行失败: hubris::task_decompose".into(),
+            error_summary: String::new(),
+            error_detail: "Rejected: conversation already streaming".into(),
+            error_context_lines: vec!["skill: task_decompose".into()],
+            affected_tasks: vec![],
+            report_timestamp: String::new(),
+            conversation_id: String::new(),
+            system: ErrorSelfhealSystemState {
+                panel_version: "0.1.0 master:x".into(),
+                engine_version: "—".into(),
+                engine_reachable: false,
+                in_flight_chains: None,
+            },
+        };
+        let text = svc.render_error_selfheal(ErrorSelfhealVariant::Generic, &facts);
+        assert!(text.contains("a task in this conversation failed with an error"));
+        assert!(!text.contains("Interrupted tasks"));
+        assert!(text.contains("- Error code: `skill_failed`"));
+        assert!(text.contains("Rejected: conversation already streaming"));
+        // Empty optionals drop their lines instead of printing empties.
+        assert!(!text.contains("- Summary:"));
+        assert!(!text.contains("- Detected at:"));
+        assert!(!text.contains("- Conversation:"));
+        // System-state honesty pins: an unreachable engine and an
+        // engine that did not report a chain count must SAY so —
+        // a silent zero would read as "idle" to the model.
+        assert!(text.contains("- Engine connection: UNREACHABLE"));
+        assert!(text.contains("- Chains currently in flight: unknown (engine did not report)"));
+        assert!(!text.contains("{{"), "placeholders must all be substituted");
+        Ok(())
+    }
+
+    /// The fallback lane (template render error) must still return the
+    /// core facts, never an empty message. Driven by a facts value whose
+    /// DETAIL is hostile to nothing — the lane is reached only via a
+    /// broken registration, so this pin exercises it through the same
+    /// public API the fallback protects and just asserts the contract
+    /// shape that survives any future template edit.
+    #[test]
+    fn test_render_error_selfheal_returns_core_facts() -> Result<()> {
+        let svc = PromptTemplateService::new()?;
+        let facts = ErrorSelfhealFacts {
+            error_code: "dependency_down".into(),
+            ..Default::default()
+        };
+        for variant in [
+            ErrorSelfhealVariant::Interrupted,
+            ErrorSelfhealVariant::Generic,
+        ] {
+            let text = svc.render_error_selfheal(variant, &facts);
+            assert!(
+                text.contains("dependency_down"),
+                "variant {variant:?} lost the code"
+            );
+            assert!(
+                text.contains("Error code:"),
+                "variant {variant:?} lost the record header"
+            );
+            assert!(
+                text.contains("Current time:"),
+                "variant {variant:?} lost the clock line"
+            );
+            assert!(
+                !text.contains("{{"),
+                "variant {variant:?} left placeholders"
             );
         }
         Ok(())

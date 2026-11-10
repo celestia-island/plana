@@ -2,7 +2,7 @@
 name = "plana"
 # Release-wave marker: `cargo-v*` tags must name this version (the publish
 # workflow validates the tag against this manifest).
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
