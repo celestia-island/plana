@@ -36,6 +36,18 @@ struct Band {
     pricing: [f64; 3],
 }
 
+/// An `[[image_band]]` row: per-image pricing (micro-CNY) for models sold
+/// by the generated image, not by the token. Same substring grammar as
+/// token bands; `reason` is mandatory (the snapshot has no per-image
+/// anchor to pull from).
+#[derive(Debug)]
+struct ImageBand {
+    id: String,
+    all: Vec<String>,
+    any: Vec<Vec<String>>,
+    per_image_micros_cny: i64,
+}
+
 fn generate() -> String {
     let bands_src = fs::read_to_string("pricing/bands.toml")
         .expect("pricing/bands.toml is checked in — a missing file is a broken package");
@@ -118,22 +130,7 @@ fn generate() -> String {
                 .unwrap_or_default()
         };
         let all: Vec<String> = read_patterns("all");
-        let any: Vec<Vec<String>> = row
-            .get("any")
-            .and_then(|v| v.as_array())
-            .map(|groups| {
-                groups
-                    .iter()
-                    .map(|g| {
-                        g.as_array()
-                            .expect("any entry is a group of strings")
-                            .iter()
-                            .map(|v| v.as_str().expect("pattern string").to_string())
-                            .collect()
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
+        let any: Vec<Vec<String>> = read_patterns_any(row);
 
         for p in all.iter().chain(any.iter().flatten()) {
             assert!(!p.is_empty(), "band {id}: empty pattern");
@@ -198,6 +195,85 @@ fn generate() -> String {
         });
     }
 
+    // ── [[image_band]] — per-image rows (micro-CNY) ───────────────────
+    // Image models MUST NOT resolve through the token table: the guard
+    // lives in metering.rs (lookup_pricing returns None for image-banded
+    // models), which only works if this parse keeps the same substring
+    // grammar and the same fail-closed posture.
+    let raw_image_bands: Vec<&toml::Value> = bands
+        .get("image_band")
+        .map(|v| {
+            v.as_array()
+                .expect("image_band must be an array of tables — a typo'd scalar would silently re-enable token pricing")
+        })
+        .map(|arr| arr.iter().collect())
+        .unwrap_or_default();
+    let mut parsed_images = Vec::new();
+    for row in raw_image_bands {
+        let row_table = row.as_table().expect("image_band row is a table");
+        let id = row_table
+            .get("id")
+            .and_then(|v| v.as_str())
+            .expect("image_band id")
+            .to_string();
+        assert!(
+            !seen_ids.contains(&id),
+            "duplicate band id {id} (image_band ids share the namespace with token bands)"
+        );
+        seen_ids.insert(id.clone());
+
+        let read_patterns = |key: &str| -> Vec<String> {
+            row_table
+                .get(key)
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .map(|v| v.as_str().expect("pattern is a string").to_string())
+                        .collect()
+                })
+                .unwrap_or_default()
+        };
+        let all: Vec<String> = read_patterns("all");
+        let any: Vec<Vec<String>> = read_patterns_any(row);
+        for p in all.iter().chain(any.iter().flatten()) {
+            assert!(!p.is_empty(), "image_band {id}: empty pattern");
+            assert!(
+                p.chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || !c.is_alphabetic()),
+                "image_band {id}: pattern {p:?} must be lowercase (matched against the lowercased model id)"
+            );
+        }
+        assert!(
+            !all.is_empty() || any.iter().any(|g| !g.is_empty()),
+            "image_band {id}: at least one pattern overall (catch-all rows are forbidden)"
+        );
+        assert!(
+            any.iter().all(|g| !g.is_empty()),
+            "image_band {id}: empty any-group (drop it instead)"
+        );
+
+        let reason = row_table.get("reason").and_then(|v| v.as_str());
+        assert!(
+            reason.map(|r| !r.trim().is_empty()).unwrap_or(false),
+            "image_band {id}: per-image rows need a non-empty `reason` (the snapshot has no per-image anchor to cite)"
+        );
+        let per_image_micros_cny = row
+            .get("per_image_micros_cny")
+            .and_then(|v| v.as_integer())
+            .unwrap_or_else(|| panic!("image_band {id}: integer per_image_micros_cny"));
+        assert!(
+            per_image_micros_cny > 0,
+            "image_band {id}: per_image_micros_cny must be positive, got {per_image_micros_cny}"
+        );
+
+        parsed_images.push(ImageBand {
+            id,
+            all,
+            any,
+            per_image_micros_cny,
+        });
+    }
+
     let mut code = String::new();
     code.push_str(
         "// AUTO-GENERATED by build.rs from pricing/bands.toml + pricing/models-snapshot.toml\n",
@@ -236,7 +312,62 @@ fn generate() -> String {
         ));
     }
     code.push_str("];\n");
+
+    code.push_str("\npub(crate) struct ImagePricingBand {\n");
+    code.push_str("    pub(crate) id: &'static str,\n");
+    code.push_str("    pub(crate) all: &'static [&'static str],\n");
+    code.push_str("    pub(crate) any: &'static [&'static [&'static str]],\n");
+    code.push_str("    pub(crate) per_image_micros_cny: i64,\n");
+    code.push_str("}\n\n");
+    code.push_str("pub(crate) static IMAGE_PRICING_BANDS: &[ImagePricingBand] = &[\n");
+    for b in &parsed_images {
+        let all = b
+            .all
+            .iter()
+            .map(|p| format!("{p:?}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let any = b
+            .any
+            .iter()
+            .map(|g| {
+                let inner = g
+                    .iter()
+                    .map(|p| format!("{p:?}"))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("&[{inner}]")
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        code.push_str(&format!(
+            "    ImagePricingBand {{ id: {:?}, all: &[{}], any: &[{}], per_image_micros_cny: {} }},\n",
+            b.id, all, any, b.per_image_micros_cny
+        ));
+    }
+    code.push_str("];\n");
     code
+}
+
+/// Shared `any`-group reader for the substring grammar — BOTH tables (token
+/// and image) parse `any` through this one helper so the grammar cannot
+/// drift between them.
+fn read_patterns_any(row: &toml::Value) -> Vec<Vec<String>> {
+    row.get("any")
+        .and_then(|v| v.as_array())
+        .map(|groups| {
+            groups
+                .iter()
+                .map(|g| {
+                    g.as_array()
+                        .expect("any entry is a group of strings")
+                        .iter()
+                        .map(|v| v.as_str().expect("pattern string").to_string())
+                        .collect()
+                })
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 fn assert_price(v: f64, ctx: &str) {
