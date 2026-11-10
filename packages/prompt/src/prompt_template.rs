@@ -707,6 +707,9 @@ mod tests {
         assert!(!text.contains("Interrupted tasks"));
         assert!(text.contains("- Error code: `skill_failed`"));
         assert!(text.contains("Rejected: conversation already streaming"));
+        // The fixture's single context line renders under the Context
+        // block — a reverted loop (or a swapped ctx insert) must go red.
+        assert!(text.contains("  - skill: task_decompose"));
         // Empty optionals drop their lines instead of printing empties.
         assert!(!text.contains("- Summary:"));
         assert!(!text.contains("- Detected at:"));
@@ -749,6 +752,20 @@ mod tests {
             assert!(
                 text.contains("Current time:"),
                 "variant {variant:?} lost the clock line"
+            );
+            // Drop-when-empty is a stated contract: default facts carry an
+            // empty title and no context lines, so the record must NOT
+            // print those lines at all (R3 finding: the title line had NO
+            // red-on-revert interception — a reverted `{% if %}` guard
+            // rendered a bare `- Report title: ` and every pin stayed
+            // green).
+            assert!(
+                !text.contains("- Report title:"),
+                "variant {variant:?} rendered an empty title line"
+            );
+            assert!(
+                !text.contains("- Context:"),
+                "variant {variant:?} rendered an empty context block"
             );
             // The interruption framing is claimed by the VARIANT, not by
             // default facts: with an empty affected-task list the section
