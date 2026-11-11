@@ -32,6 +32,197 @@ export const SELF_HOSTED_ERROR_PATHS = {
   IndexRequired: "Models.SelfHosted.IndexRequired",
 } as const;
 
+/** Authority tree paths (chest's shared authority gates). */
+export const AUTHORITY_ERROR_PATHS = {
+  SystemWrite: "Authority.SystemWrite",
+  SystemRead: "Authority.SystemRead",
+  RbacManage: "Authority.RbacManage",
+  DeviceEnroll: "Authority.DeviceEnroll",
+  MaintenanceAdmin: "Authority.MaintenanceAdmin",
+  PanelWrite: "Authority.PanelWrite",
+  Forbidden: "Authority.Forbidden",
+} as const;
+
+/** Upstream tree paths (chest's upstream transport failures). */
+export const UPSTREAM_ERROR_PATHS = {
+  Unreachable: "Upstream.Unreachable",
+  Malformed: "Upstream.Malformed",
+  Timeout: "Upstream.Timeout",
+  Auth: "Upstream.Auth",
+  Internal: "Upstream.Internal",
+} as const;
+
+/** Topic tree paths (chest's topics/chat faces). */
+export const TOPIC_ERROR_PATHS = {
+  GetFailed: "Topic.GetFailed",
+  ListFailed: "Topic.ListFailed",
+  MessagesFailed: "Topic.MessagesFailed",
+  ArchiveFailed: "Topic.ArchiveFailed",
+  EditFailed: "Topic.EditFailed",
+  UndoFailed: "Topic.UndoFailed",
+  ConversationNotFound: "Topic.ConversationNotFound",
+  ConversationIdRequired: "Topic.ConversationIdRequired",
+  ConversationAccessDenied: "Topic.ConversationAccessDenied",
+  NoModelSelected: "Topic.NoModelSelected",
+} as const;
+
+/** Workspace tree paths (chest's workspace/tenancy faces). */
+export const WORKSPACE_ERROR_PATHS = {
+  Forbidden: "Workspace.Forbidden",
+  RoleInsufficient: "Workspace.RoleInsufficient",
+  NotFound: "Workspace.NotFound",
+  AccessDenied: "Workspace.AccessDenied",
+  WorkspaceIdRequired: "Workspace.WorkspaceIdRequired",
+  WorkspaceIdInvalid: "Workspace.WorkspaceIdInvalid",
+  TabNotFound: "Workspace.TabNotFound",
+  ShareNotFound: "Workspace.ShareNotFound",
+  ShareUnavailable: "Workspace.ShareUnavailable",
+} as const;
+
+/** Auth tree paths (chest's account/session faces). */
+export const AUTH_ERROR_PATHS = {
+  UsernameTaken: "Auth.UsernameTaken",
+  EmailInUse: "Auth.EmailInUse",
+  PasswordTooShort: "Auth.PasswordTooShort",
+  UserNotFound: "Auth.UserNotFound",
+  NoUserWithEmail: "Auth.NoUserWithEmail",
+  SelfDeleteDenied: "Auth.SelfDeleteDenied",
+  RealNameDisabled: "Auth.RealNameDisabled",
+  SmsDisabled: "Auth.SmsDisabled",
+  SmsProviderMissing: "Auth.SmsProviderMissing",
+  WrongCode: "Auth.WrongCode",
+  NoChallenge: "Auth.NoChallenge",
+  InvitationMintFailed: "Auth.InvitationMintFailed",
+  MobileInvalid: "Auth.MobileInvalid",
+} as const;
+
+/** Provider tree paths (chest's provider config faces). */
+export const PROVIDER_ERROR_PATHS = {
+  NotFound: "Provider.NotFound",
+  NameTaken: "Provider.NameTaken",
+  NameAndUrlRequired: "Provider.NameAndUrlRequired",
+  UrlInvalid: "Provider.UrlInvalid",
+  ModelsRequired: "Provider.ModelsRequired",
+  ModelsInvalid: "Provider.ModelsInvalid",
+  QuotaReached: "Provider.QuotaReached",
+  KindInvalid: "Provider.KindInvalid",
+  WorkflowRequired: "Provider.WorkflowRequired",
+  WorkflowInvalid: "Provider.WorkflowInvalid",
+  NoActiveAdapter: "Provider.NoActiveAdapter",
+  NoConfig: "Provider.NoConfig",
+} as const;
+
+/** Media tree paths (chest's audio/video/voice/media faces). */
+export const MEDIA_ERROR_PATHS = {
+  AccountLookupFailed: "Media.AccountLookupFailed",
+  AccountMissing: "Media.AccountMissing",
+  ServiceUnavailable: "Media.ServiceUnavailable",
+  AudioTooLarge: "Media.AudioTooLarge",
+  TranscribeRateLimited: "Media.TranscribeRateLimited",
+  AudioMissing: "Media.AudioMissing",
+  Base64ImageInvalid: "Media.Base64ImageInvalid",
+  FileTooLarge: "Media.FileTooLarge",
+  TranscribeFailed: "Media.TranscribeFailed",
+} as const;
+
+/** Topology tree paths (chest's topology/connections faces). */
+export const TOPOLOGY_ERROR_PATHS = {
+  GatewayTimeout: "Topology.GatewayTimeout",
+  TargetDuplicate: "Topology.TargetDuplicate",
+  RemoteTargetMissing: "Topology.RemoteTargetMissing",
+  NoDialPath: "Topology.NoDialPath",
+  ConnectionMissing: "Topology.ConnectionMissing",
+  ClaimedGatewayNoNodeId: "Topology.ClaimedGatewayNoNodeId",
+  TargetKindMismatch: "Topology.TargetKindMismatch",
+  NodeIdShapeInvalid: "Topology.NodeIdShapeInvalid",
+  NodeIdModeRequired: "Topology.NodeIdModeRequired",
+  HostRequired: "Topology.HostRequired",
+} as const;
+
+/** Console tree paths (chest's operator/ops faces). */
+export const CONSOLE_ERROR_PATHS = {
+  CiNotConfigured: "Console.CiNotConfigured",
+  CiWatchlistEmpty: "Console.CiWatchlistEmpty",
+  CdNotConfigured: "Console.CdNotConfigured",
+  EngineNotConfigured: "Console.EngineNotConfigured",
+  RepairTargetNotConfigured: "Console.RepairTargetNotConfigured",
+} as const;
+
+/** Webhook tree paths (chest's webhook config face). */
+export const WEBHOOK_ERROR_PATHS = {
+  IdRequired: "Webhook.IdRequired",
+  ScopeTypeInvalid: "Webhook.ScopeTypeInvalid",
+  ScopeIdInvalid: "Webhook.ScopeIdInvalid",
+  ServiceAuthOnly: "Webhook.ServiceAuthOnly",
+  EventsInvalid: "Webhook.EventsInvalid",
+  ScopesInvalid: "Webhook.ScopesInvalid",
+} as const;
+
+/** Iam tree paths (chest's iam + oauth_clients faces). */
+export const IAM_ERROR_PATHS = {
+  ClientIdRequired: "Iam.ClientIdRequired",
+  ClientNotFound: "Iam.ClientNotFound",
+  ClientNotActive: "Iam.ClientNotActive",
+  TokenEncryptFailed: "Iam.TokenEncryptFailed",
+  SecretSealFailed: "Iam.SecretSealFailed",
+  GroupSourceRequiresSystemWrite: "Iam.GroupSourceRequiresSystemWrite",
+  BuiltinGroupImmutable: "Iam.BuiltinGroupImmutable",
+  MembershipRequired: "Iam.MembershipRequired",
+  ConsentRequiresMembership: "Iam.ConsentRequiresMembership",
+} as const;
+
+/** Billing tree paths (chest's billing authority/quota faces). */
+export const BILLING_ERROR_PATHS = {
+  ReservationLost: "Billing.ReservationLost",
+  WalletVanished: "Billing.WalletVanished",
+  ModeInvalid: "Billing.ModeInvalid",
+  QuotaExceeded: "Billing.QuotaExceeded",
+} as const;
+
+/** Edge tree paths (chest's edge_flash/admission/enroll/proxy faces). */
+export const EDGE_ERROR_PATHS = {
+  CatalogEntryNotFound: "Edge.CatalogEntryNotFound",
+  IntentIdRequired: "Edge.IntentIdRequired",
+  DeviceIdRequired: "Edge.DeviceIdRequired",
+  EnrollmentBudgetExhausted: "Edge.EnrollmentBudgetExhausted",
+  SerialOrEnrollmentIdRequired: "Edge.SerialOrEnrollmentIdRequired",
+  AdmissionForbidden: "Edge.AdmissionForbidden",
+} as const;
+
+/** Visitor tree paths (chest's visitor faces). */
+export const VISITOR_ERROR_PATHS = {
+  TicketRequired: "Visitor.TicketRequired",
+  TicketNotFound: "Visitor.TicketNotFound",
+  ObservationNotFound: "Visitor.ObservationNotFound",
+  TicketIdRequired: "Visitor.TicketIdRequired",
+} as const;
+
+/** Panel tree paths (chest's panel/projects/mcp_tools faces). */
+export const PANEL_ERROR_PATHS = {
+  RevisionInvalid: "Panel.RevisionInvalid",
+  ViewRefInvalid: "Panel.ViewRefInvalid",
+  ExpectedRevisionRequired: "Panel.ExpectedRevisionRequired",
+  RoleRequired: "Panel.RoleRequired",
+  ReadOnly: "Panel.ReadOnly",
+  McpHubRequired: "Panel.McpHubRequired",
+  McpIdToolRequired: "Panel.McpIdToolRequired",
+  ArgumentsInvalid: "Panel.ArgumentsInvalid",
+} as const;
+
+/** Audit tree paths (chest's audit/usage_facts faces). */
+export const AUDIT_ERROR_PATHS = {
+  ExportRecordWriteFailed: "Audit.ExportRecordWriteFailed",
+  NothingToPurge: "Audit.NothingToPurge",
+  BatchTooLarge: "Audit.BatchTooLarge",
+} as const;
+
+/** Plugin tree paths (chest's plugins.rs face). */
+export const PLUGIN_ERROR_PATHS = {
+  IdRequired: "Plugin.IdRequired",
+  TargetTypeRequired: "Plugin.TargetTypeRequired",
+  PointRequired: "Plugin.PointRequired",
+} as const;
+
 /** Every path in the table, in declaration order. */
 export const ERROR_PATHS = [
   "Usage.Forbidden",
@@ -49,6 +240,129 @@ export const ERROR_PATHS = [
   "Models.SelfHosted.ModelsInvalid",
   "Models.SelfHosted.ModelsRequired",
   "Models.SelfHosted.IndexRequired",
+  "Authority.SystemWrite",
+  "Authority.SystemRead",
+  "Authority.RbacManage",
+  "Authority.DeviceEnroll",
+  "Authority.MaintenanceAdmin",
+  "Authority.PanelWrite",
+  "Authority.Forbidden",
+  "Upstream.Unreachable",
+  "Upstream.Malformed",
+  "Upstream.Timeout",
+  "Upstream.Auth",
+  "Upstream.Internal",
+  "Topic.GetFailed",
+  "Topic.ListFailed",
+  "Topic.MessagesFailed",
+  "Topic.ArchiveFailed",
+  "Topic.EditFailed",
+  "Topic.UndoFailed",
+  "Topic.ConversationNotFound",
+  "Topic.ConversationIdRequired",
+  "Topic.ConversationAccessDenied",
+  "Topic.NoModelSelected",
+  "Workspace.Forbidden",
+  "Workspace.RoleInsufficient",
+  "Workspace.NotFound",
+  "Workspace.AccessDenied",
+  "Workspace.WorkspaceIdRequired",
+  "Workspace.WorkspaceIdInvalid",
+  "Workspace.TabNotFound",
+  "Workspace.ShareNotFound",
+  "Workspace.ShareUnavailable",
+  "Auth.UsernameTaken",
+  "Auth.EmailInUse",
+  "Auth.PasswordTooShort",
+  "Auth.UserNotFound",
+  "Auth.NoUserWithEmail",
+  "Auth.SelfDeleteDenied",
+  "Auth.RealNameDisabled",
+  "Auth.SmsDisabled",
+  "Auth.SmsProviderMissing",
+  "Auth.WrongCode",
+  "Auth.NoChallenge",
+  "Auth.InvitationMintFailed",
+  "Auth.MobileInvalid",
+  "Provider.NotFound",
+  "Provider.NameTaken",
+  "Provider.NameAndUrlRequired",
+  "Provider.UrlInvalid",
+  "Provider.ModelsRequired",
+  "Provider.ModelsInvalid",
+  "Provider.QuotaReached",
+  "Provider.KindInvalid",
+  "Provider.WorkflowRequired",
+  "Provider.WorkflowInvalid",
+  "Provider.NoActiveAdapter",
+  "Provider.NoConfig",
+  "Media.AccountLookupFailed",
+  "Media.AccountMissing",
+  "Media.ServiceUnavailable",
+  "Media.AudioTooLarge",
+  "Media.TranscribeRateLimited",
+  "Media.AudioMissing",
+  "Media.Base64ImageInvalid",
+  "Media.FileTooLarge",
+  "Media.TranscribeFailed",
+  "Topology.GatewayTimeout",
+  "Topology.TargetDuplicate",
+  "Topology.RemoteTargetMissing",
+  "Topology.NoDialPath",
+  "Topology.ConnectionMissing",
+  "Topology.ClaimedGatewayNoNodeId",
+  "Topology.TargetKindMismatch",
+  "Topology.NodeIdShapeInvalid",
+  "Topology.NodeIdModeRequired",
+  "Topology.HostRequired",
+  "Console.CiNotConfigured",
+  "Console.CiWatchlistEmpty",
+  "Console.CdNotConfigured",
+  "Console.EngineNotConfigured",
+  "Console.RepairTargetNotConfigured",
+  "Webhook.IdRequired",
+  "Webhook.ScopeTypeInvalid",
+  "Webhook.ScopeIdInvalid",
+  "Webhook.ServiceAuthOnly",
+  "Webhook.EventsInvalid",
+  "Webhook.ScopesInvalid",
+  "Iam.ClientIdRequired",
+  "Iam.ClientNotFound",
+  "Iam.ClientNotActive",
+  "Iam.TokenEncryptFailed",
+  "Iam.SecretSealFailed",
+  "Iam.GroupSourceRequiresSystemWrite",
+  "Iam.BuiltinGroupImmutable",
+  "Iam.MembershipRequired",
+  "Iam.ConsentRequiresMembership",
+  "Billing.ReservationLost",
+  "Billing.WalletVanished",
+  "Billing.ModeInvalid",
+  "Billing.QuotaExceeded",
+  "Edge.CatalogEntryNotFound",
+  "Edge.IntentIdRequired",
+  "Edge.DeviceIdRequired",
+  "Edge.EnrollmentBudgetExhausted",
+  "Edge.SerialOrEnrollmentIdRequired",
+  "Edge.AdmissionForbidden",
+  "Visitor.TicketRequired",
+  "Visitor.TicketNotFound",
+  "Visitor.ObservationNotFound",
+  "Visitor.TicketIdRequired",
+  "Panel.RevisionInvalid",
+  "Panel.ViewRefInvalid",
+  "Panel.ExpectedRevisionRequired",
+  "Panel.RoleRequired",
+  "Panel.ReadOnly",
+  "Panel.McpHubRequired",
+  "Panel.McpIdToolRequired",
+  "Panel.ArgumentsInvalid",
+  "Audit.ExportRecordWriteFailed",
+  "Audit.NothingToPurge",
+  "Audit.BatchTooLarge",
+  "Plugin.IdRequired",
+  "Plugin.TargetTypeRequired",
+  "Plugin.PointRequired",
 ] as const;
 
 export type ErrorPath = (typeof ERROR_PATHS)[number];
