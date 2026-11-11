@@ -5,6 +5,24 @@ pub use plana_core::{AgentErrorCode, StructuredAgentError};
 // re-exports them so the engine (which takes its agent-error vocabulary from
 // here) writes `reason` / `interrupted` values through the typed enums
 // instead of raw string literals.
+///
+/// Consumer-shaped root-surface pin: a doctest compiles against this crate
+/// as an EXTERNAL crate, so the imports resolve only when lib.rs's root
+/// `pub use agent_error::…` actually carries the names — the 0.5.1 publish
+/// shipped the vocabularies module-only, and only the engine's compile
+/// (not any in-crate test, which resolves through `self`) noticed.
+///
+/// ```rust
+/// use plana_state_sync::{AgentErrorReason, AgentErrorCode, AgentInterruptReason, StructuredAgentError};
+///
+/// let reason = AgentErrorReason::PeerUnreachable;
+/// assert_eq!(reason.wire_form(), "peer_unreachable");
+/// assert_eq!(AgentInterruptReason::Restart.wire_form(), "restart");
+/// let code: AgentErrorCode = serde_json::from_str("\"chain_failed\"").unwrap();
+/// assert_eq!(code, AgentErrorCode::ChainFailed);
+/// let error = StructuredAgentError::new(AgentErrorCode::AgentBusy);
+/// assert_eq!(error.code, AgentErrorCode::AgentBusy);
+/// ```
 pub use plana_celestia_types::{AgentErrorReason, AgentInterruptReason};
 
 #[cfg(test)]
