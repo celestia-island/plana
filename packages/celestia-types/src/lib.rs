@@ -566,12 +566,6 @@ pub struct StructuredAgentError {
 // `derive_enum!`: they are error identity, and the contract crate is their
 // home. Wire forms are snake_case strings identical to the tokens producers
 // write today — the enums close the vocabulary without changing the wire.
-
-// The two context vocabularies below live in the same file as
-// [`AgentErrorCode`] for the same reason that enum lives behind
-// `derive_enum!`: they are error identity, and the contract crate is their
-// home. Wire forms are snake_case strings identical to the tokens producers
-// write today — the enums close the vocabulary without changing the wire.
 // Doc comments sit INSIDE each macro invocation: rustdoc does not attach
 // docs to items through a macro invocation from the outside.
 yuuka::derive_enum!(
