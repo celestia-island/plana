@@ -5,7 +5,7 @@ name = "plana-state-sync"
 # 0.3.0 bump answered the SwarmCursorProjection variant, 0.4.0 answers the
 # DependencyDown variant, 0.5.0 answers the AgentBusy / BudgetExhausted
 # variants added to the re-exported plana-core enum.
-version = "0.5.0"
+version = "0.5.1"
 edition.workspace = true
 rust-version.workspace = true
 publish = true

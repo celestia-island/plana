@@ -402,68 +402,76 @@ pub struct RouteInfo {
     pub target_token: Option<String>,
 }
 
-#[derive(
-    JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS, thiserror::Error,
-)]
-#[ts(export, export_to = "ws/core.ts")]
-#[serde(rename_all = "snake_case")]
-pub enum AgentErrorCode {
-    #[error("model has no providers")]
-    ModelNoProviders,
-    #[error("model has no models")]
-    ModelNoModels,
-    #[error("model tier mismatch")]
-    ModelTierMismatch,
-    #[error("all models excluded")]
-    ModelAllExcluded,
-    #[error("model env incomplete")]
-    ModelEnvIncomplete,
-    #[error("model selection retry exhausted")]
-    ModelSelectionRetryExhausted,
-    #[error("no model with the required capability is available in the tier")]
-    ModelNoCapableModel,
-    #[error("LLM call failed")]
-    LlmCallFailed,
-    #[error("LLM empty response")]
-    LlmEmptyResponse,
-    #[error("LLM rate limited")]
-    LlmRateLimited,
-    #[error("LLM auth failed")]
-    LlmAuthFailed,
-    #[error("LLM timeout")]
-    LlmTimeout,
-    #[error("cosmos no connection")]
-    CosmosNoConnection,
-    #[error("cosmos tool failed")]
-    CosmosToolFailed,
-    #[error("cosmos local unavailable")]
-    CosmosLocalUnavailable,
-    #[error("chain max depth")]
-    ChainMaxDepth,
-    #[error("chain cycle detected")]
-    ChainCycle,
-    #[error("chain failed")]
-    ChainFailed,
-    #[error("skill failed")]
-    SkillFailed,
-    #[error("skill empty output")]
-    SkillEmptyOutput,
-    #[error("skill missing report")]
-    SkillMissingReport,
-    /// An infrastructure dependency (IPC peer, upstream service, database) is
-    /// unreachable or unhealthy. See [`StructuredAgentError`]'s `context`
-    /// field for the canonical keys carried alongside this code.
-    #[error("infrastructure dependency failure")]
-    DependencyDown,
-    /// The request was refused because the engine is already processing
-    /// another user message (single-flight guard), not because of a fault.
-    #[error("agent is busy processing another request")]
-    AgentBusy,
-    /// The request was refused because the task's budget (steps, tokens or
-    /// wall-clock allowance) is exhausted, not because of a fault.
-    #[error("task budget is exhausted")]
-    BudgetExhausted,
-}
+// Declared through the yuuka `derive_enum!` house form (the same shape as
+// `error_paths::UsageErrors`): the error identity the wire carries must be an
+// enum, declared with the workspace's enum DSL, in the contract crate — not a
+// hand-rolled `serde` enum. The derives come FIRST inside the macro (a
+// `derive_enum!` parser constraint); the `ts` / `serde` attributes and the
+// per-variant `#[error(...)]` prose pass through unchanged, so the wire form
+// (`snake_case` union in `bindings/ws/core.ts`) is byte-identical to the
+// pre-macro declaration.
+yuuka::derive_enum!(
+    #[derive(JsonSchema, PartialEq, Eq, Hash, Serialize, Deserialize, TS, thiserror::Error)]
+    #[ts(export, export_to = "ws/core.ts")]
+    #[serde(rename_all = "snake_case")]
+    pub enum AgentErrorCode {
+        #[error("model has no providers")]
+        ModelNoProviders,
+        #[error("model has no models")]
+        ModelNoModels,
+        #[error("model tier mismatch")]
+        ModelTierMismatch,
+        #[error("all models excluded")]
+        ModelAllExcluded,
+        #[error("model env incomplete")]
+        ModelEnvIncomplete,
+        #[error("model selection retry exhausted")]
+        ModelSelectionRetryExhausted,
+        #[error("no model with the required capability is available in the tier")]
+        ModelNoCapableModel,
+        #[error("LLM call failed")]
+        LlmCallFailed,
+        #[error("LLM empty response")]
+        LlmEmptyResponse,
+        #[error("LLM rate limited")]
+        LlmRateLimited,
+        #[error("LLM auth failed")]
+        LlmAuthFailed,
+        #[error("LLM timeout")]
+        LlmTimeout,
+        #[error("cosmos no connection")]
+        CosmosNoConnection,
+        #[error("cosmos tool failed")]
+        CosmosToolFailed,
+        #[error("cosmos local unavailable")]
+        CosmosLocalUnavailable,
+        #[error("chain max depth")]
+        ChainMaxDepth,
+        #[error("chain cycle detected")]
+        ChainCycle,
+        #[error("chain failed")]
+        ChainFailed,
+        #[error("skill failed")]
+        SkillFailed,
+        #[error("skill empty output")]
+        SkillEmptyOutput,
+        #[error("skill missing report")]
+        SkillMissingReport,
+        /// An infrastructure dependency (IPC peer, upstream service, database) is
+        /// unreachable or unhealthy. See [`StructuredAgentError`]'s `context`
+        /// field for the canonical keys carried alongside this code.
+        #[error("infrastructure dependency failure")]
+        DependencyDown,
+        /// The request was refused because the engine is already processing
+        /// another user message (single-flight guard), not because of a fault.
+        #[error("agent is busy processing another request")]
+        AgentBusy,
+        /// The request was refused because the task's budget (steps, tokens or
+        /// wall-clock allowance) is exhausted, not because of a fault.
+        #[error("task budget is exhausted")]
+        BudgetExhausted,
+    }
+);
 
 impl AgentErrorCode {
     pub fn is_llm_error(&self) -> bool {
@@ -534,14 +542,116 @@ pub struct StructuredAgentError {
     /// map (serde default), so payloads written by newer producers stay
     /// readable by older consumers and vice versa.
     ///
-    /// Canonical keys for the `DependencyDown` code (infrastructure
-    /// dependency failures):
-    /// - `dependency`: stable identifier of the failed dependency
-    ///   (e.g. `evernight-ipc`, `arona`);
-    /// - `reason`: machine-readable reason label (e.g. `peer_unreachable`);
-    /// - `hint`: optional operator-facing remediation hint.
+    /// Identity-bearing values are closed vocabularies declared below, so
+    /// consumers key display catalogs off enum wire forms instead of
+    /// matching free-form strings:
+    /// - `reason`: the wire form of [`AgentErrorReason`] — carried on
+    ///   engine-flow refusals (`AgentBusy` → `single_flight`,
+    ///   `BudgetExhausted` → `quota_exceeded`), the chain deadline guard
+    ///   (`ChainFailed` → `chain_deadline`), and infrastructure dependency
+    ///   failures (`DependencyDown` → the dispatch taxonomy labels such as
+    ///   `peer_unreachable`);
+    /// - `interrupted`: the wire form of [`AgentInterruptReason`] — why an
+    ///   in-flight chain was interrupted (`ChainFailed` → `restart`);
+    /// - `dependency` (DependencyDown): stable identifier of the failed
+    ///   dependency (e.g. `evernight-ipc`, `arona`);
+    /// - `hint`: optional operator-facing remediation hint — deliberately
+    ///   free prose, NOT part of a closed vocabulary.
     #[serde(default)]
     pub context: std::collections::HashMap<String, String>,
+}
+
+// The two context vocabularies below live in the same file as
+// [`AgentErrorCode`] for the same reason that enum lives behind
+// `derive_enum!`: they are error identity, and the contract crate is their
+// home. Wire forms are snake_case strings identical to the tokens producers
+// write today — the enums close the vocabulary without changing the wire.
+// Doc comments sit INSIDE each macro invocation: rustdoc does not attach
+// docs to items through a macro invocation from the outside.
+yuuka::derive_enum!(
+    #[derive(JsonSchema, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+    /// Closed vocabulary for the structured agent error's `reason` context
+    /// value. Union of every token the engine writes today: the engine-flow
+    /// refusal reasons, the chain deadline guard, and the dispatch/dependency
+    /// taxonomy labels that flow in from evernight broker failures
+    /// (`ClassifiedError` / `ErrorKind::label`). Unknown values stay readable
+    /// on the wire (context is a string map); a new producer token must land
+    /// here as a variant, not bypass the vocabulary.
+    #[ts(export, export_to = "ws/core.ts")]
+    #[serde(rename_all = "snake_case")]
+    pub enum AgentErrorReason {
+        /// The engine was already processing another user message
+        /// (single-flight guard) — pairs with `AgentBusy`.
+        SingleFlight,
+        /// The task's quota/budget was exhausted — pairs with
+        /// `BudgetExhausted`.
+        QuotaExceeded,
+        /// A chain step missed its deadline guard — pairs with
+        /// `ChainFailed`.
+        ChainDeadline,
+        /// Broker rejected the envelope/params (`-32602`).
+        InvalidParams,
+        /// Unknown broker method / mistyped verb (`-32601`).
+        MethodNotFound,
+        /// Broker unreachable at the transport layer.
+        PeerUnreachable,
+        /// Server-side execution timeout.
+        ExecutionTimeout,
+        /// Authorization/authentication refusal (`AUTH_ERROR`).
+        Auth,
+        /// `target_scope` validation failure.
+        TargetOutOfScope,
+        /// The idempotency key was already seen; rejected locally.
+        DuplicateRequest,
+        /// Anything else (original code/message/data preserved).
+        Other,
+    }
+);
+
+yuuka::derive_enum!(
+    #[derive(JsonSchema, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
+    /// Closed vocabulary for the structured agent error's `interrupted`
+    /// context value: why an in-flight chain was interrupted. `Restart` is
+    /// the restart-sweep discriminator chest renders the aggregated
+    /// interruption card from (ente #821); future interruption causes extend
+    /// this enum instead of minting new free-form tokens.
+    #[ts(export, export_to = "ws/core.ts")]
+    #[serde(rename_all = "snake_case")]
+    pub enum AgentInterruptReason {
+        /// The engine restart interrupted the in-flight chain.
+        Restart,
+    }
+);
+
+impl AgentErrorReason {
+    /// The exact wire form (`context` value spelling). Producers write
+    /// vocabularies into the string-map context through this — the enum
+    /// stays the only source of the token, and the wire-pin test asserts
+    /// this never drifts from the serde form.
+    pub fn wire_form(&self) -> &'static str {
+        match self {
+            Self::SingleFlight => "single_flight",
+            Self::QuotaExceeded => "quota_exceeded",
+            Self::ChainDeadline => "chain_deadline",
+            Self::InvalidParams => "invalid_params",
+            Self::MethodNotFound => "method_not_found",
+            Self::PeerUnreachable => "peer_unreachable",
+            Self::ExecutionTimeout => "execution_timeout",
+            Self::Auth => "auth",
+            Self::TargetOutOfScope => "target_out_of_scope",
+            Self::DuplicateRequest => "duplicate_request",
+            Self::Other => "other",
+        }
+    }
+}
+
+impl AgentInterruptReason {
+    /// See [`AgentErrorReason::wire_form`].
+    pub fn wire_form(&self) -> &'static str {
+        match self {
+            Self::Restart => "restart",
+        }
+    }
 }
 
 #[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
@@ -990,6 +1100,64 @@ mod tests {
             AgentErrorCode::BudgetExhausted.to_string(),
             "task budget is exhausted"
         );
+    }
+
+    /// The `reason` context vocabulary's wire strings are cross-service
+    /// contracts: engine producers write them into
+    /// `StructuredAgentError.context` and chest keys display catalogs off
+    /// them. Every variant is pinned to its exact snake_case wire form — a
+    /// rename drifts consumers' catalogs silently, so it must fail here.
+    #[test]
+    fn agent_error_reason_wire_strings_are_stable() {
+        let expected: &[(&str, &str)] = &[
+            ("SingleFlight", "single_flight"),
+            ("QuotaExceeded", "quota_exceeded"),
+            ("ChainDeadline", "chain_deadline"),
+            ("InvalidParams", "invalid_params"),
+            ("MethodNotFound", "method_not_found"),
+            ("PeerUnreachable", "peer_unreachable"),
+            ("ExecutionTimeout", "execution_timeout"),
+            ("Auth", "auth"),
+            ("TargetOutOfScope", "target_out_of_scope"),
+            ("DuplicateRequest", "duplicate_request"),
+            ("Other", "other"),
+        ];
+        assert_eq!(expected.len(), 11);
+        for (variant, wire) in expected {
+            let value = match *variant {
+                "SingleFlight" => AgentErrorReason::SingleFlight,
+                "QuotaExceeded" => AgentErrorReason::QuotaExceeded,
+                "ChainDeadline" => AgentErrorReason::ChainDeadline,
+                "InvalidParams" => AgentErrorReason::InvalidParams,
+                "MethodNotFound" => AgentErrorReason::MethodNotFound,
+                "PeerUnreachable" => AgentErrorReason::PeerUnreachable,
+                "ExecutionTimeout" => AgentErrorReason::ExecutionTimeout,
+                "Auth" => AgentErrorReason::Auth,
+                "TargetOutOfScope" => AgentErrorReason::TargetOutOfScope,
+                "DuplicateRequest" => AgentErrorReason::DuplicateRequest,
+                "Other" => AgentErrorReason::Other,
+                _ => unreachable!(),
+            };
+            let encoded = serde_json::to_string(&value).unwrap();
+            assert_eq!(encoded, format!(r#""{wire}""#), "variant {variant}");
+            let back: AgentErrorReason = serde_json::from_str(&encoded).unwrap();
+            assert_eq!(back, value, "variant {variant}");
+            // `wire_form` is the producer-facing spelling — it must equal
+            // the serde form for every variant or the vocabulary splits.
+            assert_eq!(value.wire_form(), *wire, "wire_form drift on {variant}");
+        }
+    }
+
+    /// The `interrupted` context vocabulary's wire string is the
+    /// restart-interruption discriminator chest classifies the aggregated
+    /// interruption card from (ente #821).
+    #[test]
+    fn agent_interrupt_reason_wire_strings_are_stable() {
+        let encoded = serde_json::to_string(&AgentInterruptReason::Restart).unwrap();
+        assert_eq!(encoded, r#""restart""#);
+        let back: AgentInterruptReason = serde_json::from_str(&encoded).unwrap();
+        assert_eq!(back, AgentInterruptReason::Restart);
+        assert_eq!(AgentInterruptReason::Restart.wire_form(), "restart");
     }
 
     /// Backward-compatibility tolerance for the `context` field, in both

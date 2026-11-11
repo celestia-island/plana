@@ -1,5 +1,12 @@
 pub use plana_core::{AgentErrorCode, StructuredAgentError};
 
+// The context vocabularies are declared ONCE, in celestia-types (the contract
+// crate that also owns the ts-rs bindings the webui consumes); this shim
+// re-exports them so the engine (which takes its agent-error vocabulary from
+// here) writes `reason` / `interrupted` values through the typed enums
+// instead of raw string literals.
+pub use plana_celestia_types::{AgentErrorReason, AgentInterruptReason};
+
 #[cfg(test)]
 mod tests {
     //! Lockstep proof for the two serialization twins of `AgentErrorCode`:
