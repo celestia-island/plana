@@ -29,6 +29,12 @@ pub mod agent;
 /// The in-process agent handle (`AgentContext`); deliberately not a wire type.
 pub mod agent_context;
 /// Re-export shim: `AgentErrorCode` and `StructuredAgentError` live in `plana_core`.
+///
+/// The root surface is what external consumers (the engine) name, so it is
+/// pinned by a consumer-shaped doctest — the 0.5.1 publish shipped the
+/// vocabulary re-export inside `agent_error` only, and nothing in this
+/// crate's tests (which resolve through `self`) noticed until the engine's
+/// compile broke on the root path.
 pub mod agent_error;
 /// The runtime agent identity: builtin enum or plugin-carried folder
 /// (the L2 plugin platform's non-hardcoded key).
@@ -47,7 +53,13 @@ pub use agent::{
     CustomAgentId, WorkStatus,
 };
 pub use agent_context::AgentContext;
-pub use agent_error::{AgentErrorCode, StructuredAgentError};
+// The context vocabularies join the code enum at the crate root: the engine
+// writes them through this re-export (scepter's `reason_label` maps onto
+// them), and a module-only path would compile green while the root surface
+// silently lags — exactly the gap the published 0.5.1 shipped with.
+pub use agent_error::{
+    AgentErrorCode, AgentErrorReason, AgentInterruptReason, StructuredAgentError,
+};
 pub use agent_key::{AgentKey, InvalidAgentKey, PLUGIN_PREFIX};
 pub use doc_loader::{ToolDoc, ToolDocLoader};
 pub use gateway::{
