@@ -6,6 +6,26 @@ export type AgentBadge = string;
 
 export type AgentErrorCode = "model_no_providers" | "model_no_models" | "model_tier_mismatch" | "model_all_excluded" | "model_env_incomplete" | "model_selection_retry_exhausted" | "model_no_capable_model" | "llm_call_failed" | "llm_empty_response" | "llm_rate_limited" | "llm_auth_failed" | "llm_timeout" | "cosmos_no_connection" | "cosmos_tool_failed" | "cosmos_local_unavailable" | "chain_max_depth" | "chain_cycle" | "chain_failed" | "skill_failed" | "skill_empty_output" | "skill_missing_report" | "dependency_down" | "agent_busy" | "budget_exhausted";
 
+/**
+ * Closed vocabulary for the structured agent error's `reason` context
+ * value. Union of every token the engine writes today: the engine-flow
+ * refusal reasons, the chain deadline guard, and the dispatch/dependency
+ * taxonomy labels that flow in from evernight broker failures
+ * (`ClassifiedError` / `ErrorKind::label`). Unknown values stay readable
+ * on the wire (context is a string map); a new producer token must land
+ * here as a variant, not bypass the vocabulary.
+ */
+export type AgentErrorReason = "single_flight" | "quota_exceeded" | "chain_deadline" | "invalid_params" | "method_not_found" | "peer_unreachable" | "execution_timeout" | "auth" | "target_out_of_scope" | "duplicate_request" | "other";
+
+/**
+ * Closed vocabulary for the structured agent error's `interrupted`
+ * context value: why an in-flight chain was interrupted. `Restart` is
+ * the restart-sweep discriminator chest renders the aggregated
+ * interruption card from (ente #821); future interruption causes extend
+ * this enum instead of minting new free-form tokens.
+ */
+export type AgentInterruptReason = "restart";
+
 export type AgentStatus = "Initializing" | "Online" | "Busy" | "Offline" | "Error";
 
 export type CompletionOutcome = "None" | "Reported" | "Failed";
@@ -76,12 +96,21 @@ export type StructuredAgentError = { code: AgentErrorCode, detail?: string,
  * map (serde default), so payloads written by newer producers stay
  * readable by older consumers and vice versa.
  *
- * Canonical keys for the `DependencyDown` code (infrastructure
- * dependency failures):
- * - `dependency`: stable identifier of the failed dependency
- *   (e.g. `evernight-ipc`, `arona`);
- * - `reason`: machine-readable reason label (e.g. `peer_unreachable`);
- * - `hint`: optional operator-facing remediation hint.
+ * Identity-bearing values are closed vocabularies declared below, so
+ * consumers key display catalogs off enum wire forms instead of
+ * matching free-form strings:
+ * - `reason`: the wire form of [`AgentErrorReason`] — carried on
+ *   engine-flow refusals (`AgentBusy` → `single_flight`,
+ *   `BudgetExhausted` → `quota_exceeded`), the chain deadline guard
+ *   (`ChainFailed` → `chain_deadline`), and infrastructure dependency
+ *   failures (`DependencyDown` → the dispatch taxonomy labels such as
+ *   `peer_unreachable`);
+ * - `interrupted`: the wire form of [`AgentInterruptReason`] — why an
+ *   in-flight chain was interrupted (`ChainFailed` → `restart`);
+ * - `dependency` (DependencyDown): stable identifier of the failed
+ *   dependency (e.g. `evernight-ipc`, `arona`);
+ * - `hint`: optional operator-facing remediation hint — deliberately
+ *   free prose, NOT part of a closed vocabulary.
  */
 context: { [key in string]: string }, };
 

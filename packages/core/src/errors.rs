@@ -3,44 +3,50 @@ use std::collections::HashMap;
 
 use thiserror::Error;
 
-/// Wire taxonomy for structured agent errors. This enum is a serialization twin
-/// of `plana_celestia_types::AgentErrorCode` (same variants, same order, same
-/// snake_case wire form) — keep both copies in lockstep when adding variants.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "snake_case")]
-pub enum AgentErrorCode {
-    ModelNoProviders,
-    ModelNoModels,
-    ModelTierMismatch,
-    ModelAllExcluded,
-    ModelEnvIncomplete,
-    ModelSelectionRetryExhausted,
-    ModelNoCapableModel,
-    LlmCallFailed,
-    LlmEmptyResponse,
-    LlmRateLimited,
-    LlmAuthFailed,
-    LlmTimeout,
-    CosmosNoConnection,
-    CosmosToolFailed,
-    CosmosLocalUnavailable,
-    ChainMaxDepth,
-    ChainCycle,
-    ChainFailed,
-    SkillFailed,
-    SkillEmptyOutput,
-    SkillMissingReport,
-    /// An infrastructure dependency (IPC peer, upstream service, database) is
-    /// unreachable or unhealthy. See [`StructuredAgentError`]'s `context`
-    /// field for the canonical keys carried alongside this code.
-    DependencyDown,
-    /// The request was refused because the engine is already processing
-    /// another user message (single-flight guard), not because of a fault.
-    AgentBusy,
-    /// The request was refused because the task's budget (steps, tokens or
-    /// wall-clock allowance) is exhausted, not because of a fault.
-    BudgetExhausted,
-}
+yuuka::derive_enum!(
+    #[derive(Serialize, Deserialize, PartialEq, Eq, Hash)]
+    /// Wire taxonomy for structured agent errors. This enum is a serialization
+    /// twin of `plana_celestia_types::AgentErrorCode` (same variants, same
+    /// order, same snake_case wire form) — keep both copies in lockstep when
+    /// adding variants (the state-sync census is the guard). Declared through
+    /// the yuuka `derive_enum!` house form, mirroring the celestia-types twin;
+    /// doc comments sit inside the invocation because rustdoc does not attach
+    /// docs through a macro call from the outside.
+    #[serde(rename_all = "snake_case")]
+    pub enum AgentErrorCode {
+        ModelNoProviders,
+        ModelNoModels,
+        ModelTierMismatch,
+        ModelAllExcluded,
+        ModelEnvIncomplete,
+        ModelSelectionRetryExhausted,
+        ModelNoCapableModel,
+        LlmCallFailed,
+        LlmEmptyResponse,
+        LlmRateLimited,
+        LlmAuthFailed,
+        LlmTimeout,
+        CosmosNoConnection,
+        CosmosToolFailed,
+        CosmosLocalUnavailable,
+        ChainMaxDepth,
+        ChainCycle,
+        ChainFailed,
+        SkillFailed,
+        SkillEmptyOutput,
+        SkillMissingReport,
+        /// An infrastructure dependency (IPC peer, upstream service, database) is
+        /// unreachable or unhealthy. See [`StructuredAgentError`]'s `context`
+        /// field for the canonical keys carried alongside this code.
+        DependencyDown,
+        /// The request was refused because the engine is already processing
+        /// another user message (single-flight guard), not because of a fault.
+        AgentBusy,
+        /// The request was refused because the task's budget (steps, tokens or
+        /// wall-clock allowance) is exhausted, not because of a fault.
+        BudgetExhausted,
+    }
+);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct StructuredAgentError {
@@ -51,12 +57,16 @@ pub struct StructuredAgentError {
     /// map (serde default), so payloads written by newer producers stay
     /// readable by older consumers and vice versa.
     ///
-    /// Canonical keys for the `DependencyDown` code (infrastructure
-    /// dependency failures):
+    /// Identity-bearing values are closed vocabularies declared in
+    /// `plana_celestia_types` (re-exported for the engine through
+    /// state-sync): `reason` carries the wire form of `AgentErrorReason`
+    /// and `interrupted` the wire form of `AgentInterruptReason`. The
+    /// string-map keys:
     /// - `dependency`: stable identifier of the failed dependency
     ///   (e.g. `evernight-ipc`, `arona`);
     /// - `reason`: machine-readable reason label (e.g. `peer_unreachable`);
-    /// - `hint`: optional operator-facing remediation hint.
+    /// - `interrupted`: why an in-flight chain was interrupted (`restart`);
+    /// - `hint`: optional operator-facing remediation hint (free prose).
     #[serde(default)]
     pub context: HashMap<String, String>,
 }

@@ -30,6 +30,12 @@ tracing-subscriber.workspace = true
 tracing.workspace = true
 ts-rs.workspace = true
 uuid.workspace = true
+# yuuka is consumed from crates.io on the 0.10 line, declared directly (not
+# through the workspace table) — same convention as celestia-types. This
+# crate only uses `yuuka::derive_enum!` for the error-identity enums
+# (`AgentErrorCode`); the kirino 0.6-line split noted in celestia-types'
+# Cargo.toml does not apply here.
+yuuka = { version = "^0.10" }
 [dev-dependencies]
 
 criterion = "^0.5"
