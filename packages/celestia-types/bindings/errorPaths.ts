@@ -64,6 +64,12 @@ export const TOPIC_ERROR_PATHS = {
   ConversationIdRequired: "Topic.ConversationIdRequired",
   ConversationAccessDenied: "Topic.ConversationAccessDenied",
   NoModelSelected: "Topic.NoModelSelected",
+  ParamsRequired: "Topic.ParamsRequired",
+  CreateFailed: "Topic.CreateFailed",
+  UpdateFailed: "Topic.UpdateFailed",
+  DeleteFailed: "Topic.DeleteFailed",
+  ReportsFailed: "Topic.ReportsFailed",
+  MessageNotFound: "Topic.MessageNotFound",
 } as const;
 
 /** Workspace tree paths (chest's workspace/tenancy faces). */
@@ -94,6 +100,9 @@ export const AUTH_ERROR_PATHS = {
   NoChallenge: "Auth.NoChallenge",
   InvitationMintFailed: "Auth.InvitationMintFailed",
   MobileInvalid: "Auth.MobileInvalid",
+  ParamsRequired: "Auth.ParamsRequired",
+  IdInvalid: "Auth.IdInvalid",
+  SaveFailed: "Auth.SaveFailed",
 } as const;
 
 /** Provider tree paths (chest's provider config faces). */
@@ -114,7 +123,6 @@ export const PROVIDER_ERROR_PATHS = {
 
 /** Media tree paths (chest's audio/video/voice/media faces). */
 export const MEDIA_ERROR_PATHS = {
-  AccountLookupFailed: "Media.AccountLookupFailed",
   AccountMissing: "Media.AccountMissing",
   ServiceUnavailable: "Media.ServiceUnavailable",
   AudioTooLarge: "Media.AudioTooLarge",
@@ -123,6 +131,9 @@ export const MEDIA_ERROR_PATHS = {
   Base64ImageInvalid: "Media.Base64ImageInvalid",
   FileTooLarge: "Media.FileTooLarge",
   TranscribeFailed: "Media.TranscribeFailed",
+  ParamsRequired: "Media.ParamsRequired",
+  IdInvalid: "Media.IdInvalid",
+  KindRequired: "Media.KindRequired",
 } as const;
 
 /** Topology tree paths (chest's topology/connections faces). */
@@ -146,6 +157,7 @@ export const CONSOLE_ERROR_PATHS = {
   CdNotConfigured: "Console.CdNotConfigured",
   EngineNotConfigured: "Console.EngineNotConfigured",
   RepairTargetNotConfigured: "Console.RepairTargetNotConfigured",
+  ParamsRequired: "Console.ParamsRequired",
 } as const;
 
 /** Webhook tree paths (chest's webhook config face). */
@@ -156,6 +168,15 @@ export const WEBHOOK_ERROR_PATHS = {
   ServiceAuthOnly: "Webhook.ServiceAuthOnly",
   EventsInvalid: "Webhook.EventsInvalid",
   ScopesInvalid: "Webhook.ScopesInvalid",
+  ParamsRequired: "Webhook.ParamsRequired",
+  NameRequired: "Webhook.NameRequired",
+  NotFound: "Webhook.NotFound",
+  IdInvalid: "Webhook.IdInvalid",
+  InsertFailed: "Webhook.InsertFailed",
+  UpdateFailed: "Webhook.UpdateFailed",
+  DeleteFailed: "Webhook.DeleteFailed",
+  RotateFailed: "Webhook.RotateFailed",
+  QueryFailed: "Webhook.QueryFailed",
 } as const;
 
 /** Iam tree paths (chest's iam + oauth_clients faces). */
@@ -169,6 +190,8 @@ export const IAM_ERROR_PATHS = {
   BuiltinGroupImmutable: "Iam.BuiltinGroupImmutable",
   MembershipRequired: "Iam.MembershipRequired",
   ConsentRequiresMembership: "Iam.ConsentRequiresMembership",
+  GroupNotFound: "Iam.GroupNotFound",
+  NameRequired: "Iam.NameRequired",
 } as const;
 
 /** Billing tree paths (chest's billing authority/quota faces). */
@@ -177,6 +200,10 @@ export const BILLING_ERROR_PATHS = {
   WalletVanished: "Billing.WalletVanished",
   ModeInvalid: "Billing.ModeInvalid",
   QuotaExceeded: "Billing.QuotaExceeded",
+  ParamsRequired: "Billing.ParamsRequired",
+  SenderIdRequired: "Billing.SenderIdRequired",
+  SenderIdInvalid: "Billing.SenderIdInvalid",
+  Forbidden: "Billing.Forbidden",
 } as const;
 
 /** Edge tree paths (chest's edge_flash/admission/enroll/proxy faces). */
@@ -186,7 +213,6 @@ export const EDGE_ERROR_PATHS = {
   DeviceIdRequired: "Edge.DeviceIdRequired",
   EnrollmentBudgetExhausted: "Edge.EnrollmentBudgetExhausted",
   SerialOrEnrollmentIdRequired: "Edge.SerialOrEnrollmentIdRequired",
-  AdmissionForbidden: "Edge.AdmissionForbidden",
 } as const;
 
 /** Visitor tree paths (chest's visitor faces). */
@@ -207,6 +233,8 @@ export const PANEL_ERROR_PATHS = {
   McpHubRequired: "Panel.McpHubRequired",
   McpIdToolRequired: "Panel.McpIdToolRequired",
   ArgumentsInvalid: "Panel.ArgumentsInvalid",
+  IdRequired: "Panel.IdRequired",
+  NotFound: "Panel.NotFound",
 } as const;
 
 /** Audit tree paths (chest's audit/usage_facts faces). */
@@ -214,6 +242,12 @@ export const AUDIT_ERROR_PATHS = {
   ExportRecordWriteFailed: "Audit.ExportRecordWriteFailed",
   NothingToPurge: "Audit.NothingToPurge",
   BatchTooLarge: "Audit.BatchTooLarge",
+  ServiceAuthOnly: "Audit.ServiceAuthOnly",
+  ParamsRequired: "Audit.ParamsRequired",
+  FactsRequired: "Audit.FactsRequired",
+  QueryFailed: "Audit.QueryFailed",
+  ExportFailed: "Audit.ExportFailed",
+  ExportedBeforeRequired: "Audit.ExportedBeforeRequired",
 } as const;
 
 /** Plugin tree paths (chest's plugins.rs face). */
@@ -221,6 +255,36 @@ export const PLUGIN_ERROR_PATHS = {
   IdRequired: "Plugin.IdRequired",
   TargetTypeRequired: "Plugin.TargetTypeRequired",
   PointRequired: "Plugin.PointRequired",
+} as const;
+
+/** Channel tree paths (chest's channel admin + personal-channel faces). */
+export const CHANNEL_ERROR_PATHS = {
+  SaveFailed: "Channel.SaveFailed",
+  NotFound: "Channel.NotFound",
+  InvalidParams: "Channel.InvalidParams",
+  ParamsRequired: "Channel.ParamsRequired",
+  NoConfig: "Channel.NoConfig",
+  NoActiveAdapter: "Channel.NoActiveAdapter",
+  ReloadFailed: "Channel.ReloadFailed",
+  QueryFailed: "Channel.QueryFailed",
+  SendFailed: "Channel.SendFailed",
+  InsertFailed: "Channel.InsertFailed",
+  DeleteFailed: "Channel.DeleteFailed",
+  NameRequired: "Channel.NameRequired",
+  IdRequired: "Channel.IdRequired",
+  UnsupportedPlatform: "Channel.UnsupportedPlatform",
+  QuotaExceeded: "Channel.QuotaExceeded",
+  CategoryInvalid: "Channel.CategoryInvalid",
+} as const;
+
+/** Extensions tree paths (chest's extensions/RAG face). */
+export const EXTENSIONS_ERROR_PATHS = {
+  SearchFailed: "Extensions.SearchFailed",
+  UpsertFailed: "Extensions.UpsertFailed",
+  EmbedFailed: "Extensions.EmbedFailed",
+  DocumentParamsInvalid: "Extensions.DocumentParamsInvalid",
+  TierLookupFailed: "Extensions.TierLookupFailed",
+  ParamsRequired: "Extensions.ParamsRequired",
 } as const;
 
 /** Every path in the table, in declaration order. */
@@ -262,6 +326,12 @@ export const ERROR_PATHS = [
   "Topic.ConversationIdRequired",
   "Topic.ConversationAccessDenied",
   "Topic.NoModelSelected",
+  "Topic.ParamsRequired",
+  "Topic.CreateFailed",
+  "Topic.UpdateFailed",
+  "Topic.DeleteFailed",
+  "Topic.ReportsFailed",
+  "Topic.MessageNotFound",
   "Workspace.Forbidden",
   "Workspace.RoleInsufficient",
   "Workspace.NotFound",
@@ -284,6 +354,9 @@ export const ERROR_PATHS = [
   "Auth.NoChallenge",
   "Auth.InvitationMintFailed",
   "Auth.MobileInvalid",
+  "Auth.ParamsRequired",
+  "Auth.IdInvalid",
+  "Auth.SaveFailed",
   "Provider.NotFound",
   "Provider.NameTaken",
   "Provider.NameAndUrlRequired",
@@ -296,7 +369,6 @@ export const ERROR_PATHS = [
   "Provider.WorkflowInvalid",
   "Provider.NoActiveAdapter",
   "Provider.NoConfig",
-  "Media.AccountLookupFailed",
   "Media.AccountMissing",
   "Media.ServiceUnavailable",
   "Media.AudioTooLarge",
@@ -305,6 +377,9 @@ export const ERROR_PATHS = [
   "Media.Base64ImageInvalid",
   "Media.FileTooLarge",
   "Media.TranscribeFailed",
+  "Media.ParamsRequired",
+  "Media.IdInvalid",
+  "Media.KindRequired",
   "Topology.GatewayTimeout",
   "Topology.TargetDuplicate",
   "Topology.RemoteTargetMissing",
@@ -320,12 +395,22 @@ export const ERROR_PATHS = [
   "Console.CdNotConfigured",
   "Console.EngineNotConfigured",
   "Console.RepairTargetNotConfigured",
+  "Console.ParamsRequired",
   "Webhook.IdRequired",
   "Webhook.ScopeTypeInvalid",
   "Webhook.ScopeIdInvalid",
   "Webhook.ServiceAuthOnly",
   "Webhook.EventsInvalid",
   "Webhook.ScopesInvalid",
+  "Webhook.ParamsRequired",
+  "Webhook.NameRequired",
+  "Webhook.NotFound",
+  "Webhook.IdInvalid",
+  "Webhook.InsertFailed",
+  "Webhook.UpdateFailed",
+  "Webhook.DeleteFailed",
+  "Webhook.RotateFailed",
+  "Webhook.QueryFailed",
   "Iam.ClientIdRequired",
   "Iam.ClientNotFound",
   "Iam.ClientNotActive",
@@ -335,16 +420,21 @@ export const ERROR_PATHS = [
   "Iam.BuiltinGroupImmutable",
   "Iam.MembershipRequired",
   "Iam.ConsentRequiresMembership",
+  "Iam.GroupNotFound",
+  "Iam.NameRequired",
   "Billing.ReservationLost",
   "Billing.WalletVanished",
   "Billing.ModeInvalid",
   "Billing.QuotaExceeded",
+  "Billing.ParamsRequired",
+  "Billing.SenderIdRequired",
+  "Billing.SenderIdInvalid",
+  "Billing.Forbidden",
   "Edge.CatalogEntryNotFound",
   "Edge.IntentIdRequired",
   "Edge.DeviceIdRequired",
   "Edge.EnrollmentBudgetExhausted",
   "Edge.SerialOrEnrollmentIdRequired",
-  "Edge.AdmissionForbidden",
   "Visitor.TicketRequired",
   "Visitor.TicketNotFound",
   "Visitor.ObservationNotFound",
@@ -357,12 +447,42 @@ export const ERROR_PATHS = [
   "Panel.McpHubRequired",
   "Panel.McpIdToolRequired",
   "Panel.ArgumentsInvalid",
+  "Panel.IdRequired",
+  "Panel.NotFound",
   "Audit.ExportRecordWriteFailed",
   "Audit.NothingToPurge",
   "Audit.BatchTooLarge",
+  "Audit.ServiceAuthOnly",
+  "Audit.ParamsRequired",
+  "Audit.FactsRequired",
+  "Audit.QueryFailed",
+  "Audit.ExportFailed",
+  "Audit.ExportedBeforeRequired",
   "Plugin.IdRequired",
   "Plugin.TargetTypeRequired",
   "Plugin.PointRequired",
+  "Channel.SaveFailed",
+  "Channel.NotFound",
+  "Channel.InvalidParams",
+  "Channel.ParamsRequired",
+  "Channel.NoConfig",
+  "Channel.NoActiveAdapter",
+  "Channel.ReloadFailed",
+  "Channel.QueryFailed",
+  "Channel.SendFailed",
+  "Channel.InsertFailed",
+  "Channel.DeleteFailed",
+  "Channel.NameRequired",
+  "Channel.IdRequired",
+  "Channel.UnsupportedPlatform",
+  "Channel.QuotaExceeded",
+  "Channel.CategoryInvalid",
+  "Extensions.SearchFailed",
+  "Extensions.UpsertFailed",
+  "Extensions.EmbedFailed",
+  "Extensions.DocumentParamsInvalid",
+  "Extensions.TierLookupFailed",
+  "Extensions.ParamsRequired",
 ] as const;
 
 export type ErrorPath = (typeof ERROR_PATHS)[number];

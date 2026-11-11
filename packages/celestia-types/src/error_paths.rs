@@ -288,6 +288,12 @@ derive_enum!(
         ConversationIdRequired,
         ConversationAccessDenied,
         NoModelSelected,
+        ParamsRequired,
+        CreateFailed,
+        UpdateFailed,
+        DeleteFailed,
+        ReportsFailed,
+        MessageNotFound,
     }
 );
 
@@ -305,6 +311,12 @@ impl TopicErrors {
             Self::ConversationIdRequired => TOPIC_PATHS[7],
             Self::ConversationAccessDenied => TOPIC_PATHS[8],
             Self::NoModelSelected => TOPIC_PATHS[9],
+            Self::ParamsRequired => TOPIC_PATHS[10],
+            Self::CreateFailed => TOPIC_PATHS[11],
+            Self::UpdateFailed => TOPIC_PATHS[12],
+            Self::DeleteFailed => TOPIC_PATHS[13],
+            Self::ReportsFailed => TOPIC_PATHS[14],
+            Self::MessageNotFound => TOPIC_PATHS[15],
         }
     }
 }
@@ -327,6 +339,12 @@ pub const TOPIC_PATHS: &[&str] = &[
     "Topic.ConversationIdRequired",
     "Topic.ConversationAccessDenied",
     "Topic.NoModelSelected",
+    "Topic.ParamsRequired",
+    "Topic.CreateFailed",
+    "Topic.UpdateFailed",
+    "Topic.DeleteFailed",
+    "Topic.ReportsFailed",
+    "Topic.MessageNotFound",
 ];
 
 // ── Workspace (chest's workspace/tenancy handler faces: role gates,
@@ -337,6 +355,10 @@ derive_enum!(
         Forbidden,
         RoleInsufficient,
         NotFound,
+        /// "No access to this workspace" (chest `workspace.rs:91`, `:238`
+        /// — the `check_workspace_access` denial) and "Not your
+        /// workspace" (`workspace.rs:1111`, `:1193` — the
+        /// `may_manage_workspace_alias` denial).
         AccessDenied,
         WorkspaceIdRequired,
         WorkspaceIdInvalid,
@@ -387,6 +409,9 @@ pub const WORKSPACE_PATHS: &[&str] = &[
 derive_enum!(
     #[derive(PartialEq, Eq)]
     pub enum AuthErrors {
+        /// "username already taken" (chest
+        /// `handlers/invitations.rs:614`, `:675` — the directed-invitation
+        /// account-precreate guard, `-32602`).
         UsernameTaken,
         EmailInUse,
         PasswordTooShort,
@@ -398,8 +423,14 @@ derive_enum!(
         SmsProviderMissing,
         WrongCode,
         NoChallenge,
+        /// "invite code pre-check failed" (chest `handlers/invitations.rs:376`),
+        /// "could not mint a unique invite code" (`invitations.rs:385`),
+        /// "failed to create invitation" (`invitations.rs:456`).
         InvitationMintFailed,
         MobileInvalid,
+        ParamsRequired,
+        IdInvalid,
+        SaveFailed,
     }
 );
 
@@ -420,6 +451,9 @@ impl AuthErrors {
             Self::NoChallenge => AUTH_PATHS[10],
             Self::InvitationMintFailed => AUTH_PATHS[11],
             Self::MobileInvalid => AUTH_PATHS[12],
+            Self::ParamsRequired => AUTH_PATHS[13],
+            Self::IdInvalid => AUTH_PATHS[14],
+            Self::SaveFailed => AUTH_PATHS[15],
         }
     }
 }
@@ -445,6 +479,9 @@ pub const AUTH_PATHS: &[&str] = &[
     "Auth.NoChallenge",
     "Auth.InvitationMintFailed",
     "Auth.MobileInvalid",
+    "Auth.ParamsRequired",
+    "Auth.IdInvalid",
+    "Auth.SaveFailed",
 ];
 
 // ── Provider (chest's model provider/vendor config faces: naming, URLs,
@@ -514,7 +551,6 @@ pub const PROVIDER_PATHS: &[&str] = &[
 derive_enum!(
     #[derive(PartialEq, Eq)]
     pub enum MediaErrors {
-        AccountLookupFailed,
         AccountMissing,
         ServiceUnavailable,
         AudioTooLarge,
@@ -523,6 +559,9 @@ derive_enum!(
         Base64ImageInvalid,
         FileTooLarge,
         TranscribeFailed,
+        ParamsRequired,
+        IdInvalid,
+        KindRequired,
     }
 );
 
@@ -530,15 +569,17 @@ impl MediaErrors {
     /// See UsageErrors::path — arms draw from `MEDIA_PATHS` slots.
     pub const fn path(&self) -> &'static str {
         match self {
-            Self::AccountLookupFailed => MEDIA_PATHS[0],
-            Self::AccountMissing => MEDIA_PATHS[1],
-            Self::ServiceUnavailable => MEDIA_PATHS[2],
-            Self::AudioTooLarge => MEDIA_PATHS[3],
-            Self::TranscribeRateLimited => MEDIA_PATHS[4],
-            Self::AudioMissing => MEDIA_PATHS[5],
-            Self::Base64ImageInvalid => MEDIA_PATHS[6],
-            Self::FileTooLarge => MEDIA_PATHS[7],
-            Self::TranscribeFailed => MEDIA_PATHS[8],
+            Self::AccountMissing => MEDIA_PATHS[0],
+            Self::ServiceUnavailable => MEDIA_PATHS[1],
+            Self::AudioTooLarge => MEDIA_PATHS[2],
+            Self::TranscribeRateLimited => MEDIA_PATHS[3],
+            Self::AudioMissing => MEDIA_PATHS[4],
+            Self::Base64ImageInvalid => MEDIA_PATHS[5],
+            Self::FileTooLarge => MEDIA_PATHS[6],
+            Self::TranscribeFailed => MEDIA_PATHS[7],
+            Self::ParamsRequired => MEDIA_PATHS[8],
+            Self::IdInvalid => MEDIA_PATHS[9],
+            Self::KindRequired => MEDIA_PATHS[10],
         }
     }
 }
@@ -549,9 +590,12 @@ impl AppErrorPath for MediaErrors {
     }
 }
 
-/// Every path of the Media tree.
+/// Every path of the Media tree. `AccountLookupFailed` was removed in
+/// the fix round: its only chest references were dynamic (`format!`
+/// interpolation at `billing_quota.rs:153`, `billing_premium.rs:65`,
+/// `video_results.rs:259`) — a later chest PR wires those sites to
+/// `Media.AccountLookupFailed` when it lands.
 pub const MEDIA_PATHS: &[&str] = &[
-    "Media.AccountLookupFailed",
     "Media.AccountMissing",
     "Media.ServiceUnavailable",
     "Media.AudioTooLarge",
@@ -560,6 +604,9 @@ pub const MEDIA_PATHS: &[&str] = &[
     "Media.Base64ImageInvalid",
     "Media.FileTooLarge",
     "Media.TranscribeFailed",
+    "Media.ParamsRequired",
+    "Media.IdInvalid",
+    "Media.KindRequired",
 ];
 
 // ── Topology (chest's topology/connections handler faces: gateway dial,
@@ -629,6 +676,7 @@ derive_enum!(
         CdNotConfigured,
         EngineNotConfigured,
         RepairTargetNotConfigured,
+        ParamsRequired,
     }
 );
 
@@ -641,6 +689,7 @@ impl ConsoleErrors {
             Self::CdNotConfigured => CONSOLE_PATHS[2],
             Self::EngineNotConfigured => CONSOLE_PATHS[3],
             Self::RepairTargetNotConfigured => CONSOLE_PATHS[4],
+            Self::ParamsRequired => CONSOLE_PATHS[5],
         }
     }
 }
@@ -658,6 +707,7 @@ pub const CONSOLE_PATHS: &[&str] = &[
     "Console.CdNotConfigured",
     "Console.EngineNotConfigured",
     "Console.RepairTargetNotConfigured",
+    "Console.ParamsRequired",
 ];
 
 // ── Webhook (chest's webhook config face) ────────────────────────────────
@@ -670,6 +720,15 @@ derive_enum!(
         ServiceAuthOnly,
         EventsInvalid,
         ScopesInvalid,
+        ParamsRequired,
+        NameRequired,
+        NotFound,
+        IdInvalid,
+        InsertFailed,
+        UpdateFailed,
+        DeleteFailed,
+        RotateFailed,
+        QueryFailed,
     }
 );
 
@@ -683,6 +742,15 @@ impl WebhookErrors {
             Self::ServiceAuthOnly => WEBHOOK_PATHS[3],
             Self::EventsInvalid => WEBHOOK_PATHS[4],
             Self::ScopesInvalid => WEBHOOK_PATHS[5],
+            Self::ParamsRequired => WEBHOOK_PATHS[6],
+            Self::NameRequired => WEBHOOK_PATHS[7],
+            Self::NotFound => WEBHOOK_PATHS[8],
+            Self::IdInvalid => WEBHOOK_PATHS[9],
+            Self::InsertFailed => WEBHOOK_PATHS[10],
+            Self::UpdateFailed => WEBHOOK_PATHS[11],
+            Self::DeleteFailed => WEBHOOK_PATHS[12],
+            Self::RotateFailed => WEBHOOK_PATHS[13],
+            Self::QueryFailed => WEBHOOK_PATHS[14],
         }
     }
 }
@@ -701,6 +769,15 @@ pub const WEBHOOK_PATHS: &[&str] = &[
     "Webhook.ServiceAuthOnly",
     "Webhook.EventsInvalid",
     "Webhook.ScopesInvalid",
+    "Webhook.ParamsRequired",
+    "Webhook.NameRequired",
+    "Webhook.NotFound",
+    "Webhook.IdInvalid",
+    "Webhook.InsertFailed",
+    "Webhook.UpdateFailed",
+    "Webhook.DeleteFailed",
+    "Webhook.RotateFailed",
+    "Webhook.QueryFailed",
 ];
 
 // ── Iam (chest's iam + oauth_clients faces: clients, tokens, group
@@ -717,6 +794,8 @@ derive_enum!(
         BuiltinGroupImmutable,
         MembershipRequired,
         ConsentRequiresMembership,
+        GroupNotFound,
+        NameRequired,
     }
 );
 
@@ -733,6 +812,8 @@ impl IamErrors {
             Self::BuiltinGroupImmutable => IAM_PATHS[6],
             Self::MembershipRequired => IAM_PATHS[7],
             Self::ConsentRequiresMembership => IAM_PATHS[8],
+            Self::GroupNotFound => IAM_PATHS[9],
+            Self::NameRequired => IAM_PATHS[10],
         }
     }
 }
@@ -754,6 +835,8 @@ pub const IAM_PATHS: &[&str] = &[
     "Iam.BuiltinGroupImmutable",
     "Iam.MembershipRequired",
     "Iam.ConsentRequiresMembership",
+    "Iam.GroupNotFound",
+    "Iam.NameRequired",
 ];
 
 // ── Billing (chest's billing authority/quota/reconcile faces) ────────────
@@ -764,6 +847,10 @@ derive_enum!(
         WalletVanished,
         ModeInvalid,
         QuotaExceeded,
+        ParamsRequired,
+        SenderIdRequired,
+        SenderIdInvalid,
+        Forbidden,
     }
 );
 
@@ -775,6 +862,10 @@ impl BillingErrors {
             Self::WalletVanished => BILLING_PATHS[1],
             Self::ModeInvalid => BILLING_PATHS[2],
             Self::QuotaExceeded => BILLING_PATHS[3],
+            Self::ParamsRequired => BILLING_PATHS[4],
+            Self::SenderIdRequired => BILLING_PATHS[5],
+            Self::SenderIdInvalid => BILLING_PATHS[6],
+            Self::Forbidden => BILLING_PATHS[7],
         }
     }
 }
@@ -791,10 +882,18 @@ pub const BILLING_PATHS: &[&str] = &[
     "Billing.WalletVanished",
     "Billing.ModeInvalid",
     "Billing.QuotaExceeded",
+    "Billing.ParamsRequired",
+    "Billing.SenderIdRequired",
+    "Billing.SenderIdInvalid",
+    "Billing.Forbidden",
 ];
 
 // ── Edge (chest's edge_flash/edge_admission/edge_enroll/edge_proxy
-//    faces) ────────────────────────────────────────────────────────────────
+//    faces). `AdmissionForbidden` was removed in the fix round: its only
+//    referent is edge_admission's admin-gate prose ("admin required —
+//    device admission management is an operator surface"), and per this
+//    table's Authority rule every missing-authority denial lands in
+//    Authority.* — never as a per-domain Forbidden. ──────────────────────
 derive_enum!(
     #[derive(PartialEq, Eq)]
     pub enum EdgeErrors {
@@ -803,7 +902,6 @@ derive_enum!(
         DeviceIdRequired,
         EnrollmentBudgetExhausted,
         SerialOrEnrollmentIdRequired,
-        AdmissionForbidden,
     }
 );
 
@@ -816,7 +914,6 @@ impl EdgeErrors {
             Self::DeviceIdRequired => EDGE_PATHS[2],
             Self::EnrollmentBudgetExhausted => EDGE_PATHS[3],
             Self::SerialOrEnrollmentIdRequired => EDGE_PATHS[4],
-            Self::AdmissionForbidden => EDGE_PATHS[5],
         }
     }
 }
@@ -834,7 +931,6 @@ pub const EDGE_PATHS: &[&str] = &[
     "Edge.DeviceIdRequired",
     "Edge.EnrollmentBudgetExhausted",
     "Edge.SerialOrEnrollmentIdRequired",
-    "Edge.AdmissionForbidden",
 ];
 
 // ── Visitor (chest's visitor/visitor_observations_admin/tour_access
@@ -888,6 +984,8 @@ derive_enum!(
         McpHubRequired,
         McpIdToolRequired,
         ArgumentsInvalid,
+        IdRequired,
+        NotFound,
     }
 );
 
@@ -903,6 +1001,8 @@ impl PanelErrors {
             Self::McpHubRequired => PANEL_PATHS[5],
             Self::McpIdToolRequired => PANEL_PATHS[6],
             Self::ArgumentsInvalid => PANEL_PATHS[7],
+            Self::IdRequired => PANEL_PATHS[8],
+            Self::NotFound => PANEL_PATHS[9],
         }
     }
 }
@@ -923,6 +1023,8 @@ pub const PANEL_PATHS: &[&str] = &[
     "Panel.McpHubRequired",
     "Panel.McpIdToolRequired",
     "Panel.ArgumentsInvalid",
+    "Panel.IdRequired",
+    "Panel.NotFound",
 ];
 
 // ── Audit (chest's audit_query/audit_forward/usage_facts faces) ──────────
@@ -932,6 +1034,12 @@ derive_enum!(
         ExportRecordWriteFailed,
         NothingToPurge,
         BatchTooLarge,
+        ServiceAuthOnly,
+        ParamsRequired,
+        FactsRequired,
+        QueryFailed,
+        ExportFailed,
+        ExportedBeforeRequired,
     }
 );
 
@@ -942,6 +1050,12 @@ impl AuditErrors {
             Self::ExportRecordWriteFailed => AUDIT_PATHS[0],
             Self::NothingToPurge => AUDIT_PATHS[1],
             Self::BatchTooLarge => AUDIT_PATHS[2],
+            Self::ServiceAuthOnly => AUDIT_PATHS[3],
+            Self::ParamsRequired => AUDIT_PATHS[4],
+            Self::FactsRequired => AUDIT_PATHS[5],
+            Self::QueryFailed => AUDIT_PATHS[6],
+            Self::ExportFailed => AUDIT_PATHS[7],
+            Self::ExportedBeforeRequired => AUDIT_PATHS[8],
         }
     }
 }
@@ -957,6 +1071,12 @@ pub const AUDIT_PATHS: &[&str] = &[
     "Audit.ExportRecordWriteFailed",
     "Audit.NothingToPurge",
     "Audit.BatchTooLarge",
+    "Audit.ServiceAuthOnly",
+    "Audit.ParamsRequired",
+    "Audit.FactsRequired",
+    "Audit.QueryFailed",
+    "Audit.ExportFailed",
+    "Audit.ExportedBeforeRequired",
 ];
 
 // ── Plugin (chest's plugins.rs face — domain-specific conditions only;
@@ -994,6 +1114,127 @@ pub const PLUGIN_PATHS: &[&str] = &[
     "Plugin.PointRequired",
 ];
 
+// ── Channel (chest's channel faces: admin.channels.*, admin.policy.*,
+//    admin.credentials.*, channel.self.* — the admin CRUD buckets ride
+//    this tree by name; the shared missing-authority gates themselves
+//    still land in Authority.*) ────────────────────────────────────────────
+derive_enum!(
+    #[derive(PartialEq, Eq)]
+    pub enum ChannelErrors {
+        SaveFailed,
+        NotFound,
+        InvalidParams,
+        ParamsRequired,
+        NoConfig,
+        NoActiveAdapter,
+        ReloadFailed,
+        QueryFailed,
+        SendFailed,
+        InsertFailed,
+        DeleteFailed,
+        NameRequired,
+        IdRequired,
+        UnsupportedPlatform,
+        QuotaExceeded,
+        CategoryInvalid,
+    }
+);
+
+impl ChannelErrors {
+    /// See UsageErrors::path — arms draw from `CHANNEL_PATHS` slots.
+    pub const fn path(&self) -> &'static str {
+        match self {
+            Self::SaveFailed => CHANNEL_PATHS[0],
+            Self::NotFound => CHANNEL_PATHS[1],
+            Self::InvalidParams => CHANNEL_PATHS[2],
+            Self::ParamsRequired => CHANNEL_PATHS[3],
+            Self::NoConfig => CHANNEL_PATHS[4],
+            Self::NoActiveAdapter => CHANNEL_PATHS[5],
+            Self::ReloadFailed => CHANNEL_PATHS[6],
+            Self::QueryFailed => CHANNEL_PATHS[7],
+            Self::SendFailed => CHANNEL_PATHS[8],
+            Self::InsertFailed => CHANNEL_PATHS[9],
+            Self::DeleteFailed => CHANNEL_PATHS[10],
+            Self::NameRequired => CHANNEL_PATHS[11],
+            Self::IdRequired => CHANNEL_PATHS[12],
+            Self::UnsupportedPlatform => CHANNEL_PATHS[13],
+            Self::QuotaExceeded => CHANNEL_PATHS[14],
+            Self::CategoryInvalid => CHANNEL_PATHS[15],
+        }
+    }
+}
+
+impl AppErrorPath for ChannelErrors {
+    fn error_path(&self) -> &'static str {
+        self.path()
+    }
+}
+
+/// Every path of the Channel tree.
+pub const CHANNEL_PATHS: &[&str] = &[
+    "Channel.SaveFailed",
+    "Channel.NotFound",
+    "Channel.InvalidParams",
+    "Channel.ParamsRequired",
+    "Channel.NoConfig",
+    "Channel.NoActiveAdapter",
+    "Channel.ReloadFailed",
+    "Channel.QueryFailed",
+    "Channel.SendFailed",
+    "Channel.InsertFailed",
+    "Channel.DeleteFailed",
+    "Channel.NameRequired",
+    "Channel.IdRequired",
+    "Channel.UnsupportedPlatform",
+    "Channel.QuotaExceeded",
+    "Channel.CategoryInvalid",
+];
+
+// ── Extensions (chest's extensions/RAG face: rag.search/upsert/embed,
+//    payment.tier(s), invalid document params, and the pipeline.execute
+//    param guard) ──────────────────────────────────────────────────────────
+derive_enum!(
+    #[derive(PartialEq, Eq)]
+    pub enum ExtensionsErrors {
+        SearchFailed,
+        UpsertFailed,
+        EmbedFailed,
+        DocumentParamsInvalid,
+        TierLookupFailed,
+        ParamsRequired,
+    }
+);
+
+impl ExtensionsErrors {
+    /// See UsageErrors::path — arms draw from `EXTENSIONS_PATHS` slots.
+    pub const fn path(&self) -> &'static str {
+        match self {
+            Self::SearchFailed => EXTENSIONS_PATHS[0],
+            Self::UpsertFailed => EXTENSIONS_PATHS[1],
+            Self::EmbedFailed => EXTENSIONS_PATHS[2],
+            Self::DocumentParamsInvalid => EXTENSIONS_PATHS[3],
+            Self::TierLookupFailed => EXTENSIONS_PATHS[4],
+            Self::ParamsRequired => EXTENSIONS_PATHS[5],
+        }
+    }
+}
+
+impl AppErrorPath for ExtensionsErrors {
+    fn error_path(&self) -> &'static str {
+        self.path()
+    }
+}
+
+/// Every path of the Extensions tree.
+pub const EXTENSIONS_PATHS: &[&str] = &[
+    "Extensions.SearchFailed",
+    "Extensions.UpsertFailed",
+    "Extensions.EmbedFailed",
+    "Extensions.DocumentParamsInvalid",
+    "Extensions.TierLookupFailed",
+    "Extensions.ParamsRequired",
+];
+
 /// Every path in the table, namespace by namespace — the TS export's
 /// flat surface.
 pub const ALL_ERROR_PATHS: &[&[&str]] = &[
@@ -1018,6 +1259,8 @@ pub const ALL_ERROR_PATHS: &[&[&str]] = &[
     PANEL_PATHS,
     AUDIT_PATHS,
     PLUGIN_PATHS,
+    CHANNEL_PATHS,
+    EXTENSIONS_PATHS,
 ];
 
 #[cfg(test)]
@@ -1130,7 +1373,13 @@ mod tests {
             "Topic.ConversationAccessDenied"
         );
         assert_eq!(TopicErrors::NoModelSelected.path(), "Topic.NoModelSelected");
-        assert_eq!(TOPIC_PATHS.len(), 10);
+        assert_eq!(TopicErrors::ParamsRequired.path(), "Topic.ParamsRequired");
+        assert_eq!(TopicErrors::CreateFailed.path(), "Topic.CreateFailed");
+        assert_eq!(TopicErrors::UpdateFailed.path(), "Topic.UpdateFailed");
+        assert_eq!(TopicErrors::DeleteFailed.path(), "Topic.DeleteFailed");
+        assert_eq!(TopicErrors::ReportsFailed.path(), "Topic.ReportsFailed");
+        assert_eq!(TopicErrors::MessageNotFound.path(), "Topic.MessageNotFound");
+        assert_eq!(TOPIC_PATHS.len(), 16);
     }
 
     #[test]
@@ -1186,7 +1435,10 @@ mod tests {
             "Auth.InvitationMintFailed"
         );
         assert_eq!(AuthErrors::MobileInvalid.path(), "Auth.MobileInvalid");
-        assert_eq!(AUTH_PATHS.len(), 13);
+        assert_eq!(AuthErrors::ParamsRequired.path(), "Auth.ParamsRequired");
+        assert_eq!(AuthErrors::IdInvalid.path(), "Auth.IdInvalid");
+        assert_eq!(AuthErrors::SaveFailed.path(), "Auth.SaveFailed");
+        assert_eq!(AUTH_PATHS.len(), 16);
     }
 
     #[test]
@@ -1226,10 +1478,6 @@ mod tests {
 
     #[test]
     fn media_paths_pinned() {
-        assert_eq!(
-            MediaErrors::AccountLookupFailed.path(),
-            "Media.AccountLookupFailed"
-        );
         assert_eq!(MediaErrors::AccountMissing.path(), "Media.AccountMissing");
         assert_eq!(
             MediaErrors::ServiceUnavailable.path(),
@@ -1250,7 +1498,10 @@ mod tests {
             MediaErrors::TranscribeFailed.path(),
             "Media.TranscribeFailed"
         );
-        assert_eq!(MEDIA_PATHS.len(), 9);
+        assert_eq!(MediaErrors::ParamsRequired.path(), "Media.ParamsRequired");
+        assert_eq!(MediaErrors::IdInvalid.path(), "Media.IdInvalid");
+        assert_eq!(MediaErrors::KindRequired.path(), "Media.KindRequired");
+        assert_eq!(MEDIA_PATHS.len(), 11);
     }
 
     #[test]
@@ -1314,7 +1565,73 @@ mod tests {
             ConsoleErrors::RepairTargetNotConfigured.path(),
             "Console.RepairTargetNotConfigured"
         );
-        assert_eq!(CONSOLE_PATHS.len(), 5);
+        assert_eq!(
+            ConsoleErrors::ParamsRequired.path(),
+            "Console.ParamsRequired"
+        );
+        assert_eq!(CONSOLE_PATHS.len(), 6);
+    }
+
+    #[test]
+    fn channel_paths_pinned() {
+        assert_eq!(ChannelErrors::SaveFailed.path(), "Channel.SaveFailed");
+        assert_eq!(ChannelErrors::NotFound.path(), "Channel.NotFound");
+        assert_eq!(ChannelErrors::InvalidParams.path(), "Channel.InvalidParams");
+        assert_eq!(
+            ChannelErrors::ParamsRequired.path(),
+            "Channel.ParamsRequired"
+        );
+        assert_eq!(ChannelErrors::NoConfig.path(), "Channel.NoConfig");
+        assert_eq!(
+            ChannelErrors::NoActiveAdapter.path(),
+            "Channel.NoActiveAdapter"
+        );
+        assert_eq!(ChannelErrors::ReloadFailed.path(), "Channel.ReloadFailed");
+        assert_eq!(ChannelErrors::QueryFailed.path(), "Channel.QueryFailed");
+        assert_eq!(ChannelErrors::SendFailed.path(), "Channel.SendFailed");
+        assert_eq!(ChannelErrors::InsertFailed.path(), "Channel.InsertFailed");
+        assert_eq!(ChannelErrors::DeleteFailed.path(), "Channel.DeleteFailed");
+        assert_eq!(ChannelErrors::NameRequired.path(), "Channel.NameRequired");
+        assert_eq!(ChannelErrors::IdRequired.path(), "Channel.IdRequired");
+        assert_eq!(
+            ChannelErrors::UnsupportedPlatform.path(),
+            "Channel.UnsupportedPlatform"
+        );
+        assert_eq!(ChannelErrors::QuotaExceeded.path(), "Channel.QuotaExceeded");
+        assert_eq!(
+            ChannelErrors::CategoryInvalid.path(),
+            "Channel.CategoryInvalid"
+        );
+        assert_eq!(CHANNEL_PATHS.len(), 16);
+    }
+
+    #[test]
+    fn extensions_paths_pinned() {
+        assert_eq!(
+            ExtensionsErrors::SearchFailed.path(),
+            "Extensions.SearchFailed"
+        );
+        assert_eq!(
+            ExtensionsErrors::UpsertFailed.path(),
+            "Extensions.UpsertFailed"
+        );
+        assert_eq!(
+            ExtensionsErrors::EmbedFailed.path(),
+            "Extensions.EmbedFailed"
+        );
+        assert_eq!(
+            ExtensionsErrors::DocumentParamsInvalid.path(),
+            "Extensions.DocumentParamsInvalid"
+        );
+        assert_eq!(
+            ExtensionsErrors::TierLookupFailed.path(),
+            "Extensions.TierLookupFailed"
+        );
+        assert_eq!(
+            ExtensionsErrors::ParamsRequired.path(),
+            "Extensions.ParamsRequired"
+        );
+        assert_eq!(EXTENSIONS_PATHS.len(), 6);
     }
 
     #[test]
@@ -1334,7 +1651,19 @@ mod tests {
         );
         assert_eq!(WebhookErrors::EventsInvalid.path(), "Webhook.EventsInvalid");
         assert_eq!(WebhookErrors::ScopesInvalid.path(), "Webhook.ScopesInvalid");
-        assert_eq!(WEBHOOK_PATHS.len(), 6);
+        assert_eq!(
+            WebhookErrors::ParamsRequired.path(),
+            "Webhook.ParamsRequired"
+        );
+        assert_eq!(WebhookErrors::NameRequired.path(), "Webhook.NameRequired");
+        assert_eq!(WebhookErrors::NotFound.path(), "Webhook.NotFound");
+        assert_eq!(WebhookErrors::IdInvalid.path(), "Webhook.IdInvalid");
+        assert_eq!(WebhookErrors::InsertFailed.path(), "Webhook.InsertFailed");
+        assert_eq!(WebhookErrors::UpdateFailed.path(), "Webhook.UpdateFailed");
+        assert_eq!(WebhookErrors::DeleteFailed.path(), "Webhook.DeleteFailed");
+        assert_eq!(WebhookErrors::RotateFailed.path(), "Webhook.RotateFailed");
+        assert_eq!(WebhookErrors::QueryFailed.path(), "Webhook.QueryFailed");
+        assert_eq!(WEBHOOK_PATHS.len(), 15);
     }
 
     #[test]
@@ -1363,7 +1692,9 @@ mod tests {
             IamErrors::ConsentRequiresMembership.path(),
             "Iam.ConsentRequiresMembership"
         );
-        assert_eq!(IAM_PATHS.len(), 9);
+        assert_eq!(IamErrors::GroupNotFound.path(), "Iam.GroupNotFound");
+        assert_eq!(IamErrors::NameRequired.path(), "Iam.NameRequired");
+        assert_eq!(IAM_PATHS.len(), 11);
     }
 
     #[test]
@@ -1378,7 +1709,20 @@ mod tests {
         );
         assert_eq!(BillingErrors::ModeInvalid.path(), "Billing.ModeInvalid");
         assert_eq!(BillingErrors::QuotaExceeded.path(), "Billing.QuotaExceeded");
-        assert_eq!(BILLING_PATHS.len(), 4);
+        assert_eq!(
+            BillingErrors::ParamsRequired.path(),
+            "Billing.ParamsRequired"
+        );
+        assert_eq!(
+            BillingErrors::SenderIdRequired.path(),
+            "Billing.SenderIdRequired"
+        );
+        assert_eq!(
+            BillingErrors::SenderIdInvalid.path(),
+            "Billing.SenderIdInvalid"
+        );
+        assert_eq!(BillingErrors::Forbidden.path(), "Billing.Forbidden");
+        assert_eq!(BILLING_PATHS.len(), 8);
     }
 
     #[test]
@@ -1397,11 +1741,7 @@ mod tests {
             EdgeErrors::SerialOrEnrollmentIdRequired.path(),
             "Edge.SerialOrEnrollmentIdRequired"
         );
-        assert_eq!(
-            EdgeErrors::AdmissionForbidden.path(),
-            "Edge.AdmissionForbidden"
-        );
-        assert_eq!(EDGE_PATHS.len(), 6);
+        assert_eq!(EDGE_PATHS.len(), 5);
     }
 
     #[test]
@@ -1444,7 +1784,9 @@ mod tests {
             PanelErrors::ArgumentsInvalid.path(),
             "Panel.ArgumentsInvalid"
         );
-        assert_eq!(PANEL_PATHS.len(), 8);
+        assert_eq!(PanelErrors::IdRequired.path(), "Panel.IdRequired");
+        assert_eq!(PanelErrors::NotFound.path(), "Panel.NotFound");
+        assert_eq!(PANEL_PATHS.len(), 10);
     }
 
     #[test]
@@ -1455,7 +1797,16 @@ mod tests {
         );
         assert_eq!(AuditErrors::NothingToPurge.path(), "Audit.NothingToPurge");
         assert_eq!(AuditErrors::BatchTooLarge.path(), "Audit.BatchTooLarge");
-        assert_eq!(AUDIT_PATHS.len(), 3);
+        assert_eq!(AuditErrors::ServiceAuthOnly.path(), "Audit.ServiceAuthOnly");
+        assert_eq!(AuditErrors::ParamsRequired.path(), "Audit.ParamsRequired");
+        assert_eq!(AuditErrors::FactsRequired.path(), "Audit.FactsRequired");
+        assert_eq!(AuditErrors::QueryFailed.path(), "Audit.QueryFailed");
+        assert_eq!(AuditErrors::ExportFailed.path(), "Audit.ExportFailed");
+        assert_eq!(
+            AuditErrors::ExportedBeforeRequired.path(),
+            "Audit.ExportedBeforeRequired"
+        );
+        assert_eq!(AUDIT_PATHS.len(), 9);
     }
 
     #[test]
@@ -1624,6 +1975,16 @@ mod tests {
                 "PLUGIN_ERROR_PATHS",
                 "Plugin tree paths (chest's plugins.rs face).",
                 PLUGIN_PATHS,
+            ),
+            tree_const(
+                "CHANNEL_ERROR_PATHS",
+                "Channel tree paths (chest's channel admin + personal-channel faces).",
+                CHANNEL_PATHS,
+            ),
+            tree_const(
+                "EXTENSIONS_ERROR_PATHS",
+                "Extensions tree paths (chest's extensions/RAG face).",
+                EXTENSIONS_PATHS,
             ),
         ]
         .join("\n");
