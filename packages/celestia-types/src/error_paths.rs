@@ -1826,6 +1826,43 @@ mod tests {
             APP_ERROR_CODE, -32000,
             "the app-error code is the placeholder by ruling; paths are the identity"
         );
+        // The aggregate table's rows must be the per-tree consts IN THEIR
+        // DECLARATION ORDER (pointer identity, not value equality — a
+        // reordered or duplicated row would produce the same strings from
+        // the wrong tree). R3-mutation evidence: reordering two rows used
+        // to stay green because the exported TS only changed silently.
+        const EXPECTED_ROWS: &[&[&str]] = &[
+            USAGE_PATHS,
+            SCHEDULER_PATHS,
+            PLATFORM_PATHS,
+            SELF_HOSTED_PATHS,
+            AUTHORITY_PATHS,
+            UPSTREAM_PATHS,
+            TOPIC_PATHS,
+            WORKSPACE_PATHS,
+            AUTH_PATHS,
+            PROVIDER_PATHS,
+            MEDIA_PATHS,
+            TOPOLOGY_PATHS,
+            CONSOLE_PATHS,
+            WEBHOOK_PATHS,
+            IAM_PATHS,
+            BILLING_PATHS,
+            EDGE_PATHS,
+            VISITOR_PATHS,
+            PANEL_PATHS,
+            AUDIT_PATHS,
+            PLUGIN_PATHS,
+            CHANNEL_PATHS,
+            EXTENSIONS_PATHS,
+        ];
+        assert_eq!(ALL_ERROR_PATHS.len(), EXPECTED_ROWS.len(), "tree count");
+        for (row, expected) in ALL_ERROR_PATHS.iter().zip(EXPECTED_ROWS) {
+            assert!(
+                std::ptr::eq(*row, *expected),
+                "ALL_ERROR_PATHS row drifted from its per-tree const slot"
+            );
+        }
         // Pairwise-unique across the whole table — an error path names
         // exactly one condition.
         let flat: Vec<&str> = ALL_ERROR_PATHS.concat();
