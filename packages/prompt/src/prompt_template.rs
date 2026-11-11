@@ -500,13 +500,13 @@ impl PromptTemplateService {
     // reserved for `agent::skill` references, and a machine token in the
     // title field gets rendered verbatim by older or minimal consumers,
     // masquerading as a skill report. These renderers return PROSE in the
-    // user's language; `test_notice_arms_are_localized` additionally pins
-    // that no arm contains `::`.
+    // user's language; `test_notice_arms_are_localized_and_prose_shaped`
+    // additionally pins that no arm contains `::`.
     pub fn render_inquiry_expired_title(&self, lang: &str) -> String {
         match lang {
             "zh-Hans" | "zhs" | "zh-CN" | "zh" => "询问已失效".to_string(),
             "zh-Hant" | "zht" | "zh-TW" => "詢問已失效".to_string(),
-            "ja" => "問い合わせは無効です".to_string(),
+            "ja" => "問い合わせの有効期限が切れました".to_string(),
             "ko" => "문의가 만료되었습니다".to_string(),
             "fr" => "Demande expirée".to_string(),
             "es" => "Consulta expirada".to_string(),
@@ -519,7 +519,7 @@ impl PromptTemplateService {
         match lang {
             "zh-Hans" | "zhs" | "zh-CN" | "zh" => "这条询问已失效或已回答，未执行任何方案。请重新发送需求。".to_string(),
             "zh-Hant" | "zht" | "zh-TW" => "這條詢問已失效或已回答，未執行任何方案。請重新發送需求。".to_string(),
-            "ja" => "この問い合わせは無効か、すでに回答済みです。何も実行されていません。要件を再度送信してください。".to_string(),
+            "ja" => "この問い合わせは期限切れか、すでに回答済みです。何も実行されていません。要件を再度送信してください。".to_string(),
             "ko" => "이 문의는 만료되었거나 이미 답변되었습니다. 아무것도 실행되지 않았습니다. 요구사항을 다시 보내주세요.".to_string(),
             "fr" => "Cette demande a expiré ou a déjà reçu une réponse ; rien n'a été exécuté. Veuillez renvoyer votre besoin.".to_string(),
             "es" => "Esta consulta ha expirado o ya fue respondida; no se ejecutó nada. Envíe el requisito de nuevo.".to_string(),
@@ -706,6 +706,23 @@ mod tests {
                 "inquiry-expired content arm {lang} must be prose: {content}"
             );
         }
+        // The DEFAULT arm gets the prose-shape pin too (the localized arms
+        // cannot): `_` is exactly the slot the retired
+        // `engine::inquiry_expired` token historically occupied, and the
+        // copy real en-language sessions receive. A revert of the default
+        // arm to that token turns THIS red — the per-language loop above
+        // never inspects it (each localized assert_ne passes against any
+        // distinct en baseline).
+        let en_title = svc.render_inquiry_expired_title("en");
+        let en_content = svc.render_inquiry_expired_content("en");
+        assert!(
+            !en_title.contains("::"),
+            "inquiry-expired DEFAULT title arm must be prose, not a domain::name token: {en_title}"
+        );
+        assert!(
+            !en_content.contains("::"),
+            "inquiry-expired DEFAULT content arm must be prose: {en_content}"
+        );
         Ok(())
     }
 
