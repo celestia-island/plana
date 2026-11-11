@@ -629,6 +629,37 @@ yuuka::derive_enum!(
     }
 );
 
+impl AgentErrorReason {
+    /// The exact wire form (`context` value spelling). Producers write
+    /// vocabularies into the string-map context through this — the enum
+    /// stays the only source of the token, and the wire-pin test asserts
+    /// this never drifts from the serde form.
+    pub fn wire_form(&self) -> &'static str {
+        match self {
+            Self::SingleFlight => "single_flight",
+            Self::QuotaExceeded => "quota_exceeded",
+            Self::ChainDeadline => "chain_deadline",
+            Self::InvalidParams => "invalid_params",
+            Self::MethodNotFound => "method_not_found",
+            Self::PeerUnreachable => "peer_unreachable",
+            Self::ExecutionTimeout => "execution_timeout",
+            Self::Auth => "auth",
+            Self::TargetOutOfScope => "target_out_of_scope",
+            Self::DuplicateRequest => "duplicate_request",
+            Self::Other => "other",
+        }
+    }
+}
+
+impl AgentInterruptReason {
+    /// See [`AgentErrorReason::wire_form`].
+    pub fn wire_form(&self) -> &'static str {
+        match self {
+            Self::Restart => "restart",
+        }
+    }
+}
+
 #[derive(JsonSchema, Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "ws/core.ts")]
 #[serde(rename_all = "snake_case")]
@@ -1117,6 +1148,9 @@ mod tests {
             assert_eq!(encoded, format!(r#""{wire}""#), "variant {variant}");
             let back: AgentErrorReason = serde_json::from_str(&encoded).unwrap();
             assert_eq!(back, value, "variant {variant}");
+            // `wire_form` is the producer-facing spelling — it must equal
+            // the serde form for every variant or the vocabulary splits.
+            assert_eq!(value.wire_form(), *wire, "wire_form drift on {variant}");
         }
     }
 
@@ -1129,6 +1163,7 @@ mod tests {
         assert_eq!(encoded, r#""restart""#);
         let back: AgentInterruptReason = serde_json::from_str(&encoded).unwrap();
         assert_eq!(back, AgentInterruptReason::Restart);
+        assert_eq!(AgentInterruptReason::Restart.wire_form(), "restart");
     }
 
     /// Backward-compatibility tolerance for the `context` field, in both
