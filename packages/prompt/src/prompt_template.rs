@@ -486,6 +486,48 @@ impl PromptTemplateService {
         }
     }
 
+    // ── Expired-enquiry notice (entelecheia `handle_agent_report_reply`) ──
+    // A reply to a plan enquiry that no longer exists (already answered or
+    // past its TTL) is a System-type notice, NOT a coded error: none of the
+    // `AgentErrorCode` variants honestly describes it, and the chest error
+    // catalog only renders CODED reports. So this is the one engine-
+    // originated surface that still carries display copy — localized HERE,
+    // in the same match-arm family as the chain-error cards above, fed by
+    // the session's preferred language.
+    //
+    // Format contract (user direction 2026-11-11): engine-level envelopes
+    // must never carry a `domain::name`-shaped title — that shape is
+    // reserved for `agent::skill` references, and a machine token in the
+    // title field gets rendered verbatim by older or minimal consumers,
+    // masquerading as a skill report. These renderers return PROSE in the
+    // user's language; `test_notice_arms_are_localized` additionally pins
+    // that no arm contains `::`.
+    pub fn render_inquiry_expired_title(&self, lang: &str) -> String {
+        match lang {
+            "zh-Hans" | "zhs" | "zh-CN" | "zh" => "询问已失效".to_string(),
+            "zh-Hant" | "zht" | "zh-TW" => "詢問已失效".to_string(),
+            "ja" => "問い合わせは無効です".to_string(),
+            "ko" => "문의가 만료되었습니다".to_string(),
+            "fr" => "Demande expirée".to_string(),
+            "es" => "Consulta expirada".to_string(),
+            "ru" => "Запрос истёк".to_string(),
+            _ => "Enquiry expired".to_string(),
+        }
+    }
+
+    pub fn render_inquiry_expired_content(&self, lang: &str) -> String {
+        match lang {
+            "zh-Hans" | "zhs" | "zh-CN" | "zh" => "这条询问已失效或已回答，未执行任何方案。请重新发送需求。".to_string(),
+            "zh-Hant" | "zht" | "zh-TW" => "這條詢問已失效或已回答，未執行任何方案。請重新發送需求。".to_string(),
+            "ja" => "この問い合わせは無効か、すでに回答済みです。何も実行されていません。要件を再度送信してください。".to_string(),
+            "ko" => "이 문의는 만료되었거나 이미 답변되었습니다. 아무것도 실행되지 않았습니다. 요구사항을 다시 보내주세요.".to_string(),
+            "fr" => "Cette demande a expiré ou a déjà reçu une réponse ; rien n'a été exécuté. Veuillez renvoyer votre besoin.".to_string(),
+            "es" => "Esta consulta ha expirado o ya fue respondida; no se ejecutó nada. Envíe el requisito de nuevo.".to_string(),
+            "ru" => "Этот запрос истёк или уже был отвечен; ничего не выполнено. Отправьте требование ещё раз.".to_string(),
+            _ => "This enquiry has expired or was already answered; nothing was run. Please send the requirement again.".to_string(),
+        }
+    }
+
     pub fn render_raw(&self, template: &str, variables: &HashMap<&str, String>) -> String {
         let mut ctx = Context::new();
         for (k, v) in variables {
@@ -622,6 +664,46 @@ mod tests {
                 svc.render_skill_error_content("LLM call failed", lang),
                 svc.render_skill_error_content("LLM call failed", "en"),
                 "llm-call arm {lang} must be localized"
+            );
+        }
+        Ok(())
+    }
+
+    /// The expired-enquiry notice (entelecheia `handle_agent_report_reply`)
+    /// is the one engine-originated surface that still carries display
+    /// copy — a System notice with no honest `AgentErrorCode`, so the
+    /// chest error catalog cannot render it. Contract (user direction
+    /// 2026-11-11): engine envelopes never carry `domain::name`-shaped
+    /// titles — that shape is reserved for `agent::skill` references, and
+    /// a machine token in the title field gets rendered verbatim by
+    /// consumers, masquerading as a skill report. Every arm must be
+    /// localized prose, and no arm may contain the `::` skill-reference
+    /// separator (a revert to the old `engine::inquiry_expired` token or
+    /// to the English default turns this red).
+    #[test]
+    fn test_notice_arms_are_localized_and_prose_shaped() -> Result<()> {
+        let svc = PromptTemplateService::new()?;
+        let langs = ["zh-Hans", "zh-Hant", "ja", "ko", "fr", "es", "ru"];
+        for lang in langs {
+            let title = svc.render_inquiry_expired_title(lang);
+            let content = svc.render_inquiry_expired_content(lang);
+            assert_ne!(
+                title,
+                svc.render_inquiry_expired_title("en"),
+                "inquiry-expired title arm {lang} must be localized"
+            );
+            assert_ne!(
+                content,
+                svc.render_inquiry_expired_content("en"),
+                "inquiry-expired content arm {lang} must be localized"
+            );
+            assert!(
+                !title.contains("::"),
+                "inquiry-expired title arm {lang} must be prose, not a domain::name token: {title}"
+            );
+            assert!(
+                !content.contains("::"),
+                "inquiry-expired content arm {lang} must be prose: {content}"
             );
         }
         Ok(())
