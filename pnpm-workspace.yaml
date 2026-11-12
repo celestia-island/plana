@@ -1,5 +1,6 @@
 packages:
   - 'packages/rpc_client'
+  - 'packages/celestia-types'
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true

@@ -9,6 +9,15 @@ overrides:
 
 importers:
 
+  packages/celestia-types:
+    devDependencies:
+      typescript:
+        specifier: ~6.0
+        version: 6.0.3
+      vitest:
+        specifier: ^3
+        version: 3.2.7(@types/node@26.6.4)
+
   packages/rpc_client:
     dependencies:
       '@celestia-island/tairitsu-transport':
