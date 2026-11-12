@@ -95,3 +95,8 @@ export * from "./bindings/tools/skemma";
 export * from "./bindings/tools/skopeo";
 export * from "./bindings/tools/web_automation";
 export * from "./bindings/serde_json/JsonValue";
+
+// The shared error-message funnel (2026-11-13, PA-14): the one
+// implementation of the resolve pipeline both webuis consume; per-app
+// tables and transport branches are injected via createErrorFunnel.
+export * from "./error_funnel";
