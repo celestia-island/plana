@@ -25,6 +25,7 @@
 #![allow(clippy::type_complexity)]
 
 pub mod async_bridge;
+pub mod callback_ingress;
 pub mod circuit_breaker;
 pub mod device_id;
 pub mod instance_kind;
