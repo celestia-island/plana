@@ -257,7 +257,7 @@ export function createErrorFunnel(options: ErrorFunnelOptions): ErrorFunnel {
 
     // 8. The fallback — its English matters before the i18n instance is
     //    registered (the bridge returns the raw key argument).
-    return { headline: say(t, "generic.unknown", "Something went wrong"), detail: "" };
+    return { headline: say(t, "generic.unknown", "An unexpected error occurred"), detail: "" };
   };
 
   return {
