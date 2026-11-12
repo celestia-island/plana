@@ -183,7 +183,7 @@ export function createErrorFunnel(options: ErrorFunnelOptions): ErrorFunnel {
     }
 
     if (typeof err !== "object" || err === null) {
-      return { headline: say(t, "generic.unknown", "Something went wrong"), detail: "" };
+      return { headline: say(t, "generic.unknown", "An unexpected error occurred"), detail: "" };
     }
 
     const e = err as { status?: number; body?: string; message?: string };

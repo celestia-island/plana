@@ -92,6 +92,20 @@ describe("createErrorFunnel", () => {
     expect(calls[0]).toEqual({ key: "plana::errors.generic.unknown", fallback: "Something went wrong" });
   });
 
+  it("carries the arm-specific English fallbacks to the t() call", () => {
+    // Two different sentences exist on purpose (chest's originals): the
+    // nothing-thrown arm says "Something went wrong", the non-object and
+    // final arms say "An unexpected error occurred". Pinning them keeps a
+    // future copy-paste from collapsing the two into a declared delta.
+    const { t, calls } = recordingT();
+    funnel.resolveParts(t, null);
+    expect(calls[0].fallback).toBe("Something went wrong");
+    funnel.resolveParts(t, 42 as unknown as object);
+    expect(calls[1].fallback).toBe("An unexpected error occurred");
+    funnel.resolveParts(t, {});
+    expect(calls[2].fallback).toBe("An unexpected error occurred");
+  });
+
   it("resolves a network failure to connection lost", () => {
     const { t, calls } = recordingT();
     expect(funnel.resolveParts(t, { message: "Failed to fetch" })).toEqual({
