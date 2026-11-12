@@ -22,6 +22,7 @@
 //! | [`Rejection::Missing`] | `signature_missing` | no header at all |
 //! | [`Rejection::Malformed`] | `signature_malformed` | header present but unparsable |
 //! | [`Rejection::Mismatch`] | `signature_mismatch` | MAC does not match any candidate |
+//! | [`Rejection::Oversized`] | `body_too_large` | raw body exceeds the caller's cap (checked before the MAC) |
 //! | [`Rejection::Stale`] | `signature_expired` | timestamp outside the skew window |
 //!
 //! Two details are load-bearing and easy to get wrong:
@@ -346,6 +347,7 @@ mod tests {
         assert_eq!(Rejection::Malformed.wire_code(), "signature_malformed");
         assert_eq!(Rejection::Stale.wire_code(), "signature_expired");
         assert_eq!(Rejection::Mismatch.wire_code(), "signature_mismatch");
+        assert_eq!(Rejection::Oversized.wire_code(), "body_too_large");
     }
 
     #[test]
