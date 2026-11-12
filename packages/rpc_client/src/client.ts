@@ -702,8 +702,8 @@ export class RpcClient {
         // Upstreams may answer unknown methods with a literal `null`
         // body (JSON.parse("null") → null). Reading `.method` off it
         // throws, and the uncaught TypeError is treated as a boot
-        // failure by the shell's fatal-fallback, freezing the whole
-        // page behind a full-screen overlay. Only JSON objects carry
+        // failure by the shell's pre-boot error landing, freezing the
+        // whole page behind a full-screen overlay. Only JSON objects carry
         // JSON-RPC semantics — drop everything else (null, scalars,
         // arrays) without touching `.method`/`.id`.
         if (typeof parsed !== "object" || parsed === null) return;
