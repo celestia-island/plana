@@ -57,6 +57,9 @@ pub enum Rejection {
     Stale,
     /// No candidate matched the MAC.
     Mismatch,
+    /// The raw body exceeded the caller's cap. Rejected **before** the signature is
+    /// judged: an oversized unauthenticated body must not reach the HMAC at all.
+    Oversized,
 }
 
 impl Rejection {
@@ -68,6 +71,7 @@ impl Rejection {
             Rejection::Malformed => "signature_malformed",
             Rejection::Stale => "signature_expired",
             Rejection::Mismatch => "signature_mismatch",
+            Rejection::Oversized => "body_too_large",
         }
     }
 }
@@ -97,6 +101,40 @@ pub fn verify(
     now_unix: i64,
     max_skew_secs: i64,
 ) -> Result<Verified, Rejection> {
+    verify_capped(
+        secret,
+        header,
+        body,
+        now_unix,
+        max_skew_secs,
+        DEFAULT_MAX_BODY_BYTES,
+    )
+}
+
+/// Same as [`verify`], with an explicit cap on the raw body.
+///
+/// Callers that legitimately accept larger payloads must say so here — a payment notice
+/// is not the same size as a model-result callback, and quietly inheriting the 64 KiB
+/// default is how one service ended up with 1 MiB while another had 64 KiB.
+pub fn verify_capped(
+    secret: &[u8],
+    header: Option<&str>,
+    body: &[u8],
+    now_unix: i64,
+    max_skew_secs: i64,
+    max_body_bytes: usize,
+) -> Result<Verified, Rejection> {
+    // A zero-length secret is a deployment error with a security consequence: HMAC
+    // accepts any key length, so `new_from_slice(b"")` succeeds and every caller in the
+    // world can compute the "signature". Fail closed rather than pretend it is a MAC.
+    if secret.is_empty() {
+        return Err(Rejection::Mismatch);
+    }
+
+    if body.len() > max_body_bytes {
+        return Err(Rejection::Oversized);
+    }
+
     let Some(header) = header else {
         return Err(Rejection::Missing);
     };
@@ -115,13 +153,11 @@ pub fn verify(
     let mut matched = false;
 
     for candidate in candidates {
-        let Ok(mac) = Hmac::<Sha256>::new_from_slice(secret) else {
-            // An unusable secret is a deployment error, not an attacker's doing; there is
-            // no candidate that could ever match, so every candidate "fails" identically.
+        // `secret` is non-empty here (checked above) and HMAC accepts any key length, so
+        // this cannot fail in practice.
+        let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(secret) else {
             return Err(Rejection::Mismatch);
         };
-
-        let mut mac = mac;
         mac.update(&signed);
 
         // `verify_slice` is constant-time and rejects on length mismatch.
@@ -313,9 +349,64 @@ mod tests {
     }
 
     #[test]
-    fn an_empty_secret_never_matches() {
+    fn an_empty_secret_fails_closed_even_for_a_correctly_signed_request() {
+        // The old version of this test signed with `test-secret` and verified with an
+        // empty secret — it failed for the wrong reason and proved nothing. This one
+        // signs **with the empty key**, which is exactly what an attacker would do
+        // because HMAC accepts a zero-length key.
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+
+        let mut mac = Hmac::<Sha256>::new_from_slice(b"").expect("hmac accepts any key length");
+        mac.update(b"1700000000.");
+        mac.update(GOLDEN_BODY);
+        let forged = hex::encode(mac.finalize().into_bytes());
+        let header = format!("t=1700000000,v1={forged}");
+
         assert_eq!(
-            verify(b"", Some(GOLDEN_HEADER), GOLDEN_BODY, NOW, 300),
+            verify(b"", Some(&header), GOLDEN_BODY, NOW, 300),
+            Err(Rejection::Mismatch),
+            "an empty secret must never authenticate anything"
+        );
+    }
+
+    #[test]
+    fn the_window_is_checked_before_the_mac() {
+        // A stale **and** wrongly-signed request must report Stale: telling the sender
+        // "your MAC is wrong" both hides the attack and tells them they were late.
+        let bogus = format!("t=1700000000,v1={}", "00".repeat(32));
+
+        assert_eq!(
+            verify(SECRET, Some(&bogus), GOLDEN_BODY, NOW + 9_000, 300),
+            Err(Rejection::Stale)
+        );
+    }
+
+    #[test]
+    fn an_oversized_body_is_rejected_before_the_mac() {
+        let huge = vec![b'x'; 2048];
+
+        assert_eq!(
+            verify_capped(SECRET, Some(GOLDEN_HEADER), &huge, NOW, 300, 1024),
+            Err(Rejection::Oversized)
+        );
+
+        // …and the default cap is the documented 64 KiB.
+        let at_cap = vec![b'x'; DEFAULT_MAX_BODY_BYTES];
+
+        assert_ne!(
+            verify(SECRET, Some(GOLDEN_HEADER), &at_cap, NOW, 300),
+            Err(Rejection::Oversized),
+            "a body exactly at the cap is not oversized"
+        );
+    }
+
+    #[test]
+    fn a_truncated_digest_is_a_mismatch_not_a_match() {
+        let short = format!("t=1700000000,v1={}", "8c".repeat(16));
+
+        assert_eq!(
+            verify(SECRET, Some(&short), GOLDEN_BODY, NOW, 300),
             Err(Rejection::Mismatch)
         );
     }
