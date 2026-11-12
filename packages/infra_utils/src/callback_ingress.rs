@@ -1,8 +1,8 @@
 //! `X-Celestia-Signature` ingress verification — the one implementation.
 //!
-//! The workspace has three services that receive signed callbacks (arona for model
-//! results, evernight's node for MCP execution, celestia-erp for payment notices), and
-//! each grew its own verifier. By 2026-11-12 they had drifted: one accepted a 1 MiB
+//! Two services verify signed callbacks — arona for model results, celestia-erp for
+//! payment notices — and each grew its own verifier. (evernight's edge relays callback
+//! bytes to whichever node owns the job; it authenticates nothing itself.) By 2026-11-12 they had drifted: one accepted a 1 MiB
 //! body while another capped at 64 KiB, one collected every `v1=` candidate for key
 //! rotation while another kept only the last, and one returned a three-word rejection
 //! vocabulary where another had six. Same header, same HMAC construction, different
@@ -90,7 +90,10 @@ pub struct Verified {
 /// * `header` — the `X-Celestia-Signature` value, or `None` when absent.
 /// * `body` — the **raw** request body, exactly as received.
 /// * `now_unix` — the current time; a parameter so callers can test without a clock.
-/// * `max_skew_secs` — accepted absolute difference between `t` and `now_unix`.
+/// * `max_skew_secs` — accepted absolute difference between `t` and `now_unix`. A
+///   non-positive value is not a "disable the window" escape hatch: every timestamp is
+///   then outside the window and every request is `Stale`, which is the fail-closed
+///   reading. Callers that want the default pass [`DEFAULT_MAX_SKEW_SECS`].
 ///
 /// The window is checked before the MAC on purpose: a late delivery is a logging
 /// problem, a bad MAC is an attack, and conflating them both hides the attack and
