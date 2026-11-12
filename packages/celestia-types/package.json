@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "~6.0",
+    "typescript": "^6",
     "vitest": "^3"
   }
 }
