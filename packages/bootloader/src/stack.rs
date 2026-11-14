@@ -137,20 +137,23 @@ pub struct StackConfig {
     /// unsafe shapes rather than ranking them: both sources set ("both" means
     /// nobody knows which daemon the stack talks to), a non-absolute path (a
     /// relative value is a *named volume* to the container runtime, not a bind —
-    /// the stack would come up pointing at a socket that does not exist), and this
-    /// very path spelled `/var/run/docker.sock` (that is the R-01 opt-in's job,
-    /// under its own name and its own tradeoff). The guard is against operator
-    /// mistakes, not against someone who can already write the config: an alias
-    /// such as `//var/run/docker.sock` or a symlink is not resolved.
+    /// the stack would come up pointing at a socket that does not exist), a path
+    /// that *resolves* to the raw host socket after lexical normalization (that is
+    /// the R-01 opt-in's job, under its own name and its own tradeoff), and a
+    /// directory (mounting one at the socket path exposes every socket beneath it).
+    /// Normalization is lexical only — `..` is resolved, symlinks are not — so this
+    /// is a guard against operator mistakes, not against someone who can already
+    /// write the config, and a symlink planted at the raw socket still gets through.
     ///
     /// Rollout — read this before restarting anything: [`bring_up_stack`] is
     /// **idempotent**. A running container is left alone, and a stopped one is
     /// merely started with the spec it already has, so editing the supervisor
     /// environment and restarting the unit applies **nothing** to a stack that is
-    /// already up and warns about nothing. The operator must make the container
-    /// look absent first (stop the supervisor, `docker rename` the old container
-    /// aside as the rollback body, start the supervisor), which is also how you
-    /// roll back. The rename sequence lives in the rollout note of the PR that
+    /// already up and warns about nothing. The operator must also free the old
+    /// container's published host port (a rename alone keeps it bound, and the new
+    /// container's start then fails with "port is already allocated"): stop the
+    /// old container, rename it aside as the rollback body, then start the
+    /// supervisor. The exact sequence lives in the rollout note of the PR that
     /// introduced this field; it is not repeated here so the two cannot drift.
     pub docker_socket_path: Option<PathBuf>,
 }
@@ -618,15 +621,53 @@ fn socket_source_error(cfg: &StackConfig) -> Option<String> {
             path.display()
         ));
     }
-    if path == Path::new("/var/run/docker.sock") {
-        return Some(
-            "docker_socket_path is the raw host socket; that is the root-equivalent R-01 \
-             opt-in — set allow_docker_socket and accept that tradeoff, or point this \
-             field at the proxy socket instead"
-                .to_string(),
-        );
+    // `Path` equality is component-wise: it drops `.` and redundant separators but
+    // does **not** resolve `..`, so `/var/run/docker.sock/../docker.sock` compares
+    // unequal to the raw path while being the same file on disk. Normalize lexically
+    // (the socket may not exist yet, so this must not touch the filesystem).
+    let raw = Path::new(RAW_DOCKER_SOCKET);
+    if normalize_lexically(path) == normalize_lexically(raw) {
+        return Some(format!(
+            "docker_socket_path resolves to the raw host socket ({RAW_DOCKER_SOCKET}); that is \
+             the root-equivalent R-01 opt-in — set allow_docker_socket and accept that \
+             tradeoff, or point this field at the proxy socket instead"
+        ));
+    }
+    // Mounting a *directory* at the container's socket path hands over every socket
+    // beneath it — `/var/run` would smuggle the raw socket in through the side door
+    // and the branch would still log that the raw socket stays unmounted.
+    if path.is_dir() {
+        return Some(format!(
+            "docker_socket_path is a directory ({:?}); the mount target is a socket path, \
+             and mounting a directory there exposes every socket beneath it",
+            path.display()
+        ));
     }
     None
+}
+
+/// The host path of the raw docker socket (the R-01 opt-in's source).
+const RAW_DOCKER_SOCKET: &str = "/var/run/docker.sock";
+
+/// Lexical normalization: drop `.` and redundant separators, resolve `..` against
+/// the segments already seen, never above the root. No filesystem access — the
+/// socket this path names may not exist yet when the config is validated.
+fn normalize_lexically(path: &Path) -> std::path::PathBuf {
+    use std::path::Component;
+    let mut out = std::path::PathBuf::new();
+    for comp in path.components() {
+        match comp {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                // pop() is false at the root; `/..` is `/`, so drop it there.
+                if !out.pop() && !out.has_root() {
+                    out.push("..");
+                }
+            }
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
 }
 
 /// Bring up the full stack: sockets → network → pull images → create/start
@@ -978,6 +1019,77 @@ mod tests {
                 "the refusal must say the path has to be absolute: {err}"
             );
         }
+    }
+
+    /// `Path` equality drops `.` but does not resolve `..`, so a lexical alias of
+    /// the raw socket must be refused on the normalized form — otherwise
+    /// `/var/run/docker.sock/../docker.sock` slips through the guard and the raw
+    /// socket rides in while the branch logs that it stays unmounted.
+    #[tokio::test]
+    async fn docker_socket_path_aliases_of_the_raw_socket_are_refused() {
+        for alias in [
+            "//var/run/docker.sock",
+            "/var/run/./docker.sock",
+            "/var/run/docker.sock/../docker.sock",
+        ] {
+            let cfg = StackConfig {
+                docker_socket_path: Some(std::path::PathBuf::from(alias)),
+                ..StackConfig::default()
+            };
+            let err = match bring_up_stack(&cfg).await {
+                Ok(_) => panic!("{alias} must be refused"),
+                Err(error) => error,
+            };
+            assert!(
+                err.to_string().contains("resolves to the raw host socket"),
+                "{alias} must be refused as the raw socket: {err}"
+            );
+        }
+    }
+
+    /// A directory mounted at the container's socket path hands over everything
+    /// beneath it — `/var/run` would smuggle the raw socket in through the side
+    /// door while the log line says the raw socket stays unmounted.
+    #[tokio::test]
+    async fn docker_socket_path_directory_is_refused() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let cfg = StackConfig {
+            docker_socket_path: Some(dir.path().to_path_buf()),
+            ..StackConfig::default()
+        };
+        let err = match bring_up_stack(&cfg).await {
+            Ok(_) => panic!("a directory source must be refused"),
+            Err(error) => error,
+        };
+        assert!(
+            err.to_string().contains("is a directory"),
+            "the refusal must say why a directory is wrong: {err}"
+        );
+    }
+
+    /// `bring_up_stack` refuses both-set, but `scepter_params` stays infallible and
+    /// therefore still *ranks* the two sources. That ranking is a second layer and
+    /// needs its own test: without one, turning the `else if` into an `if` mounts
+    /// both sockets and nothing notices (it survived a mutation round).
+    #[test]
+    fn scepter_params_mounts_only_the_proxy_when_both_are_set() {
+        let cfg = StackConfig {
+            allow_docker_socket: true,
+            docker_socket_path: Some(std::path::PathBuf::from("/srv/proxy/docker.sock")),
+            ..StackConfig::default()
+        };
+        let scepter = scepter_params(&cfg);
+        let socket_mounts: Vec<_> = scepter
+            .volumes
+            .iter()
+            .filter(|v| v.container_path == "/var/run/docker.sock")
+            .collect();
+        assert_eq!(
+            socket_mounts.len(),
+            1,
+            "the params layer must never mount two docker sockets, even unreachable-via-guard"
+        );
+        assert_eq!(socket_mounts[0].host_path, "/srv/proxy/docker.sock");
     }
 
     /// The GID that reaches the container must come from the socket that is
