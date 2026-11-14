@@ -92,7 +92,8 @@ enum MatchKind {
     /// Plain substring containment (the historical behaviour).
     Substring,
     /// The needle must appear as a whole token: the characters around the
-    /// match must be boundaries (start/end of text, a space, or a quote).
+    /// match must be shell word boundaries (anything that is not a word
+    /// character — so `--force;`, `--force&&x` and `(--force)` all match).
     /// `--force` blocks `git push --force` while `--force-with-lease` —
     /// the workspace push policy's own mandated escape hatch — and other
     /// `--force-*` flags stay usable.
@@ -519,6 +520,26 @@ fn decode_ansi_c_spans(token: &str) -> String {
                         let decoded = decode_escape(&chars, j);
                         match decoded {
                             Some((ch, width)) => {
+                                // bash cannot carry a NUL in a shell word:
+                                // the escape TRUNCATES this span, and the
+                                // text after the closing quote still
+                                // concatenates (`$'\u0000'/etc` is
+                                // "/etc" — R13 S1, measured). Copying the
+                                // NUL instead would hide the real path.
+                                if ch == '\0' {
+                                    j += width;
+                                    // skip to (and consume) the closing
+                                    // quote: bash truncates the span at
+                                    // the NUL but the word continues.
+                                    while j < chars.len() && chars[j] != '\'' {
+                                        j += 1;
+                                    }
+                                    if j < chars.len() {
+                                        j += 1;
+                                    }
+                                    closed = true;
+                                    break;
+                                }
                                 span.push(ch);
                                 j += width;
                             }
@@ -601,6 +622,13 @@ fn decode_escape(chars: &[char], start: usize) -> Option<(char, usize)> {
             char::from_u32(val).map(|ch| (ch, width))
         }
         'E' => simple('\x1b'),
+        // `\cX` is a control character: ctrl-@ (\c@) is NUL, which
+        // truncates the word just like a decoded NUL escape (R13 S1).
+        'c' => {
+            let target = *chars.get(start + 2)?;
+            let code = (target as u32) & 0x1f;
+            char::from_u32(code).map(|ch| (ch, 3))
+        }
         // `\uHHHH` (1-4 hex) and `\UHHHHHHHH` (1-8 hex): bash decodes
         // these inside `$'...'` in every locale, so the laundering class
         // R10 closed for `\x`/octal is open here too until they are
@@ -838,7 +866,9 @@ fn glob_prefix(target: &str) -> Option<&str> {
 /// A literal, shell-decoded path whose forced deletion is system damage:
 /// any ABSOLUTE target outside the scratch roots — the bare roots block
 /// too, except the disposable tmp trees ([`RM_DELETABLE_ROOTS`]);
-/// relative targets are workspace-local and allowed.
+/// relative targets are workspace-local and allowed. `~` (home) is
+/// deliberately OUT of scope: the gate models static absolute spellings,
+/// so `rm -rf ~` stays allowed exactly as on master (R13 S2 note).
 fn path_protected(target: &str) -> bool {
     let normalized = normalize_posix_path(target);
     if normalized == "/" || normalized == "/*" {
@@ -1431,6 +1461,20 @@ mod tests {
             r"rm -rf $'\u02f'",
             r"rm -rf $'\U2f'etc",
             r"$'\u72m' -rf /etc",
+            // NUL escapes TRUNCATE the span, so the path after the quote
+            // is what runs (R13 S1 — 12 measured fail-opens).
+            r"rm -rf $'\u0000'/etc",
+            r"rm -rf $'\U00000000'/etc",
+            r"rm -rf $'\x00'/etc",
+            r"rm -rf $'\x0'/etc",
+            r"rm -rf $'\0'/etc",
+            r"rm -rf $'\00'/etc",
+            r"rm -rf $'\000'/etc",
+            r#"rm -rf $'\u0000'"/etc""#,
+            r"rm -rf $'\u0000'/m*",
+            r"r$'\u0000'm -rf /etc",
+            r#"bash -c "rm -rf $'\u0000'/etc""#,
+            r"rm -rf $'\c@'/etc",
             // Outer sh, inner bash: the INNER shell decodes.
             "bash -c \"rm -rf $'\\u2f'etc\"",
             r"$'\u0072\u006d' -rf /etc",
@@ -1504,9 +1548,12 @@ mod tests {
             "rm -rf $HOME/etc",
             "rm -rf `echo /etc`",
             // An unknown `\m` keeps its letter in bash, so this stays
-            // relative (the short `\u` forms moved to the BLOCK table —
-            // bash decodes 1..cap digits).
+            // relative. `\u2fetc` is NOT relative by intent but by the
+            // greedy 3-digit read: U+02FE + "tc" (measured), so it is
+            // harmless and must stay ALLOW-pinned (R13 S2).
             r"rm -rf $'\mnt\u002f..\u002fetc'",
+            r"rm -rf $'\u2fetc'",
+            r"rm -rf $'\U2fetc'",
             "rm --one-file-system -r /tmp/x",
             "git push --force-with-lease origin b",
             "docker compose up -d --force-recreate web",
