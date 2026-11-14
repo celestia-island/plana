@@ -112,6 +112,10 @@ struct DangerousPattern {
     /// How `pattern` (or the family matcher) is applied to the normalized
     /// text — see [`MatchKind`].
     kind: MatchKind,
+    /// Host-hardening rules must not police container-internal operations
+    /// (`container_exec` runs inside the ephemeral sandbox; `rm -rf
+    /// /etc/nginx` there is legitimate ops work — R5 F8).
+    host_only: bool,
     pattern: &'static str,
     rule_name: &'static str,
     reason: &'static str,
@@ -121,6 +125,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: true,
         kind: MatchKind::RmFamily,
         pattern: "rm",
         rule_name: "exec_rmrf_root",
@@ -129,6 +134,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "--no-preserve-root",
         rule_name: "exec_no_preserve_root",
@@ -137,6 +143,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: true,
         kind: MatchKind::Token,
         pattern: "--force",
         rule_name: "exec_force_flag",
@@ -145,6 +152,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "| bash",
         rule_name: "exec_curl_pipe_bash",
@@ -155,6 +163,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "|bash",
         rule_name: "exec_pipe_bash_no_space",
@@ -163,6 +172,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "| sh",
         rule_name: "exec_curl_pipe_sh",
@@ -171,6 +181,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "|sh",
         rule_name: "exec_pipe_sh_no_space",
@@ -179,6 +190,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "> /dev/sda",
         rule_name: "exec_write_block_device",
@@ -187,6 +199,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "> /dev/hda",
         rule_name: "exec_write_block_device_hda",
@@ -195,6 +208,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "file_write",
         param_keys: &["path"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: ".ssh/",
         rule_name: "file_write_ssh",
@@ -203,6 +217,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "file_write",
         param_keys: &["path"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "/etc/shadow",
         rule_name: "file_write_shadow",
@@ -211,6 +226,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "file_write",
         param_keys: &["path"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "/etc/passwd",
         rule_name: "file_write_passwd",
@@ -219,6 +235,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_create",
         param_keys: &["options"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "--privileged",
         rule_name: "container_privileged",
@@ -227,6 +244,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_create",
         param_keys: &["options"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "--network host",
         rule_name: "container_host_network",
@@ -235,6 +253,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_exec",
         param_keys: &["command"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "--privileged",
         rule_name: "container_exec_privileged",
@@ -243,6 +262,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_exec",
         param_keys: &["command"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "--network host",
         rule_name: "container_exec_host_network",
@@ -251,6 +271,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "__import__('subprocess')",
         rule_name: "script_subprocess_import",
@@ -259,6 +280,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "os.system(",
         rule_name: "script_os_system",
@@ -267,6 +289,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "os.popen(",
         rule_name: "script_os_popen",
@@ -275,6 +298,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        host_only: false,
         kind: MatchKind::Substring,
         pattern: "subprocess.",
         rule_name: "script_subprocess_direct",
@@ -310,6 +334,9 @@ fn normalize_whitespace(value: &str) -> String {
 pub fn check_dangerous_params(tool_name: &str, params: &serde_json::Value) -> ToolSecurityVerdict {
     for pattern in DANGEROUS_PATTERNS {
         if !tool_name.contains(pattern.tool_pattern) {
+            continue;
+        }
+        if pattern.host_only && tool_name.contains("container") {
             continue;
         }
 
@@ -390,103 +417,116 @@ const RM_PROTECTED: &[&str] = &[
 /// mean fail-unusable for the workspace's own daily cleanup (R2
 /// finding). Targets containing `..`, the root itself, or `/*` are
 /// always blocked.
-fn rm_forced_protected_target(normalized: &str) -> Option<(&'static str, &'static str)> {
-    let tokens: Vec<&str> = normalized.split(' ').collect();
-    let mut i = 0;
-    while i < tokens.len() {
-        // Strip leading decoration (`\rm`, `` `rm ``, `$(rm`, `(rm`) so a
-        // prefixed rm cannot slip the word check — the master substring
-        // rule caught these shapes and the token rewrite must not narrow
-        // that (R4 residual 1).
-        if tokens[i].trim_start_matches(|c: char| !c.is_alphanumeric()) != "rm" {
-            i += 1;
-            continue;
-        }
-        let mut j = i + 1;
-        let mut forced = false;
-        let mut recursive = false;
-        while j < tokens.len() && tokens[j].starts_with('-') && tokens[j].len() > 1 {
-            if tokens[j] == "--" {
-                j += 1;
-                break;
-            }
-            if tokens[j].starts_with("--") {
-                // Long options match by full name only — letter scanning
-                // would trip on `--one-file-system` (R3 S3).
-                if tokens[j] == "--force" {
-                    forced = true;
-                }
-            } else {
-                let flags = tokens[j].trim_start_matches('-');
-                if flags.contains('f') {
-                    forced = true;
-                }
-                // `-R` is rm's documented recursive spelling too.
-                if flags.contains('r') || flags.contains('R') {
-                    recursive = true;
-                }
-            }
-            j += 1;
-        }
-        if forced {
-            // Walk the whole operand list; a shell separator ends the
-            // command (`;`, `&&`, `|`, …) — everything before it is a
-            // victim of THIS rm.
-            let mut k = j;
-            while k < tokens.len() {
-                let token = tokens[k];
-                if is_shell_separator(token) {
-                    break;
-                }
-                if token == "--" || token.is_empty() {
-                    k += 1;
-                    continue;
-                }
-                if token.starts_with('-') && token.len() > 1 {
-                    k += 1;
-                    continue;
-                }
-                // Drop quote characters ANYWHERE in the token: shell
-                // splices `/et''c` into `/etc`, so a fully-quoted-only
-                // strip would miss it (R4 residual 2).
-                let target: String = trim_shell_separators(token).replace(['\'', '"'], "");
-                if rm_target_protected(&target) {
-                    let (rule, reason) = if recursive {
-                        (
-                            "exec_rmrf_root",
-                            "rm -rf on a protected absolute path is destructive and irreversible",
-                        )
-                    } else {
-                        (
-                            "exec_rm_f_root",
-                            "forced deletion of a protected absolute path is irrecoverable",
-                        )
-                    };
-                    return Some((rule, reason));
-                }
-                k += 1;
-            }
-        }
-        i = j.max(i + 1);
-    }
-    None
+/// Split the normalized command at shell operators (`;`, `&&`, `|`, `&`,
+/// `(`, `)`, `<`, `>`, backtick). Every segment is an independent command:
+/// rm operands and flag words must not bleed across a segment boundary,
+/// and a command glued after `;`/`&&` (`true;rm -rf /etc`) must still be
+/// scanned — the master substring rule caught those forms and the token
+/// rewrite must not narrow them (R5 F2/F3).
+fn shell_segments(normalized: &str) -> Vec<String> {
+    normalized
+        .split(|c: char| matches!(c, ';' | '&' | '|' | '(' | ')' | '<' | '>' | '`'))
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
+        .collect()
 }
 
-/// A token that ends the current shell command (or opens a subshell):
-/// operand scanning must stop here — what follows belongs to another
-/// command.
-fn is_shell_separator(token: &str) -> bool {
-    token.starts_with(';')
-        || token.starts_with("&&")
-        || token.starts_with('|')
-        || token.starts_with('&')
-        || token.starts_with('(')
-        || token.starts_with(')')
+/// Strip shell backslash escapes (`/et\c` is `/etc` to the shell) from an
+/// operand before path matching (R5 F4).
+fn unescape_shell(token: &str) -> String {
+    token.replace('\\', "")
+}
+
+/// Detect an `rm` invocation whose flags force (`-f`, `-rf`, `-fr`,
+/// `-Rf`, `--force`) and whose target set contains a protected absolute
+/// path. EVERY positional operand is a deletion victim (R3 S1), and every
+/// SHELL SEGMENT is scanned independently (R5 F3). The `rm` word check
+/// strips decoration from BOTH ends (`\rm`, `` `rm ``, `'rm'` — R5 F1/F5).
+/// Scratch prefixes (`/tmp`, `/var/tmp`, `/mnt`, `/workspace`, `/data`)
+/// are deliberately allowed: fail-closed must not mean fail-unusable for
+/// the workspace's own daily cleanup (R2). The root itself, `/*` under
+/// it, and `..`-traversal of ABSOLUTE targets are always blocked
+/// (relative `../build` cleanup stays allowed — R5 F6).
+fn rm_forced_protected_target(normalized: &str) -> Option<(&'static str, &'static str)> {
+    for segment in shell_segments(normalized) {
+        let tokens: Vec<&str> = segment.split(' ').collect();
+        let mut i = 0;
+        while i < tokens.len() {
+            // Strip decoration from BOTH ends so `\rm`, `` `rm ``, `'rm'`
+            // and glued suffixes all read as the rm word.
+            if tokens[i].trim_matches(|c: char| !c.is_alphanumeric()) != "rm" {
+                i += 1;
+                continue;
+            }
+            let mut j = i + 1;
+            let mut forced = false;
+            let mut recursive = false;
+            while j < tokens.len() && tokens[j].starts_with('-') && tokens[j].len() > 1 {
+                if tokens[j] == "--" {
+                    j += 1;
+                    break;
+                }
+                if tokens[j].starts_with("--") {
+                    // Long options match by full name only — letter
+                    // scanning would trip on `--one-file-system` (R3 S3).
+                    if tokens[j] == "--force" {
+                        forced = true;
+                    }
+                } else {
+                    let flags = tokens[j].trim_start_matches('-');
+                    if flags.contains('f') {
+                        forced = true;
+                    }
+                    // `-R` is rm's documented recursive spelling too.
+                    if flags.contains('r') || flags.contains('R') {
+                        recursive = true;
+                    }
+                }
+                j += 1;
+            }
+            if forced {
+                // Walk the whole operand list within THIS segment.
+                let mut k = j;
+                while k < tokens.len() {
+                    let token = tokens[k];
+                    if token == "--" || token.is_empty() {
+                        k += 1;
+                        continue;
+                    }
+                    if token.starts_with('-') && token.len() > 1 {
+                        k += 1;
+                        continue;
+                    }
+                    let target = unescape_shell(strip_quotes(trim_shell_separators(token)));
+                    if rm_target_protected(&target) {
+                        let (rule, reason) = if recursive {
+                            (
+                                "exec_rmrf_root",
+                                "rm -rf on a protected absolute path is destructive and irreversible",
+                            )
+                        } else {
+                            (
+                                "exec_rm_f_root",
+                                "forced deletion of a protected absolute path is irrecoverable",
+                            )
+                        };
+                        return Some((rule, reason));
+                    }
+                    k += 1;
+                }
+            }
+            i = j.max(i + 1);
+        }
+    }
+    None
 }
 
 /// Strip trailing shell punctuation (`/etc;`, `/etc)`, `/etc&&` …) so a
 /// separator glued to the operand does not mask the path.
 fn trim_shell_separators(token: &str) -> &str {
+    // Quotes are NOT stripped here: a fully-quoted token ("/") must reach
+    // strip_quotes intact (stripping them here would mangle "/" into "/).
     token.trim_end_matches(|c| matches!(c, ';' | '&' | '|' | '(' | ')' | '<' | '>'))
 }
 
@@ -506,8 +546,22 @@ fn normalize_posix_path(target: &str) -> String {
     format!("/{}", parts.join("/"))
 }
 
+fn strip_quotes(token: &str) -> &str {
+    let bytes = token.as_bytes();
+    if bytes.len() >= 2
+        && (bytes[0] == b'"' || bytes[0] == b'\'')
+        && bytes[bytes.len() - 1] == bytes[0]
+    {
+        &token[1..token.len() - 1]
+    } else {
+        token
+    }
+}
+
 fn rm_target_protected(target: &str) -> bool {
-    if target.contains("..") {
+    // `..` traversal matters for absolute targets; relative `../build`
+    // cleanup is daily routine and stays allowed (R5 F6).
+    if target.starts_with('/') && target.contains("..") {
         return true;
     }
     let normalized = normalize_posix_path(target);
@@ -880,18 +934,41 @@ mod tests {
 
     /// Shell separators end a command for the rm scan too: a scratch
     /// second command must not launder, and a protected first command
-    /// must still block with the separator glued on.
+    /// must still block with the separator glued on. The R5 forms round
+    /// this out: backtick-wrapped commands, separators glued to the
+    /// operand, a command appended after `;`/`&&`, backslash escapes,
+    /// and quote-wrapped rm words — all shapes the master substring rule
+    /// caught and the token rewrite must keep catching.
     #[test]
     fn dangerous_params_host_command_exec_rm_with_separators() -> Result<()> {
         for (command, rule) in [
             ("rm -rf /etc; rm -rf /tmp/x", "exec_rmrf_root"),
             ("(rm -rf /etc)", "exec_rmrf_root"),
             ("rm -rf /var/log&&echo done", "exec_rmrf_root"),
+            // R5 F1: trailing backtick on the operand.
+            ("`rm -rf /etc`", "exec_rmrf_root"),
+            // R5 F2: separator glued to the top-level protected dir.
+            ("rm -rf /etc;id", "exec_rmrf_root"),
+            ("rm -rf /etc&&echo done", "exec_rmrf_root"),
+            ("rm -rf /etc|cat", "exec_rmrf_root"),
+            // R5 F3: rm appended after another command.
+            ("true;rm -rf /etc", "exec_rmrf_root"),
+            ("echo hi&&rm -rf /etc", "exec_rmrf_root"),
+            ("id|rm -rf /etc", "exec_rmrf_root"),
+            // R5 F4: backslash escape inside the operand.
+            ("rm -rf /et\\c", "exec_rmrf_root"),
+            ("rm -rf /e\\tc", "exec_rmrf_root"),
+            // R5 F5: quote-wrapped rm word.
+            ("'rm' -rf /etc", "exec_rmrf_root"),
         ] {
             let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
             let verdict = check_dangerous_params("host_command_exec", &params);
             assert_eq!(verdict.action, SecurityAction::Block, "command: {command}");
-            assert_eq!(verdict.matched_rule.as_deref(), Some(rule));
+            assert_eq!(
+                verdict.matched_rule.as_deref(),
+                Some(rule),
+                "cmd: {command}"
+            );
         }
         // Separator ends the command: a benign rm followed by another
         // command mentioning nothing dangerous stays allowed.
@@ -901,6 +978,45 @@ mod tests {
         .unwrap_or_default();
         let verdict = check_dangerous_params("host_command_exec", &params);
         assert!(verdict.is_allowed());
+        // R5 F6: relative `..` cleanup is daily routine, not protected.
+        let params = serde_json::to_value(CommandParams {
+            command: "rm -rf ../build",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("host_command_exec", &params);
+        assert!(
+            verdict.is_allowed(),
+            "relative traversal cleanup stays allowed"
+        );
+        Ok(())
+    }
+
+    /// Host-hardening rules stay host-only: `container_exec` runs inside
+    /// the ephemeral sandbox, where `rm -rf /etc/nginx` is legitimate
+    /// ops work (R5 F8). Its own `--privileged` rule still fires.
+    #[test]
+    fn host_hardening_rules_do_not_police_container_exec() -> Result<()> {
+        let params = serde_json::to_value(CommandParams {
+            command: "rm -rf /etc/nginx && rm -f /etc/resolv.conf",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("container_exec", &params);
+        assert!(
+            verdict.is_allowed(),
+            "container-internal rm is out of scope"
+        );
+        let params = serde_json::to_value(CommandParams {
+            command: "docker run --force-recreate web",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("container_exec", &params);
+        assert!(verdict.is_allowed());
+        let params = serde_json::to_value(CommandParams {
+            command: "docker exec x --privileged sh",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("container_exec", &params);
+        assert!(!verdict.is_allowed(), "the container rule still fires");
         Ok(())
     }
 
