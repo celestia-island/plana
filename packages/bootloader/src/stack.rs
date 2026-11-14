@@ -133,13 +133,25 @@ pub struct StackConfig {
     /// This is the **sanctioned alternative** to [`StackConfig::allow_docker_socket`]:
     /// the raw socket stays default-off (R-01, 2026-11-06 audit: it is
     /// root-equivalent on the host), while a proxy socket only reaches the API
-    /// surface the proxy allows. The two options are mutually exclusive on purpose —
-    /// setting both is refused, because "both" means nobody knows which socket the
-    /// stack is actually talking to.
+    /// surface the proxy allows. [`bring_up_stack`] refuses the ambiguous and the
+    /// unsafe shapes rather than ranking them: both sources set ("both" means
+    /// nobody knows which daemon the stack talks to), a non-absolute path (a
+    /// relative value is a *named volume* to the container runtime, not a bind —
+    /// the stack would come up pointing at a socket that does not exist), and this
+    /// very path spelled `/var/run/docker.sock` (that is the R-01 opt-in's job,
+    /// under its own name and its own tradeoff). The guard is against operator
+    /// mistakes, not against someone who can already write the config: an alias
+    /// such as `//var/run/docker.sock` or a symlink is not resolved.
     ///
-    /// Rollout: put `EVERNIGHT_DOCKER_SOCKET_PATH=<host socket path>` in the
-    /// supervisor environment file and restart the supervisor; the bootloader then
-    /// recreates the stack with this mount.
+    /// Rollout — read this before restarting anything: [`bring_up_stack`] is
+    /// **idempotent**. A running container is left alone, and a stopped one is
+    /// merely started with the spec it already has, so editing the supervisor
+    /// environment and restarting the unit applies **nothing** to a stack that is
+    /// already up and warns about nothing. The operator must make the container
+    /// look absent first (stop the supervisor, `docker rename` the old container
+    /// aside as the rollback body, start the supervisor), which is also how you
+    /// roll back. The rename sequence lives in the rollout note of the PR that
+    /// introduced this field; it is not repeated here so the two cannot drift.
     pub docker_socket_path: Option<PathBuf>,
 }
 
@@ -493,31 +505,36 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
         volumes.push(VolumeMount::rw(ws_str, "/workspace"));
     }
 
-    // Inject the docker socket GID so the scepter container can talk to
-    // dockerd — only when the socket itself is mounted (same opt-in).
-    let group_add: Option<Vec<String>> = if !cfg.allow_docker_socket {
-        None
-    } else {
-        std::fs::metadata("/var/run/docker.sock")
-            .ok()
-            .and_then(|m| {
-                #[cfg(unix)]
-                {
-                    use std::os::unix::fs::MetadataExt;
-                    let gid = m.gid();
-                    if gid != 0 {
-                        Some(vec![gid.to_string()])
-                    } else {
-                        None
-                    }
-                }
-                #[cfg(not(unix))]
-                {
-                    let _ = m;
+    // Inject the socket's GID so the scepter container can talk to the daemon —
+    // only when a socket is mounted, and from the source that is actually mounted.
+    // A proxy socket owned by a non-root group is the normal shape, and without
+    // this the container's user simply cannot connect to it (no knob for that
+    // group); reading the raw path while a proxy path is mounted would inject the
+    // wrong GID and look like it worked.
+    let mounted_socket: Option<&Path> = match cfg.docker_socket_path.as_deref() {
+        Some(proxy) => Some(proxy),
+        None if cfg.allow_docker_socket => Some(Path::new("/var/run/docker.sock")),
+        None => None,
+    };
+    let group_add: Option<Vec<String>> = mounted_socket.and_then(|socket| {
+        std::fs::metadata(socket).ok().and_then(|m| {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::MetadataExt;
+                let gid = m.gid();
+                if gid != 0 {
+                    Some(vec![gid.to_string()])
+                } else {
                     None
                 }
-            })
-    };
+            }
+            #[cfg(not(unix))]
+            {
+                let _ = m;
+                None
+            }
+        })
+    });
     if let Some(ref groups) = group_add {
         info!(
             gid = %groups.first().unwrap_or(&"0".to_string()),
@@ -576,20 +593,58 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     }
 }
 
+/// The reason the configured socket sources are unusable, if they are.
+///
+/// Sits beside the mount it constrains (see `scepter_params`) but is enforced by
+/// the fallible entry point, so the infallible params builder never has to rank or
+/// guess. Three shapes are refused: two sources at once, a non-absolute path (the
+/// container runtime reads a relative value as a *named volume*, so the stack
+/// would come up with an empty socket), and the raw host socket spelled out in
+/// this field — that one belongs to `allow_docker_socket`, which names the R-01
+/// tradeoff instead of smuggling root-equivalence in under the "proxy" label.
+fn socket_source_error(cfg: &StackConfig) -> Option<String> {
+    if cfg.allow_docker_socket && cfg.docker_socket_path.is_some() {
+        return Some(
+            "StackConfig sets both allow_docker_socket and docker_socket_path; \
+             choose one — the raw host socket (R-01 opt-in) or a proxy socket path"
+                .to_string(),
+        );
+    }
+    let path = cfg.docker_socket_path.as_ref()?;
+    if !path.is_absolute() {
+        return Some(format!(
+            "docker_socket_path must be an absolute host path, got {:?} — a relative \
+             value is a named volume to the container runtime, not a socket bind",
+            path.display()
+        ));
+    }
+    if path == Path::new("/var/run/docker.sock") {
+        return Some(
+            "docker_socket_path is the raw host socket; that is the root-equivalent R-01 \
+             opt-in — set allow_docker_socket and accept that tradeoff, or point this \
+             field at the proxy socket instead"
+                .to_string(),
+        );
+    }
+    None
+}
+
 /// Bring up the full stack: sockets → network → pull images → create/start
 /// containers → wait healthy. Returns a handle that keeps the backend alive.
 ///
 /// Idempotent: already-running containers are left alone, stopped ones are
 /// started, missing ones are created. Safe to call on every boot.
+///
+/// Because of that idempotency, changing `docker_socket_path` does **not** reach a
+/// container that already exists; see [`StackConfig::docker_socket_path`] for what
+/// the operator has to do instead of restarting the unit.
 pub async fn bring_up_stack(cfg: &StackConfig) -> Result<StackHandle> {
-    // Refuse rather than pick when two socket sources are configured: "both" means
-    // nobody knows which daemon the stack is actually talking to. Checked here (the
-    // fallible entry point) so `scepter_params` can stay infallible.
-    if cfg.allow_docker_socket && cfg.docker_socket_path.is_some() {
-        return Err(anyhow!(
-            "StackConfig sets both allow_docker_socket and docker_socket_path; \
-             choose one — the raw host socket (R-01 opt-in) or a proxy socket path"
-        ));
+    // Refuse rather than pick when the socket sources are ambiguous or unsafe.
+    // Checked here (the fallible entry point) so `scepter_params` can stay
+    // infallible and the container runtime never receives a shape it would
+    // silently misread (a relative bind becomes a named volume).
+    if let Some(problem) = socket_source_error(cfg) {
+        return Err(anyhow!(problem));
     }
     if cfg.postgres_password.is_empty() {
         return Err(anyhow!(
@@ -879,6 +934,82 @@ mod tests {
             socket_mounts[0].host_path, "/var/run/docker.sock",
             "the R-01 opt-in must still mount the RAW host socket"
         );
+    }
+
+    /// Spelling the raw host socket in `docker_socket_path` must be refused: the
+    /// field is documented as the *proxy* alternative, and mounting the raw socket
+    /// through it would carry root-equivalence in under the safe label while the
+    /// branch's log line claims the raw socket stays unmounted.
+    #[tokio::test]
+    async fn docker_socket_path_cannot_be_the_raw_host_socket() {
+        for raw in ["/var/run/docker.sock", "/var/run/docker.sock/"] {
+            let cfg = StackConfig {
+                docker_socket_path: Some(std::path::PathBuf::from(raw)),
+                ..StackConfig::default()
+            };
+            let err = match bring_up_stack(&cfg).await {
+                Ok(_) => panic!("{raw} must be refused"),
+                Err(error) => error,
+            };
+            let text = err.to_string();
+            assert!(
+                text.contains("allow_docker_socket"),
+                "the refusal must point at the opt-in that owns the tradeoff: {text}"
+            );
+        }
+    }
+
+    /// A relative (or empty) path is not a bind source: the container runtime reads
+    /// it as a named volume, so the stack would start with an empty socket and the
+    /// failure would surface much later as a dead docker client.
+    #[tokio::test]
+    async fn docker_socket_path_must_be_absolute() {
+        for bad in ["proxy.sock", "", "../run/proxy.sock"] {
+            let cfg = StackConfig {
+                docker_socket_path: Some(std::path::PathBuf::from(bad)),
+                ..StackConfig::default()
+            };
+            let err = match bring_up_stack(&cfg).await {
+                Ok(_) => panic!("{bad:?} must be refused"),
+                Err(error) => error,
+            };
+            assert!(
+                err.to_string().contains("absolute"),
+                "the refusal must say the path has to be absolute: {err}"
+            );
+        }
+    }
+
+    /// The GID that reaches the container must come from the socket that is
+    /// actually mounted. A proxy socket owned by a non-root group is the normal
+    /// shape; reading the raw path here would inject the wrong group and look fine.
+    #[test]
+    fn proxy_socket_gid_is_read_from_the_mounted_source() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let proxy = dir.path().join("docker.sock");
+        std::fs::write(&proxy, b"").expect("touch the fake socket");
+        let cfg = StackConfig {
+            docker_socket_path: Some(proxy.clone()),
+            ..StackConfig::default()
+        };
+        let scepter = scepter_params(&cfg);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            let gid = std::fs::metadata(&proxy).expect("stat").gid();
+            if gid != 0 {
+                assert_eq!(
+                    scepter.group_add,
+                    Some(vec![gid.to_string()]),
+                    "the proxy socket's own GID must be injected, not the raw socket's"
+                );
+            } else {
+                // root-owned file: the code documents that gid 0 needs no injection
+                assert!(scepter.group_add.is_none());
+            }
+        }
+        #[cfg(not(unix))]
+        assert!(scepter.group_add.is_none());
     }
 
     /// Two socket sources must be refused, not silently ranked: "both" means nobody
