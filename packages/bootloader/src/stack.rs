@@ -158,8 +158,11 @@ pub struct StackConfig {
     /// container's published host port (a rename alone keeps it bound, and the new
     /// container's start then fails with "port is already allocated"): stop the
     /// old container, rename it aside as the rollback body, then start the
-    /// supervisor. The exact sequence lives in the rollout note of the PR that
-    /// introduced this field; it is not repeated here so the two cannot drift.
+    /// supervisor. This paragraph gives the *shape*; the PR's rollout note gives
+    /// the literal commands. If they ever disagree, the note wins — and the socket
+    /// you publish must be connectable by the container's user (a `0600` root socket
+    /// is not: set `0666`, or `root:<non-zero gid> 0660` so the gid arm can inject
+    /// that group).
     pub docker_socket_path: Option<PathBuf>,
 }
 
@@ -612,8 +615,10 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
 /// The reason the configured socket sources are unusable, if they are.
 ///
 /// Sits beside the mount it constrains (see `scepter_params`) but is enforced by
-/// the fallible entry point, so the infallible params builder never has to rank or
-/// guess. Four shapes are refused: two sources at once; a non-absolute path (the
+/// the fallible entry point, so the params builder is never handed a genuinely
+/// ambiguous configuration. It still applies a fixed precedence for the
+/// two-sources case (proxy wins) because it cannot refuse — that ranking has its
+/// own test, and the guard is what keeps it unreachable in practice. Four shapes are refused: two sources at once; a non-absolute path (the
 /// container runtime reads a relative value as a *named volume*, so the stack
 /// would come up with an empty socket); the raw host socket named through this
 /// field, which belongs to `allow_docker_socket` (that option names the R-01
@@ -1105,6 +1110,13 @@ mod tests {
             Path::new("/nonexistent/x/../y.sock"),
             Path::new("/nonexistent/y.sock")
         ));
+        // `..` above the root must clamp to the root, not leave the path changed:
+        // without the clamp this compares unequal and only the filesystem half
+        // could save it — and that half needs the socket to exist.
+        assert!(names_the_same_socket(
+            Path::new("/../var/run/docker.sock"),
+            Path::new("/var/run/docker.sock")
+        ));
         assert!(!names_the_same_socket(&real, &real_dir.join("other.sock")));
     }
 
@@ -1183,6 +1195,29 @@ mod tests {
         }
         #[cfg(not(unix))]
         assert!(scepter.group_add.is_none());
+    }
+
+    /// The acceptance case. Every other test in this module asserts a **refusal**,
+    /// and a guard that refuses every proxy path passes all of them — the feature
+    /// would ship dead and no gate would notice. This is the test that says a
+    /// legitimate configuration gets through.
+    #[test]
+    fn socket_source_error_accepts_every_legitimate_source() {
+        for good in ["/srv/proxy/docker.sock", "/mnt/work/r1-sock/docker.sock"] {
+            let cfg = StackConfig {
+                docker_socket_path: Some(std::path::PathBuf::from(good)),
+                ..StackConfig::default()
+            };
+            assert_eq!(socket_source_error(&cfg), None, "{good} must be accepted");
+        }
+        // Neither source (the R-01 default) is legitimate too.
+        assert_eq!(socket_source_error(&StackConfig::default()), None);
+        // So is the raw opt-in on its own.
+        let raw = StackConfig {
+            allow_docker_socket: true,
+            ..StackConfig::default()
+        };
+        assert_eq!(socket_source_error(&raw), None);
     }
 
     /// Two socket sources must be refused, not silently ranked: "both" means nobody
