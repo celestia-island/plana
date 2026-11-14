@@ -8,8 +8,8 @@
 //! - [`i18n`] — the locale directories embedded from `res/i18n/locales`
 #![allow(clippy::type_complexity)]
 
-pub mod lang;
 pub mod i18n;
+pub mod lang;
 
 // Re-export commonly used types and constants at the crate root
 pub use lang::{Language, SUPPORTED_LANG_CODES, SUPPORTED_LANGUAGES};

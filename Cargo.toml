@@ -35,7 +35,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.4.4"
+version = "0.4.5"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
@@ -56,7 +56,7 @@ all = "deny"
 # ── Internal workspace crates (path deps; hyphenated names are the published
 #    crate names, legacy underscore keys alias them via package =) ──
 plana-billing = { path = "packages/billing", version = "^0.4" }
-plana-bootloader = { path = "packages/bootloader", version = "^0.4" }
+plana-bootloader = { path = "packages/bootloader", version = "^0.5" }
 plana-build-info = { path = "packages/build_info", version = "0.4" }
 plana-config = { path = "packages/config", version = "^0.4" }
 plana_core = { path = "packages/core", version = "0.4", package = "plana-core" }
@@ -64,7 +64,7 @@ plana_custom_agent = { package = "plana-custom-agent", path = "packages/custom_a
 plana_domain_agent = { path = "packages/domain_agent", version = "0.4", package = "plana-domain-agent" }
 plana_domain_skills = { path = "packages/domain_skills", version = "0.4", package = "plana-domain-skills" }
 plana_domain_skills_permissions = { path = "packages/domain_skills_permissions", version = "0.4", package = "plana-domain-skills-permissions" }
-plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services", version = "^0.4" }
+plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services", version = "^0.5" }
 plana-infra-utils = { path = "packages/infra_utils", version = "^0.4" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.4" }
 plana_macros = { path = "packages/macros", version = "0.4", package = "plana-macros" }
@@ -85,8 +85,8 @@ kirino = { version = "^0.9" }
 # https://github.com/celestia-island/cherino as `cherino` / `cherino-runtime`
 # — and since the v0.1.7 first release (2026-11-04) they are on crates.io,
 # so the git dependency is gone entirely (versioning-audit W4, B5 ruling).
-cherino = { version = "^0.1" }
-cherino-runtime = { version = "^0.1" }
+cherino = { version = "^0.2" }
+cherino-runtime = { version = "^0.2" }
 
 # External dependency versions (carried from entelecheia workspace)
 anyhow = "^1"

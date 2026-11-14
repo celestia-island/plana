@@ -1,6 +1,9 @@
 [package]
 name = "plana-bootloader"
-version.workspace = true
+# Own version line, like packages/plana: this crate's public structs are
+# constructible, so adding a field is a major break — a workspace patch bump
+# (0.4.x) would fail the release's cargo-semver-checks gate.
+version = "0.5.0"
 edition.workspace = true
 rust-version.workspace = true
 publish = true

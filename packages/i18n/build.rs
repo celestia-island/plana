@@ -40,7 +40,9 @@ fn main() {
         for &lang in REQUIRED_LANGS {
             let _ = fs::create_dir_all(locales.join(lang));
         }
-        println!("cargo:warning=[ WARN ] locale sources not found - building with an EMPTY locale set (workspace-only content)");
+        println!(
+            "cargo:warning=[ WARN ] locale sources not found - building with an EMPTY locale set (workspace-only content)"
+        );
         return;
     }
 
@@ -61,7 +63,10 @@ fn main() {
 
     log_blank!();
     if has_errors {
-        log_err!("i18n resource validation FAILED with {} error(s)", error_count);
+        log_err!(
+            "i18n resource validation FAILED with {} error(s)",
+            error_count
+        );
         log_info!("Please fix the issues above before proceeding.");
         eprintln!("i18n resource validation failed. See warnings above for details.");
         std::process::exit(1);
