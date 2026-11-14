@@ -394,8 +394,11 @@ fn rm_forced_protected_target(normalized: &str) -> Option<(&'static str, &'stati
     let tokens: Vec<&str> = normalized.split(' ').collect();
     let mut i = 0;
     while i < tokens.len() {
-        // Trim a leading `(` so `(rm -rf /etc)` still reads as an rm call.
-        if tokens[i].trim_start_matches('(') != "rm" {
+        // Strip leading decoration (`\rm`, `` `rm ``, `$(rm`, `(rm`) so a
+        // prefixed rm cannot slip the word check — the master substring
+        // rule caught these shapes and the token rewrite must not narrow
+        // that (R4 residual 1).
+        if tokens[i].trim_start_matches(|c: char| !c.is_alphanumeric()) != "rm" {
             i += 1;
             continue;
         }
@@ -443,8 +446,11 @@ fn rm_forced_protected_target(normalized: &str) -> Option<(&'static str, &'stati
                     k += 1;
                     continue;
                 }
-                let target = strip_quotes(trim_shell_separators(token));
-                if rm_target_protected(target) {
+                // Drop quote characters ANYWHERE in the token: shell
+                // splices `/et''c` into `/etc`, so a fully-quoted-only
+                // strip would miss it (R4 residual 2).
+                let target: String = trim_shell_separators(token).replace(['\'', '"'], "");
+                if rm_target_protected(&target) {
                     let (rule, reason) = if recursive {
                         (
                             "exec_rmrf_root",
@@ -520,18 +526,6 @@ fn rm_target_protected(target: &str) -> bool {
         }
     }
     false
-}
-
-fn strip_quotes(token: &str) -> &str {
-    let bytes = token.as_bytes();
-    if bytes.len() >= 2
-        && (bytes[0] == b'"' || bytes[0] == b'\'')
-        && bytes[bytes.len() - 1] == bytes[0]
-    {
-        &token[1..token.len() - 1]
-    } else {
-        token
-    }
 }
 
 #[derive(Debug, Clone)]
