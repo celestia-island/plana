@@ -350,14 +350,12 @@ pub fn check_dangerous_params(tool_name: &str, params: &serde_json::Value) -> To
             let Some(value) = params.get(*key).and_then(|v| v.as_str()) else {
                 continue;
             };
-            // Decode ANSI-C spans over the WHOLE string before any
-            // segmentation: the separators inside `$'...'` are literal
-            // data there, and splitting first detached the protected
-            // tail from its rm word (`rm -rf $'\u0000|'/etc` → bash
-            // runs `rm -rf /etc`, R15 S1). The NUL truncation is the
-            // mechanism, so this must happen before `shell_segments`.
-            let decoded_input = decode_ansi_c_spans(value);
-            let normalized = normalize_whitespace(&decoded_input);
+            // Segmentation runs on the RAW text and is quote/escape
+            // aware, so a separator inside `$'...'` or `"..."` stays
+            // data (R15/R16). Decoding happens per token afterwards:
+            // decoding FIRST would turn `$'\x3b'` into a real `;` and
+            // split the rm word away from its operand (R16 S1).
+            let normalized = normalize_whitespace(value);
 
             match pattern.kind {
                 MatchKind::Substring => {
@@ -466,12 +464,69 @@ fn brace_escapes(target: &str) -> bool {
 /// scanned — the master substring rule caught those forms and the token
 /// rewrite must not narrow them (R5 F2/F3).
 fn shell_segments(normalized: &str) -> Vec<String> {
-    normalized
-        .split([';', '&', '|', '(', ')', '<', '>', '`'])
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(str::to_string)
-        .collect()
+    // QUOTE/ESCAPE-AWARE split (R16): separators are only operators when
+    // they are not inside a quoted span and not backslash-escaped. The
+    // previous `split([...])` cut `rm -rf "a|b" /etc` into two commands
+    // and detached the protected tail from its rm word.
+    let chars: Vec<char> = normalized.chars().collect();
+    let mut segments: Vec<String> = Vec::new();
+    let mut current = String::new();
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        match c {
+            '\\' => {
+                // An escape keeps itself and the next char inside the
+                // current segment (`a\;b` is one word).
+                current.push(c);
+                if let Some(next) = chars.get(i + 1) {
+                    current.push(*next);
+                    i += 2;
+                    continue;
+                }
+                i += 1;
+            }
+            '\'' | '"' => {
+                // Copy a whole quoted span verbatim (an escaped quote
+                // inside a double-quoted span does not close it).
+                current.push(c);
+                i += 1;
+                while i < chars.len() {
+                    let q = chars[i];
+                    if q == '\\' && c == '"' {
+                        current.push(q);
+                        if let Some(next) = chars.get(i + 1) {
+                            current.push(*next);
+                            i += 2;
+                            continue;
+                        }
+                        i += 1;
+                        continue;
+                    }
+                    current.push(q);
+                    i += 1;
+                    if q == c {
+                        break;
+                    }
+                }
+            }
+            ';' | '&' | '|' | '(' | ')' | '<' | '>' | '`' => {
+                if !current.trim().is_empty() {
+                    segments.push(current.trim().to_string());
+                }
+                current.clear();
+                i += 1;
+            }
+            _ => {
+                current.push(c);
+                i += 1;
+            }
+        }
+    }
+    if !current.trim().is_empty() {
+        segments.push(current.trim().to_string());
+    }
+    segments
 }
 
 /// Reduce a shell word to the byte sequence the shell hands to `rm`.
