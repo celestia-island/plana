@@ -350,7 +350,14 @@ pub fn check_dangerous_params(tool_name: &str, params: &serde_json::Value) -> To
             let Some(value) = params.get(*key).and_then(|v| v.as_str()) else {
                 continue;
             };
-            let normalized = normalize_whitespace(value);
+            // Decode ANSI-C spans over the WHOLE string before any
+            // segmentation: the separators inside `$'...'` are literal
+            // data there, and splitting first detached the protected
+            // tail from its rm word (`rm -rf $'\u0000|'/etc` → bash
+            // runs `rm -rf /etc`, R15 S1). The NUL truncation is the
+            // mechanism, so this must happen before `shell_segments`.
+            let decoded_input = decode_ansi_c_spans(value);
+            let normalized = normalize_whitespace(&decoded_input);
 
             match pattern.kind {
                 MatchKind::Substring => {
@@ -1489,6 +1496,22 @@ mod tests {
             r"rm -rf $'\x00\'x'/etc",
             r"rm -rf $'\c@\'x'/etc",
             r"rm -rf $'\u0000\'x'/m*",
+            // A separator INSIDE the span is literal data: the NUL drops
+            // it and the tail stays attached (R15 S1 — segmentation must
+            // happen after span decoding).
+            r"rm -rf $'\u0000|'/etc",
+            r"rm -rf $'\u0000;'/etc",
+            r"rm -rf $'\u0000&'/etc",
+            r"rm -rf $'\u0000('/etc",
+            r"rm -rf $'\u0000)'/etc",
+            r"rm -rf $'\u0000<'/etc",
+            r"rm -rf $'\u0000>'/etc",
+            r"rm -rf $'\u0000`'/etc",
+            r"rm -rf $'\u0000\|'/etc",
+            r"rm -rf $'\u0000|'/m*",
+            r"rm -f $'\u0000|'/etc",
+            r"rm -rf /tmp/ok $'\u0000|'/etc",
+            r#"bash -c "rm -rf $'\u0000|'/etc""#,
             // Outer sh, inner bash: the INNER shell decodes.
             "bash -c \"rm -rf $'\\u2f'etc\"",
             r"$'\u0072\u006d' -rf /etc",
