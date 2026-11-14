@@ -487,13 +487,19 @@ fn shell_segments(normalized: &str) -> Vec<String> {
                 i += 1;
             }
             '\'' | '"' => {
-                // Copy a whole quoted span verbatim (an escaped quote
-                // inside a double-quoted span does not close it).
+                // Copy a whole quoted span verbatim. Inside a double
+                // quote AND inside an ANSI-C `$'...'` span a backslash
+                // escapes the next char, so `\'` does NOT close it —
+                // missing the `$'` case made `$'a\'|' /etc` split the
+                // tail away (R17 S0).
+                let ansi_c = c == '\''
+                    && current.trim_end_matches(|ch: char| ch == '$').len()
+                        < current.trim_end().len();
                 current.push(c);
                 i += 1;
                 while i < chars.len() {
                     let q = chars[i];
-                    if q == '\\' && c == '"' {
+                    if q == '\\' && (c == '"' || ansi_c) {
                         current.push(q);
                         if let Some(next) = chars.get(i + 1) {
                             current.push(*next);
@@ -1555,6 +1561,26 @@ mod tests {
             // it and the tail stays attached (R15 S1 — segmentation must
             // happen after span decoding).
             r"rm -rf $'\u0000|'/etc",
+            // Escaped separators are literal data (R16 S1 regression).
+            r"rm -rf $'\x3b' /etc",
+            r"rm -rf $'\073' /etc",
+            r"rm -rf $'\x26' /etc",
+            r"rm -rf $'\x7c' /etc",
+            r"rm -rf $'\x7c' /mnt",
+            r"rm -rf $'\x28' /etc",
+            r"rm -rf $'\x3e' /etc",
+            r"rm -rf $'\x60' /etc",
+            r"$'\x72\x6d' -rf $'\x3b' /etc",
+            r"rm -rf /tmp/ok $'\x3b' /etc",
+            r"rm -rf $'\x3b' '/etc'",
+            // A separator inside an ANSI-C span is data even when the
+            // span contains an escaped quote (R17 S0).
+            r"rm -rf $'a\'|' /etc",
+            r"rm -rf $'a\';' /etc",
+            r"rm -rf $'a\&&' /etc",
+            r"rm -rf $'a\'|' /mnt",
+            r"rm -rf $'\x61\'|' /etc",
+            r"rm -rf $'\u0061\'|' /etc",
             r"rm -rf $'\u0000;'/etc",
             r"rm -rf $'\u0000&'/etc",
             r"rm -rf $'\u0000('/etc",
