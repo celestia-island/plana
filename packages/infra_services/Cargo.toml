@@ -1,6 +1,11 @@
 [package]
 name = "plana-infra-services"
-version.workspace = true
+# Own version line, like packages/plana and packages/bootloader: this crate
+# re-exports cherino types (`ContainerRuntimeType`, `Box<dyn ContainerOps>`), so a
+# cherino major bump changes type identity for every consumer while
+# cargo-semver-checks stays blind to it (the item paths read the same). A patch
+# number would understate that break.
+version = "0.5.0"
 edition.workspace = true
 rust-version.workspace = true
 publish = true

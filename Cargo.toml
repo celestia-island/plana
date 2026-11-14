@@ -64,7 +64,7 @@ plana_custom_agent = { package = "plana-custom-agent", path = "packages/custom_a
 plana_domain_agent = { path = "packages/domain_agent", version = "0.4", package = "plana-domain-agent" }
 plana_domain_skills = { path = "packages/domain_skills", version = "0.4", package = "plana-domain-skills" }
 plana_domain_skills_permissions = { path = "packages/domain_skills_permissions", version = "0.4", package = "plana-domain-skills-permissions" }
-plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services", version = "^0.4" }
+plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services", version = "^0.5" }
 plana-infra-utils = { path = "packages/infra_utils", version = "^0.4" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.4" }
 plana_macros = { path = "packages/macros", version = "0.4", package = "plana-macros" }
