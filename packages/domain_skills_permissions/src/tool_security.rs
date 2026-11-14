@@ -600,6 +600,38 @@ fn decode_escape(chars: &[char], start: usize) -> Option<(char, usize)> {
             }
             char::from_u32(val).map(|ch| (ch, width))
         }
+        'E' => simple('\x1b'),
+        // `\uHHHH` (1-4 hex) and `\UHHHHHHHH` (1-8 hex): bash decodes
+        // these inside `$'...'` in every locale, so the laundering class
+        // R10 closed for `\x`/octal is open here too until they are
+        // handled (R11 S1 — `$'\u002fetc'` really deleted `/etc` in an
+        // end-to-end probe). bash stops at 4/8 digits, so a longer run
+        // is NOT greedily consumed (`$'\u0002f'` is \x02 + "f").
+        'u' | 'U' => {
+            let cap = if c == 'u' { 4 } else { 8 };
+            let mut val = 0u32;
+            let mut width = 2;
+            while width < 2 + cap {
+                match chars.get(start + width).and_then(|c| c.to_digit(16)) {
+                    Some(d) => {
+                        val = val.saturating_mul(16).saturating_add(d);
+                        width += 1;
+                    }
+                    None => break,
+                }
+            }
+            // bash reads EXACTLY 4 (`\u`) / 8 (`\U`) hex digits and
+            // leaves the escape literal when that many are not there
+            // (verified on bash 5.2: `$'\u2fetc'` is U+02FE + "tc",
+            // NOT "/etc"; `$'\u002fetc'` IS "/etc"). A short run is
+            // therefore not decoded — the raw copy keeps the operand
+            // relative, which matches what bash would really delete.
+            if width == 2 + cap {
+                char::from_u32(val).map(|ch| (ch, width))
+            } else {
+                None
+            }
+        }
         _ => None,
     }
 }
@@ -1388,6 +1420,14 @@ mod tests {
             r"rm -rf $'\057etc'",
             r"$'\x72\x6d' -rf /etc",
             r"rm -rf {a,$'\x2fetc'}",
+            // `\u`/`\U` decode like `\x` under bash (R11 S1).
+            r"rm -rf $'\u002fetc'",
+            r"rm -rf $'\u002Fetc'",
+            r"rm -rf $'\U0000002fetc'",
+            r"rm -rf $'\u002f'",
+            r"$'\u0072\u006d' -rf /etc",
+            // Outer sh, inner bash: the INNER shell does the decoding.
+            "bash -c \"rm -rf $'\\u002fetc'\"",
             // Brace escapes with an absolute alternative (R9 S1).
             "rm -rf /tmp/{a,/etc}",
             "rm -rf /tmp/{a,/mnt}",
@@ -1448,6 +1488,19 @@ mod tests {
             // Benign brace groups (no absolute alternative) stay allowed.
             "rm -rf /tmp/{a,b}",
             "rm -rf /mnt/work/{a,b}",
+            // DYNAMIC expansion is out of scope by design (R10/R11
+            // record): needs a real shell parser, and the gate models
+            // static spellings only.
+            "rm -rf $(echo /etc)",
+            "rm -rf ${ETC_DIR}",
+            "rm -rf $HOME/etc",
+            "rm -rf `echo /etc`",
+            // Short/half escapes bash leaves literal (verified on bash 5.2):
+            // a 2-digit `\u2f` is U+02FE and an unknown `\m` keeps its letter,
+            // so both stay RELATIVE — ALLOW is the true bash verdict.
+            r"rm -rf $'\u2fetc'",
+            r"rm -rf $'\U2fetc'",
+            r"rm -rf $'\mnt\u002f..\u002fetc'",
             "rm --one-file-system -r /tmp/x",
             "git push --force-with-lease origin b",
             "docker compose up -d --force-recreate web",
