@@ -662,9 +662,16 @@ fn path_protected(target: &str) -> bool {
     if !normalized.starts_with('/') {
         return false;
     }
-    !RM_SCRATCH_ROOTS
-        .iter()
-        .any(|root| normalized == *root || normalized.starts_with(&format!("{root}/")))
+    !RM_SCRATCH_ROOTS.iter().any(|root| {
+        // Scratch CHILDREN are always allowed; the bare ROOT only for
+        // the disposable tmp trees — `/mnt`, `/workspace`, `/data` hold
+        // live data (on this workspace /mnt IS the 1 TiB checkout disk),
+        // so `rm -rf /mnt` must block (R8 S1: the first inversion made
+        // every root spelling deletable, which is worse than the
+        // `rm -rf /etc` the gate has always blocked).
+        normalized.starts_with(&format!("{root}/"))
+            || (normalized == *root && matches!(*root, "/tmp" | "/var/tmp"))
+    })
 }
 
 fn rm_target_protected(target: &str) -> bool {
@@ -1207,6 +1214,13 @@ mod tests {
             "true; rm -rf /media/cdrom",
             // Absolute globs outside the scratch roots (their expansions
             // can name protected paths).
+            // Scratch roots themselves are NOT deletable (only their
+            // children; the disposable tmp trees may lose the bare root).
+            "rm -rf /mnt",
+            "rm -rf /workspace",
+            "rm -rf /data",
+            "rm -rf /mnt/",
+            "rm -rf //mnt",
             "rm -rf /m*",
             "rm -rf /media/*",
             "rm -rf /snap/*",
