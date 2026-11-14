@@ -345,22 +345,27 @@ pub fn check_dangerous_params(tool_name: &str, params: &serde_json::Value) -> To
     ToolSecurityVerdict::allow()
 }
 
-/// Whole-token containment on the whitespace-normalized text: the match
-/// must begin and end at a boundary (start/end of text, a space, or a
-/// quote character).
+/// Whole-token containment on the whitespace-normalized text. The match
+/// must begin and end at a shell-word boundary: anything that is not a
+/// word character (alphanumerics plus `_ - . / = :`). Treating only
+/// spaces/quotes as boundaries let command separators glue themselves to
+/// the flag (`git push --force;` / `--force&&x` / `(--force)` all
+/// bypassed the first cut — R3 finding).
 fn token_match(normalized: &str, needle: &str) -> bool {
-    let boundary = |c: char| c == ' ' || c == '"' || c == '\'';
+    fn word_char(c: char) -> bool {
+        c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '/' | '=' | ':')
+    }
     let mut from = 0;
     while let Some(offset) = normalized[from..].find(needle) {
         let start = from + offset;
         let end = start + needle.len();
         let before_ok = match normalized[..start].chars().next_back() {
             None => true,
-            Some(c) => boundary(c),
+            Some(c) => !word_char(c),
         };
         let after_ok = match normalized[end..].chars().next() {
             None => true,
-            Some(c) => boundary(c),
+            Some(c) => !word_char(c),
         };
         if before_ok && after_ok {
             return true;
@@ -377,67 +382,138 @@ const RM_PROTECTED: &[&str] = &[
 ];
 
 /// Detect an `rm` invocation whose flags force (`-f`, `-rf`, `-fr`,
-/// `-rf`-style combinations, or `--force`) and whose target is a
-/// protected absolute path. Scratch prefixes (`/tmp`, `/var/tmp`,
-/// `/mnt`, `/workspace`, `/data`) are deliberately allowed: the first
-/// cut of this rule blocked ANY absolute path and would have taken the
-/// workspace's own daily cleanup (`rm -rf /tmp/build`,
-/// `rm -rf /mnt/work/target-*`) offline — fail-closed must not mean
-/// fail-unusable (R2 finding). Targets containing `..`, the root itself,
-/// or `/*` are always blocked.
+/// `-Rf`, `--force`) and whose target set contains a protected absolute
+/// path. EVERY positional operand is a deletion victim — the first cut
+/// checked only the first one, letting `rm -rf /tmp/ok /etc/passwd`
+/// through (R3 S1). Scratch prefixes (`/tmp`, `/var/tmp`, `/mnt`,
+/// `/workspace`, `/data`) are deliberately allowed: fail-closed must not
+/// mean fail-unusable for the workspace's own daily cleanup (R2
+/// finding). Targets containing `..`, the root itself, or `/*` are
+/// always blocked.
 fn rm_forced_protected_target(normalized: &str) -> Option<(&'static str, &'static str)> {
     let tokens: Vec<&str> = normalized.split(' ').collect();
     let mut i = 0;
     while i < tokens.len() {
-        if tokens[i] != "rm" {
+        // Trim a leading `(` so `(rm -rf /etc)` still reads as an rm call.
+        if tokens[i].trim_start_matches('(') != "rm" {
             i += 1;
             continue;
         }
         let mut j = i + 1;
         let mut forced = false;
         let mut recursive = false;
-        while j < tokens.len() && tokens[j].starts_with('-') {
-            let flags = tokens[j].trim_start_matches('-');
-            if flags.is_empty() {
-                // A bare `--` separator: the next token is the target.
+        while j < tokens.len() && tokens[j].starts_with('-') && tokens[j].len() > 1 {
+            if tokens[j] == "--" {
                 j += 1;
                 break;
             }
-            if flags.contains('f') {
-                forced = true;
-            }
-            if flags.contains('r') {
-                recursive = true;
+            if tokens[j].starts_with("--") {
+                // Long options match by full name only — letter scanning
+                // would trip on `--one-file-system` (R3 S3).
+                if tokens[j] == "--force" {
+                    forced = true;
+                }
+            } else {
+                let flags = tokens[j].trim_start_matches('-');
+                if flags.contains('f') {
+                    forced = true;
+                }
+                // `-R` is rm's documented recursive spelling too.
+                if flags.contains('r') || flags.contains('R') {
+                    recursive = true;
+                }
             }
             j += 1;
         }
-        if forced && j < tokens.len() && rm_target_protected(strip_quotes(tokens[j])) {
-            let (rule, reason) = if recursive {
-                (
-                    "exec_rmrf_root",
-                    "rm -rf on a protected absolute path is destructive and irreversible",
-                )
-            } else {
-                (
-                    "exec_rm_f_root",
-                    "forced deletion of a protected absolute path is irrecoverable",
-                )
-            };
-            return Some((rule, reason));
+        if forced {
+            // Walk the whole operand list; a shell separator ends the
+            // command (`;`, `&&`, `|`, …) — everything before it is a
+            // victim of THIS rm.
+            let mut k = j;
+            while k < tokens.len() {
+                let token = tokens[k];
+                if is_shell_separator(token) {
+                    break;
+                }
+                if token == "--" || token.is_empty() {
+                    k += 1;
+                    continue;
+                }
+                if token.starts_with('-') && token.len() > 1 {
+                    k += 1;
+                    continue;
+                }
+                let target = strip_quotes(trim_shell_separators(token));
+                if rm_target_protected(target) {
+                    let (rule, reason) = if recursive {
+                        (
+                            "exec_rmrf_root",
+                            "rm -rf on a protected absolute path is destructive and irreversible",
+                        )
+                    } else {
+                        (
+                            "exec_rm_f_root",
+                            "forced deletion of a protected absolute path is irrecoverable",
+                        )
+                    };
+                    return Some((rule, reason));
+                }
+                k += 1;
+            }
         }
         i = j.max(i + 1);
     }
     None
 }
 
+/// A token that ends the current shell command (or opens a subshell):
+/// operand scanning must stop here — what follows belongs to another
+/// command.
+fn is_shell_separator(token: &str) -> bool {
+    token.starts_with(';')
+        || token.starts_with("&&")
+        || token.starts_with('|')
+        || token.starts_with('&')
+        || token.starts_with('(')
+        || token.starts_with(')')
+}
+
+/// Strip trailing shell punctuation (`/etc;`, `/etc)`, `/etc&&` …) so a
+/// separator glued to the operand does not mask the path.
+fn trim_shell_separators(token: &str) -> &str {
+    token.trim_end_matches(|c| matches!(c, ';' | '&' | '|' | '(' | ')' | '<' | '>'))
+}
+
+/// Collapse POSIX-equivalent spellings (`//etc`, `/./etc`, trailing `/`)
+/// so the prefix table cannot be spelling-bypassed (R3 S2).
+fn normalize_posix_path(target: &str) -> String {
+    if !target.starts_with('/') {
+        return target.to_string();
+    }
+    let parts: Vec<&str> = target
+        .split('/')
+        .filter(|p| !p.is_empty() && *p != ".")
+        .collect();
+    if parts.is_empty() {
+        return "/".to_string();
+    }
+    format!("/{}", parts.join("/"))
+}
+
 fn rm_target_protected(target: &str) -> bool {
-    if target.contains("..") || target == "/" || target == "/*" {
+    if target.contains("..") {
+        return true;
+    }
+    let normalized = normalize_posix_path(target);
+    if normalized == "/" || normalized == "/*" {
         return true;
     }
     for prefix in RM_PROTECTED {
-        if target == *prefix || target.starts_with(&format!("{prefix}/")) {
+        if normalized == *prefix || normalized.starts_with(&format!("{prefix}/")) {
             // `/var/tmp` is the scratch carve-out inside protected `/var`.
-            if *prefix == "/var" && (target == "/var/tmp" || target.starts_with("/var/tmp/")) {
+            if *prefix == "/var"
+                && (normalized == "/var/tmp" || normalized.starts_with("/var/tmp/"))
+            {
                 return false;
             }
             return true;
@@ -727,8 +803,17 @@ mod tests {
             ("rm -rf /", "exec_rmrf_root"),
             // Quote-stripped target: a bare substring rule never sees this.
             ("rm -rf \"/\"", "exec_rmrf_root"),
+            // `-R` is rm's documented recursive spelling too.
+            ("rm -Rf /", "exec_rmrf_root"),
             ("rm -f /etc/passwd", "exec_rm_f_root"),
             ("sudo rm -f /var/lib/db", "exec_rm_f_root"),
+            // EVERY operand is a victim — a scratch first arg must not
+            // launder a protected second one (R3 S1).
+            ("rm -rf /tmp/ok /etc/passwd", "exec_rmrf_root"),
+            ("rm -rf a /etc/passwd", "exec_rmrf_root"),
+            // POSIX-equivalent spellings (R3 S2).
+            ("rm -rf //etc/passwd", "exec_rmrf_root"),
+            ("rm -rf /./etc/passwd", "exec_rmrf_root"),
         ] {
             let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
             let verdict = check_dangerous_params("host_command_exec", &params);
@@ -769,10 +854,11 @@ mod tests {
         Ok(())
     }
 
-    /// `--force` is token-matched, so the workspace push policy's own
-    /// mandated form (`--force-with-lease`) and other `--force-*` flags
-    /// stay usable — a bare substring here would have blocked the very
-    /// escape hatch AGENTS.md prescribes (R2 finding).
+    /// `--force` is token-matched with shell-word boundaries, so the
+    /// workspace push policy's own mandated form (`--force-with-lease`)
+    /// and other `--force-*` flags stay usable — AND command separators
+    /// glued to a bare `--force` still block (`--force;`, `--force&&x`,
+    /// `(--force)`, `--force|cat` all bypassed the first cut — R3 S1).
     #[test]
     fn dangerous_params_host_command_exec_force_prefixed_flags_allowed() -> Result<()> {
         for command in [
@@ -784,6 +870,67 @@ mod tests {
             let verdict = check_dangerous_params("host_command_exec", &params);
             assert!(verdict.is_allowed(), "command: {command}");
         }
+        for command in [
+            "git push --force;",
+            "git push --force&&echo done",
+            "(git push --force)",
+            "git push --force|cat",
+        ] {
+            let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
+            let verdict = check_dangerous_params("host_command_exec", &params);
+            assert_eq!(verdict.action, SecurityAction::Block, "command: {command}");
+            assert_eq!(verdict.matched_rule.as_deref(), Some("exec_force_flag"));
+        }
+        Ok(())
+    }
+
+    /// Shell separators end a command for the rm scan too: a scratch
+    /// second command must not launder, and a protected first command
+    /// must still block with the separator glued on.
+    #[test]
+    fn dangerous_params_host_command_exec_rm_with_separators() -> Result<()> {
+        for (command, rule) in [
+            ("rm -rf /etc; rm -rf /tmp/x", "exec_rmrf_root"),
+            ("(rm -rf /etc)", "exec_rmrf_root"),
+            ("rm -rf /var/log&&echo done", "exec_rmrf_root"),
+        ] {
+            let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
+            let verdict = check_dangerous_params("host_command_exec", &params);
+            assert_eq!(verdict.action, SecurityAction::Block, "command: {command}");
+            assert_eq!(verdict.matched_rule.as_deref(), Some(rule));
+        }
+        // Separator ends the command: a benign rm followed by another
+        // command mentioning nothing dangerous stays allowed.
+        let params = serde_json::to_value(CommandParams {
+            command: "rm -rf /tmp/x; echo done",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("host_command_exec", &params);
+        assert!(verdict.is_allowed());
+        Ok(())
+    }
+
+    /// Long options are matched by full name: `--one-file-system`
+    /// contains an 'f' but is not a force flag (R3 S3).
+    #[test]
+    fn dangerous_params_host_command_exec_rm_long_options_not_letter_scanned() -> Result<()> {
+        let params = serde_json::to_value(CommandParams {
+            command: "rm --one-file-system -r /tmp/x",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("host_command_exec", &params);
+        assert!(verdict.is_allowed());
+        let params = serde_json::to_value(CommandParams {
+            command: "rm --force /etc/passwd",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("host_command_exec", &params);
+        assert_eq!(verdict.action, SecurityAction::Block);
+        assert_eq!(
+            verdict.matched_rule.as_deref(),
+            Some("exec_rm_f_root"),
+            "--force without -r is the non-recursive forced family"
+        );
         Ok(())
     }
 
