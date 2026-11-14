@@ -443,10 +443,7 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     } else if cfg.allow_docker_socket {
         // Docker socket — scepter spawns cosmos sub-containers through it.
         // Opt-in (R-01): root-equivalent on the host; see StackConfig.
-        volumes.push(VolumeMount::rw(
-            "/var/run/docker.sock",
-            "/var/run/docker.sock",
-        ));
+        volumes.push(VolumeMount::rw(RAW_DOCKER_SOCKET, "/var/run/docker.sock"));
     } else {
         info!(
             "docker socket NOT mounted (R-01 default): cosmos sub-container spawn is disabled until EVERNIGHT_ALLOW_DOCKER_SOCKET=1"
@@ -516,27 +513,38 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     // wrong GID and look like it worked.
     let mounted_socket: Option<&Path> = match cfg.docker_socket_path.as_deref() {
         Some(proxy) => Some(proxy),
-        None if cfg.allow_docker_socket => Some(Path::new("/var/run/docker.sock")),
+        None if cfg.allow_docker_socket => Some(Path::new(RAW_DOCKER_SOCKET)),
         None => None,
     };
     let group_add: Option<Vec<String>> = mounted_socket.and_then(|socket| {
-        std::fs::metadata(socket).ok().and_then(|m| {
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::MetadataExt;
-                let gid = m.gid();
-                if gid != 0 {
-                    Some(vec![gid.to_string()])
-                } else {
-                    None
-                }
+        let meta = match std::fs::metadata(socket) {
+            Ok(meta) => meta,
+            Err(error) => {
+                // Not fatal — there is simply no gid to inject — but staying silent
+                // here is how the old wrong-source bug looked like success.
+                warn!(
+                    socket = %socket.display(),
+                    %error,
+                    "cannot stat the mounted docker socket; no GID injected — the container user may be unable to connect to it"
+                );
+                return None;
             }
-            #[cfg(not(unix))]
-            {
-                let _ = m;
+        };
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            let gid = meta.gid();
+            if gid != 0 {
+                Some(vec![gid.to_string()])
+            } else {
                 None
             }
-        })
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = meta;
+            None
+        }
     });
     if let Some(ref groups) = group_add {
         info!(
@@ -600,11 +608,12 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
 ///
 /// Sits beside the mount it constrains (see `scepter_params`) but is enforced by
 /// the fallible entry point, so the infallible params builder never has to rank or
-/// guess. Three shapes are refused: two sources at once, a non-absolute path (the
+/// guess. Four shapes are refused: two sources at once; a non-absolute path (the
 /// container runtime reads a relative value as a *named volume*, so the stack
-/// would come up with an empty socket), and the raw host socket spelled out in
-/// this field — that one belongs to `allow_docker_socket`, which names the R-01
-/// tradeoff instead of smuggling root-equivalence in under the "proxy" label.
+/// would come up with an empty socket); the raw host socket named through this
+/// field, which belongs to `allow_docker_socket` (that option names the R-01
+/// tradeoff instead of smuggling root-equivalence in under the "proxy" label); and
+/// a directory, which would hand over every socket beneath it.
 fn socket_source_error(cfg: &StackConfig) -> Option<String> {
     if cfg.allow_docker_socket && cfg.docker_socket_path.is_some() {
         return Some(
@@ -622,11 +631,13 @@ fn socket_source_error(cfg: &StackConfig) -> Option<String> {
         ));
     }
     // `Path` equality is component-wise: it drops `.` and redundant separators but
-    // does **not** resolve `..`, so `/var/run/docker.sock/../docker.sock` compares
-    // unequal to the raw path while being the same file on disk. Normalize lexically
-    // (the socket may not exist yet, so this must not touch the filesystem).
+    // does **not** resolve `..`, and no lexical rule can see a symlinked parent —
+    // on a host where `/var/run -> /run`, `/run/docker.sock` is the same socket
+    // under a different spelling. Compare lexically first, then by filesystem
+    // identity when the path exists (a socket that does not exist cannot be
+    // canonicalized — and cannot be mounted either).
     let raw = Path::new(RAW_DOCKER_SOCKET);
-    if normalize_lexically(path) == normalize_lexically(raw) {
+    if names_the_same_socket(path, raw) {
         return Some(format!(
             "docker_socket_path resolves to the raw host socket ({RAW_DOCKER_SOCKET}); that is \
              the root-equivalent R-01 opt-in — set allow_docker_socket and accept that \
@@ -648,6 +659,21 @@ fn socket_source_error(cfg: &StackConfig) -> Option<String> {
 
 /// The host path of the raw docker socket (the R-01 opt-in's source).
 const RAW_DOCKER_SOCKET: &str = "/var/run/docker.sock";
+
+/// True when `path` names the same file as `other`: lexically (`..`, `.`, doubled
+/// separators) or, when both exist, through symlinks. The filesystem half is what
+/// catches a symlinked parent — `/run/docker.sock` on a host whose `/var/run` is a
+/// symlink to `/run` — which no lexical rule can see. Both halves are needed: the
+/// lexical one works before the socket exists, the canonical one after.
+fn names_the_same_socket(path: &Path, other: &Path) -> bool {
+    if normalize_lexically(path) == normalize_lexically(other) {
+        return true;
+    }
+    match (path.canonicalize(), other.canonicalize()) {
+        (Ok(a), Ok(b)) => a == b,
+        _ => false,
+    }
+}
 
 /// Lexical normalization: drop `.` and redundant separators, resolve `..` against
 /// the segments already seen, never above the root. No filesystem access — the
@@ -1045,6 +1071,36 @@ mod tests {
                 "{alias} must be refused as the raw socket: {err}"
             );
         }
+    }
+
+    /// No lexical rule can see a symlinked **parent**: on a host whose `/var/run`
+    /// is a symlink to `/run`, `/run/docker.sock` is the same socket under a
+    /// different spelling, and `is_dir()` is false for a socket. The filesystem half
+    /// of `names_the_same_socket` is what catches it, so it is tested here on paths
+    /// a test can create. (An end-to-end case for `/run/docker.sock` itself is not
+    /// written: it would pass or skip depending on whether the lane has a docker
+    /// socket, which is exactly the kind of vacuous test this repo counts as a
+    /// finding.)
+    #[cfg(unix)]
+    #[test]
+    fn names_the_same_socket_resolves_a_symlinked_parent() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let real_dir = dir.path().join("real");
+        std::fs::create_dir(&real_dir).expect("mkdir");
+        let real = real_dir.join("docker.sock");
+        std::fs::write(&real, b"").expect("touch");
+        let alias_dir = dir.path().join("alias");
+        std::os::unix::fs::symlink(&real_dir, &alias_dir).expect("symlink");
+        assert!(
+            names_the_same_socket(&alias_dir.join("docker.sock"), &real),
+            "a path reached through a symlinked parent must resolve to the same file"
+        );
+        // The lexical half still has to work before the socket exists.
+        assert!(names_the_same_socket(
+            Path::new("/nonexistent/x/../y.sock"),
+            Path::new("/nonexistent/y.sock")
+        ));
+        assert!(!names_the_same_socket(&real, &real_dir.join("other.sock")));
     }
 
     /// A directory mounted at the container's socket path hands over everything
