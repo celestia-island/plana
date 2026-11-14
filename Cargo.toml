@@ -85,8 +85,8 @@ kirino = { version = "^0.9" }
 # https://github.com/celestia-island/cherino as `cherino` / `cherino-runtime`
 # — and since the v0.1.7 first release (2026-11-04) they are on crates.io,
 # so the git dependency is gone entirely (versioning-audit W4, B5 ruling).
-cherino = { version = "^0.1" }
-cherino-runtime = { version = "^0.1" }
+cherino = { version = "^0.2" }
+cherino-runtime = { version = "^0.2" }
 
 # External dependency versions (carried from entelecheia workspace)
 anyhow = "^1"
