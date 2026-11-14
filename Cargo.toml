@@ -35,7 +35,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.4.4"
+version = "0.4.5"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
@@ -56,7 +56,7 @@ all = "deny"
 # ── Internal workspace crates (path deps; hyphenated names are the published
 #    crate names, legacy underscore keys alias them via package =) ──
 plana-billing = { path = "packages/billing", version = "^0.4" }
-plana-bootloader = { path = "packages/bootloader", version = "^0.4" }
+plana-bootloader = { path = "packages/bootloader", version = "^0.5" }
 plana-build-info = { path = "packages/build_info", version = "0.4" }
 plana-config = { path = "packages/config", version = "^0.4" }
 plana_core = { path = "packages/core", version = "0.4", package = "plana-core" }
