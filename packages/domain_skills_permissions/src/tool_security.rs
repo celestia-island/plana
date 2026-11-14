@@ -412,7 +412,41 @@ fn token_match(normalized: &str, needle: &str) -> bool {
 /// (R7 S1 — the previous protected-prefix table silently allowed
 /// `/run`, `/media`, `/swapfile`, `/vmlinuz`, `/snap`, `/lost+found`…
 /// where master's substring needle blocked every absolute target).
+/// The roots THEMSELVES are deletable only for the disposable tmp trees
+/// (see [`RM_DELETABLE_ROOTS`]); `/mnt`, `/workspace`, `/data` hold
+/// live data and their bare roots block too (R8 S1).
 const RM_SCRATCH_ROOTS: &[&str] = &["/tmp", "/var/tmp", "/mnt", "/workspace", "/data"];
+
+/// Scratch roots that may lose their BARE root spelling as well as
+/// their children — disposable tmp trees only.
+const RM_DELETABLE_ROOTS: &[&str] = &["/tmp", "/var/tmp"];
+
+/// True when a brace group in the operand carries an alternative
+/// starting with `/` or `~`: the shell expands `/tmp/{a,/mnt}` into
+/// `/tmp/a /mnt`, so the brace is an escape hatch off any literal
+/// prefix. Tracks nesting (R9 S1).
+fn brace_escapes(target: &str) -> bool {
+    let chars: Vec<char> = target.chars().collect();
+    let mut depth = 0usize;
+    for i in 0..chars.len() {
+        match chars[i] {
+            '{' => {
+                depth += 1;
+                if matches!(chars.get(i + 1), Some('/') | Some('~')) {
+                    return true;
+                }
+            }
+            ',' if depth > 0 => {
+                if matches!(chars.get(i + 1), Some('/') | Some('~')) {
+                    return true;
+                }
+            }
+            '}' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+    }
+    false
+}
 
 /// Split the normalized command at shell operators (`;`, `&&`, `|`, `&`,
 /// `(`, `)`, `<`, `>`, backtick). Every segment is an independent command:
@@ -670,7 +704,7 @@ fn path_protected(target: &str) -> bool {
         // every root spelling deletable, which is worse than the
         // `rm -rf /etc` the gate has always blocked).
         normalized.starts_with(&format!("{root}/"))
-            || (normalized == *root && matches!(*root, "/tmp" | "/var/tmp"))
+            || (normalized == *root && RM_DELETABLE_ROOTS.contains(root))
     })
 }
 
@@ -678,6 +712,13 @@ fn rm_target_protected(target: &str) -> bool {
     // `..` traversal matters for absolute targets; relative `../build`
     // cleanup is daily routine and stays allowed (R5 F6).
     if target.starts_with('/') && target.contains("..") {
+        return true;
+    }
+    // Brace groups expand before rm sees them: a scratch-prefixed
+    // spelling with an ABSOLUTE alternative (`/tmp/{a,/mnt}` → `/tmp/a
+    // /mnt`) still names a protected path and must block (R9 S1 — the
+    // same catastrophe as `rm -rf /mnt` itself, one spelling over).
+    if brace_escapes(target) {
         return true;
     }
     if path_protected(target) {
@@ -1221,6 +1262,15 @@ mod tests {
             "rm -rf /data",
             "rm -rf /mnt/",
             "rm -rf //mnt",
+            // Brace escapes off a scratch prefix (R9 S1).
+            "rm -rf /tmp/{a,/etc}",
+            "rm -rf /tmp/{a,/mnt}",
+            "rm -rf /tmp/{,/etc}",
+            "rm -rf /tmp/x{a,/etc}",
+            // Root-spelling edge forms.
+            "rm -rf /mnt/.",
+            "rm -rf /mnt/./",
+            "rm -rf /./mnt",
             "rm -rf /m*",
             "rm -rf /media/*",
             "rm -rf /snap/*",
@@ -1265,6 +1315,13 @@ mod tests {
             "rm -rf /workspace/node_modules",
             "rm -f /tmp/a /tmp/b",
             "rm -rf ../build",
+            // The disposable tmp trees may lose their BARE root too
+            // (only /tmp and /var/tmp — R8 S1 kept the live roots).
+            "rm -rf /tmp",
+            "rm -rf /var/tmp",
+            // Benign brace groups (no absolute alternative) stay allowed.
+            "rm -rf /tmp/{a,b}",
+            "rm -rf /mnt/work/{a,b}",
             "rm --one-file-system -r /tmp/x",
             "git push --force-with-lease origin b",
             "docker compose up -d --force-recreate web",
