@@ -81,16 +81,37 @@ impl ToolSecurityVerdict {
 /// Parameter names that carry a shell command on the exec-family tools.
 ///
 /// The real host command tool (`host_command_exec` in entelecheia/polemos)
-/// names the parameter `command`; every rule below used to declare `code`
-/// only, so no exec rule could ever match a live invocation. `code` is kept
-/// as a second key so skill-declared and script-shaped calls still match.
+/// names the parameter `command`; the rules below used to declare `code`
+/// only, which never matched that live shape. `code` stays as a second key
+/// because the scepter `exec` tool does name its live parameter `code` —
+/// the two keys together cover both live invocation shapes.
 const EXEC_COMMAND_KEYS: &[&str] = &["command", "code"];
+
+/// How a [`DangerousPattern`] matches the whitespace-normalized text.
+enum MatchKind {
+    /// Plain substring containment (the historical behaviour).
+    Substring,
+    /// The needle must appear as a whole token: the characters around the
+    /// match must be boundaries (start/end of text, a space, or a quote).
+    /// `--force` blocks `git push --force` while `--force-with-lease` —
+    /// the workspace push policy's own mandated escape hatch — and other
+    /// `--force-*` flags stay usable.
+    Token,
+    /// The `rm`-family rule: forced deletion of a protected absolute path
+    /// (see [`RM_PROTECTED`]). Scratch prefixes stay allowed so daily
+    /// cleanup (`rm -rf /tmp/build`, the workspace's own `target-*`
+    /// cleanup under `/mnt`) is not taken offline. Ignores `pattern`.
+    RmFamily,
+}
 
 struct DangerousPattern {
     tool_pattern: &'static str,
     /// Parameter names to inspect, in order — the first one carrying a string
     /// that matches `pattern` blocks the call.
     param_keys: &'static [&'static str],
+    /// How `pattern` (or the family matcher) is applied to the normalized
+    /// text — see [`MatchKind`].
+    kind: MatchKind,
     pattern: &'static str,
     rule_name: &'static str,
     reason: &'static str,
@@ -100,27 +121,15 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
-        pattern: "rm -rf /",
+        kind: MatchKind::RmFamily,
+        pattern: "rm",
         rule_name: "exec_rmrf_root",
         reason: "rm -rf / is destructive and irreversible",
     },
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
-        pattern: "rm -fr /",
-        rule_name: "exec_rm_fr_root",
-        reason: "rm -fr / is destructive and irreversible",
-    },
-    DangerousPattern {
-        tool_pattern: "exec",
-        param_keys: EXEC_COMMAND_KEYS,
-        pattern: "rm -f /",
-        rule_name: "exec_rm_f_root",
-        reason: "forced deletion of an absolute path is irrecoverable",
-    },
-    DangerousPattern {
-        tool_pattern: "exec",
-        param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Substring,
         pattern: "--no-preserve-root",
         rule_name: "exec_no_preserve_root",
         reason: "deleting the root filesystem without the safety guard is irreversible",
@@ -128,13 +137,15 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Token,
         pattern: "--force",
         rule_name: "exec_force_flag",
-        reason: "--force overrides the guard of a destructive operation",
+        reason: "a bare --force token overrides the guard of a destructive operation",
     },
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Substring,
         pattern: "| bash",
         rule_name: "exec_curl_pipe_bash",
         reason: "piping to bash is a common attack vector",
@@ -144,6 +155,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Substring,
         pattern: "|bash",
         rule_name: "exec_pipe_bash_no_space",
         reason: "piping to bash is a common attack vector",
@@ -151,6 +163,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Substring,
         pattern: "| sh",
         rule_name: "exec_curl_pipe_sh",
         reason: "piping to sh is a common attack vector",
@@ -158,6 +171,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Substring,
         pattern: "|sh",
         rule_name: "exec_pipe_sh_no_space",
         reason: "piping to sh is a common attack vector",
@@ -165,6 +179,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Substring,
         pattern: "> /dev/sda",
         rule_name: "exec_write_block_device",
         reason: "writing directly to block devices is destructive",
@@ -172,6 +187,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
+        kind: MatchKind::Substring,
         pattern: "> /dev/hda",
         rule_name: "exec_write_block_device_hda",
         reason: "writing directly to block devices is destructive",
@@ -179,6 +195,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "file_write",
         param_keys: &["path"],
+        kind: MatchKind::Substring,
         pattern: ".ssh/",
         rule_name: "file_write_ssh",
         reason: "writing to .ssh directory can compromise authentication",
@@ -186,6 +203,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "file_write",
         param_keys: &["path"],
+        kind: MatchKind::Substring,
         pattern: "/etc/shadow",
         rule_name: "file_write_shadow",
         reason: "writing to /etc/shadow compromises system authentication",
@@ -193,6 +211,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "file_write",
         param_keys: &["path"],
+        kind: MatchKind::Substring,
         pattern: "/etc/passwd",
         rule_name: "file_write_passwd",
         reason: "writing to /etc/passwd compromises system authentication",
@@ -200,6 +219,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_create",
         param_keys: &["options"],
+        kind: MatchKind::Substring,
         pattern: "--privileged",
         rule_name: "container_privileged",
         reason: "privileged containers bypass isolation",
@@ -207,6 +227,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_create",
         param_keys: &["options"],
+        kind: MatchKind::Substring,
         pattern: "--network host",
         rule_name: "container_host_network",
         reason: "host network mode bypasses container network isolation",
@@ -214,6 +235,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_exec",
         param_keys: &["command"],
+        kind: MatchKind::Substring,
         pattern: "--privileged",
         rule_name: "container_exec_privileged",
         reason: "privileged flag in container exec bypasses isolation",
@@ -221,6 +243,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "container_exec",
         param_keys: &["command"],
+        kind: MatchKind::Substring,
         pattern: "--network host",
         rule_name: "container_exec_host_network",
         reason: "host network in container exec bypasses isolation",
@@ -228,6 +251,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        kind: MatchKind::Substring,
         pattern: "__import__('subprocess')",
         rule_name: "script_subprocess_import",
         reason: "subprocess import in scripts is a sandbox escape vector",
@@ -235,6 +259,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        kind: MatchKind::Substring,
         pattern: "os.system(",
         rule_name: "script_os_system",
         reason: "os.system() in scripts is a sandbox escape vector",
@@ -242,6 +267,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        kind: MatchKind::Substring,
         pattern: "os.popen(",
         rule_name: "script_os_popen",
         reason: "os.popen() in scripts is a sandbox escape vector",
@@ -249,6 +275,7 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "script_exec",
         param_keys: &["code"],
+        kind: MatchKind::Substring,
         pattern: "subprocess.",
         rule_name: "script_subprocess_direct",
         reason: "subprocess usage in scripts is a sandbox escape vector",
@@ -290,14 +317,145 @@ pub fn check_dangerous_params(tool_name: &str, params: &serde_json::Value) -> To
             let Some(value) = params.get(*key).and_then(|v| v.as_str()) else {
                 continue;
             };
+            let normalized = normalize_whitespace(value);
 
-            if normalize_whitespace(value).contains(pattern.pattern) {
-                return ToolSecurityVerdict::block(pattern.reason, pattern.rule_name);
+            match pattern.kind {
+                MatchKind::Substring => {
+                    if normalized.contains(pattern.pattern) {
+                        return ToolSecurityVerdict::block(pattern.reason, pattern.rule_name);
+                    }
+                }
+                MatchKind::Token => {
+                    if token_match(&normalized, pattern.pattern) {
+                        return ToolSecurityVerdict::block(pattern.reason, pattern.rule_name);
+                    }
+                }
+                // The family matcher picks the specific rule name so the
+                // cross-repo seam (`rm -rf /` → `exec_rmrf_root`, pinned by
+                // the entelecheia consumer suite) stays stable.
+                MatchKind::RmFamily => {
+                    if let Some((rule, reason)) = rm_forced_protected_target(&normalized) {
+                        return ToolSecurityVerdict::block(reason, rule);
+                    }
+                }
             }
         }
     }
 
     ToolSecurityVerdict::allow()
+}
+
+/// Whole-token containment on the whitespace-normalized text: the match
+/// must begin and end at a boundary (start/end of text, a space, or a
+/// quote character).
+fn token_match(normalized: &str, needle: &str) -> bool {
+    let boundary = |c: char| c == ' ' || c == '"' || c == '\'';
+    let mut from = 0;
+    while let Some(offset) = normalized[from..].find(needle) {
+        let start = from + offset;
+        let end = start + needle.len();
+        let before_ok = match normalized[..start].chars().next_back() {
+            None => true,
+            Some(c) => boundary(c),
+        };
+        let after_ok = match normalized[end..].chars().next() {
+            None => true,
+            Some(c) => boundary(c),
+        };
+        if before_ok && after_ok {
+            return true;
+        }
+        from = end.max(start + 1);
+    }
+    false
+}
+
+/// Absolute-path prefixes whose forced deletion is system damage.
+const RM_PROTECTED: &[&str] = &[
+    "/etc", "/usr", "/bin", "/sbin", "/lib", "/lib64", "/boot", "/dev", "/proc", "/sys", "/root",
+    "/home", "/opt", "/srv", "/var",
+];
+
+/// Detect an `rm` invocation whose flags force (`-f`, `-rf`, `-fr`,
+/// `-rf`-style combinations, or `--force`) and whose target is a
+/// protected absolute path. Scratch prefixes (`/tmp`, `/var/tmp`,
+/// `/mnt`, `/workspace`, `/data`) are deliberately allowed: the first
+/// cut of this rule blocked ANY absolute path and would have taken the
+/// workspace's own daily cleanup (`rm -rf /tmp/build`,
+/// `rm -rf /mnt/work/target-*`) offline — fail-closed must not mean
+/// fail-unusable (R2 finding). Targets containing `..`, the root itself,
+/// or `/*` are always blocked.
+fn rm_forced_protected_target(normalized: &str) -> Option<(&'static str, &'static str)> {
+    let tokens: Vec<&str> = normalized.split(' ').collect();
+    let mut i = 0;
+    while i < tokens.len() {
+        if tokens[i] != "rm" {
+            i += 1;
+            continue;
+        }
+        let mut j = i + 1;
+        let mut forced = false;
+        let mut recursive = false;
+        while j < tokens.len() && tokens[j].starts_with('-') {
+            let flags = tokens[j].trim_start_matches('-');
+            if flags.is_empty() {
+                // A bare `--` separator: the next token is the target.
+                j += 1;
+                break;
+            }
+            if flags.contains('f') {
+                forced = true;
+            }
+            if flags.contains('r') {
+                recursive = true;
+            }
+            j += 1;
+        }
+        if forced && j < tokens.len() && rm_target_protected(strip_quotes(tokens[j])) {
+            let (rule, reason) = if recursive {
+                (
+                    "exec_rmrf_root",
+                    "rm -rf on a protected absolute path is destructive and irreversible",
+                )
+            } else {
+                (
+                    "exec_rm_f_root",
+                    "forced deletion of a protected absolute path is irrecoverable",
+                )
+            };
+            return Some((rule, reason));
+        }
+        i = j.max(i + 1);
+    }
+    None
+}
+
+fn rm_target_protected(target: &str) -> bool {
+    if target.contains("..") || target == "/" || target == "/*" {
+        return true;
+    }
+    for prefix in RM_PROTECTED {
+        if target == *prefix || target.starts_with(&format!("{prefix}/")) {
+            // `/var/tmp` is the scratch carve-out inside protected `/var`.
+            if *prefix == "/var" && (target == "/var/tmp" || target.starts_with("/var/tmp/")) {
+                return false;
+            }
+            return true;
+        }
+    }
+    false
+}
+
+fn strip_quotes(token: &str) -> &str {
+    let bytes = token.as_bytes();
+    if bytes.len() >= 2
+        && (bytes[0] == b'"' || bytes[0] == b'\'')
+        && bytes[bytes.len() - 1] == bytes[0]
+    {
+        &token[1..token.len() - 1]
+    } else {
+        token
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -564,7 +722,11 @@ mod tests {
     #[test]
     fn dangerous_params_host_command_exec_rm_force_variants() -> Result<()> {
         for (command, rule) in [
-            ("rm -fr /", "exec_rm_fr_root"),
+            ("rm -fr /", "exec_rmrf_root"),
+            ("rm -r -f /", "exec_rmrf_root"),
+            ("rm -rf /", "exec_rmrf_root"),
+            // Quote-stripped target: a bare substring rule never sees this.
+            ("rm -rf \"/\"", "exec_rmrf_root"),
             ("rm -f /etc/passwd", "exec_rm_f_root"),
             ("sudo rm -f /var/lib/db", "exec_rm_f_root"),
         ] {
@@ -607,14 +769,36 @@ mod tests {
         Ok(())
     }
 
+    /// `--force` is token-matched, so the workspace push policy's own
+    /// mandated form (`--force-with-lease`) and other `--force-*` flags
+    /// stay usable — a bare substring here would have blocked the very
+    /// escape hatch AGENTS.md prescribes (R2 finding).
+    #[test]
+    fn dangerous_params_host_command_exec_force_prefixed_flags_allowed() -> Result<()> {
+        for command in [
+            "git push --force-with-lease origin perfsec-p0",
+            "docker compose up -d --force-recreate web",
+            "pnpm install --filter ./packages --no-frozen-lockfile",
+        ] {
+            let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
+            let verdict = check_dangerous_params("host_command_exec", &params);
+            assert!(verdict.is_allowed(), "command: {command}");
+        }
+        Ok(())
+    }
+
     /// Positive control: wiring the rules to `command` must not turn ordinary
-    /// host commands into blocks — in particular `rm -f` on a relative path is
-    /// scoped out (only absolute-path forced deletion is blocked).
+    /// host commands into blocks — forced deletion of SCRATCH absolute paths
+    /// (daily cleanup, incl. this workspace's own `target-*` discipline) is
+    /// scoped out; only protected-absolute-path deletion is blocked.
     #[test]
     fn dangerous_params_host_command_exec_benign_allowed() -> Result<()> {
         for command in [
             "ls -la /workspace",
             "rm -f ./build/tmp.o",
+            "rm -f /tmp/build.log",
+            "rm -rf /mnt/work/target-plana-r2",
+            "rm -rf /var/tmp/cache",
             "cargo test --offline --quiet",
         ] {
             let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
