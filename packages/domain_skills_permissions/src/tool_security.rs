@@ -421,10 +421,13 @@ const RM_SCRATCH_ROOTS: &[&str] = &["/tmp", "/var/tmp", "/mnt", "/workspace", "/
 /// their children — disposable tmp trees only.
 const RM_DELETABLE_ROOTS: &[&str] = &["/tmp", "/var/tmp"];
 
-/// True when a brace group in the operand carries an alternative
-/// starting with `/` or `~`: the shell expands `/tmp/{a,/mnt}` into
-/// `/tmp/a /mnt`, so the brace is an escape hatch off any literal
-/// prefix. Tracks nesting (R9 S1).
+/// True when a brace group carries an alternative starting with `/` or
+/// `~`. The REAL escape is a WORD-INITIAL group (`{a,/etc}` expands to
+/// the standalone words `a /etc`); a prefixed group keeps its prefix
+/// (`/tmp/{a,/mnt}` → `/tmp/a /tmp//mnt`), so blocking it is a harmless
+/// over-block that also covers the word-initial shape inside any longer
+/// word (R9 S1; rationale corrected in R10 — the R9 premise that the
+/// prefix is dropped was wrong, the verdict was already fail-closed).
 fn brace_escapes(target: &str) -> bool {
     let chars: Vec<char> = target.chars().collect();
     let mut depth = 0usize;
@@ -473,8 +476,15 @@ fn shell_segments(normalized: &str) -> Vec<String> {
 /// matched these on the raw text and the token rewrite must not be narrower
 /// (R5 F4, R6 S1).
 fn clean_operand(token: &str) -> String {
-    let mut cleaned = String::with_capacity(token.len());
-    let mut chars = token.chars().peekable();
+    // Decode ANSI-C `$'...'` spans FIRST: bash turns `$'\x2fetc'` into
+    // `/etc` before rm runs, so both the command word
+    // (`$'\x72\x6d' -rf /etc`) and operands (`rm -rf $'\x2fetc'`)
+    // launder through hex/octal escapes (R10 S1). `$"..."` is locale
+    // quoting with NO escape decoding and is left as-is (quotes strip
+    // in the main pass).
+    let decoded = decode_ansi_c_spans(token);
+    let mut cleaned = String::with_capacity(decoded.len());
+    let mut chars = decoded.chars().peekable();
     while let Some(c) = chars.next() {
         match c {
             '\'' | '"' | '\\' => {}
@@ -483,6 +493,115 @@ fn clean_operand(token: &str) -> String {
         }
     }
     cleaned
+}
+
+/// Decode the escape sequences inside every `$'...'` span (hex `\xHH`,
+/// octal `\0`/`\NNN`, the single-char escapes, `\\` and `\'`), dropping
+/// the `$` and the quotes. Unterminated spans are copied through raw
+/// (fail-closed: the literal text still runs the normal rules).
+fn decode_ansi_c_spans(token: &str) -> String {
+    let chars: Vec<char> = token.chars().collect();
+    let mut out = String::with_capacity(token.len());
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '$' && chars.get(i + 1) == Some(&'\'') {
+            let mut j = i + 2;
+            let mut span = String::new();
+            let mut closed = false;
+            while j < chars.len() {
+                match chars[j] {
+                    '\'' => {
+                        closed = true;
+                        j += 1;
+                        break;
+                    }
+                    '\\' => {
+                        let decoded = decode_escape(&chars, j);
+                        match decoded {
+                            Some((ch, width)) => {
+                                span.push(ch);
+                                j += width;
+                            }
+                            None => {
+                                span.push('\\');
+                                j += 1;
+                            }
+                        }
+                    }
+                    c => {
+                        span.push(c);
+                        j += 1;
+                    }
+                }
+            }
+            if closed {
+                out.push_str(&span);
+                i = j;
+            } else {
+                // Unterminated: copy raw (the `\\`/quote strip in the
+                // caller still applies).
+                out.push('$');
+                out.push('\'');
+                i += 2;
+            }
+        } else {
+            out.push(chars[i]);
+            i += 1;
+        }
+    }
+    out
+}
+
+/// Decode one backslash escape at `start` (chars[start] == '\\'),
+/// returning the decoded char and the number of chars consumed.
+fn decode_escape(chars: &[char], start: usize) -> Option<(char, usize)> {
+    let c = *chars.get(start + 1)?;
+    let simple = |ch: char| Some((ch, 2));
+    match c {
+        'n' => simple('\n'),
+        't' => simple('\t'),
+        'r' => simple('\r'),
+        'a' => simple('\u{7}'),
+        'b' => simple('\u{8}'),
+        'f' => simple('\u{c}'),
+        'v' => simple('\u{b}'),
+        'e' => simple('\x1b'),
+        '\\' => simple('\\'),
+        '\'' => simple('\''),
+        'x' => {
+            let mut val = 0u32;
+            let mut width = 2;
+            while width < 4 {
+                match chars.get(start + width).and_then(|c| c.to_digit(16)) {
+                    Some(d) => {
+                        val = val * 16 + d;
+                        width += 1;
+                    }
+                    None => break,
+                }
+            }
+            if width > 2 {
+                char::from_u32(val).map(|ch| (ch, width))
+            } else {
+                None
+            }
+        }
+        '0'..='7' => {
+            let mut val = c.to_digit(8).unwrap();
+            let mut width = 2;
+            while width < 4 {
+                match chars.get(start + width).and_then(|c| c.to_digit(8)) {
+                    Some(d) => {
+                        val = val * 8 + d;
+                        width += 1;
+                    }
+                    None => break,
+                }
+            }
+            char::from_u32(val).map(|ch| (ch, width))
+        }
+        _ => None,
+    }
 }
 
 /// True when a shell word names the `rm` utility.
@@ -686,7 +805,8 @@ fn glob_prefix(target: &str) -> Option<&str> {
 }
 
 /// A literal, shell-decoded path whose forced deletion is system damage:
-/// any ABSOLUTE target outside the scratch roots (and the root itself);
+/// any ABSOLUTE target outside the scratch roots — the bare roots block
+/// too, except the disposable tmp trees ([`RM_DELETABLE_ROOTS`]);
 /// relative targets are workspace-local and allowed.
 fn path_protected(target: &str) -> bool {
     let normalized = normalize_posix_path(target);
@@ -714,10 +834,10 @@ fn rm_target_protected(target: &str) -> bool {
     if target.starts_with('/') && target.contains("..") {
         return true;
     }
-    // Brace groups expand before rm sees them: a scratch-prefixed
-    // spelling with an ABSOLUTE alternative (`/tmp/{a,/mnt}` → `/tmp/a
-    // /mnt`) still names a protected path and must block (R9 S1 — the
-    // same catastrophe as `rm -rf /mnt` itself, one spelling over).
+    // Brace groups expand before rm sees them: a WORD-INITIAL group
+    // with an absolute alternative (`{a,/mnt}` → `a /mnt`) deletes a
+    // protected root; blocking prefixed spellings too is the same
+    // fail-closed verdict (R9 S1, rationale corrected R10).
     if brace_escapes(target) {
         return true;
     }
@@ -1262,7 +1382,13 @@ mod tests {
             "rm -rf /data",
             "rm -rf /mnt/",
             "rm -rf //mnt",
-            // Brace escapes off a scratch prefix (R9 S1).
+            // ANSI-C hex/octal escapes decode to the real path/word
+            // (R10 S1: `$'\x2fetc'` is `/etc` to bash).
+            r"rm -rf $'\x2fetc'",
+            r"rm -rf $'\057etc'",
+            r"$'\x72\x6d' -rf /etc",
+            r"rm -rf {a,$'\x2fetc'}",
+            // Brace escapes with an absolute alternative (R9 S1).
             "rm -rf /tmp/{a,/etc}",
             "rm -rf /tmp/{a,/mnt}",
             "rm -rf /tmp/{,/etc}",
