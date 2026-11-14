@@ -123,6 +123,24 @@ pub struct StackConfig {
     /// `EVERNIGHT_ALLOW_DOCKER_SOCKET=1` (supervise) or the field directly
     /// only when the host-root tradeoff is accepted.
     pub allow_docker_socket: bool,
+    /// Opt-in: mount a **proxy** docker socket instead of the raw host one.
+    ///
+    /// The value is a host path (for example the unix socket exposed by a
+    /// docker-socket-proxy bridge) and it is mounted at the container's default
+    /// `/var/run/docker.sock`, so bollard finds it with no `DOCKER_HOST` and no
+    /// image or client change.
+    ///
+    /// This is the **sanctioned alternative** to [`StackConfig::allow_docker_socket`]:
+    /// the raw socket stays default-off (R-01, 2026-11-06 audit: it is
+    /// root-equivalent on the host), while a proxy socket only reaches the API
+    /// surface the proxy allows. The two options are mutually exclusive on purpose —
+    /// setting both is refused, because "both" means nobody knows which socket the
+    /// stack is actually talking to.
+    ///
+    /// Rollout: put `EVERNIGHT_DOCKER_SOCKET_PATH=<host socket path>` in the
+    /// supervisor environment file and restart the supervisor; the bootloader then
+    /// recreates the stack with this mount.
+    pub docker_socket_path: Option<PathBuf>,
 }
 
 impl Default for StackConfig {
@@ -150,6 +168,7 @@ impl Default for StackConfig {
             evernight_sock: None,
             evernight_token: None,
             allow_docker_socket: false,
+            docker_socket_path: None,
         }
     }
 }
@@ -394,7 +413,19 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
     let tmpfs_dir = socket_dir_tmpfs();
     let ext4_dir = socket_dir_ext4();
     let mut volumes = vec![];
-    if cfg.allow_docker_socket {
+    if let Some(proxy_socket) = cfg.docker_socket_path.as_ref() {
+        // Proxy socket (docker-socket-proxy): mounted at the container's default
+        // docker path so bollard needs no DOCKER_HOST. The proxy is the security
+        // boundary; the raw socket stays unmounted (R-01 default).
+        info!(
+            proxy_socket = %proxy_socket.display(),
+            "docker socket mounted from a proxy path (allowlisted surface; raw host socket stays unmounted)"
+        );
+        volumes.push(VolumeMount::rw(
+            proxy_socket.display().to_string(),
+            "/var/run/docker.sock",
+        ));
+    } else if cfg.allow_docker_socket {
         // Docker socket — scepter spawns cosmos sub-containers through it.
         // Opt-in (R-01): root-equivalent on the host; see StackConfig.
         volumes.push(VolumeMount::rw(
@@ -551,6 +582,15 @@ fn scepter_params(cfg: &StackConfig) -> ContainerCreateParams {
 /// Idempotent: already-running containers are left alone, stopped ones are
 /// started, missing ones are created. Safe to call on every boot.
 pub async fn bring_up_stack(cfg: &StackConfig) -> Result<StackHandle> {
+    // Refuse rather than pick when two socket sources are configured: "both" means
+    // nobody knows which daemon the stack is actually talking to. Checked here (the
+    // fallible entry point) so `scepter_params` can stay infallible.
+    if cfg.allow_docker_socket && cfg.docker_socket_path.is_some() {
+        return Err(anyhow!(
+            "StackConfig sets both allow_docker_socket and docker_socket_path; \
+             choose one — the raw host socket (R-01 opt-in) or a proxy socket path"
+        ));
+    }
     if cfg.postgres_password.is_empty() {
         return Err(anyhow!(
             "postgres_password is empty — set POSTGRES_PASSWORD or the bootloader config"
@@ -783,5 +823,40 @@ mod tests {
             !scepter.env.contains_key("EVERNIGHT_TOKEN"),
             "no evernight_token in the spec => no EVERNIGHT_TOKEN in the container env"
         );
+    }
+
+    /// R-01 regression: by default the scepter container must get **no** docker
+    /// socket at all. If this ever starts failing, the stack silently widens the
+    /// 2026-11-06 security posture.
+    #[test]
+    fn docker_socket_path_none_mounts_nothing() {
+        let cfg = StackConfig::default();
+        let scepter = scepter_params(&cfg);
+        assert!(
+            !scepter
+                .volumes
+                .iter()
+                .any(|v| v.container_path == "/var/run/docker.sock"),
+            "default config must not mount any docker socket"
+        );
+    }
+
+    /// The sanctioned alternative: a proxy socket is mounted at the container's
+    /// default docker path, so bollard needs no DOCKER_HOST and the raw host socket
+    /// stays unmounted.
+    #[test]
+    fn docker_socket_path_mounts_the_proxy_at_the_default_path() {
+        let cfg = StackConfig {
+            docker_socket_path: Some(std::path::PathBuf::from("/srv/proxy/docker.sock")),
+            ..StackConfig::default()
+        };
+        let scepter = scepter_params(&cfg);
+        let socket_mounts: Vec<_> = scepter
+            .volumes
+            .iter()
+            .filter(|v| v.container_path == "/var/run/docker.sock")
+            .collect();
+        assert_eq!(socket_mounts.len(), 1, "exactly one docker socket mount");
+        assert_eq!(socket_mounts[0].host_path, "/srv/proxy/docker.sock");
     }
 }
