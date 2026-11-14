@@ -859,4 +859,46 @@ mod tests {
         assert_eq!(socket_mounts.len(), 1, "exactly one docker socket mount");
         assert_eq!(socket_mounts[0].host_path, "/srv/proxy/docker.sock");
     }
+
+    /// R-01 opt-in must keep working byte-identically: `allow_docker_socket` alone
+    /// still mounts the **raw** host socket at the container's default path.
+    #[test]
+    fn allow_docker_socket_alone_still_mounts_the_raw_socket() {
+        let cfg = StackConfig {
+            allow_docker_socket: true,
+            ..StackConfig::default()
+        };
+        let scepter = scepter_params(&cfg);
+        let socket_mounts: Vec<_> = scepter
+            .volumes
+            .iter()
+            .filter(|v| v.container_path == "/var/run/docker.sock")
+            .collect();
+        assert_eq!(socket_mounts.len(), 1, "exactly one docker socket mount");
+        assert_eq!(
+            socket_mounts[0].host_path, "/var/run/docker.sock",
+            "the R-01 opt-in must still mount the RAW host socket"
+        );
+    }
+
+    /// Two socket sources must be refused, not silently ranked: "both" means nobody
+    /// knows which daemon the stack actually talks to. The refusal sits ahead of the
+    /// postgres_password check, so this test never reaches docker.
+    #[tokio::test]
+    async fn both_socket_sources_are_refused() {
+        let cfg = StackConfig {
+            allow_docker_socket: true,
+            docker_socket_path: Some(std::path::PathBuf::from("/srv/proxy/docker.sock")),
+            ..StackConfig::default()
+        };
+        let err = match bring_up_stack(&cfg).await {
+            Ok(_) => panic!("both socket sources must be refused"),
+            Err(error) => error,
+        };
+        let text = err.to_string();
+        assert!(
+            text.contains("docker_socket_path") && text.contains("allow_docker_socket"),
+            "refusal must name both fields so the operator knows what to drop: {text}"
+        );
+    }
 }
