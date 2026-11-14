@@ -13,7 +13,6 @@
 //! without entelecheia-specific assumptions baked in.
 
 use std::collections::HashMap;
-#[cfg(unix)]
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -138,12 +137,18 @@ pub struct StackConfig {
     /// nobody knows which daemon the stack talks to), a non-absolute path (a
     /// relative value is a *named volume* to the container runtime, not a bind —
     /// the stack would come up pointing at a socket that does not exist), a path
-    /// that *resolves* to the raw host socket after lexical normalization (that is
-    /// the R-01 opt-in's job, under its own name and its own tradeoff), and a
-    /// directory (mounting one at the socket path exposes every socket beneath it).
-    /// Normalization is lexical only — `..` is resolved, symlinks are not — so this
-    /// is a guard against operator mistakes, not against someone who can already
-    /// write the config, and a symlink planted at the raw socket still gets through.
+    /// that *resolves* to the raw host socket (that is the R-01 opt-in's job, under
+    /// its own name and its own tradeoff), and a directory (mounting one at the
+    /// socket path exposes every socket beneath it).
+    ///
+    /// "Resolves" is answered two ways, so read this before trusting it: lexically,
+    /// which covers `..`, `.` and doubled separators and works before the socket
+    /// exists; and, once both paths exist, through `canonicalize`, which is what
+    /// catches a symlinked parent — where `/var/run` is a symlink, `/run/docker.sock`
+    /// *is* the raw socket under another spelling. What still gets through is a
+    /// dangling symlink that only resolves after this validation runs. So this is a
+    /// guard against operator mistakes, not against someone who can already write
+    /// the config.
     ///
     /// Rollout — read this before restarting anything: [`bring_up_stack`] is
     /// **idempotent**. A running container is left alone, and a stopped one is
