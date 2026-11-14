@@ -408,15 +408,6 @@ const RM_PROTECTED: &[&str] = &[
     "/home", "/opt", "/srv", "/var",
 ];
 
-/// Detect an `rm` invocation whose flags force (`-f`, `-rf`, `-fr`,
-/// `-Rf`, `--force`) and whose target set contains a protected absolute
-/// path. EVERY positional operand is a deletion victim — the first cut
-/// checked only the first one, letting `rm -rf /tmp/ok /etc/passwd`
-/// through (R3 S1). Scratch prefixes (`/tmp`, `/var/tmp`, `/mnt`,
-/// `/workspace`, `/data`) are deliberately allowed: fail-closed must not
-/// mean fail-unusable for the workspace's own daily cleanup (R2
-/// finding). Targets containing `..`, the root itself, or `/*` are
-/// always blocked.
 /// Split the normalized command at shell operators (`;`, `&&`, `|`, `&`,
 /// `(`, `)`, `<`, `>`, backtick). Every segment is an independent command:
 /// rm operands and flag words must not bleed across a segment boundary,
@@ -425,109 +416,206 @@ const RM_PROTECTED: &[&str] = &[
 /// rewrite must not narrow them (R5 F2/F3).
 fn shell_segments(normalized: &str) -> Vec<String> {
     normalized
-        .split(|c: char| matches!(c, ';' | '&' | '|' | '(' | ')' | '<' | '>' | '`'))
+        .split([';', '&', '|', '(', ')', '<', '>', '`'])
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .map(str::to_string)
         .collect()
 }
 
-/// Strip shell backslash escapes (`/et\c` is `/etc` to the shell) from an
-/// operand before path matching (R5 F4).
-fn unescape_shell(token: &str) -> String {
-    token.replace('\\', "")
+/// Reduce a shell word to the byte sequence the shell hands to `rm`.
+///
+/// Quote characters are SPLICING markers, never characters of the path, so
+/// they vanish wherever they sit (`"/etc"`, `/e''tc`, a dangling `/etc"`);
+/// a backslash escapes the next character (`/et\c` is `/etc`); and the `$`
+/// that opens an ANSI-C / locale quoted word (`$'...'`, `$"..."`) belongs to
+/// the quoting syntax, not to the operand (R6 F5). The master substring rule
+/// matched these on the raw text and the token rewrite must not be narrower
+/// (R5 F4, R6 S1).
+fn clean_operand(token: &str) -> String {
+    let mut cleaned = String::with_capacity(token.len());
+    let mut chars = token.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '\'' | '"' | '\\' => {}
+            '$' if matches!(chars.peek(), Some('\'') | Some('"')) => {}
+            _ => cleaned.push(c),
+        }
+    }
+    cleaned
+}
+
+/// True when a shell word names the `rm` utility.
+///
+/// Command words carry decoration on both ends (`` `rm ``, `'rm'`, `\rm`,
+/// `$'rm'`) — the quote/backtick is not part of the name — and may be
+/// path-prefixed (`/bin/rm`, `/usr/bin/rm`); the last path component is the
+/// binary that actually runs (R6 S1).
+fn is_rm_word(token: &str) -> bool {
+    // A flag is never the command word (`docker run --rm` is not an rm).
+    if token.starts_with('-') {
+        return false;
+    }
+    let cleaned = clean_operand(token);
+    let base = cleaned.rsplit('/').next().unwrap_or(&cleaned);
+    base.trim_matches(|c: char| !c.is_alphanumeric()) == "rm"
 }
 
 /// Detect an `rm` invocation whose flags force (`-f`, `-rf`, `-fr`,
 /// `-Rf`, `--force`) and whose target set contains a protected absolute
-/// path. EVERY positional operand is a deletion victim (R3 S1), and every
-/// SHELL SEGMENT is scanned independently (R5 F3). The `rm` word check
-/// strips decoration from BOTH ends (`\rm`, `` `rm ``, `'rm'` — R5 F1/F5).
-/// Scratch prefixes (`/tmp`, `/var/tmp`, `/mnt`, `/workspace`, `/data`)
-/// are deliberately allowed: fail-closed must not mean fail-unusable for
-/// the workspace's own daily cleanup (R2). The root itself, `/*` under
-/// it, and `..`-traversal of ABSOLUTE targets are always blocked
-/// (relative `../build` cleanup stays allowed — R5 F6).
+/// path.
+///
+/// EVERY positional operand is a deletion victim (R3 S1), every SHELL
+/// SEGMENT is scanned independently (R5 F3), and the command word is read
+/// through its decoration and any path prefix — `` `rm ``, `\rm`, `'rm'`,
+/// `r''m`, `/bin/rm`, `/usr/bin/rm` (R5 F1/F5, R6 S1). Operands are
+/// shell-decoded before path matching, so quote splicing, backslash escapes
+/// and glob expansion cannot launder a protected path (R5 F4, R6 S1).
+///
+/// Scratch prefixes (`/tmp`, `/var/tmp`, `/mnt`, `/workspace`, `/data`) are
+/// deliberately allowed: fail-closed must not mean fail-unusable for the
+/// workspace's own daily cleanup (R2). The root itself, `/*` under it, and
+/// `..`-traversal of ABSOLUTE targets are always blocked (relative
+/// `../build` cleanup stays allowed — R5 F6).
 fn rm_forced_protected_target(normalized: &str) -> Option<(&'static str, &'static str)> {
-    for segment in shell_segments(normalized) {
-        let tokens: Vec<&str> = segment.split(' ').collect();
-        let mut i = 0;
-        while i < tokens.len() {
-            // Strip decoration from BOTH ends so `\rm`, `` `rm ``, `'rm'`
-            // and glued suffixes all read as the rm word.
-            if tokens[i].trim_matches(|c: char| !c.is_alphanumeric()) != "rm" {
-                i += 1;
-                continue;
-            }
-            let mut j = i + 1;
-            let mut forced = false;
-            let mut recursive = false;
-            while j < tokens.len() && tokens[j].starts_with('-') && tokens[j].len() > 1 {
-                if tokens[j] == "--" {
-                    j += 1;
-                    break;
-                }
-                if tokens[j].starts_with("--") {
-                    // Long options match by full name only — letter
-                    // scanning would trip on `--one-file-system` (R3 S3).
-                    if tokens[j] == "--force" {
-                        forced = true;
-                    }
-                } else {
-                    let flags = tokens[j].trim_start_matches('-');
-                    if flags.contains('f') {
-                        forced = true;
-                    }
-                    // `-R` is rm's documented recursive spelling too.
-                    if flags.contains('r') || flags.contains('R') {
-                        recursive = true;
-                    }
-                }
-                j += 1;
-            }
-            if forced {
-                // Walk the whole operand list within THIS segment.
-                let mut k = j;
-                while k < tokens.len() {
-                    let token = tokens[k];
-                    if token == "--" || token.is_empty() {
-                        k += 1;
-                        continue;
-                    }
-                    if token.starts_with('-') && token.len() > 1 {
-                        k += 1;
-                        continue;
-                    }
-                    let target = unescape_shell(strip_quotes(trim_shell_separators(token)));
-                    if rm_target_protected(&target) {
-                        let (rule, reason) = if recursive {
-                            (
-                                "exec_rmrf_root",
-                                "rm -rf on a protected absolute path is destructive and irreversible",
-                            )
-                        } else {
-                            (
-                                "exec_rm_f_root",
-                                "forced deletion of a protected absolute path is irrecoverable",
-                            )
-                        };
-                        return Some((rule, reason));
-                    }
-                    k += 1;
+    // Depth 2: a quoted command string (`sh -c 'rm -rf /etc'`) may hold one
+    // more level of quoting, and nothing legitimate nests deeper.
+    scan_rm_segments(normalized, 2)
+}
+
+/// Depth-limited segment scan. Each shell segment is tokenized and scanned
+/// for an rm invocation; then the INTERIORS of its quoted spans are
+/// re-scanned as nested command strings, so a command that only appears
+/// inside quotes (`sh -c 'rm -rf /etc'`) is still seen (R6 S1).
+fn scan_rm_segments(input: &str, depth: u8) -> Option<(&'static str, &'static str)> {
+    for segment in shell_segments(input) {
+        if let Some(hit) = scan_rm_segment(&segment) {
+            return Some(hit);
+        }
+        if depth > 0 {
+            for inner in quoted_span_contents(&segment) {
+                if let Some(hit) = scan_rm_segments(inner, depth - 1) {
+                    return Some(hit);
                 }
             }
-            i = j.max(i + 1);
         }
     }
     None
 }
 
-/// Strip trailing shell punctuation (`/etc;`, `/etc)`, `/etc&&` …) so a
-/// separator glued to the operand does not mask the path.
+/// One shell segment: find the `rm` word, classify the rest of the segment
+/// into flags and deletion victims, and test EVERY victim.
+fn scan_rm_segment(segment: &str) -> Option<(&'static str, &'static str)> {
+    let tokens: Vec<&str> = segment.split(' ').collect();
+    let mut i = 0;
+    while i < tokens.len() {
+        if !is_rm_word(tokens[i]) {
+            i += 1;
+            continue;
+        }
+        // Everything after the command word splits into flags and deletion
+        // victims. Flags are recognized anywhere in that tail because GNU
+        // rm permutes them (`rm /etc -rf` deletes /etc); `--` ends flag
+        // parsing. Flags are shell words too, so `rm "-rf" /etc` counts.
+        let mut forced = false;
+        let mut recursive = false;
+        let mut flags_done = false;
+        let mut operands: Vec<&str> = Vec::new();
+        for token in &tokens[i + 1..] {
+            let word = clean_operand(token);
+            if !flags_done && word == "--" {
+                flags_done = true;
+                continue;
+            }
+            if !flags_done && word.starts_with('-') && word.len() > 1 {
+                if word.starts_with("--") {
+                    // Long options match by full name only — letter
+                    // scanning would trip on `--one-file-system` (R3 S3).
+                    if word == "--force" {
+                        forced = true;
+                    }
+                } else {
+                    let letters = word.trim_start_matches('-');
+                    if letters.contains('f') {
+                        forced = true;
+                    }
+                    // `-R` is rm's documented recursive spelling too.
+                    if letters.contains('r') || letters.contains('R') {
+                        recursive = true;
+                    }
+                }
+                continue;
+            }
+            operands.push(token);
+        }
+        if forced {
+            // EVERY positional operand is a deletion victim (R3 S1); only
+            // THIS segment's operands are considered (R5 F3).
+            for operand in operands {
+                let cleaned = clean_operand(operand);
+                let target = trim_shell_separators(&cleaned);
+                if target.is_empty() {
+                    continue;
+                }
+                if rm_target_protected(target) {
+                    let (rule, reason) = if recursive {
+                        (
+                            "exec_rmrf_root",
+                            "rm -rf on a protected absolute path is destructive and irreversible",
+                        )
+                    } else {
+                        (
+                            "exec_rm_f_root",
+                            "forced deletion of a protected absolute path is irrecoverable",
+                        )
+                    };
+                    return Some((rule, reason));
+                }
+            }
+        }
+        i += 1;
+    }
+    None
+}
+
+/// The INTERIORS of the quoted spans in one segment, in order.
+///
+/// A span closes at its matching delimiter, or at the end of the segment
+/// when an earlier split (`;`, `|`, …) already cut the pair in half. Only a
+/// span containing whitespace can hide a command, so token-sized spans are
+/// skipped.
+fn quoted_span_contents(segment: &str) -> Vec<&str> {
+    let mut spans = Vec::new();
+    let mut idx = 0;
+    while idx < segment.len() {
+        let open = match segment.as_bytes()[idx] {
+            b'\'' => b'\'',
+            b'"' => b'"',
+            _ => {
+                idx += 1;
+                continue;
+            }
+        };
+        let start = idx + 1;
+        // Quote characters are ASCII, so these byte offsets are always char
+        // boundaries and the slices below cannot split a UTF-8 sequence.
+        let end = match segment[start..].find(open as char) {
+            Some(offset) => start + offset,
+            None => segment.len(),
+        };
+        let inner = &segment[start..end];
+        if inner.chars().any(char::is_whitespace) {
+            spans.push(inner);
+        }
+        idx = end + 1;
+    }
+    spans
+}
+
+/// Strip shell punctuation glued to an operand (`/etc;`, `/etc)`, `/etc&&`)
+/// so the separator does not mask the path.
 fn trim_shell_separators(token: &str) -> &str {
-    // Quotes are NOT stripped here: a fully-quoted token ("/") must reach
-    // strip_quotes intact (stripping them here would mangle "/" into "/).
-    token.trim_end_matches(|c| matches!(c, ';' | '&' | '|' | '(' | ')' | '<' | '>'))
+    token.trim_end_matches([';', '&', '|', '(', ')', '<', '>'])
 }
 
 /// Collapse POSIX-equivalent spellings (`//etc`, `/./etc`, trailing `/`)
@@ -546,24 +634,19 @@ fn normalize_posix_path(target: &str) -> String {
     format!("/{}", parts.join("/"))
 }
 
-fn strip_quotes(token: &str) -> &str {
-    let bytes = token.as_bytes();
-    if bytes.len() >= 2
-        && (bytes[0] == b'"' || bytes[0] == b'\'')
-        && bytes[bytes.len() - 1] == bytes[0]
-    {
-        &token[1..token.len() - 1]
-    } else {
-        token
-    }
+/// Shell characters that make an operand a GLOB instead of a literal path.
+const GLOB_METACHARS: &[char] = &['*', '?', '[', '{'];
+
+/// Where the glob part of an operand starts (the first metacharacter), i.e.
+/// the literal prefix the shell keeps before expanding anything.
+fn glob_prefix(target: &str) -> Option<&str> {
+    target
+        .find(|c| GLOB_METACHARS.contains(&c))
+        .map(|idx| &target[..idx])
 }
 
-fn rm_target_protected(target: &str) -> bool {
-    // `..` traversal matters for absolute targets; relative `../build`
-    // cleanup is daily routine and stays allowed (R5 F6).
-    if target.starts_with('/') && target.contains("..") {
-        return true;
-    }
+/// A literal, shell-decoded path whose forced deletion is system damage.
+fn path_protected(target: &str) -> bool {
     let normalized = normalize_posix_path(target);
     if normalized == "/" || normalized == "/*" {
         return true;
@@ -580,6 +663,37 @@ fn rm_target_protected(target: &str) -> bool {
         }
     }
     false
+}
+
+fn rm_target_protected(target: &str) -> bool {
+    // `..` traversal matters for absolute targets; relative `../build`
+    // cleanup is daily routine and stays allowed (R5 F6).
+    if target.starts_with('/') && target.contains("..") {
+        return true;
+    }
+    if path_protected(target) {
+        return true;
+    }
+    // Glob targets are expanded by the shell BEFORE `rm` sees them, so a
+    // pattern that COULD name a protected path must block. Two tests: the
+    // pre-metacharacter prefix as a literal path (`/etc*`, `/{etc,usr}`),
+    // and that prefix as a possible spelling of a protected path (`/e?c`
+    // has prefix `/e`, which prefixes `/etc`). Relative globs (`*`,
+    // `./build/*`) and scratch globs (`/tmp/*`, `/mnt/work/target-*`) stay
+    // allowed — the carve-outs above run first (R6 S1).
+    let Some(prefix) = glob_prefix(target) else {
+        return false;
+    };
+    if path_protected(prefix) {
+        return true;
+    }
+    let prefix_path = normalize_posix_path(prefix);
+    if prefix_path.is_empty() {
+        return false;
+    }
+    RM_PROTECTED
+        .iter()
+        .any(|protected| protected.starts_with(&prefix_path))
 }
 
 #[derive(Debug, Clone)]
@@ -1017,6 +1131,172 @@ mod tests {
         .unwrap_or_default();
         let verdict = check_dangerous_params("container_exec", &params);
         assert!(!verdict.is_allowed(), "the container rule still fires");
+        Ok(())
+    }
+
+    /// PARITY PIN TABLE — BLOCK side (R6). Every row is either a form the
+    /// master substring rule caught on the raw text, or plainly destructive.
+    /// The token rewrite may never be narrower than master on any of them.
+    /// The table is asserted as a TABLE (not row by row in prose) so no row
+    /// can be silently dropped by a later refactor: stdin rows are command
+    /// strings, the assertion names the leaked row on failure.
+    #[test]
+    fn dangerous_command_parity_table_blocks() -> Result<()> {
+        let rows = [
+            // Flag spellings and plain protected targets.
+            "rm -rf /",
+            "rm -fr /",
+            "rm -r -f /",
+            "rm -Rf /",
+            "rm --force /etc/passwd",
+            "rm -f /etc/passwd",
+            "sudo rm -f /var/lib/db",
+            // EVERY operand is a victim, not just the first.
+            "rm -rf /tmp/ok /etc/passwd",
+            "rm -rf a /etc/passwd",
+            // POSIX-equivalent spellings.
+            "rm -rf //etc/passwd",
+            "rm -rf /./etc/passwd",
+            "rm -rf \"/etc\"",
+            // Separators glued to the operand, and rm glued after another
+            // command.
+            "rm -rf /etc;id",
+            "rm -rf /etc&&echo done",
+            "rm -rf /etc|cat",
+            "true;rm -rf /etc",
+            "echo hi&&rm -rf /etc",
+            "id|rm -rf /etc",
+            // Substitution / quoting decoration on the rm word itself.
+            "`rm -rf /etc`",
+            "$(rm -rf /etc)",
+            "'rm' -rf /etc",
+            "\\rm -rf /etc",
+            // Same form with trailing whitespace.
+            "`rm -rf /etc` ",
+            // Backslash escapes inside the operand.
+            "rm -rf /et\\c",
+            "rm -rf /e\\tc",
+            // Shell -c escaping: the command string is a quoted word.
+            "sh -c 'rm -rf /etc'",
+            "bash -c \"rm -rf /\"",
+            // Path-prefixed command words (basename must be rm).
+            "/bin/rm -rf /etc",
+            "sudo /usr/bin/rm -rf /",
+            // Glob targets that expand onto a protected path.
+            "rm -rf /etc*",
+            "rm -rf /e?c",
+            "rm -rf /{etc,usr}",
+            // Intra-word quote splicing, and a dangling quote.
+            "rm -rf /e''tc",
+            "rm -rf /etc\"",
+            // Subshell and command-wrapper prefixes.
+            "(rm -rf /etc)",
+            "command rm -rf /etc",
+            "env rm -rf /etc",
+            "sudo rm -rf /usr",
+            "rm -rf /var/log&&echo done",
+        ];
+        // Collect every leaked row before failing, so one run reports the
+        // whole gap instead of only its first element.
+        let mut leaked: Vec<String> = Vec::new();
+        for command in rows {
+            let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
+            let verdict = check_dangerous_params("host_command_exec", &params);
+            if verdict.action != SecurityAction::Block {
+                leaked.push(format!("{command:?} (allowed)"));
+            } else if !matches!(
+                verdict.matched_rule.as_deref(),
+                Some("exec_rmrf_root") | Some("exec_rm_f_root")
+            ) {
+                leaked.push(format!(
+                    "{command:?} (blocked by unexpected rule {:?})",
+                    verdict.matched_rule
+                ));
+            }
+        }
+        assert!(
+            leaked.is_empty(),
+            "master-parity BLOCK rows leaked through the gate: {leaked:#?}"
+        );
+        Ok(())
+    }
+
+    /// PARITY PIN TABLE — ALLOW side (R6). These are the usability wins of
+    /// the R2 round (scratch cleanup, the sanctioned `--force-with-lease`
+    /// push form, container-scoped ops). Fail-closed must not turn into
+    /// fail-unusable: no row here may start blocking.
+    #[test]
+    fn dangerous_command_parity_table_allows() -> Result<()> {
+        let rows = [
+            "rm -f ./build/tmp.o",
+            "rm -f /tmp/build.log",
+            "rm -rf /mnt/work/target-x",
+            "rm -rf /var/tmp/cache",
+            "rm -rf /workspace/node_modules",
+            "rm -f /tmp/a /tmp/b",
+            "rm -rf ../build",
+            "rm --one-file-system -r /tmp/x",
+            "git push --force-with-lease origin b",
+            "docker compose up -d --force-recreate web",
+            "pnpm install --filter ./packages",
+            "ls -la /workspace",
+            "rm -rf /tmp/x; echo done",
+        ];
+        let mut lost: Vec<String> = Vec::new();
+        for command in rows {
+            let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
+            let verdict = check_dangerous_params("host_command_exec", &params);
+            if !verdict.is_allowed() {
+                lost.push(format!(
+                    "{command:?} -> {:?} ({})",
+                    verdict.matched_rule, verdict.reason
+                ));
+            }
+        }
+        assert!(
+            lost.is_empty(),
+            "usability pins lost (fail-closed became fail-unusable): {lost:#?}"
+        );
+        Ok(())
+    }
+
+    /// Container scope for the same table: host-hardening rules (including
+    /// the whole rm family) stay out of `container_exec`, while the
+    /// container's own rule set still fires.
+    #[test]
+    fn dangerous_command_parity_table_container_scope() -> Result<()> {
+        for command in ["rm -rf /etc/nginx", "sudo rm -rf /usr"] {
+            let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
+            let verdict = check_dangerous_params("container_exec", &params);
+            assert!(
+                verdict.is_allowed(),
+                "container-internal rm must stay out of scope: {command:?} -> {:?}",
+                verdict.matched_rule
+            );
+        }
+        let params = serde_json::to_value(CommandParams {
+            command: "docker exec x --privileged sh",
+        })
+        .unwrap_or_default();
+        let verdict = check_dangerous_params("container_exec", &params);
+        assert_eq!(verdict.action, SecurityAction::Block);
+        Ok(())
+    }
+
+    /// Beyond-table extras: ANSI-C quoting (`$'/etc'`) — a known pre-existing
+    /// gap (R6 F5). Kept in its own test so a failure here is visible as a
+    /// documented debt rather than a silently dropped parity row.
+    #[test]
+    fn dangerous_command_ansi_c_quoting_blocks() -> Result<()> {
+        for command in ["rm -rf $'/etc'", "rm -rf $'/et\\c'", "rm -rf $\"/etc\""] {
+            let params = serde_json::to_value(CommandParams { command }).unwrap_or_default();
+            let verdict = check_dangerous_params("host_command_exec", &params);
+            assert_eq!(
+                verdict.action,
+                SecurityAction::Block,
+                "ANSI-C quoting leaked: {command:?}"
+            );
+        }
         Ok(())
     }
 
