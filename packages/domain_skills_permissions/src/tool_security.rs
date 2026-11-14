@@ -97,10 +97,12 @@ enum MatchKind {
     /// the workspace push policy's own mandated escape hatch — and other
     /// `--force-*` flags stay usable.
     Token,
-    /// The `rm`-family rule: forced deletion of a protected absolute path
-    /// (see [`RM_PROTECTED`]). Scratch prefixes stay allowed so daily
-    /// cleanup (`rm -rf /tmp/build`, the workspace's own `target-*`
-    /// cleanup under `/mnt`) is not taken offline. Ignores `pattern`.
+    /// The `rm`-family rule: forced deletion of any absolute path
+    /// outside the scratch roots (see [`RM_SCRATCH_ROOTS`]) —
+    /// deny-by-default, so unknown top-level entries (`/run`, `/media`,
+    /// `/swapfile`…) are protected too (R7 S1). Scratch cleanup
+    /// (`rm -rf /tmp/build`, the workspace's own `target-*` under
+    /// `/mnt`) stays allowed. Ignores `pattern`.
     RmFamily,
 }
 
@@ -134,7 +136,10 @@ static DANGEROUS_PATTERNS: &[DangerousPattern] = &[
     DangerousPattern {
         tool_pattern: "exec",
         param_keys: EXEC_COMMAND_KEYS,
-        host_only: false,
+        // Host-only like the rm family: container-internal root-nuke is
+        // the ephemeral sandbox's own business (R7 F6 — the R5 F8
+        // rationale applies to this rule just as much).
+        host_only: true,
         kind: MatchKind::Substring,
         pattern: "--no-preserve-root",
         rule_name: "exec_no_preserve_root",
@@ -402,11 +407,12 @@ fn token_match(normalized: &str, needle: &str) -> bool {
     false
 }
 
-/// Absolute-path prefixes whose forced deletion is system damage.
-const RM_PROTECTED: &[&str] = &[
-    "/etc", "/usr", "/bin", "/sbin", "/lib", "/lib64", "/boot", "/dev", "/proc", "/sys", "/root",
-    "/home", "/opt", "/srv", "/var",
-];
+/// The ONLY absolute roots a forced `rm` may touch — daily-cleanup
+/// scratch. Deny-by-default: every OTHER absolute target is protected
+/// (R7 S1 — the previous protected-prefix table silently allowed
+/// `/run`, `/media`, `/swapfile`, `/vmlinuz`, `/snap`, `/lost+found`…
+/// where master's substring needle blocked every absolute target).
+const RM_SCRATCH_ROOTS: &[&str] = &["/tmp", "/var/tmp", "/mnt", "/workspace", "/data"];
 
 /// Split the normalized command at shell operators (`;`, `&&`, `|`, `&`,
 /// `(`, `)`, `<`, `>`, backtick). Every segment is an independent command:
@@ -645,24 +651,20 @@ fn glob_prefix(target: &str) -> Option<&str> {
         .map(|idx| &target[..idx])
 }
 
-/// A literal, shell-decoded path whose forced deletion is system damage.
+/// A literal, shell-decoded path whose forced deletion is system damage:
+/// any ABSOLUTE target outside the scratch roots (and the root itself);
+/// relative targets are workspace-local and allowed.
 fn path_protected(target: &str) -> bool {
     let normalized = normalize_posix_path(target);
     if normalized == "/" || normalized == "/*" {
         return true;
     }
-    for prefix in RM_PROTECTED {
-        if normalized == *prefix || normalized.starts_with(&format!("{prefix}/")) {
-            // `/var/tmp` is the scratch carve-out inside protected `/var`.
-            if *prefix == "/var"
-                && (normalized == "/var/tmp" || normalized.starts_with("/var/tmp/"))
-            {
-                return false;
-            }
-            return true;
-        }
+    if !normalized.starts_with('/') {
+        return false;
     }
-    false
+    !RM_SCRATCH_ROOTS
+        .iter()
+        .any(|root| normalized == *root || normalized.starts_with(&format!("{root}/")))
 }
 
 fn rm_target_protected(target: &str) -> bool {
@@ -674,26 +676,21 @@ fn rm_target_protected(target: &str) -> bool {
     if path_protected(target) {
         return true;
     }
-    // Glob targets are expanded by the shell BEFORE `rm` sees them, so a
-    // pattern that COULD name a protected path must block. Two tests: the
-    // pre-metacharacter prefix as a literal path (`/etc*`, `/{etc,usr}`),
-    // and that prefix as a possible spelling of a protected path (`/e?c`
-    // has prefix `/e`, which prefixes `/etc`). Relative globs (`*`,
-    // `./build/*`) and scratch globs (`/tmp/*`, `/mnt/work/target-*`) stay
-    // allowed — the carve-outs above run first (R6 S1).
+    // Glob targets are expanded by the shell BEFORE `rm` sees them, so
+    // the pattern must be WHOLLY inside a scratch root to stay allowed
+    // (`/tmp/*`, `/mnt/work/target-*`); any other absolute glob could
+    // name a protected path (`/m*` reaches /media, `/e*` reaches /etc)
+    // and blocks. Relative globs (`*`, `./build/*`) are workspace-local.
     let Some(prefix) = glob_prefix(target) else {
         return false;
     };
-    if path_protected(prefix) {
-        return true;
-    }
-    let prefix_path = normalize_posix_path(prefix);
-    if prefix_path.is_empty() {
+    if !prefix.starts_with('/') {
         return false;
     }
-    RM_PROTECTED
+    let prefix_path = normalize_posix_path(prefix);
+    !RM_SCRATCH_ROOTS
         .iter()
-        .any(|protected| protected.starts_with(&prefix_path))
+        .any(|root| prefix_path == *root || prefix_path.starts_with(&format!("{root}/")))
 }
 
 #[derive(Debug, Clone)]
@@ -1195,6 +1192,25 @@ mod tests {
             "env rm -rf /etc",
             "sudo rm -rf /usr",
             "rm -rf /var/log&&echo done",
+            // Deny-by-default: unknown top-level entries are protected
+            // too (R7 S1 — the protected-prefix table used to allow
+            // these where master's substring blocked them).
+            "rm -rf /run",
+            "rm -rf /media",
+            "rm -rf /swapfile",
+            "rm -rf /vmlinuz",
+            "rm -rf /snap",
+            "rm -rf /lost+found",
+            "sudo rm -rf /run/postgresql",
+            "/bin/rm -rf /media/cdrom",
+            "sh -c 'rm -rf /media/cdrom'",
+            "true; rm -rf /media/cdrom",
+            // Absolute globs outside the scratch roots (their expansions
+            // can name protected paths).
+            "rm -rf /m*",
+            "rm -rf /media/*",
+            "rm -rf /snap/*",
+            "rm -rf /t*",
         ];
         // Collect every leaked row before failing, so one run reports the
         // whole gap instead of only its first element.
