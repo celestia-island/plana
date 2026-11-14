@@ -620,13 +620,12 @@ fn decode_escape(chars: &[char], start: usize) -> Option<(char, usize)> {
                     None => break,
                 }
             }
-            // bash reads EXACTLY 4 (`\u`) / 8 (`\U`) hex digits and
-            // leaves the escape literal when that many are not there
-            // (verified on bash 5.2: `$'\u2fetc'` is U+02FE + "tc",
-            // NOT "/etc"; `$'\u002fetc'` IS "/etc"). A short run is
-            // therefore not decoded — the raw copy keeps the operand
-            // relative, which matches what bash would really delete.
-            if width == 2 + cap {
+            // bash consumes 1..cap hex digits greedily and decodes
+            // whatever it got (verified on bash 5.2 with a recording rm:
+            // `$'\u2f'etc` → `/etc`, `$'\u02f'` → `/`,
+            // `$'\u2fetc'` → U+02FE + "tc" because it ate three digits).
+            // Only a ZERO-digit run stays literal (`$'\u'`).
+            if width > 2 {
                 char::from_u32(val).map(|ch| (ch, width))
             } else {
                 None
@@ -1425,6 +1424,15 @@ mod tests {
             r"rm -rf $'\u002Fetc'",
             r"rm -rf $'\U0000002fetc'",
             r"rm -rf $'\u002f'",
+            // Short-but-real runs: bash decodes 1..cap digits, so these
+            // are the terse spellings an attacker types (R12 S1).
+            r"rm -rf $'\u2f'etc",
+            r"rm -rf $'\u2f'",
+            r"rm -rf $'\u02f'",
+            r"rm -rf $'\U2f'etc",
+            r"$'\u72m' -rf /etc",
+            // Outer sh, inner bash: the INNER shell decodes.
+            "bash -c \"rm -rf $'\\u2f'etc\"",
             r"$'\u0072\u006d' -rf /etc",
             // Outer sh, inner bash: the INNER shell does the decoding.
             "bash -c \"rm -rf $'\\u002fetc'\"",
@@ -1495,11 +1503,9 @@ mod tests {
             "rm -rf ${ETC_DIR}",
             "rm -rf $HOME/etc",
             "rm -rf `echo /etc`",
-            // Short/half escapes bash leaves literal (verified on bash 5.2):
-            // a 2-digit `\u2f` is U+02FE and an unknown `\m` keeps its letter,
-            // so both stay RELATIVE — ALLOW is the true bash verdict.
-            r"rm -rf $'\u2fetc'",
-            r"rm -rf $'\U2fetc'",
+            // An unknown `\m` keeps its letter in bash, so this stays
+            // relative (the short `\u` forms moved to the BLOCK table —
+            // bash decodes 1..cap digits).
             r"rm -rf $'\mnt\u002f..\u002fetc'",
             "rm --one-file-system -r /tmp/x",
             "git push --force-with-lease origin b",
