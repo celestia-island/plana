@@ -528,13 +528,20 @@ fn decode_ansi_c_spans(token: &str) -> String {
                                 // NUL instead would hide the real path.
                                 if ch == '\0' {
                                     j += width;
-                                    // skip to (and consume) the closing
-                                    // quote: bash truncates the span at
-                                    // the NUL but the word continues.
-                                    while j < chars.len() && chars[j] != '\'' {
-                                        j += 1;
-                                    }
-                                    if j < chars.len() {
+                                    // Skip to the closing quote — but
+                                    // an ESCAPED quote does not close
+                                    // the span (bash: `$'a\'b'` is one
+                                    // span). Treating `\'` as the end
+                                    // re-opened the fail-open (R14 S1).
+                                    while j < chars.len() {
+                                        if chars[j] == '\\' {
+                                            j += 2;
+                                            continue;
+                                        }
+                                        if chars[j] == '\'' {
+                                            j += 1;
+                                            break;
+                                        }
                                         j += 1;
                                     }
                                     closed = true;
@@ -1475,6 +1482,13 @@ mod tests {
             r"r$'\u0000'm -rf /etc",
             r#"bash -c "rm -rf $'\u0000'/etc""#,
             r"rm -rf $'\c@'/etc",
+            // An ESCAPED quote inside the span does not close it, so the
+            // path after the real quote still runs (R14 S1).
+            r"rm -rf $'\u0000\'x'/etc",
+            r"rm -rf $'\0\'x'/etc",
+            r"rm -rf $'\x00\'x'/etc",
+            r"rm -rf $'\c@\'x'/etc",
+            r"rm -rf $'\u0000\'x'/m*",
             // Outer sh, inner bash: the INNER shell decodes.
             "bash -c \"rm -rf $'\\u2f'etc\"",
             r"$'\u0072\u006d' -rf /etc",
