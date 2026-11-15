@@ -186,14 +186,15 @@ pub struct StackConfig {
     /// created. The mount is **read-write** on purpose: scepter creates
     /// `<root>/<uuid>` through it and reclaim deletes through it.
     ///
-    /// The directory is set to `0o1777` **unconditionally** — world-writable and
-    /// sticky like the socket directories, but with the sticky bit and the
-    /// unconditional normalisation added here on purpose): world-writable
-    /// because scepter creates its per-container subdirectories through the bind as
-    /// whatever uid the image runs as — the bootloader takes no uid parameter and
-    /// should not hardcode one — and **sticky** because those subdirectories become
-    /// the agent containers' `/workspace` roots, so no peer uid may rename or
-    /// substitute another user's entry. An existing directory is normalised too: an
+    /// The directory is set to `0o1777` **unconditionally**, which differs from
+    /// [`ensure_socket_dirs`] in two ways: it adds the sticky bit, and it applies to
+    /// an existing directory instead of only to one it just created. It is
+    /// world-writable because scepter creates its per-container subdirectories
+    /// through the bind as whatever uid the image runs as — the bootloader takes no
+    /// uid parameter and should not hardcode one — and **sticky** because those
+    /// subdirectories become the agent containers' `/workspace` roots, so no peer uid
+    /// may rename or substitute another user's entry. An existing directory is
+    /// normalised for the same reason: an
     /// operator who pre-creates it as root would otherwise leave the fix's own
     /// precondition unmet, and scepter only warns when its `create_dir_all` fails.
     ///
