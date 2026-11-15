@@ -56,8 +56,14 @@
 //!   cannot grow without limit; there is no background task to own or shut
 //!   down. Once the pending cap is reached a `begin` is refused
 //!   structurally (`-32054`) instead of silently dropping older ops.
+//! - **Constant work per dispatch.** The pending count, the expiry sweep and
+//!   the retention eviction are all answered from side indexes that are
+//!   maintained under the same lock, so `begin` on the dispatch path never
+//!   scans the table: it reads one counter and touches two ordered indexes.
+//!   Only the entries that actually expired are walked.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -235,7 +241,11 @@ struct Entry {
     /// The connection the op was begun on, kept for the best-effort
     /// settlement notification only; released as soon as the op settles.
     origin: Option<OutboundHandle>,
-    /// Monotonic order of settlement, used to evict oldest-settled first.
+    /// Monotonic order of settlement, and the key this entry holds in
+    /// `State::settled` once it settles (0 while pending, which is a valid
+    /// NOTE: 0 doubles as the "pending" sentinel while the first real settled
+    /// key is ALSO 0 — nothing relies on the sentinel (gating is on
+    /// `settlement.is_some()`), do not key anything off the raw value.
     settled_seq: u64,
 }
 
@@ -265,15 +275,93 @@ impl Entry {
     }
 }
 
+/// The locked half of a registry: the entries plus the two side indexes that
+/// make `begin` cheap.
+///
+/// - `Inner::pending` (an atomic outside this struct) is the exact pending
+///   count, so the capacity check reads one `usize` instead of walking every
+///   entry.
+/// - `settled` orders settled entries by settlement, so eviction picks the
+///   oldest victim in `O(log n)`.
+/// - `by_deadline` orders live entries by deadline, so the expiry sweep pops
+///   only what expired instead of retaining the whole table.
+///
+/// The three only stay in agreement because **every** mutation of `entries`
+/// goes through `State::insert` and `State::remove`; no other code may
+/// touch the map.
+#[derive(Default)]
+struct State {
+    entries: HashMap<DeferredOpRef, Entry>,
+    /// Settled entries keyed by their unique `Entry::settled_seq`.
+    settled: BTreeMap<u64, DeferredOpRef>,
+    /// Live entries grouped by deadline. A `Vec` per deadline because two
+    /// `begin`s can land on the same `Instant`; `remove` drops the bucket when
+    /// it empties, so there is no tombstone growth.
+    by_deadline: BTreeMap<Instant, Vec<DeferredOpRef>>,
+}
+
+impl State {
+    /// Register a freshly begun (still pending) entry in both indexes.
+    fn insert(&mut self, pending: &AtomicUsize, op: DeferredOpRef, entry: Entry) {
+        debug_assert!(
+            entry.settlement.is_none(),
+            "an entry is pending until it is settled"
+        );
+        self.by_deadline
+            .entry(entry.deadline)
+            .or_default()
+            .push(op.clone());
+        self.entries.insert(op, entry);
+        pending.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Drop an entry together with every index reference to it, keeping the
+    /// pending count exact: a pending entry that goes away (expiry) frees its
+    /// slot, a settled one leaves the eviction order.
+    fn remove(&mut self, pending: &AtomicUsize, op: &DeferredOpRef) -> Option<Entry> {
+        let entry = self.entries.remove(op)?;
+        match entry.settlement {
+            Some(_) => {
+                self.settled.remove(&entry.settled_seq);
+            }
+            None => {
+                pending.fetch_sub(1, Ordering::Relaxed);
+            }
+        }
+        let emptied = match self.by_deadline.get_mut(&entry.deadline) {
+            Some(bucket) => {
+                bucket.retain(|queued| queued != op);
+                bucket.is_empty()
+            }
+            None => false,
+        };
+        if emptied {
+            self.by_deadline.remove(&entry.deadline);
+        }
+        Some(entry)
+    }
+}
+
 struct Inner {
     config: DeferredOpsConfig,
-    entries: Mutex<HashMap<DeferredOpRef, Entry>>,
-    /// Bumped on every settlement before the entries lock is taken. The total
+    state: Mutex<State>,
+    /// Exact number of pending (unsettled) entries. Every mutation happens
+    /// under the `state` lock — `begin` adds one, settlement and the removal
+    /// of a pending entry each subtract one — so a read taken under that lock
+    /// is exact, which is what the capacity check needs.
+    ///
+    /// Kept as its own atomic (rather than a field of [`State`]) so
+    /// [`DeferredOps::pending_len`] can report without taking the lock;
+    /// `Relaxed` suffices because the lock's release/acquire pair already
+    /// orders the writes for the locked readers.
+    pending: AtomicUsize,
+    /// Bumped on every settlement before the state lock is taken. The total
     /// order is therefore the fetch order, which two racing settlers can
     /// invert relative to the order they actually take the lock in — an
     /// arbitrary but harmless tie-break, since concurrent settlements have no
-    /// meaningful "older" one.
-    seq: std::sync::atomic::AtomicU64,
+    /// meaningful "older" one. The values are unique, which is what lets them
+    /// key the eviction order.
+    seq: AtomicU64,
 }
 
 /// Server-global registry of deferred operations.
@@ -308,8 +396,9 @@ impl DeferredOps {
         Self {
             inner: Arc::new(Inner {
                 config: config.normalized(),
-                entries: Mutex::new(HashMap::new()),
-                seq: std::sync::atomic::AtomicU64::new(0),
+                state: Mutex::new(State::default()),
+                pending: AtomicUsize::new(0),
+                seq: AtomicU64::new(0),
             }),
         }
     }
@@ -335,8 +424,6 @@ impl DeferredOps {
         method: &str,
         origin: OutboundHandle,
     ) -> Result<(DeferredOpCreated, OpHandle), DeferredOpsError> {
-        self.prune_expired();
-
         let now = Instant::now();
         let op_id = DeferredOpRef::new_random();
         // `checked_add`, not `+`: `begin` runs on the dispatch path, outside
@@ -353,16 +440,25 @@ impl DeferredOps {
             .unwrap_or(now);
 
         {
-            let mut entries = self.inner.entries.lock().unwrap();
-            let pending = entries.values().filter(|e| e.settlement.is_none()).count();
+            let mut state = self.inner.state.lock().unwrap();
+            // The sweep runs under the same lock as the reservation: it can
+            // only free pending slots, and the capacity check has to see the
+            // count *after* it.
+            sweep_expired(&mut state, &self.inner.pending, now);
+            let pending = self.inner.pending.load(Ordering::Relaxed);
             if pending >= self.inner.config.max_pending {
                 return Err(DeferredOpsError::Capacity {
                     pending,
                     max_pending: self.inner.config.max_pending,
                 });
             }
-            evict_for_retention(&mut entries, self.inner.config.max_retained);
-            entries.insert(
+            evict_for_retention(
+                &mut state,
+                &self.inner.pending,
+                self.inner.config.max_retained,
+            );
+            state.insert(
+                &self.inner.pending,
                 op_id.clone(),
                 Entry {
                     method: method.to_string(),
@@ -400,15 +496,17 @@ impl DeferredOps {
     /// evicted before its window elapsed) answers `Unknown` directly.
     pub fn status(&self, op: &DeferredOpRef) -> Result<DeferredOpOutcome, DeferredOpsError> {
         let now = Instant::now();
-        let mut entries = self.inner.entries.lock().unwrap();
-        let Some(entry) = entries.get(op) else {
-            return Err(DeferredOpsError::Unknown);
-        };
-        if now >= entry.deadline {
-            entries.remove(op);
-            return Err(DeferredOpsError::Expired);
+        let mut state = self.inner.state.lock().unwrap();
+        {
+            let Some(entry) = state.entries.get(op) else {
+                return Err(DeferredOpsError::Unknown);
+            };
+            if now < entry.deadline {
+                return Ok(entry.outcome(op, now));
+            }
         }
-        Ok(entry.outcome(op, now))
+        state.remove(&self.inner.pending, op);
+        Err(DeferredOpsError::Expired)
     }
 
     /// Record a best-effort cancellation request.
@@ -420,22 +518,24 @@ impl DeferredOps {
     /// a valid answer, not an error.
     pub fn cancel(&self, op: &DeferredOpRef) -> Result<OpsCancelResult, DeferredOpsError> {
         let now = Instant::now();
-        let mut entries = self.inner.entries.lock().unwrap();
-        let Some(entry) = entries.get_mut(op) else {
-            return Err(DeferredOpsError::Unknown);
-        };
-        if now >= entry.deadline {
-            entries.remove(op);
-            return Err(DeferredOpsError::Expired);
+        let mut state = self.inner.state.lock().unwrap();
+        {
+            let Some(entry) = state.entries.get_mut(op) else {
+                return Err(DeferredOpsError::Unknown);
+            };
+            if now < entry.deadline {
+                if entry.settlement.is_none() {
+                    entry.cancel_requested = true;
+                }
+                return Ok(OpsCancelResult {
+                    op_id: op.clone(),
+                    status: entry.status(),
+                    cancel_requested: entry.cancel_requested && entry.settlement.is_none(),
+                });
+            }
         }
-        if entry.settlement.is_none() {
-            entry.cancel_requested = true;
-        }
-        Ok(OpsCancelResult {
-            op_id: op.clone(),
-            status: entry.status(),
-            cancel_requested: entry.cancel_requested && entry.settlement.is_none(),
-        })
+        state.remove(&self.inner.pending, op);
+        Err(DeferredOpsError::Expired)
     }
 
     /// Drop every entry whose window has elapsed; returns how many were
@@ -443,27 +543,23 @@ impl DeferredOps {
     /// for supervisors that want to force the sweep.
     pub fn prune_expired(&self) -> usize {
         let now = Instant::now();
-        let mut entries = self.inner.entries.lock().unwrap();
-        let before = entries.len();
-        entries.retain(|_, entry| now < entry.deadline);
-        before - entries.len()
+        let mut state = self.inner.state.lock().unwrap();
+        sweep_expired(&mut state, &self.inner.pending, now)
     }
 
     /// Number of retained entries (pending + settled but not yet collected or
     /// expired).
     pub fn retained_len(&self) -> usize {
-        self.inner.entries.lock().unwrap().len()
+        self.inner.state.lock().unwrap().entries.len()
     }
 
     /// Number of retained entries still pending.
+    ///
+    /// Answered from the incrementally maintained counter, so it takes no
+    /// lock; under concurrent traffic it is a gauge that was true at some
+    /// instant rather than a snapshot of one.
     pub fn pending_len(&self) -> usize {
-        self.inner
-            .entries
-            .lock()
-            .unwrap()
-            .values()
-            .filter(|e| e.settlement.is_none())
-            .count()
+        self.inner.pending.load(Ordering::Relaxed)
     }
 
     /// Settle an operation: returns the status to announce and the origin to
@@ -474,18 +570,23 @@ impl DeferredOps {
         settlement: Settlement,
     ) -> Result<(DeferredOpStatus, Option<OutboundHandle>), DeferredOpsError> {
         let now = Instant::now();
-        let seq = self
-            .inner
-            .seq
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let mut entries = self.inner.entries.lock().unwrap();
-        let Some(entry) = entries.get_mut(op) else {
-            return Err(DeferredOpsError::Unknown);
+        let seq = self.inner.seq.fetch_add(1, Ordering::Relaxed);
+        let mut state = self.inner.state.lock().unwrap();
+        // The deadline check is a separate borrow from the mutation below: an
+        // expired entry has to be *removed* (dropping it from both indexes and
+        // freeing its pending slot), which needs the map borrowed mutably.
+        let expired = match state.entries.get(op) {
+            None => return Err(DeferredOpsError::Unknown),
+            Some(entry) => now >= entry.deadline,
         };
-        if now >= entry.deadline {
-            entries.remove(op);
+        if expired {
+            state.remove(&self.inner.pending, op);
             return Err(DeferredOpsError::Expired);
         }
+        let entry = state
+            .entries
+            .get_mut(op)
+            .expect("the entry exists until it is removed");
         if entry.settlement.is_some() {
             return Err(DeferredOpsError::Settled);
         }
@@ -494,33 +595,64 @@ impl DeferredOps {
         let status = entry.status();
         // The settlement notification is best-effort: release the origin as
         // soon as it has been handed back to the caller.
-        Ok((status, entry.origin.take()))
+        let origin = entry.origin.take();
+        state.settled.insert(seq, op.clone());
+        self.inner.pending.fetch_sub(1, Ordering::Relaxed);
+        Ok((status, origin))
     }
 
     /// Read the cancellation flag without a full lookup.
     fn cancel_requested(&self, op: &DeferredOpRef) -> bool {
         self.inner
-            .entries
+            .state
             .lock()
             .unwrap()
+            .entries
             .get(op)
             .map(|e| e.cancel_requested && e.settlement.is_none())
             .unwrap_or(false)
     }
 }
 
+/// Drop every entry whose window has elapsed; returns how many went away.
+///
+/// The deadline index makes this proportional to the entries that actually
+/// expired (`O(k log n)`) rather than to the size of the table, which is what
+/// keeps [`DeferredOps::begin`]'s lock hold time independent of retention.
+fn sweep_expired(state: &mut State, pending: &AtomicUsize, now: Instant) -> usize {
+    let mut dropped = 0;
+    loop {
+        let oldest = state.by_deadline.keys().next().copied();
+        let Some(deadline) = oldest else { break };
+        if now < deadline {
+            break;
+        }
+        // `State::remove` drops a bucket as soon as it empties, so a key still
+        // in the index always has at least one live entry behind it.
+        let bucket = state
+            .by_deadline
+            .remove(&deadline)
+            .expect("the key was just read from the index");
+        for op in bucket {
+            if state.remove(pending, &op).is_some() {
+                dropped += 1;
+            }
+        }
+    }
+    dropped
+}
+
 /// Evict the oldest settled entries until there is room for one more, if the
 /// retention cap is reached. Pending entries are never evicted.
-fn evict_for_retention(entries: &mut HashMap<DeferredOpRef, Entry>, max_retained: usize) {
-    while entries.len() >= max_retained {
-        let victim = entries
-            .iter()
-            .filter(|(_, e)| e.settlement.is_some())
-            .min_by_key(|(_, e)| e.settled_seq)
-            .map(|(op, _)| op.clone());
+///
+/// The head of the settlement order is `O(log n)` to find, instead of a scan
+/// per eviction.
+fn evict_for_retention(state: &mut State, pending: &AtomicUsize, max_retained: usize) {
+    while state.entries.len() >= max_retained {
+        let victim = state.settled.iter().next().map(|(_, op)| op.clone());
         match victim {
             Some(op) => {
-                entries.remove(&op);
+                state.remove(pending, &op);
             }
             // Everything is pending; the pending cap is what stops growth.
             None => break,
@@ -777,6 +909,11 @@ mod tests {
             DeferredOpsError::Unknown
         );
         assert_eq!(ops.retained_len(), 0);
+        assert_eq!(
+            ops.pending_len(),
+            0,
+            "a lookup that prunes an expired pending op releases its slot"
+        );
     }
 
     #[test]
@@ -898,6 +1035,214 @@ mod tests {
         );
     }
 
+    /// Eviction follows the **settlement** order, not the creation order — the
+    /// registry evicts the outcome that has been waiting longest, and the
+    /// ordered index must reproduce exactly that choice.
+    #[tokio::test]
+    async fn eviction_follows_settlement_order_not_creation_order() {
+        // `max_retained` is clamped up to `max_pending`, so a three-entry
+        // retention cap is only reachable with a three-op pending cap.
+        let ops = registry(Duration::from_secs(60), 3, 3);
+        let (created_a, handle_a) = begin(&ops, "payment.submit");
+        let (created_b, handle_b) = begin(&ops, "payment.submit");
+        let (created_c, handle_c) = begin(&ops, "payment.submit");
+        assert_eq!(ops.retained_len(), 3);
+
+        // Settle in reverse creation order: the newest op is the oldest
+        // settlement.
+        handle_c.complete(serde_json::json!("c")).await.unwrap();
+        handle_a.complete(serde_json::json!("a")).await.unwrap();
+        handle_b.complete(serde_json::json!("b")).await.unwrap();
+        assert_eq!(ops.pending_len(), 0);
+
+        // The next begin has no retention room and must take `created_c`.
+        let (newcomer, _newcomer_handle) = begin(&ops, "payment.submit");
+        assert_eq!(
+            ops.status(&created_c.op_id).unwrap_err(),
+            DeferredOpsError::Unknown,
+            "the earliest settlement is the eviction victim, whatever the creation order"
+        );
+        assert_eq!(
+            ops.status(&created_a.op_id).unwrap().result,
+            Some(serde_json::json!("a"))
+        );
+        assert_eq!(
+            ops.status(&created_b.op_id).unwrap().result,
+            Some(serde_json::json!("b"))
+        );
+        assert_eq!(
+            ops.status(&newcomer.op_id).unwrap().status,
+            DeferredOpStatus::Pending
+        );
+        assert_eq!(ops.retained_len(), 3);
+        assert_eq!(ops.pending_len(), 1, "eviction never touches the counter");
+    }
+
+    /// The incrementally maintained counter must agree with the live set
+    /// across the whole lifecycle: the capacity answer is derived from it, so
+    /// drift would either refuse a lawful `begin` or admit an uncollectable op.
+    #[tokio::test]
+    async fn pending_counter_matches_the_live_set_through_the_lifecycle() {
+        let ops = registry(Duration::from_secs(60), 4, 4);
+        let (created_a, handle_a) = begin(&ops, "m");
+        let (created_b, handle_b) = begin(&ops, "m");
+        let (_created_c, handle_c) = begin(&ops, "m");
+        assert_eq!(ops.pending_len(), 3);
+
+        // Settlement of any kind frees exactly one slot ...
+        handle_a.complete(serde_json::json!(1)).await.unwrap();
+        assert_eq!(ops.pending_len(), 2);
+        // ... while a cancellation request is only a flag: still pending.
+        assert!(ops.cancel(&created_b.op_id).unwrap().cancel_requested);
+        assert_eq!(ops.pending_len(), 2);
+        handle_b
+            .fail(JsonRpcError::internal_error("boom"))
+            .await
+            .unwrap();
+        assert_eq!(ops.pending_len(), 1);
+        handle_c.complete(serde_json::json!(3)).await.unwrap();
+        assert_eq!(ops.pending_len(), 0);
+        assert_eq!(ops.retained_len(), 3, "settled entries stay retained");
+        assert_eq!(created_a.expires_in, 60);
+
+        // Fill the cap back up: the retained settled entries are evicted, but
+        // the counter only tracks the pending ones.
+        for _ in 0..4 {
+            let (_created, _handle) = begin(&ops, "m");
+        }
+        assert_eq!(ops.pending_len(), 4);
+        assert_eq!(ops.retained_len(), 4, "eviction kept the cap");
+        let refused = ops
+            .begin("m", OutboundHandle::closed())
+            .expect_err("the cap is full");
+        assert_eq!(
+            refused,
+            DeferredOpsError::Capacity {
+                pending: 4,
+                max_pending: 4
+            },
+            "the refusal quotes the counter, so it must equal the live count"
+        );
+        assert_eq!(ops.pending_len(), 4);
+    }
+
+    /// An expired **pending** entry releases its slot on the next sweep: the
+    /// counter has to fall with the entry, or the registry would refuse every
+    /// `begin` from then on.
+    #[tokio::test]
+    async fn an_expired_settled_entry_drops_its_eviction_key_too() {
+        // M6 (R2): a settled entry removed by the sweep must also leave the
+        // `settled` index, or retention eviction spins forever on a stale
+        // key (a HANG, not a red assert — this test pins the interaction).
+        let ops = registry(Duration::from_millis(30), 4, 4);
+        let (_a, ha) = begin(&ops, "sweep-a");
+        ha.complete(serde_json::json!("a")).await.unwrap();
+        let (_b, hb) = begin(&ops, "sweep-b");
+        hb.complete(serde_json::json!("b")).await.unwrap();
+        tokio::time::sleep(Duration::from_millis(80)).await;
+        // Sweep the expired pair implicitly via a fresh begin, then drive
+        // retention to capacity: with a stale eviction key this loops
+        // forever; correctly, it evicts the remaining settled entries.
+        let (_c, _hc) = begin(&ops, "long-lived");
+        for i in 0..8 {
+            let (_op, handle) = begin(&ops, &format!("x{i}"));
+            handle.complete(serde_json::json!(i)).await.unwrap();
+        }
+        assert!(
+            ops.retained_len() <= 4,
+            "retention stays bounded after sweep+eviction interleave"
+        );
+    }
+
+    #[test]
+    fn an_expired_pending_op_releases_its_slot() {
+        let ops = registry(Duration::from_millis(60), 1, 8);
+        let (_created, _handle) = begin(&ops, "payment.submit");
+        assert_eq!(ops.pending_len(), 1);
+
+        let refused = ops
+            .begin("payment.submit", OutboundHandle::closed())
+            .expect_err("one pending op already fills the cap");
+        assert_eq!(
+            refused,
+            DeferredOpsError::Capacity {
+                pending: 1,
+                max_pending: 1
+            }
+        );
+
+        std::thread::sleep(Duration::from_millis(100));
+        let (_kept, _kept_handle) = begin(&ops, "payment.submit");
+        assert_eq!(ops.retained_len(), 1, "the expired pending op was swept");
+        assert_eq!(ops.pending_len(), 1, "and its slot was released");
+    }
+
+    /// The sweep drops pending and settled entries alike, and leaves no stale
+    /// reference behind in either index.
+    #[tokio::test]
+    async fn prune_drops_expired_pending_and_settled_entries_alike() {
+        let ops = registry(Duration::from_millis(60), 8, 8);
+        let (_pending, _pending_handle) = begin(&ops, "m");
+        let (_settled, settled_handle) = begin(&ops, "m");
+        settled_handle
+            .complete(serde_json::json!("done"))
+            .await
+            .unwrap();
+        assert_eq!(ops.pending_len(), 1);
+        assert_eq!(ops.retained_len(), 2);
+
+        std::thread::sleep(Duration::from_millis(100));
+        assert_eq!(ops.prune_expired(), 2, "both windows elapsed");
+        assert_eq!(ops.retained_len(), 0);
+        assert_eq!(ops.pending_len(), 0, "the counter followed the sweep");
+
+        // The eviction order no longer holds the pruned settled entry: a fresh
+        // begin neither evicts it again nor trips over a stale reference.
+        let (_fresh, _fresh_handle) = begin(&ops, "m");
+        assert_eq!(ops.retained_len(), 1);
+        assert_eq!(ops.pending_len(), 1);
+    }
+
+    /// Churn past the retention cap: the cap holds, the counter returns to
+    /// zero, and exactly the newest `max_retained` outcomes survive.
+    #[tokio::test]
+    async fn churn_keeps_retention_bounded_and_the_indexes_exact() {
+        const CAP: usize = 16;
+        const ROUNDS: u32 = 200;
+        let ops = registry(Duration::from_secs(60), CAP, CAP);
+        let mut created = Vec::new();
+        for value in 0..ROUNDS {
+            let (settled, handle) = begin(&ops, "churn");
+            handle.complete(serde_json::json!(value)).await.unwrap();
+            assert_eq!(ops.pending_len(), 0);
+            assert!(
+                ops.retained_len() <= CAP,
+                "round {value} grew past the retention cap"
+            );
+            created.push(settled);
+        }
+
+        let evicted = ROUNDS - CAP as u32;
+        for (value, settled) in created.iter().enumerate() {
+            let value = u32::try_from(value).unwrap();
+            match ops.status(&settled.op_id) {
+                Ok(outcome) => {
+                    assert!(
+                        value >= evicted,
+                        "op {value} should have been evicted by the cap"
+                    );
+                    assert_eq!(outcome.status, DeferredOpStatus::Completed);
+                    assert_eq!(outcome.result, Some(serde_json::json!(value)));
+                }
+                Err(err) => {
+                    assert!(value < evicted, "op {value} should still be retained");
+                    assert_eq!(err, DeferredOpsError::Unknown);
+                }
+            }
+        }
+        assert_eq!(ops.retained_len(), CAP);
+    }
+
     #[test]
     fn unknown_references_are_unknown_not_expired() {
         let ops = registry(Duration::from_secs(60), 8, 8);
@@ -947,5 +1292,10 @@ mod tests {
             Err(DeferredOpsError::Expired)
         );
         assert_eq!(ops.retained_len(), 0);
+        assert_eq!(
+            ops.pending_len(),
+            0,
+            "a refused settlement still releases the expired op's slot"
+        );
     }
 }
