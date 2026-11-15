@@ -186,9 +186,11 @@ pub struct StackConfig {
     /// created. The mount is **read-write** on purpose: scepter creates
     /// `<root>/<uuid>` through it and reclaim deletes through it.
     ///
-    /// The directory is set to `0o1777` **unconditionally**, which differs from
-    /// [`ensure_socket_dirs`] in two ways: it adds the sticky bit, and it applies to
-    /// an existing directory instead of only to one it just created. It is
+    /// The directory is set to `0o1777`, which differs from [`ensure_socket_dirs`]'s
+    /// plain `0o777` in two ways: it adds the sticky bit, and it **returns an error**
+    /// when the mode cannot be set (the socket directories swallow that failure).
+    /// Both apply the mode to an existing directory, because in both cases the chmod
+    /// sits outside the creation branch. It is
     /// world-writable because scepter creates its per-container subdirectories
     /// through the bind as whatever uid the image runs as — the bootloader takes no
     /// uid parameter and should not hardcode one — and **sticky** because those
@@ -796,8 +798,9 @@ fn prepare_snowflake_ws_dir(cfg: &StackConfig) -> Result<Option<PathBuf>> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        // Unconditionally, unlike `ensure_socket_dirs`'s plain `0o777` — this one
-        // adds the sticky bit and normalises an existing directory too:
+        // Unconditionally, like `ensure_socket_dirs`'s chmod (both sit outside the
+        // creation branch) — but this one uses `0o1777` where they use `0o777`, and it
+        // propagates the failure where they swallow it:
         // an operator who pre-created this as root would otherwise leave the container
         // unable to write, and scepter only *warns* when its `create_dir_all` fails —
         // the failure would resurface as the original 400 at the first write-mode skill.
