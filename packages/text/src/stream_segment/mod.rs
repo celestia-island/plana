@@ -27,6 +27,9 @@ pub enum StreamToolEvent {
         call_id: Uuid,
         params_summary: Option<String>,
         agent_type: Option<String>,
+        /// The execution-location badge — mirrors the segment field so the
+        /// streaming fan-out can record it on the session-tree builder.
+        agent_id: Option<String>,
     },
     ToolResult {
         tool_name: String,
@@ -35,6 +38,8 @@ pub enum StreamToolEvent {
         success: bool,
         duration_ms: Option<u64>,
         agent_type: Option<String>,
+        /// The execution-location badge — mirrors `ToolCall::agent_id`.
+        agent_id: Option<String>,
     },
 }
 
@@ -143,6 +148,12 @@ pub enum StreamSegment {
         params: Value,
         #[serde(default)]
         agent_type: Option<String>,
+        /// The execution LOCATION badge (`demiurge.061`-shaped container
+        /// instance id) the call ran in — recorded alongside `agent_type`
+        /// so replay surfaces can name where a tool executed instead of
+        /// only which agent type issued it. Absent on legacy rows.
+        #[serde(default)]
+        agent_id: Option<String>,
         #[serde(default)]
         message_id: Option<Uuid>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -157,6 +168,11 @@ pub enum StreamSegment {
         duration_ms: Option<u64>,
         #[serde(default)]
         agent_type: Option<String>,
+        /// The execution LOCATION badge of the result's call half —
+        /// mirrors `ToolCall::agent_id` so a result half whose call was
+        /// dropped by a stream cap still names its location.
+        #[serde(default)]
+        agent_id: Option<String>,
         #[serde(default)]
         message_id: Option<Uuid>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -264,6 +280,17 @@ impl StreamSegment {
         match self {
             Self::ToolCall { agent_type, .. } => agent_type.as_deref(),
             Self::ToolResult { agent_type, .. } => agent_type.as_deref(),
+            _ => None,
+        }
+    }
+
+    /// The execution-location badge (`demiurge.061`-shaped) recorded on a
+    /// tool segment — `None` on non-tool variants and on legacy rows that
+    /// predate the field.
+    pub fn agent_id(&self) -> Option<&str> {
+        match self {
+            Self::ToolCall { agent_id, .. } => agent_id.as_deref(),
+            Self::ToolResult { agent_id, .. } => agent_id.as_deref(),
             _ => None,
         }
     }
@@ -603,6 +630,7 @@ mod tests {
             call_id,
             Some(serde_json::to_value(PathParam { path: "/test" }).unwrap_or_default()),
             None,
+            None,
         );
         builder.push_tool_result(
             "read_file".to_string(),
@@ -610,6 +638,7 @@ mod tests {
             Value::String("file contents".to_string()),
             true,
             Some(150),
+            None,
             None,
         );
         builder.push_chunk("Here is the file:", StreamChunkKind::Text);
@@ -654,12 +683,13 @@ mod tests {
         let mut builder = LlmStreamBuilder::new();
         builder.push_chunk("report intro", StreamChunkKind::Text);
         let call_id = Uuid::now_v7();
-        builder.push_tool_call("report".to_string(), call_id, Some(empty()), None);
+        builder.push_tool_call("report".to_string(), call_id, Some(empty()), None, None);
         builder.push_tool_result(
             "report".to_string(),
             call_id,
             Value::String("This is the actual report content".to_string()),
             true,
+            None,
             None,
             None,
         );
@@ -686,12 +716,14 @@ mod tests {
             call_id,
             Some(serde_json::json!({"key": "value"})),
             None,
+            None,
         );
         builder.push_tool_result(
             "report".to_string(),
             call_id,
             Value::String("result".to_string()),
             true,
+            None,
             None,
             None,
         );
@@ -785,6 +817,7 @@ mod tests {
             call_id_1,
             Some(serde_json::to_value(PathParam { path: "/a" }).unwrap_or_default()),
             None,
+            None,
         );
         builder.push_tool_result(
             "read_file".to_string(),
@@ -793,11 +826,13 @@ mod tests {
             true,
             None,
             None,
+            None,
         );
         builder.push_tool_call(
             "write_file".to_string(),
             call_id_2,
             Some(serde_json::to_value(PathParam { path: "/b" }).unwrap_or_default()),
+            None,
             None,
         );
 
@@ -834,12 +869,13 @@ mod tests {
     fn test_seal_coalesced_no_synthetic_when_all_resolved() -> Result<()> {
         let mut builder = LlmStreamBuilder::new();
         let call_id = Uuid::now_v7();
-        builder.push_tool_call("exec".to_string(), call_id, Some(empty()), None);
+        builder.push_tool_call("exec".to_string(), call_id, Some(empty()), None, None);
         builder.push_tool_result(
             "exec".to_string(),
             call_id,
             Value::String("ok".to_string()),
             true,
+            None,
             None,
             None,
         );
@@ -875,13 +911,14 @@ mod tests {
         assert!(refreshed > first, "the stamp rides the LAST activity");
         assert_eq!(b.segments().len(), 1, "appends coalesce");
         let call = Uuid::now_v7();
-        b.push_tool_call("exec".to_string(), call, None, None);
+        b.push_tool_call("exec".to_string(), call, None, None, None);
         b.push_tool_result(
             "exec".to_string(),
             call,
             serde_json::json!("ok"),
             true,
             Some(3),
+            None,
             None,
         );
         assert!(b.segments()[1].wall_ts().is_some(), "tool calls stamp");
@@ -909,6 +946,89 @@ mod tests {
         assert_eq!(wire["Text"]["ts"].as_u64(), Some(1_790_000_000_123));
     }
 
+    /// The execution-location badge rides every synthetic/backfilled
+    /// result shape: the seal-time close for a call whose result never
+    /// arrived, and both patch paths that fill a result in later — the
+    /// location the call recorded must never orphan.
+    #[test]
+    fn test_tool_badge_rides_synthetic_and_patched_results() -> Result<()> {
+        let call_id = Uuid::now_v7();
+        let mut builder = LlmStreamBuilder::new();
+        builder.push_tool_call(
+            "exec".to_string(),
+            call_id,
+            Some(serde_json::json!({"code": "1"})),
+            Some("hubris".to_string()),
+            Some("demiurge.061".to_string()),
+        );
+        // 1. The seal-time synthetic close inherits the call's badge (and
+        //    its agent type) beside the failure marker.
+        let mut stream = builder.seal_coalesced();
+        match stream
+            .segments()
+            .iter()
+            .find(|s| s.call_id() == Some(call_id) && s.tool_result_success().is_some())
+        {
+            Some(seg) => {
+                assert_eq!(seg.agent_id(), Some("demiurge.061"));
+                assert_eq!(seg.agent_type(), Some("hubris"));
+                assert_eq!(seg.tool_result_success(), Some(false));
+            }
+            other => panic!("the synthetic close must carry the call's badge, got {other:?}"),
+        }
+        // 2. The patch-first branch (filling the synthetic in) must not
+        //    clobber the badge it already carries.
+        assert!(
+            stream.patch_tool_result_for_call(call_id, serde_json::json!("ok"), true, Some(7),)
+        );
+        let patched = stream
+            .segments()
+            .iter()
+            .find(|s| s.call_id() == Some(call_id) && s.tool_result_success() == Some(true))
+            .expect("the patched synthetic result");
+        assert_eq!(patched.agent_id(), Some("demiurge.061"));
+        assert_eq!(patched.tool_result_success(), Some(true));
+        // 3. The patch-backfill branch (a call with NO result segment at
+        //    all) constructs the result from the call and inherits the
+        //    badge with it.
+        let orphan_id = Uuid::now_v7();
+        let mut bare = LlmStream {
+            segments: vec![StreamSegment::ToolCall {
+                tool_name: "exec".to_string(),
+                call_id: orphan_id,
+                params: serde_json::json!({"code": "2"}),
+                agent_type: Some("hubris".to_string()),
+                agent_id: Some("demiurge.042".to_string()),
+                message_id: None,
+                ts: None,
+            }],
+        };
+        assert!(bare.patch_tool_result_for_call(orphan_id, serde_json::json!("late"), true, None,));
+        let backfilled = bare
+            .segments()
+            .iter()
+            .find(|s| s.call_id() == Some(orphan_id) && s.tool_result_success().is_some())
+            .expect("the backfilled result");
+        assert_eq!(backfilled.agent_id(), Some("demiurge.042"));
+        assert_eq!(backfilled.agent_type(), Some("hubris"));
+        Ok(())
+    }
+
+    #[test]
+    fn legacy_tool_rows_parse_without_agent_id() -> Result<()> {
+        // The pre-badge tool shape (what chest's run-record adapter and
+        // every stored stream already carry) must keep parsing with the
+        // badge defaulting to None — `#[serde(default)]`, not a wire
+        // break. Both accessor reads on the legacy row pin that default.
+        let legacy: StreamSegment = serde_json::from_str(
+            r#"{"ToolCall":{"tool_name":"exec","call_id":"01930000-0000-7000-8000-000000000001","params":{"code":"1"},"agent_type":"hubris","message_id":null}}"#,
+        )
+        .context("legacy ToolCall without agent_id parses")?;
+        assert_eq!(legacy.agent_type(), Some("hubris"));
+        assert_eq!(legacy.agent_id(), None);
+        Ok(())
+    }
+
     #[test]
     fn test_text_segment_returns_string_directly() -> Result<()> {
         let seg = StreamSegment::Text {
@@ -927,6 +1047,7 @@ mod tests {
             call_id: Uuid::now_v7(),
             params: serde_json::json!({"code": "import { report } from 'hubris'; report({text: 'hi'})"}),
             agent_type: None,
+            agent_id: None,
             message_id: None,
             ts: None,
         };
@@ -947,6 +1068,7 @@ mod tests {
             data: serde_json::json!({"ok": true, "data": "Hello!", "error": null}),
             duration_ms: None,
             agent_type: None,
+            agent_id: None,
             message_id: None,
             ts: None,
         };

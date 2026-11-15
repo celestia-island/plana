@@ -141,12 +141,14 @@ impl LlmStreamBuilder {
         true
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn push_tool_call(
         &mut self,
         tool_name: String,
         call_id: Uuid,
         params: Option<Value>,
         agent_type: Option<String>,
+        agent_id: Option<String>,
     ) {
         self.strip_trailing_tool_text_for_call(&tool_name);
         self.segments.push(StreamSegment::ToolCall {
@@ -154,6 +156,7 @@ impl LlmStreamBuilder {
             call_id,
             params: params.unwrap_or(Value::Null),
             agent_type,
+            agent_id,
             message_id: None,
             ts: Some(Self::now_ms()),
         });
@@ -194,6 +197,7 @@ impl LlmStreamBuilder {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn push_tool_result(
         &mut self,
         tool_name: String,
@@ -202,6 +206,7 @@ impl LlmStreamBuilder {
         success: bool,
         duration_ms: Option<u64>,
         agent_type: Option<String>,
+        agent_id: Option<String>,
     ) {
         self.segments.push(StreamSegment::ToolResult {
             tool_name,
@@ -210,11 +215,13 @@ impl LlmStreamBuilder {
             data,
             duration_ms,
             agent_type,
+            agent_id,
             message_id: None,
             ts: Some(Self::now_ms()),
         });
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_tool_result_after_call(
         &mut self,
         call_id: Uuid,
@@ -223,6 +230,7 @@ impl LlmStreamBuilder {
         success: bool,
         duration_ms: Option<u64>,
         agent_type: Option<String>,
+        agent_id: Option<String>,
     ) {
         let result = StreamSegment::ToolResult {
             tool_name,
@@ -231,6 +239,7 @@ impl LlmStreamBuilder {
             data,
             duration_ms,
             agent_type,
+            agent_id,
             message_id: None,
             ts: Some(Self::now_ms()),
         };
@@ -383,6 +392,7 @@ impl LlmStreamBuilder {
                 call_id,
                 tool_name,
                 agent_type,
+                agent_id,
                 ..
             } = seg
                 && !closed_ids.contains(call_id)
@@ -394,6 +404,10 @@ impl LlmStreamBuilder {
                     data: Value::String("[stream sealed before result arrived]".to_string()),
                     duration_ms: None,
                     agent_type: agent_type.clone(),
+                    // The synthetic close names the same location its call
+                    // half recorded — a sealed-away call must not lose the
+                    // execution location the real result would have carried.
+                    agent_id: agent_id.clone(),
                     message_id: None,
                     // A synthetic close has no activity instant of its
                     // own — no clock beats the seal time.

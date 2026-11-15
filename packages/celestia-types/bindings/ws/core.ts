@@ -88,7 +88,19 @@ export type StreamSegment = { "Text": { text: string, message_id?: string,
  * plana_text's segment stamp (plana #407) so the two shapes stay
  * aligned; absent on legacy/hand-built values.
  */
-ts?: number, } } | { "Thinking": { text: string, message_id?: string, ts?: number, } } | { "DeepThinking": { text: string, message_id?: string, ts?: number, } } | { "ToolCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, message_id?: string, ts?: number, } } | { "ToolResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, message_id?: string, ts?: number, } };
+ts?: number, } } | { "Thinking": { text: string, message_id?: string, ts?: number, } } | { "DeepThinking": { text: string, message_id?: string, ts?: number, } } | { "ToolCall": { tool_name: string, call_id: string, params: unknown, agent_type?: string, 
+/**
+ * The execution LOCATION badge (`demiurge.061`-shaped container
+ * instance id) — mirrors plana_text's `ToolCall::agent_id` so the
+ * live wire and the stored run record name the same where-it-ran
+ * fact. Absent on legacy rows.
+ */
+agent_id?: string, message_id?: string, ts?: number, } } | { "ToolResult": { tool_name: string, call_id: string, success: boolean, data: unknown, duration_ms?: bigint, agent_type?: string, 
+/**
+ * The execution LOCATION badge of the result's call half —
+ * mirrors plana_text's `ToolResult::agent_id`.
+ */
+agent_id?: string, message_id?: string, ts?: number, } };
 
 export type StructuredAgentError = { code: AgentErrorCode, detail?: string, 
 /**
