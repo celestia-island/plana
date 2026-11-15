@@ -190,6 +190,14 @@ pub struct StackConfig {
     /// substitute another user's entry. An existing directory is normalised too: an
     /// operator who pre-creates it as root would otherwise leave the fix's own
     /// precondition unmet, and scepter only warns when its `create_dir_all` fails.
+    ///
+    /// Rollout — the same caveat as [`StackConfig::docker_socket_path`]:
+    /// [`bring_up_stack`] is idempotent, so a container that already exists keeps
+    /// the spec it was created with. Editing the supervisor environment and
+    /// restarting the unit applies **neither** this mount **nor** the env var, and
+    /// says nothing; the original 400 survives to the first write-mode skill. Stop
+    /// the supervisor, move the old container aside so the bootloader creates a new
+    /// one, then start it — that move is also the rollback.
     pub snowflake_ws_dir: Option<PathBuf>,
 }
 
