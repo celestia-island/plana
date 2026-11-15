@@ -39,6 +39,20 @@ impl Default for CredentialFile {
     }
 }
 
+/// Open `path` for writing as an owner-only (`0o600`) file.
+///
+/// The store holds provider credentials, so the file must never exist with a
+/// broader mode than 0o600 — including the instant between the write and a
+/// follow-up chmod. Hence the mode goes into the `open(2)` call itself
+/// (credential hygiene, AGENTS.md red line 1).
+async fn open_private_file(path: &Path) -> std::io::Result<fs::File> {
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    options.mode(0o600);
+    options.open(path).await
+}
+
 pub struct FileCredentialStorage {
     credentials_dir: PathBuf,
     llm_credentials_file: PathBuf,
@@ -118,19 +132,13 @@ impl FileCredentialStorage {
         let contents = serde_json::to_string_pretty(file)
             .with_context(|| "Failed to serialize credentials")?;
 
-        let mut file_handle = fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(path)
+        let mut file_handle = open_private_file(path)
             .await
             .with_context(|| format!("Failed to create credential file: {:?}", path))?;
 
-        file_handle
-            .write_all(contents.as_bytes())
-            .await
-            .with_context(|| "Failed to write credential file")?;
-
+        // open(2) ignores `mode` for an existing file, so the descriptor is
+        // fchmod'ed too: handle-scoped (no path can be swapped under it) and it
+        // repairs a file an older release left at 0o644.
         #[cfg(unix)]
         {
             file_handle
@@ -140,6 +148,11 @@ impl FileCredentialStorage {
                     || "Failed to set restrictive permissions (0o600) on credential file",
                 )?;
         }
+
+        file_handle
+            .write_all(contents.as_bytes())
+            .await
+            .with_context(|| "Failed to write credential file")?;
 
         Ok(())
     }
@@ -351,4 +364,79 @@ fn parse_credential_key_for_storage(key: &str) -> Result<(&str, &str)> {
         return Err(anyhow!("Invalid key format: {}", key));
     }
     Ok((parts[0], parts[1]))
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    /// Build a storage instance rooted in a temp dir instead of the real config
+    /// dir, so the test never touches the user's credentials.
+    fn temp_storage() -> (tempfile::TempDir, FileCredentialStorage) {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let storage = FileCredentialStorage {
+            credentials_dir: dir.path().to_path_buf(),
+            llm_credentials_file: dir.path().join("llm_providers.json"),
+            ssh_credentials_file: dir.path().join("ssh_keys.json"),
+        };
+        (dir, storage)
+    }
+
+    fn mode_of(path: &Path) -> u32 {
+        std::fs::metadata(path)
+            .expect("credential file metadata")
+            .permissions()
+            .mode()
+            & 0o777
+    }
+
+    /// The credential store must be owner-only from the instant the file
+    /// exists, both for a fresh file and for one an older release left at 0o644.
+    #[tokio::test]
+    async fn credential_file_creates_and_tightens_owner_only() {
+        let (_dir, storage) = temp_storage();
+
+        // The create call itself must carry the mode: a follow-up chmod lands
+        // too late by construction, so observe the file before any tightening.
+        drop(
+            open_private_file(&storage.llm_credentials_file)
+                .await
+                .expect("create store"),
+        );
+        assert_eq!(
+            mode_of(&storage.llm_credentials_file),
+            0o600,
+            "a newly created credential file must be owner-only from the first byte"
+        );
+        // Empty probe file: drop it so the store starts from its empty default
+        // instead of trying to parse zero bytes as JSON.
+        std::fs::remove_file(&storage.llm_credentials_file).expect("clear probe file");
+        storage
+            .save_with_auto_imported("openai:first", "encrypted-blob", false)
+            .await
+            .expect("save fresh credential");
+        assert_eq!(
+            mode_of(&storage.llm_credentials_file),
+            0o600,
+            "rewriting the credential file must keep it owner-only"
+        );
+
+        // open(2) ignores mode for an existing file, so the descriptor-level
+        // chmod must tighten one an older release left world-readable.
+        std::fs::set_permissions(
+            &storage.llm_credentials_file,
+            std::fs::Permissions::from_mode(0o644),
+        )
+        .expect("widen credential file");
+        storage
+            .save_with_auto_imported("openai:second", "encrypted-blob", false)
+            .await
+            .expect("rewrite credential file");
+        assert_eq!(
+            mode_of(&storage.llm_credentials_file),
+            0o600,
+            "an existing 0o644 credential file must be tightened"
+        );
+    }
 }
