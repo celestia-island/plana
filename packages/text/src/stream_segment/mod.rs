@@ -946,6 +946,74 @@ mod tests {
         assert_eq!(wire["Text"]["ts"].as_u64(), Some(1_790_000_000_123));
     }
 
+    /// The execution-location badge rides every synthetic/backfilled
+    /// result shape: the seal-time close for a call whose result never
+    /// arrived, and both patch paths that fill a result in later — the
+    /// location the call recorded must never orphan.
+    #[test]
+    fn test_tool_badge_rides_synthetic_and_patched_results() -> Result<()> {
+        let call_id = Uuid::now_v7();
+        let mut builder = LlmStreamBuilder::new();
+        builder.push_tool_call(
+            "exec".to_string(),
+            call_id,
+            Some(serde_json::json!({"code": "1"})),
+            Some("hubris".to_string()),
+            Some("demiurge.061".to_string()),
+        );
+        // 1. The seal-time synthetic close inherits the call's badge (and
+        //    its agent type) beside the failure marker.
+        let mut stream = builder.seal_coalesced();
+        match stream
+            .segments()
+            .iter()
+            .find(|s| s.call_id() == Some(call_id) && s.tool_result_success().is_some())
+        {
+            Some(seg) => {
+                assert_eq!(seg.agent_id(), Some("demiurge.061"));
+                assert_eq!(seg.agent_type(), Some("hubris"));
+                assert_eq!(seg.tool_result_success(), Some(false));
+            }
+            other => panic!("the synthetic close must carry the call's badge, got {other:?}"),
+        }
+        // 2. The patch-first branch (filling the synthetic in) must not
+        //    clobber the badge it already carries.
+        assert!(
+            stream.patch_tool_result_for_call(call_id, serde_json::json!("ok"), true, Some(7),)
+        );
+        let patched = stream
+            .segments()
+            .iter()
+            .find(|s| s.call_id() == Some(call_id) && s.tool_result_success() == Some(true))
+            .expect("the patched synthetic result");
+        assert_eq!(patched.agent_id(), Some("demiurge.061"));
+        assert_eq!(patched.tool_result_success(), Some(true));
+        // 3. The patch-backfill branch (a call with NO result segment at
+        //    all) constructs the result from the call and inherits the
+        //    badge with it.
+        let orphan_id = Uuid::now_v7();
+        let mut bare = LlmStream {
+            segments: vec![StreamSegment::ToolCall {
+                tool_name: "exec".to_string(),
+                call_id: orphan_id,
+                params: serde_json::json!({"code": "2"}),
+                agent_type: Some("hubris".to_string()),
+                agent_id: Some("demiurge.042".to_string()),
+                message_id: None,
+                ts: None,
+            }],
+        };
+        assert!(bare.patch_tool_result_for_call(orphan_id, serde_json::json!("late"), true, None,));
+        let backfilled = bare
+            .segments()
+            .iter()
+            .find(|s| s.call_id() == Some(orphan_id) && s.tool_result_success().is_some())
+            .expect("the backfilled result");
+        assert_eq!(backfilled.agent_id(), Some("demiurge.042"));
+        assert_eq!(backfilled.agent_type(), Some("hubris"));
+        Ok(())
+    }
+
     #[test]
     fn legacy_tool_rows_parse_without_agent_id() -> Result<()> {
         // The pre-badge tool shape (what chest's run-record adapter and
