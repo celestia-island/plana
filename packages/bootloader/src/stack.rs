@@ -180,10 +180,16 @@ pub struct StackConfig {
     /// correct only when scepter runs on the host.
     ///
     /// [`bring_up_stack`] refuses a relative path, one containing `..`, the docker
-    /// socket itself, and anything that is not a directory once created. The
-    /// directory is created when missing and made world-writable, because the
-    /// container's uid is an image detail the host cannot know and scepter creates
-    /// its per-container subdirectories through this bind as that uid.
+    /// socket itself, the filesystem root, and anything that is not a directory
+    /// once created. The directory is set to `0o1777` **unconditionally** (the same
+    /// shape [`ensure_socket_dirs`] uses for its socket directories): world-writable
+    /// because scepter creates its per-container subdirectories through the bind as
+    /// whatever uid the image runs as — the bootloader takes no uid parameter and
+    /// should not hardcode one — and **sticky** because those subdirectories become
+    /// the agent containers' `/workspace` roots, so no peer uid may rename or
+    /// substitute another user's entry. An existing directory is normalised too: an
+    /// operator who pre-creates it as root would otherwise leave the fix's own
+    /// precondition unmet, and scepter only warns when its `create_dir_all` fails.
     pub snowflake_ws_dir: Option<PathBuf>,
 }
 
@@ -664,6 +670,31 @@ fn prepare_snowflake_ws_dir(cfg: &StackConfig) -> Result<Option<PathBuf>> {
     let Some(dir) = cfg.snowflake_ws_dir.as_ref() else {
         return Ok(None);
     };
+    if dir.as_os_str().is_empty() || dir == Path::new("/") {
+        return Err(anyhow!(
+            "snowflake_ws_dir must not be the filesystem root ({:?}) — it is mounted \
+             read-write at the same path inside scepter, so `/` would mask the container's \
+             whole rootfs",
+            dir.display()
+        ));
+    }
+    if cfg.docker_socket_path.as_ref() == Some(dir) {
+        return Err(anyhow!(
+            "snowflake_ws_dir and docker_socket_path are the same path ({:?}); one is a \
+             socket, the other a directory that scepter writes into",
+            dir.display()
+        ));
+    }
+    // Non-UTF-8 cannot survive the trip: the path reaches the Docker API as a
+    // String, so a lossy conversion would name a different (non-existent) path and
+    // reproduce the very 400 this field exists to remove.
+    if dir.to_str().is_none() {
+        return Err(anyhow!(
+            "snowflake_ws_dir is not valid UTF-8 ({:?}); it is passed to the Docker API as a \
+             string, so a lossy rendering would name a different path",
+            dir.display()
+        ));
+    }
     if !dir.is_absolute() {
         return Err(anyhow!(
             "snowflake_ws_dir must be an absolute host path, got {:?} — scepter passes it \
@@ -695,20 +726,28 @@ fn prepare_snowflake_ws_dir(cfg: &StackConfig) -> Result<Option<PathBuf>> {
                 dir.display()
             )
         })?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            // Best effort: a host that cannot chmod still gets the directory, and
-            // the run fails later at the first `create_dir_all` inside the bind —
-            // which names the real problem better than refusing here would.
-            let _ = std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o777));
-        }
     }
     if !dir.is_dir() {
         return Err(anyhow!(
             "snowflake_ws_dir {:?} is not a directory",
             dir.display()
         ));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        // Unconditionally, like `ensure_socket_dirs`: an operator who pre-created
+        // this as root would otherwise leave the container unable to write, and
+        // scepter only *warns* when its `create_dir_all` fails — the failure would
+        // resurface as the original 400 at the first write-mode skill.
+        std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o1777)).with_context(
+            || {
+                format!(
+                    "cannot make snowflake_ws_dir {:?} container-writable (0o1777)",
+                    dir.display()
+                )
+            },
+        )?;
     }
     Ok(Some(dir.clone()))
 }
@@ -1342,6 +1381,10 @@ mod tests {
             mounts[0].host_path, ws_str,
             "host and container path must be the same string"
         );
+        assert!(
+            !mounts[0].read_only,
+            "the bind must be read-write: scepter creates <root>/<uuid> through it and reclaim deletes it"
+        );
         assert_eq!(
             scepter.env.get("COSMOS_WORKSPACE_HOST_DIR"),
             Some(&ws_str),
@@ -1370,35 +1413,126 @@ mod tests {
             ws.is_dir(),
             "the bind needs a directory that already exists"
         );
-        let mode = std::fs::metadata(&ws).expect("stat").permissions().mode() & 0o777;
+        let mode = std::fs::metadata(&ws).expect("stat").permissions().mode() & 0o7777;
         assert_eq!(
-            mode, 0o777,
-            "scepter creates its subdirectories as the image uid; a root-owned 0755 dir would fail inside the bind"
+            mode, 0o1777,
+            "world-writable so the image uid can create subdirectories, sticky so no peer uid can rename or substitute another user's entry"
         );
     }
 
     /// Relative and escaping paths are refused: the string is used verbatim on
     /// both sides, so an escape makes the identity ambiguous.
+    /// Each escape is refused by its own branch, not incidentally by the
+    /// create-directory failure — that message also names the field, so a deleted
+    /// guard would still look covered. The `..` cases stay rooted in a tempdir so a
+    /// surviving mutant cannot litter the crate directory.
     #[tokio::test]
     async fn snowflake_ws_dir_refuses_relative_and_escaping_paths() {
-        for bad in [
-            "snowflake-ws",
-            "../snowflake-ws",
-            "/mnt/work/../etc/snowflake-ws",
-        ] {
+        let base = tempfile::tempdir().expect("tempdir");
+        let dotdot = base.path().join("a/../b");
+        let cases = [
+            (
+                std::path::PathBuf::from("snowflake-ws"),
+                "must be an absolute host path",
+            ),
+            (dotdot, "must not contain `..`"),
+        ];
+        for (bad, expected) in cases {
             let cfg = StackConfig {
-                snowflake_ws_dir: Some(std::path::PathBuf::from(bad)),
+                snowflake_ws_dir: Some(bad.clone()),
                 ..StackConfig::default()
             };
             let err = match bring_up_stack(&cfg).await {
-                Ok(_) => panic!("{bad} must be refused"),
+                Ok(_) => panic!("{bad:?} must be refused"),
                 Err(error) => error,
             };
             assert!(
-                err.to_string().contains("snowflake_ws_dir"),
-                "{bad} must be refused by name: {err}"
+                err.to_string().contains(expected),
+                "{bad:?} must be refused with {expected:?}, got: {err}"
             );
         }
+    }
+
+    /// The filesystem root would be mounted read-write at the same path inside
+    /// scepter, masking the container's whole rootfs.
+    #[tokio::test]
+    async fn snowflake_ws_dir_refuses_the_filesystem_root() {
+        let cfg = StackConfig {
+            snowflake_ws_dir: Some(std::path::PathBuf::from("/")),
+            ..StackConfig::default()
+        };
+        let err = match bring_up_stack(&cfg).await {
+            Ok(_) => panic!("`/` must be refused"),
+            Err(error) => error,
+        };
+        assert!(
+            err.to_string().contains("filesystem root"),
+            "refusal must say why: {err}"
+        );
+    }
+
+    /// One field is a socket, the other a directory scepter writes into.
+    #[tokio::test]
+    async fn snowflake_ws_dir_refuses_the_same_path_as_the_docker_socket() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let shared = dir.path().join("shared");
+        let cfg = StackConfig {
+            docker_socket_path: Some(shared.clone()),
+            snowflake_ws_dir: Some(shared),
+            ..StackConfig::default()
+        };
+        let err = match bring_up_stack(&cfg).await {
+            Ok(_) => panic!("the same path for both must be refused"),
+            Err(error) => error,
+        };
+        assert!(
+            err.to_string().contains("same path"),
+            "refusal must say why: {err}"
+        );
+    }
+
+    /// A pre-created root (the operator spelling) is normalised too: leaving it
+    /// 0755 root would reinstate the original 400 at the first write-mode skill.
+    #[cfg(unix)]
+    #[test]
+    fn snowflake_ws_dir_normalises_an_existing_directory() {
+        use std::os::unix::fs::PermissionsExt;
+        let base = tempfile::tempdir().expect("tempdir");
+        let ws = base.path().join("pre-created");
+        std::fs::create_dir(&ws).expect("pre-create");
+        std::fs::set_permissions(&ws, std::fs::Permissions::from_mode(0o755)).expect("chmod");
+        let cfg = StackConfig {
+            snowflake_ws_dir: Some(ws.clone()),
+            ..StackConfig::default()
+        };
+        prepare_snowflake_ws_dir(&cfg)
+            .expect("prepare must succeed")
+            .expect("Some in, Some out");
+        let mode = std::fs::metadata(&ws).expect("stat").permissions().mode() & 0o7777;
+        assert_eq!(
+            mode, 0o1777,
+            "an existing directory must be normalised, or a root-owned one silently breaks the bind"
+        );
+    }
+
+    /// Non-UTF-8 cannot survive the trip to the Docker API, which takes a string.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn snowflake_ws_dir_refuses_non_utf8() {
+        use std::os::unix::ffi::OsStrExt;
+        let bad = std::path::PathBuf::from(std::ffi::OsStr::from_bytes(b"/tmp/ws-\xff"));
+        let cfg = StackConfig {
+            snowflake_ws_dir: Some(bad),
+            ..StackConfig::default()
+        };
+        let err = match bring_up_stack(&cfg).await {
+            Ok(_) => panic!("non-UTF-8 must be refused"),
+            Err(error) => error,
+        };
+        assert!(
+            err.to_string().contains("not valid UTF-8"),
+            "refusal must say why: {err}"
+        );
     }
 
     /// The raw docker socket is a socket, not a workspace root. Mounting it
