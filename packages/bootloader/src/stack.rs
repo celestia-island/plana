@@ -179,10 +179,16 @@ pub struct StackConfig {
     /// `None` keeps today's behaviour exactly (scepter's own data home), which is
     /// correct only when scepter runs on the host.
     ///
-    /// [`bring_up_stack`] refuses a relative path, one containing `..`, the docker
-    /// socket itself, the filesystem root, and anything that is not a directory
-    /// once created. The directory is set to `0o1777` **unconditionally** (the same
-    /// shape [`ensure_socket_dirs`] uses for its socket directories): world-writable
+    /// [`bring_up_stack`] refuses a relative path, one containing `..`, a symlink,
+    /// the filesystem root, the docker socket itself, a directory **containing** that
+    /// socket, a non-UTF-8 path, the same path as
+    /// [`StackConfig::docker_socket_path`], and anything that is not a directory once
+    /// created. The mount is **read-write** on purpose: scepter creates
+    /// `<root>/<uuid>` through it and reclaim deletes through it.
+    ///
+    /// The directory is set to `0o1777` **unconditionally** — world-writable and
+    /// sticky like the socket directories, but with the sticky bit and the
+    /// unconditional normalisation added here on purpose): world-writable
     /// because scepter creates its per-container subdirectories through the bind as
     /// whatever uid the image runs as — the bootloader takes no uid parameter and
     /// should not hardcode one — and **sticky** because those subdirectories become
@@ -196,8 +202,10 @@ pub struct StackConfig {
     /// the spec it was created with. Editing the supervisor environment and
     /// restarting the unit applies **neither** this mount **nor** the env var, and
     /// says nothing; the original 400 survives to the first write-mode skill. Stop
-    /// the supervisor, move the old container aside so the bootloader creates a new
-    /// one, then start it — that move is also the rollback.
+    /// the supervisor, **stop** the old container (a rename alone keeps its
+    /// published port bound, and the new container's start then fails with "port is
+    /// already allocated", so the mount never applies and the doc looks wrong),
+    /// rename it aside, then start the supervisor — that move is also the rollback.
     pub snowflake_ws_dir: Option<PathBuf>,
 }
 
@@ -708,14 +716,18 @@ fn prepare_snowflake_ws_dir(cfg: &StackConfig) -> Result<Option<PathBuf>> {
             dir.display()
         ));
     }
-    if std::fs::symlink_metadata(dir)
+    // `normalize_lexically` strips the trailing separator, which `symlink_metadata`
+    // would otherwise follow: `/var/run/` is the same leaf as `/var/run`.
+    let leaf = normalize_lexically(dir);
+    if std::fs::symlink_metadata(&leaf)
         .map(|m| m.file_type().is_symlink())
         .unwrap_or(false)
     {
         return Err(anyhow!(
             "snowflake_ws_dir {:?} is a symlink; `chmod` and the Docker daemon both follow it, \
              so the path this guard validated is not the directory that would be mounted — \
-             point the field at the real directory",
+             point the field at the real directory (and if that directory contains the \
+             docker socket, it is refused on its own account)",
             dir.display()
         ));
     }
@@ -760,25 +772,30 @@ fn prepare_snowflake_ws_dir(cfg: &StackConfig) -> Result<Option<PathBuf>> {
     // A symlinked **ancestor** has the same failure mode as a symlinked leaf: the
     // spelling passes every check above while `mount` and `chmod` act on the target.
     // Resolve once and re-check the identities that matter against the real path.
+    // Only the checks that can still change the answer are repeated here: the
+    // literal `/` and socket comparisons already ran above, and a directory cannot
+    // canonicalise into a socket.
     let resolved = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
-    if resolved == Path::new("/") {
-        return Err(anyhow!(
-            "snowflake_ws_dir {:?} resolves to the filesystem root; it is mounted read-write at \
-             the same path inside scepter, so `/` would mask the container's whole rootfs",
-            resolved.display()
-        ));
-    }
-    if names_the_same_socket(&resolved, Path::new(RAW_DOCKER_SOCKET)) {
-        return Err(anyhow!(
-            "snowflake_ws_dir {:?} resolves to the raw docker socket",
-            resolved.display()
-        ));
-    }
     // The directory must not *contain* the raw socket either: mounting `/var/run`
     // read-write at the same path inside scepter would put a root-equivalent docker
     // socket at bollard's default location with `allow_docker_socket` still false —
     // the R-01 default-off silently bypassed.
-    if Path::new(RAW_DOCKER_SOCKET).starts_with(&resolved) {
+    //
+    // Compare canonical-to-canonical **and** canonical-to-literal: `resolved` is
+    // canonical while `RAW_DOCKER_SOCKET` is not, so on a host where `/var/run` is a
+    // symlink to `/run` the literal comparison misses `/run` and `/var/run/` (the
+    // trailing slash also hides the leaf from `symlink_metadata`), and those pass
+    // straight through to the chmod and the bind.
+    // Canonicalise the socket's *parent* rather than the socket: `/var/run` exists on
+    // every host even when the daemon socket does not, so this comparison does not
+    // depend on the socket being present (`/var/run -> /run` is the common shape).
+    let raw_literal = Path::new(RAW_DOCKER_SOCKET);
+    let raw_resolved = raw_literal
+        .parent()
+        .and_then(|parent| std::fs::canonicalize(parent).ok())
+        .map(|parent| parent.join("docker.sock"))
+        .unwrap_or_else(|| raw_literal.to_path_buf());
+    if raw_literal.starts_with(&resolved) || raw_resolved.starts_with(&resolved) {
         return Err(anyhow!(
             "snowflake_ws_dir {:?} contains the raw docker socket ({RAW_DOCKER_SOCKET}); \
              mounting it read-write inside scepter would hand the container the daemon's \
@@ -1658,6 +1675,46 @@ mod tests {
         assert!(
             err.to_string().contains("contains the raw docker socket"),
             "refusal must say why: {err}"
+        );
+    }
+
+    /// The canonical spelling of the socket's own directory. `/var/run` is a symlink
+    /// to `/run` on the common Debian shape, so a guard that compares a canonicalised
+    /// directory against the *literal* socket path misses it — and `/run` mounted
+    /// read-write at `/run` still puts the socket where bollard looks for it.
+    #[tokio::test]
+    async fn snowflake_ws_dir_refuses_the_socket_directory_canonical_spelling() {
+        let cfg = StackConfig {
+            snowflake_ws_dir: Some(std::path::PathBuf::from("/run")),
+            ..StackConfig::default()
+        };
+        let err = match bring_up_stack(&cfg).await {
+            Ok(_) => panic!("/run must be refused"),
+            Err(error) => error,
+        };
+        assert!(
+            err.to_string().contains("contains the raw docker socket"),
+            "refusal must say why: {err}"
+        );
+    }
+
+    /// A trailing separator is the same leaf: `symlink_metadata` follows the final
+    /// component when the path ends in `/`, so the symlink guard has to normalise
+    /// first (this spelling reached the chmod and the bind before that fix).
+    #[tokio::test]
+    async fn snowflake_ws_dir_refuses_a_symlink_with_a_trailing_slash() {
+        let cfg = StackConfig {
+            snowflake_ws_dir: Some(std::path::PathBuf::from("/var/run/")),
+            ..StackConfig::default()
+        };
+        let err = match bring_up_stack(&cfg).await {
+            Ok(_) => panic!("/var/run/ must be refused"),
+            Err(error) => error,
+        };
+        let text = err.to_string();
+        assert!(
+            text.contains("is a symlink") || text.contains("contains the raw docker socket"),
+            "refusal must say why: {text}"
         );
     }
 
