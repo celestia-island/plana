@@ -27,6 +27,9 @@ pub enum StreamToolEvent {
         call_id: Uuid,
         params_summary: Option<String>,
         agent_type: Option<String>,
+        /// The execution-location badge — mirrors the segment field so the
+        /// streaming fan-out can record it on the session-tree builder.
+        agent_id: Option<String>,
     },
     ToolResult {
         tool_name: String,
@@ -35,6 +38,8 @@ pub enum StreamToolEvent {
         success: bool,
         duration_ms: Option<u64>,
         agent_type: Option<String>,
+        /// The execution-location badge — mirrors `ToolCall::agent_id`.
+        agent_id: Option<String>,
     },
 }
 
@@ -275,6 +280,17 @@ impl StreamSegment {
         match self {
             Self::ToolCall { agent_type, .. } => agent_type.as_deref(),
             Self::ToolResult { agent_type, .. } => agent_type.as_deref(),
+            _ => None,
+        }
+    }
+
+    /// The execution-location badge (`demiurge.061`-shaped) recorded on a
+    /// tool segment — `None` on non-tool variants and on legacy rows that
+    /// predate the field.
+    pub fn agent_id(&self) -> Option<&str> {
+        match self {
+            Self::ToolCall { agent_id, .. } => agent_id.as_deref(),
+            Self::ToolResult { agent_id, .. } => agent_id.as_deref(),
             _ => None,
         }
     }
@@ -928,6 +944,21 @@ mod tests {
         assert_eq!(stamped.wall_ts(), Some(1_790_000_000_123));
         let wire = serde_json::to_value(&stamped).expect("serialize");
         assert_eq!(wire["Text"]["ts"].as_u64(), Some(1_790_000_000_123));
+    }
+
+    #[test]
+    fn legacy_tool_rows_parse_without_agent_id() -> Result<()> {
+        // The pre-badge tool shape (what chest's run-record adapter and
+        // every stored stream already carry) must keep parsing with the
+        // badge defaulting to None — `#[serde(default)]`, not a wire
+        // break. Both accessor reads on the legacy row pin that default.
+        let legacy: StreamSegment = serde_json::from_str(
+            r#"{"ToolCall":{"tool_name":"exec","call_id":"01930000-0000-7000-8000-000000000001","params":{"code":"1"},"agent_type":"hubris","message_id":null}}"#,
+        )
+        .context("legacy ToolCall without agent_id parses")?;
+        assert_eq!(legacy.agent_type(), Some("hubris"));
+        assert_eq!(legacy.agent_id(), None);
+        Ok(())
     }
 
     #[test]
