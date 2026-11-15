@@ -353,6 +353,13 @@ pub enum StreamSegment {
         #[serde(default)]
         #[ts(optional)]
         agent_type: Option<String>,
+        /// The execution LOCATION badge (`demiurge.061`-shaped container
+        /// instance id) — mirrors plana_text's `ToolCall::agent_id` so the
+        /// live wire and the stored run record name the same where-it-ran
+        /// fact. Absent on legacy rows.
+        #[serde(default)]
+        #[ts(optional)]
+        agent_id: Option<String>,
         #[serde(default)]
         #[ts(optional)]
         #[ts(type = "string")]
@@ -374,6 +381,11 @@ pub enum StreamSegment {
         #[serde(default)]
         #[ts(optional)]
         agent_type: Option<String>,
+        /// The execution LOCATION badge of the result's call half —
+        /// mirrors plana_text's `ToolResult::agent_id`.
+        #[serde(default)]
+        #[ts(optional)]
+        agent_id: Option<String>,
         #[serde(default)]
         #[ts(optional)]
         #[ts(type = "string")]
@@ -1289,7 +1301,8 @@ mod tests {
             tool_name: "kalos.file_read".into(),
             call_id: "call-1".into(),
             params: json!({"path": "/etc/hosts"}),
-            agent_type: None,
+            agent_type: Some("KaLos".into()),
+            agent_id: Some("demiurge.061".into()),
             message_id: None,
             ts: None,
         };
@@ -1297,10 +1310,18 @@ mod tests {
         let back: StreamSegment = serde_json::from_value(v).unwrap();
         match back {
             StreamSegment::ToolCall {
-                tool_name, call_id, ..
+                tool_name,
+                call_id,
+                agent_type,
+                agent_id,
+                ..
             } => {
                 assert_eq!(tool_name, "kalos.file_read");
                 assert_eq!(call_id, "call-1");
+                // The execution-location badge survives the wire round trip
+                // beside the agent type (2026-11-15 trace-location chain).
+                assert_eq!(agent_type.as_deref(), Some("KaLos"));
+                assert_eq!(agent_id.as_deref(), Some("demiurge.061"));
             }
             other => panic!("expected ToolCall, got {other:?}"),
         }
@@ -1315,6 +1336,7 @@ mod tests {
             data: json!({"content": "file data"}),
             duration_ms: Some(42),
             agent_type: Some("KaLos".into()),
+            agent_id: Some("demiurge.061".into()),
             message_id: None,
             ts: None,
         };
@@ -1326,10 +1348,14 @@ mod tests {
             StreamSegment::ToolResult {
                 success,
                 duration_ms,
+                agent_id,
                 ..
             } => {
                 assert!(success);
                 assert_eq!(duration_ms, Some(42));
+                // The result half carries the call's location badge too —
+                // a cap-dropped call must not orphan the location.
+                assert_eq!(agent_id.as_deref(), Some("demiurge.061"));
             }
             other => panic!("expected ToolResult, got {other:?}"),
         }

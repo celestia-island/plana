@@ -143,6 +143,12 @@ pub enum StreamSegment {
         params: Value,
         #[serde(default)]
         agent_type: Option<String>,
+        /// The execution LOCATION badge (`demiurge.061`-shaped container
+        /// instance id) the call ran in — recorded alongside `agent_type`
+        /// so replay surfaces can name where a tool executed instead of
+        /// only which agent type issued it. Absent on legacy rows.
+        #[serde(default)]
+        agent_id: Option<String>,
         #[serde(default)]
         message_id: Option<Uuid>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -157,6 +163,11 @@ pub enum StreamSegment {
         duration_ms: Option<u64>,
         #[serde(default)]
         agent_type: Option<String>,
+        /// The execution LOCATION badge of the result's call half —
+        /// mirrors `ToolCall::agent_id` so a result half whose call was
+        /// dropped by a stream cap still names its location.
+        #[serde(default)]
+        agent_id: Option<String>,
         #[serde(default)]
         message_id: Option<Uuid>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -603,6 +614,7 @@ mod tests {
             call_id,
             Some(serde_json::to_value(PathParam { path: "/test" }).unwrap_or_default()),
             None,
+            None,
         );
         builder.push_tool_result(
             "read_file".to_string(),
@@ -610,6 +622,7 @@ mod tests {
             Value::String("file contents".to_string()),
             true,
             Some(150),
+            None,
             None,
         );
         builder.push_chunk("Here is the file:", StreamChunkKind::Text);
@@ -654,12 +667,13 @@ mod tests {
         let mut builder = LlmStreamBuilder::new();
         builder.push_chunk("report intro", StreamChunkKind::Text);
         let call_id = Uuid::now_v7();
-        builder.push_tool_call("report".to_string(), call_id, Some(empty()), None);
+        builder.push_tool_call("report".to_string(), call_id, Some(empty()), None, None);
         builder.push_tool_result(
             "report".to_string(),
             call_id,
             Value::String("This is the actual report content".to_string()),
             true,
+            None,
             None,
             None,
         );
@@ -686,12 +700,14 @@ mod tests {
             call_id,
             Some(serde_json::json!({"key": "value"})),
             None,
+            None,
         );
         builder.push_tool_result(
             "report".to_string(),
             call_id,
             Value::String("result".to_string()),
             true,
+            None,
             None,
             None,
         );
@@ -785,6 +801,7 @@ mod tests {
             call_id_1,
             Some(serde_json::to_value(PathParam { path: "/a" }).unwrap_or_default()),
             None,
+            None,
         );
         builder.push_tool_result(
             "read_file".to_string(),
@@ -793,11 +810,13 @@ mod tests {
             true,
             None,
             None,
+            None,
         );
         builder.push_tool_call(
             "write_file".to_string(),
             call_id_2,
             Some(serde_json::to_value(PathParam { path: "/b" }).unwrap_or_default()),
+            None,
             None,
         );
 
@@ -834,12 +853,13 @@ mod tests {
     fn test_seal_coalesced_no_synthetic_when_all_resolved() -> Result<()> {
         let mut builder = LlmStreamBuilder::new();
         let call_id = Uuid::now_v7();
-        builder.push_tool_call("exec".to_string(), call_id, Some(empty()), None);
+        builder.push_tool_call("exec".to_string(), call_id, Some(empty()), None, None);
         builder.push_tool_result(
             "exec".to_string(),
             call_id,
             Value::String("ok".to_string()),
             true,
+            None,
             None,
             None,
         );
@@ -875,13 +895,14 @@ mod tests {
         assert!(refreshed > first, "the stamp rides the LAST activity");
         assert_eq!(b.segments().len(), 1, "appends coalesce");
         let call = Uuid::now_v7();
-        b.push_tool_call("exec".to_string(), call, None, None);
+        b.push_tool_call("exec".to_string(), call, None, None, None);
         b.push_tool_result(
             "exec".to_string(),
             call,
             serde_json::json!("ok"),
             true,
             Some(3),
+            None,
             None,
         );
         assert!(b.segments()[1].wall_ts().is_some(), "tool calls stamp");
@@ -927,6 +948,7 @@ mod tests {
             call_id: Uuid::now_v7(),
             params: serde_json::json!({"code": "import { report } from 'hubris'; report({text: 'hi'})"}),
             agent_type: None,
+            agent_id: None,
             message_id: None,
             ts: None,
         };
@@ -947,6 +969,7 @@ mod tests {
             data: serde_json::json!({"ok": true, "data": "Hello!", "error": null}),
             duration_ms: None,
             agent_type: None,
+            agent_id: None,
             message_id: None,
             ts: None,
         };

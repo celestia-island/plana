@@ -25,6 +25,7 @@ fn tool_call(tool: &str, call_id: Uuid, text: &str) -> StreamSegment {
         call_id,
         params,
         agent_type: Some("haplotes".to_string()),
+        agent_id: None,
         message_id: None,
         ts: None,
     }
@@ -54,6 +55,7 @@ fn tool_result(
         data,
         duration_ms: dur_ms,
         agent_type: Some("haplotes".to_string()),
+        agent_id: None,
         message_id: None,
         ts: None,
     }

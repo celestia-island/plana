@@ -191,6 +191,21 @@ impl LlmStream {
                     _ => None,
                 })
                 .flatten();
+            // The call-backfilled result inherits the call's location badge
+            // beside its agent type — same contract as the synthetic seal
+            // close in the builder.
+            let agent_id = self
+                .segments
+                .iter()
+                .find_map(|s| match s {
+                    StreamSegment::ToolCall {
+                        call_id: cid,
+                        agent_id,
+                        ..
+                    } if *cid == call_id => Some(agent_id.clone()),
+                    _ => None,
+                })
+                .flatten();
 
             let pos = self
                 .segments
@@ -209,6 +224,7 @@ impl LlmStream {
                     data: result_data,
                     duration_ms,
                     agent_type,
+                    agent_id,
                     message_id: None,
                     ts: None,
                 },
