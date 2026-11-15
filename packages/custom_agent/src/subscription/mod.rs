@@ -20,6 +20,16 @@ fn default_check_interval() -> String {
     "daily".to_string()
 }
 
+/// Serde default for [`SubscribeSettings::verify_signature`].
+///
+/// A plain `#[serde(default)]` would deserialize a missing key to `false`,
+/// silently diverging from [`SubscribeSettings::default`] (which is `true`)
+/// and downgrading signature verification for every config file written
+/// before the field existed. Missing key must mean "verify".
+fn default_verify_signature() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscribeConfig {
     #[serde(default = "default_subscribe_version")]
@@ -46,7 +56,7 @@ pub struct SubscribeSettings {
     pub auto_update: bool,
     #[serde(default = "default_check_interval")]
     pub check_interval: String,
-    #[serde(default)]
+    #[serde(default = "default_verify_signature")]
     pub verify_signature: bool,
     #[serde(default)]
     pub trusted_sources: Vec<String>,

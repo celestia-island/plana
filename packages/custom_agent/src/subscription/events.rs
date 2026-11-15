@@ -93,7 +93,7 @@ pub fn validate_subscription_entry(entry: &SubscriptionEntry) -> Result<()> {
         SubscriptionSource::Url => {
             if entry.url.as_deref().unwrap_or_default().trim().is_empty() {
                 return Err(anyhow!(
-                    "url source requires url=\"https://...\" or git URL"
+                    "url source requires an https:// git URL in url=\"...\""
                 ));
             }
             Ok(())
@@ -120,15 +120,98 @@ pub fn subscription_repo_url(entry: &SubscriptionEntry) -> Result<String> {
     }
 }
 
-pub async fn clone_repository(repo_url: &str, dest: &Path) -> Result<()> {
-    let status = tokio::process::Command::new("git")
+/// Transport allow-list for subscription clones.
+///
+/// Only `https` is accepted. `file://`, `ssh://`, `git://` and the
+/// `<transport>::<address>` helper syntax (`ext::sh -c …`) are rejected: a
+/// subscription URL is attacker-controlled data, and `git` treats a
+/// URL-shaped argv element that starts with `-` as an *option* — which is how
+/// `--upload-pack=<cmd>` turns a clone into command execution. No local
+/// `file://` development flow exists for subscriptions (nothing in the repo,
+/// docs or tests references one), so the whitelist stays narrow.
+const ALLOWED_CLONE_SCHEMES: &[&str] = &["https"];
+
+/// Reject subscription repository URLs that cannot be safely handed to `git`.
+///
+/// This is the URL-level half of the clone hardening; the `--` separator in
+/// [`clone_command`] is the argv-level half, so an option-shaped URL is
+/// stopped twice.
+fn validate_clone_url(repo_url: &str) -> Result<()> {
+    let url = repo_url.trim();
+    if url.is_empty() {
+        return Err(anyhow!("subscription repository URL must not be empty"));
+    }
+    // `git` parses any argv element starting with `-` as an option, so a URL
+    // such as `--upload-pack=sh -c …` would be executed as a flag.
+    if url.starts_with('-') {
+        return Err(anyhow!(
+            "subscription repository URL must not start with '-': {}",
+            url
+        ));
+    }
+    if url.chars().any(|c| c.is_whitespace() || c.is_control()) {
+        return Err(anyhow!(
+            "subscription repository URL must not contain whitespace or control characters: {}",
+            url
+        ));
+    }
+    let Some((scheme, rest)) = url.split_once("://") else {
+        return Err(anyhow!(
+            "unsupported subscription repository URL '{}': only {}:// is allowed",
+            url,
+            ALLOWED_CLONE_SCHEMES.join(" / ")
+        ));
+    };
+    let scheme = scheme.to_ascii_lowercase();
+    if !ALLOWED_CLONE_SCHEMES.contains(&scheme.as_str()) {
+        return Err(anyhow!(
+            "unsupported subscription repository URL scheme '{}': only {}:// is allowed",
+            scheme,
+            ALLOWED_CLONE_SCHEMES.join(" / ")
+        ));
+    }
+    let host = rest.split(['/', '?', '#']).next().unwrap_or_default();
+    if host.is_empty() || host == "." || host == ".." {
+        return Err(anyhow!(
+            "unsupported subscription repository URL '{}': missing host",
+            url
+        ));
+    }
+    Ok(())
+}
+
+/// Build the `git clone` invocation for one subscription.
+///
+/// `--` terminates option parsing, so both the repository URL and the
+/// destination are treated as positional arguments. The caller validates the
+/// URL first ([`validate_clone_url`]); keeping the argv construction in one
+/// place is what makes the argument order testable without running `git`.
+fn clone_command(repo_url: &str, dest: &Path) -> tokio::process::Command {
+    let mut command = tokio::process::Command::new("git");
+    command
         .arg("clone")
         .arg("--depth")
         .arg("1")
+        .arg("--")
         .arg(repo_url)
         .arg(dest)
         .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit());
+    command
+}
+
+/// Clone a subscription repository into a temporary directory.
+///
+/// Note: callers verify the package signature *after* this call (the trusted
+/// source allow-list and this URL whitelist run before it), so a hostile
+/// source can still cause a clone attempt. Moving signature verification
+/// ahead of the clone is a structural change and is deliberately out of scope
+/// for this hardening; the URL whitelist plus `--` close the `--upload-pack`
+/// command-execution path in the meantime.
+pub async fn clone_repository(repo_url: &str, dest: &Path) -> Result<()> {
+    validate_clone_url(repo_url)?;
+
+    let status = clone_command(repo_url, dest)
         .status()
         .await
         .with_context(|| format!("git clone execution failed: {}", repo_url))?;
@@ -278,4 +361,115 @@ pub fn copy_dir_recursive(source_dir: &Path, target_dir: &Path) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn argv(repo_url: &str, dest: &Path) -> Vec<String> {
+        clone_command(repo_url, dest)
+            .as_std()
+            .get_args()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect()
+    }
+
+    #[test]
+    fn clone_command_terminates_options_before_url() -> Result<()> {
+        let dest = Path::new("/tmp/entelecheia-sub-test");
+        let args = argv("https://github.com/owner/repo.git", dest);
+        assert_eq!(
+            args,
+            vec![
+                "clone",
+                "--depth",
+                "1",
+                "--",
+                "https://github.com/owner/repo.git",
+                "/tmp/entelecheia-sub-test",
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn clone_url_rejects_option_shaped_urls() {
+        // Without `--`, git parses the URL as an option; `--upload-pack=<cmd>`
+        // is the command-execution shape.
+        assert!(validate_clone_url("--upload-pack=touch /tmp/pwn").is_err());
+        assert!(validate_clone_url("--upload-pack=touch").is_err());
+        assert!(validate_clone_url("-u/tmp/pwn").is_err());
+    }
+
+    #[test]
+    fn clone_url_rejects_transport_helpers_and_other_schemes() {
+        for url in [
+            "ext::sh -c touch% /tmp/pwn",
+            "ext::sh",
+            "file:///tmp/repo",
+            "http://github.com/owner/repo.git",
+            "git://github.com/owner/repo.git",
+            "ssh://git@github.com/owner/repo.git",
+            "git@github.com:owner/repo.git",
+            "github.com/owner/repo.git",
+            "/tmp/repo",
+            "",
+            "   ",
+            "https://",
+            "https:///owner/repo.git",
+        ] {
+            assert!(
+                validate_clone_url(url).is_err(),
+                "expected rejection for {url:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn clone_url_accepts_https() -> Result<()> {
+        validate_clone_url("https://github.com/celestia-island/plana-agents.git")?;
+        validate_clone_url("HTTPS://github.com/owner/repo.git")?;
+        validate_clone_url("https://git.example.dev:8443/owner/repo.git")?;
+        Ok(())
+    }
+
+    #[test]
+    fn missing_verify_signature_key_defaults_to_true() -> Result<()> {
+        // A settings table that predates the field: the key is absent, so a
+        // plain `#[serde(default)]` would have yielded `false`.
+        let config: crate::SubscribeConfig = toml::from_str(
+            r#"
+            [settings]
+            auto_update = true
+            "#,
+        )?;
+        assert!(config.settings.verify_signature);
+
+        // No settings table at all keeps the `Default` value too.
+        let config: crate::SubscribeConfig = toml::from_str("")?;
+        assert!(config.settings.verify_signature);
+        Ok(())
+    }
+
+    #[test]
+    fn explicit_verify_signature_false_is_honoured() -> Result<()> {
+        let config: crate::SubscribeConfig = toml::from_str(
+            r#"
+            [settings]
+            verify_signature = false
+            "#,
+        )?;
+        assert!(!config.settings.verify_signature);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn clone_repository_rejects_unsafe_url_before_spawning_git() {
+        let dest = std::env::temp_dir().join("entelecheia-clone-url-test");
+        let err = clone_repository("--upload-pack=touch /tmp/pwn", &dest)
+            .await
+            .expect_err("unsafe clone URL must be rejected");
+        assert!(err.to_string().contains("must not start with '-'"));
+    }
 }
