@@ -169,7 +169,9 @@ impl ProviderConfigManager {
         let content = toml::to_string_pretty(config)
             .map_err(|e| anyhow!("Failed to serialize config: {}", e))?;
 
-        std::fs::write(&self.config_path, content)
+        // The file carries plaintext api_keys: write it owner-only from
+        // the first byte (R2 F2 — the plain `fs::write` landed 0644).
+        super::provider_config::write_private_file(&self.config_path, &content)
             .map_err(|e| anyhow!("Failed to write config: {}", e))?;
 
         self.invalidate_cache();
@@ -509,4 +511,30 @@ fn collect_env_providers() -> Vec<LlmProviderConfig> {
     }
 
     providers
+}
+
+#[cfg(test)]
+mod private_write_tests {
+    use super::*;
+
+    #[test]
+    #[cfg(unix)]
+    fn saving_a_provider_config_writes_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("aporia.toml");
+        let manager = ProviderConfigManager::with_path(&path);
+        let mut config = ProviderCrudConfig::default();
+        config.llm_providers.push(LlmProviderConfig {
+            name: "Test Provider".into(),
+            provider_type: "openai".into(),
+            api_key: "sk-test".into(),
+            model: "gpt".into(),
+            endpoint: None,
+            website_domain: String::new(),
+        });
+        manager.save(&config).unwrap();
+        let mode = std::fs::metadata(&path).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600, "provider config is owner-only");
+    }
 }

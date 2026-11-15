@@ -1,5 +1,6 @@
+use std::io::Write;
 #[cfg(unix)]
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::PathBuf;
 
 use tracing::{info, warn};
@@ -52,45 +53,63 @@ pub fn write_token_to_file(token: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Open `path` for writing, creating it with `mode` in the `open(2)` call
+/// itself.
+///
+/// The token is a bearer credential: creating the file with the umask default
+/// and `chmod`ing it right after leaves a window in which the secret is readable
+/// by anyone the umask allowed, so the mode goes into the create call instead
+/// (credential hygiene, AGENTS.md red line 1).
+///
+/// Windows keeps its ACL-based permissions; mode bits have no meaning there.
+fn open_private_file(path: &PathBuf, mode: u32) -> std::io::Result<std::fs::File> {
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        options.mode(mode);
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = mode; // suppress unused-variable warning on Windows
+    }
+    options.open(path)
+}
+
 fn write_token_with_perms(token: &str, path: &PathBuf, mode: u32) -> std::io::Result<()> {
     if let Some(parent) = path.parent()
         && !parent.exists()
     {
         std::fs::create_dir_all(parent)?;
     }
-    if let Err(e) = std::fs::write(path, token) {
-        if path.exists() {
-            match std::fs::remove_file(path) {
-                Ok(()) => std::fs::write(path, token)?,
-                Err(rm_err) => {
-                    warn!(
-                        event = "connection_token_remove_failed",
-                        path = %path.display(),
-                        write_error = %e,
-                        remove_error = %rm_err,
-                        "Cannot write or remove old token file"
-                    );
-                    return Err(e);
+    let mut file = match open_private_file(path, mode) {
+        Ok(file) => file,
+        Err(e) => {
+            if path.exists() {
+                match std::fs::remove_file(path) {
+                    Ok(()) => open_private_file(path, mode)?,
+                    Err(rm_err) => {
+                        warn!(
+                            event = "connection_token_remove_failed",
+                            path = %path.display(),
+                            write_error = %e,
+                            remove_error = %rm_err,
+                            "Cannot write or remove old token file"
+                        );
+                        return Err(e);
+                    }
                 }
+            } else {
+                return Err(e);
             }
-        } else {
-            return Err(e);
         }
-    }
-    // Unix: chmod the token file to the requested mode (typically 0o600).
-    // Windows: file permissions are ACL-based, not mode bits — skip the chmod;
-    // the token file is in a user-owned config dir and isn't world-readable.
+    };
+    // open(2) ignores `mode` for an existing file, so the descriptor is
+    // fchmod'ed too: handle-scoped (no path can be swapped under it) and it
+    // repairs a token file a previous release left at 0o644.
     #[cfg(unix)]
-    {
-        let file_perms = std::fs::metadata(path)?.permissions();
-        let mut perms = file_perms;
-        perms.set_mode(mode);
-        std::fs::set_permissions(path, perms)?;
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = mode; // suppress unused-variable warning on Windows
-    }
+    file.set_permissions(std::fs::Permissions::from_mode(mode))?;
+    file.write_all(token.as_bytes())?;
     Ok(())
 }
 
@@ -160,5 +179,60 @@ pub fn remove_token_file() {
         && let Err(e) = std::fs::remove_file(&socket_path)
     {
         warn!(path = %socket_path.display(), error = %e, "failed to remove socket token");
+    }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    fn mode_of(path: &std::path::Path) -> u32 {
+        std::fs::metadata(path)
+            .expect("token file metadata")
+            .permissions()
+            .mode()
+            & 0o777
+    }
+
+    /// The token is a bearer credential: it must be owner-only from the instant
+    /// the file exists, both for a fresh file and for one an older release left
+    /// at 0o644.
+    #[test]
+    fn write_token_with_perms_creates_and_tightens_owner_only() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("nested").join("scepter.token");
+
+        std::fs::create_dir_all(path.parent().expect("token parent")).expect("create token dir");
+
+        // The create call itself must carry the mode: a follow-up chmod lands
+        // too late by construction, so observe the file before any tightening.
+        drop(open_private_file(&path, 0o600).expect("create token file"));
+        assert_eq!(
+            mode_of(&path),
+            0o600,
+            "a newly created connection token must be owner-only from the first byte"
+        );
+        write_token_with_perms("test-token", &path, 0o600).expect("write fresh token");
+        assert_eq!(
+            mode_of(&path),
+            0o600,
+            "rewriting the connection token must keep it owner-only"
+        );
+
+        // Pre-existing file from an older release: open(2) ignores mode for an
+        // existing file, so the descriptor-level chmod must tighten it.
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644))
+            .expect("widen token file");
+        write_token_with_perms("rotated-token", &path, 0o600).expect("rewrite token");
+        assert_eq!(
+            mode_of(&path),
+            0o600,
+            "an existing 0o644 connection token must be tightened"
+        );
+        assert_eq!(
+            std::fs::read_to_string(&path).expect("read token"),
+            "rotated-token"
+        );
     }
 }

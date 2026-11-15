@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use tracing::{debug, info, trace, warn};
@@ -632,6 +632,63 @@ fn derive_config_from_env() -> Option<ProviderConfigData> {
     })
 }
 
+/// Create `dir` (and its parents) and, when this call is the one that creates
+/// it, restrict it to the owner (`0o700`).
+///
+/// `create_dir_all` inherits the umask, so a directory it brings into existence
+/// can be group/world traversable. The mode is only re-asserted for a directory
+/// this call created: an operator-provided config directory keeps whatever mode
+/// it was set up with.
+fn ensure_private_dir(dir: &Path) -> std::io::Result<()> {
+    if dir.exists() {
+        return Ok(());
+    }
+    std::fs::create_dir_all(dir)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700))?;
+    }
+    Ok(())
+}
+
+/// Open `path` for writing as an owner-only (`0o600`) file.
+///
+/// The mode is handed to `open(2)` instead of being applied by a follow-up
+/// `chmod`: the config written here carries plaintext API keys, so a
+/// write-then-chmod sequence would leave those bytes readable by whatever the
+/// umask allows for however long the gap lasts — an observable window, not a
+/// millisecond-scale theoretical one (credential hygiene, AGENTS.md red line 1).
+fn open_private_file(path: &Path) -> std::io::Result<std::fs::File> {
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options.open(path)
+}
+
+/// Write `contents` to `path` as an owner-only (`0o600`) file, tightening a
+/// pre-existing file on the way.
+///
+/// `open(2)` ignores `mode` for a file that already exists, so the descriptor is
+/// `fchmod`ed as well: that is handle-scoped (no path can be swapped underneath
+/// it) and repairs a file an older release left group/world readable.
+pub(crate) fn write_private_file(path: &Path, contents: &str) -> std::io::Result<()> {
+    use std::io::Write;
+
+    let mut file = open_private_file(path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        file.set_permissions(std::fs::Permissions::from_mode(0o600))?;
+    }
+    file.write_all(contents.as_bytes())?;
+    Ok(())
+}
+
 /// Ensure `provider_config.toml` exists on disk.
 ///
 /// If the file already exists, this is a no-op (the user or a previous init
@@ -670,14 +727,14 @@ pub fn ensure_provider_config_from_env() -> std::io::Result<bool> {
     }
 
     if let Some(parent) = config_path.parent() {
-        std::fs::create_dir_all(parent)?;
+        ensure_private_dir(parent)?;
     }
 
     let toml_str = toml::to_string_pretty(&data).map_err(|e| {
         std::io::Error::other(format!("failed to serialize provider config: {}", e))
     })?;
 
-    std::fs::write(&config_path, &toml_str)?;
+    write_private_file(&config_path, &toml_str)?;
 
     info!(
         "generated provider_config.toml at {:?}: {} provider(s), {} model(s)",
@@ -1770,5 +1827,50 @@ basic = 3
             !disabled.providers[0].enabled,
             "an explicit enabled = false must round-trip"
         );
+    }
+
+    /// The generated provider config holds plaintext API keys, so it has to be
+    /// owner-only from the moment it exists — for a freshly created file and
+    /// for one an older release left at 0o644.
+    #[cfg(unix)]
+    #[test]
+    fn write_private_file_creates_and_tightens_owner_only() -> Result<()> {
+        use std::os::unix::fs::PermissionsExt;
+
+        let root = tempfile::tempdir()?;
+        let config_dir = root.path().join("config");
+        ensure_private_dir(&config_dir)?;
+        assert_eq!(
+            std::fs::metadata(&config_dir)?.permissions().mode() & 0o777,
+            0o700,
+            "a freshly created config dir must be owner-only"
+        );
+
+        // The create call itself must carry the mode: a follow-up chmod lands
+        // too late by construction, so observe the file before any tightening.
+        let config_path = config_dir.join("provider_config.toml");
+        drop(open_private_file(&config_path)?);
+        assert_eq!(
+            std::fs::metadata(&config_path)?.permissions().mode() & 0o777,
+            0o600,
+            "a newly created provider config must be owner-only from the first byte"
+        );
+        write_private_file(&config_path, "api_key = \"k\"\n")?;
+        assert_eq!(
+            std::fs::metadata(&config_path)?.permissions().mode() & 0o777,
+            0o600,
+            "rewriting the provider config must keep it owner-only"
+        );
+
+        // Pre-existing file from an older release: open(2) ignores mode for an
+        // existing file, so the descriptor-level chmod must tighten it.
+        std::fs::set_permissions(&config_path, std::fs::Permissions::from_mode(0o644))?;
+        write_private_file(&config_path, "api_key = \"k\"\n")?;
+        assert_eq!(
+            std::fs::metadata(&config_path)?.permissions().mode() & 0o777,
+            0o600,
+            "an existing 0o644 provider config must be tightened"
+        );
+        Ok(())
     }
 }

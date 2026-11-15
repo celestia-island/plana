@@ -300,8 +300,26 @@ impl UserConfig {
             toml::to_string_pretty(self).map_err(|e| std::io::Error::other(e.to_string()))?;
 
         let config_file = Self::config_file();
+        // The config can carry database.url passwords and llm.api_key:
+        // write it owner-only from the first byte (the old
+        // write-then-chmod had a world-readable window AND only OR-ed
+        // 0o600 in, never stripping group/world bits — R3 finding).
+        #[cfg(unix)]
+        {
+            use std::io::Write;
+            use std::os::unix::fs::OpenOptionsExt;
+            use std::os::unix::fs::PermissionsExt;
+            let mut f = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&config_file)?;
+            f.set_permissions(std::fs::Permissions::from_mode(0o600))?;
+            f.write_all(content.as_bytes())?;
+        }
+        #[cfg(not(unix))]
         std::fs::write(&config_file, &content)?;
-        Self::set_user_writable(&config_file);
         Ok(())
     }
 

@@ -278,6 +278,25 @@ impl ServerManager {
             ));
         }
 
+        // The file carries a plaintext api_key: create it owner-only from
+        // the first byte and tighten on the fd before writing (the plain
+        // `File::create` landed 0644 — R2 F1).
+        #[cfg(unix)]
+        let mut file = {
+            use std::os::unix::fs::OpenOptionsExt;
+            use std::os::unix::fs::PermissionsExt;
+            let f = std::fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&config_path)
+                .map_err(|e| anyhow!("Failed to create {}: {}", config_path.display(), e))?;
+            f.set_permissions(std::fs::Permissions::from_mode(0o600))
+                .map_err(|e| anyhow!("Failed to restrict {}: {}", config_path.display(), e))?;
+            f
+        };
+        #[cfg(not(unix))]
         let mut file = std::fs::File::create(&config_path)
             .map_err(|e| anyhow!("Failed to create {}: {}", config_path.display(), e))?;
         file.write_all(toml_content.as_bytes())
