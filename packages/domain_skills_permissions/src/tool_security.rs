@@ -492,9 +492,8 @@ fn shell_segments(normalized: &str) -> Vec<String> {
                 // escapes the next char, so `\'` does NOT close it —
                 // missing the `$'` case made `$'a\'|' /etc` split the
                 // tail away (R17 S0).
-                let ansi_c = c == '\''
-                    && current.trim_end_matches(|ch: char| ch == '$').len()
-                        < current.trim_end().len();
+                let ansi_c =
+                    c == '\'' && current.trim_end_matches('$').len() < current.trim_end().len();
                 current.push(c);
                 i += 1;
                 while i < chars.len() {
@@ -1557,9 +1556,9 @@ mod tests {
             r"rm -rf $'\x00\'x'/etc",
             r"rm -rf $'\c@\'x'/etc",
             r"rm -rf $'\u0000\'x'/m*",
-            // A separator INSIDE the span is literal data: the NUL drops
-            // it and the tail stays attached (R15 S1 — segmentation must
-            // happen after span decoding).
+            // A separator inside an ANSI-C span is data because the
+            // segmenter is quote-aware, not because decoding ran first
+            // (decoding first would weaponise `$'\x3b'` — R16 S1).
             r"rm -rf $'\u0000|'/etc",
             // Escaped separators are literal data (R16 S1 regression).
             r"rm -rf $'\x3b' /etc",
