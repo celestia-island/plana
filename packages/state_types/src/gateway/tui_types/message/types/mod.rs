@@ -718,6 +718,27 @@ pub enum SyncMessage {
         content: String,
         name: String,
     },
+    /// P5 prompt registry: list every addressable prompt (builtin souls,
+    /// system fragments, and every registered plugin agent's
+    /// tools/skills) with cache-oriented metadata only.
+    PromptRegistryList,
+    /// Reply to `PromptRegistryList`.
+    PromptRegistryListResponse {
+        items: Vec<super::super::prompt_registry::PromptRegistryItem>,
+    },
+    /// Fetch one document by `(level, agent_key, name)`; `lang` is
+    /// REQUIRED — a locale outside the item's `langs` is a named
+    /// refusal, never a silent fallback.
+    PromptRegistryGet {
+        level: super::super::prompt_registry::PromptLevel,
+        agent_key: String,
+        name: String,
+        lang: String,
+    },
+    /// The served document with its metadata.
+    PromptRegistryGetResponse {
+        doc: super::super::prompt_registry::PromptRegistryDoc,
+    },
     /// Request for the subscribed custom-agent roster; answered by `CustomAgentListResponse`.
     CustomAgentList,
     /// Roster reply carrying one `CustomAgentInfo` per subscribed agent.

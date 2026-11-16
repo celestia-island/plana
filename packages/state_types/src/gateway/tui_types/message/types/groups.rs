@@ -127,6 +127,31 @@ pub mod layer2 {
     ];
 }
 
+/// String constants for the P5 prompt-registry variants.
+pub mod prompt_registry {
+    /// `Sync.PromptRegistryList` - client -> server; enumerate every
+    /// addressable prompt (builtin souls, system fragments, every
+    /// registered plugin agent's tools/skills).
+    pub const PROMPT_REGISTRY_LIST: &str = "PromptRegistryList";
+    /// `Sync.PromptRegistryListResponse` - server -> client; metadata
+    /// items with `sha256`/`body_chars` for cache decisions.
+    pub const PROMPT_REGISTRY_LIST_RESPONSE: &str = "PromptRegistryListResponse";
+    /// `Sync.PromptRegistryGet` - client -> server; fetch one document;
+    /// `lang` required, out-of-list locale is a named refusal.
+    pub const PROMPT_REGISTRY_GET: &str = "PromptRegistryGet";
+    /// `Sync.PromptRegistryGetResponse` - server -> client; the served
+    /// document and its metadata.
+    pub const PROMPT_REGISTRY_GET_RESPONSE: &str = "PromptRegistryGetResponse";
+
+    /// The 4 prompt-registry names as one slice, in declaration order.
+    pub const VARIANTS: &[&str] = &[
+        PROMPT_REGISTRY_LIST,
+        PROMPT_REGISTRY_LIST_RESPONSE,
+        PROMPT_REGISTRY_GET,
+        PROMPT_REGISTRY_GET_RESPONSE,
+    ];
+}
+
 /// String constants for core agent lifecycle variants.
 ///
 /// User ↔ agent messaging, streaming, reporting, orchestration status,
@@ -1169,6 +1194,7 @@ mod tests {
         let total: usize = [
             protocol::VARIANTS.len(),
             layer2::VARIANTS.len(),
+            prompt_registry::VARIANTS.len(),
             agent::VARIANTS.len(),
             task::VARIANTS.len(),
             llm::VARIANTS.len(),
@@ -1190,7 +1216,7 @@ mod tests {
         ]
         .iter()
         .sum();
-        assert_eq!(total, 215, "expected 215 grouped variants, got {total}");
+        assert_eq!(total, 219, "expected 219 grouped variants, got {total}");
     }
 
     #[test]
@@ -1198,6 +1224,7 @@ mod tests {
         let mut all: Vec<&str> = Vec::new();
         all.extend(protocol::VARIANTS);
         all.extend(layer2::VARIANTS);
+        all.extend(prompt_registry::VARIANTS);
         all.extend(agent::VARIANTS);
         all.extend(task::VARIANTS);
         all.extend(llm::VARIANTS);

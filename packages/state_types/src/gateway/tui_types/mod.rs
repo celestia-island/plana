@@ -18,6 +18,7 @@ pub mod layer2;
 /// The sync wire vocabulary: `SyncMessage` and the payload modules nested under
 /// it.
 pub mod message;
+pub mod prompt_registry;
 /// Configured-provider rows, usage-period kinds and per-period usage
 /// counters.
 pub mod provider;
@@ -57,6 +58,7 @@ pub use message::{
     ActorClaims, AuthUserInfo, ClientCapability, ClientNodeInfo, FilePayload, NoaEvent,
     PolemosDeviceInfo, REPORT_ORIGIN_YOLO_TICK, ReportProvenance, SyncMessage,
 };
+pub use prompt_registry::{PromptLevel, PromptRegistryDoc, PromptRegistryItem};
 
 // Industrial wire types (telemetry / alarm / discovery / write-approval /
 // station topology / alarm history) live in `message::types` but are
