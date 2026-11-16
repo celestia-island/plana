@@ -69,7 +69,7 @@ plana-infra-utils = { path = "packages/infra_utils", version = "^0.5" }
 plana-llm-provider = { path = "packages/llm_provider", version = "0.5" }
 plana_macros = { path = "packages/macros", version = "0.5", package = "plana-macros" }
 plana_prompt = { path = "packages/prompt", version = "0.5", package = "plana-prompt" }
-plana_state_sync = { path = "packages/state_types", version = "^0.5", package = "plana-state-sync" }
+plana_state_sync = { path = "packages/state_types", version = "^0.6", package = "plana-state-sync" }
 plana-sync = { path = "packages/sync" }
 plana_text = { path = "packages/text", version = "0.5", package = "plana-text" }
 plana_timeline = { package = "plana-timeline", path = "packages/timeline", version = "^0.5" }
