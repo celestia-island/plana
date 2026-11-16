@@ -718,6 +718,27 @@ pub enum SyncMessage {
         content: String,
         name: String,
     },
+    /// P5 prompt registry: list every addressable prompt (builtin souls,
+    /// system fragments, and every registered plugin agent's
+    /// tools/skills) with cache-oriented metadata only.
+    PromptRegistryList,
+    /// Reply to `PromptRegistryList`.
+    PromptRegistryListResponse {
+        items: Vec<super::super::prompt_registry::PromptRegistryItem>,
+    },
+    /// Fetch one document by `(level, agent_key, name)`; `lang` is
+    /// REQUIRED — a locale outside the item's `langs` is a named
+    /// refusal, never a silent fallback.
+    PromptRegistryGet {
+        level: super::super::prompt_registry::PromptLevel,
+        agent_key: String,
+        name: String,
+        lang: String,
+    },
+    /// The served document with its metadata.
+    PromptRegistryGetResponse {
+        doc: super::super::prompt_registry::PromptRegistryDoc,
+    },
     /// Request for the subscribed custom-agent roster; answered by `CustomAgentListResponse`.
     CustomAgentList,
     /// Roster reply carrying one `CustomAgentInfo` per subscribed agent.
@@ -2233,6 +2254,108 @@ pub enum SyncMessage {
 #[cfg(test)]
 mod tests {
     use super::SyncMessage;
+
+    #[test]
+    fn prompt_registry_variants_carry_the_wire_tags_and_refuse_a_missing_lang() {
+        // P5 wire pins (R2 suggestion): the four registry variants must
+        // serialize under their declared action tags, `lang` must stay
+        // REQUIRED on the wire (dropping it is a deserialization error,
+        // never a silent default), and the groups vocabulary must stay
+        // in lockstep with the enum — deleting a variant breaks this
+        // test's compilation, renaming a constant breaks the equality.
+        let get = SyncMessage::PromptRegistryGet {
+            level: super::super::super::prompt_registry::PromptLevel::Soul,
+            agent_key: "hubris".to_string(),
+            name: "x".to_string(),
+            lang: "en".to_string(),
+        };
+        let json = serde_json::to_value(&get).expect("serialize get");
+        assert_eq!(json["action"], "PromptRegistryGet");
+        assert_eq!(json["level"], "soul");
+
+        let list = SyncMessage::PromptRegistryList;
+        assert_eq!(
+            serde_json::to_value(&list).expect("serialize list")["action"],
+            "PromptRegistryList"
+        );
+
+        // The never-guessed wire contract: a Get without `lang` is a
+        // decoding error, not a defaulted one.
+        let missing_lang =
+            r#"{"action":"PromptRegistryGet","level":"soul","agent_key":"hubris","name":"x"}"#;
+        assert!(
+            serde_json::from_str::<SyncMessage>(missing_lang).is_err(),
+            "lang must be required on the wire"
+        );
+
+        // The responses are constructed here too: deleting any of the
+        // four variants breaks this test's compilation, and the tag
+        // assertions below bite a variant-level serde rename.
+        let list_resp = SyncMessage::PromptRegistryListResponse { items: vec![] };
+        assert_eq!(
+            serde_json::to_value(&list_resp).expect("serialize list resp")["action"],
+            "PromptRegistryListResponse"
+        );
+        let get_resp = SyncMessage::PromptRegistryGetResponse {
+            doc: super::super::super::prompt_registry::PromptRegistryDoc {
+                item: super::super::super::prompt_registry::PromptRegistryItem {
+                    level: super::super::super::prompt_registry::PromptLevel::Soul,
+                    agent_key: "hubris".to_string(),
+                    folder: "hubris".to_string(),
+                    name: "x".to_string(),
+                    langs: vec!["en".to_string()],
+                    sha256: "a".repeat(64),
+                    body_chars: 1,
+                },
+                lang: "en".to_string(),
+                body: "doc body".to_string(),
+            },
+        };
+        let resp_json = serde_json::to_value(&get_resp).expect("serialize get resp");
+        assert_eq!(resp_json["action"], "PromptRegistryGetResponse");
+        // Payload field names on the wire (a serde rename of
+        // agent_key/name/lang must go red here).
+        assert_eq!(resp_json["doc"]["item"]["agent_key"], "hubris");
+        assert_eq!(resp_json["doc"]["item"]["name"], "x");
+        assert_eq!(resp_json["doc"]["lang"], "en");
+
+        // A true roundtrip for the request shape: the parsed message is
+        // the same variant with every field intact.
+        let back: SyncMessage =
+            serde_json::from_value(serde_json::to_value(&get).expect("re-serialize get"))
+                .expect("roundtrip get");
+        match back {
+            SyncMessage::PromptRegistryGet {
+                level,
+                agent_key,
+                name,
+                lang,
+            } => {
+                assert_eq!(
+                    level,
+                    super::super::super::prompt_registry::PromptLevel::Soul
+                );
+                assert_eq!(agent_key, "hubris");
+                assert_eq!(name, "x");
+                assert_eq!(lang, "en");
+            }
+            other => panic!("roundtrip changed the variant: {other:?}"),
+        }
+
+        // Vocabulary reconciliation: every declared groups string is the
+        // action tag of a real variant (all four constructed above).
+        let expected: Vec<&str> = super::groups::prompt_registry::VARIANTS.to_vec();
+        assert_eq!(
+            expected,
+            vec![
+                "PromptRegistryList",
+                "PromptRegistryListResponse",
+                "PromptRegistryGet",
+                "PromptRegistryGetResponse",
+            ]
+        );
+    }
+
     use crate::gateway::Message;
 
     /// shittim-chest serializes `Sync.UserMessage.timestamp` as epoch-millis
