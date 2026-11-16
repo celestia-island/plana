@@ -2281,7 +2281,8 @@ mod tests {
 
         // The never-guessed wire contract: a Get without `lang` is a
         // decoding error, not a defaulted one.
-        let missing_lang = r#"{"action":"PromptRegistryGet","level":"soul","agent_key":"hubris","name":"x"}"#;
+        let missing_lang =
+            r#"{"action":"PromptRegistryGet","level":"soul","agent_key":"hubris","name":"x"}"#;
         assert!(
             serde_json::from_str::<SyncMessage>(missing_lang).is_err(),
             "lang must be required on the wire"
