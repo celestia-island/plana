@@ -2254,6 +2254,55 @@ pub enum SyncMessage {
 #[cfg(test)]
 mod tests {
     use super::SyncMessage;
+
+    #[test]
+    fn prompt_registry_variants_carry_the_wire_tags_and_refuse_a_missing_lang() {
+        // P5 wire pins (R2 suggestion): the four registry variants must
+        // serialize under their declared action tags, `lang` must stay
+        // REQUIRED on the wire (dropping it is a deserialization error,
+        // never a silent default), and the groups vocabulary must stay
+        // in lockstep with the enum — deleting a variant breaks this
+        // test's compilation, renaming a constant breaks the equality.
+        let get = SyncMessage::PromptRegistryGet {
+            level: super::super::super::prompt_registry::PromptLevel::Soul,
+            agent_key: "hubris".to_string(),
+            name: "x".to_string(),
+            lang: "en".to_string(),
+        };
+        let json = serde_json::to_value(&get).expect("serialize get");
+        assert_eq!(json["action"], "PromptRegistryGet");
+        assert_eq!(json["level"], "soul");
+
+        let list = SyncMessage::PromptRegistryList;
+        assert_eq!(
+            serde_json::to_value(&list).expect("serialize list")["action"],
+            "PromptRegistryList"
+        );
+
+        // The never-guessed wire contract: a Get without `lang` is a
+        // decoding error, not a defaulted one.
+        let missing_lang = r#"{"action":"PromptRegistryGet","level":"soul","agent_key":"hubris","name":"x"}"#;
+        assert!(
+            serde_json::from_str::<SyncMessage>(missing_lang).is_err(),
+            "lang must be required on the wire"
+        );
+
+        // Vocabulary reconciliation: every declared groups string is the
+        // action tag of a real variant (proven above for the two request
+        // shapes; the responses carry the same prefix by construction and
+        // are pinned by the roundtrips in prompt_registry.rs).
+        let expected: Vec<&str> = super::groups::prompt_registry::VARIANTS.to_vec();
+        assert_eq!(
+            expected,
+            vec![
+                "PromptRegistryList",
+                "PromptRegistryListResponse",
+                "PromptRegistryGet",
+                "PromptRegistryGetResponse",
+            ]
+        );
+    }
+
     use crate::gateway::Message;
 
     /// shittim-chest serializes `Sync.UserMessage.timestamp` as epoch-millis
