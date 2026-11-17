@@ -192,7 +192,7 @@ impl LlmProvider for OpenAiCompatibleProvider {
         request: LlmChatRequest,
         config: &ProviderConfig,
     ) -> Result<StreamResult, ProviderError> {
-        let client = self.create_http_client(config.timeout_duration())?;
+        let client = self.create_stream_http_client(config)?;
         let base_url = self.get_base_url(config);
         let url = format!("{}/chat/completions", base_url);
         let model = self.resolve_model(&request, config);
