@@ -5,7 +5,7 @@ name = "plana-infra-services"
 # cherino major bump changes type identity for every consumer while
 # cargo-semver-checks stays blind to it (the item paths read the same). A patch
 # number would understate that break.
-version = "0.6.1"
+version = "0.6.2"
 edition.workspace = true
 rust-version.workspace = true
 publish = true
