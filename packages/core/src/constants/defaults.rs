@@ -35,7 +35,6 @@ pub struct RuntimeTuningConfig {
     pub max_message_length: usize, // 0 = unlimited (outer transport handles size limits)
 
     pub recovery_threshold_secs: u64,
-    pub max_context_tokens: usize,
 
     pub skill_chain_temperature: f32,
 
@@ -167,10 +166,6 @@ impl RuntimeTuningConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(300),
-            max_context_tokens: std::env::var("MAX_CONTEXT_TOKENS")
-                .ok()
-                .and_then(|v| v.parse().ok())
-                .unwrap_or(8000),
 
             skill_chain_temperature: std::env::var("SKILL_CHAIN_TEMPERATURE")
                 .ok()
