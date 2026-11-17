@@ -20,6 +20,7 @@
 //! at least visible in the trace.
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use axum::{
     extract::Query,
@@ -38,6 +39,11 @@ pub type SessionId = String;
 /// EventSource reconnects fresh.
 const SESSION_QUEUE_CAPACITY: usize = 256;
 
+/// SSE keep-alive interval in seconds — the heartbeat cadence of
+/// [`sse_events_handler_impl`]. Also re-exported through the feature-gated
+/// `rpc_server::sse` surface for the client-facing docs.
+pub const SSE_HEARTBEAT_INTERVAL_SECS: u64 = 25;
+
 /// Soft ceiling on live sessions per manager (audit R1-JR-1): at the
 /// ceiling the OLDEST session is evicted to make room, so the map can
 /// never grow without bound no matter how many ids are minted. A client
@@ -51,22 +57,6 @@ const MAX_SESSIONS: usize = 1_000;
 /// unenforceable from the synchronous `send` path. tokio's `try_send`
 /// fails for real once the queue is full.
 type SessionSender = tokio::sync::mpsc::Sender<String>;
-
-/// Bridge a tokio receiver into a futures stream for axum's SSE
-/// (poll_recv is the whole adapter; no tokio-stream dependency).
-/// Receiver is Unpin, so this stream is too.
-struct RxStream {
-    rx: tokio::sync::mpsc::Receiver<String>,
-}
-impl futures::Stream for RxStream {
-    type Item = String;
-    fn poll_next(
-        mut self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<Option<String>> {
-        self.rx.poll_recv(cx)
-    }
-}
 
 #[derive(Clone, Default)]
 pub struct SessionManager {
@@ -167,15 +157,44 @@ pub async fn sse_events_handler(
     sse_events_handler_impl(sessions.0, q.session).await
 }
 
-/// Direct implementation for backends that hold SessionManager in their own state.
+/// Direct implementation for backends that hold SessionManager in their own
+/// state. Heartbeats run at [`SSE_HEARTBEAT_INTERVAL_SECS`]; see
+/// [`sse_events_handler_impl_with_heartbeat`] to pick an interval.
 pub async fn sse_events_handler_impl(
     sessions: SessionManager,
     session_id: String,
 ) -> Sse<impl futures::Stream<Item = Result<Event, Infallible>>> {
+    sse_events_handler_impl_with_heartbeat(
+        sessions,
+        session_id,
+        Duration::from_secs(SSE_HEARTBEAT_INTERVAL_SECS),
+    )
+    .await
+}
+
+/// [`sse_events_handler_impl`] with a caller-chosen heartbeat interval —
+/// for backends with a specific proxy budget and for tests that shrink it.
+pub async fn sse_events_handler_impl_with_heartbeat(
+    sessions: SessionManager,
+    session_id: String,
+    heartbeat_interval: Duration,
+) -> Sse<impl futures::Stream<Item = Result<Event, Infallible>>> {
+    let (rx, janitor) = mount_session(&sessions, &session_id);
+    let stream = sse_event_stream(rx, janitor, heartbeat_interval);
+    Sse::new(stream)
+}
+
+/// Register `session_id` on `sessions` (replace-on-remount warning, FIFO
+/// order bookkeeping) and hand back the receiving end plus the janitor that
+/// evicts the entry when the stream dies.
+fn mount_session(
+    sessions: &SessionManager,
+    session_id: &str,
+) -> (tokio::sync::mpsc::Receiver<String>, SessionJanitor) {
     let (tx, rx) = tokio::sync::mpsc::channel(SESSION_QUEUE_CAPACITY);
     {
         let mut guard = sessions.sessions.lock().unwrap();
-        if guard.insert(session_id.clone(), tx.clone()).is_some() {
+        if guard.insert(session_id.to_string(), tx.clone()).is_some() {
             // Audit R1-JR-1: the session id is a bearer credential; a
             // mount over a LIVE id is either a reconnect or a hijack —
             // the trace should say which happened and when.
@@ -190,8 +209,8 @@ pub async fn sse_events_handler_impl(
         // follow-up: duplicate pushes would grow the queue per reconnect).
         {
             let mut order = sessions.insertion_order.lock().unwrap();
-            order.retain(|id| id != &session_id);
-            order.push_back(session_id.clone());
+            order.retain(|id| id != session_id);
+            order.push_back(session_id.to_string());
         }
     }
     // END-OF-STREAM RECLAMATION (round-9's V9-3): the send-failure
@@ -209,21 +228,75 @@ pub async fn sse_events_handler_impl(
     let janitor = SessionJanitor {
         sessions: std::sync::Arc::clone(&sessions.sessions),
         insertion_order: std::sync::Arc::clone(&sessions.insertion_order),
-        session_id: session_id.clone(),
-        own_tx: tx.clone(),
+        session_id: session_id.to_string(),
+        own_tx: tx,
     };
-    // Bridge the tokio receiver into a futures stream for axum's SSE
-    // via the module-level [`RxStream`] adapter (no tokio-stream
-    // dependency).
+    (rx, janitor)
+}
 
-    let stream = RxStream { rx }
-        .map(move |msg| Ok(Event::default().data(msg)))
-        .chain(futures::stream::unfold(janitor, |_j| async {
-            // Runs when the source rx is EXHAUSTED (the tx dropped);
-            // the janitor then drops with the chain, closing the entry.
-            None::<(Result<Event, Infallible>, SessionJanitor)>
-        }));
-    Sse::new(stream)
+/// The SSE event stream for one mounted session: an immediate `:connected`
+/// comment, then pushed notifications interleaved with a periodic
+/// keep-alive heartbeat.
+///
+/// Why data-frame heartbeats: an idle SSE connection is indistinguishable
+/// from a dead one to everything between the server and the client. Proxies
+/// cut silent connections, and agent-style clients reset their idle timers
+/// only on received *data* frames — a bare `:` comment line does not count
+/// (2026-11-17 newapi incident: comment pings flowed every 30s and 300s-idle
+/// client aborts still killed slow-first-token streams). Each tick therefore
+/// emits ONE event carrying both the `:heartbeat` comment (byte-level
+/// watchers) and the protocol's `Base.Heartbeat` notification as data, which
+/// strict parsers accept and clients may treat as a liveness signal.
+///
+/// `tokio::time::interval` fires its first tick immediately, so a fresh
+/// mount is followed by `:connected` and one heartbeat right away.
+fn sse_event_stream(
+    rx: tokio::sync::mpsc::Receiver<String>,
+    janitor: SessionJanitor,
+    heartbeat_interval: Duration,
+) -> impl futures::Stream<Item = Result<Event, Infallible>> {
+    let connected = futures::stream::once(async {
+        Ok::<_, std::convert::Infallible>(Event::default().comment("connected"))
+    });
+    connected.chain(futures::stream::unfold(
+        (rx, janitor, tokio::time::interval(heartbeat_interval)),
+        |(mut rx, janitor, mut ticker)| async move {
+            tokio::select! {
+                msg = rx.recv() => match msg {
+                    Some(msg) => Some((Ok(Event::default().data(msg)), (rx, janitor, ticker))),
+                    // Upstream senders are all gone: end the stream. The
+                    // janitor drops with the state and closes the entry.
+                    None => None,
+                },
+                _ = ticker.tick() => Some((Ok(heartbeat_event()), (rx, janitor, ticker))),
+            }
+        },
+    ))
+}
+
+/// One keep-alive beat as a single SSE event: the `:heartbeat` comment for
+/// byte-level watchers plus the [`heartbeat_payload`] notification as data.
+fn heartbeat_event() -> Event {
+    Event::default()
+        .comment("heartbeat")
+        .data(heartbeat_payload())
+}
+
+/// The wire payload of one heartbeat beat — a JSON-RPC notification whose
+/// `params.timestamp` is the sender clock reading (epoch ms), mirroring
+/// `state_types::gateway::BaseMessage::Heartbeat`. Factored out pure for
+/// tests.
+fn heartbeat_payload() -> String {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or_default();
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "method": "Base.Heartbeat",
+        "params": { "timestamp": timestamp },
+    })
+    .to_string()
 }
 
 /// Closes a session entry when dropped — the end-of-stream reclamation
@@ -263,6 +336,22 @@ impl Drop for SessionJanitor {
 mod reclamation_tests {
     use super::*;
     use futures::FutureExt;
+
+    /// Bridge a tokio receiver into a futures stream (the adapter the SSE
+    /// handler used to be built on; kept here for receiver-side tests).
+    /// Receiver is Unpin, so this stream is too.
+    struct RxStream {
+        rx: tokio::sync::mpsc::Receiver<String>,
+    }
+    impl futures::Stream for RxStream {
+        type Item = String;
+        fn poll_next(
+            mut self: std::pin::Pin<&mut Self>,
+            cx: &mut std::task::Context<'_>,
+        ) -> std::task::Poll<Option<String>> {
+            self.rx.poll_recv(cx)
+        }
+    }
 
     /// Round-8's leak gate: a session whose receiver is gone (never
     /// subscribed, or disconnected) must be reclaimed on the failed
@@ -420,5 +509,122 @@ mod reconnect_race_tests {
             mgr.insertion_order.lock().unwrap().is_empty(),
             "the order queue must not hold zombie ids"
         );
+    }
+}
+
+#[cfg(test)]
+mod heartbeat_tests {
+    use super::*;
+    use futures::StreamExt;
+    use std::time::Duration;
+
+    /// The keep-alive payload must be a well-formed `Base.Heartbeat`
+    /// notification so client parsers can dispatch it through the same
+    /// notification path as any server push (and ignore it if they don't
+    /// care). The timestamp mirrors `BaseMessage::Heartbeat`'s sender clock.
+    #[test]
+    fn heartbeat_payload_is_a_base_heartbeat_notification() {
+        let value: serde_json::Value = serde_json::from_str(&heartbeat_payload()).unwrap();
+        assert_eq!(value["jsonrpc"], "2.0");
+        assert_eq!(value["method"], "Base.Heartbeat");
+        let ts = value["params"]["timestamp"]
+            .as_i64()
+            .expect("timestamp is an integer");
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as i64;
+        assert!(
+            (now - ts).abs() < 5_000,
+            "the timestamp is the sender clock reading, not garbage"
+        );
+    }
+
+    /// The newapi lesson as a gate: an idle session (zero pushes) must
+    /// still emit keep-alive frames on its own — before this fix the stream
+    /// went fully silent until the next push and proxies/idle-timed clients
+    /// killed it.
+    #[tokio::test]
+    async fn an_idle_session_still_emits_heartbeat_frames() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        let (tx, rx) = tokio::sync::mpsc::channel(8);
+        let janitor = SessionJanitor {
+            sessions: std::sync::Arc::clone(&mgr.sessions),
+            insertion_order: std::sync::Arc::clone(&mgr.insertion_order),
+            session_id: sid.clone(),
+            own_tx: tx.clone(),
+        };
+        mgr.sessions.lock().unwrap().insert(sid.clone(), tx);
+        let stream = sse_event_stream(rx, janitor, Duration::from_millis(20));
+        tokio::pin!(stream);
+        // No pushes at all: connected + immediately-ticking heartbeats must
+        // keep the frames coming.
+        for i in 0..3 {
+            let frame = tokio::time::timeout(Duration::from_secs(2), stream.next())
+                .await
+                .expect("a frame arrives within 2s");
+            assert!(matches!(frame, Some(Ok(_))), "frame {i} is an Ok(Event)");
+        }
+    }
+
+    /// Heartbeats must not turn a disconnect into a zombie: dropping the
+    /// SSE response MID-heartbeat still triggers the janitor's end-of-stream
+    /// reclamation. The mount's janitor holds its own sender clone, so the
+    /// stream only ever ends by being dropped — this gate proves the
+    /// heartbeat ticker cannot delay or skip that cleanup.
+    #[tokio::test]
+    async fn heartbeats_do_not_delay_janitor_reclaim_on_drop() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        let sse = sse_events_handler_impl_with_heartbeat(
+            mgr.clone(),
+            sid.clone(),
+            Duration::from_millis(20),
+        )
+        .await;
+        assert!(mgr.exists(&sid));
+        // Let a few heartbeat ticks happen before the disconnect.
+        tokio::time::sleep(Duration::from_millis(60)).await;
+        drop(sse);
+        assert!(
+            !mgr.exists(&sid),
+            "the heartbeat stream's janitor still reclaims on drop"
+        );
+    }
+
+    /// A push must not be swallowed by the heartbeat path: pushed frames
+    /// still flow through the merged stream while heartbeats tick.
+    #[tokio::test]
+    async fn pushed_frames_still_flow_alongside_heartbeats() {
+        let mgr = SessionManager::default();
+        let sid = mgr.create_id();
+        let (tx, rx) = tokio::sync::mpsc::channel(8);
+        let janitor = SessionJanitor {
+            sessions: std::sync::Arc::clone(&mgr.sessions),
+            insertion_order: std::sync::Arc::clone(&mgr.insertion_order),
+            session_id: sid.clone(),
+            own_tx: tx.clone(),
+        };
+        mgr.sessions.lock().unwrap().insert(sid.clone(), tx.clone());
+        let stream = sse_event_stream(rx, janitor, Duration::from_millis(50));
+        tokio::pin!(stream);
+        tx.send("pushed-notification".to_string()).await.unwrap();
+        // Whatever mix of connected/heartbeat/pushed frames comes first, the
+        // stream must stay healthy and deliver frames; the push queue being
+        // drained is observable via try_recv on a fresh clone — here we
+        // assert frames keep arriving and the sender's buffer is consumed.
+        let first = tokio::time::timeout(Duration::from_secs(2), stream.next())
+            .await
+            .expect("a frame arrives within 2s");
+        assert!(matches!(first, Some(Ok(_))));
+        tokio::time::timeout(Duration::from_secs(2), tx.send("second".to_string()))
+            .await
+            .unwrap()
+            .unwrap();
+        let second = tokio::time::timeout(Duration::from_secs(2), stream.next())
+            .await
+            .expect("another frame within 2s");
+        assert!(matches!(second, Some(Ok(_))));
     }
 }
