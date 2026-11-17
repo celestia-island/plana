@@ -395,6 +395,9 @@ pub struct ToolCallDelta {
 
 const DEFAULT_REQUEST_TIMEOUT_SECS: u64 = 120;
 const DEFAULT_ANTHROPIC_TIMEOUT_SECS: u64 = 180;
+/// Per-read idle window for STREAMING requests (seconds). A healthy stream
+/// may run for many minutes; only a stalled upstream should trip this.
+const DEFAULT_STREAM_IDLE_TIMEOUT_SECS: u64 = 90;
 
 /// Provider configuration for LLM API authentication.
 ///
@@ -415,6 +418,15 @@ pub struct ProviderConfig {
     pub protocol: Option<plana_config::GenProtocol>,
     #[serde(default)]
     pub request_timeout_secs: Option<u64>,
+    /// Per-read idle timeout for STREAMING requests, in seconds.
+    ///
+    /// Streaming responses are deliberately NOT bounded by
+    /// `request_timeout_secs`'s total deadline — a healthy stream may run
+    /// for many minutes and a total timeout aborts long generations
+    /// mid-flight. Instead every read on the response body must complete
+    /// within this window, so a stalled upstream is still noticed.
+    #[serde(default)]
+    pub stream_idle_timeout_secs: Option<u64>,
 }
 
 impl std::fmt::Debug for ProviderConfig {
@@ -426,6 +438,7 @@ impl std::fmt::Debug for ProviderConfig {
             .field("auth_type", &self.auth_type)
             .field("protocol", &self.protocol)
             .field("request_timeout_secs", &self.request_timeout_secs)
+            .field("stream_idle_timeout_secs", &self.stream_idle_timeout_secs)
             .finish()
     }
 }
@@ -445,6 +458,7 @@ impl ProviderConfig {
             auth_header: None,
             protocol: None,
             request_timeout_secs: None,
+            stream_idle_timeout_secs: None,
         }
     }
 
@@ -480,6 +494,11 @@ impl ProviderConfig {
         self
     }
 
+    pub fn with_stream_idle_timeout(mut self, secs: u64) -> Self {
+        self.stream_idle_timeout_secs = Some(secs);
+        self
+    }
+
     pub fn timeout_duration(&self) -> Duration {
         Duration::from_secs(
             self.request_timeout_secs
@@ -490,6 +509,12 @@ impl ProviderConfig {
     pub fn timeout_secs(&self) -> u64 {
         self.request_timeout_secs
             .unwrap_or(DEFAULT_REQUEST_TIMEOUT_SECS)
+    }
+
+    /// Per-read idle window for streaming requests, in seconds.
+    pub fn stream_idle_timeout_secs(&self) -> u64 {
+        self.stream_idle_timeout_secs
+            .unwrap_or(DEFAULT_STREAM_IDLE_TIMEOUT_SECS)
     }
 
     /// Read the API key string.
@@ -576,6 +601,30 @@ pub trait LlmProvider: Send + Sync {
             .map_err(|e| crate::errors::ProviderError::ConfigError {
                 key: CONFIG_KEY_HTTP_CLIENT.into(),
                 reason: format!("Failed to create HTTP client: {}", e),
+            })
+    }
+
+    /// HTTP client for STREAMING requests.
+    ///
+    /// A total deadline is wrong for streams: a healthy generation can run
+    /// for many minutes, and the old shape (reusing the total
+    /// `request_timeout_secs` here) aborted long responses mid-flight.
+    /// The streaming client therefore carries NO total timeout — only a
+    /// connect window and a per-read idle window
+    /// ([`ProviderConfig::stream_idle_timeout_secs`]) so a stalled upstream
+    /// is still detected while a slow-but-flowing one survives.
+    fn create_stream_http_client(
+        &self,
+        config: &ProviderConfig,
+    ) -> Result<reqwest::Client, crate::errors::ProviderError> {
+        ensure_rustls_crypto_provider();
+        reqwest::Client::builder()
+            .connect_timeout(config.timeout_duration())
+            .read_timeout(Duration::from_secs(config.stream_idle_timeout_secs()))
+            .build()
+            .map_err(|e| crate::errors::ProviderError::ConfigError {
+                key: CONFIG_KEY_HTTP_CLIENT.into(),
+                reason: format!("Failed to create streaming HTTP client: {}", e),
             })
     }
 
@@ -769,6 +818,25 @@ mod tests {
             .context("invalid Authorization header value")?;
         assert_eq!(auth_value, "Bearer bearer-token");
         Ok(())
+    }
+
+    #[test]
+    fn stream_idle_timeout_config_defaults_and_roundtrips() {
+        let mut config = ProviderConfig::new("test");
+        assert_eq!(
+            config.stream_idle_timeout_secs(),
+            DEFAULT_STREAM_IDLE_TIMEOUT_SECS,
+            "absent field falls back to the default idle window"
+        );
+        config = config.with_stream_idle_timeout(600);
+        assert_eq!(config.stream_idle_timeout_secs(), 600);
+        let deserialized: ProviderConfig =
+            serde_json::from_str("{\"api_key\":\"k\",\"extra_headers\":{}}").unwrap();
+        assert_eq!(
+            deserialized.stream_idle_timeout_secs(),
+            DEFAULT_STREAM_IDLE_TIMEOUT_SECS,
+            "serde default keeps old configs valid"
+        );
     }
 
     #[test]

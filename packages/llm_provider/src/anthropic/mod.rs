@@ -208,12 +208,7 @@ impl LlmProvider for AnthropicProvider {
         request: LlmChatRequest,
         config: &ProviderConfig,
     ) -> Result<StreamResult, ProviderError> {
-        let timeout = Duration::from_secs(
-            config
-                .request_timeout_secs
-                .unwrap_or(DEFAULT_ANTHROPIC_TIMEOUT_SECS),
-        );
-        let client = self.create_http_client(timeout)?;
+        let client = self.create_stream_http_client(config)?;
         let base_url = config
             .base_url
             .clone()

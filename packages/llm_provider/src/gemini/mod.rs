@@ -222,7 +222,7 @@ impl LlmProvider for GeminiProvider {
         request: LlmChatRequest,
         config: &ProviderConfig,
     ) -> Result<StreamResult, ProviderError> {
-        let client = self.create_http_client(config.timeout_duration())?;
+        let client = self.create_stream_http_client(config)?;
         let base_url = config
             .base_url
             .clone()
