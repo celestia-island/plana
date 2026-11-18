@@ -18,10 +18,7 @@ plana_state_sync = { workspace = true }
 anyhow.workspace = true
 chrono.workspace = true
 serde = { workspace = true, features = ["derive"] }
-serde_json.workspace = true
-serde_yaml.workspace = true
 tera.workspace = true
-thiserror.workspace = true
 tokio.workspace = true
 toml.workspace = true
 tracing.workspace = true

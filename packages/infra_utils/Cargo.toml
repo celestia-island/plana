@@ -29,6 +29,3 @@ thiserror.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "time", "net", "sync"] }
 tracing.workspace = true
 uuid = { workspace = true, features = ["v5"] }
-[dev-dependencies]
-
-tokio-test.workspace = true
