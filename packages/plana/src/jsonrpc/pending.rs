@@ -225,6 +225,15 @@ namespace!("Sync", Sync, SyncMethod,
     RequestBridgeNetwork       as SyncReq,
     RequestFileTree            as SyncReq,
     RequestFileRead            as SyncReq,
+    // ── Office file-manager plane (2026-11-19) ──
+    // Binary-safe read (RequestFileRead's UTF-8-lossy text corrupts
+    // zip-based office documents) + the write family; handled by
+    // scepter's raw-method arms, response payload is an untyped Value.
+    RequestFileBytes           as SyncReq,
+    FileWrite                  as SyncReq,
+    FileMkdir                  as SyncReq,
+    FileDelete                 as SyncReq,
+    FileRename                 as SyncReq,
     RequestModelList           as SyncReq,
     RequestModelServerAction   as SyncReq,
     AgentChunkRange            as OneWay,
@@ -457,6 +466,11 @@ flat_aliases!(
     RequestBridgeNetwork,
     RequestFileTree,
     RequestFileRead,
+    RequestFileBytes,
+    FileWrite,
+    FileMkdir,
+    FileDelete,
+    FileRename,
     RequestModelList,
     RequestModelServerAction,
     AgentChunkRange,

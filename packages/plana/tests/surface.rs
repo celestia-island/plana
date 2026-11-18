@@ -227,6 +227,27 @@ fn jsonrpc_flat_method_aliases_cover_the_consumer_namespaces() {
     let yolo_start = plana::jsonrpc::Method::SyncYoloStart;
     assert_eq!(yolo_start.method_name(), "Sync.YoloStart");
     assert_eq!(yolo_start.kind(), plana::jsonrpc::MessageKind::AsyncReq);
+    // The office file-manager plane (2026-11-19): five wire names the
+    // scepter raw-method arms will dispatch on. There is NO generic
+    // enumeration test — this representative set is the only pin the
+    // derived wire strings have, so the file family rides here too
+    // (a simultaneous rename in BOTH macro lists would otherwise
+    // compile green and silently change the wire contract).
+    let file_bytes = plana::jsonrpc::Method::SyncRequestFileBytes;
+    assert_eq!(file_bytes.method_name(), "Sync.RequestFileBytes");
+    assert_eq!(file_bytes.kind(), plana::jsonrpc::MessageKind::SyncReq);
+    let file_write = plana::jsonrpc::Method::SyncFileWrite;
+    assert_eq!(file_write.method_name(), "Sync.FileWrite");
+    assert_eq!(file_write.kind(), plana::jsonrpc::MessageKind::SyncReq);
+    let file_mkdir = plana::jsonrpc::Method::SyncFileMkdir;
+    assert_eq!(file_mkdir.method_name(), "Sync.FileMkdir");
+    assert_eq!(file_mkdir.kind(), plana::jsonrpc::MessageKind::SyncReq);
+    let file_delete = plana::jsonrpc::Method::SyncFileDelete;
+    assert_eq!(file_delete.method_name(), "Sync.FileDelete");
+    assert_eq!(file_delete.kind(), plana::jsonrpc::MessageKind::SyncReq);
+    let file_rename = plana::jsonrpc::Method::SyncFileRename;
+    assert_eq!(file_rename.method_name(), "Sync.FileRename");
+    assert_eq!(file_rename.kind(), plana::jsonrpc::MessageKind::SyncReq);
     // The flat aliases are `Method` values, not distinct types: the inner
     // and flat forms name the same enum instance on the wire.
     assert_eq!(
