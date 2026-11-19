@@ -27,7 +27,6 @@ tracing.workspace = true
 [dev-dependencies]
 
 criterion = "^0.5"
-tokio-test.workspace = true
 [[bench]]
 name = "skills_bench"
 harness = false
