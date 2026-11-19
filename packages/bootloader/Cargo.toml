@@ -30,7 +30,6 @@ plana-infra-utils = { workspace = true, optional = true }
 anyhow.workspace = true
 async-trait.workspace = true
 bollard = { workspace = true, optional = true }
-chrono.workspace = true
 dirs.workspace = true
 rand.workspace = true
 serde = { workspace = true, features = ["derive"] }

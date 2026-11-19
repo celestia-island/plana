@@ -37,7 +37,6 @@ default = []
 # backport) and stays registered as the "yuuka single line" follow-up.
 yuuka = { version = "^0.10" }
 
-kirino = { workspace = true }
 plana = { workspace = true }
 
 schemars = { workspace = true }
