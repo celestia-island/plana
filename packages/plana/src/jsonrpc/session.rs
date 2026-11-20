@@ -262,12 +262,12 @@ fn sse_event_stream(
         (rx, janitor, tokio::time::interval(heartbeat_interval)),
         |(mut rx, janitor, mut ticker)| async move {
             tokio::select! {
-                msg = rx.recv() => match msg {
-                    Some(msg) => Some((Ok(Event::default().data(msg)), (rx, janitor, ticker))),
-                    // Upstream senders are all gone: end the stream. The
-                    // janitor drops with the state and closes the entry.
-                    None => None,
-                },
+                msg = rx.recv() => {
+                    // `None` means upstream senders are all gone: end the
+                    // stream. The janitor drops with the state and closes the
+                    // entry.
+                    msg.map(|msg| (Ok(Event::default().data(msg)), (rx, janitor, ticker)))
+                }
                 _ = ticker.tick() => Some((Ok(heartbeat_event()), (rx, janitor, ticker))),
             }
         },
