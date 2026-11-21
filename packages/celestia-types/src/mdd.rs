@@ -7,11 +7,10 @@
 //!
 //! Consumers read an [`MddDescriptor`] and derive a concrete plan from it:
 //!
-//! ```text
-//!   MDD file ──▶ planner ──▶ component DAG ──▶ runtime selection ──▶ tiers
-//!                                  │
-//!                                  ▼
-//!                   evernight deploys the matching runtimes
+//! ```mermaid
+//! flowchart LR
+//!     F["MDD file"] --> P["planner"] --> D["component DAG"] --> R["runtime selection"] --> T["tiers"]
+//!     D --> E["evernight deploys the matching runtimes"]
 //! ```
 //!
 //! Schema versioning is explicit: `schema_version` identifies the descriptor
