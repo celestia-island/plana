@@ -7,16 +7,12 @@
 //! (scepter) nor the web UI (shittim-chest) loads, starts, or stops models
 //! directly. They send requests; evernight handles the lifecycle:
 //!
-//! ```text
-//!  WebUI (chest)   ──WS──▶  Scepter  ──▶  evernight
-//!  Scepter (RAG)   ──────────────────▶  evernight
-//!                                        │
-//!                   ┌────────────────────┴────────────────────┐
-//!                   │ GPU-first: detect GPU nodes → deploy     │
-//!                   │   vLLM / faster GPU backends             │
-//!                   │ GPU unavailable? → degrade to CPU:       │
-//!                   │   ollama / whisper.cpp / onnxruntime     │
-//!                   └─────────────────────────────────────────┘
+//! ```mermaid
+//! flowchart TD
+//!     W["WebUI (chest)"] -- "WS" --> S["Scepter"]
+//!     S --> E["evernight"]
+//!     R["Scepter (RAG)"] --> E
+//!     E --> G["GPU-first: detect GPU nodes → deploy<br/>vLLM / faster GPU backends<br/>GPU unavailable? → degrade to CPU:<br/>ollama / whisper.cpp / onnxruntime"]
 //! ```
 //!
 //! **GPU-first, CPU-fallback.** evernight always attempts GPU first. Only
