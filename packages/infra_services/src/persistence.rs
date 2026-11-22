@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use tracing::warn;
 use uuid::Uuid;
 
-use sea_orm::{ConnectionTrait, DatabaseConnection};
+use lacrymira::{Command, Dialect, Reply, Value};
+use lacrymira_pg::PgExecutor;
 
 use crate::types::{AgentMetadata, LogContext};
 
@@ -16,16 +17,36 @@ pub struct OnlineAgentInfo {
 }
 
 pub struct Persistence {
-    conn: DatabaseConnection,
+    conn: PgExecutor,
+}
+
+/// Positional cell lookup by column name inside one decoded row.
+fn cell<'a>(row: &'a [Value], columns: &[String], name: &str) -> Option<&'a Value> {
+    let idx = columns.iter().position(|c| c == name)?;
+    row.get(idx)
 }
 
 impl Persistence {
-    pub fn new(conn: DatabaseConnection) -> Self {
+    pub fn new(conn: PgExecutor) -> Self {
         Self { conn }
     }
 
-    pub fn get_connection(&self) -> &DatabaseConnection {
+    pub fn get_connection(&self) -> &PgExecutor {
         &self.conn
+    }
+
+    /// Run one raw single-statement SQL command with bound parameters
+    /// (the `Command::Sql` surface is prepared-statement based, so the
+    /// text must be a single statement; PostgreSQL type casts stay in
+    /// the SQL text, e.g. `$5::jsonb`).
+    async fn exec(&self, sql: &str, params: Vec<Value>) -> Result<Reply, lacrymira::Error> {
+        self.conn
+            .execute(&Command::Sql {
+                dialect: Dialect::Postgres,
+                text: sql.to_string(),
+                params,
+            })
+            .await
     }
 
     pub async fn save_agent(
@@ -38,8 +59,7 @@ impl Persistence {
         let metadata_json = serde_json::to_string(&metadata).unwrap_or_else(|_| "{}".to_string());
         let id = Uuid::now_v7();
 
-        let stmt = sea_orm::Statement::from_sql_and_values(
-            self.conn.get_database_backend(),
+        self.exec(
             r#"
             INSERT INTO agents (id, agent_type, agent_id, status, started_at, last_heartbeat, metadata, created_at, updated_at)
             VALUES ($1, $2, $3, $4, NOW(), NOW(), $5::jsonb, NOW(), NOW())
@@ -49,38 +69,34 @@ impl Persistence {
                 metadata = EXCLUDED.metadata,
                 updated_at = NOW()
             "#,
-            [
-                id.into(),
-                agent_type.into(),
-                agent_id.into(),
-                status.into(),
-                metadata_json.into(),
+            vec![
+                Value::Uuid(id.to_string()),
+                Value::Text(agent_type.to_string()),
+                Value::Text(agent_id.to_string()),
+                Value::Text(status.to_string()),
+                Value::Text(metadata_json),
             ],
-        );
-
-        self.conn
-            .execute_raw(stmt)
-            .await
-            .map_err(|e| anyhow!("Failed to save agent info: {}", e))?;
+        )
+        .await
+        .map_err(|e| anyhow!("Failed to save agent info: {}", e))?;
 
         Ok(())
     }
 
     pub async fn update_agent_status(&self, agent_id: &str, status: &str) -> Result<()> {
-        let stmt = sea_orm::Statement::from_sql_and_values(
-            self.conn.get_database_backend(),
+        self.exec(
             r#"
             UPDATE agents
             SET status = $1, last_heartbeat = NOW()
             WHERE agent_id = $2
             "#,
-            [status.into(), agent_id.into()],
-        );
-
-        self.conn
-            .execute_raw(stmt)
-            .await
-            .map_err(|e| anyhow!("Failed to update agent status: {}", e))?;
+            vec![
+                Value::Text(status.to_string()),
+                Value::Text(agent_id.to_string()),
+            ],
+        )
+        .await
+        .map_err(|e| anyhow!("Failed to update agent status: {}", e))?;
 
         Ok(())
     }
@@ -97,25 +113,21 @@ impl Persistence {
         let agent_type_val = agent_type.unwrap_or("");
         let agent_id_val = agent_id.unwrap_or("");
 
-        let stmt = sea_orm::Statement::from_sql_and_values(
-            self.conn.get_database_backend(),
+        self.exec(
             r#"
             INSERT INTO logs (level, agent_type, agent_id, message, context, created_at)
             VALUES ($1, $2, $3, $4, $5::jsonb, NOW())
             "#,
-            [
-                level.into(),
-                agent_type_val.into(),
-                agent_id_val.into(),
-                message.into(),
-                context_value.into(),
+            vec![
+                Value::Text(level.to_string()),
+                Value::Text(agent_type_val.to_string()),
+                Value::Text(agent_id_val.to_string()),
+                Value::Text(message.to_string()),
+                Value::Text(context_value),
             ],
-        );
-
-        self.conn
-            .execute_raw(stmt)
-            .await
-            .map_err(|e| anyhow!("Failed to log entry: {}", e))?;
+        )
+        .await
+        .map_err(|e| anyhow!("Failed to log entry: {}", e))?;
 
         Ok(())
     }
@@ -171,22 +183,25 @@ impl Persistence {
             SELECT count(*)::bigint FROM moved
         "#;
 
-        let stmt = sea_orm::Statement::from_sql_and_values(
-            self.conn.get_database_backend(),
-            sql,
-            [(stale_after_secs as i64).into()],
-        );
-
-        let row = self
-            .conn
-            .query_one_raw(stmt)
+        let reply = self
+            .exec(sql, vec![Value::I64(stale_after_secs as i64)])
             .await
-            .map_err(|e| anyhow!("Failed to mark stale agents offline: {}", e))?
-            .ok_or_else(|| anyhow!("mark_stale_agents_offline: no row returned"))?;
+            .map_err(|e| anyhow!("Failed to mark stale agents offline: {}", e))?;
 
-        let count: i64 = row
-            .try_get("", "count")
-            .map_err(|e| anyhow!("mark_stale_agents_offline: missing count: {}", e))?;
+        let count: i64 = match &reply {
+            Reply::Rows { columns, rows } if !rows.is_empty() => {
+                match cell(&rows[0], columns, "count") {
+                    Some(Value::I64(v)) => *v,
+                    other => {
+                        return Err(anyhow!(
+                            "mark_stale_agents_offline: missing count: got {:?}",
+                            other
+                        ));
+                    }
+                }
+            }
+            _ => return Err(anyhow!("mark_stale_agents_offline: no row returned")),
+        };
 
         Ok(count.max(0) as u64)
     }
@@ -204,53 +219,53 @@ impl Persistence {
             ORDER BY agent_type
         "#;
 
-        let stmt = sea_orm::Statement::from_string(self.conn.get_database_backend(), sql);
-
-        let rows = self
-            .conn
-            .query_all_raw(stmt)
+        let reply = self
+            .exec(sql, Vec::new())
             .await
             .map_err(|e| anyhow!("Failed to query online agents: {}", e))?;
 
+        let (columns, rows) = match reply {
+            Reply::Rows { columns, rows } => (columns, rows),
+            _ => return Ok(Vec::new()),
+        };
+
         let mut agents: Vec<OnlineAgentInfo> = Vec::new();
         for row in &rows {
-            let agent_type: String = match row.try_get("", "agent_type") {
-                Ok(v) => v,
-                Err(e) => {
-                    warn!(error = %e, "skipping row: missing agent_type");
+            let agent_type: String = match cell(row, &columns, "agent_type") {
+                Some(Value::Text(v)) => v.clone(),
+                other => {
+                    warn!(value = ?other, "skipping row: missing agent_type");
                     continue;
                 }
             };
-            let agent_id: String = match row.try_get("", "agent_id") {
-                Ok(v) => v,
-                Err(e) => {
-                    warn!(error = %e, "skipping row: missing agent_id");
+            let agent_id: String = match cell(row, &columns, "agent_id") {
+                Some(Value::Text(v)) => v.clone(),
+                other => {
+                    warn!(value = ?other, "skipping row: missing agent_id");
                     continue;
                 }
             };
             // `agents.started_at` / `last_heartbeat` are TIMESTAMPTZ
-            // (scepter baseline schema). Decoding them as `String` failed
-            // for EVERY row ("mismatched types"), so each `list_agents`
-            // call spammed one warn per row into the journal AND returned
-            // an empty roster — the 2026-10-27 journal-spam finding.
-            // Decode the timestamp and render RFC 3339; the wire shape of
-            // `OnlineAgentInfo` (String fields) is unchanged.
-            let started_at =
-                match row.try_get::<chrono::DateTime<chrono::FixedOffset>>("", "started_at") {
-                    Ok(v) => v.to_rfc3339(),
-                    Err(e) => {
-                        warn!(error = %e, "skipping row: missing started_at");
-                        continue;
-                    }
-                };
-            let last_heartbeat =
-                match row.try_get::<chrono::DateTime<chrono::FixedOffset>>("", "last_heartbeat") {
-                    Ok(v) => v.to_rfc3339(),
-                    Err(e) => {
-                        warn!(error = %e, "skipping row: missing last_heartbeat");
-                        continue;
-                    }
-                };
+            // (scepter baseline schema). lacrymira decodes them as RFC
+            // 3339 strings (`Value::Timestamp`); the wire shape of
+            // `OnlineAgentInfo` (String fields) is unchanged. The skip
+            // arms keep the 2026-10-27 journal-spam shape — a column
+            // that decodes to anything else must warn-and-skip, never
+            // fail the whole roster (nor return an empty one silently).
+            let started_at = match cell(row, &columns, "started_at") {
+                Some(Value::Timestamp(v)) => v.clone(),
+                other => {
+                    warn!(value = ?other, "skipping row: missing started_at");
+                    continue;
+                }
+            };
+            let last_heartbeat = match cell(row, &columns, "last_heartbeat") {
+                Some(Value::Timestamp(v)) => v.clone(),
+                other => {
+                    warn!(value = ?other, "skipping row: missing last_heartbeat");
+                    continue;
+                }
+            };
 
             agents.push(OnlineAgentInfo {
                 agent_type,
@@ -273,8 +288,9 @@ mod persistence_tests {
     /// baseline DDL). The historical `String` decode failed for EVERY row
     /// ("mismatched types"), spamming one warn per row per `list_agents`
     /// call and returning an EMPTY roster; the fix decodes the timestamp
-    /// and renders RFC 3339. Reverting to the `String` decode must turn
-    /// this red (every row lands in the skip arms again).
+    /// and renders RFC 3339. Reverting to a decode that cannot produce a
+    /// timestamp must turn this red (every row lands in the skip arms
+    /// again).
     ///
     /// Skips without `DATABASE_URL` — same guard shape as the services'
     /// DB-backed tests. Builds the table inline because the production
@@ -289,18 +305,21 @@ mod persistence_tests {
             }
         };
         // The pglite bridge multiplexes ONE in-memory session: cap the pool
-        // to one connection and run the whole fixture as a single statement
-        // — multiple pool round-trips degrade the bridge mid-test (ledger
-        // known-env 坑①/坑② family). Idempotent (IF NOT EXISTS + DELETE)
-        // so re-runs within one bridge lifetime work.
-        let mut opts = sea_orm::ConnectOptions::new(url);
-        opts.max_connections(1);
-        let conn = sea_orm::Database::connect(opts)
-            .await
-            .map_err(|e| anyhow!("connect test db: {e}"))?;
+        // to one connection and keep the fixture a single multi-statement
+        // round-trip via the raw pool (the `Command::Sql` surface is
+        // prepared-statement single-statement only) — multiple pool
+        // round-trips degrade the bridge mid-test (ledger known-env 坑①/坑②
+        // family). Idempotent (IF NOT EXISTS + DELETE) so re-runs within
+        // one bridge lifetime work.
+        let conn = PgExecutor::connect_with(
+            &url,
+            sqlx::postgres::PgPoolOptions::new().max_connections(1),
+        )
+        .await
+        .map_err(|e| anyhow!("connect test db: {e}"))?;
 
         // The production baseline shape: TIMESTAMPTZ, one Online row.
-        conn.execute_unprepared(
+        sqlx::raw_sql(
             "CREATE TEMP TABLE IF NOT EXISTS agents (
                 id UUID PRIMARY KEY,
                 agent_type TEXT NOT NULL,
@@ -316,6 +335,7 @@ mod persistence_tests {
             INSERT INTO agents (id, agent_type, agent_id, status, started_at, last_heartbeat, metadata, created_at, updated_at)
              VALUES ('01800000-0000-7000-8000-000000000001', 'aporia', 'decode-probe', 'Online', NOW(), NOW(), '{}', NOW(), NOW());",
         )
+        .execute(conn.pool())
         .await
         .map_err(|e| anyhow!("fixture: {e}"))?;
 

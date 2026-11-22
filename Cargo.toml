@@ -59,7 +59,7 @@ plana-config = { path = "packages/config", version = "^0.8" }
 plana_core = { path = "packages/core", version = "^0.8", package = "plana-core" }
 plana_domain_agent = { path = "packages/domain_agent", version = "^0.8", package = "plana-domain-agent" }
 plana_domain_skills_permissions = { path = "packages/domain_skills_permissions", version = "^0.8", package = "plana-domain-skills-permissions" }
-plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services", version = "^0.8" }
+plana_infra_services = { package = "plana-infra-services", path = "packages/infra_services", version = "^0.9" }
 plana-infra-utils = { path = "packages/infra_utils", version = "^0.8" }
 plana-llm-provider = { path = "packages/llm_provider", version = "^0.8" }
 plana_macros = { path = "packages/macros", version = "^0.8", package = "plana-macros" }
@@ -107,6 +107,10 @@ hmac = "^0.12"
 http = "^1"
 include_dir = { version = "^0.7", features = ["glob"] }
 interprocess = "^2"
+# lacrymira: the family data access layer (SQL and KV under one Command
+# surface) — infra_services speaks it instead of an ORM.
+lacrymira = { version = "^0.1" }
+lacrymira-pg = { version = "^0.1" }
 # libnoa 0.4.2 is on crates.io (noa tag v0.4.2 == the master tree this used to
 # follow), and it carries the redb 4 / suppaftp 12 line, so the registry copy no
 # longer drags the suppaftp 9 RUSTSEC-2026-0271 pin that forced the git edge.
@@ -133,15 +137,18 @@ reqwest = { version = "^0.13", default-features = false, features = [
 # Pinning rustls/hyper-rustls/tokio-rustls here with ring kills aws-lc-rs at the source.
 rustls = { version = "^0.23", default-features = false, features = ["ring", "std", "tls12"] }
 schemars = { version = "^1", features = ["derive", "uuid1"] }
-sea-orm = { version = "^2", features = [
-    "sqlx-postgres",
-    "runtime-tokio-rustls",
-    "macros",
-] }
 secrecy = { version = "^0.8", features = ["serde"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 sha2 = "^0.10"
+# Only for the infra_services test fixtures that need multi-statement
+# round-trips via `PgExecutor::pool()` (the `Command::Sql` surface is
+# single-statement); must stay on the sqlx line lacrymira-pg is built
+# against.
+sqlx = { version = "^0.9", default-features = false, features = [
+    "postgres",
+    "runtime-tokio",
+] }
 strum = { version = "^0.28", features = ["derive"] }
 sys-locale = "^0.3"
 tempfile = "^3"
