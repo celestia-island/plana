@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::{io::Write, time::Duration};
 use tokio::sync::mpsc;
 
-use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
+use lacrymira::{Command, Dialect, Value};
+use lacrymira_pg::PgExecutor;
 
 const DEFAULT_BUFFER_SIZE: usize = 50;
 const DEFAULT_FLUSH_INTERVAL_MS: u64 = 500;
@@ -25,7 +26,7 @@ pub struct PgLogWriter {
 
 impl PgLogWriter {
     pub fn new(
-        conn: DatabaseConnection,
+        conn: PgExecutor,
         buffer_size: Option<usize>,
         flush_interval: Option<Duration>,
     ) -> Self {
@@ -47,7 +48,7 @@ impl PgLogWriter {
 
     pub fn from_receiver(
         rx: mpsc::UnboundedReceiver<LogEntry>,
-        conn: DatabaseConnection,
+        conn: PgExecutor,
         buffer_size: Option<usize>,
         flush_interval: Option<Duration>,
     ) -> Self {
@@ -62,7 +63,7 @@ impl PgLogWriter {
 
     pub fn from_receiver_with_tap(
         rx: mpsc::UnboundedReceiver<LogEntry>,
-        conn: DatabaseConnection,
+        conn: PgExecutor,
         buffer_size: Option<usize>,
         flush_interval: Option<Duration>,
         tap: mpsc::UnboundedSender<LogEntry>,
@@ -95,7 +96,7 @@ impl PgLogWriter {
 }
 
 async fn writer_task(
-    conn: DatabaseConnection,
+    conn: PgExecutor,
     mut rx: mpsc::UnboundedReceiver<LogEntry>,
     buffer_size: usize,
     flush_interval: Duration,
@@ -150,7 +151,7 @@ enum SinkAction {
 }
 
 /// Pure classifier so the disable policy is unit-pinnable.
-fn classify_flush_failure(err: &sea_orm::DbErr) -> SinkAction {
+fn classify_flush_failure(err: &lacrymira::Error) -> SinkAction {
     if err.to_string().contains("does not exist") {
         SinkAction::Disable
     } else {
@@ -162,7 +163,7 @@ fn classify_flush_failure(err: &sea_orm::DbErr) -> SinkAction {
 /// way once attempted (same loss semantics as the previous writer) — the
 /// tap already received its copy on ingest.
 async fn drain(
-    conn: &DatabaseConnection,
+    conn: &PgExecutor,
     buffer: &mut Vec<LogEntry>,
     db_enabled: &mut bool,
     consecutive_failures: &mut u64,
@@ -206,17 +207,14 @@ async fn drain(
     }
 }
 
-async fn flush(
-    conn: &DatabaseConnection,
-    buffer: &mut Vec<LogEntry>,
-) -> Result<(), sea_orm::DbErr> {
+async fn flush(conn: &PgExecutor, buffer: &mut Vec<LogEntry>) -> Result<(), lacrymira::Error> {
     if buffer.is_empty() {
         return Ok(());
     }
 
     let mut values_parts: Vec<String> = Vec::with_capacity(buffer.len());
     let mut param_idx = 1;
-    let mut params: Vec<sea_orm::Value> = Vec::new();
+    let mut params: Vec<Value> = Vec::new();
 
     for entry in buffer.drain(..) {
         values_parts.push(format!(
@@ -231,17 +229,15 @@ async fn flush(
         ));
         param_idx += 7;
 
-        params.push(entry.source.into());
-        params.push(entry.instance_uuid.unwrap_or_default().into());
-        params.push(entry.level.into());
-        params.push(entry.target.unwrap_or_default().into());
-        params.push(entry.message.into());
-        params.push(
-            serde_json::to_string(&entry.fields)
-                .unwrap_or_else(|_| "{}".into())
-                .into(),
-        );
-        params.push(entry.created_at.into());
+        params.push(Value::Text(entry.source));
+        params.push(Value::Text(entry.instance_uuid.unwrap_or_default()));
+        params.push(Value::Text(entry.level));
+        params.push(Value::Text(entry.target.unwrap_or_default()));
+        params.push(Value::Text(entry.message));
+        params.push(Value::Text(
+            serde_json::to_string(&entry.fields).unwrap_or_else(|_| "{}".into()),
+        ));
+        params.push(Value::Timestamp(entry.created_at));
     }
 
     let sql = format!(
@@ -249,9 +245,13 @@ async fn flush(
         values_parts.join(", ")
     );
 
-    let stmt = sea_orm::Statement::from_sql_and_values(conn.get_database_backend(), sql, params);
-
-    conn.execute_raw(stmt).await.map(|_| ())
+    conn.execute(&Command::Sql {
+        dialect: Dialect::Postgres,
+        text: sql,
+        params,
+    })
+    .await
+    .map(|_| ())
 }
 
 /// Batch size for [`cleanup_old_logs`]: each DELETE touches at most this
@@ -259,7 +259,7 @@ async fn flush(
 /// INSERTs never queue behind it.
 pub const LOG_CLEANUP_BATCH: i64 = 5000;
 
-pub async fn cleanup_old_logs(conn: &DatabaseConnection, retention_days: u32) -> Result<u64> {
+pub async fn cleanup_old_logs(conn: &PgExecutor, retention_days: u32) -> Result<u64> {
     // Bounded batches (the 2026-10-07 incident review): a single
     // unbounded DELETE over an accumulated backlog holds its lock long
     // enough to block EVERY concurrent log INSERT — the insert queue
@@ -269,19 +269,25 @@ pub async fn cleanup_old_logs(conn: &DatabaseConnection, retention_days: u32) ->
     // drains the backlog to completion and reports the total.
     let mut total: u64 = 0;
     loop {
-        let stmt = Statement::from_sql_and_values(
-            conn.get_database_backend(),
-            "DELETE FROM log.entries WHERE id IN (\
-             SELECT id FROM log.entries \
-             WHERE created_at < NOW() - ($1::text || ' days')::interval \
-             LIMIT $2)",
-            [(retention_days as i64).into(), LOG_CLEANUP_BATCH.into()],
-        );
-        let n = conn
-            .execute_raw(stmt)
+        let reply = conn
+            .execute(&Command::Sql {
+                dialect: Dialect::Postgres,
+                text: "DELETE FROM log.entries WHERE id IN (\
+                 SELECT id FROM log.entries \
+                 WHERE created_at < NOW() - ($1::text || ' days')::interval \
+                 LIMIT $2)"
+                    .to_string(),
+                params: vec![
+                    Value::I64(retention_days as i64),
+                    Value::I64(LOG_CLEANUP_BATCH),
+                ],
+            })
             .await
-            .map_err(|e| anyhow!("Failed to clean up old logs: {}", e))?
-            .rows_affected();
+            .map_err(|e| anyhow!("Failed to clean up old logs: {}", e))?;
+        let n = match reply {
+            lacrymira::Reply::Affected(n) => n,
+            _ => 0,
+        };
         total += n;
         if (n as i64) < LOG_CLEANUP_BATCH {
             break;
@@ -301,19 +307,28 @@ mod cleanup_tests {
     #[test]
     fn missing_relation_disables_the_sink_other_errors_retry() {
         assert_eq!(
-            classify_flush_failure(&sea_orm::DbErr::Custom(
-                "error returned from database: relation \"log.entries\" does not exist".into()
-            )),
+            classify_flush_failure(&lacrymira::Error::Db {
+                kind: "syntax_or_access_error".into(),
+                message: "error returned from database: relation \"log.entries\" does not exist"
+                    .into(),
+                sqlstate: Some("42P01".into()),
+            }),
             SinkAction::Disable
         );
         assert_eq!(
-            classify_flush_failure(&sea_orm::DbErr::Custom(
-                "connection refused (os error 111)".into()
-            )),
+            classify_flush_failure(&lacrymira::Error::Db {
+                kind: "connection".into(),
+                message: "connection refused (os error 111)".into(),
+                sqlstate: None,
+            }),
             SinkAction::Keep
         );
         assert_eq!(
-            classify_flush_failure(&sea_orm::DbErr::Custom(String::new())),
+            classify_flush_failure(&lacrymira::Error::Db {
+                kind: "postgres".into(),
+                message: String::new(),
+                sqlstate: None,
+            }),
             SinkAction::Keep
         );
     }
@@ -329,34 +344,44 @@ mod cleanup_tests {
             eprintln!("SKIP: set PLANA_LOG_PG_URL to run the batching drain test");
             return;
         };
-        let conn = sea_orm::Database::connect(url)
-            .await
-            .expect("connect test pg");
+        // Single-connection pool (same discipline as the persistence
+        // TIMESTAMPTZ test): the pglite bridge multiplexes one session, and
+        // pool rotation across connections collides prepared-statement
+        // names inside it. Real PG is unaffected either way — the
+        // statements stay sequential.
+        let conn = PgExecutor::connect_with(
+            &url,
+            sqlx::postgres::PgPoolOptions::new().max_connections(1),
+        )
+        .await
+        .expect("connect test pg");
 
         // Seed: 12000 stale rows (older than the 30-day window used
-        // below) + one fresh row that must survive.
-        conn.execute_raw(Statement::from_string(
-            sea_orm::DatabaseBackend::Postgres,
-            "TRUNCATE log.entries RESTART IDENTITY".to_string(),
-        ))
-        .await
-        .expect("truncate");
-        conn.execute_raw(Statement::from_string(
-            sea_orm::DatabaseBackend::Postgres,
+        // below) + one fresh row that must survive. Each fixture
+        // statement is single-statement, so the `Command::Sql` surface
+        // carries them directly.
+        async fn raw(conn: &PgExecutor, sql: &str) {
+            conn.execute(&Command::Sql {
+                dialect: Dialect::Postgres,
+                text: sql.to_string(),
+                params: Vec::new(),
+            })
+            .await
+            .unwrap_or_else(|e| panic!("fixture statement failed: {e}"));
+        }
+        raw(&conn, "TRUNCATE log.entries RESTART IDENTITY").await;
+        raw(
+            &conn,
             "INSERT INTO log.entries (source, level, message, created_at) \
              SELECT 'test', 'info', 'stale', NOW() - (g || ' days')::interval \
-             FROM generate_series(1, 12000) g"
-                .to_string(),
-        ))
-        .await
-        .expect("seed stale");
-        conn.execute_raw(Statement::from_string(
-            sea_orm::DatabaseBackend::Postgres,
-            "INSERT INTO log.entries (source, level, message) VALUES ('test', 'info', 'fresh')"
-                .to_string(),
-        ))
-        .await
-        .expect("seed fresh");
+             FROM generate_series(1, 12000) g",
+        )
+        .await;
+        raw(
+            &conn,
+            "INSERT INTO log.entries (source, level, message) VALUES ('test', 'info', 'fresh')",
+        )
+        .await;
 
         // The 12000-row fixture exceeds LOG_CLEANUP_BATCH (5000), so
         // the drain spans multiple batches. The fixture spreads rows at
@@ -369,16 +394,30 @@ mod cleanup_tests {
             "the whole stale backlog drains (multi-batch)"
         );
 
-        let remaining = conn
-            .query_one_raw(Statement::from_string(
-                sea_orm::DatabaseBackend::Postgres,
-                "SELECT count(*) AS n, count(*) FILTER (WHERE message = 'fresh') AS f FROM log.entries".to_string(),
-            ))
+        let reply = conn
+            .execute(&Command::Sql {
+                dialect: Dialect::Postgres,
+                text: "SELECT count(*) AS n, count(*) FILTER (WHERE message = 'fresh') AS f FROM log.entries".to_string(),
+                params: Vec::new(),
+            })
             .await
-            .expect("count")
-            .expect("row");
-        let n: i64 = remaining.try_get("", "n").expect("n");
-        let f: i64 = remaining.try_get("", "f").expect("f");
+            .expect("count");
+        let lacrymira::Reply::Rows { columns, rows } = reply else {
+            panic!("count query returned no rows");
+        };
+        let row = rows.first().expect("row");
+        let get = |name: &str| -> i64 {
+            let idx = columns
+                .iter()
+                .position(|c| c == name)
+                .unwrap_or_else(|| panic!("column {name} missing"));
+            match &row[idx] {
+                Value::I64(v) => *v,
+                other => panic!("{name} not an integer count: {other:?}"),
+            }
+        };
+        let n = get("n");
+        let f = get("f");
         assert_eq!(
             (n, f),
             (30, 1),

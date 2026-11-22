@@ -4,8 +4,10 @@ name = "plana-infra-services"
 # re-exports cherino types (`ContainerRuntimeType`, `Box<dyn ContainerOps>`), so a
 # cherino major bump changes type identity for every consumer while
 # cargo-semver-checks stays blind to it (the item paths read the same). A patch
-# number would understate that break.
-version = "0.8.0"
+# number would understate that break. The 0.9.0 bump carries the same rule for
+# the lacrymira migration: `Persistence`/`PgLogWriter` constructors now take a
+# `lacrymira_pg::PgExecutor`, another type-identity break for consumers.
+version = "0.9.0"
 edition.workspace = true
 rust-version.workspace = true
 publish = true
@@ -30,8 +32,9 @@ async-trait.workspace = true
 base64.workspace = true
 chrono.workspace = true
 futures.workspace = true
+lacrymira.workspace = true
+lacrymira-pg.workspace = true
 rand.workspace = true
-sea-orm.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "time", "net", "io-util", "fs", "sync"] }
@@ -44,5 +47,6 @@ cherino-runtime.workspace = true
 
 [dev-dependencies]
 
+sqlx.workspace = true
 tempfile.workspace = true
 
