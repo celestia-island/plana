@@ -208,6 +208,8 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/oauth/token"))
             .and(body_string_contains("\"client_secret\":\"s3cr3t\""))
+            // MUT:accept-json — every call asks for JSON (module docs).
+            .and(header("Accept", "application/json"))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({"access_token": "at-2"})))
             .expect(1)
             .mount(&server)
@@ -216,6 +218,7 @@ mod tests {
             .and(path("/oauth/userinfo"))
             // MUT:bearer-header — the access token travels as a Bearer credential.
             .and(header("Authorization", "Bearer at-2"))
+            .and(header("Accept", "application/json"))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({"sub": "sub-1"})))
             .expect(1)
             .mount(&server)
@@ -236,6 +239,32 @@ mod tests {
             .await
             .expect("ok");
         assert_eq!(claims["sub"], "sub-1");
+    }
+
+    #[tokio::test]
+    async fn a_hanging_provider_is_cut_off_by_the_timeout() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(200).set_delay(Duration::from_secs(30)))
+            .mount(&server)
+            .await;
+        // MUT:bounded-timeout — without the client timeout this call would
+        // wait the full 30 s; the test finishes in well under a second.
+        let fetcher = ReqwestFetcher::with_timeout(Duration::from_millis(100)).expect("fetcher");
+        let started = std::time::Instant::now();
+        let err = fetcher
+            .post_form(
+                &base(&server, "/oauth/token"),
+                &[("grant_type", "authorization_code")],
+            )
+            .await
+            .unwrap_err()
+            .to_string();
+        assert!(err.starts_with("identity provider unreachable"), "{err}");
+        assert!(
+            started.elapsed() < Duration::from_secs(5),
+            "the timeout did not cut the call short"
+        );
     }
 
     #[tokio::test]
