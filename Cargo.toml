@@ -35,7 +35,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.8.0"
+version = "0.8.1"
 edition = "2024"
 rust-version = "1.91"
 authors = ["langyo <langyo.china@gmail.com>"]
@@ -109,8 +109,8 @@ include_dir = { version = "^0.7", features = ["glob"] }
 interprocess = "^2"
 # lacrymira: the family data access layer (SQL and KV under one Command
 # surface) — infra_services speaks it instead of an ORM.
-lacrymira = { version = "^0.1" }
-lacrymira-pg = { version = "^0.1" }
+lacrymira = { version = "^0.2" }
+lacrymira-pg = { version = "^0.2" }
 # libnoa 0.4.2 is on crates.io (noa tag v0.4.2 == the master tree this used to
 # follow), and it carries the redb 4 / suppaftp 12 line, so the registry copy no
 # longer drags the suppaftp 9 RUSTSEC-2026-0271 pin that forced the git edge.

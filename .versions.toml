@@ -35,6 +35,8 @@ npm = "0.1.14"
 "packages/rpc-server" = "independently published line"
 "packages/state_types" = "independently published line (plana-state-sync: DependencyDown re-export breaking bump; own 0.4.0 line per PR #553, mirroring the 0.3.0 line #544 cut for the SwarmCursorProjection variant)"
 "packages/tauri" = "independently published line (plana-tauri: last crates.io release 0.1.20, next 0.1.21; it no longer inherits the workspace 0.1.51 umbrella line)"
+"packages/infra_services" = "independently published line (plana-infra-services: own 0.9 line cut by #605 — constructors take lacrymira_pg::PgExecutor, so a lacrymira type-identity break needs its own minor bump the workspace patch line cannot carry; the exemption entry itself was forgotten there, leaving trunk verify-versions red since 2026-11-22)"
+"packages/bootloader" = "independently published line (plana-bootloader stays at the wave version it last shipped — 0.8.0, already on crates.io, so the publish job skips it this wave; it republishes only when its own manifest bumps)"
 "patches/ts-rs" = "vendored upstream ts-rs patch pinned to 12.0.1"
 "patches/ts-rs-macros" = "vendored upstream ts-rs patch pinned to 12.0.1"
 

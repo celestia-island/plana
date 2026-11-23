@@ -7,7 +7,16 @@ name = "plana-infra-services"
 # number would understate that break. The 0.9.0 bump carries the same rule for
 # the lacrymira migration: `Persistence`/`PgLogWriter` constructors now take a
 # `lacrymira_pg::PgExecutor`, another type-identity break for consumers.
-version = "0.9.0"
+# The 0.9.1 bump is a dependency-line move only (lacrymira/lacrymira-pg
+# ^0.1 → ^0.2): this crate's own declarations did not change, and the
+# `lacrymira_pg::PgExecutor` item paths consumers name are identical in
+# both lines. The upstream 0.2 surface is additive but not invisible to
+# consumers that ALSO use lacrymira directly (Select.lock/distinct,
+# Update.returning, and an ungated Value::NaiveTimestamp variant on the
+# closed enum): those consumers meet the additions through their own
+# lacrymira upgrade when cargo unifies the graph with this ^0.2 edge —
+# unlike 0.9.0, no constructor or signature OF THIS CRATE moved.
+version = "0.9.1"
 edition.workspace = true
 rust-version.workspace = true
 publish = true
