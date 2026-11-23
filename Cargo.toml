@@ -31,6 +31,7 @@ members = [
     "packages/provider-catalog",
     "packages/sync",
     "packages/dev_server",
+    "packages/identity_relay",
     "packages/assets",
 ]
 

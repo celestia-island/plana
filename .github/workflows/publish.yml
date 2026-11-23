@@ -389,5 +389,7 @@ jobs:
           publish_crate plana-timeline packages/timeline/Cargo.toml
           publish_crate plana-dev-server packages/dev_server/Cargo.toml
           publish_crate plana-sibling packages/sibling/Cargo.toml
+          # Registry-only dependencies (kirino from crates.io); no intra-family deps.
+          publish_crate plana-identity-relay packages/identity_relay/Cargo.toml
           publish_crate plana-infra-services packages/infra_services/Cargo.toml
           publish_crate plana-bootloader packages/bootloader/Cargo.toml
