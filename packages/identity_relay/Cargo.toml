@@ -1,0 +1,32 @@
+[package]
+name = "plana-identity-relay"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+description = "HTTP transport for kirino's OAuth relying-party core: a reqwest implementation of its HttpFetcher trait"
+license-file.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Layering: plana -> kirino. Only this member pulls kirino (and with it the
+# yuuka 0.6 line noted in `sync`/`celestia-types`), so the rest of plana's
+# graph stays free of it. kirino opens no socket by design; the transport
+# lives here.
+kirino = { version = "^0.9.6", default-features = false, features = ["auth-oauth"] }
+anyhow.workspace = true
+async-trait.workspace = true
+reqwest = { workspace = true, features = ["json", "form"] }
+# The workspace `reqwest` is built `rustls-no-provider`; a client cannot be
+# constructed until a crypto provider is installed (see `ensure_rustls_crypto_provider`).
+rustls = { workspace = true }
+serde_json.workspace = true
+thiserror.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+chrono.workspace = true
+tokio = { workspace = true, features = ["macros", "rt"] }
+wiremock.workspace = true
