@@ -45,6 +45,36 @@ fn app(landing: ErrorLanding) -> Router {
             "/html-error",
             get(|| async { (StatusCode::BAD_REQUEST, Html("<p>curated</p>")) }),
         )
+        .route(
+            "/validator-error",
+            get(|| async {
+                (
+                    StatusCode::NOT_FOUND,
+                    [
+                        (header::ETAG, "\"abc\""),
+                        (header::LAST_MODIFIED, "Wed, 21 Oct 2015 07:28:00 GMT"),
+                        (header::CONTENT_RANGE, "bytes 0-10/11"),
+                        (header::EXPIRES, "Wed, 21 Oct 2015 07:28:00 GMT"),
+                        (header::SET_COOKIE, "sid=1; Path=/"),
+                    ],
+                    Json(json!({ "error": "range not satisfiable" })),
+                )
+            }),
+        )
+        .route(
+            "/inner-compressed",
+            get(|| async {
+                (
+                    StatusCode::NOT_FOUND,
+                    [
+                        (header::CONTENT_TYPE, "application/json"),
+                        (header::CONTENT_ENCODING, " gzip "),
+                    ],
+                    // Bytes an inner gzip layer could have produced: not UTF-8.
+                    Body::from(vec![0x1f, 0x8b, 0x00, b'n', b'o', b't']),
+                )
+            }),
+        )
         .route("/ok", get(|| async { Html(SHELL) }))
         .route("/redirect", get(|| async { Redirect::to("/login") }))
         .route("/bare", get(|| async { StatusCode::NOT_FOUND }))
@@ -274,6 +304,46 @@ async fn the_landing_keeps_the_services_other_headers() {
     );
     assert!(document.contains(r#""status":401"#));
     assert!(document.contains(r#""message":"sign in first""#));
+}
+
+#[tokio::test]
+async fn validators_of_the_replaced_body_do_not_survive() {
+    let (status, headers, document) =
+        navigation(app(ErrorLanding::new(SHELL)), "/validator-error").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    // They described bytes that no longer exist; a revalidating or
+    // range-aware client must never act on them against the landing.
+    for gone in &[
+        header::ETAG,
+        header::LAST_MODIFIED,
+        header::CONTENT_RANGE,
+        header::EXPIRES,
+    ] {
+        assert_eq!(headers.get(gone), None, "{} survived", gone.as_str());
+    }
+    // What the service said to the CLIENT still does.
+    assert_eq!(headers[header::SET_COOKIE], "sid=1; Path=/");
+    assert_eq!(
+        headers[header::CONTENT_LENGTH].to_str().unwrap(),
+        document.len().to_string()
+    );
+}
+
+#[tokio::test]
+async fn a_body_an_inner_layer_already_encoded_is_left_alone() {
+    let (status, headers, body) = send(
+        app(ErrorLanding::new(SHELL)),
+        "GET",
+        "/inner-compressed",
+        &[("sec-fetch-dest", "document")],
+    )
+    .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    // The layer cannot read an encoded body, so it does not pretend to:
+    // bytes and the header that explains them pass through together.
+    assert_eq!(headers[header::CONTENT_ENCODING], " gzip ");
+    assert_eq!(headers[header::CONTENT_TYPE], "application/json");
+    assert_eq!(body, b"\x1f\x8b\x00not");
 }
 
 #[tokio::test]

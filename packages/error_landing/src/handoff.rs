@@ -19,12 +19,24 @@ pub const SERVER_ERROR_LANDING_VERSION: u8 = 1;
 /// `</head>`, else before `</body>`, else at the very end.
 pub const SERVER_ERROR_LANDING_MARKER: &str = "<!--hk-server-error-->";
 
-/// Headers of the JSON answer that describe a body the landing replaces.
-const REPLACED_BODY_HEADERS: [header::HeaderName; 4] = [
+/// Headers of the JSON answer that described the body the landing replaces
+/// — its type, length and encoding, its validators and range, its caching
+/// metadata — or that are hop-by-hop and never forwarded. None of them is
+/// true of the landing document, so none of them survives it.
+const REPLACED_BODY_HEADERS: [header::HeaderName; 13] = [
     header::CONTENT_TYPE,
     header::CONTENT_LENGTH,
     header::CONTENT_ENCODING,
     header::TRANSFER_ENCODING,
+    header::ETAG,
+    header::LAST_MODIFIED,
+    header::CONTENT_RANGE,
+    header::EXPIRES,
+    header::AGE,
+    header::PRAGMA,
+    header::CONNECTION,
+    header::TE,
+    header::TRAILER,
 ];
 
 /// The request headers the landing's eligibility depends on, written for
@@ -210,32 +222,100 @@ pub(crate) fn escape_island_json(json: &str) -> String {
 
 /// Seat the island in a shell: at [`SERVER_ERROR_LANDING_MARKER`] (which it
 /// replaces — a marker comment is not something to keep), else right before
-/// the first `</head>`, else the first `</body>`, else appended. Anchors
-/// match case-insensitively; byte offsets found in the lowercased shell are
-/// valid in the original, since ASCII lowercasing keeps every byte's length.
+/// the first `</head>`, else the first `</body>`, else appended.
+///
+/// Anchors are looked for in TOP-LEVEL markup only. An HTML comment, a
+/// `<script>` element and a `<style>` element are skipped whole, so a shell
+/// that merely mentions `</head>` in a comment or a JS string does not
+/// capture the island where the SPA could never read it. Anchors match
+/// case-insensitively; byte offsets found in the lowercased shell are valid
+/// in the original, since ASCII lowercasing keeps every byte's length.
 #[must_use]
 pub fn inject_island(shell: &str, island: &str) -> String {
     let lower = shell.to_ascii_lowercase();
-    if let Some(at) = lower.find(SERVER_ERROR_LANDING_MARKER) {
-        let mut out = String::with_capacity(shell.len() + island.len());
+    let skipped = skipped_spans(&lower);
+    // `Iterator::find` hands its predicate a reference to the item.
+    let outside = |at: &usize| {
+        !skipped
+            .iter()
+            .any(|(start, end)| *at >= *start && *at < *end)
+    };
+    let replacing = lower
+        .match_indices(SERVER_ERROR_LANDING_MARKER)
+        .map(|(at, _)| at)
+        .find(outside)
+        .map(|at| (at, SERVER_ERROR_LANDING_MARKER.len()));
+    let before = replacing.is_none().then(|| {
+        ["</head>", "</body>"]
+            .iter()
+            .find_map(|anchor| lower.match_indices(anchor).map(|(at, _)| at).find(outside))
+    });
+    let mut out = String::with_capacity(shell.len() + island.len());
+    if let Some((at, len)) = replacing {
         out.push_str(&shell[..at]);
         out.push_str(island);
-        out.push_str(&shell[at + SERVER_ERROR_LANDING_MARKER.len()..]);
-        return out;
+        out.push_str(&shell[at + len..]);
+    } else if let Some(at) = before.flatten() {
+        out.push_str(&shell[..at]);
+        out.push_str(island);
+        out.push_str(&shell[at..]);
+    } else {
+        out.push_str(shell);
+        out.push_str(island);
     }
-    for anchor in ["</head>", "</body>"] {
-        if let Some(at) = lower.find(anchor) {
-            let mut out = String::with_capacity(shell.len() + island.len());
-            out.push_str(&shell[..at]);
-            out.push_str(island);
-            out.push_str(&shell[at..]);
-            return out;
+    out
+}
+
+/// The byte ranges of a lowercased shell that are not top-level markup:
+/// each HTML comment (except the marker itself, which IS an anchor) and
+/// each `<script>` / `<style>` element, open tag to close tag.
+fn skipped_spans(lower: &str) -> Vec<(usize, usize)> {
+    let mut spans = Vec::new();
+    let mut at = 0;
+    while at < lower.len() {
+        let rest = &lower[at..];
+        if rest.starts_with(SERVER_ERROR_LANDING_MARKER) {
+            at += SERVER_ERROR_LANDING_MARKER.len();
+            continue;
+        }
+        if rest.starts_with("<!--") {
+            let end = rest.find("-->").map_or(lower.len(), |found| at + found + 3);
+            spans.push((at, end));
+            at = end;
+            continue;
+        }
+        if let Some(close) = raw_text_close(rest) {
+            let end = rest
+                .find(close)
+                .map_or(lower.len(), |found| at + found + close.len());
+            spans.push((at, end));
+            at = end;
+            continue;
+        }
+        // Next `<`: char-boundary safe (a slice may not start mid-character).
+        at += rest
+            .char_indices()
+            .nth(1)
+            .and_then(|(index, _)| rest[index..].find('<').map(|found| index + found))
+            .unwrap_or(rest.len());
+    }
+    spans
+}
+
+/// When `rest` opens a raw-text element (`<script>` / `<style>`, attribute
+/// list or self-closing slash allowed), the close tag that ends it.
+fn raw_text_close(rest: &str) -> Option<&'static str> {
+    for (open, close) in [("<script", "</script>"), ("<style", "</style>")] {
+        if let Some(tail) = rest.strip_prefix(open)
+            && tail
+                .chars()
+                .next()
+                .is_some_and(|next| matches!(next, ' ' | '\t' | '\n' | '\r' | '>' | '/'))
+        {
+            return Some(close);
         }
     }
-    let mut out = String::with_capacity(shell.len() + island.len());
-    out.push_str(shell);
-    out.push_str(island);
-    out
+    None
 }
 
 /// `Vary` for the landing: what the service already varied on, plus the two
@@ -273,30 +353,39 @@ fn merged_vary(original: &axum::http::HeaderMap) -> HeaderValue {
 /// `code` and `message` out of a JSON error object (the table on
 /// [`ServerErrorLanding::from_body`]).
 fn describe(object: &serde_json::Map<String, Value>) -> (String, String) {
-    let top_message = || {
-        object
-            .get("message")
+    let text_of = |value: Option<&Value>| {
+        value
             .and_then(Value::as_str)
             .map(str::trim)
             .filter(|text| !text.is_empty())
             .map(ToOwned::to_owned)
     };
+    let top_message = || text_of(object.get("message"));
     match object.get("error") {
-        // `{"error": "<text>"}` — and, with a top-level `message`,
-        // `{"error": "<code>", "message": "<text>"}`.
-        Some(Value::String(error)) => match top_message() {
-            Some(message) => (error.trim().to_owned(), message),
-            None => (String::new(), error.trim().to_owned()),
-        },
-        // `{"error": {"code" | "type", "message"}}`.
+        // `{"error": "<code>"}` — alone, or beside a top-level `message`:
+        // `{"error": "<code>", "message": "<text>"}`. A string with a space
+        // in it is no code, whatever key it rode in on: that is the other
+        // family shape, `{"error": "<text>"}`, and a top-level `message`
+        // there is the same text said more precisely.
+        Some(Value::String(error)) => {
+            let error = error.trim();
+            if looks_like_code(error) {
+                (error.to_owned(), top_message().unwrap_or_default())
+            } else {
+                (
+                    String::new(),
+                    top_message().unwrap_or_else(|| error.to_owned()),
+                )
+            }
+        }
+        // `{"error": {"code" | "type", "message"}}`; an object that names
+        // no text of its own falls back to the top-level `message`.
         Some(Value::Object(inner)) => {
-            let message = inner
-                .get("message")
-                .or_else(|| inner.get("prose"))
-                .and_then(Value::as_str)
-                .map(str::trim)
-                .unwrap_or_default()
-                .to_owned();
+            let message = ["message", "prose"]
+                .iter()
+                .find_map(|key| text_of(inner.get(*key)))
+                .or_else(top_message)
+                .unwrap_or_default();
             let code = ["code", "type", "kind"]
                 .iter()
                 .find_map(|key| inner.get(*key).and_then(scalar))
@@ -321,6 +410,19 @@ fn describe(object: &serde_json::Map<String, Value>) -> (String, String) {
             (code, message)
         }
     }
+}
+
+/// Whether an `error` string is spelled like a wire code rather than a
+/// sentence: one token of the characters services spell codes with
+/// (`not_found`, `policy_denied`, `http_410.gone`), at most 64 characters.
+/// Anything with whitespace, punctuation outside that set or non-ASCII text
+/// is a message.
+fn looks_like_code(text: &str) -> bool {
+    !text.is_empty()
+        && text.len() <= 64
+        && text
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-' | '.' | ':' | '/'))
 }
 
 /// A code-bearing value as a chip string: strings as written, numbers
@@ -470,6 +572,115 @@ mod tests {
             );
             assert_eq!(landing.status, status.as_u16());
         }
+    }
+
+    #[test]
+    fn a_sentence_in_the_error_field_is_copy_not_a_code() {
+        let json = HeaderValue::from_static("application/json");
+        // A service that puts its sentence under `error` and a detail under
+        // `message`: the sentence is no code, the detail is the copy.
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::BAD_GATEWAY,
+            Some(&json),
+            r#"{"error":"Something failed","message":"the upstream is down"}"#.as_bytes(),
+        );
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("", "the upstream is down")
+        );
+        // The sentence alone: it is the message.
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::BAD_GATEWAY,
+            Some(&json),
+            r#"{"error":"Something failed"}"#.as_bytes(),
+        );
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("", "Something failed")
+        );
+        // A code alone stays a code; the message falls back to the status reason.
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::NOT_FOUND,
+            Some(&json),
+            r#"{"error":"not_found"}"#.as_bytes(),
+        );
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("not_found", "Not Found")
+        );
+        // Punctuation a code never carries makes it a message.
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::BAD_REQUEST,
+            Some(&json),
+            r#"{"error":"备案号不能为空"}"#.as_bytes(),
+        );
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("", "备案号不能为空")
+        );
+    }
+
+    #[test]
+    fn a_nested_error_without_text_falls_back_to_the_top_level_message() {
+        let json = HeaderValue::from_static("application/json");
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::BAD_GATEWAY,
+            Some(&json),
+            r#"{"message":"x","error":{"code":0}}"#.as_bytes(),
+        );
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("0", "x")
+        );
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::BAD_GATEWAY,
+            Some(&json),
+            r#"{"message":"x","error":{}}"#.as_bytes(),
+        );
+        assert_eq!((landing.code.as_str(), landing.message.as_str()), ("", "x"));
+        // The nested text, when there is one, wins over the top level.
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::BAD_GATEWAY,
+            Some(&json),
+            r#"{"message":"outer","error":{"code":"inner_code","message":"inner"}}"#.as_bytes(),
+        );
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("inner_code", "inner")
+        );
+    }
+
+    #[test]
+    fn inject_ignores_anchors_inside_comments_scripts_and_styles() {
+        // `</head>` mentioned in a comment must not capture the island.
+        let shell = "<head><!-- put </head> here? no --><title>t</title></head><body>b</body>";
+        assert_eq!(
+            inject_island(shell, "[i]"),
+            "<head><!-- put </head> here? no --><title>t</title>[i]</head><body>b</body>"
+        );
+        // The same text inside a JS string.
+        let shell = "<head><script>var s = '</head>';</script></head><body>b</body>";
+        assert_eq!(
+            inject_island(shell, "[i]"),
+            "<head><script>var s = '</head>';</script>[i]</head><body>b</body>"
+        );
+        // Inside a style rule; and a marker inside a script is not the marker.
+        let shell = "<head><style>a::after{content:'</head>'}</style></head><body><script>var t = '<!--hk-server-error-->';</script></body>";
+        assert_eq!(
+            inject_island(shell, "[i]"),
+            "<head><style>a::after{content:'</head>'}</style>[i]</head><body><script>var t = '<!--hk-server-error-->';</script></body>"
+        );
+        // An unterminated comment swallows the rest: nothing is top level,
+        // so the island is appended.
+        assert_eq!(
+            inject_island("<head><!-- never closed </head>", "[i]"),
+            "<head><!-- never closed </head>[i]"
+        );
+        // Multi-byte text before the anchors keeps every offset on a char boundary.
+        assert_eq!(
+            inject_island("<html>错误<head></head>", "[i]"),
+            "<html>错误<head>[i]</head>"
+        );
     }
 
     #[test]

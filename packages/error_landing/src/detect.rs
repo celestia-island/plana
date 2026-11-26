@@ -64,31 +64,62 @@ pub fn is_browser_navigation(method: &Method, headers: &HeaderMap) -> bool {
     if headers.contains_key(header::UPGRADE) {
         return false;
     }
-    match headers.get("sec-fetch-dest") {
-        Some(value) => match value.to_str() {
-            Ok(dest) => matches!(
-                dest.trim().to_ascii_lowercase().as_str(),
-                "document" | "iframe"
-            ),
-            // Present but not UTF-8: the sender is a browser-class client
-            // whose verdict cannot be read, so the Accept fallback decides.
-            Err(_) => accepts_html(headers),
-        },
-        None => accepts_html(headers),
+    let dests: Vec<&HeaderValue> = headers.get_all("sec-fetch-dest").iter().collect();
+    if !dests.is_empty() {
+        let mut unreadable = false;
+        for value in &dests {
+            match value.to_str() {
+                Ok(dest) => {
+                    if matches!(
+                        dest.trim().to_ascii_lowercase().as_str(),
+                        "document" | "iframe" | "nested-document"
+                    ) {
+                        return true;
+                    }
+                }
+                // Present but not UTF-8: the sender is a browser-class client
+                // whose verdict cannot be read, so the Accept fallback decides.
+                Err(_) => unreadable = true,
+            }
+        }
+        if !unreadable {
+            return false;
+        }
     }
+    accepts_html(headers)
 }
 
-/// The `Accept` fallback: at least one media range names `text/html`.
+/// The `Accept` fallback: at least one media range names `text/html`, and
+/// not with `q=0` — that is an explicit refusal of it.
 fn accepts_html(headers: &HeaderMap) -> bool {
     headers.get_all(header::ACCEPT).iter().any(|value| {
-        value.to_str().unwrap_or_default().split(',').any(|range| {
-            range
-                .split(';')
-                .next()
-                .unwrap_or_default()
-                .trim()
-                .eq_ignore_ascii_case("text/html")
-        })
+        value
+            .to_str()
+            .unwrap_or_default()
+            .split(',')
+            .any(range_wants_html)
+    })
+}
+
+/// Whether one `Accept` media range (the text between commas) asks for
+/// `text/html`: the media type is it, and no `q` parameter refuses it.
+fn range_wants_html(range: &str) -> bool {
+    let mut parts = range.split(';');
+    let media = parts.next().unwrap_or_default().trim();
+    if !media.eq_ignore_ascii_case("text/html") {
+        return false;
+    }
+    !parts.any(|parameter| {
+        parameter
+            .trim()
+            .split_once('=')
+            .is_some_and(|(name, value)| {
+                name.trim().eq_ignore_ascii_case("q")
+                    && value
+                        .trim()
+                        .parse::<f32>()
+                        .is_ok_and(|weight| weight == 0.0)
+            })
     })
 }
 
@@ -121,6 +152,16 @@ mod tests {
             &Method::GET,
             &headers(&[("sec-fetch-dest", "iframe")])
         ));
+        // A document nested through <embed>/<object> is a framed document too.
+        assert!(is_browser_navigation(
+            &Method::GET,
+            &headers(&[("sec-fetch-dest", "nested-document")])
+        ));
+        // A repeated header is read as a whole: a navigation anywhere in it
+        // is a navigation.
+        let mut repeated = headers(&[("sec-fetch-dest", "empty")]);
+        repeated.append("sec-fetch-dest", HeaderValue::from_static("document"));
+        assert!(is_browser_navigation(&Method::GET, &repeated));
     }
 
     #[test]
@@ -160,6 +201,9 @@ mod tests {
             "application/json",
             "application/json, text/plain",
             "text/html-ish",
+            // `q=0` is an explicit refusal of HTML, not a request for it.
+            "text/html;q=0",
+            "text/html; q=0.0, application/json",
             "",
         ] {
             assert!(

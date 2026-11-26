@@ -44,7 +44,11 @@
 //! `/` (the embedded `include_dir!` tree, the `rust-embed` asset, the file
 //! read at startup). The island is injected where the shell asks for it
 //! ([`SERVER_ERROR_LANDING_MARKER`]), else before `</head>`, else before
-//! `</body>`, else appended. Without a shell the layer is inert: a headless
+//! `</body>`, else appended — always in top-level markup: text inside an
+//! HTML comment, a `<script>` or a `<style>` element is never taken for an
+//! anchor. The card hikari paints is the family's one design: an HTTP
+//! status chip, the wire code, the service's copy, the raw response under
+//! a details pane, a 4xx in the warning tone and a 5xx in the error tone. Without a shell the layer is inert: a headless
 //! build without a frontend keeps answering JSON.
 //!
 //! ```no_run
