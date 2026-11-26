@@ -685,14 +685,14 @@ mod tests {
             inject_island("<head><!-- never closed </head>", "[i]"),
             "<head><!-- never closed </head>[i]"
         );
-        // A look-alike element name is not the element: `<scriptx>` opens
-        // nothing, so its contents are ordinary top-level markup.
+        // A look-alike element name is not the element: `<scriptx>` opens no
+        // raw-text span, so scanning continues and the FIRST `</body>` — the
+        // one inside that look-alike's text — is the anchor. Had the boundary
+        // check been skipped, the whole tail would have been treated as one
+        // script and the island would have been appended past the real close.
         assert_eq!(
-            inject_island(
-                "<html><head></head><body><div><scriptx>var s = '</body>';</scriptx></div></body></html>",
-                "[i]"
-            ),
-            "<html><head>[i]</head><body><div><scriptx>var s = '</body>';</scriptx></div></body></html>"
+            inject_island("<body><scriptx>var s = '</body>';</scriptx></body>", "[i]"),
+            "<body><scriptx>var s = '[i]</body>';</scriptx></body>"
         );
         // Multi-byte text before the anchors keeps every offset on a char boundary.
         assert_eq!(
