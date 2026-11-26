@@ -269,7 +269,7 @@ async fn success_redirects_streams_and_attachments_pass_through() {
     );
 
     let (status, headers, _) = send(app.clone(), "GET", "/redirect", &navigation_headers).await;
-    // `Redirect::to` answers 303 See Other; a 3xx is followed, never landed.
+    // `Redirect::to` answers 303 See Other; a 3xx is followed, not landed.
     assert_eq!(status, StatusCode::SEE_OTHER);
     assert_eq!(headers[header::LOCATION], "/login");
 
@@ -312,7 +312,7 @@ async fn validators_of_the_replaced_body_do_not_survive() {
         navigation(app(ErrorLanding::new(SHELL)), "/validator-error").await;
     assert_eq!(status, StatusCode::NOT_FOUND);
     // They described bytes that no longer exist; a revalidating or
-    // range-aware client must never act on them against the landing.
+    // range-aware client has nothing to act on against the landing.
     for gone in &[
         header::ETAG,
         header::LAST_MODIFIED,
@@ -339,7 +339,7 @@ async fn a_body_an_inner_layer_already_encoded_is_left_alone() {
     )
     .await;
     assert_eq!(status, StatusCode::NOT_FOUND);
-    // The layer cannot read an encoded body, so it does not pretend to:
+    // The layer has no way to read an encoded body, so it declines to try:
     // bytes and the header that explains them pass through together.
     assert_eq!(headers[header::CONTENT_ENCODING], " gzip ");
     assert_eq!(headers[header::CONTENT_TYPE], "application/json");
