@@ -48,8 +48,10 @@
 //! HTML comment, a `<script>` or a `<style>` element is never taken for an
 //! anchor. The card hikari paints is the family's one design: an HTTP
 //! status chip, the wire code, the service's copy, the raw response under
-//! a details pane, a 4xx in the warning tone and a 5xx in the error tone. Without a shell the layer is inert: a headless
-//! build without a frontend keeps answering JSON.
+//! a details pane — a 4xx in the warning tone, a 5xx in the error one.
+//!
+//! Without a shell the layer is inert: a headless build without a frontend
+//! keeps answering JSON.
 //!
 //! ```no_run
 //! use std::sync::Arc;

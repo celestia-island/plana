@@ -462,6 +462,23 @@ mod tests {
     }
 
     #[test]
+    fn island_escapes_every_markup_character_individually() {
+        // Exact equality, so the removal of ANY ONE of the five escape arms
+        // — `<`, `>`, `&`, U+2028, U+2029 — leaves a literal character in
+        // the island and fails here.
+        let landing =
+            ServerErrorLanding::new(StatusCode::BAD_REQUEST, "x", "a<b>c&d\u{2028}e\u{2029}");
+        assert_eq!(
+            island_of(&landing),
+            concat!(
+                "<script type=\"application/json\" id=\"hk-server-error\">",
+                "{\"v\":1,\"status\":400,\"code\":\"x\",\"message\":\"a\\u003cb\\u003ec\\u0026d\\u2028e\\u2029\"}",
+                "</script>"
+            )
+        );
+    }
+
+    #[test]
     fn island_escapes_markup_so_no_payload_can_close_it() {
         let landing =
             ServerErrorLanding::new(StatusCode::BAD_REQUEST, "x", "</script><b>&\u{2028}")
