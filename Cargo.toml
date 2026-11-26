@@ -33,6 +33,7 @@ members = [
     "packages/dev_server",
     "packages/identity_relay",
     "packages/assets",
+    "packages/error_landing",
 ]
 
 [workspace.package]
@@ -106,6 +107,7 @@ hex = "^0.4"
 # wallet-service bridge line protocol).
 hmac = "^0.12"
 http = "^1"
+http-body-util = "^0.1"
 include_dir = { version = "^0.7", features = ["glob"] }
 interprocess = "^2"
 # lacrymira: the family data access layer (SQL and KV under one Command
