@@ -68,6 +68,13 @@ pub struct ServerErrorLanding {
 impl ServerErrorLanding {
     /// A handoff with the service's own copy. `message` empty is replaced by
     /// the status's canonical reason, so the card never shows a blank line.
+    ///
+    /// The status is NOT validated here: this constructor is for a service
+    /// that has already decided the answer is a failure, and the layer
+    /// ([`crate::ErrorLanding`]) is what gates a response on being 4xx/5xx.
+    /// A caller that builds a landing for a 2xx answers the visitor with a
+    /// document hikari refuses to render (its own range check) — a mistake
+    /// that is visible immediately and harms nothing.
     #[must_use]
     pub fn new(status: StatusCode, code: impl Into<String>, message: impl Into<String>) -> Self {
         Self::compose(status, code.into(), message.into(), None)
@@ -103,7 +110,7 @@ impl ServerErrorLanding {
     /// |---|---|---|---|
     /// | `{"error": "<text>"}` | the family's most common error body | — | the text |
     /// | `{"error": "<code>", "message": "<text>"}` | a wire code beside its text | the code | the text |
-    /// | `{"error": {"code", "message", "type"}}` | a nested error object; JSON-RPC error frames | `code`, else `type` | `message` |
+    /// | `{"error": {"code", "message" \| "prose", "type"}}` | a nested error object; JSON-RPC error frames | `code`, else `type` | `message`, else `prose`, else the top-level `message` |
     /// | `{"code", "message"}` / RFC 9457 `{"type", "title", "detail"}` | a flat code pair; problem details | `code`, else `type` | `message`, else `detail`, else `title` |
     /// | any `text/plain`, or a body declared JSON that does not parse | a gateway's API lane; axum's own defaults | — | the text |
     /// | empty | axum's bare 404 / 405 | — | the status's canonical reason |
@@ -169,7 +176,9 @@ impl ServerErrorLanding {
 
     /// The HTTP answer: the shell with the island, at the status the service
     /// answered with, uncacheable, with every header the service set except
-    /// the four that described the replaced body.
+    /// those that described the replaced body ([`REPLACED_BODY_HEADERS`]:
+    /// its type, length, encoding, validators, range and caching metadata,
+    /// plus the hop-by-hop set).
     pub(crate) fn into_response(
         self,
         parts: axum::http::response::Parts,
@@ -676,10 +685,65 @@ mod tests {
             inject_island("<head><!-- never closed </head>", "[i]"),
             "<head><!-- never closed </head>[i]"
         );
+        // A look-alike element name is not the element: `<scriptx>` opens
+        // nothing, so its contents are ordinary top-level markup.
+        assert_eq!(
+            inject_island(
+                "<html><head></head><body><div><scriptx>var s = '</body>';</scriptx></div></body></html>",
+                "[i]"
+            ),
+            "<html><head>[i]</head><body><div><scriptx>var s = '</body>';</scriptx></div></body></html>"
+        );
         // Multi-byte text before the anchors keeps every offset on a char boundary.
         assert_eq!(
             inject_island("<html>错误<head></head>", "[i]"),
             "<html>错误<head>[i]</head>"
+        );
+    }
+
+    #[test]
+    fn a_code_shaped_string_is_capped_at_a_64_character_chip() {
+        let json = HeaderValue::from_static("application/json");
+        // 64 characters: still a chip.
+        let at_cap = "c".repeat(64);
+        let body = format!(r#"{{"error":"{at_cap}"}}"#);
+        let landing =
+            ServerErrorLanding::from_body(StatusCode::BAD_REQUEST, Some(&json), body.as_bytes());
+        assert_eq!(landing.code, at_cap);
+        // 65 characters: past the cap, so it is copy, not a chip.
+        let past_cap = "c".repeat(65);
+        let body = format!(r#"{{"error":"{past_cap}"}}"#);
+        let landing =
+            ServerErrorLanding::from_body(StatusCode::BAD_REQUEST, Some(&json), body.as_bytes());
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("", past_cap.as_str())
+        );
+    }
+
+    #[test]
+    fn from_body_keeps_a_declared_json_body_it_could_not_parse() {
+        // The details pane reads `raw`; dropping it here would be a silent
+        // loss of the only copy the visitor could hand to an operator.
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::BAD_REQUEST,
+            Some(&HeaderValue::from_static("application/json")),
+            b"{not json",
+        );
+        assert_eq!(landing.message, "{not json");
+        assert_eq!(landing.raw, Some(Value::String("{not json".to_owned())));
+    }
+
+    #[test]
+    fn a_nested_error_carries_its_prose_when_it_has_no_message() {
+        let landing = ServerErrorLanding::from_body(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Some(&HeaderValue::from_static("application/json")),
+            br#"{"error":{"code":"invalid","prose":"the field is required"}}"#,
+        );
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("invalid", "the field is required")
         );
     }
 
