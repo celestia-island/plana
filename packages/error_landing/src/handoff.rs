@@ -111,7 +111,7 @@ impl ServerErrorLanding {
     /// | `{"error": "<text>"}` | the family's most common error body | — | the text |
     /// | `{"error": "<code>", "message": "<text>"}` | a wire code beside its text | the code | the text |
     /// | `{"error": {"code", "message" \| "prose", "type"}}` | a nested error object; JSON-RPC error frames | `code`, else `type` | `message`, else `prose`, else the top-level `message` |
-    /// | `{"code", "message"}` / RFC 9457 `{"type", "title", "detail"}` | a flat code pair; problem details | `code`, else `type` | `message`, else `detail`, else `title` |
+    /// | `{"code", "message"}` / RFC 9457 `{"type", "title", "detail"}` | a flat code pair; problem details | `code`, else `type` — **when it looks like a code** | `message`, else `detail`, else `title` |
     /// | any `text/plain`, or a body declared JSON that does not parse | a gateway's API lane; axum's own defaults | — | the text |
     /// | empty | axum's bare 404 / 405 | — | the status's canonical reason |
     ///
@@ -359,6 +359,26 @@ fn merged_vary(original: &axum::http::HeaderMap) -> HeaderValue {
         .unwrap_or_else(|_| HeaderValue::from_static("Sec-Fetch-Dest, Accept"))
 }
 
+/// The chip candidate from a `code` / `type` / `kind` key: the last URL
+/// segment (`problem-type` out of an RFC 9457 `type` URI), and — exactly
+/// like the `error` string arm — a CODE only when it looks like one. A
+/// sentence parked under any of these keys is copy the message ladder can
+/// still reach; it is never promoted to the chip.
+fn code_key_value(object: &serde_json::Map<String, Value>) -> String {
+    ["code", "type", "kind"]
+        .iter()
+        .find_map(|key| object.get(*key).and_then(scalar))
+        .map(|code| {
+            code.rsplit(['/', '#'])
+                .next()
+                .unwrap_or(&code)
+                .trim()
+                .to_owned()
+        })
+        .filter(|code| looks_like_code(code))
+        .unwrap_or_default()
+}
+
 /// `code` and `message` out of a JSON error object (the table on
 /// [`ServerErrorLanding::from_body`]).
 fn describe(object: &serde_json::Map<String, Value>) -> (String, String) {
@@ -395,10 +415,7 @@ fn describe(object: &serde_json::Map<String, Value>) -> (String, String) {
                 .find_map(|key| text_of(inner.get(*key)))
                 .or_else(top_message)
                 .unwrap_or_default();
-            let code = ["code", "type", "kind"]
-                .iter()
-                .find_map(|key| inner.get(*key).and_then(scalar))
-                .unwrap_or_default();
+            let code = code_key_value(inner);
             (code, message)
         }
         // `{"code", "message"}`, RFC 9457 `{"type", "title", "detail"}`.
@@ -411,11 +428,7 @@ fn describe(object: &serde_json::Map<String, Value>) -> (String, String) {
                     .unwrap_or_default()
                     .to_owned()
             });
-            let code = ["code", "type", "kind"]
-                .iter()
-                .find_map(|key| object.get(*key).and_then(scalar))
-                .map(|code| code.rsplit(['/', '#']).next().unwrap_or(&code).to_owned())
-                .unwrap_or_default();
+            let code = code_key_value(object);
             (code, message)
         }
     }
@@ -735,6 +748,60 @@ mod tests {
         assert_eq!(
             (landing.code.as_str(), landing.message.as_str()),
             ("", past_cap.as_str())
+        );
+    }
+
+    #[test]
+    fn a_sentence_in_a_code_key_is_copy_not_a_chip() {
+        let json = HeaderValue::from_static("application/json");
+        // Flat keys: `code` / `type` / `kind` go through the same sentence
+        // gate as the `error` string arm.
+        for body in [
+            r#"{"code":"Something went wrong with the identity provider","message":"x"}"#,
+            r#"{"kind":"The upstream is unavailable right now","message":"y"}"#,
+            r#"{"message":"y","error":{"code":"Something went very wrong indeed and here is the sentence"}}"#,
+        ] {
+            let landing = ServerErrorLanding::from_body(
+                StatusCode::BAD_GATEWAY,
+                Some(&json),
+                body.as_bytes(),
+            );
+            let expected = if body.contains("identity provider") {
+                "x"
+            } else {
+                "y"
+            };
+            assert_eq!(
+                (landing.code.as_str(), landing.message.as_str()),
+                ("", expected),
+                "body {body}"
+            );
+        }
+        // A code-shaped value still becomes the chip, on every key.
+        for (body, code) in [
+            (r#"{"code":"policy_denied","message":"x"}"#, "policy_denied"),
+            (r#"{"kind":"rate_limited"}"#, "rate_limited"),
+            (
+                r#"{"message":"y","error":{"code":"inner_code"}}"#,
+                "inner_code",
+            ),
+        ] {
+            let landing = ServerErrorLanding::from_body(
+                StatusCode::BAD_REQUEST,
+                Some(&json),
+                body.as_bytes(),
+            );
+            assert_eq!(landing.code, code, "body {body}");
+        }
+        // Past the 64-character cap the chip empties, exactly like the
+        // `error` arm; the copy survives via the message ladder.
+        let long = "c".repeat(65);
+        let body = format!(r#"{{"code":"{long}","message":"kept"}}"#);
+        let landing =
+            ServerErrorLanding::from_body(StatusCode::BAD_REQUEST, Some(&json), body.as_bytes());
+        assert_eq!(
+            (landing.code.as_str(), landing.message.as_str()),
+            ("", "kept")
         );
     }
 
