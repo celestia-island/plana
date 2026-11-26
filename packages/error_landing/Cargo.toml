@@ -1,0 +1,30 @@
+[package]
+name = "plana-error-landing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = true
+description = "Turn a failed browser navigation into the family error landing: the hk-server-error handoff for axum services"
+license-file.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Deliberately standalone: no dependency on any other plana crate, so a
+# service that takes its plana crates from crates.io on an older line pulls
+# this one from git without dragging in a second copy of those.
+axum = { workspace = true }
+http = { workspace = true }
+http-body-util = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tower-layer = "0.3"
+tower-service = "0.3"
+
+[dev-dependencies]
+bytes = { workspace = true }
+futures = { workspace = true }
+http-body-util = { workspace = true }
+tokio = { workspace = true }
+tower = { version = "0.5", features = ["util"] }
