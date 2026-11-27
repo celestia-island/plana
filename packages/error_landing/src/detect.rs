@@ -230,6 +230,49 @@ mod tests {
         ));
     }
 
+    /// The two headers pull in opposite directions here: `Sec-Fetch-Dest`
+    /// names a document, `Accept` names JSON. `Sec-Fetch-Dest` is
+    /// authoritative, so the request is a navigation and the landing's
+    /// destination half is what must stay. The reverse pair — a resource
+    /// load that ASKS for HTML — belongs to the test below it, and both
+    /// under the same rule.
+    ///
+    /// Where `Sec-Fetch-Dest` names no document, `Accept` alone decides:
+    /// `empty` beside `*/*` is not a navigation, `document` beside `*/*` is.
+    // MUT:m3-detect-accept-fallback drops the `return false` for a readable
+    // non-document destination; MUT:m4-detect-permissive-return turns it into
+    // `return true`. Both red the `empty` rows below.
+    #[test]
+    fn a_document_destination_outranks_a_json_accept() {
+        for (dest, accept, navigation) in [
+            ("document", "application/json", true),
+            ("iframe", "application/json", true),
+            // The controls on either side of that verdict.
+            ("document", "*/*", true),
+            ("empty", "text/html", false),
+            ("empty", "application/json", false),
+            ("empty", "*/*", false),
+        ] {
+            assert_eq!(
+                is_browser_navigation(
+                    &Method::GET,
+                    &headers(&[("sec-fetch-dest", dest), ("accept", accept)])
+                ),
+                navigation,
+                "dest {dest} accept {accept}"
+            );
+        }
+        // No `Sec-Fetch-Dest` at all: the `Accept` fallback answers.
+        assert!(is_browser_navigation(
+            &Method::GET,
+            &headers(&[("accept", "text/html")])
+        ));
+        assert!(!is_browser_navigation(
+            &Method::GET,
+            &headers(&[("accept", "application/json")])
+        ));
+    }
+
     #[test]
     fn body_kind_by_content_type() {
         for (raw, kind) in [

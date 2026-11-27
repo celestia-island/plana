@@ -418,3 +418,68 @@ fn the_public_constants_name_the_island_hikari_reads() {
     assert_eq!(SERVER_ERROR_LANDING_ID, "hk-server-error");
     assert_eq!(SERVER_ERROR_LANDING_MARKER, "<!--hk-server-error-->");
 }
+
+/// The provenance meta hikari's standalone build stamps: `v` (the island
+/// contract), the hikari version, the build sha (`<dev>` for a tree build).
+fn assert_standalone_marks(document: &str) {
+    assert!(
+        document.contains("<meta name=\"hk-error-landing\" content=\"v1 0.55.498 <dev>\">"),
+        "the vendored document keeps its provenance meta"
+    );
+    assert!(document.contains("id=\"hk-server-error\""));
+    // MUT:m2-inject-anchor-fallback drops the anchor scan in `inject_island`,
+    // which moves the island out of the document and reds HERE.
+    // MUT:m1-standalone-disabled turns `standalone()` into `disabled()` and
+    // never reaches this assertion: the answer is the bare JSON, so the
+    // `content-type` check in the test below reds first. The
+    // `standalone().wants(...)` assertion in `layer.rs` is its bite point.
+    // One executable module script: the landing paints itself. That is the
+    // no-CSP constraint `standalone()` documents.
+    assert_eq!(document.matches("<script type=\"module\">").count(), 1);
+}
+
+#[tokio::test]
+async fn a_service_with_no_shell_answers_a_navigation_with_the_standalone_landing() {
+    let (status, headers, document) =
+        navigation(app(ErrorLanding::standalone()), "/json-error").await;
+    // The status and the framing are the layer's, unchanged.
+    assert_eq!(status, StatusCode::BAD_GATEWAY);
+    assert_eq!(headers[header::CONTENT_TYPE], "text/html; charset=utf-8");
+    assert_eq!(headers[header::CACHE_CONTROL], "no-store");
+    assert_standalone_marks(&document);
+    // The island carries the error the service answered with.
+    assert!(document.contains(r#""status":502"#));
+    assert!(document.contains(OAUTH_MESSAGE));
+}
+
+#[tokio::test]
+async fn a_fetch_caller_of_a_standalone_service_keeps_the_json() {
+    let wire = format!(r#"{{"error":"{OAUTH_MESSAGE}"}}"#);
+    let (status, headers, body) = send(
+        app(ErrorLanding::standalone()),
+        "GET",
+        "/json-error",
+        &[("sec-fetch-dest", "empty"), ("accept", "application/json")],
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_GATEWAY);
+    assert_eq!(headers[header::CONTENT_TYPE], "application/json");
+    assert_eq!(String::from_utf8(body).expect("utf-8"), wire);
+}
+
+#[tokio::test]
+async fn a_disabled_landing_still_replaces_nothing_of_the_standalone_kind() {
+    let (status, headers, body) = send(
+        app(ErrorLanding::disabled()),
+        "GET",
+        "/json-error",
+        &[("sec-fetch-dest", "document")],
+    )
+    .await;
+    assert_eq!(status, StatusCode::BAD_GATEWAY);
+    assert_eq!(headers[header::CONTENT_TYPE], "application/json");
+    assert_eq!(
+        String::from_utf8(body).expect("utf-8"),
+        format!(r#"{{"error":"{OAUTH_MESSAGE}"}}"#)
+    );
+}
