@@ -42,14 +42,21 @@ fn api_call() -> HeaderMap {
     headers
 }
 
-/// Every header class the landing must DROP: they described the body being
-/// replaced, or are hop-by-hop, and none of them is true of the landing
-/// document. One per class in `handoff.rs`'s replaced-body set, so dropping
-/// any entry from that set lands a stale header here.
+/// One header of every class in `handoff.rs`'s replaced-body set, carrying a
+/// value that is TRUE of the wire JSON and FALSE of the landing document —
+/// so a member the assembly forgot to drop shows up here as a stale value
+/// rather than as a coincidentally-correct one.
 ///
-/// `content-type` and `content-length` are absent by construction — the
-/// answers below SET them, and the landing sets them to its own values.
-const REPLACED_BODY_METADATA: [(&str, &str); 11] = [
+/// Two members are asserted differently from the rest. `content-type` and
+/// `content-length` are REPLACED rather than dropped by the assembly (it sets
+/// its own type, and `Body::from` regenerates the length from the landing
+/// document), so those two are asserted "not the stale value"; every other
+/// member is asserted absent outright. A surviving `content-length: 2` would
+/// truncate the client at two bytes, which is why its wire value has to be
+/// impossible for the landing.
+const REPLACED_BODY_METADATA: [(&str, &str); 13] = [
+    ("content-type", "application/json"),
+    ("content-length", "2"),
     ("content-encoding", "identity"),
     ("transfer-encoding", "chunked"),
     ("etag", "\"abc\""),
@@ -157,12 +164,28 @@ async fn a_domain_declared_landing_answers_what_the_layer_would() {
             "{name} must survive the landing"
         );
     }
-    // … and nothing that described the replaced body does.
-    for (name, _) in REPLACED_BODY_METADATA {
+    // … and nothing that described the replaced body does. Every stale value
+    // is asserted GONE. `content-type` and `content-length` are the two the
+    // landing REPLACES rather than drops (the type assertion above is one; the
+    // length is regenerated from the landing document by `Body::from`), so they
+    // are asserted as "not the stale value" — a surviving `content-length: 2`
+    // would truncate the client at two bytes.
+    for (name, stale) in REPLACED_BODY_METADATA {
+        let seen = response
+            .headers()
+            .get(name)
+            .map(|value| value.to_str().unwrap_or_default());
+        assert!(
+            seen != Some(stale),
+            "{name} survived the landing carrying the replaced body's value {stale:?} \
+             (the landing answers its own document, not that body)"
+        );
+        if name == "content-length" || name == "content-type" {
+            continue;
+        }
         assert_eq!(
-            response.headers().get(name),
-            None,
-            "{name} described the body the landing replaced and must not survive"
+            seen, None,
+            "{name} described the body the landing replaced and must not survive (stale {stale})"
         );
     }
 
@@ -369,4 +392,18 @@ fn the_layer_and_the_assembly_exist_side_by_side() {
     let _disabled = ErrorLanding::disabled();
     let _standalone = ErrorLanding::standalone();
     let _html: Html<&str> = Html(SHELL);
+}
+
+#[test]
+fn wants_answers_navigation_and_shell_together() {
+    // The mount-side predicate: "this request's error would be replaced",
+    // which is BOTH halves of the rule. Public so a caller that composes the
+    // landing itself asks the same combined question instead of re-deriving
+    // "shell present AND navigating" from two separate exports.
+    assert!(ErrorLanding::new(SHELL).wants(&Method::GET, &navigation()));
+    assert!(!ErrorLanding::new(SHELL).wants(&Method::GET, &api_call()));
+    // No shell: nothing is replaced, however the request looks.
+    assert!(!ErrorLanding::disabled().wants(&Method::GET, &navigation()));
+    // A landing has a body, so HEAD never qualifies.
+    assert!(!ErrorLanding::new(SHELL).wants(&Method::HEAD, &navigation()));
 }
