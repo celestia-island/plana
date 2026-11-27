@@ -7,6 +7,10 @@
 //! exported does not compile here. That is the point: the wrapper below is
 //! the `chest-app` shape (navigation judgment → bare-text predicate →
 //! landing response), and it carries no rule of its own.
+//!
+//! MUT:mCL-narrowing-a-name-breaks-this-file — narrowing any widened name back
+//! to `pub(crate)`/private fails THIS file's compile (not an assertion), which
+//! is what makes the sentence above load-bearing rather than decorative.
 
 use axum::body::Body;
 use axum::http::header;
@@ -313,7 +317,8 @@ async fn the_bare_text_predicate_declines_what_a_caller_must_not_replace() {
         &[("content-type", "application/json")]
     )));
     // A body the visitor was never shown as text, an encoded one, or an
-    // attachment: each is somebody else's answer.
+    // attachment: each is somebody else's answer. MUT:m3-predicate-accepts-html
+    // turns `BodyKind::Other` into `true` and reds the `text/html` row here.
     assert!(!is_bare_text(&of(
         StatusCode::BAD_REQUEST,
         &[("content-type", "text/html; charset=utf-8")]
@@ -403,7 +408,10 @@ fn wants_answers_navigation_and_shell_together() {
     assert!(ErrorLanding::new(SHELL).wants(&Method::GET, &navigation()));
     assert!(!ErrorLanding::new(SHELL).wants(&Method::GET, &api_call()));
     // No shell: nothing is replaced, however the request looks.
+    // MUT:mW-wants-drops-the-shell-half reds the assertion right below.
     assert!(!ErrorLanding::disabled().wants(&Method::GET, &navigation()));
-    // A landing has a body, so HEAD never qualifies.
+    // A landing has a body, so HEAD never qualifies. MUT:m6-service-ignores-wants
+    // (the service path skipping the request-side judgment) is pinned by
+    // `landing::head_requests_are_untouched`, which reds on this same rule.
     assert!(!ErrorLanding::new(SHELL).wants(&Method::HEAD, &navigation()));
 }
