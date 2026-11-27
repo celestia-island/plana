@@ -7,7 +7,7 @@ use std::task::{Context, Poll};
 
 use axum::body::Body;
 use axum::http::header;
-use axum::http::{Method, Request, Response};
+use axum::http::{HeaderMap, Request, Response};
 use http_body_util::{BodyExt, Limited};
 use tower_layer::Layer;
 use tower_service::Service;
@@ -90,17 +90,27 @@ impl ErrorLanding {
     /// Whether this request's error response would be replaced. Decided
     /// before the handler runs, so a non-navigation request pays nothing
     /// but one header read.
-    fn wants(&self, method: &Method, headers: &axum::http::HeaderMap) -> bool {
+    pub fn wants(&self, method: &axum::http::Method, headers: &HeaderMap) -> bool {
         self.shell.is_some() && is_browser_navigation(method, headers)
     }
 
     /// Replace the response when it is an error a browser would have shown
     /// as bare text; hand back anything else exactly as it was.
+    ///
+    /// TEST-ONLY, and deliberately not public. In a real build the decision
+    /// is [`ErrorLandingService::call`]'s alone: it asks the REQUEST once
+    /// (navigation) and then this response-side predicate, in that order,
+    /// with no second copy of the rule to drift. A downstream that reached
+    /// for a `take_over`-like entry point would be re-deciding the half it
+    /// cannot see; a caller that must decide before a body exists composes
+    /// the landing out of [`crate::is_browser_navigation`],
+    /// [`crate::is_bare_text`] and [`ServerErrorLanding::into_response`].
+    #[cfg(test)]
     async fn take_over(self: Arc<Self>, response: Response<Body>) -> Response<Body> {
         let Some(shell) = self.shell.clone() else {
             return response;
         };
-        if !response_is_bare_text(&response) {
+        if !is_bare_text(&response) {
             return response;
         }
         let (parts, body) = response.into_parts();
@@ -123,7 +133,15 @@ impl ErrorLanding {
 /// Whether a response is one the landing may replace: an error status whose
 /// body is JSON, plain text or absent, not compressed (the layer cannot read
 /// what an inner layer already encoded), not an attachment.
-fn response_is_bare_text(response: &Response<Body>) -> bool {
+///
+/// The second half of the family's one landing rule — the first half is
+/// [`is_browser_navigation`] on the REQUEST. Public because a caller that
+/// assembles its own landing response (see
+/// [`ServerErrorLanding::into_response`]) has to apply the same gate to the
+/// response it holds; a restated copy in a downstream is a second rule that
+/// drifts the day one side changes.
+#[must_use]
+pub fn is_bare_text(response: &Response<Body>) -> bool {
     let headers = &response.headers();
     if !(response.status().is_client_error() || response.status().is_server_error()) {
         return false;
@@ -193,18 +211,33 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        // Decided here, off the request, so `take_over` never has to guess
-        // from the response whether anyone was navigating.
+        // Decided here, off the request and before the handler runs, so the
+        // response side never has to guess whether anyone was navigating.
         let wants = self.landing.wants(req.method(), req.headers());
         let landing = Arc::clone(&self.landing);
         let future = self.inner.call(req);
         Box::pin(async move {
             let response = future.await?;
-            if wants {
-                Ok(landing.take_over(response).await)
-            } else {
-                Ok(response)
+            if !wants || !is_bare_text(&response) {
+                return Ok(response);
             }
+            let Some(shell) = landing.shell.clone() else {
+                return Ok(response);
+            };
+            let (parts, body) = response.into_parts();
+            // Too large to show: the landing goes up without the body, never
+            // a half-read one.
+            let bytes = Limited::new(body, MAX_ERROR_BODY_BYTES)
+                .collect()
+                .await
+                .map(|collected| collected.to_bytes())
+                .unwrap_or_default();
+            Ok(ServerErrorLanding::from_body(
+                parts.status,
+                parts.headers.get(header::CONTENT_TYPE),
+                &bytes,
+            )
+            .into_response(parts, &shell))
         })
     }
 }
@@ -213,7 +246,7 @@ where
 mod tests {
     use super::*;
     use crate::handoff::inject_island;
-    use axum::http::HeaderValue;
+    use axum::http::{HeaderValue, Method};
 
     fn response(
         status: axum::http::StatusCode,
@@ -228,24 +261,24 @@ mod tests {
 
     #[test]
     fn only_error_statuses_with_bare_text_bodies_are_replaced() {
-        assert!(response_is_bare_text(&response(
+        assert!(is_bare_text(&response(
             axum::http::StatusCode::NOT_FOUND,
             &[]
         )));
-        assert!(response_is_bare_text(&response(
+        assert!(is_bare_text(&response(
             axum::http::StatusCode::BAD_GATEWAY,
             &[("content-type", "application/json")]
         )));
-        assert!(response_is_bare_text(&response(
+        assert!(is_bare_text(&response(
             axum::http::StatusCode::FORBIDDEN,
             &[("content-type", "text/plain; charset=utf-8")]
         )));
         // Not errors.
-        assert!(!response_is_bare_text(&response(
+        assert!(!is_bare_text(&response(
             axum::http::StatusCode::OK,
             &[("content-type", "application/json")]
         )));
-        assert!(!response_is_bare_text(&response(
+        assert!(!is_bare_text(&response(
             axum::http::StatusCode::TEMPORARY_REDIRECT,
             &[("content-type", "text/html")]
         )));
@@ -258,7 +291,7 @@ mod tests {
             "image/webp",
         ] {
             assert!(
-                !response_is_bare_text(&response(
+                !is_bare_text(&response(
                     axum::http::StatusCode::NOT_FOUND,
                     &[("content-type", content_type)]
                 )),
@@ -266,14 +299,14 @@ mod tests {
             );
         }
         // Compressed by an inner layer: unreadable here, left alone.
-        assert!(!response_is_bare_text(&response(
+        assert!(!is_bare_text(&response(
             axum::http::StatusCode::BAD_GATEWAY,
             &[
                 ("content-type", "application/json"),
                 ("content-encoding", "gzip"),
             ]
         )));
-        assert!(response_is_bare_text(&response(
+        assert!(is_bare_text(&response(
             axum::http::StatusCode::BAD_GATEWAY,
             &[
                 ("content-type", "application/json"),
@@ -281,7 +314,7 @@ mod tests {
             ]
         )));
         // An attachment the browser was about to save.
-        assert!(!response_is_bare_text(&response(
+        assert!(!is_bare_text(&response(
             axum::http::StatusCode::NOT_FOUND,
             &[
                 ("content-type", "application/json"),

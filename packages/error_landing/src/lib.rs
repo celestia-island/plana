@@ -53,6 +53,59 @@
 //! Without a shell the layer is inert: a headless build without a frontend
 //! keeps answering JSON.
 //!
+//! # A domain that knows its answer is browser-facing
+//!
+//! Some failures are decided before a response exists: an OAuth lane picks
+//! its redirect-or-JSON shape first, and by the time it has a response worth
+//! handing to the layer it has already committed to one. Such a caller
+//! assembles the landing itself, out of the same rule and the same assembly
+//! the layer applies — [`is_browser_navigation`] on the request, then
+//! [`is_bare_text`] on the response it composed, then
+//! [`ServerErrorLanding::into_response`] out of the same shell. Nothing in
+//! the downstream decides anything of its own: a second copy of these rules
+//! is the thing this surface exists to remove.
+//!
+//! ```no_run
+//! use axum::body::Body;
+//! use axum::http::{HeaderMap, Method, StatusCode, header};
+//! use axum::response::Response;
+//! use plana_error_landing::{ServerErrorLanding, is_bare_text, is_browser_navigation};
+//!
+//! /// The answer for one failure: the landing for a browser navigation,
+//! /// the wire JSON for everyone else.
+//! fn answer(
+//!     method: &Method,
+//!     request: &HeaderMap,
+//!     status: StatusCode,
+//!     wire: Response<Body>,
+//!     shell: Option<&str>,
+//! ) -> Response<Body> {
+//!     // The request half of the family's one rule, then the response half.
+//!     let Some(shell) = shell.filter(|_| is_browser_navigation(method, request)) else {
+//!         return wire;
+//!     };
+//!     if !is_bare_text(&wire) {
+//!         return wire;
+//!     }
+//!     let (parts, body) = wire.into_parts();
+//!     // A caller with no body to read (the answer is decided, not found)
+//!     // builds the landing from its own copy instead of `from_body`.
+//!     let _ = body;
+//!     ServerErrorLanding::new(status, "upstream_down", "the upstream is down")
+//!         .into_response(parts, shell)
+//! }
+//!
+//! # let mut request = HeaderMap::new();
+//! # request.insert("sec-fetch-dest", header::HeaderValue::from_static("document"));
+//! # let wire = Response::builder()
+//! #     .status(StatusCode::BAD_GATEWAY)
+//! #     .header(header::CONTENT_TYPE, "application/json")
+//! #     .body(Body::from(r#"{"error":"upstream down"}"#))
+//! #     .expect("static response");
+//! # let answer = answer(&Method::GET, &request, StatusCode::BAD_GATEWAY, wire, Some("<html></html>"));
+//! # assert_eq!(answer.headers()[header::CONTENT_TYPE], "text/html; charset=utf-8");
+//! ```
+//!
 //! # A service with no shell of its own
 //!
 //! A service that serves nothing but an API has no `index.html` to seat the
@@ -109,4 +162,6 @@ pub use handoff::{
     SERVER_ERROR_LANDING_ID, SERVER_ERROR_LANDING_MARKER, SERVER_ERROR_LANDING_VERSION,
     ServerErrorLanding, inject_island,
 };
-pub use layer::{ErrorLanding, ErrorLandingLayer, ErrorLandingService, MAX_ERROR_BODY_BYTES};
+pub use layer::{
+    ErrorLanding, ErrorLandingLayer, ErrorLandingService, MAX_ERROR_BODY_BYTES, is_bare_text,
+};
