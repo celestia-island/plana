@@ -22,6 +22,15 @@ use crate::handoff::ServerErrorLanding;
 /// answers a huge error a way to allocate without limit.
 pub const MAX_ERROR_BODY_BYTES: usize = 64 * 1024;
 
+/// The standalone landing document [`ErrorLanding::standalone`] answers
+/// with: hikari's `packages/vue/src/errorLandingStandalone/error-landing.html`,
+/// vendored byte for byte (`res/error-landing.html`). Point every DOT of this
+/// list at the first character of one line of that file — no comment line, no
+/// blank line — and `cargo fmt --all -- --check` leaves the file alone; a
+/// plain call here would be re-wrapped into mangled lines of its own.
+#[rustfmt::skip]
+const STANDALONE_DOCUMENT: &str = include_str!("../res/error-landing.html");
+
 /// The landing's two inputs: the SPA shell document a failed navigation is
 /// answered with, and (implicitly) that there is one at all.
 ///
@@ -47,6 +56,25 @@ impl ErrorLanding {
     #[must_use]
     pub fn disabled() -> Self {
         Self { shell: None }
+    }
+
+    /// Serve landings out of the family's standalone landing document.
+    ///
+    /// For a service with no SPA shell to hand in: the failed navigation is
+    /// answered with hikari's prebuilt `error-landing.html` — the family
+    /// card, its locales and the island reader, in one file — instead of
+    /// the service's own document. Every rule above still decides what
+    /// qualifies; only the shell changes.
+    ///
+    /// The document carries an EXECUTABLE inline script, so it is for a
+    /// service that sets no Content-Security-Policy of its own: a
+    /// `script-src` an operator added would refuse that script and leave
+    /// the visitor on a blank card. A service with its own CSP keeps its
+    /// SPA shell. [`Self::disabled`] is unchanged — a build that should
+    /// replace nothing keeps passing every response through.
+    #[must_use]
+    pub fn standalone() -> Self {
+        Self::new(STANDALONE_DOCUMENT)
     }
 
     /// The layer over every route whose errors should land. Innermost, so it
@@ -184,6 +212,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::handoff::inject_island;
+    use axum::http::HeaderValue;
 
     fn response(
         status: axum::http::StatusCode,
@@ -268,11 +298,121 @@ mod tests {
             &[("content-type", "application/json")],
         );
         assert!(!landing.wants(&Method::GET, &axum::http::HeaderMap::new()));
+        // Not even a navigation gets a landing: `disabled` stays the switch
+        // for a build that replaces nothing at all, whatever shell exists.
+        // MUT:m1-standalone-disabled renders `standalone()` as `disabled()`;
+        // the bite lands in the standalone test ABOVE, on its FIRST assertion
+        // — `ErrorLanding::standalone().wants(&Method::GET, &navigation())`,
+        // not on any document assertion. This test stays green under M1,
+        // because `disabled` is exactly what it asserts.
+        assert!(!landing.wants(&Method::GET, &navigation()));
         let out = Arc::new(landing).take_over(original).await;
         assert_eq!(out.status(), axum::http::StatusCode::NOT_FOUND);
         assert_eq!(
             out.headers().get(header::CONTENT_TYPE).unwrap(),
             "application/json"
+        );
+    }
+
+    fn navigation() -> axum::http::HeaderMap {
+        let mut headers = axum::http::HeaderMap::new();
+        headers.insert("sec-fetch-dest", HeaderValue::from_static("document"));
+        headers
+    }
+
+    #[test]
+    fn the_standalone_document_is_the_vendored_artifact() {
+        // The provenance a vendored upstream copy is recognized by: hikari's
+        // build stamps it, and the copy carries it unchanged.
+        assert!(STANDALONE_DOCUMENT.starts_with("<!doctype html>"));
+        assert!(
+            STANDALONE_DOCUMENT
+                .contains("<meta name=\"hk-error-landing\" content=\"v1 0.55.498 <dev>\">"),
+            "the provenance meta survives the vendoring"
+        );
+        assert!(STANDALONE_DOCUMENT.trim_end().ends_with("</html>"));
+    }
+
+    #[tokio::test]
+    async fn a_standalone_landing_seats_the_island_in_the_vendored_document() {
+        // A real navigation wants it …
+        assert!(ErrorLanding::standalone().wants(&Method::GET, &navigation()));
+        let original = response(
+            axum::http::StatusCode::BAD_GATEWAY,
+            &[("content-type", "application/json")],
+        );
+        let out = Arc::new(ErrorLanding::standalone())
+            .take_over(original)
+            .await;
+        assert_eq!(out.status(), axum::http::StatusCode::BAD_GATEWAY);
+        assert_eq!(
+            out.headers().get(header::CONTENT_TYPE).unwrap(),
+            "text/html; charset=utf-8"
+        );
+        let (_, body) = out.into_parts();
+        let document = String::from_utf8(
+            http_body_util::BodyExt::collect(body)
+                .await
+                .expect("infallible body")
+                .to_bytes()
+                .to_vec(),
+        )
+        .expect("utf-8 document");
+        // Both marks are in the answer: the island a reader consumes, and
+        // the provenance meta that names the build it came from.
+        assert!(document.contains("<script type=\"application/json\" id=\"hk-server-error\">"));
+        assert!(
+            document.contains("<meta name=\"hk-error-landing\" content=\"v1 0.55.498 <dev>\">")
+        );
+        // Nothing but the island moved: the artifact's own bytes around it
+        // are whole. The layer seats the island off the response it took
+        // over, so the comparison is the insertion shape rather than one
+        // rebuilt island — this body's description is pinned elsewhere.
+        let island_start = document
+            .find("<script type=\"application/json\"")
+            .expect("island");
+        let island_end = island_start
+            + document[island_start..]
+                .find("</script>")
+                .expect("island end")
+            + "</script>".len();
+        let mut without_island = document.clone();
+        without_island.replace_range(island_start..island_end, "");
+        assert_eq!(without_island, STANDALONE_DOCUMENT);
+        // The island names the status the response actually carried.
+        assert!(document[island_start..island_end].contains(r#""v":1,"status":502"#));
+        // The markup is the artifact's own: one head to anchor at (the
+        // bundled script mentions `</head>` in a string of its own, so the
+        // count is the artifact's, not the document's), and one executable
+        // script — the no-CSP constraint `standalone()` documents.
+        assert_eq!(STANDALONE_DOCUMENT.matches("<head>").count(), 1);
+        assert_eq!(STANDALONE_DOCUMENT.matches("</head>").count(), 1);
+        assert_eq!(document.matches("<script type=\"module\">").count(), 1);
+    }
+
+    #[tokio::test]
+    async fn the_standalone_document_takes_the_anchor_fallbacks_too() {
+        // MUT:m2-inject-anchor-fallback drops the `</head>` / `</body>` scan
+        // in `inject_island`; this test reds on its first assertion.
+        // The artifact has both anchor levels, so pin them ON ITS BYTES:
+        // the island lands before the FIRST `</head>`, at top level.
+        let standalone = STANDALONE_DOCUMENT;
+        let out = inject_island(standalone, "[i]");
+        assert_eq!(
+            out,
+            standalone.replacen("</head>", "[i]</head>", 1),
+            "before the first </head>, byte for byte around it"
+        );
+        // And with no `</head>` to take, on the next anchor down.
+        let without_head = standalone.replace("</head>", "");
+        assert_eq!(
+            inject_island(&without_head, "[i]"),
+            without_head.replacen("</body>", "[i]</body>", 1)
+        );
+        // Nothing at all: appended after the last byte.
+        assert_eq!(
+            inject_island("<!doctype html><p>fragment", "[i]"),
+            "<!doctype html><p>fragment[i]"
         );
     }
 }

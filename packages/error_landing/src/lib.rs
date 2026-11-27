@@ -53,6 +53,33 @@
 //! Without a shell the layer is inert: a headless build without a frontend
 //! keeps answering JSON.
 //!
+//! # A service with no shell of its own
+//!
+//! A service that serves nothing but an API has no `index.html` to seat the
+//! island in. [`ErrorLanding::standalone`] answers those with the family's
+//! standalone landing document, which this crate ships: one file carrying
+//! the family card, its copy in the family's locales, and the reader that
+//! turns the island into it — so the failed navigation lands on the same
+//! card a service with a shell shows. The document is hikari's
+//! `packages/vue/src/errorLandingStandalone/error-landing.html`, vendored
+//! byte for byte; its [`hk-error-landing`][standalone] meta names the hikari
+//! version it was built from.
+//!
+//! That document carries one EXECUTABLE inline script. A service that sets
+//! its own Content-Security-Policy therefore keeps its SPA shell — such a
+//! service's `script-src` would refuse the landing's script, and a card that
+//! never paints is worse than the shell it already has. Standalone is for
+//! services with no CSP and no shell; [`ErrorLanding::disabled`] stays the
+//! switch for a build that should replace nothing at all.
+//!
+//! ```no_run
+//! use axum::Router;
+//! use plana_error_landing::ErrorLanding;
+//!
+//! let app: Router = Router::new().layer(ErrorLanding::standalone().layer());
+//! # let _ = app;
+//! ```
+//!
 //! ```no_run
 //! use std::sync::Arc;
 //! use axum::{http::StatusCode, routing::get, Json, Router};
@@ -69,6 +96,7 @@
 //! ```
 //!
 //! [`HkErrorLanding`]: https://github.com/celestia-island/hikari/blob/master/packages/vue/src/components/HkErrorLanding.tsx
+//! [standalone]: https://github.com/celestia-island/hikari/blob/master/packages/vue/src/errorLandingStandalone/error-landing.html
 
 #![forbid(unsafe_code)]
 
