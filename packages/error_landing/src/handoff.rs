@@ -179,11 +179,35 @@ impl ServerErrorLanding {
     /// those that described the replaced body ([`REPLACED_BODY_HEADERS`]:
     /// its type, length, encoding, validators, range and caching metadata,
     /// plus the hop-by-hop set).
-    pub(crate) fn into_response(
+    ///
+    /// This is the layer's assembly, offered to a caller that has to decide
+    /// the landing out of the response it already holds. A domain that KNOWS
+    /// its failure is browser-facing — an OAuth lane that picks its
+    /// redirect/JSON shape before a body exists — cannot hand off to
+    /// [`crate::ErrorLanding`]'s layer, which finds that out from a finished
+    /// response. Such a caller composes the JSON answer it would have sent,
+    /// builds the landing from it ([`Self::from_body`], or [`Self::new`]
+    /// with its own copy), and answers with this: the same status, the same
+    /// surviving headers, the same `text/html` / `no-store` / `Vary` /
+    /// `nosniff` framing the layer produces — so both paths answer one
+    /// failure one way.
+    ///
+    /// `parts` are the parts of the response being replaced; it is CONSUMED
+    /// (the status and the headers are carried over, the body is not — the
+    /// landing document takes its place). A caller with nothing to carry
+    /// over passes [`Self::empty_parts`] with the status it is answering.
+    ///
+    /// Nothing here decides WHETHER a response qualifies — that is the
+    /// caller's (the navigation test and the body predicate, in that order);
+    /// this answers for a caller that already decided.
+    #[must_use]
+    pub fn into_response(
         self,
         parts: axum::http::response::Parts,
         shell: &str,
     ) -> axum::response::Response {
+        // One `Content-Length` for the document, never the replaced body's.
+        let document = self.document(shell);
         let vary = merged_vary(&parts.headers);
         let mut headers = axum::http::HeaderMap::new();
         for (name, value) in &parts.headers {
@@ -206,7 +230,24 @@ impl ServerErrorLanding {
         }
         let mut parts = parts;
         parts.headers = headers;
-        axum::response::Response::from_parts(parts, Body::from(self.document(shell)))
+        axum::response::Response::from_parts(parts, Body::from(document))
+    }
+
+    /// Parts carrying a status and NO headers — nothing for
+    /// [`Self::into_response`] to carry over but the status itself.
+    ///
+    /// For a caller that is answering a decision, not replacing a response
+    /// it received: an OAuth lane composing the answer for a failure its own
+    /// handler just produced has no response to hand in. `Vary` and the
+    /// landing's own framing are added by [`Self::into_response`] regardless.
+    #[must_use]
+    pub fn empty_parts(status: StatusCode) -> axum::http::response::Parts {
+        axum::response::Response::builder()
+            .status(status)
+            .body(())
+            .expect("(status, no headers) is always a valid response head")
+            .into_parts()
+            .0
     }
 }
 
