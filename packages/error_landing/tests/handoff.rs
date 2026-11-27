@@ -42,21 +42,47 @@ fn api_call() -> HeaderMap {
     headers
 }
 
-/// The JSON answer the service would have sent to an API caller, with its own
-/// headers — the response a domain-declared landing lane holds in hand.
+/// Every header class the landing must DROP: they described the body being
+/// replaced, or are hop-by-hop, and none of them is true of the landing
+/// document. One per class in `handoff.rs`'s replaced-body set, so dropping
+/// any entry from that set lands a stale header here.
+///
+/// `content-type` and `content-length` are absent by construction — the
+/// answers below SET them, and the landing sets them to its own values.
+const REPLACED_BODY_METADATA: [(&str, &str); 11] = [
+    ("content-encoding", "identity"),
+    ("transfer-encoding", "chunked"),
+    ("etag", "\"abc\""),
+    ("last-modified", "Wed, 21 Oct 2015 07:28:00 GMT"),
+    ("content-range", "bytes 0-1/2"),
+    ("expires", "Wed, 21 Oct 2015 07:28:00 GMT"),
+    ("age", "120"),
+    ("pragma", "no-cache"),
+    ("connection", "keep-alive"),
+    ("te", "trailers"),
+    ("trailer", "X-Checksum"),
+];
+
+/// What the service said to the CLIENT: true of the landing too, so it must
+/// survive the replacement.
+const CLIENT_FACING: [(&str, &str); 2] = [
+    ("set-cookie", "session=; Max-Age=0; Path=/"),
+    ("retry-after", "3"),
+];
+
+/// The JSON answer the service would have sent to an API caller, carrying one
+/// header of every class — the response a domain-declared landing lane holds
+/// in hand.
 fn wire_response(status: StatusCode, body: &serde_json::Value) -> Response<Body> {
-    let mut response = Response::builder()
+    let mut builder = Response::builder()
         .status(status)
-        .header(header::CONTENT_TYPE, "application/json")
-        .header(header::SET_COOKIE, "session=; Max-Age=0; Path=/")
-        .header(header::RETRY_AFTER, "3")
+        .header(header::CONTENT_TYPE, "application/json");
+    for (name, value) in REPLACED_BODY_METADATA.iter().chain(CLIENT_FACING.iter()) {
+        builder = builder.header(*name, *value);
+    }
+    builder
         .body(Body::from(serde_json::to_vec(body).expect("json")))
-        .expect("static response");
-    // A validator that describes the JSON body about to be replaced.
-    response
-        .headers_mut()
-        .insert(header::ETAG, HeaderValue::from_static("\"abc\""));
-    response
+        .expect("static response")
 }
 
 /// The downstream wrapper this surface exists for: a domain that decides a
@@ -124,13 +150,21 @@ async fn a_domain_declared_landing_answers_what_the_layer_would() {
     );
     assert_eq!(response.headers()[header::VARY], "Sec-Fetch-Dest, Accept");
     // What the service said to the CLIENT survives the landing …
-    assert_eq!(
-        response.headers()[header::SET_COOKIE],
-        "session=; Max-Age=0; Path=/"
-    );
-    assert_eq!(response.headers()[header::RETRY_AFTER], "3");
-    // … and the validator of the body it replaced does not.
-    assert_eq!(response.headers().get(header::ETAG), None);
+    for (name, value) in CLIENT_FACING {
+        assert_eq!(
+            response.headers().get(name).and_then(|v| v.to_str().ok()),
+            Some(value),
+            "{name} must survive the landing"
+        );
+    }
+    // … and nothing that described the replaced body does.
+    for (name, _) in REPLACED_BODY_METADATA {
+        assert_eq!(
+            response.headers().get(name),
+            None,
+            "{name} described the body the landing replaced and must not survive"
+        );
+    }
 
     let document = body_text(response).await;
     // The service's own shell, with the island seated inside <head>, and the
