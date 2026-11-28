@@ -211,15 +211,17 @@ jobs:
           # the loop skips proc-macro-only members with a notice.
           #
           # A library target is any kind cargo-semver-checks (0.51.0, pinned
-          # below) treats as a library: lib, rlib, dylib, cdylib, staticlib.
+          # above as VER) treats as a library: lib, rlib, dylib, cdylib, staticlib.
           # The literal membership test for "lib" missed rlib — a crate that
           # declares `[lib] crate-type = ["rlib"]` reports kind: ["rlib"] and
           # was classified as proc-macro-only, so its API was never diffed
           # (kirino shipped a breaking public field as a patch that way; ledger
-          # L970). Every plana member is kind "lib" today, so nothing here was
-          # ever skipped wrongly — this keeps it that way if one changes its
-          # crate-type. Same detector as the devtools callee; the test that
-          # pins it lives there (tests/test_semver_library_target.py).
+          # L970). In plana, every member with an API to diff is kind "lib"
+          # today — plana-macros is the one proc-macro-only member, skipped on
+          # purpose — so nothing here was ever skipped wrongly; this keeps it
+          # that way if a member changes its crate-type. Same detector as the
+          # devtools callee; the test that pins it lives there
+          # (tests/test_semver_library_target.py), reading its own copy.
           declare -A HAS_LIB=()
           while IFS='=' read -r pkg haslib; do
             HAS_LIB[$pkg]="$haslib"
