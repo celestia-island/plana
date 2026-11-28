@@ -389,6 +389,12 @@ jobs:
           publish_crate plana-timeline packages/timeline/Cargo.toml
           publish_crate plana-dev-server packages/dev_server/Cargo.toml
           publish_crate plana-sibling packages/sibling/Cargo.toml
+          # The family error landing (the hk-server-error handoff, #610) joins
+          # the release line: ayane still pulls it from master because crates.io
+          # has nothing to satisfy its `^0.8` requirement, and a git dependency
+          # cannot be published from ayane's side at all. Deliberately standalone
+          # (no intra-family deps), so its position here is free.
+          publish_crate plana-error-landing packages/error_landing/Cargo.toml
           # Registry-only dependencies (kirino from crates.io); no intra-family deps.
           publish_crate plana-identity-relay packages/identity_relay/Cargo.toml
           publish_crate plana-infra-services packages/infra_services/Cargo.toml
