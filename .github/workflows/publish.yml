@@ -209,10 +209,27 @@ jobs:
           # major bump blocked forever by a crate whose API surface a rustlib
           # diff cannot even represent. Map crate -> has-library-target once;
           # the loop skips proc-macro-only members with a notice.
+          #
+          # A library target is any kind cargo-semver-checks (0.51.0, pinned
+          # below) treats as a library: lib, rlib, dylib, cdylib, staticlib.
+          # The literal membership test for "lib" missed rlib — a crate that
+          # declares `[lib] crate-type = ["rlib"]` reports kind: ["rlib"] and
+          # was classified as proc-macro-only, so its API was never diffed
+          # (kirino shipped a breaking public field as a patch that way; ledger
+          # L970). Every plana member is kind "lib" today, so nothing here was
+          # ever skipped wrongly — this keeps it that way if one changes its
+          # crate-type. Same detector as the devtools callee; the test that
+          # pins it lives there (tests/test_semver_library_target.py).
           declare -A HAS_LIB=()
           while IFS='=' read -r pkg haslib; do
             HAS_LIB[$pkg]="$haslib"
-          done < <(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; d=json.load(sys.stdin); [print(p["name"], str(any("lib" in t.get("kind", []) for t in p["targets"])).lower(), sep="=") for p in d["packages"]]')
+          done < <(cargo metadata --no-deps --format-version 1 | python3 -c '
+          import json, sys
+          LIBRARY_KINDS = {"lib", "rlib", "dylib", "cdylib", "staticlib"}
+          for p in json.load(sys.stdin)["packages"]:
+              has = any(LIBRARY_KINDS.intersection(t.get("kind") or []) for t in p["targets"])
+              print(p["name"], str(has).lower(), sep="=")
+          ')
 
           internal_skipped=()
           checked=0
